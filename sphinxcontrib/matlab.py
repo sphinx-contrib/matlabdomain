@@ -707,3 +707,14 @@ class MATLABDomain(Domain):
             yield (modname, modname, 'module', info[0], 'module-' + modname, 0)
         for refname, (docname, type) in self.data['objects'].iteritems():
             yield (refname, refname, type, docname, refname, 1)
+
+def setup(app):
+    app.add_domain(MATLABDomain)
+    # TODO: add autodoc
+    # see coffeedomain as example
+    # from . import documenters as doc
+    # app.add_autodocumenter(doc.ModuleDocumenter)
+    # app.add_autodocumenter(doc.ClassDocumenter)
+    # app.add_autodocumenter(doc.FunctionDocumenter)
+    # app.add_autodocumenter(doc.MethodDocumenter)
+    # app.add_autodocumenter(doc.StaticMethodDocumenter)
