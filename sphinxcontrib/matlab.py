@@ -9,6 +9,8 @@
     :license: BSD, see LICENSE for details.
 """
 
+from std import StandardDomain
+
 import re
 
 from docutils import nodes
@@ -25,7 +27,7 @@ from sphinx.util.docfields import Field, GroupedField, TypedField
 
 
 # REs for MATLAB signatures
-m_sig_re = re.compile(
+mat_sig_re = re.compile(
     r'''^ ([\w.]*\.)?            # class name(s)
           (\w+)  \s*             # thing name
           (?: \((.*)\)           # optional: arguments
@@ -81,7 +83,7 @@ def _pseudo_parse_arglist(signode, arglist):
         signode += paramlist
 
 
-class MObject(ObjectDescription):
+class MatObject(ObjectDescription):
     """
     Description of a general MATLAB object.
     """
@@ -131,15 +133,15 @@ class MObject(ObjectDescription):
         * it is stripped from the displayed name if present
         * it is added to the full name (return value) if not present
         """
-        m = m_sig_re.match(sig)
+        m = mat_sig_re.match(sig)
         if m is None:
             raise ValueError
         name_prefix, name, arglist, retann = m.groups()
 
         # determine module and class name (if applicable), as well as full name
         modname = self.options.get(
-            'module', self.env.temp_data.get('m:module'))
-        classname = self.env.temp_data.get('m:class')
+            'module', self.env.temp_data.get('mat:module'))
+        classname = self.env.temp_data.get('mat:class')
         if classname:
             add_module = False
             if name_prefix and name_prefix.startswith(classname):
@@ -176,7 +178,7 @@ class MObject(ObjectDescription):
         # 'exceptions' module.
         elif add_module and self.env.config.add_module_names:
             modname = self.options.get(
-                'module', self.env.temp_data.get('m:module'))
+                'module', self.env.temp_data.get('mat:module'))
             if modname and modname != 'exceptions':
                 nodetext = modname + '.'
                 signode += addnodes.desc_addname(nodetext, nodetext)
@@ -207,7 +209,7 @@ class MObject(ObjectDescription):
 
     def add_target_and_index(self, name_cls, sig, signode):
         modname = self.options.get(
-            'module', self.env.temp_data.get('m:module'))
+            'module', self.env.temp_data.get('mat:module'))
         fullname = (modname and modname + '.' or '') + name_cls[0]
         # note target
         if fullname not in self.state.document.ids:
@@ -215,7 +217,7 @@ class MObject(ObjectDescription):
             signode['ids'].append(fullname)
             signode['first'] = (not self.names)
             self.state.document.note_explicit_target(signode)
-            objects = self.env.domaindata['m']['objects']
+            objects = self.env.domaindata['mat']['objects']
             if fullname in objects:
                 self.state_machine.reporter.warning(
                     'duplicate object description of %s, ' % fullname +
@@ -236,10 +238,10 @@ class MObject(ObjectDescription):
 
     def after_content(self):
         if self.clsname_set:
-            self.env.temp_data['m:class'] = None
+            self.env.temp_data['mat:class'] = None
 
 
-class MModulelevel(MObject):
+class MatModulelevel(MatObject):
     """
     Description of an object on module level (functions, data).
     """
@@ -260,7 +262,7 @@ class MModulelevel(MObject):
             return ''
 
 
-class MClasslike(MObject):
+class MatClasslike(MatObject):
     """
     Description of a class-like object (classes, interfaces, exceptions).
     """
@@ -279,13 +281,13 @@ class MClasslike(MObject):
             return ''
 
     def before_content(self):
-        MObject.before_content(self)
+        MatObject.before_content(self)
         if self.names:
-            self.env.temp_data['m:class'] = self.names[0][0]
+            self.env.temp_data['mat:class'] = self.names[0][0]
             self.clsname_set = True
 
 
-class MClassmember(MObject):
+class MatClassmember(MatObject):
     """
     Description of a class member (methods, attributes).
     """
@@ -357,19 +359,19 @@ class MClassmember(MObject):
             return ''
 
     def before_content(self):
-        MObject.before_content(self)
+        MatObject.before_content(self)
         lastname = self.names and self.names[-1][1]
-        if lastname and not self.env.temp_data.get('m:class'):
-            self.env.temp_data['m:class'] = lastname.strip('.')
+        if lastname and not self.env.temp_data.get('mat:class'):
+            self.env.temp_data['mat:class'] = lastname.strip('.')
             self.clsname_set = True
 
 
-class MDecoratorMixin(object):
+class MatDecoratorMixin(object):
     """
     Mixin for decorator directives.
     """
     def handle_signature(self, sig, signode):
-        ret = super(MDecoratorMixin, self).handle_signature(sig, signode)
+        ret = super(MatDecoratorMixin, self).handle_signature(sig, signode)
         signode.insert(0, addnodes.desc_addname('@', '@'))
         return ret
 
@@ -377,26 +379,26 @@ class MDecoratorMixin(object):
         return False
 
 
-class MDecoratorFunction(MDecoratorMixin, MModulelevel):
+class MatDecoratorFunction(MatDecoratorMixin, MatModulelevel):
     """
     Directive to mark functions meant to be used as decorators.
     """
     def run(self):
         # a decorator function is a function after all
-        self.name = 'm:function'
-        return MModulelevel.run(self)
+        self.name = 'mat:function'
+        return MatModulelevel.run(self)
 
 
-class MDecoratorMethod(MDecoratorMixin, MClassmember):
+class MatDecoratorMethod(MatDecoratorMixin, MatClassmember):
     """
     Directive to mark methods meant to be used as decorators.
     """
     def run(self):
-        self.name = 'm:method'
-        return MClassmember.run(self)
+        self.name = 'mat:method'
+        return MatClassmember.run(self)
 
 
-class MModule(Directive):
+class MatModule(Directive):
     """
     Directive to mark description of a new module.
     """
@@ -416,15 +418,15 @@ class MModule(Directive):
         env = self.state.document.settings.env
         modname = self.arguments[0].strip()
         noindex = 'noindex' in self.options
-        env.temp_data['m:module'] = modname
+        env.temp_data['mat:module'] = modname
         ret = []
         if not noindex:
-            env.domaindata['m']['modules'][modname] = \
+            env.domaindata['mat']['modules'][modname] = \
                 (env.docname, self.options.get('synopsis', ''),
                  self.options.get('platform', ''), 'deprecated' in self.options)
             # make a duplicate entry in 'objects' to facilitate searching for
             # the module in MATLABDomain.find_obj()
-            env.domaindata['m']['objects'][modname] = (env.docname, 'module')
+            env.domaindata['mat']['objects'][modname] = (env.docname, 'module')
             targetnode = nodes.target('', '', ids=['module-' + modname],
                                       ismod=True)
             self.state.document.note_explicit_target(targetnode)
@@ -438,7 +440,7 @@ class MModule(Directive):
         return ret
 
 
-class MCurrentModule(Directive):
+class MatCurrentModule(Directive):
     """
     This directive is just to tell Sphinx that we're documenting
     stuff in module foo, but links to module foo won't lead here.
@@ -454,16 +456,16 @@ class MCurrentModule(Directive):
         env = self.state.document.settings.env
         modname = self.arguments[0].strip()
         if modname == 'None':
-            env.temp_data['m:module'] = None
+            env.temp_data['mat:module'] = None
         else:
-            env.temp_data['m:module'] = modname
+            env.temp_data['mat:module'] = modname
         return []
 
 
-class MXRefRole(XRefRole):
+class MatXRefRole(XRefRole):
     def process_link(self, env, refnode, has_explicit_title, title, target):
-        refnode['m:module'] = env.temp_data.get('m:module')
-        refnode['m:class'] = env.temp_data.get('m:class')
+        refnode['mat:module'] = env.temp_data.get('mat:module')
+        refnode['mat:class'] = env.temp_data.get('mat:class')
         if not has_explicit_title:
             title = title.lstrip('.')   # only has a meaning for the target
             target = target.lstrip('~') # only has a meaning for the title
@@ -554,7 +556,7 @@ class MATLABModuleIndex(Index):
 
 class MATLABDomain(Domain):
     """MATLAB language domain."""
-    name = 'm'
+    name = 'mat'
     label = 'MATLAB'
     object_types = {
         'function':     ObjType(l_('function'),      'func', 'obj'),
@@ -569,29 +571,29 @@ class MATLABDomain(Domain):
     }
 
     directives = {
-        'function':        MModulelevel,
-        'data':            MModulelevel,
-        'class':           MClasslike,
-        'exception':       MClasslike,
-        'method':          MClassmember,
-        'classmethod':     MClassmember,
-        'staticmethod':    MClassmember,
-        'attribute':       MClassmember,
-        'module':          MModule,
-        'currentmodule':   MCurrentModule,
-        'decorator':       MDecoratorFunction,
-        'decoratormethod': MDecoratorMethod,
+        'function':        MatModulelevel,
+        'data':            MatModulelevel,
+        'class':           MatClasslike,
+        'exception':       MatClasslike,
+        'method':          MatClassmember,
+        'classmethod':     MatClassmember,
+        'staticmethod':    MatClassmember,
+        'attribute':       MatClassmember,
+        'module':          MatModule,
+        'currentmodule':   MatCurrentModule,
+        'decorator':       MatDecoratorFunction,
+        'decoratormethod': MatDecoratorMethod,
     }
     roles = {
-        'data':  MXRefRole(),
-        'exc':   MXRefRole(),
-        'func':  MXRefRole(fix_parens=True),
-        'class': MXRefRole(),
-        'const': MXRefRole(),
-        'attr':  MXRefRole(),
-        'meth':  MXRefRole(fix_parens=True),
-        'mod':   MXRefRole(),
-        'obj':   MXRefRole(),
+        'data':  MatXRefRole(),
+        'exc':   MatXRefRole(),
+        'func':  MatXRefRole(fix_parens=True),
+        'class': MatXRefRole(),
+        'const': MatXRefRole(),
+        'attr':  MatXRefRole(),
+        'meth':  MatXRefRole(fix_parens=True),
+        'mod':   MatXRefRole(),
+        'obj':   MatXRefRole(),
     }
     initial_data = {
         'objects': {},  # fullname -> docname, objtype
@@ -671,8 +673,8 @@ class MATLABDomain(Domain):
 
     def resolve_xref(self, env, fromdocname, builder,
                      type, target, node, contnode):
-        modname = node.get('m:module')
-        clsname = node.get('m:class')
+        modname = node.get('mat:module')
+        clsname = node.get('mat:class')
         searchmode = node.hasattr('refspecific') and 1 or 0
         matches = self.find_obj(env, modname, clsname, target,
                                 type, searchmode)
@@ -709,6 +711,7 @@ class MATLABDomain(Domain):
             yield (refname, refname, type, docname, refname, 1)
 
 def setup(app):
+    app.override_domain(StandardDomain)
     app.add_domain(MATLABDomain)
     # TODO: add autodoc
     # see coffeedomain as example
