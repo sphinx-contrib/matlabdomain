@@ -10,6 +10,8 @@
 """
 
 from std import StandardDomain
+import documenters as doc
+    
 
 import re
 
@@ -713,11 +715,11 @@ class MATLABDomain(Domain):
 def setup(app):
     app.override_domain(StandardDomain)
     app.add_domain(MATLABDomain)
-    # TODO: add autodoc
+    # autodoc
     # see coffeedomain as example
-    # from . import documenters as doc
-    # app.add_autodocumenter(doc.ModuleDocumenter)
-    # app.add_autodocumenter(doc.ClassDocumenter)
-    # app.add_autodocumenter(doc.FunctionDocumenter)
-    # app.add_autodocumenter(doc.MethodDocumenter)
-    # app.add_autodocumenter(doc.StaticMethodDocumenter)
+    app.add_autodocumenter(doc.ModuleDocumenter)
+    app.add_autodocumenter(doc.ClassDocumenter)
+    add_autodoc_attrgetter(MatClass, MatClass.getter)
+    app.add_autodocumenter(doc.FunctionDocumenter)
+    app.add_autodocumenter(doc.MethodDocumenter)
+    app.add_autodocumenter(doc.StaticMethodDocumenter)
