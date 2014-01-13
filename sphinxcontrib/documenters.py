@@ -57,21 +57,30 @@ class MatObject(object):
     Base Matlab object to which all others are subclassed.
 
     :param name: Name of Matlab object.
+    :type name: str
     """
     def __init__(self, name):
         #: name of Matlab object
         self.name = name
     def __str__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.name)
+
     @staticmethod
-    def tokenize(fullpath):
-        with open(fullpath, 'r') as fp:
-            code = fp.read()
-        return list(MatlabLexer().get_tokens(code))
-    @staticmethod
-    def parse_mfile(mfile):        
+    def parse_mfile(mfile, name, path):
+        """
+        Use Pygments to parse mfile to determine type: function or class.
+
+        :param mfile: Full path of mfile.
+        :type mfile: str
+        :param name: Name of :class:`MatObject`.
+        :type name: str
+        :param path: Path of folder containing object.
+        :type path: str
+        """
         # use Pygments to parse mfile to determine type: function/classdef
-        tks = MatObject.tokenize(fullpath)  # tokens
+        with open(mfile, 'r') as f:
+            code = f.read()
+        tks = list(MatlabLexer().get_tokens(code))  # tokens
         tkn = 0  # token number
         # skip comments
         while tks[tkn][0] is Token.Commment: tkn += 1
@@ -83,6 +92,7 @@ class MatObject(object):
         else:
             # it's a script file
             return None
+
     @ staticmethod
     def matlabify(fullpath):
         """
@@ -97,7 +107,8 @@ class MatObject(object):
         if os.path.isdir(fullpath):
             return MatModule(name, path)  # treat folder as Matlab module
         elif os.path.isfile(fullpath + '.m'):
-            return MatObject.parse_mfile(fullpath + '.m')
+            mfile = fullpath + '.m'
+            return MatObject.parse_mfile(mfile, name, path)
         # allow namespace to be anywhere on the path
         else:
             for root, dirs, files in os.walk:
@@ -109,13 +120,16 @@ class MatObject(object):
                 for f in tuple(files):
                     if not f.endswith('.m'):
                         files.remove(f)
+                # folder trumps mfile with same name
                 if name in dirs:
                     return MatModule(name, root)
                 elif name + '.m' in files:
-                    return MatObject.parse_mfile(fullpath + '.m')
+                    mfile = os.path.join(root, name) + '.m'
+                    return MatObject.parse_mfile(mfile, name, path)
                 else:
                     continue
-            return None
+                # keep walking tree
+            # no matching folders or mfiles
         return None
 
 
@@ -124,6 +138,9 @@ class MatModule(MatObject):
     There is no concept of a *module* in Matlab, so repurpose *module* to be
     a folder that acts like a namespace for any :class:`MatObjects` in that
     folder. Sphinx will treats objects without a namespace as builtins.
+
+    :param name: Name of Matlab object.
+    :type name: str
     """
     def __init__(self, name, path=None):
         super(MatModule, self).__init__(name)
@@ -173,34 +190,45 @@ class MatlabDocumenter(Documenter):
     """
     Base class for documenters of Matlab objects.
     """
+    domain = 'matlab'
+
     def import_object(self):
         """Import the object given by *self.modname* and *self.objpath* and set
         it as *self.object*.
 
         Returns True if successful, False if an error occurred.
         """
-        # make a full path out of ``self.modname`` and ``self.objpath``
-        modname = self.modname.replace('.', os.sep)  # modname may have dots
-        fullpath = os.path.join(modname, *self.objpath)  # objpath is a list
-        # if directory, set dirname as parent
-        if os.path.isdir(fullpath):
-            parent = os.path.dirname(fullpath)
-            self.parent = MatModule(parent) if parent else None
-            self.object = MatModule(fullpath)
-            return true
-        # if file, tokenize
-        elif os.path.isfile(fullpath):
-            with open(fullpath, 'r') as fp:
-                code = fp.read()
-            tks = list(MatlabLexer().get_tokens(code))
-        # look for objpath in modname directory
-        else:
-            for root, dirs, files in os.walk(modname):
-                break
-        if k is Token.Keyword and v == 'function':
-            self.object = MatFunction(modname)
-        elif k is Token.Keyword and v == 'classdef':
-            self.object = MatClass(modname)
-
-
+        dbg = self.env.app.debug
+        if self.objpath:
+            dbg('[autodoc] from %s import %s',
+                self.modname, '.'.join(self.objpath))
+        try:
+            # make a full path out of ``self.modname`` and ``self.objpath``
+            modname = self.modname.replace('.', os.sep)  # modname may have dots
+            fullpath = os.path.join(modname, *self.objpath)  # objpath is a list
+            dbg('[autodoc] import %s', self.modname)
+            self.module = MatModule(modname)  # the folder
+            self.object = MatObject.matlabify(fullpath)
+            dbg('[autodoc] => %r', self.object)
+            self.object_name = os.path.basename(fullpath)
+            self.parent = MatObject.matlabify(os.path.dirname(fullpath))
+            if self.object:
+                return True
+            else:
+                return False
+        # this used to only catch SyntaxError, ImportError and AttributeError,
+        # but importing modules with side effects can raise all kinds of errors
+        except Exception:
+            if self.objpath:
+                errmsg = 'autodoc: failed to import %s %r from module %r' % \
+                         (self.objtype, '.'.join(self.objpath), self.modname)
+            else:
+                errmsg = 'autodoc: failed to import %s %r' % \
+                         (self.objtype, self.fullname)
+            errmsg += '; the following exception was raised:\n%s' % \
+                      traceback.format_exc()
+            dbg(errmsg)
+            self.directive.warn(errmsg)
+            self.env.note_reread()
+            return False
 
