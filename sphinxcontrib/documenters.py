@@ -83,13 +83,22 @@ class MatObject(object):
             code = f.read()
         tks = list(MatlabLexer().get_tokens(code))  # tokens
         tkn = 0  # token number
-        # skip comments
-        while tks[tkn][0] is Token.Commment: tkn += 1
+        # skip comments, whitespace, tabs and newlines at begenning of mfile
+        while tks[tkn][0] in [Token.Commment, Token.Text]:
+            # skip comments
+            if tks[tkn][0] is Token.Commment: tkn += 1
+            # skip whitespace, tabs and newlines
+            while tks[tkn][0] is Token.Text:
+                if tks[tkn][1] in [u' ', u'\n', u'\t']:
+                    tkn += 1
+                else:
+                    raise Exception('Unexpected Text "%s" found in %s.' %
+                                    (tks[tkn][1], name))
         if tks[tkn][0] is Token.Keyword:
             if tks[tkn][1] == 'function':
-                return MatFunction(name, path, tks)
+                return MatFunction(name, path, tks, tkn)
             elif tks[tkn][1] == 'classdef':
-                return MatClass(name, path, tks)
+                return MatClass(name, path, tks, tkn)
         else:
             # it's a script file
             return None
@@ -158,10 +167,23 @@ class MatModule(MatObject):
 
 
 class MatFunction(MatObject):
+    """
+    A MATLAB function.
+
+    :param name: Name of :class:`MatObject`.
+    :type name: str
+    :param path: Path of folder containing :class:`MatObject`.
+    :type path: str
+    :param tokens: List of tokens parsed from mfile by Pygments.
+    :type tokens: list
+    """
     def __init__(self, name, path, tokens):
         super(MatClass, self).__init__(name)
+        #: Path of folder containing :class:`MatObject`.
         self.path = path
+        #: List of tokens parsed from mfile by Pygments.
         self.tokens = tokens
+
     def getter(self, name, *defargs):
         return defargs
 
@@ -169,21 +191,48 @@ class MatFunction(MatObject):
 
 class MatClass(MatObject):
     """
-    A MATLAB
+    A MATLAB class definition.
 
     :param name: Name of :class:`MatObject`.
     :type name: str
     :param path: Path of folder containing :class:`MatObject`.
     :type path: str
+    :param tokens: List of tokens parsed from mfile by Pygments.
+    :type tokens: list
     """
     def __init__(self, name, path, tokens):
         super(MatClass, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
         self.path = path
+        #: List of tokens parsed from mfile by Pygments.
         self.tokens = list(tokens)
+        # get class decorators        
+        tkn = 0  # token counter
+        # find first keyword token
+        while self.tokens[tkn][0] is not Token.Keyword:
+            # skip comments at beginning of mfile
+            while self.tokens[tkn][0] is Token.Commment: tkn += 1
+            # skip whitespace, tabs and newlines at beginning of mfile 
+            while self.tokens[tkn][0] is Token.Text:
+                if self.tokens[tkn][1] in [u' ', u'\n', u'\t']:
+                    tkn += 1
+                else:
+                    raise Exception('Unexpected Text "%s" found in %s.' %
+                                    (self.tokens[tkn][1], self.name))
+        for k, v in self.tokens[tkn:]:
+            if self.tokens[tkn][0] is Token.Keyword:
+                if self.tokens[tkn][1] == 'properties':
+                    pass        
+
+
     def getter(self, name, *defargs):
-        for k, v in self.tokens:
-            pass
+        """
+        :class:`MatClass` ``getter`` method to get attributes.
+        """
+        if name in self.properties:
+            return self.properties[name]
+        else:
+            return defargs
 
 
 class MatProperty(MatObject):
