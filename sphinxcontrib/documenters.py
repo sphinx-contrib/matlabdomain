@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-    sphinx.ext.autodoc
-    ~~~~~~~~~~~~~~~~~~
+    matlabdomain.documenters
+    ~~~~~~~~~~~~~~~~~~~~~~~~
 
     Automatically insert docstrings for functions, classes or whole modules into
     the doctree, thus avoiding duplication between docstrings and documentation
@@ -48,22 +48,23 @@ from pygments.lexers import MatlabLexer
 from pygments.token import Token
 
 
-# create some Matlab objects
+# create some MATLAB objects
 # TODO: +packages & @class folders
 # TODO: subfunctions (not nested) and private folders/functions/classes
 # TODO: script files
 class MatObject(object):
     """
-    Base Matlab object to which all others are subclassed.
+    Base MATLAB object to which all others are subclassed.
 
-    :param name: Name of Matlab object.
+    :param name: Name of MATLAB object.
     :type name: str
     """
     def __init__(self, name):
-        #: name of Matlab object
+        #: name of MATLAB object
         self.name = name
+
     def __str__(self):
-        return "<%s: %s>" % (self.__class__.__name__, self.name)
+        return '<%s: "%s">' % (self.__class__.__name__, self.name)
 
     @staticmethod
     def parse_mfile(mfile, name, path):
@@ -98,14 +99,14 @@ class MatObject(object):
         """
         Makes a MatObject.
 
-        :param fullpath: Full path of object to matlabify.
+        :param fullpath: Full path of object to matlabify without file extension.
         :type fullpath: str
         """
         # separate path from file/folder name
-        name, path = os.path.split(fullpath)
+        path, name = os.path.split(fullpath)
         # folder trumps mfile with same name
         if os.path.isdir(fullpath):
-            return MatModule(name, path)  # treat folder as Matlab module
+            return MatModule(name, path)  # treat folder as MATLAB module
         elif os.path.isfile(fullpath + '.m'):
             mfile = fullpath + '.m'
             return MatObject.parse_mfile(mfile, name, path)
@@ -135,12 +136,14 @@ class MatObject(object):
 
 class MatModule(MatObject):
     """
-    There is no concept of a *module* in Matlab, so repurpose *module* to be
+    There is no concept of a *module* in MATLAB, so repurpose *module* to be
     a folder that acts like a namespace for any :class:`MatObjects` in that
     folder. Sphinx will treats objects without a namespace as builtins.
 
-    :param name: Name of Matlab object.
+    :param name: Name of :class:`MatObject`.
     :type name: str
+    :param path: Path of folder containing :class:`MatObject`.
+    :type path: str
     """
     def __init__(self, name, path=None):
         super(MatModule, self).__init__(name)
@@ -160,14 +163,23 @@ class MatFunction(MatObject):
         self.path = path
         self.tokens = tokens
     def getter(self, name, *defargs):
-        for k, v in self.tokens:
-            pass
+        return defargs
 
 
 
 class MatClass(MatObject):
+    """
+    A MATLAB
+
+    :param name: Name of :class:`MatObject`.
+    :type name: str
+    :param path: Path of folder containing :class:`MatObject`.
+    :type path: str
+    """
     def __init__(self, name, path, tokens):
         super(MatClass, self).__init__(name)
+        #: Path of folder containing :class:`MatObject`.
+        self.path = path
         self.tokens = list(tokens)
     def getter(self, name, *defargs):
         for k, v in self.tokens:
@@ -188,7 +200,7 @@ class MatStaticMethod(MatObject):
 
 class MatlabDocumenter(Documenter):
     """
-    Base class for documenters of Matlab objects.
+    Base class for documenters of MATLAB objects.
     """
     domain = 'matlab'
 
