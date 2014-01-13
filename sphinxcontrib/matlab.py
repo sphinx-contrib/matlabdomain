@@ -716,10 +716,10 @@ def setup(app):
     app.override_domain(StandardDomain)
     app.add_domain(MATLABDomain)
     # autodoc
-    # see coffeedomain as example
     app.add_autodocumenter(doc.ModuleDocumenter)
+    app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
     app.add_autodocumenter(doc.ClassDocumenter)
-    add_autodoc_attrgetter(MatClass, MatClass.getter)
+    app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
     app.add_autodocumenter(doc.FunctionDocumenter)
     app.add_autodocumenter(doc.MethodDocumenter)
     app.add_autodocumenter(doc.StaticMethodDocumenter)
