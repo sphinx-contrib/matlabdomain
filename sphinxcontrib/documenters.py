@@ -122,7 +122,7 @@ class MatObject(object):
             return MatObject.parse_mfile(mfile, name, path)
         # allow namespace to be anywhere on the path
         else:
-            for root, dirs, files in os.walk:
+            for root, dirs, files in os.walk(os.path.join('.', path)):
                 # don't visit vcs directories
                 for vcs in ['.git', '.hg', '.svn']:
                     if vcs in dirs:
@@ -170,8 +170,10 @@ class MatMixin(object):
         return (self.tokens[idx][0] is token[0] and
                 self.tokens[idx][1] == token[1])
     def _tk_ne(self, idx, token):
-        return (self.tokens[idx][0] is not token[0] and
+        return (self.tokens[idx][0] is not token[0] or
                 self.tokens[idx][1] != token[1])
+    def _eotk(self, idx):
+        return idx >= len(self.tokens)
 
 
 class MatFunction(MatObject):
@@ -217,7 +219,7 @@ class MatClass(MatMixin, MatObject):
         #: Path of folder containing :class:`MatObject`.
         self.path = path
         #: List of tokens parsed from mfile by Pygments.
-        self.tokens = list(tokens)
+        self.tokens = tokens
         #: dictionary of class attributes
         self.attrs = {}
         #: list of class superclasses
@@ -287,8 +289,9 @@ class MatClass(MatMixin, MatObject):
         # classname
         idx = MatObject.skip_whitespace(self.tokens, idx)
         if self._tk_ne(idx, (Token.Name, self.name)):
-            errmsg = 'Unexpected class name: "%s".' % self.tokens[idx][0]
+            errmsg = 'Unexpected class name: "%s".' % self.tokens[idx][1]
             raise Exception(errmsg)
+        idx += 1
         idx = MatObject.skip_whitespace(self.tokens, idx)
         # =====================================================================
         # super classes
@@ -298,13 +301,17 @@ class MatClass(MatMixin, MatObject):
             while self._tk_ne(idx, (Token.Text, '\n')):
                 idx = MatObject.skip_whitespace(self.tokens, idx)
                 # concatenate base name
-                base_mame = ''
-                while self._tk_ne(idx, (Token.Text, ' ')):
-                    base_mame += self.tokens[idx][1]
+                base_name = ''
+                while (self._tk_ne(idx, (Token.Text, ' ')) and
+                       self._tk_ne(idx, (Token.Text, '\n')) and
+                       self._tk_ne(idx, (Token.Text, '\t'))):
+                    base_name += self.tokens[idx][1]
                     idx += 1
-                idx += 1
-                if base_mame:
-                    self.bases.append(base_mame)
+                # if newline, don't increment index
+                if self._tk_ne(idx, (Token.Text, '\n')):
+                    idx += 1
+                if base_name:
+                    self.bases.append(base_name)
                 idx = MatObject.skip_whitespace(self.tokens, idx)
                 # continue to next super class separated by &
                 if self._tk_eq(idx, (Token.Operator, '&')):
@@ -312,12 +319,17 @@ class MatClass(MatMixin, MatObject):
             idx += 1
         # =====================================================================
         # docstring
-        while (self._tk_eq(idx, (Token.Text, '\n')) or
-               self._tk_eq(idx, (Token.Text, ' '))):
+        # skip newlines, tab and whitespace
+        while (not self._eotk(idx) and self.tokens[idx][0] is Token.Text and
+               self.tokens[idx][1] in [' ', '\n', '\t']):
             idx += 1
-        while self.tokens[idx][0] is Token.Comment:
+        # concatenate docstring
+        while not self._eotk(idx) and self.tokens[idx][0] is Token.Comment:
             self.docstring += self.tokens[idx][1]
             idx += 1
+            if self._tk_eq(idx, (Token.Text, '\n')):
+                self.docstring += self.tokens[idx][1]
+                idx += 1
 
 
     def getter(self, name, *defargs):
