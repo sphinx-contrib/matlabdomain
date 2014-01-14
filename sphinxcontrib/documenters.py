@@ -236,7 +236,7 @@ class MatClass(MatMixin, MatObject):
 # % docstring
         idx = MatObject.skip_whitespace(self.tokens, idx)
         # =====================================================================
-        # MATLAB class "attributes" starts with opening parenthesis
+        # class "attributes"
         if self._tk_eq(idx, (Token.Punctuation, '(')):
             idx += 1
             # closing parenthesis terminates attributes
@@ -284,7 +284,14 @@ class MatClass(MatMixin, MatObject):
                     if self._tk_eq(idx, (Token.Punctuation, ',')):
                         idx += 1
         # =====================================================================
-        # MATLAB super classes
+        # classname
+        idx = MatObject.skip_whitespace(self.tokens, idx)
+        if self._tk_ne(idx, (Token.Name, self.name)):
+            errmsg = 'Unexpected class name: "%s".' % self.tokens[idx][0]
+            raise Exception(errmsg)
+        idx = MatObject.skip_whitespace(self.tokens, idx)
+        # =====================================================================
+        # super classes
         if self._tk_eq(idx, (Token.Operator, '<')):
             idx += 1
             # newline terminates superclasses
@@ -305,9 +312,12 @@ class MatClass(MatMixin, MatObject):
             idx += 1
         # =====================================================================
         # docstring
-        idx = MatObject.skip_whitespace(self.tokens, idx)
-        if self.tokens[idx][0] is Token.Comment:
-            self.docstring = self.tokens[idx][1]
+        while (self._tk_eq(idx, (Token.Text, '\n')) or
+               self._tk_eq(idx, (Token.Text, ' '))):
+            idx += 1
+        while self.tokens[idx][0] is Token.Comment:
+            self.docstring += self.tokens[idx][1]
+            idx += 1
 
 
     def getter(self, name, *defargs):
