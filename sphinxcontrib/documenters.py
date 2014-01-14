@@ -82,26 +82,27 @@ class MatObject(object):
         with open(mfile, 'r') as f:
             code = f.read()
         tks = list(MatlabLexer().get_tokens(code))  # tokens
-        tkn = 0  # token number
-        # skip comments, whitespace, tabs and newlines at begenning of mfile
-        while tks[tkn][0] in [Token.Commment, Token.Text]:
-            # skip comments
-            if tks[tkn][0] is Token.Commment: tkn += 1
-            # skip whitespace, tabs and newlines
-            while tks[tkn][0] is Token.Text:
-                if tks[tkn][1] in [u' ', u'\n', u'\t']:
-                    tkn += 1
-                else:
-                    raise Exception('Unexpected Text "%s" found in %s.' %
-                                    (tks[tkn][1], name))
-        if tks[tkn][0] is Token.Keyword:
-            if tks[tkn][1] == 'function':
-                return MatFunction(name, path, tks, tkn)
-            elif tks[tkn][1] == 'classdef':
-                return MatClass(name, path, tks, tkn)
+        # assume that functions and classes always start with a keyword
+        if tks[0] == (Token.Keyword, 'function'):
+            return MatFunction(name, path, tks)
+        elif tks[0] == (Token.Keyword, 'classdef'):
+            return MatClass(name, path, tks)
         else:
             # it's a script file
             return None
+
+    @staticmethod
+    def skip_whitespace(token, idx):
+        """
+        Skips whitespace text tokens.
+
+        :param token: Token.
+        :type token: tuple
+        :param idx: Token index.
+        :type idx: int
+        """
+        while token[idx][0] is Token.Text and token[idx][1] == ' ': idx += 1
+        return idx
 
     @ staticmethod
     def matlabify(fullpath):
@@ -136,8 +137,6 @@ class MatObject(object):
                 elif name + '.m' in files:
                     mfile = os.path.join(root, name) + '.m'
                     return MatObject.parse_mfile(mfile, name, path)
-                else:
-                    continue
                 # keep walking tree
             # no matching folders or mfiles
         return None
@@ -166,6 +165,15 @@ class MatModule(MatObject):
             return defargs
 
 
+class MatMixin(object):
+    def _tk_eq(self, idx, token):
+        return (self.tokens[idx][0] is token[0] and
+                self.tokens[idx][1] == token[1])
+    def _tk_ne(self, idx, token):
+        return (self.tokens[idx][0] is not token[0] and
+                self.tokens[idx][1] != token[1])
+
+
 class MatFunction(MatObject):
     """
     A MATLAB function.
@@ -188,8 +196,7 @@ class MatFunction(MatObject):
         return defargs
 
 
-
-class MatClass(MatObject):
+class MatClass(MatMixin, MatObject):
     """
     A MATLAB class definition.
 
@@ -200,29 +207,107 @@ class MatClass(MatObject):
     :param tokens: List of tokens parsed from mfile by Pygments.
     :type tokens: list
     """
+    #: dictionary of MATLAB class "attributes"
+    # http://www.mathworks.com/help/matlab/matlab_oop/class-attributes.html
+    cls_attr_types = {'Abstract': bool, 'AllowedSubclasses': list,
+                      'ConstructOnLoad': bool, 'HandleCompatible': bool,
+                      'Hidden': bool, 'InferiorClasses': list, 'Sealed': bool}
     def __init__(self, name, path, tokens):
         super(MatClass, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
         self.path = path
         #: List of tokens parsed from mfile by Pygments.
         self.tokens = list(tokens)
-        # get class decorators        
-        tkn = 0  # token counter
-        # find first keyword token
-        while self.tokens[tkn][0] is not Token.Keyword:
-            # skip comments at beginning of mfile
-            while self.tokens[tkn][0] is Token.Commment: tkn += 1
-            # skip whitespace, tabs and newlines at beginning of mfile 
-            while self.tokens[tkn][0] is Token.Text:
-                if self.tokens[tkn][1] in [u' ', u'\n', u'\t']:
-                    tkn += 1
+        #: dictionary of class attributes
+        self.attrs = {}
+        #: list of class superclasses
+        self.bases = []
+        #: docstring
+        self.docstring = ''
+        #: dictionary of class properties
+        self.properties = {}
+        #: dictionary of class methods
+        self.methods = {}
+        # =====================================================================
+        # parse tokens
+        idx = 1  # token index, skip classdef keyword
+        # parse classdef signature
+# classdef [(Attributes [= true], Attributes [= {}}] ...)] name [< bases & ...]
+# % docstring
+        idx = MatObject.skip_whitespace(self.tokens, idx)
+        # =====================================================================
+        # MATLAB class "attributes" starts with opening parenthesis
+        if self._tk_eq(idx, (Token.Punctuation, '(')):
+            idx += 1
+            # closing parenthesis terminates attributes
+            while self._tk_ne(idx, (Token.Punctuation, ')')):
+                idx = MatObject.skip_whitespace(self.tokens, idx)
+                k, cls_attr = self.tokens[idx]  # split token key, value
+                if k is Token.Name and cls_attr in MatClass.cls_attr_types:
+                    self.attrs[cls_attr] = []  # add attibute to dictionary
+                    idx += 1
                 else:
-                    raise Exception('Unexpected Text "%s" found in %s.' %
-                                    (self.tokens[tkn][1], self.name))
-        for k, v in self.tokens[tkn:]:
-            if self.tokens[tkn][0] is Token.Keyword:
-                if self.tokens[tkn][1] == 'properties':
-                    pass        
+                    errmsg = 'Unexpected class attribute: "%s".' % cls_attr
+                    raise Exception(errmsg)
+                    # TODO: make matlab exception
+                idx = MatObject.skip_whitespace(self.tokens, idx)
+                # continue to next attribute separated by commas
+                if self._tk_eq(idx, (Token.Punctuation, ',')):
+                    idx += 1
+                    continue
+                # attribute values
+                elif self._tk_eq(idx, (Token.Punctuation, '=')):
+                    idx += 1
+                    idx = MatObject.skip_whitespace(self.tokens, idx)
+                    # logical value
+                    k, attr_val = self.tokens[idx]  # split token key, value
+                    if (k is Token.Name and attr_val in ['true', 'false']):
+                        self.attrs[cls_attr] = attr_val
+                        idx += 1
+                    # cell array of values
+                    elif self._tk_eq(idx, (Token.Punctuation, '{')):
+                        idx += 1
+                        while self._tk_ne(idx, (Token.Punctuation, '}')):
+                            idx = MatObject.skip_whitespace(self.tokens, idx)
+                            # concatenate attr value string
+                            attr_val = ''
+                            while (self._tk_ne(idx, (Token.Text, ' ')) and
+                                   self._tk_ne(idx, (Token.Punctuation, ','))):
+                                attr_val += self.tokens[idx][1]
+                                idx += 1
+                            idx += 1
+                            if attr_val:
+                                self.attrs[cls_attr].append(attr_val)
+                        idx += 1
+                    idx = MatObject.skip_whitespace(self.tokens, idx)
+                    # continue to next attribute separated by commas
+                    if self._tk_eq(idx, (Token.Punctuation, ',')):
+                        idx += 1
+        # =====================================================================
+        # MATLAB super classes
+        if self._tk_eq(idx, (Token.Operator, '<')):
+            idx += 1
+            # newline terminates superclasses
+            while self._tk_ne(idx, (Token.Text, '\n')):
+                idx = MatObject.skip_whitespace(self.tokens, idx)
+                # concatenate base name
+                base_mame = ''
+                while self._tk_ne(idx, (Token.Text, ' ')):
+                    base_mame += self.tokens[idx][1]
+                    idx += 1
+                idx += 1
+                if base_mame:
+                    self.bases.append(base_mame)
+                idx = MatObject.skip_whitespace(self.tokens, idx)
+                # continue to next super class separated by &
+                if self._tk_eq(idx, (Token.Operator, '&')):
+                    idx += 1
+            idx += 1
+        # =====================================================================
+        # docstring
+        idx = MatObject.skip_whitespace(self.tokens, idx)
+        if self.tokens[idx][0] is Token.Comment:
+            self.docstring = self.tokens[idx][1]
 
 
     def getter(self, name, *defargs):
@@ -293,3 +378,31 @@ class MatlabDocumenter(Documenter):
             self.env.note_reread()
             return False
 
+
+# snippets
+# # skip comments, whitespace, tabs and newlines at begenning of mfile
+# tkn = 0  # token index
+# while tks[tkn][0] in [Token.Commment, Token.Text]:
+#     # skip comments
+#     if tks[tkn][0] is Token.Commment: tkn += 1
+#     # skip whitespace, tabs and newlines
+#     while tks[tkn][0] is Token.Text:
+#         if tks[tkn][1] in [u' ', u'\n', u'\t']:
+#             tkn += 1
+#         else:
+#             raise Exception('Unexpected Text "%s" found in %s.' %
+#                             (tks[tkn][1], name))
+#
+# # get class decorators        
+# tkn = 0  # token counter
+# # find first keyword token
+# while self.tokens[tkn][0] is not Token.Keyword:
+#     # skip comments at beginning of mfile
+#     while self.tokens[tkn][0] is Token.Commment: tkn += 1
+#     # skip whitespace, tabs and newlines at beginning of mfile 
+#     while self.tokens[tkn][0] is Token.Text:
+#         if self.tokens[tkn][1] in [u' ', u'\n', u'\t']:
+#             tkn += 1
+#         else:
+#             raise Exception('Unexpected Text "%s" found in %s.' %
+#                             (self.tokens[tkn][1], self.name))
