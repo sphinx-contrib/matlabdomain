@@ -1,3 +1,5 @@
 classdef MyHandleClass < handle
-% a handle class
-% :param x: a variable
+    % a handle class
+    % :param x: a variable
+
+end

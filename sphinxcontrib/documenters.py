@@ -58,6 +58,14 @@ class MatObject(object):
 
     :param name: Name of MATLAB object.
     :type name: str
+
+    MATLAB objects can be :class:`MatModule`, :class:`MatFunction` or
+    :class:`MatClass`. :class:`MatModule` are just folders that define a psuedo
+    namespace for :class:`MatFunction` and :class:`MatClass` on that path.
+    :class:`MatFunction` and :class:`MatClass` must begin with either
+    ``function`` or ``classdef`` keywords. A :class:`MatObject` can be anywhere
+    on the path of the :class:`MatModule`; it does not need to be in the
+    top-level of the :class:`MatModule`.
     """
     def __init__(self, name):
         #: name of MATLAB object
@@ -90,19 +98,6 @@ class MatObject(object):
         else:
             # it's a script file
             return None
-
-    @staticmethod
-    def skip_whitespace(token, idx):
-        """
-        Skips whitespace text tokens.
-
-        :param token: Token.
-        :type token: tuple
-        :param idx: Token index.
-        :type idx: int
-        """
-        while token[idx][0] is Token.Text and token[idx][1] == ' ': idx += 1
-        return idx
 
     @ staticmethod
     def matlabify(fullpath):
@@ -166,14 +161,77 @@ class MatModule(MatObject):
 
 
 class MatMixin(object):
+    """
+    Methods to comparing and manipulating tokens in :class:`MatFunction` and
+    :class:`MatClass`.
+    """
     def _tk_eq(self, idx, token):
+        """
+        Returns ``True`` if token keys are the same and values are equal.
+
+        :param idx: Index of token in :class:`MatObject`.
+        :type idx: int
+        :param token: Comparison token.
+        :type token: tuple
+        """
         return (self.tokens[idx][0] is token[0] and
                 self.tokens[idx][1] == token[1])
     def _tk_ne(self, idx, token):
+        """
+        Returns ``True`` if token keys are not the same or values are not equal.
+
+        :param idx: Index of token in :class:`MatObject`.
+        :type idx: int
+        :param token: Comparison token.
+        :type token: tuple
+        """
         return (self.tokens[idx][0] is not token[0] or
                 self.tokens[idx][1] != token[1])
     def _eotk(self, idx):
+        """
+        Returns ``True`` if end of tokens is reached.
+        """
         return idx >= len(self.tokens)
+
+    def _blanks(self, idx):
+        """
+        Returns number of blank text tokens.
+
+        :param idx: Token index.
+        :type idx: int
+        """
+        idx0 = idx  # original index
+        while self._tk_eq(idx, (Token.Text, ' ')): idx += 1
+        return idx - idx0  # blanks
+
+    def _whitespace(self, idx):
+        """
+        Returns number of whitespaces text tokens, including blanks, newline
+        and tabs.
+
+        :param idx: Token index.
+        :type idx: int
+        """
+        idx0 = idx  # original index
+        while (self.tokens[idx][0] is Token.Text and
+               self.tokens[idx][1] in [' ', '\n', '\t']):
+            idx += 1
+        return idx - idx0  # whitespace
+
+    def _indent(self, idx):
+        """
+        Returns indentation tabs or spaces. No indentation is zero.
+
+        :param idx: Token index.
+        :type idx: int
+        """
+        idx0 = idx  # original index
+        while (self.tokens[idx][0] is Token.Text and
+               self.tokens[idx][1] in [' ', '\t']):
+            idx += 1
+        return idx - idx0  # indentation
+
+
 
 
 class MatFunction(MatObject):
@@ -214,6 +272,10 @@ class MatClass(MatMixin, MatObject):
     cls_attr_types = {'Abstract': bool, 'AllowedSubclasses': list,
                       'ConstructOnLoad': bool, 'HandleCompatible': bool,
                       'Hidden': bool, 'InferiorClasses': list, 'Sealed': bool}
+    prop_attr_types = {'AbortSet': bool, 'Abstract': bool, 'Access': list,
+                       'Constant': bool, 'Dependent': bool, 'GetAccess': list,
+                       'GetObservable': bool, 'Hidden': bool, 'SetAccess': list,
+                       'SetObservable': bool, 'Transient': bool}
     def __init__(self, name, path, tokens):
         super(MatClass, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
@@ -232,18 +294,23 @@ class MatClass(MatMixin, MatObject):
         self.methods = {}
         # =====================================================================
         # parse tokens
-        idx = 1  # token index, skip classdef keyword
+        # TODO: use generator and next() instead of stepping index!
+        idx = 0  # token index
+        # chekc classdef keyword
+        if self._tk_ne(idx, (Token.Keyword, 'classdef')):
+            raise TypeError('Object is not a class. Expected a class.')
+        idx += 1
         # parse classdef signature
 # classdef [(Attributes [= true], Attributes [= {}}] ...)] name [< bases & ...]
 # % docstring
-        idx = MatObject.skip_whitespace(self.tokens, idx)
+        idx += self._blanks(idx)  # skip blanks
         # =====================================================================
         # class "attributes"
         if self._tk_eq(idx, (Token.Punctuation, '(')):
             idx += 1
             # closing parenthesis terminates attributes
             while self._tk_ne(idx, (Token.Punctuation, ')')):
-                idx = MatObject.skip_whitespace(self.tokens, idx)
+                idx += self._blanks(idx)  # skip blanks
                 k, cls_attr = self.tokens[idx]  # split token key, value
                 if k is Token.Name and cls_attr in MatClass.cls_attr_types:
                     self.attrs[cls_attr] = []  # add attibute to dictionary
@@ -252,7 +319,7 @@ class MatClass(MatMixin, MatObject):
                     errmsg = 'Unexpected class attribute: "%s".' % cls_attr
                     raise Exception(errmsg)
                     # TODO: make matlab exception
-                idx = MatObject.skip_whitespace(self.tokens, idx)
+                idx += self._blanks(idx)  # skip blanks
                 # continue to next attribute separated by commas
                 if self._tk_eq(idx, (Token.Punctuation, ',')):
                     idx += 1
@@ -260,7 +327,7 @@ class MatClass(MatMixin, MatObject):
                 # attribute values
                 elif self._tk_eq(idx, (Token.Punctuation, '=')):
                     idx += 1
-                    idx = MatObject.skip_whitespace(self.tokens, idx)
+                    idx += self._blanks(idx)  # skip blanks
                     # logical value
                     k, attr_val = self.tokens[idx]  # split token key, value
                     if (k is Token.Name and attr_val in ['true', 'false']):
@@ -270,7 +337,7 @@ class MatClass(MatMixin, MatObject):
                     elif self._tk_eq(idx, (Token.Punctuation, '{')):
                         idx += 1
                         while self._tk_ne(idx, (Token.Punctuation, '}')):
-                            idx = MatObject.skip_whitespace(self.tokens, idx)
+                            idx += self._blanks(idx)  # skip blanks
                             # concatenate attr value string
                             attr_val = ''
                             while (self._tk_ne(idx, (Token.Text, ' ')) and
@@ -281,30 +348,29 @@ class MatClass(MatMixin, MatObject):
                             if attr_val:
                                 self.attrs[cls_attr].append(attr_val)
                         idx += 1
-                    idx = MatObject.skip_whitespace(self.tokens, idx)
+                    idx += self._blanks(idx)  # skip blanks
                     # continue to next attribute separated by commas
                     if self._tk_eq(idx, (Token.Punctuation, ',')):
                         idx += 1
+            idx += 1  # end of class attributes
         # =====================================================================
         # classname
-        idx = MatObject.skip_whitespace(self.tokens, idx)
+        idx += self._blanks(idx)  # skip blanks
         if self._tk_ne(idx, (Token.Name, self.name)):
             errmsg = 'Unexpected class name: "%s".' % self.tokens[idx][1]
             raise Exception(errmsg)
         idx += 1
-        idx = MatObject.skip_whitespace(self.tokens, idx)
+        idx += self._blanks(idx)  # skip blanks
         # =====================================================================
         # super classes
         if self._tk_eq(idx, (Token.Operator, '<')):
             idx += 1
             # newline terminates superclasses
             while self._tk_ne(idx, (Token.Text, '\n')):
-                idx = MatObject.skip_whitespace(self.tokens, idx)
+                idx += self._blanks(idx)  # skip blanks
                 # concatenate base name
                 base_name = ''
-                while (self._tk_ne(idx, (Token.Text, ' ')) and
-                       self._tk_ne(idx, (Token.Text, '\n')) and
-                       self._tk_ne(idx, (Token.Text, '\t'))):
+                while not self._whitespace(idx):
                     base_name += self.tokens[idx][1]
                     idx += 1
                 # if newline, don't increment index
@@ -312,24 +378,50 @@ class MatClass(MatMixin, MatObject):
                     idx += 1
                 if base_name:
                     self.bases.append(base_name)
-                idx = MatObject.skip_whitespace(self.tokens, idx)
+                idx += self._blanks(idx)  # skip blanks
                 # continue to next super class separated by &
                 if self._tk_eq(idx, (Token.Operator, '&')):
                     idx += 1
-            idx += 1
+            idx += 1  # end of super classes
+        # newline terminates classdef signature
+        elif self._tk_eq(idx, (Token.Text, '\n')):
+            idx += 1  # end of classdef signature
         # =====================================================================
         # docstring
-        # skip newlines, tab and whitespace
-        while (not self._eotk(idx) and self.tokens[idx][0] is Token.Text and
-               self.tokens[idx][1] in [' ', '\n', '\t']):
-            idx += 1
-        # concatenate docstring
-        while not self._eotk(idx) and self.tokens[idx][0] is Token.Comment:
-            self.docstring += self.tokens[idx][1]
-            idx += 1
-            if self._tk_eq(idx, (Token.Text, '\n')):
+        # Must be immediately after class and indented
+        indent = self._indent(idx)  # calculation indentation
+        if indent:
+            idx += indent
+            # concatenate docstring
+            while self.tokens[idx][0] is Token.Comment:
                 self.docstring += self.tokens[idx][1]
                 idx += 1
+                # append newline to docstring
+                if self._tk_eq(idx, (Token.Text, '\n')):
+                    self.docstring += self.tokens[idx][1]
+                    idx += 1
+                # skip tab
+                indent = self._indent(idx)  # calculation indentation
+                if indent:
+                    idx += indent
+        # =====================================================================
+        # # properties & methods blocks
+        # # skip comments, newlines, tab and whitespace
+        # while ((self.tokens[idx][0] is Token.Text and
+        #        self.tokens[idx][1] in [' ', '\n', '\t']) or
+        #        self.tokens[idx][0] is Token.Comment):
+        #     idx += 1
+        # # find properties & methods blocks
+        # if (self.tokens[idx][0] is Token.Keyword and
+        #     self.tokens[idx][1] in ['properties', 'methods']):
+        #     idx += 1
+        # # skip newlines, tab and whitespace
+        # while (self.tokens[idx][0] is Token.Text and
+        #        self.tokens[idx][1] in [' ', '\n', '\t']):
+        #     idx += 1
+        # # Token.Keyword: "end" terminates properties & methods block
+        # while self._tk_ne(idx, (Token.Keyword, 'end')):
+            
 
 
     def getter(self, name, *defargs):
@@ -400,31 +492,3 @@ class MatlabDocumenter(Documenter):
             self.env.note_reread()
             return False
 
-
-# snippets
-# # skip comments, whitespace, tabs and newlines at begenning of mfile
-# tkn = 0  # token index
-# while tks[tkn][0] in [Token.Commment, Token.Text]:
-#     # skip comments
-#     if tks[tkn][0] is Token.Commment: tkn += 1
-#     # skip whitespace, tabs and newlines
-#     while tks[tkn][0] is Token.Text:
-#         if tks[tkn][1] in [u' ', u'\n', u'\t']:
-#             tkn += 1
-#         else:
-#             raise Exception('Unexpected Text "%s" found in %s.' %
-#                             (tks[tkn][1], name))
-#
-# # get class decorators        
-# tkn = 0  # token counter
-# # find first keyword token
-# while self.tokens[tkn][0] is not Token.Keyword:
-#     # skip comments at beginning of mfile
-#     while self.tokens[tkn][0] is Token.Commment: tkn += 1
-#     # skip whitespace, tabs and newlines at beginning of mfile 
-#     while self.tokens[tkn][0] is Token.Text:
-#         if self.tokens[tkn][1] in [u' ', u'\n', u'\t']:
-#             tkn += 1
-#         else:
-#             raise Exception('Unexpected Text "%s" found in %s.' %
-#                             (self.tokens[tkn][1], self.name))
