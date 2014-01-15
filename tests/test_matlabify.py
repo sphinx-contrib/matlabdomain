@@ -18,14 +18,16 @@ def test_matlabify_class():
     ok_(isinstance(my_cls, doc.MatClass))
     eq_(my_cls.name, 'MyHandleClass')
     eq_(my_cls.path, '.\\tests\\test_data')
-    eq_(my_cls.bases, ['handle'])
+    eq_(my_cls.bases, ['handle', 'my.super.Class'])
+    eq_(my_cls.properties, {'x': {'attrs': {}, 'default': None,
+                                  'docstring': '% a property'}})
     eq_(my_cls.docstring, '% a handle class\n% :param x: a variable\n')
     # test cls attr
     my_abc = m.getter('MyAbstractClass')
     ok_(isinstance(my_abc, doc.MatClass))
     eq_(my_abc.name, 'MyAbstractClass')
     eq_(my_abc.path, '.\\tests\\test_data')
-    eq_(my_abc.attrs, {'Abstract': 'true'})
+    eq_(my_abc.attrs, {'Abstract': True, 'Sealed': True})
     eq_(my_abc.docstring,
         '% an abstract class with tabs\n% :param y: a variable\n% :type y: double\n')
     return m, my_cls, my_abc
@@ -33,10 +35,17 @@ def test_matlabify_class():
 
 if __name__ == '__main__':
     m, my_cls, my_abc = test_matlabify_class()
+
     print '\nmodule: %s\n' % m
+   
     print 'class: %s' % my_cls
     print 'bases: %s' % my_cls.bases
+    print 'class attributes: %s' % my_cls.attrs
+    print 'properties:\n%s' % my_cls.properties
     print 'docstring:\n%s\n' % my_cls.docstring
+   
     print 'class: %s' % my_abc
+    print 'bases: %s' % my_abc.bases
     print 'class attributes: %s' % my_abc.attrs
+    print 'properties:\n%s' % my_abc.properties
     print 'docstring:\n%s\n' % my_abc.docstring

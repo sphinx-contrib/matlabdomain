@@ -151,7 +151,11 @@ class MatModule(MatObject):
     def __init__(self, name, path=None):
         super(MatModule, self).__init__(name)
         self.path = path
+
     def getter(self, name, *defargs):
+        """
+        :class:`MatModule` ``getter`` method to get attributes.
+        """
         fullpath = os.path.join(self.path, self.name, name)
         attr = MatObject.matlabify(fullpath)
         if attr:
@@ -200,9 +204,10 @@ class MatMixin(object):
         :param idx: Token index.
         :type idx: int
         """
-        idx0 = idx  # original index
-        while self._tk_eq(idx, (Token.Text, ' ')): idx += 1
-        return idx - idx0  # blanks
+        # idx0 = idx  # original index
+        # while self._tk_eq(idx, (Token.Text, ' ')): idx += 1
+        # return idx - idx0  # blanks
+        return self._indent(idx)
 
     def _whitespace(self, idx):
         """
@@ -300,59 +305,14 @@ class MatClass(MatMixin, MatObject):
         if self._tk_ne(idx, (Token.Keyword, 'classdef')):
             raise TypeError('Object is not a class. Expected a class.')
         idx += 1
+        # TODO: allow continuation dots "..." in signature
         # parse classdef signature
-# classdef [(Attributes [= true], Attributes [= {}}] ...)] name [< bases & ...]
-# % docstring
-        idx += self._blanks(idx)  # skip blanks
+        # classdef [(Attributes [= true], Attributes [= {}] ...)] name ...
+        #   [< bases & ...]
+        # % docstring
         # =====================================================================
         # class "attributes"
-        if self._tk_eq(idx, (Token.Punctuation, '(')):
-            idx += 1
-            # closing parenthesis terminates attributes
-            while self._tk_ne(idx, (Token.Punctuation, ')')):
-                idx += self._blanks(idx)  # skip blanks
-                k, cls_attr = self.tokens[idx]  # split token key, value
-                if k is Token.Name and cls_attr in MatClass.cls_attr_types:
-                    self.attrs[cls_attr] = []  # add attibute to dictionary
-                    idx += 1
-                else:
-                    errmsg = 'Unexpected class attribute: "%s".' % cls_attr
-                    raise Exception(errmsg)
-                    # TODO: make matlab exception
-                idx += self._blanks(idx)  # skip blanks
-                # continue to next attribute separated by commas
-                if self._tk_eq(idx, (Token.Punctuation, ',')):
-                    idx += 1
-                    continue
-                # attribute values
-                elif self._tk_eq(idx, (Token.Punctuation, '=')):
-                    idx += 1
-                    idx += self._blanks(idx)  # skip blanks
-                    # logical value
-                    k, attr_val = self.tokens[idx]  # split token key, value
-                    if (k is Token.Name and attr_val in ['true', 'false']):
-                        self.attrs[cls_attr] = attr_val
-                        idx += 1
-                    # cell array of values
-                    elif self._tk_eq(idx, (Token.Punctuation, '{')):
-                        idx += 1
-                        while self._tk_ne(idx, (Token.Punctuation, '}')):
-                            idx += self._blanks(idx)  # skip blanks
-                            # concatenate attr value string
-                            attr_val = ''
-                            while (self._tk_ne(idx, (Token.Text, ' ')) and
-                                   self._tk_ne(idx, (Token.Punctuation, ','))):
-                                attr_val += self.tokens[idx][1]
-                                idx += 1
-                            idx += 1
-                            if attr_val:
-                                self.attrs[cls_attr].append(attr_val)
-                        idx += 1
-                    idx += self._blanks(idx)  # skip blanks
-                    # continue to next attribute separated by commas
-                    if self._tk_eq(idx, (Token.Punctuation, ',')):
-                        idx += 1
-            idx += 1  # end of class attributes
+        self.attrs, idx = self.attributes(idx, MatClass.cls_attr_types)
         # =====================================================================
         # classname
         idx += self._blanks(idx)  # skip blanks
@@ -404,42 +364,164 @@ class MatClass(MatMixin, MatObject):
                 indent = self._indent(idx)  # calculation indentation
                 if indent:
                     idx += indent
+        elif self.tokens[idx][0] is Token.Comment:
+            raise Exception('Comments must be indented.')
+            # TODO: add to matlab domain exceptions
         # =====================================================================
-        # # properties & methods blocks
-        # # skip comments, newlines, tab and whitespace
-        # while ((self.tokens[idx][0] is Token.Text and
-        #        self.tokens[idx][1] in [' ', '\n', '\t']) or
-        #        self.tokens[idx][0] is Token.Comment):
-        #     idx += 1
-        # # find properties & methods blocks
-        # if (self.tokens[idx][0] is Token.Keyword and
-        #     self.tokens[idx][1] in ['properties', 'methods']):
-        #     idx += 1
-        # # skip newlines, tab and whitespace
-        # while (self.tokens[idx][0] is Token.Text and
-        #        self.tokens[idx][1] in [' ', '\n', '\t']):
-        #     idx += 1
-        # # Token.Keyword: "end" terminates properties & methods block
-        # while self._tk_ne(idx, (Token.Keyword, 'end')):
-            
+        # properties & methods blocks
+        # loop over code body searching for blocks until end of 
+        while self._tk_ne(idx, (Token.Keyword, 'end')):
+            # skip comments and whitespace
+            while (self._whitespace(idx) or
+                   self.tokens[idx][0] is Token.Comment):
+                whitespace = self._whitespace(idx)
+                if whitespace:
+                    idx += whitespace
+                else:
+                    idx += 1
+            # =================================================================
+            # properties blocks
+            if self._tk_eq(idx, (Token.Keyword, 'properties')):
+                idx += 1
+                # property "attributes"
+                attr_dict, idx = self.attributes(idx, MatClass.prop_attr_types)
+                # Token.Keyword: "end" terminates properties & methods block
+                while self._tk_ne(idx, (Token.Keyword, 'end')):
+                    # skip comments and whitespace
+                    while (self._whitespace(idx) or
+                           self.tokens[idx][0] is Token.Comment):
+                        whitespace = self._whitespace(idx)
+                        if whitespace:
+                            idx += whitespace
+                        else:
+                            idx += 1
+                    # TODO: alternate multiline docstring before property
+                    # trumps docstring after property
+                    if self.tokens[idx][0] is Token.Name:
+                        prop_name = self.tokens[idx][1]
+                        self.properties[prop_name] = {'attrs': attr_dict}
+                        idx += 1
+                    else:
+                        raise TypeError('Expected property.')
+                    idx += self._blanks(idx)  # skip blanks
+                    # defaults
+                    default = {'default': None}
+                    if self._tk_eq(idx, (Token.Punctuation, '=')):
+                        idx += 1
+                        idx += self._blanks(idx)  # skip blanks
+                        # concatenate default value until newline or comment
+                        default = ''
+                        while (self._tk_ne(idx, (Token.Text, '\n')) and
+                               self.tokens[idx][0] is not Token.Comment):
+                            default += self.tokens[idx][1]
+                            idx += 1
+                        if self.tokens[idx][0] is not Token.Comment:
+                            idx += 1
+                        if default:
+                            default = {'default': default.rstrip()}
+                    self.properties[prop_name].update(default)
+                    docstring = {'docstring': None}
+                    if self.tokens[idx][0] is Token.Comment:
+                        docstring['docstring'] = self.tokens[idx][1]
+                        idx += 1
+                    self.properties[prop_name].update(docstring)
+                    idx += self._whitespace(idx)
+                idx += 1
 
+    def attributes(self, idx, attr_types):
+        """
+        Retrieve MATLAB class, property and method attributes.
+        """
+        attr_dict = {}
+        idx += self._blanks(idx)  # skip blanks
+        # class, property & method "attributes" start with parenthesis
+        if self._tk_eq(idx, (Token.Punctuation, '(')):
+            idx += 1
+            # closing parenthesis terminates attributes
+            while self._tk_ne(idx, (Token.Punctuation, ')')):
+                idx += self._blanks(idx)  # skip blanks
+
+                k, attr_name = self.tokens[idx]  # split token key, value
+                if k is Token.Name and attr_name in attr_types:
+                    attr_dict[attr_name] = True  # add attibute to dictionary
+                    idx += 1
+                else:
+                    errmsg = 'Unexpected attribute: "%s".' % attr_name
+                    raise Exception(errmsg)
+                    # TODO: make matlab exception
+                idx += self._blanks(idx)  # skip blanks
+                # continue to next attribute separated by commas
+                if self._tk_eq(idx, (Token.Punctuation, ',')):
+                    idx += 1
+                    continue
+                # attribute values
+                elif self._tk_eq(idx, (Token.Punctuation, '=')):
+                    idx += 1
+                    idx += self._blanks(idx)  # skip blanks
+                    # logical value
+                    k, attr_val = self.tokens[idx]  # split token key, value
+                    if (k is Token.Name and attr_val in ['true', 'false']):
+                        if attr_val == 'false':
+                            attr_dict[attr_name] = False
+                        idx += 1
+                    elif k is Token.Name or self._tk_eq(idx, (Token.Text, '?')):
+                        # concatenate enumeration or meta class
+                        enum_or_meta = self.tokens[idx][1]
+                        idx += 1
+                        while (self._tk_ne(idx, (Token.Text, ' ')) and
+                               self._tk_ne(idx, (Token.Text, '\t')) and
+                               self._tk_ne(idx, (Token.Punctuation, ',')) and
+                               self._tk_ne(idx, (Token.Punctuation, ')'))):
+                            enum_or_meta += self.tokens[idx][1]
+                            idx += 1
+                        if self._tk_ne(idx, (Token.Punctuation, ')')):
+                            idx += 1
+                        attr_dict[attr_name] = enum_or_meta
+                    # cell array of values
+                    elif self._tk_eq(idx, (Token.Punctuation, '{')):
+                        idx += 1
+                        # closing curly braces terminate cell array
+                        while self._tk_ne(idx, (Token.Punctuation, '}')):
+                            idx += self._blanks(idx)  # skip blanks
+                            # concatenate attr value string
+                            attr_val = ''
+                            # TODO: use _blanks or _indent instead
+                            while (self._tk_ne(idx, (Token.Text, ' ')) and
+                                   self._tk_ne(idx, (Token.Text, '\t')) and
+                                   self._tk_ne(idx, (Token.Punctuation, ','))):
+                                attr_val += self.tokens[idx][1]
+                                idx += 1
+                            idx += 1
+                            if attr_val:
+                                attr_dict[attr_name].append(attr_val)
+                        idx += 1
+                    idx += self._blanks(idx)  # skip blanks
+                    # continue to next attribute separated by commas
+                    if self._tk_eq(idx, (Token.Punctuation, ',')):
+                        idx += 1
+            idx += 1  # end of class attributes
+        return attr_dict, idx
 
     def getter(self, name, *defargs):
         """
         :class:`MatClass` ``getter`` method to get attributes.
         """
         if name in self.properties:
-            return self.properties[name]
+            return MatProperty(name, self.properties[name])
         else:
             return defargs
 
 
 class MatProperty(MatObject):
-    pass
+    def __init__(self, name, attrs):
+        super(MatProperty, self).__init__(name)
+        self.attrs = attrs
 
 
-class MatMethod(MatObject):
-    pass
+class MatMethod(MatFunction):
+    def __init__(self, name, tks, attrs):
+        super(MatMethod, self).__init__(name)
+        self.attrs = attrs
 
 
 class MatStaticMethod(MatObject):
