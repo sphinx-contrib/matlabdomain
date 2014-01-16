@@ -23,7 +23,7 @@ from docutils.statemachine import ViewList
 
 from sphinx.util import rpartition, force_decode
 from sphinx.locale import _
-from sphinx.pycode import ModuleAnalyzer, PycodeError
+# from sphinx.pycode import ModuleAnalyzer as PyModuleAnalyzer, PycodeError
 from sphinx.application import ExtensionError
 from sphinx.util.nodes import nested_parse_with_titles
 from sphinx.util.compat import Directive
@@ -39,7 +39,8 @@ from sphinx.ext.autodoc import Documenter, members_option, bool_option, \
     ClassLevelDocumenter as PyClassLevelDocumenter, \
     DocstringSignatureMixin as PyDocstringSignatureMixin, \
     FunctionDocumenter as PyFunctionDocumenter, \
-    ClassDocumenter as PyClassDocumenter
+    ClassDocumenter as PyClassDocumenter, \
+    MethodDocumenter as PyMethodDocumenter
 import os
 import json
 import re
@@ -47,6 +48,20 @@ import re
 from pygments.lexers import MatlabLexer
 from pygments.token import Token
 
+# =============================================================================
+# XXX: :meth:`getter` methods must return a single object **not** a tuple in
+# order for :meth:`sphinx.ext.autodoc.Documenter.get_real_modname()` to work,
+# since it only passes ``None`` as its ``defarg`` which if returned from
+# :meth:`getter` as ``defarg`` becomes ``(None, )``. ``None`` is the correct
+# return, which due to boolean implication becomes False, so the second
+# condition of the or statement, ``self.modname`` is returned instead. This is
+# important because this is called in
+# :meth:`sphinx.ext.autodoc.Documenter.generate()` and passed to the
+# :class:`sphinx.pycode.ModuleAnalyzer` which in turn calls
+# :func:`sphinx.util.get_module_source()` which tries to import it, which
+# luckily works because hopefully it's already been imported as a
+# :class:`MatObject`.
+# =============================================================================
 
 # create some MATLAB objects
 # TODO: +packages & @class folders
@@ -73,6 +88,12 @@ class MatObject(object):
 
     def __str__(self):
         return '<%s: "%s">' % (self.__class__.__name__, self.name)
+
+    def getter(self, attr, *defargs):
+        if len(defargs) == 1:
+            return defargs[0]
+        else:
+            return defargs
 
     @staticmethod
     def parse_mfile(mfile, name, path):
@@ -161,7 +182,7 @@ class MatModule(MatObject):
         if attr:
             return attr
         else:
-            return defargs
+            super(MatModule, self).getter(attr, *defargs)
 
 
 class MatMixin(object):
@@ -258,7 +279,7 @@ class MatFunction(MatObject):
         self.tokens = tokens
 
     def getter(self, name, *defargs):
-        return defargs
+        super(MatModule, self).getter(attr, *defargs)
 
 
 class MatClass(MatMixin, MatObject):
@@ -507,15 +528,18 @@ class MatClass(MatMixin, MatObject):
         :class:`MatClass` ``getter`` method to get attributes.
         """
         if name in self.properties:
-            return MatProperty(name, self.properties[name])
+            return MatProperty(name, self.__class__, self.properties[name])
         else:
-            return defargs
+            super(MatModule, self).getter(attr, *defargs)
 
 
 class MatProperty(MatObject):
-    def __init__(self, name, attrs):
+    def __init__(self, name, cls, attrs):
         super(MatProperty, self).__init__(name)
-        self.attrs = attrs
+        self.cls = cls
+        self.attrs = attrs['attrs']
+        self.default = attrs['default']
+        self.docstring = attrs['docstring']
 
 
 class MatMethod(MatFunction):
@@ -532,7 +556,11 @@ class MatlabDocumenter(Documenter):
     """
     Base class for documenters of MATLAB objects.
     """
-    domain = 'matlab'
+    domain = 'mat'
+
+    def __init__(self, directive, name, indent=u''):
+        super(MatlabDocumenter, self).__init__(directive, name, indent=u'')
+        print 
 
     def import_object(self):
         """Import the object given by *self.modname* and *self.objpath* and set
@@ -545,9 +573,10 @@ class MatlabDocumenter(Documenter):
             dbg('[autodoc] from %s import %s',
                 self.modname, '.'.join(self.objpath))
         try:
+            basedir = self.env.config.matlab_src_dir
             # make a full path out of ``self.modname`` and ``self.objpath``
             modname = self.modname.replace('.', os.sep)  # modname may have dots
-            fullpath = os.path.join(modname, *self.objpath)  # objpath is a list
+            fullpath = os.path.join(basedir, modname, *self.objpath)  # objpath is a list
             dbg('[autodoc] import %s', self.modname)
             self.module = MatModule(modname)  # the folder
             self.object = MatObject.matlabify(fullpath)
@@ -574,3 +603,17 @@ class MatlabDocumenter(Documenter):
             self.env.note_reread()
             return False
 
+    # def generate(self, more_content=None, real_modname=None,
+    #              check_module=False, all_members=False):
+    #     ModuleAnalyzer = MatModuleAnalyzer
+    #     super(MatlabDocumenter, self).generate(more_content=None,
+    #         real_modname=None, check_module=False, all_members=False)
+
+class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
+    objtype = 'module'
+class MatClassDocumenter(MatlabDocumenter, PyClassDocumenter):
+    objtype = 'class'
+class MatFunctionDocumenter(MatlabDocumenter, PyFunctionDocumenter):
+    objtype = 'function'
+class MatMethodDocumenter(MatlabDocumenter, PyMethodDocumenter):
+    objtype = 'method'
