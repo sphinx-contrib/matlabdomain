@@ -11,7 +11,6 @@
 
 from std import StandardDomain
 import documenters as doc
-    
 
 import re
 

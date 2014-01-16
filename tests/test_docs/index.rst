@@ -25,15 +25,23 @@ This is the test data module
 
 :mod:`test_data` is a really cool module
 
-.. _test-data2:
+.. _MyHandleClass:
 
-test_data2
-^^^^^^^^^^
-This is the second test data module
+MyHandleClass
++++++++++++++
+Does this work?
 
-.. module:: test_data2
+.. autoclass:: test_data::MyHandleClass
+    :members:
 
-:mod:`test_data2` is another really cool module
+.. _MyAbstractClass:
+
+MyAbstractClass
++++++++++++++++
+Does this work?
+
+.. autoclass:: test_data::MyAbstractClass
+    :members:
 
 Indices and tables
 ==================

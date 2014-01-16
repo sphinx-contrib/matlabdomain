@@ -63,6 +63,8 @@ from pygments.token import Token
 # :class:`MatObject`.
 # =============================================================================
 
+# TODO: use type() or metaclasses instead of classes for mock python objects
+
 # create some MATLAB objects
 # TODO: +packages & @class folders
 # TODO: subfunctions (not nested) and private folders/functions/classes
@@ -85,11 +87,21 @@ class MatObject(object):
     def __init__(self, name):
         #: name of MATLAB object
         self.name = name
+        self.docstring = None
 
-    def __str__(self):
+    @property
+    def __name__(self):
+        return self.name
+
+    @property
+    def __doc__(self):
+        return self.docstring
+
+    def __repr__(self):
+        # __str__() method not required, if not given, then __repr__() used
         return '<%s: "%s">' % (self.__class__.__name__, self.name)
 
-    def getter(self, attr, *defargs):
+    def getter(self, name, *defargs):
         if len(defargs) == 1:
             return defargs[0]
         else:
@@ -121,13 +133,17 @@ class MatObject(object):
             return None
 
     @ staticmethod
-    def matlabify(fullpath):
+    def matlabify(basedir, fullpath):
         """
         Makes a MatObject.
 
+        :param basedir: Config value of ``matlab_src_dir``, path to source.
+        :type basedir: str
         :param fullpath: Full path of object to matlabify without file extension.
         :type fullpath: str
         """
+        if not fullpath:
+            return None
         # separate path from file/folder name
         path, name = os.path.split(fullpath)
         # folder trumps mfile with same name
@@ -182,7 +198,7 @@ class MatModule(MatObject):
         if attr:
             return attr
         else:
-            super(MatModule, self).getter(attr, *defargs)
+            super(MatModule, self).getter(name, *defargs)
 
 
 class MatMixin(object):
@@ -279,7 +295,7 @@ class MatFunction(MatObject):
         self.tokens = tokens
 
     def getter(self, name, *defargs):
-        super(MatModule, self).getter(attr, *defargs)
+        super(MatFunction, self).getter(name, *defargs)
 
 
 class MatClass(MatMixin, MatObject):
@@ -417,7 +433,7 @@ class MatClass(MatMixin, MatObject):
                         else:
                             idx += 1
                     # TODO: alternate multiline docstring before property
-                    # trumps docstring after property
+                    # with "%:" directive trumps docstring after property
                     if self.tokens[idx][0] is Token.Name:
                         prop_name = self.tokens[idx][1]
                         self.properties[prop_name] = {'attrs': attr_dict}
@@ -523,6 +539,10 @@ class MatClass(MatMixin, MatObject):
             idx += 1  # end of class attributes
         return attr_dict, idx
 
+    @property
+    def __module__(self):
+        return self.path
+
     def getter(self, name, *defargs):
         """
         :class:`MatClass` ``getter`` method to get attributes.
@@ -530,7 +550,7 @@ class MatClass(MatMixin, MatObject):
         if name in self.properties:
             return MatProperty(name, self.__class__, self.properties[name])
         else:
-            super(MatModule, self).getter(attr, *defargs)
+            super(MatClass, self).getter(name, *defargs)
 
 
 class MatProperty(MatObject):
@@ -558,10 +578,6 @@ class MatlabDocumenter(Documenter):
     """
     domain = 'mat'
 
-    def __init__(self, directive, name, indent=u''):
-        super(MatlabDocumenter, self).__init__(directive, name, indent=u'')
-        print 
-
     def import_object(self):
         """Import the object given by *self.modname* and *self.objpath* and set
         it as *self.object*.
@@ -573,6 +589,7 @@ class MatlabDocumenter(Documenter):
             dbg('[autodoc] from %s import %s',
                 self.modname, '.'.join(self.objpath))
         try:
+            # get config_value with absolute path to MATLAB source files
             basedir = self.env.config.matlab_src_dir
             # make a full path out of ``self.modname`` and ``self.objpath``
             modname = self.modname.replace('.', os.sep)  # modname may have dots
@@ -582,7 +599,13 @@ class MatlabDocumenter(Documenter):
             self.object = MatObject.matlabify(fullpath)
             dbg('[autodoc] => %r', self.object)
             self.object_name = os.path.basename(fullpath)
-            self.parent = MatObject.matlabify(os.path.dirname(fullpath))
+            # set parent to None if module is basedir
+            parent = os.path.dirname(fullpath)
+            if basedir != parent:
+                self.parent = MatObject.matlabify(parent)
+            else:
+                self.parent = None
+            # return True if object import successful
             if self.object:
                 return True
             else:
@@ -603,17 +626,23 @@ class MatlabDocumenter(Documenter):
             self.env.note_reread()
             return False
 
-    # def generate(self, more_content=None, real_modname=None,
-    #              check_module=False, all_members=False):
-    #     ModuleAnalyzer = MatModuleAnalyzer
-    #     super(MatlabDocumenter, self).generate(more_content=None,
-    #         real_modname=None, check_module=False, all_members=False)
 
-class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
-    objtype = 'module'
+class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter): pass
+
+
 class MatClassDocumenter(MatlabDocumenter, PyClassDocumenter):
-    objtype = 'class'
-class MatFunctionDocumenter(MatlabDocumenter, PyFunctionDocumenter):
-    objtype = 'function'
-class MatMethodDocumenter(MatlabDocumenter, PyMethodDocumenter):
-    objtype = 'method'
+    def import_object(self):
+        super(MatClassDocumenter, self).import_object()
+        self.doc_as_attr = False
+
+
+class MatModuleLevelDocumenter(MatlabDocumenter, PyModuleLevelDocumenter): pass
+
+
+class MatClassLevelDocumenter(MatlabDocumenter, PyClassLevelDocumenter): pass
+
+
+class MatFunctionDocumenter(MatlabDocumenter, PyFunctionDocumenter): pass
+
+
+class MatMethodDocumenter(MatlabDocumenter, PyMethodDocumenter): pass
