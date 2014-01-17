@@ -64,6 +64,11 @@ from pygments.token import Token
 # =============================================================================
 
 # TODO: use type() or metaclasses instead of classes for mock python objects
+# Does this make enough sense to do? EG how would you implement functions,
+# there are no metafunctions methods AFAIK. Also for classes, only class
+# attributes can be defined easily, which implementing an __init__() attribute
+# as well, seems like a lot more work. Updating __module__, __name__ and/or
+# works just as well and is a lot easier.
 
 # create some MATLAB objects
 # TODO: +packages & @class folders
@@ -87,15 +92,10 @@ class MatObject(object):
     def __init__(self, name):
         #: name of MATLAB object
         self.name = name
-        self.docstring = None
 
     @property
     def __name__(self):
         return self.name
-
-    @property
-    def __doc__(self):
-        return self.docstring
 
     def __repr__(self):
         # __str__() method not required, if not given, then __repr__() used
@@ -107,6 +107,43 @@ class MatObject(object):
         else:
             return defargs
 
+    @ staticmethod
+    def matlabify(basedir, objname):
+        """
+        Makes a MatObject.
+
+        :param basedir: Config value of ``matlab_src_dir``, path to source.
+        :type basedir: str
+        :param objname: Name of object to matlabify without file extension.
+        :type objname: str
+
+        Assumes that object is contained in a folder described by a namespace
+        composed of modules and packages connected by dots, and that the top-
+        level module or package is in ``basedir``. For example:
+        ``SimEng.models.SimEng`` represents either a folder
+        ``basedir/SimEng/models/Simeng`` or an mfile
+        ``basedir/SimEng/models/Simeng.m``. If there both is a folder and an
+        mfile with the same name, the folder is matlabified, not the mfile.
+        """
+        # no object name given
+        if not objname:
+            return None
+        # matlab modules are really packages
+        package = objname  # for packages it's namespace of __init__.py
+        # convert namespace to path
+        objname = objname.replace('.', os.sep)  # objname may have dots
+        # separate path from file/folder name
+        path, name = os.path.split(objname)
+        # make a full path out of basedir and objname
+        fullpath = os.path.join(basedir, objname)  # fullpath to objname
+        # package folders imported over mfile with same name
+        if os.path.isdir(fullpath):
+            return MatModule(name, fullpath, package)  # import package
+        elif os.path.isfile(fullpath + '.m'):
+            mfile = fullpath + '.m'
+            return MatObject.parse_mfile(mfile, name, path)  # parse mfile
+        return None
+
     @staticmethod
     def parse_mfile(mfile, name, path):
         """
@@ -116,85 +153,75 @@ class MatObject(object):
         :type mfile: str
         :param name: Name of :class:`MatObject`.
         :type name: str
-        :param path: Path of folder containing object.
-        :type path: str
+        :param modname: Name of module containing :class:`MatObject`.
+        :type modname: str
+        :returns: :class:`MatObject` that represents the type of mfile.
+
+        Assumes that the first token in the file is either one of the keywords:
+        "classdef" or "function" otherwise it is assumed to be a script.
         """
         # use Pygments to parse mfile to determine type: function/classdef
         with open(mfile, 'r') as f:
             code = f.read()
         tks = list(MatlabLexer().get_tokens(code))  # tokens
+        modname = path.replace(os.sep, '.')  # module name
         # assume that functions and classes always start with a keyword
         if tks[0] == (Token.Keyword, 'function'):
-            return MatFunction(name, path, tks)
+            return MatFunction(name, modname, tks)
         elif tks[0] == (Token.Keyword, 'classdef'):
-            return MatClass(name, path, tks)
+            return MatClass(name, modname, tks)
         else:
             # it's a script file
-            return None
-
-    @ staticmethod
-    def matlabify(basedir, fullpath):
-        """
-        Makes a MatObject.
-
-        :param basedir: Config value of ``matlab_src_dir``, path to source.
-        :type basedir: str
-        :param fullpath: Full path of object to matlabify without file extension.
-        :type fullpath: str
-        """
-        if not fullpath:
-            return None
-        # separate path from file/folder name
-        path, name = os.path.split(fullpath)
-        # folder trumps mfile with same name
-        if os.path.isdir(fullpath):
-            return MatModule(name, path)  # treat folder as MATLAB module
-        elif os.path.isfile(fullpath + '.m'):
-            mfile = fullpath + '.m'
-            return MatObject.parse_mfile(mfile, name, path)
-        # allow namespace to be anywhere on the path
-        else:
-            for root, dirs, files in os.walk(os.path.join('.', path)):
-                # don't visit vcs directories
-                for vcs in ['.git', '.hg', '.svn']:
-                    if vcs in dirs:
-                        dirs.remove(vcs)
-                # only visit mfiles
-                for f in tuple(files):
-                    if not f.endswith('.m'):
-                        files.remove(f)
-                # folder trumps mfile with same name
-                if name in dirs:
-                    return MatModule(name, root)
-                elif name + '.m' in files:
-                    mfile = os.path.join(root, name) + '.m'
-                    return MatObject.parse_mfile(mfile, name, path)
-                # keep walking tree
-            # no matching folders or mfiles
+            return MatScript(name, modname, tks)
         return None
 
 
 class MatModule(MatObject):
-    """
-    There is no concept of a *module* in MATLAB, so repurpose *module* to be
-    a folder that acts like a namespace for any :class:`MatObjects` in that
-    folder. Sphinx will treats objects without a namespace as builtins.
+    """ 
+    All MATLAB modules are packages. A package is a folder that serves as the
+    namespace for any :class:`MatObjects` in the package folder. Sphinx will
+    treats objects without a namespace as builtins, so all MATLAB projects
+    should be package in a folder so that they will have a namespace. This
+    can also be accomplished by using the MATLAB +folder package scheme.
 
     :param name: Name of :class:`MatObject`.
     :type name: str
     :param path: Path of folder containing :class:`MatObject`.
     :type path: str
     """
-    def __init__(self, name, path=None):
+    def __init__(self, name, path, package):
         super(MatModule, self).__init__(name)
+        #: Path to module on disk, path to package's __init__.py
         self.path = path
+        #: name of package (same as module)
+        self.package = package
+        # add module to system dictionary
+        sys.modules[name] = self
+
+    @property
+    def __doc__(self):
+        return None
+
+    @property
+    def __path__(self):
+        return [self.path]
+
+    @property
+    def __file__(self):
+        return self.path
+
+    @property
+    def __package__(self):
+        return self.package
 
     def getter(self, name, *defargs):
         """
         :class:`MatModule` ``getter`` method to get attributes.
         """
-        fullpath = os.path.join(self.path, self.name, name)
-        attr = MatObject.matlabify(fullpath)
+        pkg = self.package.split('.')  # list of object paths in package
+        # basedir is portion of path minus the package
+        basedir = self.path.rsplit(os.sep, len(pkg))  # MATLAB src folder
+        attr = MatObject.matlabify(basedir[0], '.'.join([self.package, name]))
         if attr:
             return attr
         else:
@@ -287,12 +314,16 @@ class MatFunction(MatObject):
     :param tokens: List of tokens parsed from mfile by Pygments.
     :type tokens: list
     """
-    def __init__(self, name, path, tokens):
+    def __init__(self, name, modname, tokens):
         super(MatClass, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
-        self.path = path
+        self.module = modname
         #: List of tokens parsed from mfile by Pygments.
         self.tokens = tokens
+
+    @property
+    def __doc__(self):
+        return None
 
     def getter(self, name, *defargs):
         super(MatFunction, self).getter(name, *defargs)
@@ -318,10 +349,10 @@ class MatClass(MatMixin, MatObject):
                        'Constant': bool, 'Dependent': bool, 'GetAccess': list,
                        'GetObservable': bool, 'Hidden': bool, 'SetAccess': list,
                        'SetObservable': bool, 'Transient': bool}
-    def __init__(self, name, path, tokens):
+    def __init__(self, name, modname, tokens):
         super(MatClass, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
-        self.path = path
+        self.module = modname
         #: List of tokens parsed from mfile by Pygments.
         self.tokens = tokens
         #: dictionary of class attributes
@@ -541,7 +572,11 @@ class MatClass(MatMixin, MatObject):
 
     @property
     def __module__(self):
-        return self.path
+        return self.module
+
+    @property
+    def __doc__(self):
+        return self.docstring
 
     def getter(self, name, *defargs):
         """
@@ -561,15 +596,38 @@ class MatProperty(MatObject):
         self.default = attrs['default']
         self.docstring = attrs['docstring']
 
+    @property
+    def __doc__(self):
+        return self.docstring
+
 
 class MatMethod(MatFunction):
     def __init__(self, name, tks, attrs):
         super(MatMethod, self).__init__(name)
         self.attrs = attrs
 
+    @property
+    def __doc__(self):
+        return None
+
 
 class MatStaticMethod(MatObject):
     pass
+
+    @property
+    def __doc__(self):
+        return None
+
+
+class MatScript(MatObject):
+    def __init__(self, name, path, tks):
+        super(MatScript, self).__init__(name)
+        self.path = path
+        self.tks = tks
+
+    @property
+    def __doc__(self):
+        return None
 
 
 class MatlabDocumenter(Documenter):
@@ -584,32 +642,27 @@ class MatlabDocumenter(Documenter):
 
         Returns True if successful, False if an error occurred.
         """
+        # get config_value with absolute path to MATLAB source files
+        basedir = self.env.config.matlab_src_dir
         dbg = self.env.app.debug
         if self.objpath:
             dbg('[autodoc] from %s import %s',
                 self.modname, '.'.join(self.objpath))
         try:
-            # get config_value with absolute path to MATLAB source files
-            basedir = self.env.config.matlab_src_dir
-            # make a full path out of ``self.modname`` and ``self.objpath``
-            modname = self.modname.replace('.', os.sep)  # modname may have dots
-            fullpath = os.path.join(basedir, modname, *self.objpath)  # objpath is a list
             dbg('[autodoc] import %s', self.modname)
-            self.module = MatModule(modname)  # the folder
-            self.object = MatObject.matlabify(fullpath)
-            dbg('[autodoc] => %r', self.object)
-            self.object_name = os.path.basename(fullpath)
-            # set parent to None if module is basedir
-            parent = os.path.dirname(fullpath)
-            if basedir != parent:
-                self.parent = MatObject.matlabify(parent)
-            else:
-                self.parent = None
-            # return True if object import successful
-            if self.object:
-                return True
-            else:
-                return False
+            MatObject.matlabify(basedir, self.modname)
+            parent = None
+            obj = self.module = sys.modules[self.modname]
+            dbg('[autodoc] => %r', obj)
+            for part in self.objpath:
+                parent = obj
+                dbg('[autodoc] getattr(_, %r)', part)
+                obj = self.get_attr(obj, part)
+                dbg('[autodoc] => %r', obj)
+                self.object_name = part
+            self.parent = parent
+            self.object = obj
+            return True
         # this used to only catch SyntaxError, ImportError and AttributeError,
         # but importing modules with side effects can raise all kinds of errors
         except Exception:
