@@ -1,49 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-    matlabdomain.documenters
-    ~~~~~~~~~~~~~~~~~~~~~~~~
+    sphinxcontrib.mat_types
+    ~~~~~~~~~~~~~~~~~~~~~~~
 
-    Automatically insert docstrings for functions, classes or whole modules into
-    the doctree, thus avoiding duplication between docstrings and documentation
-    for those who like elaborate docstrings.
+    Types for MATLAB.
 
-    :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
+    :copyright: Copyright 2014 Mark Mikofski
     :license: BSD, see LICENSE for details.
 """
 
-import re
-import sys
-import inspect
-import traceback
-from types import FunctionType, BuiltinFunctionType, MethodType
-
-from docutils import nodes
-from docutils.utils import assemble_option_dict
-from docutils.statemachine import ViewList
-
-from sphinx.util import rpartition, force_decode
-from sphinx.locale import _
-# from sphinx.pycode import ModuleAnalyzer as PyModuleAnalyzer, PycodeError
-from sphinx.application import ExtensionError
-from sphinx.util.nodes import nested_parse_with_titles
-from sphinx.util.compat import Directive
-from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
-     safe_getattr, safe_repr, is_builtin_class_method
-from sphinx.util.pycompat import base_exception, class_types
-from sphinx.util.docstrings import prepare_docstring
-
-from sphinx.ext.autodoc import py_ext_sig_re as mat_ext_sig_re
-from sphinx.ext.autodoc import Documenter, members_option, bool_option, \
-    ModuleDocumenter as PyModuleDocumenter, \
-    ModuleLevelDocumenter as PyModuleLevelDocumenter, \
-    ClassLevelDocumenter as PyClassLevelDocumenter, \
-    DocstringSignatureMixin as PyDocstringSignatureMixin, \
-    FunctionDocumenter as PyFunctionDocumenter, \
-    ClassDocumenter as PyClassDocumenter, \
-    MethodDocumenter as PyMethodDocumenter
 import os
-import json
-import re
+import sys
 
 from pygments.lexers import MatlabLexer
 from pygments.token import Token
@@ -309,8 +276,8 @@ class MatFunction(MatObject):
 
     :param name: Name of :class:`MatObject`.
     :type name: str
-    :param path: Path of folder containing :class:`MatObject`.
-    :type path: str
+    :param modname: Name of folder containing :class:`MatObject`.
+    :type modname: str
     :param tokens: List of tokens parsed from mfile by Pygments.
     :type tokens: list
     """
@@ -320,10 +287,34 @@ class MatFunction(MatObject):
         self.module = modname
         #: List of tokens parsed from mfile by Pygments.
         self.tokens = tokens
+        #: docstring
+        self.docstring = ''
+        #: output args
+        self.retval
+        #: input args
+        self.args
+        # =====================================================================
+        # parse tokens
+        idx = 0  # token index
+        # check function keyword
+        if self._tk_ne(idx, (Token.Keyword, 'function')):
+            raise TypeError('Object is not a function. Expected a function.')
+        idx += 1
+        idx += self._blanks(idx)  # skip blanks
+        # TODO: allow continuation dots "..." in signature
+        # parse function signature
+        # function [output] = name(inputs, ...)
+        # % docstring
+        # =====================================================================
+        # output args
+        # Pygments sees input and output args as Token.Text
+        if self._tk_eq(idx, (Token.Text)):
+            self.retval = self.tokens[idx][1]
+        
 
     @property
     def __doc__(self):
-        return None
+        return unicode(self.docstring)
 
     def getter(self, name, *defargs):
         super(MatFunction, self).getter(name, *defargs)
@@ -369,7 +360,7 @@ class MatClass(MatMixin, MatObject):
         # parse tokens
         # TODO: use generator and next() instead of stepping index!
         idx = 0  # token index
-        # chekc classdef keyword
+        # check classdef keyword
         if self._tk_ne(idx, (Token.Keyword, 'classdef')):
             raise TypeError('Object is not a class. Expected a class.')
         idx += 1
@@ -422,7 +413,7 @@ class MatClass(MatMixin, MatObject):
             idx += indent
             # concatenate docstring
             while self.tokens[idx][0] is Token.Comment:
-                self.docstring += self.tokens[idx][1]
+                self.docstring += self.tokens[idx][1].lstrip('%')
                 idx += 1
                 # append newline to docstring
                 if self._tk_eq(idx, (Token.Text, '\n')):
@@ -490,7 +481,7 @@ class MatClass(MatMixin, MatObject):
                     self.properties[prop_name].update(default)
                     docstring = {'docstring': None}
                     if self.tokens[idx][0] is Token.Comment:
-                        docstring['docstring'] = self.tokens[idx][1]
+                        docstring['docstring'] = self.tokens[idx][1].lstrip('%')
                         idx += 1
                     self.properties[prop_name].update(docstring)
                     idx += self._whitespace(idx)
@@ -576,7 +567,7 @@ class MatClass(MatMixin, MatObject):
 
     @property
     def __doc__(self):
-        return self.docstring
+        return unicode(self.docstring)
 
     def getter(self, name, *defargs):
         """
@@ -598,25 +589,18 @@ class MatProperty(MatObject):
 
     @property
     def __doc__(self):
-        return self.docstring
+        return unicode(self.docstring)
 
 
 class MatMethod(MatFunction):
     def __init__(self, name, tks, attrs):
         super(MatMethod, self).__init__(name)
         self.attrs = attrs
+        self.docstring = ''
 
     @property
     def __doc__(self):
-        return None
-
-
-class MatStaticMethod(MatObject):
-    pass
-
-    @property
-    def __doc__(self):
-        return None
+        return unicode(self.docstring)
 
 
 class MatScript(MatObject):
@@ -624,78 +608,20 @@ class MatScript(MatObject):
         super(MatScript, self).__init__(name)
         self.path = path
         self.tks = tks
+        self.docstring = ''
 
     @property
     def __doc__(self):
-        return None
+        return unicode(self.docstring)
 
 
-class MatlabDocumenter(Documenter):
-    """
-    Base class for documenters of MATLAB objects.
-    """
-    domain = 'mat'
+class MatException(MatObject):
+    def __init__(self, name, path, tks):
+        super(MatScript, self).__init__(name)
+        self.path = path
+        self.tks = tks
+        self.docstring = ''
 
-    def import_object(self):
-        """Import the object given by *self.modname* and *self.objpath* and set
-        it as *self.object*.
-
-        Returns True if successful, False if an error occurred.
-        """
-        # get config_value with absolute path to MATLAB source files
-        basedir = self.env.config.matlab_src_dir
-        dbg = self.env.app.debug
-        if self.objpath:
-            dbg('[autodoc] from %s import %s',
-                self.modname, '.'.join(self.objpath))
-        try:
-            dbg('[autodoc] import %s', self.modname)
-            MatObject.matlabify(basedir, self.modname)
-            parent = None
-            obj = self.module = sys.modules[self.modname]
-            dbg('[autodoc] => %r', obj)
-            for part in self.objpath:
-                parent = obj
-                dbg('[autodoc] getattr(_, %r)', part)
-                obj = self.get_attr(obj, part)
-                dbg('[autodoc] => %r', obj)
-                self.object_name = part
-            self.parent = parent
-            self.object = obj
-            return True
-        # this used to only catch SyntaxError, ImportError and AttributeError,
-        # but importing modules with side effects can raise all kinds of errors
-        except Exception:
-            if self.objpath:
-                errmsg = 'autodoc: failed to import %s %r from module %r' % \
-                         (self.objtype, '.'.join(self.objpath), self.modname)
-            else:
-                errmsg = 'autodoc: failed to import %s %r' % \
-                         (self.objtype, self.fullname)
-            errmsg += '; the following exception was raised:\n%s' % \
-                      traceback.format_exc()
-            dbg(errmsg)
-            self.directive.warn(errmsg)
-            self.env.note_reread()
-            return False
-
-
-class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter): pass
-
-
-class MatClassDocumenter(MatlabDocumenter, PyClassDocumenter):
-    def import_object(self):
-        super(MatClassDocumenter, self).import_object()
-        self.doc_as_attr = False
-
-
-class MatModuleLevelDocumenter(MatlabDocumenter, PyModuleLevelDocumenter): pass
-
-
-class MatClassLevelDocumenter(MatlabDocumenter, PyClassLevelDocumenter): pass
-
-
-class MatFunctionDocumenter(MatlabDocumenter, PyFunctionDocumenter): pass
-
-
-class MatMethodDocumenter(MatlabDocumenter, PyMethodDocumenter): pass
+    @property
+    def __doc__(self):
+        return unicode(self.docstring)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-    sphinx.domains.MATLAB
-    ~~~~~~~~~~~~~~~~~~~~~
+    sphinxcontrib.matlab
+    ~~~~~~~~~~~~~~~~~~~~
 
     The MATLAB domain.
 
@@ -10,7 +10,7 @@
 """
 
 from std import StandardDomain
-import documenters as doc
+import mat_documenters as doc
 
 import re
 
@@ -719,6 +719,10 @@ def setup(app):
     app.add_autodocumenter(doc.MatModuleDocumenter)
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
     app.add_autodocumenter(doc.MatClassDocumenter)
+    app.add_autodocumenter(doc.MatExceptionDocumenter)
+    app.add_autodocumenter(doc.MatDataDocumenter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
     app.add_autodocumenter(doc.MatFunctionDocumenter)
     app.add_autodocumenter(doc.MatMethodDocumenter)
+    app.add_autodocumenter(doc.MatAttributeDocumenter)
+    app.add_autodocumenter(doc.MatInstanceAttributeDocumenter)

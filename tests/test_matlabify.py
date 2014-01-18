@@ -1,15 +1,16 @@
 #! /usr/bin/env python
 
-from sphinxcontrib import documenters as doc
+from sphinxcontrib import mat_documenters as doc
 from nose.tools import eq_, ok_
 import json
 import os
+import sys
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
 
 def test_matlabify_class():
     """
-    test matlabify class
+    test matlabify
     """
     # test module
     m = doc.MatObject.matlabify(DIRNAME, 'test_data')
@@ -19,6 +20,7 @@ def test_matlabify_class():
     eq_(m.__file__, os.path.join(DIRNAME, 'test_data'))
     eq_(m.__package__, 'test_data')
     ok_(not m.__doc__)
+    ok_(m.__name__ in sys.modules)
     # test superclass
     my_cls = m.getter('MyHandleClass')
     ok_(isinstance(my_cls, doc.MatClass))
@@ -28,8 +30,8 @@ def test_matlabify_class():
     eq_(my_cls.attrs, {})
     eq_(my_cls.properties, {'x': {'attrs': {},
                                   'default': None,
-                                  'docstring': '% a property'}})
-    eq_(my_cls.__doc__, '% a handle class\n% :param x: a variable\n')
+                                  'docstring': ' a property'}})
+    eq_(my_cls.__doc__, ' a handle class\n :param x: a variable\n')
     x = my_cls.getter('x')
     # test cls attr
     my_abc = m.getter('MyAbstractClass')
@@ -40,13 +42,13 @@ def test_matlabify_class():
     eq_(my_abc.attrs, {'Abstract': True, 'Sealed': True})
     eq_(my_abc.properties,
         {'y': {'default': None,
-               'docstring': '% y variable',
+               'docstring': ' y variable',
                'attrs': {'GetAccess': 'private', 'SetAccess': 'private'}},
         'version': {'default': "'0.1.1-beta'",
-                    'docstring': '% version',
+                    'docstring': ' version',
                     'attrs': {'Constant': True}}})
-    eq_(my_abc.__doc__, '% an abstract class with tabs\n' +
-        '% :param y: a variable\n% :type y: double\n')
+    eq_(my_abc.__doc__, ' an abstract class with tabs\n' +
+        ' :param y: a variable\n :type y: double\n')
     y = my_abc.getter('y')
     version = my_abc.getter('version')
     return m, my_cls, x, my_abc, y, version

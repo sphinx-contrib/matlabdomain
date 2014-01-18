@@ -31,7 +31,7 @@ MyHandleClass
 +++++++++++++
 Does this work?
 
-.. autoclass:: test_data::MyHandleClass
+.. autoclass:: test_data.MyHandleClass
     :members:
 
 .. _MyAbstractClass:
@@ -40,7 +40,7 @@ MyAbstractClass
 +++++++++++++++
 Does this work?
 
-.. autoclass:: test_data::MyAbstractClass
+.. autoclass:: test_data.MyAbstractClass
     :members:
 
 Indices and tables
