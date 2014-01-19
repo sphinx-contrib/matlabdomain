@@ -11,6 +11,7 @@
 
 import os
 import sys
+from copy import copy
 
 from pygments.lexers import MatlabLexer
 from pygments.token import Token
@@ -30,6 +31,10 @@ from pygments.token import Token
 # :class:`MatObject`.
 # =============================================================================
 
+# TODO: try using self.tokens.pop? instead of idx += 1 ???
+# XXX: cool snippet: `zip((Token.Text,) * 2, (' ', '\t'))`
+# returns `[(Token.Text, ' '), (Token.Text, '\t')]`
+
 # TODO: use type() or metaclasses instead of classes for mock python objects
 # Does this make enough sense to do? EG how would you implement functions,
 # there are no metafunctions methods AFAIK. Also for classes, only class
@@ -41,6 +46,7 @@ from pygments.token import Token
 # TODO: +packages & @class folders
 # TODO: subfunctions (not nested) and private folders/functions/classes
 # TODO: script files
+# TODO: remove continuation dots "...\n" in all mfiles with 
 class MatObject(object):
     """
     Base MATLAB object to which all others are subclassed.
@@ -128,9 +134,11 @@ class MatObject(object):
         "classdef" or "function" otherwise it is assumed to be a script.
         """
         # use Pygments to parse mfile to determine type: function/classdef
+        # read mfile code
         with open(mfile, 'r') as f:
             code = f.read()
-        tks = list(MatlabLexer().get_tokens(code))  # tokens
+        code = code.replace('...\n','')  # replace all ellipsis
+        tks = list(MatlabLexer().get_tokens(code))  # tokenenize code
         modname = path.replace(os.sep, '.')  # module name
         # assume that functions and classes always start with a keyword
         if tks[0] == (Token.Keyword, 'function'):
@@ -268,8 +276,6 @@ class MatMixin(object):
         return idx - idx0  # indentation
 
 
-
-
 class MatFunction(MatObject):
     """
     A MATLAB function.
@@ -282,7 +288,7 @@ class MatFunction(MatObject):
     :type tokens: list
     """
     def __init__(self, name, modname, tokens):
-        super(MatClass, self).__init__(name)
+        super(MatFunction, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
         self.module = modname
         #: List of tokens parsed from mfile by Pygments.
@@ -290,26 +296,102 @@ class MatFunction(MatObject):
         #: docstring
         self.docstring = ''
         #: output args
-        self.retval
+        self.retv = None
         #: input args
-        self.args
+        self.args = None
         # =====================================================================
         # parse tokens
-        idx = 0  # token index
-        # check function keyword
-        if self._tk_ne(idx, (Token.Keyword, 'function')):
-            raise TypeError('Object is not a function. Expected a function.')
-        idx += 1
-        idx += self._blanks(idx)  # skip blanks
-        # TODO: allow continuation dots "..." in signature
+        # XXX: Pygments always reads MATLAB function signature as:
+        # [(Token.Keyword, 'function'),  # any whitespace is stripped
+        #  (Token.Text.Whitesapce, ' '),  # spaces and tabs are concatenated
+        #  (Token.Text, '[o1, o2]'),  # if there are outputs, they're all
+        #                               concatenated w/ or w/o brackets and any
+        #                               trailing whitespace
+        #  (Token.Punctuation, '='),  # possibly an equal sign
+        #  (Token.Text.Whitesapce, ' '),  # spaces and tabs are concatenated
+        #  (Token.Name.Function, 'myfun'),  # the name of the function
+        #  (Token.Punctuation, '('),  # opening parenthesis
+        #  (Token.Text, 'a1, a2',  # if there are args, they're concatenated
+        #  (Token.Punctuation, ')'),  # closing parenthesis
+        #  (Token.Text.Whitesapce, '\n')]  # all whitespace after args 
+        # XXX: Pygments does not tolerate MATLAB continuation ellipsis!
+        tks = copy(self.tokens)  # make a copy of tokens
+        tks.reverse()  # reverse in place for faster popping, stacks are LiLo
+        # =====================================================================
         # parse function signature
-        # function [output] = name(inputs, ...)
+        # function [output] = name(inputs)
         # % docstring
         # =====================================================================
+        # check function keyword
+        func_kw = tks.pop()  # function keyword
+        if func_kw[0] is not Token.Keyword or func_kw[1].strip() != 'function':
+            raise TypeError('Object is not a function. Expected a function.')
+            # TODO: what is a better error here?
+        # skip blanks and tabs
+        if tks.pop()[0] is not Token.Text.Whitespace:
+            raise TypeError('Expected a whitespace after function keyword.')
+            # TODO: what is a better error here?
+        # =====================================================================
         # output args
-        # Pygments sees input and output args as Token.Text
-        if self._tk_eq(idx, (Token.Text)):
-            self.retval = self.tokens[idx][1]
+        retv = tks.pop()  # return values
+        if retv[0] is Token.Text:
+            self.retv = [rv.strip() for rv in retv[1].strip('[ ]').split(',')]
+            if tks.pop() != (Token.Punctuation, '='):
+                raise TypeError('Token after outputs should be Punctuation.')
+                # TODO: raise an matlab token error or what?
+            # check for whitespace after equal sign
+            wht = tks.pop()
+            if wht[0] is not Token.Text.Whitespace:
+                tks.append(wht)  # if not whitespace, put it back in list
+        # =====================================================================
+        # function name
+        func_name = tks.pop()
+        if func_name != (Token.Name.Function, self.name):
+            errmsg = 'Unexpected function name: "%s".' % func_name[1]
+            raise Exception(errmsg)
+            # TODO: create mat_types or tokens exceptions!
+        # =====================================================================
+        # input args
+        if tks.pop() == (Token.Punctuation, '('):
+            args = tks.pop()
+            if args[0] is Token.Text:
+                self.args = [arg.strip() for arg in args[1].split(',')]
+            if tks.pop() != (Token.Punctuation, ')'):
+                raise TypeError('Token after outputs should be Punctuation.')
+                # TODO: raise an matlab token error or what?
+        # skip blanks and tabs
+        if tks.pop()[0] is not Token.Text.Whitespace:
+            raise TypeError('Expected a whitespace after input args.')
+            # TODO: what is a better error here?
+        # =====================================================================
+        # docstring
+        docstring = tks.pop()
+        while docstring[0] is Token.Comment:
+            self.docstring += docstring[1]  # concatenate docstring
+            wht = tks.pop()  # skip whitespace
+            while wht in zip((Token.Text,) * 3, (' ', '\t', '\n')):
+                wht = tks.pop()
+            docstring = wht  # check if Token is Comment
+        # =====================================================================
+        # main body
+        # find Keywords - "end" pairs
+        kw = docstring  # last token
+        lastkw = ''  # set last keyword placeholder
+        kw_end = 1  # count function keyword
+        # MATLAB keywords that increment keyword-end pair count
+        mat_kws = ('if', 'while', 'for', 'switch', 'try')
+        mat_kws = zip((Token.Keyword,) * 5, mat_kws)
+        try:
+            while kw_end > 0:
+                if kw in mat_kws:
+                    kw_end += 1
+                elif kw == (Token.Keyword, 'end'):
+                    # don't decrement `end` used as index
+                    if lastkw not in zip((Token.Punctuation,) * 2, (':', '(')):
+                        kw_end -= 1
+                lastkw, kw = kw, tks.pop()
+        except IndexError:
+            pass
         
 
     @property
@@ -378,6 +460,7 @@ class MatClass(MatMixin, MatObject):
         if self._tk_ne(idx, (Token.Name, self.name)):
             errmsg = 'Unexpected class name: "%s".' % self.tokens[idx][1]
             raise Exception(errmsg)
+            # TODO: create exception classes
         idx += 1
         idx += self._blanks(idx)  # skip blanks
         # =====================================================================

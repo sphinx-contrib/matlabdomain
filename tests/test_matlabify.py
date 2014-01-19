@@ -53,6 +53,15 @@ def test_matlabify_class():
     version = my_abc.getter('version')
     return m, my_cls, x, my_abc, y, version
 
+def test_function():
+    """
+    test matlabify function
+    """
+    # test function
+    m = doc.MatObject.matlabify(DIRNAME, 'test_data')
+    ok_(isinstance(m, doc.MatModule))
+    myfun = m.getter('myfun')
+    ok_(isinstance(myfun, doc.MatFunction))
 
 if __name__ == '__main__':
     m, my_cls, x, my_abc, y, version = test_matlabify_class()
