@@ -367,7 +367,7 @@ class MatFunction(MatObject):
         # docstring
         docstring = tks.pop()
         while docstring[0] is Token.Comment:
-            self.docstring += docstring[1]  # concatenate docstring
+            self.docstring += docstring[1] + '\n'  # concatenate docstring
             wht = tks.pop()  # skip whitespace
             while wht in zip((Token.Text,) * 3, (' ', '\t', '\n')):
                 wht = tks.pop()

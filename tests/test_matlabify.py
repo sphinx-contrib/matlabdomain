@@ -62,6 +62,10 @@ def test_function():
     ok_(isinstance(m, doc.MatModule))
     myfun = m.getter('myfun')
     ok_(isinstance(myfun, doc.MatFunction))
+    eq_(myfun.__name__, 'myfun')
+    eq_(myfun.retv, ['o1', 'o2', 'o3'])
+    eq_(myfun.args, ['a1', 'a2'])
+    return myfun
 
 if __name__ == '__main__':
     m, my_cls, x, my_abc, y, version = test_matlabify_class()
@@ -97,3 +101,11 @@ if __name__ == '__main__':
     print 'version docstring: %s' % version.__doc__
     print 'version attrs: %s' % version.attrs
     print '\n'
+
+    myfun = test_function()
+    print 'function: %s' % myfun
+    print 'returns: %s' % myfun.retv
+    print 'name: %s' % myfun.__name__
+    print 'args: %s' % myfun.args
+    print 'docstring:\n%s' % myfun.__doc__
+
