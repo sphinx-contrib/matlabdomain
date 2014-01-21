@@ -199,12 +199,13 @@ class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
         return ret
 
     def format_args(self):
-        # for classes, the relevant signature is the __init__ method's
-        initmeth = self.get_attr(self.object, '__init__', None)
+        # for classes, the relevant signature is the "constructor" method,
+        # which has the same name as the class definition
+        initmeth = self.get_attr(self.object, self.name, None)
         # classes without __init__ method, default __init__ or
         # __init__ written in C?
         if initmeth is None or \
-               is_builtin_class_method(self.object, '__init__') or \
+               is_builtin_class_method(self.object, self.name) or \
                not(inspect.ismethod(initmeth) or inspect.isfunction(initmeth)):
             return None
         try:
@@ -216,6 +217,23 @@ class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
         if argspec[0] and argspec[0][0] in ('cls', 'self'):
             del argspec[0][0]
         return inspect.formatargspec(*argspec)
+
+    def format_signature(self):
+        if self.doc_as_attr:
+            return ''
+
+        # get constructor method signature from docstring
+        if self.env.config.autodoc_docstring_signature:
+            # only act if the feature is enabled
+            init_doc = MatMethodDocumenter(self.directive, self.name)
+            init_doc.object = self.get_attr(self.object, self.name, None)
+            init_doc.objpath = [self.name]
+            result = init_doc._find_signature()
+            if result is not None:
+                # use args only for Class signature
+                return '(%s)' % result[0]
+
+        return MatModuleLevelDocumenter.format_signature(self)
 
 
 class MatExceptionDocumenter(MatlabDocumenter, PyExceptionDocumenter):

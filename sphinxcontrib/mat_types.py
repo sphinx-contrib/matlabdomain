@@ -193,14 +193,26 @@ class MatModule(MatObject):
         """
         :class:`MatModule` ``getter`` method to get attributes.
         """
-        pkg = self.package.split('.')  # list of object paths in package
-        # basedir is portion of path minus the package
-        basedir = self.path.rsplit(os.sep, len(pkg))  # MATLAB src folder
-        attr = MatObject.matlabify(basedir[0], '.'.join([self.package, name]))
-        if attr:
-            return attr
+        if name == '__name__':
+            return self.name
+        elif name == '__doc__':
+            return ''
+        elif name == '__file__':
+            return self.path
+        elif name == '__path__':
+            return [self.path]
+        elif name == '__package__':
+            return self.package
         else:
-            super(MatModule, self).getter(name, *defargs)
+            pkg = self.package.split('.')  # list of object paths in package
+            # basedir is portion of path minus the package
+            basedir = self.path.rsplit(os.sep, len(pkg))  # split path
+            basedir = basedir[0]  # MATLAB base src folder
+            attr = MatObject.matlabify(basedir, '.'.join([self.package, name]))
+            if attr:
+                return attr
+            else:
+                super(MatModule, self).getter(name, *defargs)
 
 
 class MatMixin(object):
@@ -375,7 +387,7 @@ class MatFunction(MatObject):
         # docstring
         docstring = tks.pop()
         while docstring[0] is Token.Comment:
-            self.docstring += docstring[1] + '\n'  # concatenate docstring
+            self.docstring += docstring[1].lstrip('%') + '\n'  # concatenate
             wht = tks.pop()  # skip whitespace
             while wht in zip((Token.Text,) * 3, (' ', '\t', '\n')):
                 wht = tks.pop()
@@ -411,7 +423,14 @@ class MatFunction(MatObject):
         return self.module
 
     def getter(self, name, *defargs):
-        super(MatFunction, self).getter(name, *defargs)
+        if name == '__name__':
+            return self.name
+        elif name == '__doc__':
+            return unicode(self.docstring)
+        elif name == '__module__':
+            return self.module
+        else:
+            super(MatFunction, self).getter(name, *defargs)
 
 
 class MatClass(MatMixin, MatObject):
@@ -697,10 +716,22 @@ class MatClass(MatMixin, MatObject):
         """
         :class:`MatClass` ``getter`` method to get attributes.
         """
-        if name in self.properties:
+        if name == '__name__':
+            return self.name
+        elif name == '__doc__':
+            return unicode(self.docstring)
+        elif name == '__module__':
+            return self.module
+        elif name in self.properties:
             return MatProperty(name, self.__class__, self.properties[name])
         elif name in self.methods:
             return self.methods[name]
+        elif name == '__dict__':
+            objdict = dict([(pn, self.getter(pn)) for pn in
+                            self.properties.iterkeys()])
+            # objdict = {pn: self.getter(pn) for pn in self.properties.iterkeys()}
+            objdict.update(self.methods)
+            return objdict
         else:
             super(MatClass, self).getter(name, *defargs)
 

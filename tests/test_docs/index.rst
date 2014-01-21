@@ -31,8 +31,7 @@ MyHandleClass
 +++++++++++++
 Does this work?
 
-.. autoclass:: test_data.MyHandleClass
-    :members:
+.. autoclass:: MyHandleClass
 
 .. _MyAbstractClass:
 
@@ -40,8 +39,7 @@ MyAbstractClass
 +++++++++++++++
 Does this work?
 
-.. autoclass:: test_data.MyAbstractClass
-    :members:
+.. autoclass:: MyAbstractClass
 
 .. _myfun:
 
@@ -49,7 +47,7 @@ myfun
 ++++++
 Do these work?
 
-.. autofunc:: test_data.myfun
+.. autofunction:: myfun
 
 .. _MyClass:
 
@@ -57,8 +55,7 @@ MyClass
 +++++++
 How about this?
 
-.. autoclass:: test_data.MyClass
-    :members:
+.. autoclass:: MyClass
 
 .. _mymethod:
 
@@ -66,7 +63,7 @@ mymethod
 ++++++++
 How about this too?
 
-.. automethod:: test_data.MyClass.mymethod
+.. automethod:: MyClass.mymethod
 
 
 Indices and tables
