@@ -401,11 +401,14 @@ class MatFunction(MatObject):
         # if there are any tokens left save them
         if len(tks) > 0:
             self.rem_tks = tks  # save extra tokens
-            
 
     @property
     def __doc__(self):
         return unicode(self.docstring)
+
+    @property
+    def __module__(self):
+        return self.module
 
     def getter(self, name, *defargs):
         super(MatFunction, self).getter(name, *defargs)
@@ -449,7 +452,7 @@ class MatClass(MatMixin, MatObject):
         self.properties = {}
         #: dictionary of class methods
         self.methods = {}
-        #: remaining tokens after main function is parsed
+        #: remaining tokens after main class definition is parsed
         self.rem_tks = None
         # =====================================================================
         # parse tokens
@@ -728,6 +731,10 @@ class MatMethod(MatFunction):
         self.tokens = self.tokens[:-num_rem_tks]
         self.rem_tks = None
         return len_meth
+
+    @property
+    def __module__(self):
+        return self.module
 
     @property
     def __doc__(self):

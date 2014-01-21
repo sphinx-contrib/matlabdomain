@@ -43,6 +43,32 @@ Does this work?
 .. autoclass:: test_data.MyAbstractClass
     :members:
 
+.. _myfun:
+
+myfun
+++++++
+Do these work?
+
+.. autofunc:: test_data.myfun
+
+.. _MyClass:
+
+MyClass
++++++++
+How about this?
+
+.. autoclass:: test_data.MyClass
+    :members:
+
+.. _mymethod:
+
+mymethod
+++++++++
+How about this too?
+
+.. automethod:: test_data.MyClass.mymethod
+
+
 Indices and tables
 ==================
 
