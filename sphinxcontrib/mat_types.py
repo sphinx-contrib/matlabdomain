@@ -287,6 +287,9 @@ class MatFunction(MatObject):
     :param tokens: List of tokens parsed from mfile by Pygments.
     :type tokens: list
     """
+    # MATLAB keywords that increment keyword-end pair count
+    mat_kws = zip((Token.Keyword,) * 5,
+                  ('if', 'while', 'for', 'switch', 'try'))
     def __init__(self, name, modname, tokens):
         super(MatFunction, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
@@ -299,6 +302,8 @@ class MatFunction(MatObject):
         self.retv = None
         #: input args
         self.args = None
+        #: remaining tokens after main function is parsed
+        self.rem_tks = None
         # =====================================================================
         # parse tokens
         # XXX: Pygments always reads MATLAB function signature as:
@@ -347,9 +352,12 @@ class MatFunction(MatObject):
         # function name
         func_name = tks.pop()
         if func_name != (Token.Name.Function, self.name):
-            errmsg = 'Unexpected function name: "%s".' % func_name[1]
-            raise Exception(errmsg)
-            # TODO: create mat_types or tokens exceptions!
+            if isinstance(self, MatMethod):
+              self.name = func_name[1]
+            else:
+                errmsg = 'Unexpected function name: "%s".' % func_name[1]
+                raise Exception(errmsg)
+                # TODO: create mat_types or tokens exceptions!
         # =====================================================================
         # input args
         if tks.pop() == (Token.Punctuation, '('):
@@ -378,21 +386,22 @@ class MatFunction(MatObject):
         kw = docstring  # last token
         lastkw = ''  # set last keyword placeholder
         kw_end = 1  # count function keyword
-        # MATLAB keywords that increment keyword-end pair count
-        mat_kws = ('if', 'while', 'for', 'switch', 'try')
-        mat_kws = zip((Token.Keyword,) * 5, mat_kws)
-        try:
-            while kw_end > 0:
-                if kw in mat_kws:
-                    kw_end += 1
-                elif kw == (Token.Keyword, 'end'):
-                    # don't decrement `end` used as index
-                    if lastkw not in zip((Token.Punctuation,) * 2, (':', '(')):
-                        kw_end -= 1
+        while kw_end > 0:
+            if kw in MatFunction.mat_kws:
+                kw_end += 1
+            elif kw == (Token.Keyword, 'end'):
+                # don't decrement `end` used as index
+                if lastkw not in zip((Token.Punctuation,) * 2, (':', '(')):
+                    kw_end -= 1
+            try:
                 lastkw, kw = kw, tks.pop()
-        except IndexError:
-            pass
-        
+            except IndexError:
+                break
+        tks.append(kw)  # put last token back in list
+        # if there are any tokens left save them
+        if len(tks) > 0:
+            self.rem_tks = tks  # save extra tokens
+            
 
     @property
     def __doc__(self):
@@ -422,6 +431,8 @@ class MatClass(MatMixin, MatObject):
                        'Constant': bool, 'Dependent': bool, 'GetAccess': list,
                        'GetObservable': bool, 'Hidden': bool, 'SetAccess': list,
                        'SetObservable': bool, 'Transient': bool}
+    meth_attr_types = {'Abstract': bool, 'Access': list, 'Hidden': bool,
+                       'Sealed': list, 'Static': bool}
     def __init__(self, name, modname, tokens):
         super(MatClass, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
@@ -438,6 +449,8 @@ class MatClass(MatMixin, MatObject):
         self.properties = {}
         #: dictionary of class methods
         self.methods = {}
+        #: remaining tokens after main function is parsed
+        self.rem_tks = None
         # =====================================================================
         # parse tokens
         # TODO: use generator and next() instead of stepping index!
@@ -511,7 +524,7 @@ class MatClass(MatMixin, MatObject):
             # TODO: add to matlab domain exceptions
         # =====================================================================
         # properties & methods blocks
-        # loop over code body searching for blocks until end of 
+        # loop over code body searching for blocks until end of class
         while self._tk_ne(idx, (Token.Keyword, 'end')):
             # skip comments and whitespace
             while (self._whitespace(idx) or
@@ -569,6 +582,31 @@ class MatClass(MatMixin, MatObject):
                     self.properties[prop_name].update(docstring)
                     idx += self._whitespace(idx)
                 idx += 1
+            # =================================================================
+            # method blocks
+            if self._tk_eq(idx, (Token.Keyword, 'methods')):
+                idx += 1
+                # method "attributes"
+                attr_dict, idx = self.attributes(idx, MatClass.meth_attr_types)
+                # Token.Keyword: "end" terminates properties & methods block
+                while self._tk_ne(idx, (Token.Keyword, 'end')):
+                    # skip comments and whitespace
+                    while (self._whitespace(idx) or
+                           self.tokens[idx][0] is Token.Comment):
+                        whitespace = self._whitespace(idx)
+                        if whitespace:
+                            idx += whitespace
+                        else:
+                            idx += 1
+                    # find methods
+                    meth = MatMethod(self.module, self.tokens[idx:],
+                                     self.__class__, attr_dict)
+                    idx += meth.reset_tokens()  # reset method tokens and index
+                    self.methods[meth.name] = meth  # update methods
+                    idx += self._whitespace(idx)
+                idx += 1
+        self.rem_tks = idx  # index of last token
+            
 
     def attributes(self, idx, attr_types):
         """
@@ -658,6 +696,8 @@ class MatClass(MatMixin, MatObject):
         """
         if name in self.properties:
             return MatProperty(name, self.__class__, self.properties[name])
+        elif name in self.methods:
+            return self.methods[name]
         else:
             super(MatClass, self).getter(name, *defargs)
 
@@ -676,10 +716,18 @@ class MatProperty(MatObject):
 
 
 class MatMethod(MatFunction):
-    def __init__(self, name, tks, attrs):
-        super(MatMethod, self).__init__(name)
+    def __init__(self, modname, tks, cls, attrs):
+        # set name to None
+        super(MatMethod, self).__init__(None, modname, tks)
+        self.cls = cls
         self.attrs = attrs
-        self.docstring = ''
+
+    def reset_tokens(self):
+        num_rem_tks = len(self.rem_tks)
+        len_meth = len(self.tokens) - num_rem_tks
+        self.tokens = self.tokens[:-num_rem_tks]
+        self.rem_tks = None
+        return len_meth
 
     @property
     def __doc__(self):

@@ -96,7 +96,27 @@ class MatlabDocumenter(Documenter):
             return False
 
 
-class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter): pass
+class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
+
+    def parse_name(self):
+        ret = MatlabDocumenter.parse_name(self)
+        if self.args or self.retann:
+            self.directive.warn('signature arguments or return annotation '
+                                'given for automodule %s' % self.fullname)
+        return ret
+
+    def add_directive_header(self, sig):
+        MatlabDocumenter.add_directive_header(self, sig)
+
+        # add some module-specific options
+        if self.options.synopsis:
+            self.add_line(
+                u'   :synopsis: ' + self.options.synopsis, '<autodoc>')
+        if self.options.platform:
+            self.add_line(
+                u'   :platform: ' + self.options.platform, '<autodoc>')
+        if self.options.deprecated:
+            self.add_line(u'   :deprecated:', '<autodoc>')
 
 
 class MatModuleLevelDocumenter(MatlabDocumenter):

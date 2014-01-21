@@ -10,7 +10,7 @@ DIRNAME = os.path.abspath(os.path.dirname(__file__))
 
 def test_matlabify_class():
     """
-    test matlabify
+    test matlabify classes
     """
     # test module
     m = doc.MatObject.matlabify(DIRNAME, 'test_data')
@@ -67,6 +67,25 @@ def test_function():
     eq_(myfun.args, ['a1', 'a2'])
     return myfun
 
+
+def test_method():
+    """
+    test matlabify methods
+    """
+    # test function
+    m = doc.MatObject.matlabify(DIRNAME, 'test_data')
+    ok_(isinstance(m, doc.MatModule))
+    my_cls_meth = m.getter('MyClass')
+    ok_(isinstance(my_cls_meth, doc.MatClass))
+    eq_(my_cls_meth.__name__, 'MyClass')
+    constructor = my_cls_meth.getter('MyClass')
+    ok_(isinstance(constructor, doc.MatMethod))
+    eq_(constructor.__name__, 'MyClass')
+    mymethod = my_cls_meth.getter('mymethod')
+    ok_(isinstance(mymethod, doc.MatMethod))
+    eq_(mymethod.__name__, 'mymethod')
+    return my_cls_meth, constructor, mymethod
+
 if __name__ == '__main__':
     m, my_cls, x, my_abc, y, version = test_matlabify_class()
 
@@ -109,3 +128,7 @@ if __name__ == '__main__':
     print 'args: %s' % myfun.args
     print 'docstring:\n%s' % myfun.__doc__
 
+    my_cls_meth, constructor, mymethod = test_method()
+    print my_cls_meth
+    print constructor
+    print mymethod
