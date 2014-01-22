@@ -19,9 +19,8 @@ from pygments.token import Token
 # TODO: use `self.tokens.pop()` instead of idx += 1, see MatFunction
 
 # XXX: Don't use `type()` or metaclasses. Not trivial to create metafunctions.
-# also special attributes are not required because `getter()` methods are used
-# instead. EG: `__doc__` is not `MatObject.__doc__`, instead it's actually
-# `instance_of_MatObject.getter('__doc__')
+# XXX: Some special attributes **are** required even though `getter()` methods
+# are also used.
 
 # create some MATLAB objects
 # TODO: +packages & @class folders
@@ -44,6 +43,10 @@ class MatObject(object):
     def __init__(self, name):
         #: name of MATLAB object
         self.name = name
+
+    @property
+    def __name__(self):
+        return self.name
 
     def __repr__(self):
         # __str__() method not required, if not given, then __repr__() used
@@ -148,6 +151,22 @@ class MatModule(MatObject):
         self.package = package
         # add module to system dictionary
         sys.modules[name] = self
+
+    @property
+    def __doc__(self):
+        return None
+
+    @property
+    def __path__(self):
+        return [self.path]
+
+    @property
+    def __file__(self):
+        return self.path
+
+    @property
+    def __package__(self):
+        return self.package
 
     def getter(self, name, *defargs):
         """
@@ -373,6 +392,14 @@ class MatFunction(MatObject):
         # if there are any tokens left save them
         if len(tks) > 0:
             self.rem_tks = tks  # save extra tokens
+
+    @property
+    def __doc__(self):
+        return unicode(self.docstring)
+
+    @property
+    def __module__(self):
+        return self.module
 
     def getter(self, name, *defargs):
         if name == '__name__':
@@ -656,6 +683,14 @@ class MatClass(MatMixin, MatObject):
             idx += 1  # end of class attributes
         return attr_dict, idx
 
+    @property
+    def __module__(self):
+        return self.module
+
+    @property
+    def __doc__(self):
+        return unicode(self.docstring)
+
     def getter(self, name, *defargs):
         """
         :class:`MatClass` ``getter`` method to get attributes.
@@ -688,6 +723,10 @@ class MatProperty(MatObject):
         self.default = attrs['default']
         self.docstring = attrs['docstring']
 
+    @property
+    def __doc__(self):
+        return unicode(self.docstring)
+
 
 class MatMethod(MatFunction):
     def __init__(self, modname, tks, cls, attrs):
@@ -703,6 +742,14 @@ class MatMethod(MatFunction):
         self.rem_tks = None
         return len_meth
 
+    @property
+    def __module__(self):
+        return self.module
+
+    @property
+    def __doc__(self):
+        return unicode(self.docstring)
+
 
 class MatScript(MatObject):
     def __init__(self, name, path, tks):
@@ -711,6 +758,10 @@ class MatScript(MatObject):
         self.tks = tks
         self.docstring = ''
 
+    @property
+    def __doc__(self):
+        return unicode(self.docstring)
+
 
 class MatException(MatObject):
     def __init__(self, name, path, tks):
@@ -718,3 +769,7 @@ class MatException(MatObject):
         self.path = path
         self.tks = tks
         self.docstring = ''
+
+    @property
+    def __doc__(self):
+        return unicode(self.docstring)

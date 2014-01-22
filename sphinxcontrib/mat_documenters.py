@@ -177,6 +177,16 @@ class MatFunctionDocumenter(MatModuleLevelDocumenter, PyFunctionDocumenter):
     def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatFunction)
 
+    def format_args(self):
+        if self.object.args:
+            argspec = inspect.ArgSpec(self.object.args, None, None, None)
+        else:
+            return None
+        args = inspect.formatargspec(*argspec)
+        # escape backslashes for reST
+        args = args.replace('\\', '\\\\')
+        return args
+
 
 class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
     """
@@ -251,6 +261,15 @@ class MatMethodDocumenter(MatClassLevelDocumenter, PyMethodDocumenter):
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatMethod)
+
+    def format_args(self):
+        if self.object.args:
+            argspec = inspect.ArgSpec(self.object.args, None, None, None)
+        else:
+            return None
+        if argspec[0] and argspec[0][0] in ('obj', ):
+            del argspec[0][0]
+        return inspect.formatargspec(*argspec)
 
 
 class MatAttributeDocumenter(MatClassLevelDocumenter, PyAttributeDocumenter):
