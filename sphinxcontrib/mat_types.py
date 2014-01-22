@@ -16,31 +16,12 @@ from copy import copy
 from pygments.lexers import MatlabLexer
 from pygments.token import Token
 
-# =============================================================================
-# XXX: :meth:`getter` methods must return a single object **not** a tuple in
-# order for :meth:`sphinx.ext.autodoc.Documenter.get_real_modname()` to work,
-# since it only passes ``None`` as its ``defarg`` which if returned from
-# :meth:`getter` as ``defarg`` becomes ``(None, )``. ``None`` is the correct
-# return, which due to boolean implication becomes False, so the second
-# condition of the or statement, ``self.modname`` is returned instead. This is
-# important because this is called in
-# :meth:`sphinx.ext.autodoc.Documenter.generate()` and passed to the
-# :class:`sphinx.pycode.ModuleAnalyzer` which in turn calls
-# :func:`sphinx.util.get_module_source()` which tries to import it, which
-# luckily works because hopefully it's already been imported as a
-# :class:`MatObject`.
-# =============================================================================
+# TODO: use `self.tokens.pop()` instead of idx += 1, see MatFunction
 
-# TODO: try using self.tokens.pop? instead of idx += 1 ???
-# XXX: cool snippet: `zip((Token.Text,) * 2, (' ', '\t'))`
-# returns `[(Token.Text, ' '), (Token.Text, '\t')]`
-
-# TODO: use type() or metaclasses instead of classes for mock python objects
-# Does this make enough sense to do? EG how would you implement functions,
-# there are no metafunctions methods AFAIK. Also for classes, only class
-# attributes can be defined easily, which implementing an __init__() attribute
-# as well, seems like a lot more work. Updating __module__, __name__ and/or
-# works just as well and is a lot easier.
+# XXX: Don't use `type()` or metaclasses. Not trivial to create metafunctions.
+# also special attributes are not required because `getter()` methods are used
+# instead. EG: `__doc__` is not `MatObject.__doc__`, instead it's actually
+# `instance_of_MatObject.getter('__doc__')
 
 # create some MATLAB objects
 # TODO: +packages & @class folders
@@ -56,19 +37,13 @@ class MatObject(object):
 
     MATLAB objects can be :class:`MatModule`, :class:`MatFunction` or
     :class:`MatClass`. :class:`MatModule` are just folders that define a psuedo
-    namespace for :class:`MatFunction` and :class:`MatClass` on that path.
+    namespace for :class:`MatFunction` and :class:`MatClass` in that folder.
     :class:`MatFunction` and :class:`MatClass` must begin with either
-    ``function`` or ``classdef`` keywords. A :class:`MatObject` can be anywhere
-    on the path of the :class:`MatModule`; it does not need to be in the
-    top-level of the :class:`MatModule`.
+    ``function`` or ``classdef`` keywords.
     """
     def __init__(self, name):
         #: name of MATLAB object
         self.name = name
-
-    @property
-    def __name__(self):
-        return self.name
 
     def __repr__(self):
         # __str__() method not required, if not given, then __repr__() used
@@ -92,11 +67,12 @@ class MatObject(object):
 
         Assumes that object is contained in a folder described by a namespace
         composed of modules and packages connected by dots, and that the top-
-        level module or package is in ``basedir``. For example:
-        ``SimEng.models.SimEng`` represents either a folder
-        ``basedir/SimEng/models/Simeng`` or an mfile
-        ``basedir/SimEng/models/Simeng.m``. If there both is a folder and an
-        mfile with the same name, the folder is matlabified, not the mfile.
+        level module or package is in the Sphinx config value ``basedir``. For
+        example: ``my_project.my_package.sub_pkg.MyClass`` represents either a
+        folder ``basedir/my_project/my_package/sub_pkg/MyClass`` or an mfile
+        ``basedir/my_project/my_package/sub_pkg/MyClass.m``. If there both is a
+        folder and an mfile with the same name, the folder is takes precedence
+        over the mfile.
         """
         # no object name given
         if not objname:
@@ -172,22 +148,6 @@ class MatModule(MatObject):
         self.package = package
         # add module to system dictionary
         sys.modules[name] = self
-
-    @property
-    def __doc__(self):
-        return None
-
-    @property
-    def __path__(self):
-        return [self.path]
-
-    @property
-    def __file__(self):
-        return self.path
-
-    @property
-    def __package__(self):
-        return self.package
 
     def getter(self, name, *defargs):
         """
@@ -413,14 +373,6 @@ class MatFunction(MatObject):
         # if there are any tokens left save them
         if len(tks) > 0:
             self.rem_tks = tks  # save extra tokens
-
-    @property
-    def __doc__(self):
-        return unicode(self.docstring)
-
-    @property
-    def __module__(self):
-        return self.module
 
     def getter(self, name, *defargs):
         if name == '__name__':
@@ -704,14 +656,6 @@ class MatClass(MatMixin, MatObject):
             idx += 1  # end of class attributes
         return attr_dict, idx
 
-    @property
-    def __module__(self):
-        return self.module
-
-    @property
-    def __doc__(self):
-        return unicode(self.docstring)
-
     def getter(self, name, *defargs):
         """
         :class:`MatClass` ``getter`` method to get attributes.
@@ -744,10 +688,6 @@ class MatProperty(MatObject):
         self.default = attrs['default']
         self.docstring = attrs['docstring']
 
-    @property
-    def __doc__(self):
-        return unicode(self.docstring)
-
 
 class MatMethod(MatFunction):
     def __init__(self, modname, tks, cls, attrs):
@@ -763,14 +703,6 @@ class MatMethod(MatFunction):
         self.rem_tks = None
         return len_meth
 
-    @property
-    def __module__(self):
-        return self.module
-
-    @property
-    def __doc__(self):
-        return unicode(self.docstring)
-
 
 class MatScript(MatObject):
     def __init__(self, name, path, tks):
@@ -779,10 +711,6 @@ class MatScript(MatObject):
         self.tks = tks
         self.docstring = ''
 
-    @property
-    def __doc__(self):
-        return unicode(self.docstring)
-
 
 class MatException(MatObject):
     def __init__(self, name, path, tks):
@@ -790,7 +718,3 @@ class MatException(MatObject):
         self.path = path
         self.tks = tks
         self.docstring = ''
-
-    @property
-    def __doc__(self):
-        return unicode(self.docstring)
