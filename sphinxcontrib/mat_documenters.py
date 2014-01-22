@@ -211,7 +211,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
     def format_args(self):
         # for classes, the relevant signature is the "constructor" method,
         # which has the same name as the class definition
-        initmeth = self.get_attr(self.object, self.name, None)
+        initmeth = self.get_attr(self.object, self.object.name, None)
         # classes without constructor method, default constructor or
         # constructor written in C?
         if initmeth is None or not isinstance(initmeth, MatMethod):
@@ -231,9 +231,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
         # get constructor method signature from docstring
         if self.env.config.autodoc_docstring_signature:
             # only act if the feature is enabled
-            init_doc = MatMethodDocumenter(self.directive, self.name)
-            init_doc.object = self.get_attr(self.object, self.name, None)
-            init_doc.objpath = [self.name]
+            init_doc = MatMethodDocumenter(self.directive, self.object.name)
+            init_doc.object = self.get_attr(self.object, self.object.name, None)
+            init_doc.objpath = [self.object.name]
             result = init_doc._find_signature()
             if result is not None:
                 # use args only for Class signature
@@ -255,6 +255,46 @@ class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
                          for b, v in self.object.__bases__.iteritems()]
                 self.add_line(_(u'   Bases: %s') % ', '.join(bases),
                               '<autodoc>')
+
+    def get_doc(self, encoding=None, ignore=1):
+        content = self.env.config.autoclass_content
+
+        docstrings = []
+        attrdocstring = self.get_attr(self.object, '__doc__', None)
+        if attrdocstring:
+            docstrings.append(attrdocstring)
+
+        # for classes, what the "docstring" is can be controlled via a
+        # config value; the default is only the class docstring
+        if content in ('both', 'init'):
+            # get __init__ method document from __init__.__doc__
+            if self.env.config.autodoc_docstring_signature:
+                # only act if the feature is enabled
+                init_doc = MatMethodDocumenter(self.directive, self.object.name)
+                init_doc.object = self.get_attr(self.object, self.object.name,
+                                                None)
+                init_doc.objpath = [self.object.name]
+                init_doc._find_signature()  # this effects to get_doc() result
+                initdocstring = '\n'.join(
+                    ['\n'.join(l) for l in init_doc.get_doc(encoding)])
+            else:
+                initdocstring = self.get_attr(
+                    self.get_attr(self.object, self.object.name, None),
+                    '__doc__')
+            # for new-style classes, no __init__ means default __init__
+            if initdocstring == object.__init__.__doc__:
+                initdocstring = None
+            if initdocstring:
+                if content == 'init':
+                    docstrings = [initdocstring]
+                else:
+                    docstrings.append(initdocstring)
+        doc = []
+        for docstring in docstrings:
+            if not isinstance(docstring, unicode):
+                docstring = force_decode(docstring, encoding)
+            doc.append(prepare_docstring(docstring))
+        return doc
 
 
 class MatExceptionDocumenter(MatlabDocumenter, PyExceptionDocumenter):

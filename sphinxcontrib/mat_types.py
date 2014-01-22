@@ -738,7 +738,7 @@ class MatClass(MatMixin, MatObject):
         elif name == '__module__':
             return self.module
         elif name == '__bases__':
-            return self.bases
+            return self.__bases__
         elif name in self.properties:
             return MatProperty(name, self.__class__, self.properties[name])
         elif name in self.methods:
