@@ -202,19 +202,15 @@ class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
         # for classes, the relevant signature is the "constructor" method,
         # which has the same name as the class definition
         initmeth = self.get_attr(self.object, self.name, None)
-        # classes without __init__ method, default __init__ or
-        # __init__ written in C?
-        if initmeth is None or \
-               is_builtin_class_method(self.object, self.name) or \
-               not(inspect.ismethod(initmeth) or inspect.isfunction(initmeth)):
+        # classes without constructor method, default constructor or
+        # constructor written in C?
+        if initmeth is None or not isinstance(initmeth, MatMethod):
             return None
-        try:
-            argspec = getargspec(initmeth)
-        except TypeError:
-            # still not possible: happens e.g. for old-style classes
-            # with __init__ in C
+        if initmeth.args:
+            argspec = inspect.ArgSpec(initmeth.args, None, None, None)
+        else:
             return None
-        if argspec[0] and argspec[0][0] in ('cls', 'self'):
+        if argspec[0] and argspec[0][0] in ('obj', ):
             del argspec[0][0]
         return inspect.formatargspec(*argspec)
 

@@ -1,6 +1,10 @@
 function [o1, o2, o3] = myfun(a1, a2)
-%MYFUN a fun function
-%   [O1, O2, O3] = MYFUN(A1, A2) returns O given A
+% a fun function
+%
+% :param a1: the first input
+% :param a2: another input
+% :returns: ``[o1, o2, o3]`` some outputs
+
 if nargin<1
   a1 = 0;
 end

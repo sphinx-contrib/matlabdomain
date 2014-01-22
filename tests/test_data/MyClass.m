@@ -1,16 +1,22 @@
 classdef MyClass < handle
-    %MYCLASS test class methods
-    % MC = MYCLASS(A) returns an instance MC of MYCLASS with property A.
+    % test class methods
+    %
+    % :param a: the input to :class:`MyClass`
+
     properties
         a % a property
     end
+
     methods
         function mc = MyClass(a)
             mc.a = a
         end
+
         function c = mymethod(obj, b)
-        %MYMETHOD a method in MYCLASS
-        % C = MYMETHOD(OBJ, B) does stuff
+        % a method in MYCLASS
+        %
+        % :param b: an input to :meth:`mymethod`
+
             for n = 1:10
                 if n > 5
                     c = obj.a + b
@@ -19,5 +25,7 @@ classdef MyClass < handle
                 end
             end
         end
+
     end
+
 end

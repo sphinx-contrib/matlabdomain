@@ -17,7 +17,7 @@ Tests:
 
 .. _test-data:
 
-test_data
+Test Data
 ^^^^^^^^^
 This is the test data module
 
@@ -27,23 +27,23 @@ This is the test data module
 
 .. _MyHandleClass:
 
-MyHandleClass
-+++++++++++++
+My Handle Class
++++++++++++++++
 Does this work?
 
 .. autoclass:: MyHandleClass
 
 .. _MyAbstractClass:
 
-MyAbstractClass
-+++++++++++++++
+My Abstract Class
++++++++++++++++++
 Does this work?
 
 .. autoclass:: MyAbstractClass
 
 .. _myfun:
 
-myfun
+my fun
 ++++++
 Do these work?
 
@@ -51,16 +51,16 @@ Do these work?
 
 .. _MyClass:
 
-MyClass
-+++++++
+My Class
+++++++++
 How about this?
 
 .. autoclass:: MyClass
 
 .. _mymethod:
 
-mymethod
-++++++++
+my method
++++++++++
 How about this too?
 
 .. automethod:: MyClass.mymethod
