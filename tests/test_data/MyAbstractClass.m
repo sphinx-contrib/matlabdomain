@@ -1,4 +1,4 @@
-classdef (Abstract = true, Sealed) MyAbstractClass
+classdef (Abstract = true, Sealed) MyAbstractClass < MyHandleClass & MyClass
 	% an abstract class
     %
 	% :param y: a variable

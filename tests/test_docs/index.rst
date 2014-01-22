@@ -32,6 +32,7 @@ My Handle Class
 Does this work?
 
 .. autoclass:: MyHandleClass
+    :show-inheritance:
 
 .. _MyAbstractClass:
 
@@ -40,6 +41,7 @@ My Abstract Class
 Does this work?
 
 .. autoclass:: MyAbstractClass
+    :show-inheritance:
 
 .. _myfun:
 
@@ -56,6 +58,7 @@ My Class
 How about this?
 
 .. autoclass:: MyClass
+    :show-inheritance:
 
 .. _mymethod:
 

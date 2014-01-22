@@ -53,7 +53,9 @@ class MatObject(object):
         return '<%s: "%s">' % (self.__class__.__name__, self.name)
 
     def getter(self, name, *defargs):
-        if len(defargs) == 1:
+        if name == '__name__':
+            return self.name
+        elif len(defargs) == 1:
             return defargs[0]
         else:
             return defargs
@@ -73,8 +75,8 @@ class MatObject(object):
         level module or package is in the Sphinx config value ``basedir``. For
         example: ``my_project.my_package.sub_pkg.MyClass`` represents either a
         folder ``basedir/my_project/my_package/sub_pkg/MyClass`` or an mfile
-        ``basedir/my_project/my_package/sub_pkg/MyClass.m``. If there both is a
-        folder and an mfile with the same name, the folder is takes precedence
+        ``basedir/my_project/my_package/sub_pkg/MyClass.m``. If there is both a
+        folder and an mfile with the same name, the folder takes precedence
         over the mfile.
         """
         # no object name given
@@ -135,7 +137,7 @@ class MatModule(MatObject):
     All MATLAB modules are packages. A package is a folder that serves as the
     namespace for any :class:`MatObjects` in the package folder. Sphinx will
     treats objects without a namespace as builtins, so all MATLAB projects
-    should be package in a folder so that they will have a namespace. This
+    should be packaged in a folder so that they will have a namespace. This
     can also be accomplished by using the MATLAB +folder package scheme.
 
     :param name: Name of :class:`MatObject`.
@@ -175,7 +177,7 @@ class MatModule(MatObject):
         if name == '__name__':
             return self.name
         elif name == '__doc__':
-            return ''
+            return None
         elif name == '__file__':
             return self.path
         elif name == '__path__':
@@ -691,6 +693,40 @@ class MatClass(MatMixin, MatObject):
     def __doc__(self):
         return unicode(self.docstring)
 
+    @property
+    def __bases__(self):
+        bases_ = dict.fromkeys(self.bases)
+        mod = sys.modules[self.module]
+        pkg = mod.package.split('.')  # list of object paths in package
+        # basedir is portion of path minus the package
+        basedir = mod.path.rsplit(os.sep, len(pkg))  # split path
+        basedir = basedir[0]  # MATLAB base src folder
+        for root, dirs, files in os.walk(basedir):
+            # don't visit vcs directories
+            for vcs in ['.git', '.hg', '.svn']:
+                if vcs in dirs:
+                    dirs.remove(vcs)
+            # only visit mfiles
+            for f in tuple(files):
+                if not f.endswith('.m'):
+                    files.remove(f)
+            # serach folders
+            for b in self.bases:
+                for m in dirs:
+                    if m not in sys.modules:
+                        continue
+                    b_ = sys.modules[m].getter(b)
+                    if b_:
+                        bases_[b] = b_
+                        break
+                if bases_[b]: continue
+                if b + '.m' in files:
+                    mfile = os.path.join(root, b) + '.m'
+                    return MatObject.parse_mfile(mfile, b, root)
+            # keep walking tree
+        # no matching folders or mfiles
+        return bases_
+
     def getter(self, name, *defargs):
         """
         :class:`MatClass` ``getter`` method to get attributes.
@@ -701,6 +737,8 @@ class MatClass(MatMixin, MatObject):
             return unicode(self.docstring)
         elif name == '__module__':
             return self.module
+        elif name == '__bases__':
+            return self.bases
         elif name in self.properties:
             return MatProperty(name, self.__class__, self.properties[name])
         elif name in self.methods:

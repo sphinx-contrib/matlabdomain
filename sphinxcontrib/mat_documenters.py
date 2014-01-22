@@ -241,6 +241,21 @@ class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
 
         return MatModuleLevelDocumenter.format_signature(self)
 
+    def add_directive_header(self, sig):
+        if self.doc_as_attr:
+            self.directivetype = 'attribute'
+        Documenter.add_directive_header(self, sig)
+
+        # add inheritance info, if wanted
+        if not self.doc_as_attr and self.options.show_inheritance:
+            self.add_line(u'', '<autodoc>')
+            if len(self.object.__bases__):
+                bases = [not v and u':class:`%s`' % b or
+                         u':class:`%s.%s`' % (v.__module__, b)
+                         for b, v in self.object.__bases__.iteritems()]
+                self.add_line(_(u'   Bases: %s') % ', '.join(bases),
+                              '<autodoc>')
+
 
 class MatExceptionDocumenter(MatlabDocumenter, PyExceptionDocumenter):
 

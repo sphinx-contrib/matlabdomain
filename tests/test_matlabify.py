@@ -38,7 +38,7 @@ def test_matlabify_class():
     ok_(isinstance(my_abc, doc.MatClass))
     eq_(my_abc.getter('__name__'), 'MyAbstractClass')
     eq_(my_abc.getter('__module__'), 'test_data')
-    eq_(my_abc.bases, [])
+    eq_(my_abc.bases, [u'MyHandleClass', 'MyClass'])
     eq_(my_abc.attrs, {'Abstract': True, 'Sealed': True})
     eq_(my_abc.properties,
         {'y': {'default': None,
@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
     print '\nx property: %s' % x
     print 'x default: %s' % x.default
-    print 'x docstring: %s' % x.getter('__doc__')
+    print 'x docstring: %s' % x.__doc__
     print 'x attrs: %s' % x.attrs
    
     print '\nclass: %s' % my_abc
@@ -112,12 +112,12 @@ if __name__ == '__main__':
     print 'docstring:\n%s' % my_abc.docstring
 
     print '\ny property: %s' % y
-    print 'y docstring: %s' % y.getter('__doc__')
+    print 'y docstring: %s' % y.__doc__
     print 'y default: %s' % y.default
     print 'y attrs: %s' % y.attrs
     print 'version property: %s' % version
     print 'version default: %s' % version.default
-    print 'version docstring: %s' % version.getter('__doc__')
+    print 'version docstring: %s' % version.__doc__
     print 'version attrs: %s' % version.attrs
     print '\n'
 
