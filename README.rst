@@ -8,15 +8,18 @@ Use `Pip <http://www.pip-installer.org/en/latest/index.html>`_,
 
 Pip::
 
-   ~$ pip sphinxcontrib-matlabdomain
+   ~$ pip install -U sphinxcontrib-matlabdomain
 
 Easy Install::
 
-    ~$ easy_install sphinxcontrib-matlabdomain
+    ~$ easy_install -U sphinxcontrib-matlabdomain
 
 Distutils::
 
-    ~/downloads/sphinxcontrib_matlabdomain$ python setup install
+    ~/downloads$ curl https://pypi.python.org/packages/source/s/sphinxcontrib-matlabdomain/sphinxcontrib-matlabdomain-0.2.zip
+    ~/downloads$ tar -xf sphinxcontrib-matlabdomain-0.2.zip
+    ~/downloads$ cd sphinxcontrib_matlabdomain-0.2
+    ~/downloads/sphinxcontrib_matlabdomain-0.2$ python setup.py install
 
 Usage
 =====
@@ -78,12 +81,12 @@ There are also several config values that can be set in ``conf.py`` that will
 affect auto-docementation.
 
 * ``autoclass_content`` can be set to ``class``, ``both`` or ``init``, which
-    determines which docstring is used for classes. The constructor docstring
-    is used when this is set to ``init``.
+  determines which docstring is used for classes. The constructor docstring
+  is used when this is set to ``init``.
 * ``autodoc_member_order`` can be set to ``alphabetical``, ``groupwise`` or
-    ``bysource``.
+  ``bysource``.
 * ``autodoc_default_flags`` can be set to a list of options to apply. Use
-    the ``no-flag`` directive option to disable this config value once.
+  the ``no-flag`` directive option to disable this config value once.
 
 .. note::
 
