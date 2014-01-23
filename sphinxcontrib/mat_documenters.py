@@ -40,8 +40,6 @@ from sphinx.ext.autodoc import py_ext_sig_re as mat_ext_sig_re, \
     ExceptionDocumenter as PyExceptionDocumenter, \
     DataDocumenter as PyDataDocumenter, \
     MethodDocumenter as PyMethodDocumenter, \
-    AttributeDocumenter as PyAttributeDocumenter, \
-    InstanceAttributeDocumenter as PyInstanceAttributeDocumenter, \
     AutoDirective
 
 from mat_types import MatObject, MatModule, MatFunction, MatClass, \
@@ -500,7 +498,62 @@ class MatClassLevelDocumenter(MatlabDocumenter):
         return modname, parents + [base]
 
 
-class MatFunctionDocumenter(MatModuleLevelDocumenter, PyFunctionDocumenter):
+class MatDocstringSignatureMixin(object):
+    """
+    Mixin for FunctionDocumenter and MethodDocumenter to provide the
+    feature of reading the signature from the docstring.
+    """
+
+    def _find_signature(self, encoding=None):
+        docstrings = MatlabDocumenter.get_doc(self, encoding)
+        if len(docstrings) != 1:
+            return
+        doclines = docstrings[0]
+        setattr(self, '__new_doclines', doclines)
+        if not doclines:
+            return
+        # match first line of docstring against signature RE
+        match = mat_ext_sig_re.match(doclines[0])
+        if not match:
+            return
+        exmod, path, base, args, retann = match.groups()
+        # the base name must match ours
+        if not self.objpath or base != self.objpath[-1]:
+            return
+        # re-prepare docstring to ignore indentation after signature
+        docstrings = MatlabDocumenter.get_doc(self, encoding, 2)
+        doclines = docstrings[0]
+        # ok, now jump over remaining empty lines and set the remaining
+        # lines as the new doclines
+        i = 1
+        while i < len(doclines) and not doclines[i].strip():
+            i += 1
+        setattr(self, '__new_doclines', doclines[i:])
+        return args, retann
+
+    def get_doc(self, encoding=None, ignore=1):
+        lines = getattr(self, '__new_doclines', None)
+        if lines is not None:
+            return [lines]
+        return MatlabDocumenter.get_doc(self, encoding, ignore)
+
+    def format_signature(self):
+        if self.args is None and self.env.config.autodoc_docstring_signature:
+            # only act if a signature is not explicitly given already, and if
+            # the feature is enabled
+            result = self._find_signature()
+            if result is not None:
+                self.args, self.retann = result
+        return MatlabDocumenter.format_signature(self)
+
+
+class MatFunctionDocumenter(MatDocstringSignatureMixin,
+                            MatModuleLevelDocumenter):
+    """
+    Specialized Documenter subclass for functions.
+    """
+    objtype = 'function'
+    member_order = 30
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
@@ -516,11 +569,23 @@ class MatFunctionDocumenter(MatModuleLevelDocumenter, PyFunctionDocumenter):
         args = args.replace('\\', '\\\\')
         return args
 
+    def document_members(self, all_members=False):
+        pass
 
-class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
+
+class MatClassDocumenter(MatModuleLevelDocumenter):
     """
     Specialized Documenter subclass for classes.
     """
+    objtype = 'class'
+    member_order = 20
+    option_spec = {
+        'members': members_option, 'undoc-members': bool_option,
+        'noindex': bool_option, 'inherited-members': bool_option,
+        'show-inheritance': bool_option, 'member-order': identity,
+        'exclude-members': members_set_option,
+        'private-members': bool_option, 'special-members': members_option,
+    }
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
@@ -625,6 +690,22 @@ class MatClassDocumenter(MatModuleLevelDocumenter, PyClassDocumenter):
             doc.append(prepare_docstring(docstring))
         return doc
 
+    def add_content(self, more_content, no_docstring=False):
+        if self.doc_as_attr:
+            classname = safe_getattr(self.object, '__name__', None)
+            if classname:
+                content = ViewList(
+                    [_('alias of :class:`%s`') % classname], source='')
+                MatModuleLevelDocumenter.add_content(self, content,
+                                                  no_docstring=True)
+        else:
+            MatModuleLevelDocumenter.add_content(self, more_content)
+
+    def document_members(self, all_members=False):
+        if self.doc_as_attr:
+            return
+        MatModuleLevelDocumenter.document_members(self, all_members)
+
 
 class MatExceptionDocumenter(MatlabDocumenter, PyExceptionDocumenter):
 
@@ -640,11 +721,27 @@ class MatDataDocumenter(MatModuleLevelDocumenter, PyDataDocumenter):
         return isinstance(member, MatScript)
 
 
-class MatMethodDocumenter(MatClassLevelDocumenter, PyMethodDocumenter):
+class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
+    """
+    Specialized Documenter subclass for methods (normal, static and class).
+    """
+    objtype = 'method'
+    member_order = 50
+    priority = 1  # must be more than FunctionDocumenter
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatMethod)
+
+    def import_object(self):
+        ret = MatClassLevelDocumenter.import_object(self)
+        if self.object.attrs.get('Static'):
+            self.directivetype = 'staticmethod'
+            # document class and static members before ordinary ones
+            self.member_order = self.member_order - 1
+        else:
+            self.directivetype = 'method'
+        return ret
 
     def format_args(self):
         if self.object.args:
@@ -654,6 +751,9 @@ class MatMethodDocumenter(MatClassLevelDocumenter, PyMethodDocumenter):
         if argspec[0] and argspec[0][0] in ('obj', ):
             del argspec[0][0]
         return inspect.formatargspec(*argspec)
+
+    def document_members(self, all_members=False):
+        pass
 
 
 class MatAttributeDocumenter(MatClassLevelDocumenter):
@@ -669,17 +769,6 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
     # some non-data descriptors as methods
     priority = 10
 
-    method_types = (FunctionType, BuiltinFunctionType, MethodType)
-
-    # @classmethod
-    # def can_document_member(cls, member, membername, isattr, parent):
-    #     isdatadesc = isdescriptor(member) and not \
-    #                  isinstance(member, cls.method_types) and not \
-    #                  type(member).__name__ in ("type", "method_descriptor")
-    #     return isdatadesc or (not isinstance(parent, ModuleDocumenter)
-    #                           and not inspect.isroutine(member)
-    #                           and not isinstance(member, class_types))
-
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatProperty) and member.attrs.get('Constant')
@@ -689,8 +778,10 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     def import_object(self):
         ret = MatClassLevelDocumenter.import_object(self)
-        if isdescriptor(self.object) and \
-               not isinstance(self.object, self.method_types):
+        # getset = self.object.name.split('_')
+        if (#getset[0] in ['get','set'] and
+            #getset[1:] in self.object.cls.propeties and
+            isinstance(self.object, MatMethod)):
             self._datadescriptor = True
         else:
             # if it's not a data descriptor
@@ -706,7 +797,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         if not self.options.annotation:
             if not self._datadescriptor:
                 try:
-                    objrepr = safe_repr(self.object)
+                    objrepr = safe_repr(self.object.default)  # display default
                 except ValueError:
                     pass
                 else:
@@ -718,10 +809,10 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                           '<autodoc>')
 
     def add_content(self, more_content, no_docstring=False):
-        if not self._datadescriptor:
-            # if it's not a data descriptor, its docstring is very probably the
-            # wrong thing to display
-            no_docstring = True
+        # if not self._datadescriptor:
+        #     # if it's not a data descriptor, its docstring is very probably the
+        #     # wrong thing to display
+        #     no_docstring = True
         MatClassLevelDocumenter.add_content(self, more_content, no_docstring)
 
 
@@ -748,14 +839,15 @@ class MatInstanceAttributeDocumenter(MatAttributeDocumenter):
                             not member.attrs.get('Constant'))
         return is_instance_attr
 
-    def import_object(self):
-        """Never import anything."""
-        # disguise as an attribute
-        self.objtype = 'attribute'
-        self._datadescriptor = False
-        return True
+    # def import_object(self):
+    #     """Never import anything."""
+    #     # disguise as an attribute
+    #     self.objtype = 'attribute'
+    #     self._datadescriptor = False
+    #     return True
 
     def add_content(self, more_content, no_docstring=False):
         """Never try to get a docstring from the object."""
-        MatAttributeDocumenter.add_content(self, more_content,
-                                           no_docstring=True)
+        # MatAttributeDocumenter.add_content(self, more_content,
+        #                                    no_docstring=True)
+        MatAttributeDocumenter.add_content(self, more_content, no_docstring)

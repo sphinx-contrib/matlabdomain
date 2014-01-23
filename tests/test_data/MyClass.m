@@ -6,14 +6,12 @@ classdef MyClass < handle
     properties
         a % a property
     end
-
     methods
         function mc = MyClass(a)
             mc.a = a
         end
-
         function c = mymethod(obj, b)
-        % a method in MYCLASS
+        % a method in :class:`MyClass`
         %
         % :param b: an input to :meth:`mymethod`
 
@@ -25,7 +23,5 @@ classdef MyClass < handle
                 end
             end
         end
-
     end
-
 end

@@ -633,7 +633,10 @@ class MatClass(MatMixin, MatObject):
                             idx += 1
                     # find methods
                     meth = MatMethod(self.module, self.tokens[idx:],
-                                     self.__class__, attr_dict)
+                                     self, attr_dict)
+                    # replace dot in get/set methods with underscore
+                    if meth.name.split('.')[0] in ['get','set']:
+                        meth.name = meth.name.replace('.', '_')
                     idx += meth.reset_tokens()  # reset method tokens and index
                     self.methods[meth.name] = meth  # update methods
                     idx += self._whitespace(idx)
@@ -770,7 +773,7 @@ class MatClass(MatMixin, MatObject):
         elif name == '__bases__':
             return self.__bases__
         elif name in self.properties:
-            return MatProperty(name, self.__class__, self.properties[name])
+            return MatProperty(name, self, self.properties[name])
         elif name in self.methods:
             return self.methods[name]
         elif name == '__dict__':

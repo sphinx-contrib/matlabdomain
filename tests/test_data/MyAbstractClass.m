@@ -7,17 +7,13 @@ classdef (Abstract = true, Sealed) MyAbstractClass < MyHandleClass & MyClass
     properties (Constant)
         version = '0.1.1-beta' % version
     end
-
     properties (SetAccess = private, GetAccess = private)
         %: one day this will work
         y % y variable
     end
-
     methods
         function abc = MyAbstractClass(y)
             abc.y = y
         end
-
     end
-
 end
