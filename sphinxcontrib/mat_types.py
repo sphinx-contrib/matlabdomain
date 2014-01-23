@@ -54,13 +54,13 @@ class MatObject(object):
 
     def getter(self, name, *defargs):
         if name == '__name__':
-            return self.name
+            return self.__name__
         elif len(defargs) == 1:
             return defargs[0]
         else:
             return defargs
 
-    @ staticmethod
+    @staticmethod
     def matlabify(basedir, objname):
         """
         Makes a MatObject.
@@ -107,8 +107,8 @@ class MatObject(object):
         :type mfile: str
         :param name: Name of :class:`MatObject`.
         :type name: str
-        :param modname: Name of module containing :class:`MatObject`.
-        :type modname: str
+        :param path: Path of module containing :class:`MatObject`.
+        :type path: str
         :returns: :class:`MatObject` that represents the type of mfile.
 
         Assumes that the first token in the file is either one of the keywords:
@@ -154,9 +154,37 @@ class MatModule(MatObject):
         # add module to system dictionary
         sys.modules[name] = self
 
+    def safe_getmembers(self):
+        results = []
+        for key in os.listdir(self.path):
+            # make full path
+            path = os.path.join(self.path, key)
+            # don't visit vcs directories
+            if os.path.isdir(path) and key in ['.git', '.hg', '.svn', '.bzr']:
+                continue
+            # only visit mfiles
+            if os.path.isfile(path) and not key.endswith('.m'):
+                continue
+            # trim file extension
+            if os.path.isfile(path):
+                key, _ = os.path.splitext(key)
+            if not results or key not in zip(*results)[0]:
+                value = self.getter(key, None)
+                if value:
+                    results.append((key, value))
+        results.sort()
+        return results
+
     @property
     def __doc__(self):
         return None
+
+    @property
+    def __all__(self):
+        results = self.safe_getmembers
+        if results:
+            results = zip(*self.safe_getmembers)[0]
+        return results
 
     @property
     def __path__(self):
@@ -175,15 +203,17 @@ class MatModule(MatObject):
         :class:`MatModule` ``getter`` method to get attributes.
         """
         if name == '__name__':
-            return self.name
+            return self.__name__
         elif name == '__doc__':
-            return None
+            return self.__doc__
+        elif name == '__all__':
+            return self.__all__
         elif name == '__file__':
-            return self.path
+            return self.__file__
         elif name == '__path__':
-            return [self.path]
+            return self.__path__
         elif name == '__package__':
-            return self.package
+            return self.__package__
         else:
             pkg = self.package.split('.')  # list of object paths in package
             # basedir is portion of path minus the package
@@ -405,11 +435,11 @@ class MatFunction(MatObject):
 
     def getter(self, name, *defargs):
         if name == '__name__':
-            return self.name
+            return self.__name__
         elif name == '__doc__':
-            return unicode(self.docstring)
+            return self.__doc__
         elif name == '__module__':
-            return self.module
+            return self.__module__
         else:
             super(MatFunction, self).getter(name, *defargs)
 
@@ -703,14 +733,14 @@ class MatClass(MatMixin, MatObject):
         basedir = basedir[0]  # MATLAB base src folder
         for root, dirs, files in os.walk(basedir):
             # don't visit vcs directories
-            for vcs in ['.git', '.hg', '.svn']:
+            for vcs in ['.git', '.hg', '.svn', '.bzr']:
                 if vcs in dirs:
                     dirs.remove(vcs)
             # only visit mfiles
             for f in tuple(files):
                 if not f.endswith('.m'):
                     files.remove(f)
-            # serach folders
+            # search folders
             for b in self.bases:
                 for m in dirs:
                     if m not in sys.modules:
@@ -732,11 +762,11 @@ class MatClass(MatMixin, MatObject):
         :class:`MatClass` ``getter`` method to get attributes.
         """
         if name == '__name__':
-            return self.name
+            return self.__name__
         elif name == '__doc__':
-            return unicode(self.docstring)
+            return self.__doc__
         elif name == '__module__':
-            return self.module
+            return self.__module__
         elif name == '__bases__':
             return self.__bases__
         elif name in self.properties:
@@ -746,7 +776,6 @@ class MatClass(MatMixin, MatObject):
         elif name == '__dict__':
             objdict = dict([(pn, self.getter(pn)) for pn in
                             self.properties.iterkeys()])
-            # objdict = {pn: self.getter(pn) for pn in self.properties.iterkeys()}
             objdict.update(self.methods)
             return objdict
         else:
@@ -811,3 +840,85 @@ class MatException(MatObject):
     @property
     def __doc__(self):
         return unicode(self.docstring)
+
+
+class MatcodeError(Exception):
+    def __str__(self):
+        res = self.args[0]
+        if len(self.args) > 1:
+            res += ' (exception was: %r)' % self.args[1]
+        return res
+
+
+class MatModuleAnalyzer(object):
+    # cache for analyzer objects -- caches both by module and file name
+    cache = {}
+
+    @classmethod
+    def for_folder(cls, dirname, modname):
+        if ('folder', dirname) in cls.cache:
+            return cls.cache['folder', dirname]
+        obj = cls(None, modname, dirname, True)
+        cls.cache['folder', dirname] = obj
+        return obj
+
+    @classmethod
+    def for_module(cls, modname):
+        if ('module', modname) in cls.cache:
+            entry = cls.cache['module', modname]
+            if isinstance(entry, MatcodeError):
+                raise entry
+            return entry
+        mod = sys.modules.get(modname)
+        if mod:
+            obj = cls.for_folder(mod.path, modname)
+        else:
+            err = MatcodeError('error importing %r' % modname)
+            cls.cache['module', modname] = err
+            raise err
+        cls.cache['module', modname] = obj
+        return obj
+
+    def __init__(self, source, modname, srcname, decoded=False):
+        # name of the module
+        self.modname = modname
+        # name of the source file
+        self.srcname = srcname
+        # file-like object yielding source lines
+        self.source = source
+        # cache the source code as well
+        self.encoding = None
+        self.code = None
+        # will be filled by tokenize()
+        self.tokens = None
+        # will be filled by parse()
+        self.parsetree = None
+        # will be filled by find_attr_docs()
+        self.attr_docs = None
+        self.tagorder = None
+        # will be filled by find_tags()
+        self.tags = None
+
+    def find_attr_docs(self, scope=''):
+        """Find class and module-level attributes and their documentation."""
+        if self.attr_docs is not None:
+            return self.attr_docs
+        attr_visitor_collected = {}
+        attr_visitor_tagorder = {}
+        tagnumber = 0
+        mod = sys.modules[self.modname]
+        # walk package tree
+        for k, v in mod.safe_getmembers():
+            attr_visitor_collected[mod.package, k] = v.docstring
+            attr_visitor_tagorder[k] = tagnumber
+            tagnumber += 1
+            if isinstance(v, MatClass):
+                for mk, mv in v.getter('__dict__').iteritems():
+                    namespace = '.'.join([mod.package, k])
+                    attr_visitor_collected[namespace, mk] = mv.docstring
+                    attr_visitor_tagorder[mk] = tagnumber
+                    tagnumber += 1
+        self.attr_docs = attr_visitor_collected
+        self.tagorder = attr_visitor_tagorder
+        return attr_visitor_collected
+
