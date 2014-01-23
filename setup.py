@@ -2,18 +2,17 @@
 
 from setuptools import setup, find_packages
 
-long_desc = '''
-This package contains the matlabdomain Sphinx extension.
+with open('README.rst', 'r') as f_readme:
+    long_desc = f_readme.read()
 
-.. add description here ..
-'''
+version = 0.2
 
 requires = ['Sphinx>=0.6']
 
 setup(
     name='sphinxcontrib-matlabdomain',
-    version='0.1',
-    url='http://bitbucket.org/birkenfeld/sphinx-contrib',
+    version=version,
+    url='http://bitbucket.org/bwanamarko/sphinx-contrib',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-matlabdomain',
     license='BSD',
     author='Mark Mikofski',
