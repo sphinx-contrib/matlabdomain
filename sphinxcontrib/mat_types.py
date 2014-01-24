@@ -10,6 +10,7 @@
 """
 
 import os
+import re
 import sys
 from copy import copy
 
@@ -40,6 +41,11 @@ class MatObject(object):
     :class:`MatFunction` and :class:`MatClass` must begin with either
     ``function`` or ``classdef`` keywords.
     """
+    basedir = None
+    sphinx_env = None
+    sphinx_app = None
+    sphinx_dbg = None
+
     def __init__(self, name):
         #: name of MATLAB object
         self.name = name
@@ -61,20 +67,19 @@ class MatObject(object):
             return defargs
 
     @staticmethod
-    def matlabify(basedir, objname):
+    def matlabify(objname):
         """
         Makes a MatObject.
 
-        :param basedir: Config value of ``matlab_src_dir``, path to source.
-        :type basedir: str
         :param objname: Name of object to matlabify without file extension.
         :type objname: str
 
         Assumes that object is contained in a folder described by a namespace
         composed of modules and packages connected by dots, and that the top-
-        level module or package is in the Sphinx config value ``basedir``. For
-        example: ``my_project.my_package.sub_pkg.MyClass`` represents either a
-        folder ``basedir/my_project/my_package/sub_pkg/MyClass`` or an mfile
+        level module or package is in the Sphinx config value ``matlab_src_dir``
+        which is stored locally as :attr:`MatObject.basedir`. For example:
+        ``my_project.my_package.sub_pkg.MyClass`` represents either a folder
+        ``basedir/my_project/my_package/sub_pkg/MyClass`` or an mfile
         ``basedir/my_project/my_package/sub_pkg/MyClass.m``. If there is both a
         folder and an mfile with the same name, the folder takes precedence
         over the mfile.
@@ -89,7 +94,7 @@ class MatObject(object):
         # separate path from file/folder name
         path, name = os.path.split(objname)
         # make a full path out of basedir and objname
-        fullpath = os.path.join(basedir, objname)  # fullpath to objname
+        fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
         # package folders imported over mfile with same name
         if os.path.isdir(fullpath):
             return MatModule(name, fullpath, package)  # import package
@@ -116,9 +121,16 @@ class MatObject(object):
         """
         # use Pygments to parse mfile to determine type: function/classdef
         # read mfile code
-        with open(mfile, 'r') as f:
-            code = f.read()
-        code = code.replace('...\n','')  # replace all ellipsis
+        with open(mfile, 'r') as code_f:
+            code = code_f.read()
+        # functions must be contained in one line, no ellipsis, classdef is OK
+        pat1 = r'(?P<p1>function[ \t]+)'  # "function" + 1 or more space/tabs
+        pat2 = r'(?P<p2>\[?\w+[ \t]*(?:,[ \t]*\w+)*\]?)'  # return values
+        pat3 = r'(?P<p3>[ \t]*=?[ \t]*)'  # equal sign
+        pat4 = r'(?P<p4>\w+)'  # name of function
+        pat5 = r'(?P<p5>\(\w+(?:,[ \t]*(?:...\n[ \t]*)?\w+)*\))'  # args
+        repl = lambda m: m.group().replace('...\n','')
+        code =  re.sub(''.join([pat1, pat2, pat3, pat4, pat5]), repl, code)
         tks = list(MatlabLexer().get_tokens(code))  # tokenenize code
         modname = path.replace(os.sep, '.')  # module name
         # assume that functions and classes always start with a keyword
@@ -149,10 +161,10 @@ class MatModule(MatObject):
         super(MatModule, self).__init__(name)
         #: Path to module on disk, path to package's __init__.py
         self.path = path
-        #: name of package (same as module)
+        #: name of package (full path from basedir to module)
         self.package = package
         # add module to system dictionary
-        sys.modules[name] = self
+        sys.modules[package] = self
 
     def safe_getmembers(self):
         results = []
@@ -215,11 +227,7 @@ class MatModule(MatObject):
         elif name == '__package__':
             return self.__package__
         else:
-            pkg = self.package.split('.')  # list of object paths in package
-            # basedir is portion of path minus the package
-            basedir = self.path.rsplit(os.sep, len(pkg))  # split path
-            basedir = basedir[0]  # MATLAB base src folder
-            attr = MatObject.matlabify(basedir, '.'.join([self.package, name]))
+            attr = MatObject.matlabify('.'.join([self.package, name]))
             if attr:
                 return attr
             else:
@@ -313,6 +321,7 @@ class MatFunction(MatObject):
     # MATLAB keywords that increment keyword-end pair count
     mat_kws = zip((Token.Keyword,) * 5,
                   ('if', 'while', 'for', 'switch', 'try'))
+    
     def __init__(self, name, modname, tokens):
         super(MatFunction, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
@@ -371,6 +380,8 @@ class MatFunction(MatObject):
             wht = tks.pop()
             if wht[0] is not Token.Text.Whitespace:
                 tks.append(wht)  # if not whitespace, put it back in list
+        elif retv[0] is Token.Name.Function:
+            tks.append(retv)
         # =====================================================================
         # function name
         func_name = tks.pop()
@@ -386,7 +397,11 @@ class MatFunction(MatObject):
         if tks.pop() == (Token.Punctuation, '('):
             args = tks.pop()
             if args[0] is Token.Text:
-                self.args = [arg.strip() for arg in args[1].split(',')]
+                self.args = [arg.strip() for arg in args[1].split(',')]\
+            # no arguments given
+            elif args == (Token.Punctuation, ')'):
+                tks.append(args)  # put closing parenthesis back in stack
+            # check if function args parsed correctly
             if tks.pop() != (Token.Punctuation, ')'):
                 raise TypeError('Token after outputs should be Punctuation.')
                 # TODO: raise an matlab token error or what?
@@ -407,17 +422,23 @@ class MatFunction(MatObject):
         # main body
         # find Keywords - "end" pairs
         kw = docstring  # last token
-        lastkw = ''  # set last keyword placeholder
+        lastkw = 0  # set last keyword placeholder
         kw_end = 1  # count function keyword
         while kw_end > 0:
+            # increment keyword-end pairs count
             if kw in MatFunction.mat_kws:
                 kw_end += 1
-            elif kw == (Token.Keyword, 'end'):
-                # don't decrement `end` used as index
-                if lastkw not in zip((Token.Punctuation,) * 2, (':', '(')):
-                    kw_end -= 1
+            # decrement keyword-end pairs count but
+            # don't decrement `end` if used as index
+            elif kw == (Token.Keyword, 'end') and not lastkw:
+                kw_end -= 1
+            # save last punctuation
+            elif kw in zip((Token.Punctuation,) * 2, ('(', '{')):
+                lastkw += 1
+            elif kw in zip((Token.Punctuation,) * 2, (')', '}')):
+                lastkw -= 1
             try:
-                lastkw, kw = kw, tks.pop()
+                kw = tks.pop()
             except IndexError:
                 break
         tks.append(kw)  # put last token back in list
@@ -589,6 +610,22 @@ class MatClass(MatMixin, MatObject):
                         prop_name = self.tokens[idx][1]
                         self.properties[prop_name] = {'attrs': attr_dict}
                         idx += 1
+                    # subtype of Name EG Name.Builtin used as Name
+                    elif self.tokens[idx][0] in Token.Name.subtypes:
+                        prop_name = self.tokens[idx][1]
+                        warn_msg = ' '.join(['[matlabify] WARNING %s.%s.%s is',
+                                             'a Builtin Name'])
+                        MatObject.sphinx_dbg(warn_msg, self.module, self.name,
+                                             prop_name)
+                        self.properties[prop_name] = {'attrs': attr_dict}
+                        idx += 1
+                    elif self._tk_eq(idx, (Token.Keyword, 'end')):
+                        idx += 1
+                        break
+                    # skip semicolon after property name, but no default
+                    elif self._tk_eq(idx, (Token.Punctuation, ';')):
+                        idx += 1
+                        continue
                     else:
                         raise TypeError('Expected property.')
                     idx += self._blanks(idx)  # skip blanks
@@ -599,14 +636,35 @@ class MatClass(MatMixin, MatObject):
                         idx += self._blanks(idx)  # skip blanks
                         # concatenate default value until newline or comment
                         default = ''
+                        # keep reading until newline or comment
                         while (self._tk_ne(idx, (Token.Text, '\n')) and
                                self.tokens[idx][0] is not Token.Comment):
-                            default += self.tokens[idx][1]
-                            idx += 1
+                            # default has an array spanning multiple lines
+                            if (self.tokens[idx] in
+                                zip((Token.Punctuation,) * 3,
+                                ('(', '{', '['))):
+                                default += self.tokens[idx][1]
+                                idx += 1
+                                # look for end of array
+                                while (self.tokens[idx] not in
+                                       zip((Token.Punctuation,) * 3,
+                                           (')', '}', ']'))):
+                                    tkcom = self.tokens[idx]
+                                    if (tkcom[0] is Token.Comment and
+                                        tkcom[1].startswith('...')):
+                                        idx += 1  # skip ellipsis comments
+                                        continue
+                                    default += self.tokens[idx][1]
+                                    idx += 1
+                                default += self.tokens[idx][1]
+                                idx += 1
+                            else:
+                                default += self.tokens[idx][1]
+                                idx += 1
                         if self.tokens[idx][0] is not Token.Comment:
                             idx += 1
                         if default:
-                            default = {'default': default.rstrip()}
+                            default = {'default': default.rstrip('; ')}
                     self.properties[prop_name].update(default)
                     docstring = {'docstring': None}
                     if self.tokens[idx][0] is Token.Comment:
@@ -728,13 +786,12 @@ class MatClass(MatMixin, MatObject):
 
     @property
     def __bases__(self):
-        bases_ = dict.fromkeys(self.bases)
-        mod = sys.modules[self.module]
-        pkg = mod.package.split('.')  # list of object paths in package
-        # basedir is portion of path minus the package
-        basedir = mod.path.rsplit(os.sep, len(pkg))  # split path
-        basedir = basedir[0]  # MATLAB base src folder
-        for root, dirs, files in os.walk(basedir):
+        bases_ = dict.fromkeys(self.bases)  # make copy of bases
+        num_pths = len(MatObject.basedir.split(os.sep))
+        # walk tree to find bases
+        for root, dirs, files in os.walk(MatObject.basedir):
+            # namespace defined by root, doesn't include basedir
+            root_mod = '.'.join(root.split(os.sep)[num_pths:])
             # don't visit vcs directories
             for vcs in ['.git', '.hg', '.svn', '.bzr']:
                 if vcs in dirs:
@@ -746,7 +803,8 @@ class MatClass(MatMixin, MatObject):
             # search folders
             for b in self.bases:
                 for m in dirs:
-                    if m not in sys.modules:
+                    # check if module has been matlabified already
+                    if '.'.join([root_mod, m]) not in sys.modules:
                         continue
                     b_ = sys.modules[m].getter(b)
                     if b_:
@@ -912,9 +970,10 @@ class MatModuleAnalyzer(object):
         mod = sys.modules[self.modname]
         # walk package tree
         for k, v in mod.safe_getmembers():
-            attr_visitor_collected[mod.package, k] = v.docstring
-            attr_visitor_tagorder[k] = tagnumber
-            tagnumber += 1
+            if hasattr(v, 'docstring'):
+                attr_visitor_collected[mod.package, k] = v.docstring
+                attr_visitor_tagorder[k] = tagnumber
+                tagnumber += 1
             if isinstance(v, MatClass):
                 for mk, mv in v.getter('__dict__').iteritems():
                     namespace = '.'.join([mod.package, k])

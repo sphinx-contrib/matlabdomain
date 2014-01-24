@@ -6,14 +6,14 @@ import json
 import os
 import sys
 
-DIRNAME = os.path.abspath(os.path.dirname(__file__))
+DIRNAME = doc.MatObject.basedir = os.path.abspath(os.path.dirname(__file__))
 
 def test_matlabify_class():
     """
     test matlabify classes
     """
     # test module
-    m = doc.MatObject.matlabify(DIRNAME, 'test_data')
+    m = doc.MatObject.matlabify('test_data')
     ok_(isinstance(m, doc.MatModule))
     eq_(m.getter('__name__'), 'test_data')
     eq_(m.getter('__path__')[0], os.path.join(DIRNAME, 'test_data'))
@@ -58,7 +58,7 @@ def test_function():
     test matlabify function
     """
     # test function
-    m = doc.MatObject.matlabify(DIRNAME, 'test_data')
+    m = doc.MatObject.matlabify('test_data')
     ok_(isinstance(m, doc.MatModule))
     myfun = m.getter('myfun')
     ok_(isinstance(myfun, doc.MatFunction))
@@ -73,7 +73,7 @@ def test_method():
     test matlabify methods
     """
     # test function
-    m = doc.MatObject.matlabify(DIRNAME, 'test_data')
+    m = doc.MatObject.matlabify('test_data')
     ok_(isinstance(m, doc.MatModule))
     my_cls_meth = m.getter('MyClass')
     ok_(isinstance(my_cls_meth, doc.MatClass))

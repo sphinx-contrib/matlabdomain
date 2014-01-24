@@ -63,12 +63,16 @@ class MatlabDocumenter(PyDocumenter):
         # get config_value with absolute path to MATLAB source files
         basedir = self.env.config.matlab_src_dir
         dbg = self.env.app.debug
+        MatObject.basedir = basedir  # set MatObject base directory
+        MatObject.sphinx_env = self.env  # pass env to MatObject cls
+        MatObject.sphinx_app = self.env.app  # pass app to MatObject cls
+        MatObject.sphinx_dbg = dbg  # pass dbg to MatObject cls
         if self.objpath:
             dbg('[autodoc] from %s import %s',
                 self.modname, '.'.join(self.objpath))
         try:
             dbg('[autodoc] import %s', self.modname)
-            MatObject.matlabify(basedir, self.modname)
+            MatObject.matlabify(self.modname)
             parent = None
             obj = self.module = sys.modules[self.modname]
             dbg('[autodoc] => %r', obj)
