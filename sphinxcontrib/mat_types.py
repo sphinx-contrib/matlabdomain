@@ -125,7 +125,7 @@ class MatObject(object):
             code = code_f.read()
         # functions must be contained in one line, no ellipsis, classdef is OK
         pat1 = r'(?P<p1>function[ \t]+)'  # "function" + 1 or more space/tabs
-        pat2 = r'(?P<p2>\[?\w+[ \t]*(?:,[ \t]*\w+)*\]?)'  # return values
+        pat2 = r'(?P<p2>\[?\w+[ \t]*(?:,[ \t]*(?:...\n[ \t]*)?\w+)*\]?)'  # return values
         pat3 = r'(?P<p3>[ \t]*=?[ \t]*)'  # equal sign
         pat4 = r'(?P<p4>\w+)'  # name of function
         pat5 = r'(?P<p5>\(\w+(?:,[ \t]*(?:...\n[ \t]*)?\w+)*\))'  # args
