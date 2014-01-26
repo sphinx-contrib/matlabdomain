@@ -1,7 +1,11 @@
-sphinxcontrib-matlabdomain-0.2.2 (2014-01-24)
-===========================================
+sphinxcontrib-matlabdomain-0.2.2 (2014-01-26)
+=============================================
 
 * fix ellipsis in function in output arg
+* fix bases getter method had no default, so crashing build
+* add catchall warning if getter fails and no default in MatObject.getter()
+* fix local path used to index sys.module, instead of full path, oops!
+* fix left-strip dot if in basedir, root_mod is '', so join yields ".test_data"
 
 
 sphinxcontrib-matlabdomain-0.2.1 (2014-01-24)

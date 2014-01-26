@@ -21,6 +21,10 @@ Distutils::
     ~/downloads$ cd sphinxcontrib_matlabdomain-0.2
     ~/downloads/sphinxcontrib_matlabdomain-0.2$ python setup.py install
 
+Requirements
+============
+This package is an extension to `Sphinx <http://sphinx-doc.org>`_.
+
 Usage
 =====
 In general usage is the same as for documenting Python code.

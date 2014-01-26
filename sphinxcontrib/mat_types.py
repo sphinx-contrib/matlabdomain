@@ -61,6 +61,10 @@ class MatObject(object):
     def getter(self, name, *defargs):
         if name == '__name__':
             return self.__name__
+        elif len(defargs) == 0:
+            warn_msg = '[matlabify] WARNING Attribute "%s" was not found in %s.'
+            MatObject.sphinx_dbg(warn_msg, name, self)
+            return None
         elif len(defargs) == 1:
             return defargs[0]
         else:
@@ -144,6 +148,7 @@ class MatObject(object):
         return None
 
 
+# TODO: get docstring and __all__ from contents.m if exists
 class MatModule(MatObject):
     """ 
     All MATLAB modules are packages. A package is a folder that serves as the
@@ -802,18 +807,21 @@ class MatClass(MatMixin, MatObject):
                     files.remove(f)
             # search folders
             for b in self.bases:
+                # search folders
                 for m in dirs:
                     # check if module has been matlabified already
-                    if '.'.join([root_mod, m]) not in sys.modules:
+                    mod = sys.modules.get('.'.join([root_mod, m]).lstrip('.'))
+                    if not mod:
                         continue
-                    b_ = sys.modules[m].getter(b)
+                    # check if base class is attr of module
+                    b_ = mod.getter(b, None)
                     if b_:
                         bases_[b] = b_
                         break
                 if bases_[b]: continue
                 if b + '.m' in files:
                     mfile = os.path.join(root, b) + '.m'
-                    return MatObject.parse_mfile(mfile, b, root)
+                    bases_[b] = MatObject.parse_mfile(mfile, b, root)
             # keep walking tree
         # no matching folders or mfiles
         return bases_
