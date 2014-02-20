@@ -47,8 +47,8 @@ Does this work?
 
 .. _myfun:
 
-my fun
-++++++
+my function
++++++++++++
 Do these work?
 
 .. autofunction:: myfun
@@ -70,6 +70,14 @@ my method
 How about this too?
 
 .. automethod:: MyClass.mymethod
+
+Ellipsis Properties
++++++++++++++++++++
+Some edge cases that have ellipsis inside arrays.
+
+.. autoclass:: EllipsisProperties
+    :show-inheritance:
+    :members:
 
 
 Indices and tables

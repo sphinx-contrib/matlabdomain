@@ -14,8 +14,16 @@ import re
 import sys
 from copy import copy
 
-from pygments.lexers import MatlabLexer
+# Pygments MatlabLexer is in pygments.lexers.math, but recommended way to load
+# is from lexers, which has LEXERS dictionary, which PyDev doesn't see.
+from pygments.lexers import MatlabLexer  # @UnresolvedImport
+# PyDev doesn't see Token methods and subtypes that are generated at runtime
 from pygments.token import Token
+
+MAT_DOM = 'MATLAB-domain'
+__all__ = ['MatObject', 'MatModule', 'MatFunction', 'MatClass',  \
+           'MatProperty', 'MatMethod', 'MatScript', 'MatException', \
+           'MatModuleAnalyzer', 'MAT_DOM']
 
 # TODO: use `self.tokens.pop()` instead of idx += 1, see MatFunction
 
@@ -27,7 +35,8 @@ from pygments.token import Token
 # TODO: +packages & @class folders
 # TODO: subfunctions (not nested) and private folders/functions/classes
 # TODO: script files
-# TODO: remove continuation dots "...\n" in all mfiles with 
+
+
 class MatObject(object):
     """
     Base MATLAB object to which all others are subclassed.
@@ -62,8 +71,8 @@ class MatObject(object):
         if name == '__name__':
             return self.__name__
         elif len(defargs) == 0:
-            warn_msg = '[matlabify] WARNING Attribute "%s" was not found in %s.'
-            MatObject.sphinx_dbg(warn_msg, name, self)
+            warn_msg = '[%s] WARNING Attribute "%s" was not found in %s.'
+            MatObject.sphinx_dbg(warn_msg, MAT_DOM, name, self)
             return None
         elif len(defargs) == 1:
             return defargs[0]
@@ -80,8 +89,9 @@ class MatObject(object):
 
         Assumes that object is contained in a folder described by a namespace
         composed of modules and packages connected by dots, and that the top-
-        level module or package is in the Sphinx config value ``matlab_src_dir``
-        which is stored locally as :attr:`MatObject.basedir`. For example:
+        level module or package is in the Sphinx config value
+        ``matlab_src_dir`` which is stored locally as
+        :attr:`MatObject.basedir`. For example:
         ``my_project.my_package.sub_pkg.MyClass`` represents either a folder
         ``basedir/my_project/my_package/sub_pkg/MyClass`` or an mfile
         ``basedir/my_project/my_package/sub_pkg/MyClass.m``. If there is both a
@@ -129,12 +139,13 @@ class MatObject(object):
             code = code_f.read()
         # functions must be contained in one line, no ellipsis, classdef is OK
         pat1 = r'(?P<p1>function[ \t]+)'  # "function" + 1 or more space/tabs
-        pat2 = r'(?P<p2>\[?\w+[ \t]*(?:,[ \t]*(?:...\n[ \t]*)?\w+)*\]?)'  # return values
+        # return values
+        pat2 = r'(?P<p2>\[?\w+[ \t]*(?:,[ \t]*(?:...\n[ \t]*)?\w+)*\]?)'
         pat3 = r'(?P<p3>[ \t]*=?[ \t]*)'  # equal sign
         pat4 = r'(?P<p4>\w+)'  # name of function
         pat5 = r'(?P<p5>\(\w+(?:,[ \t]*(?:...\n[ \t]*)?\w+)*\))'  # args
-        repl = lambda m: m.group().replace('...\n','')
-        code =  re.sub(''.join([pat1, pat2, pat3, pat4, pat5]), repl, code)
+        repl = lambda m: m.group().replace('...\n', '')
+        code = re.sub(''.join([pat1, pat2, pat3, pat4, pat5]), repl, code)
         tks = list(MatlabLexer().get_tokens(code))  # tokenenize code
         modname = path.replace(os.sep, '.')  # module name
         # assume that functions and classes always start with a keyword
@@ -150,7 +161,7 @@ class MatObject(object):
 
 # TODO: get docstring and __all__ from contents.m if exists
 class MatModule(MatObject):
-    """ 
+    """
     All MATLAB modules are packages. A package is a folder that serves as the
     namespace for any :class:`MatObjects` in the package folder. Sphinx will
     treats objects without a namespace as builtins, so all MATLAB projects
@@ -255,9 +266,11 @@ class MatMixin(object):
         """
         return (self.tokens[idx][0] is token[0] and
                 self.tokens[idx][1] == token[1])
+
     def _tk_ne(self, idx, token):
         """
-        Returns ``True`` if token keys are not the same or values are not equal.
+        Returns ``True`` if token keys are not the same or values are not
+        equal.
 
         :param idx: Index of token in :class:`MatObject`.
         :type idx: int
@@ -266,6 +279,7 @@ class MatMixin(object):
         """
         return (self.tokens[idx][0] is not token[0] or
                 self.tokens[idx][1] != token[1])
+
     def _eotk(self, idx):
         """
         Returns ``True`` if end of tokens is reached.
@@ -326,7 +340,7 @@ class MatFunction(MatObject):
     # MATLAB keywords that increment keyword-end pair count
     mat_kws = zip((Token.Keyword,) * 5,
                   ('if', 'while', 'for', 'switch', 'try'))
-    
+
     def __init__(self, name, modname, tokens):
         super(MatFunction, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
@@ -355,7 +369,7 @@ class MatFunction(MatObject):
         #  (Token.Punctuation, '('),  # opening parenthesis
         #  (Token.Text, 'a1, a2',  # if there are args, they're concatenated
         #  (Token.Punctuation, ')'),  # closing parenthesis
-        #  (Token.Text.Whitesapce, '\n')]  # all whitespace after args 
+        #  (Token.Text.Whitesapce, '\n')]  # all whitespace after args
         # XXX: Pygments does not tolerate MATLAB continuation ellipsis!
         tks = copy(self.tokens)  # make a copy of tokens
         tks.reverse()  # reverse in place for faster popping, stacks are LiLo
@@ -370,7 +384,7 @@ class MatFunction(MatObject):
             raise TypeError('Object is not a function. Expected a function.')
             # TODO: what is a better error here?
         # skip blanks and tabs
-        if tks.pop()[0] is not Token.Text.Whitespace:
+        if tks.pop()[0] is not Token.Text.Whitespace:  # @UndefinedVariable
             raise TypeError('Expected a whitespace after function keyword.')
             # TODO: what is a better error here?
         # =====================================================================
@@ -383,16 +397,16 @@ class MatFunction(MatObject):
                 # TODO: raise an matlab token error or what?
             # check for whitespace after equal sign
             wht = tks.pop()
-            if wht[0] is not Token.Text.Whitespace:
+            if wht[0] is not Token.Text.Whitespace:  # @UndefinedVariable
                 tks.append(wht)  # if not whitespace, put it back in list
-        elif retv[0] is Token.Name.Function:
+        elif retv[0] is Token.Name.Function:  # @UndefinedVariable
             tks.append(retv)
         # =====================================================================
         # function name
         func_name = tks.pop()
-        if func_name != (Token.Name.Function, self.name):
+        if func_name != (Token.Name.Function, self.name):  # @UndefinedVariable
             if isinstance(self, MatMethod):
-              self.name = func_name[1]
+                self.name = func_name[1]
             else:
                 errmsg = 'Unexpected function name: "%s".' % func_name[1]
                 raise Exception(errmsg)
@@ -411,7 +425,7 @@ class MatFunction(MatObject):
                 raise TypeError('Token after outputs should be Punctuation.')
                 # TODO: raise an matlab token error or what?
         # skip blanks and tabs
-        if tks.pop()[0] is not Token.Text.Whitespace:
+        if tks.pop()[0] is not Token.Text.Whitespace:  # @UndefinedVariable
             raise TypeError('Expected a whitespace after input args.')
             # TODO: what is a better error here?
         # =====================================================================
@@ -488,10 +502,12 @@ class MatClass(MatMixin, MatObject):
                       'Hidden': bool, 'InferiorClasses': list, 'Sealed': bool}
     prop_attr_types = {'AbortSet': bool, 'Abstract': bool, 'Access': list,
                        'Constant': bool, 'Dependent': bool, 'GetAccess': list,
-                       'GetObservable': bool, 'Hidden': bool, 'SetAccess': list,
-                       'SetObservable': bool, 'Transient': bool}
+                       'GetObservable': bool, 'Hidden': bool,
+                       'SetAccess': list, 'SetObservable': bool,
+                       'Transient': bool}
     meth_attr_types = {'Abstract': bool, 'Access': list, 'Hidden': bool,
                        'Sealed': list, 'Static': bool}
+
     def __init__(self, name, modname, tokens):
         super(MatClass, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
@@ -616,12 +632,12 @@ class MatClass(MatMixin, MatObject):
                         self.properties[prop_name] = {'attrs': attr_dict}
                         idx += 1
                     # subtype of Name EG Name.Builtin used as Name
-                    elif self.tokens[idx][0] in Token.Name.subtypes:
+                    elif self.tokens[idx][0] in Token.Name.subtypes:  # @UndefinedVariable
                         prop_name = self.tokens[idx][1]
-                        warn_msg = ' '.join(['[matlabify] WARNING %s.%s.%s is',
+                        warn_msg = ' '.join(['[%s] WARNING %s.%s.%s is',
                                              'a Builtin Name'])
-                        MatObject.sphinx_dbg(warn_msg, self.module, self.name,
-                                             prop_name)
+                        MatObject.sphinx_dbg(warn_msg, MAT_DOM, self.module,
+                                             self.name, prop_name)
                         self.properties[prop_name] = {'attrs': attr_dict}
                         idx += 1
                     elif self._tk_eq(idx, (Token.Keyword, 'end')):
@@ -634,6 +650,7 @@ class MatClass(MatMixin, MatObject):
                     else:
                         raise TypeError('Expected property.')
                     idx += self._blanks(idx)  # skip blanks
+                    # =========================================================
                     # defaults
                     default = {'default': None}
                     if self._tk_eq(idx, (Token.Punctuation, '=')):
@@ -641,27 +658,36 @@ class MatClass(MatMixin, MatObject):
                         idx += self._blanks(idx)  # skip blanks
                         # concatenate default value until newline or comment
                         default = ''
-                        # punctuation pairs, break after all punctuation pairs
-                        # are closed, skip semicolons & end used as index
                         punc_ctr = 0  # punctuation placeholder
                         # keep reading until newline or comment
+                        # only if all punctuation pairs are closed
+                        # and comment is **not** continuation ellipsis
                         while ((self._tk_ne(idx, (Token.Text, '\n')) and
                                 self.tokens[idx][0] is not Token.Comment) or
-                               punc_ctr>0):
+                               punc_ctr > 0 or
+                               (self.tokens[idx][0] is Token.Comment and
+                                self.tokens[idx][1].startswith('...'))):
                             token = self.tokens[idx]
                             # default has an array spanning multiple lines
-                            if (token in
-                                zip((Token.Punctuation,) * 3,
+                            if (token in zip((Token.Punctuation,) * 3,
                                 ('(', '{', '['))):
                                 punc_ctr += 1  # increment punctuation counter
                             # look for end of array
-                            elif (token in
-                                   zip((Token.Punctuation,) * 3,
+                            elif (token in zip((Token.Punctuation,) * 3,
                                        (')', '}', ']'))):
                                 punc_ctr -= 1  # decrement punctuation counter
+                            # Pygments treats continuation ellipsis as comments
+                            # text from ellipsis until newline is in token
                             elif (token[0] is Token.Comment and
                                   token[1].startswith('...')):
                                 idx += 1  # skip ellipsis comments
+                                # include newline which should follow comment
+                                if self._tk_eq(idx, (Token.Text, '\n')):
+                                    default += '\n'
+                                    idx += 1
+                                continue
+                            elif self._tk_eq(idx - 1, (Token.Text, '\n')):
+                                idx += self._blanks(idx)
                                 continue
                             default += token[1]
                             idx += 1
@@ -670,9 +696,12 @@ class MatClass(MatMixin, MatObject):
                         if default:
                             default = {'default': default.rstrip('; ')}
                     self.properties[prop_name].update(default)
+                    # =========================================================
+                    # docstring
                     docstring = {'docstring': None}
                     if self.tokens[idx][0] is Token.Comment:
-                        docstring['docstring'] = self.tokens[idx][1].lstrip('%')
+                        docstring['docstring'] = \
+                            self.tokens[idx][1].lstrip('%')
                         idx += 1
                     self.properties[prop_name].update(docstring)
                     idx += self._whitespace(idx)
@@ -697,14 +726,13 @@ class MatClass(MatMixin, MatObject):
                     meth = MatMethod(self.module, self.tokens[idx:],
                                      self, attr_dict)
                     # replace dot in get/set methods with underscore
-                    if meth.name.split('.')[0] in ['get','set']:
+                    if meth.name.split('.')[0] in ['get', 'set']:
                         meth.name = meth.name.replace('.', '_')
                     idx += meth.reset_tokens()  # reset method tokens and index
                     self.methods[meth.name] = meth  # update methods
                     idx += self._whitespace(idx)
                 idx += 1
         self.rem_tks = idx  # index of last token
-            
 
     def attributes(self, idx, attr_types):
         """
@@ -742,7 +770,8 @@ class MatClass(MatMixin, MatObject):
                         if attr_val == 'false':
                             attr_dict[attr_name] = False
                         idx += 1
-                    elif k is Token.Name or self._tk_eq(idx, (Token.Text, '?')):
+                    elif k is Token.Name or \
+                        self._tk_eq(idx, (Token.Text, '?')):
                         # concatenate enumeration or meta class
                         enum_or_meta = self.tokens[idx][1]
                         idx += 1
@@ -817,7 +846,8 @@ class MatClass(MatMixin, MatObject):
                     if b_:
                         bases_[b] = b_
                         break
-                if bases_[b]: continue
+                if bases_[b]:
+                    continue
                 if b + '.m' in files:
                     mfile = os.path.join(root, b) + '.m'
                     bases_[b] = MatObject.parse_mfile(mfile, b, root)

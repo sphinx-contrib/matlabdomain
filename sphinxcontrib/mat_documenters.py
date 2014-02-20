@@ -42,8 +42,9 @@ from sphinx.ext.autodoc import py_ext_sig_re as mat_ext_sig_re, \
     MethodDocumenter as PyMethodDocumenter, \
     AutoDirective
 
-from mat_types import MatObject, MatModule, MatFunction, MatClass, \
-    MatProperty, MatMethod, MatScript, MatException, MatModuleAnalyzer
+from mat_types import *
+# import MatObject, MatModule, MatFunction, MatClass, MatProperty, MatMethod,
+# MatScript, MatException, MatModuleAnalyzer
 
 # TODO: check MRO's for all classes, attributes and methods!!!
 
