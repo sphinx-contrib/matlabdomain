@@ -641,31 +641,30 @@ class MatClass(MatMixin, MatObject):
                         idx += self._blanks(idx)  # skip blanks
                         # concatenate default value until newline or comment
                         default = ''
+                        # punctuation pairs, break after all punctuation pairs
+                        # are closed, skip semicolons & end used as index
+                        punc_ctr = 0  # punctuation placeholder
                         # keep reading until newline or comment
-                        while (self._tk_ne(idx, (Token.Text, '\n')) and
-                               self.tokens[idx][0] is not Token.Comment):
+                        while ((self._tk_ne(idx, (Token.Text, '\n')) and
+                                self.tokens[idx][0] is not Token.Comment) or
+                               punc_ctr>0):
+                            token = self.tokens[idx]
                             # default has an array spanning multiple lines
-                            if (self.tokens[idx] in
+                            if (token in
                                 zip((Token.Punctuation,) * 3,
                                 ('(', '{', '['))):
-                                default += self.tokens[idx][1]
-                                idx += 1
-                                # look for end of array
-                                while (self.tokens[idx] not in
-                                       zip((Token.Punctuation,) * 3,
-                                           (')', '}', ']'))):
-                                    tkcom = self.tokens[idx]
-                                    if (tkcom[0] is Token.Comment and
-                                        tkcom[1].startswith('...')):
-                                        idx += 1  # skip ellipsis comments
-                                        continue
-                                    default += self.tokens[idx][1]
-                                    idx += 1
-                                default += self.tokens[idx][1]
-                                idx += 1
-                            else:
-                                default += self.tokens[idx][1]
-                                idx += 1
+                                punc_ctr += 1  # increment punctuation counter
+                            # look for end of array
+                            elif (token in
+                                   zip((Token.Punctuation,) * 3,
+                                       (')', '}', ']'))):
+                                punc_ctr -= 1  # decrement punctuation counter
+                            elif (token[0] is Token.Comment and
+                                  token[1].startswith('...')):
+                                idx += 1  # skip ellipsis comments
+                                continue
+                            default += token[1]
+                            idx += 1
                         if self.tokens[idx][0] is not Token.Comment:
                             idx += 1
                         if default:
