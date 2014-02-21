@@ -163,3 +163,8 @@ http://bwanamarko.alwaysdata.net/matlabdomain/
     setter methods are documented like methods currently, but the dot is
     replaced by an underscore. Default values for properties are represented as
     unicode strings, therefore strings will be double quoted.
+
+Changes
+-------
+
+.. include:: CHANGES.rst
