@@ -50,10 +50,18 @@ class MatObject(object):
     :class:`MatFunction` and :class:`MatClass` must begin with either
     ``function`` or ``classdef`` keywords.
     """
+
+    @staticmethod
+    def dbg(msg, *args):
+        """
+        Alternate for sphinx_dbg for test-mode.
+        """
+        print '\t<test-mode>\n' + msg % args
+
     basedir = None
     sphinx_env = None
     sphinx_app = None
-    sphinx_dbg = None
+    sphinx_dbg = dbg
 
     def __init__(self, name):
         #: name of MATLAB object
@@ -111,7 +119,15 @@ class MatObject(object):
         fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
         # package folders imported over mfile with same name
         if os.path.isdir(fullpath):
-            return MatModule(name, fullpath, package)  # import package
+            mod = sys.modules.get(package)
+            if mod:
+                msg = '[%s] mod %s already loaded.'
+                MatObject.sphinx_dbg(msg, MAT_DOM, package)
+                return mod
+            else:
+                msg = '[%s] matlabify %s from\n\t%s.'
+                MatObject.sphinx_dbg(msg, MAT_DOM, package, fullpath)
+                return MatModule(name, fullpath, package)  # import package
         elif os.path.isfile(fullpath + '.m'):
             mfile = fullpath + '.m'
             return MatObject.parse_mfile(mfile, name, path)  # parse mfile
@@ -242,9 +258,20 @@ class MatModule(MatObject):
             return self.__path__
         elif name == '__package__':
             return self.__package__
+        elif name == '__module__':
+            msg = '[%s] mod %s is a package does not have __module__.'
+            MatObject.sphinx_dbg(msg, MAT_DOM, self)
+            return None
         else:
+            if hasattr(self, name):
+                msg = '[%s] mod %s already has attr %s.'
+                MatObject.sphinx_dbg(msg, MAT_DOM, self, name)
+                return getattr(self, name)
             attr = MatObject.matlabify('.'.join([self.package, name]))
             if attr:
+                setattr(self, name, attr)
+                msg = '[%s] attr %s imported from mod %s.'
+                MatObject.sphinx_dbg(msg, MAT_DOM, name, self)
                 return attr
             else:
                 super(MatModule, self).getter(name, *defargs)
@@ -1020,4 +1047,3 @@ class MatModuleAnalyzer(object):
         self.attr_docs = attr_visitor_collected
         self.tagorder = attr_visitor_tagorder
         return attr_visitor_collected
-
