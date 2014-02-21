@@ -156,10 +156,11 @@ class MatObject(object):
         # functions must be contained in one line, no ellipsis, classdef is OK
         pat1 = r'(?P<p1>function[ \t]+)'  # "function" + 1 or more space/tabs
         # return values
-        pat2 = r'(?P<p2>\[?\w+[ \t]*(?:,[ \t]*(?:...\n[ \t]*)?\w+)*\]?)'
-        pat3 = r'(?P<p3>[ \t]*=?[ \t]*)'  # equal sign
+        pat2 = r'(?P<p2>\[?\w*[ \t]*(?:,?[ \t]*(?:...\n[ \t]*)?\w+)*\]?)'
+        # equal sign
+        pat3 = r'(?P<p3>[ \t]*(?:...\n[ \t]*)?=?[ \t]*(?:...\n[ \t]*)?)'
         pat4 = r'(?P<p4>\w+)'  # name of function
-        pat5 = r'(?P<p5>\(\w+(?:,[ \t]*(?:...\n[ \t]*)?\w+)*\))'  # args
+        pat5 = r'(?P<p5>\(\w*(?:,?[ \t]*(?:...\n[ \t]*)?\w+)*\))'  # args
         repl = lambda m: m.group().replace('...\n', '')
         code = re.sub(''.join([pat1, pat2, pat3, pat4, pat5]), repl, code)
         tks = list(MatlabLexer().get_tokens(code))  # tokenenize code
@@ -419,6 +420,14 @@ class MatFunction(MatObject):
         retv = tks.pop()  # return values
         if retv[0] is Token.Text:
             self.retv = [rv.strip() for rv in retv[1].strip('[ ]').split(',')]
+            if len(self.retv) == 1:
+                # check if return is empty
+                if not self.retv[0]:
+                    self.retv = None
+                # check if return delimited by whitespace
+                elif ' ' in self.retv[0] or '\t' in self.retv[0]:
+                    self.retv = [rv for rv_tab in self.retv[0].split('\t')
+                                 for rv in rv_tab.split(' ')]
             if tks.pop() != (Token.Punctuation, '='):
                 raise TypeError('Token after outputs should be Punctuation.')
                 # TODO: raise an matlab token error or what?
@@ -457,12 +466,21 @@ class MatFunction(MatObject):
             # TODO: what is a better error here?
         # =====================================================================
         # docstring
-        docstring = tks.pop()
-        while docstring[0] is Token.Comment:
+        try:
+            docstring = tks.pop()
+        except IndexError:
+            docstring = None
+        while docstring and docstring[0] is Token.Comment:
             self.docstring += docstring[1].lstrip('%') + '\n'  # concatenate
-            wht = tks.pop()  # skip whitespace
+            try:
+                wht = tks.pop()  # skip whitespace
+            except IndexError:
+                break
             while wht in zip((Token.Text,) * 3, (' ', '\t', '\n')):
-                wht = tks.pop()
+                try:
+                    wht = tks.pop()
+                except IndexError:
+                    break
             docstring = wht  # check if Token is Comment
         # =====================================================================
         # main body

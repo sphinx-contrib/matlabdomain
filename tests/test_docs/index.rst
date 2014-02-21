@@ -66,7 +66,7 @@ How about this?
 .. _mymethod:
 
 my method
-+++++++++
+~~~~~~~~~
 How about this too?
 
 .. automethod:: MyClass.mymethod
@@ -79,6 +79,37 @@ Some edge cases that have ellipsis inside arrays.
     :show-inheritance:
     :members:
 
+Submodule
++++++++++
+This is the test data module
+
+.. automodule:: test_data.test_submodule
+
+Ellipsis after equals
+~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: f_ellipsis_after_equals
+
+No Arguments
+~~~~~~~~~~~~
+.. autofunction:: f_no_args
+
+No Outputs
+~~~~~~~~~~
+.. autofunction:: f_no_outputs
+
+Output with Ellipsis
+~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: f_output_with_ellipsis
+
+Output with no commas
+~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: f_output_without_commas
+
+Super from different module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: super_from_diff_mod
+    :members:
+    :show-inheritance:
 
 Indices and tables
 ==================
