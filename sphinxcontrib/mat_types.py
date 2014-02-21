@@ -161,26 +161,10 @@ class MatObject(object):
                   ([\w.]+)                 # name
                   \(?([, \t\w.\n]*)\)?"""  # args
         pat = re.compile(pat, re.X | re.MULTILINE)
-        fidx = 0
-        match = True
-        filtered_code = []
-        while match:
-            start_time = time.clock()
-            match = pat.search(code, fidx)
-            elapsed_time = time.clock() - start_time
-            MatObject.sphinx_dbg('[%s] regex elapsed time %10.4g[s]', MAT_DOM,
-                                 elapsed_time)
-            if match:
-                matches = match.groups()
-                span = match.span()
-                msg = ['[%s] regex pattern match: (%d, %d) %s', 'outputs: %s',
-                       'equals: %s', 'name: %s', 'args: %s']
-                MatObject.sphinx_dbg('\n\t'.join(msg), MAT_DOM,
-                                     *(span + matches))
-                filtered_code.append(code[fidx:span[1]].replace('...\n', ''))
-                fidx = span[1]
-        code = ''.join(filtered_code) + code[fidx:]
-        MatObject.sphinx_dbg('[%s] filtered code:\n%s', MAT_DOM, code)
+        repl = lambda m: m.group().replace('...\n', '')
+        code, nsubs = pat.subn(repl, code)
+        msg = '[%s] replaced %d ellipsis in function signatures'
+        MatObject.sphinx_dbg(msg, MAT_DOM, nsubs)
         tks = list(MatlabLexer().get_tokens(code))  # tokenenize code
         modname = path.replace(os.sep, '.')  # module name
         # assume that functions and classes always start with a keyword
