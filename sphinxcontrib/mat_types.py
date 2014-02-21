@@ -13,7 +13,6 @@ import os
 import re
 import sys
 from copy import copy
-import time
 
 # Pygments MatlabLexer is in pygments.lexers.math, but recommended way to load
 # is from lexers, which has LEXERS dictionary, which PyDev doesn't see.

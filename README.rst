@@ -16,10 +16,10 @@ Easy Install::
 
 Distutils::
 
-    ~/downloads$ curl https://pypi.python.org/packages/source/s/sphinxcontrib-matlabdomain/sphinxcontrib-matlabdomain-0.2.zip
-    ~/downloads$ tar -xf sphinxcontrib-matlabdomain-0.2.zip
-    ~/downloads$ cd sphinxcontrib_matlabdomain-0.2
-    ~/downloads/sphinxcontrib_matlabdomain-0.2$ python setup.py install
+    ~/downloads$ curl https://pypi.python.org/packages/source/s/sphinxcontrib-matlabdomain/sphinxcontrib-matlabdomain-0.X.tar.gz
+    ~/downloads$ tar -xf sphinxcontrib-matlabdomain-0.X.tar.gz
+    ~/downloads$ cd sphinxcontrib_matlabdomain-0.X
+    ~/downloads/sphinxcontrib_matlabdomain-0.X$ python setup.py install
 
 Requirements
 ============
@@ -148,6 +148,11 @@ Use the following to document::
     .. autoclass:: MyHandleClass
         :show-inheritance:
         :members:
+
+Online Demo
+-----------
+The test docs in the repository are online here:
+http://bwanamarko.alwaysdata.net/matlabdomain/
 
 .. note::
 

@@ -12,7 +12,7 @@ requires = ['Sphinx>=0.6']
 setup(
     name='sphinxcontrib-matlabdomain',
     version=version,
-    url='http://bitbucket.org/bwanamarko/sphinx-contrib',
+    url='http://bitbucket.org/bwanamarko/sphinxcontrib-matlabdomain',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-matlabdomain',
     license='BSD',
     author='Mark Mikofski',
