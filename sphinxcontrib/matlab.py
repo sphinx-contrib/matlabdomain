@@ -29,7 +29,7 @@ from sphinx.util.docfields import Field, GroupedField, TypedField
 
 # REs for MATLAB signatures
 mat_sig_re = re.compile(
-    r'''^ ([\w.]*\.)?            # class name(s)
+    r'''^ ([+@]?[\w.]*\.)?            # class name(s)
           (\w+)  \s*             # thing name
           (?: \((.*)\)           # optional: arguments
            (?:\s* -> \s* (.*))?  #           return annotation
