@@ -170,7 +170,4 @@ Users
 * `Cantera <http://cantera.github.io/dev-docs/sphinx/html/compiling.html?highlight=matlabdomain#optional-programs>`_
 * `CoSMo MVPA <http://cosmomvpa.org/download.html?highlight=matlabdomain#developers>`_
 
-Changes
--------
-
-.. include:: CHANGES.rst
+`Changes <https://bitbucket.org/bwanamarko/sphinxcontrib-matlabdomain/src/default/matlabdomain/CHANGES.rst>`_
