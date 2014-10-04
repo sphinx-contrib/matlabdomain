@@ -1,3 +1,13 @@
+sphinxcontrib-matlabdomain-0.2.5 (2014-10-02)
+=============================================
+
+* fix issues #21
+* changeset 8f18a8f adds [+@]? to regular expression for matlab signatures
+* add Octave to sphinx-contrib README and link to sphinxcontrib-matlabdomain on
+  PyPI
+* update and include CHANGES in README so they're in PyPI documentation
+
+
 sphinxcontrib-matlabdomain-0.2.4 (2014-02-21)
 =============================================
 
