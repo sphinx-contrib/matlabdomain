@@ -138,6 +138,12 @@ Super from different module
     :members:
     :show-inheritance:
 
+TestFibonacci
+~~~~~~~~~~~~~
+.. autoclass:: TestFibonacci
+    :members:
+    :show-inheritance:
+
 Indices and tables
 ==================
 
