@@ -557,7 +557,9 @@ class MatClass(MatMixin, MatObject):
                        'Transient': bool}
     meth_attr_types = {'Abstract': bool, 'Access': list, 'Hidden': bool,
                        'Sealed': list, 'Static': bool, 'Test': bool,
-                       'TestClassSetup': bool, 'TestMethodSetup': bool}
+                       'TestClassSetup': bool, 'TestMethodSetup': bool,
+                       'TestClassTeardown': bool, 'TestMethodTeardown': bool,
+                       'ParameterCombination': bool}
 
     def __init__(self, name, modname, tokens):
         super(MatClass, self).__init__(name)
