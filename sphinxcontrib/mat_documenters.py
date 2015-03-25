@@ -26,7 +26,7 @@ from sphinx.application import ExtensionError
 from sphinx.util.nodes import nested_parse_with_titles
 from sphinx.util.compat import Directive
 from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
-     safe_getattr, safe_repr, is_builtin_class_method
+     safe_getattr, object_description, is_builtin_class_method
 from sphinx.util.docstrings import prepare_docstring
 
 from sphinx.ext.autodoc import py_ext_sig_re as mat_ext_sig_re, \
@@ -847,7 +847,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         if not self.options.annotation:
             if not self._datadescriptor:
                 try:
-                    objrepr = safe_repr(self.object.default)  # display default
+                    objrepr = object_description(self.object.default)  # display default
                 except ValueError:
                     pass
                 else:
