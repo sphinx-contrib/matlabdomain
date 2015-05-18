@@ -554,7 +554,8 @@ class MatClass(MatMixin, MatObject):
                        'Constant': bool, 'Dependent': bool, 'GetAccess': list,
                        'GetObservable': bool, 'Hidden': bool,
                        'SetAccess': list, 'SetObservable': bool,
-                       'Transient': bool}
+                       'Transient': bool, 'ClassSetupParameter': bool,
+                       'MethodSetupParameter': bool, 'TestParameter': bool}
     meth_attr_types = {'Abstract': bool, 'Access': list, 'Hidden': bool,
                        'Sealed': list, 'Static': bool, 'Test': bool,
                        'TestClassSetup': bool, 'TestMethodSetup': bool,
