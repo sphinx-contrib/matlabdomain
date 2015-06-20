@@ -152,7 +152,7 @@ class MatObject(object):
         # use Pygments to parse mfile to determine type: function/classdef
         # read mfile code
         with open(mfile, 'r') as code_f:
-            code = code_f.read()
+            code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
         # functions must be contained in one line, no ellipsis, classdef is OK
         pat = r"""^[ \t]*(function)        # keyword
                   ([\[\], \t\w.\n]*)       # outputs
