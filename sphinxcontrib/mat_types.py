@@ -155,10 +155,10 @@ class MatObject(object):
             code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
         # functions must be contained in one line, no ellipsis, classdef is OK
         pat = r"""^[ \t]*(function)        # keyword
-                  ([\[\], \t\w.\n]*)       # outputs
+                  ([\[\w, \t.\n\]]*)       # outputs
                   ([ \t=.\n]*)             # equal sign
-                  ([\w.]+)                 # name
-                  \(?([, \t\w.\n]*)\)?"""  # args
+                  ([\w \t.\n]+)            # name
+                  \(?([\w, \t.\n]*)\)?"""  # args
         pat = re.compile(pat, re.X | re.MULTILINE)
         repl = lambda m: m.group().replace('...\n', '')
         code, nsubs = pat.subn(repl, code)
