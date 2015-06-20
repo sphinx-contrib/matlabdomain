@@ -783,15 +783,36 @@ class MatClass(MatMixin, MatObject):
                             idx += whitespace
                         else:
                             idx += 1
-                    # find methods
-                    meth = MatMethod(self.module, self.tokens[idx:],
-                                     self, attr_dict)
-                    # replace dot in get/set methods with underscore
-                    if meth.name.split('.')[0] in ['get', 'set']:
-                        meth.name = meth.name.replace('.', '_')
-                    idx += meth.reset_tokens()  # reset method tokens and index
-                    self.methods[meth.name] = meth  # update methods
-                    idx += self._whitespace(idx)
+                    # skip methods defined in other files
+                    meth_tk = self.tokens[idx]
+                    if (meth_tk[0] is Token.Name or
+                        meth_tk[0] is Token.Name.Function or
+                        (meth_tk[0] is Token.Keyword and
+                         meth_tk[1].strip() == 'function'
+                         and self.tokens[idx+1][0] is Token.Name.Function) or
+                        self._tk_eq(idx, (Token.Punctuation, '[')) or
+                        self._tk_eq(idx, (Token.Punctuation, ']')) or
+                        self._tk_eq(idx, (Token.Punctuation, '=')) or
+                        self._tk_eq(idx, (Token.Punctuation, '(')) or
+                        self._tk_eq(idx, (Token.Punctuation, ')')) or
+                        self._tk_eq(idx, (Token.Punctuation, ','))):
+                        msg = ['[%s] Skipping tokens for methods defined in separate files.',
+                               'token #%d: %r']
+                        MatClass.sphinx_dbg('\n'.join(msg), MAT_DOM, idx, self.tokens[idx])
+                        idx += 1 + self._whitespace(idx + 1)
+                    elif self._tk_eq(idx, (Token.Keyword, 'end')):
+                        idx += 1
+                        break 
+                    else:
+                        # find methods
+                        meth = MatMethod(self.module, self.tokens[idx:],
+                                         self, attr_dict)
+                        # replace dot in get/set methods with underscore
+                        if meth.name.split('.')[0] in ['get', 'set']:
+                            meth.name = meth.name.replace('.', '_')
+                        idx += meth.reset_tokens()  # reset method tokens and index
+                        self.methods[meth.name] = meth  # update methods
+                        idx += self._whitespace(idx)
                 idx += 1
         self.rem_tks = idx  # index of last token
 

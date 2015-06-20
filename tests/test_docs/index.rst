@@ -106,6 +106,11 @@ classMethod
 
 .. autofunction:: classMethod
 
+My Static Function
+~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: my_static_func
+
 Submodule
 +++++++++
 This is the test data module
