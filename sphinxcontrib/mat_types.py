@@ -154,16 +154,23 @@ class MatObject(object):
         with open(mfile, 'r') as code_f:
             code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
         # functions must be contained in one line, no ellipsis, classdef is OK
-        pat = r"""^[ \t]*(function)        # keyword
-                  ([\[\w, \t.\n\]]*)       # outputs
-                  ([ \t=.\n]*)             # equal sign
-                  ([\w \t.\n]+)            # name
-                  \(?([\w, \t.\n]*)\)?"""  # args
-        pat = re.compile(pat, re.X | re.MULTILINE)
-        repl = lambda m: m.group().replace('...\n', ' ')
-        code, nsubs = pat.subn(repl, code)
-        msg = '[%s] replaced %d ellipsis in function signatures'
-        MatObject.sphinx_dbg(msg, MAT_DOM, nsubs)
+        pat = r"""^[ \t]*function[ \t.\n]*  # keyword (function)
+                  (\[?[\w, \t.\n]*\]?)      # outputs: group(1)
+                  [ \t.\n]*=[ \t.\n]*       # punctuation (eq)
+                  (\w+)[ \t.\n]*            # name: group(2)
+                  \(?([\w, \t.\n]*)\)?"""   # args: group(3)
+        pat = re.compile(pat, re.X | re.MULTILINE)  # search start of every line
+        # replacement function
+        def repl(m):
+            # replace any ellipsis found in function signatures
+            retv = m.group(0).replace('...\n', ' ')
+            # if no args and doesn't end with parentheses, append "()"
+            if not (m.group(3) or m.group(0).endswith('()')):
+                retv = retv.replace(m.group(2), m.group(2) + "()")
+            return retv
+        code = pat.sub(repl, code)  # search for functions and apply replacement
+        msg = '[%s] replaced ellipsis & appended parentheses in function signatures'
+        MatObject.sphinx_dbg(msg, MAT_DOM)
         tks = list(MatlabLexer().get_tokens(code))  # tokenenize code
         modname = path.replace(os.sep, '.')  # module name
         # assume that functions and classes always start with a keyword

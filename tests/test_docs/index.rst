@@ -144,6 +144,10 @@ TestFibonacci
     :members:
     :show-inheritance:
 
+Function with no parentheses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: f_constant
+
 Indices and tables
 ==================
 
