@@ -160,7 +160,7 @@ class MatObject(object):
                   ([\w \t.\n]+)            # name
                   \(?([\w, \t.\n]*)\)?"""  # args
         pat = re.compile(pat, re.X | re.MULTILINE)
-        repl = lambda m: m.group().replace('...\n', '')
+        repl = lambda m: m.group().replace('...\n', ' ')
         code, nsubs = pat.subn(repl, code)
         msg = '[%s] replaced %d ellipsis in function signatures'
         MatObject.sphinx_dbg(msg, MAT_DOM, nsubs)
