@@ -504,6 +504,9 @@ class MatFunction(MatObject):
             # increment keyword-end pairs count
             if kw in MatFunction.mat_kws:
                 kw_end += 1
+            # nested function definition
+            elif kw[0] is Token.Keyword and kw[1].strip() == 'function':
+                kw_end += 1
             # decrement keyword-end pairs count but
             # don't decrement `end` if used as index
             elif kw == (Token.Keyword, 'end') and not lastkw:
