@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for details.
 """
 
-from std import StandardDomain
 import mat_documenters as doc
 
 import re
@@ -712,7 +711,6 @@ class MATLABDomain(Domain):
             yield (refname, refname, type, docname, refname, 1)
 
 def setup(app):
-    app.override_domain(StandardDomain)
     app.add_domain(MATLABDomain)
     # autodoc
     app.add_config_value('matlab_src_dir', None, 'env')

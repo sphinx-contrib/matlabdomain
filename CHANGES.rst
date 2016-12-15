@@ -1,3 +1,9 @@
+sphinxcontrib-matlabdomain-0.2.8 (2016-12-15)
+=============================================
+
+* merge PR #2 nested functions
+
+
 sphinxcontrib-matlabdomain-0.2.6 (2014-11-10)
 =============================================
 

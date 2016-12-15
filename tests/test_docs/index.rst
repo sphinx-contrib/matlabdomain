@@ -53,6 +53,12 @@ Do these work?
 
 .. autofunction:: myfun
 
+.. _nested_fun:
+
+Function with nested function
++++++++++++++++++++++++++++++
+.. autofunction:: nested_fun
+
 .. _MyClass:
 
 My Class
