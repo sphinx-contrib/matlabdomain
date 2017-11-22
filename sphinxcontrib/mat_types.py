@@ -8,7 +8,7 @@
     :copyright: Copyright 2014 Mark Mikofski
     :license: BSD, see LICENSE for details.
 """
-
+from __future__ import unicode_literals, print_function
 import os
 import re
 import sys
@@ -56,7 +56,7 @@ class MatObject(object):
         """
         Alternate for sphinx_dbg for test-mode.
         """
-        print '\t<test-mode>\n' + msg % args
+        print('\t<test-mode>\n' + msg % args)
 
     basedir = None
     sphinx_env = None
@@ -225,7 +225,7 @@ class MatModule(MatObject):
             # trim file extension
             if os.path.isfile(path):
                 key, _ = os.path.splitext(key)
-            if not results or key not in zip(*results)[0]:
+            if not results or key not in list(zip(*results))[0]:
                 value = self.getter(key, None)
                 if value:
                     results.append((key, value))
@@ -240,7 +240,7 @@ class MatModule(MatObject):
     def __all__(self):
         results = self.safe_getmembers
         if results:
-            results = zip(*self.safe_getmembers)[0]
+            results = list(zip(*self.safe_getmembers))[0]
         return results
 
     @property
@@ -378,8 +378,8 @@ class MatFunction(MatObject):
     :type tokens: list
     """
     # MATLAB keywords that increment keyword-end pair count
-    mat_kws = zip((Token.Keyword,) * 5,
-                  ('if', 'while', 'for', 'switch', 'try'))
+    mat_kws = list(zip((Token.Keyword,) * 5,
+                  ('if', 'while', 'for', 'switch', 'try')))
 
     def __init__(self, name, modname, tokens):
         super(MatFunction, self).__init__(name)
@@ -488,7 +488,7 @@ class MatFunction(MatObject):
                 wht = tks.pop()  # skip whitespace
             except IndexError:
                 break
-            while wht in zip((Token.Text,) * 3, (' ', '\t', '\n')):
+            while wht in list(zip((Token.Text,) * 3, (' ', '\t', '\n'))):
                 try:
                     wht = tks.pop()
                 except IndexError:
@@ -512,9 +512,9 @@ class MatFunction(MatObject):
             elif kw == (Token.Keyword, 'end') and not lastkw:
                 kw_end -= 1
             # save last punctuation
-            elif kw in zip((Token.Punctuation,) * 2, ('(', '{')):
+            elif kw in list(zip((Token.Punctuation,) * 2, ('(', '{'))):
                 lastkw += 1
-            elif kw in zip((Token.Punctuation,) * 2, (')', '}')):
+            elif kw in list(zip((Token.Punctuation,) * 2, (')', '}'))):
                 lastkw -= 1
             try:
                 kw = tks.pop()
@@ -527,7 +527,7 @@ class MatFunction(MatObject):
 
     @property
     def __doc__(self):
-        return unicode(self.docstring)
+        return str(self.docstring)
 
     @property
     def __module__(self):
@@ -733,12 +733,12 @@ class MatClass(MatMixin, MatObject):
                                 self.tokens[idx][1].startswith('...'))):
                             token = self.tokens[idx]
                             # default has an array spanning multiple lines
-                            if (token in zip((Token.Punctuation,) * 3,
-                                ('(', '{', '['))):
+                            if (token in list(zip((Token.Punctuation,) * 3,
+                                ('(', '{', '[')))):
                                 punc_ctr += 1  # increment punctuation counter
                             # look for end of array
-                            elif (token in zip((Token.Punctuation,) * 3,
-                                       (')', '}', ']'))):
+                            elif (token in list(zip((Token.Punctuation,) * 3,
+                                       (')', '}', ']')))):
                                 punc_ctr -= 1  # decrement punctuation counter
                             # Pygments treats continuation ellipsis as comments
                             # text from ellipsis until newline is in token
@@ -900,7 +900,7 @@ class MatClass(MatMixin, MatObject):
 
     @property
     def __doc__(self):
-        return unicode(self.docstring)
+        return str(self.docstring)
 
     @property
     def __bases__(self):
@@ -958,7 +958,7 @@ class MatClass(MatMixin, MatObject):
             return self.methods[name]
         elif name == '__dict__':
             objdict = dict([(pn, self.getter(pn)) for pn in
-                            self.properties.iterkeys()])
+                            self.properties.keys()])
             objdict.update(self.methods)
             return objdict
         else:
@@ -975,7 +975,7 @@ class MatProperty(MatObject):
 
     @property
     def __doc__(self):
-        return unicode(self.docstring)
+        return str(self.docstring)
 
 
 class MatMethod(MatFunction):
@@ -998,7 +998,7 @@ class MatMethod(MatFunction):
 
     @property
     def __doc__(self):
-        return unicode(self.docstring)
+        return str(self.docstring)
 
 
 class MatScript(MatObject):
@@ -1010,7 +1010,7 @@ class MatScript(MatObject):
 
     @property
     def __doc__(self):
-        return unicode(self.docstring)
+        return str(self.docstring)
 
 
 class MatException(MatObject):
@@ -1022,7 +1022,7 @@ class MatException(MatObject):
 
     @property
     def __doc__(self):
-        return unicode(self.docstring)
+        return str(self.docstring)
 
 
 class MatcodeError(Exception):
@@ -1097,7 +1097,7 @@ class MatModuleAnalyzer(object):
                 attr_visitor_tagorder[k] = tagnumber
                 tagnumber += 1
             if isinstance(v, MatClass):
-                for mk, mv in v.getter('__dict__').iteritems():
+                for mk, mv in v.getter('__dict__').items():
                     namespace = '.'.join([mod.package, k])
                     attr_visitor_collected[namespace, mk] = mv.docstring
                     attr_visitor_tagorder[mk] = tagnumber

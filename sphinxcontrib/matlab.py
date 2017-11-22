@@ -8,8 +8,8 @@
     :copyright: Copyright 2007-2011 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
-
-import mat_documenters as doc
+from __future__ import absolute_import, unicode_literals
+from . import mat_documenters as doc
 
 import re
 
@@ -229,8 +229,8 @@ class MatObject(ObjectDescription):
 
         indextext = self.get_index_text(modname, name_cls)
         if indextext:
-            self.indexnode['entries'].append(('single', indextext,
-                                              fullname, ''))
+            entry = ('single', indextext, fullname, '', None)
+            self.indexnode['entries'].append(entry)
 
     def before_content(self):
         # needed for automatic qualification of members (reset in subclasses)
@@ -434,8 +434,8 @@ class MatModule(Directive):
             # used in the modindex currently
             ret.append(targetnode)
             indextext = _('%s (module)') % modname
-            inode = addnodes.index(entries=[('single', indextext,
-                                             'module-' + modname, '')])
+            entry = ('single', indextext, 'module-' + modname, '', None)
+            inode = addnodes.index(entries=[entry])
             ret.append(inode)
         return ret
 
@@ -499,7 +499,7 @@ class MATLABModuleIndex(Index):
         ignores = self.domain.env.config['modindex_common_prefix']
         ignores = sorted(ignores, key=len, reverse=True)
         # list of all modules, sorted by module name
-        modules = sorted(self.domain.data['modules'].iteritems(),
+        modules = sorted(iter(self.domain.data['modules'].items()),
                          key=lambda x: x[0].lower())
         # sort out collapsable modules
         prev_modname = ''
@@ -549,7 +549,7 @@ class MATLABModuleIndex(Index):
         collapse = len(modules) - num_toplevels < num_toplevels
 
         # sort by first letter
-        content = sorted(content.iteritems())
+        content = sorted(content.items())
 
         return content, collapse
 
@@ -604,10 +604,10 @@ class MATLABDomain(Domain):
     ]
 
     def clear_doc(self, docname):
-        for fullname, (fn, _) in self.data['objects'].items():
+        for fullname, (fn, _) in list(self.data['objects'].items()):
             if fn == docname:
                 del self.data['objects'][fullname]
-        for modname, (fn, _, _, _) in self.data['modules'].items():
+        for modname, (fn, _, _, _) in list(self.data['modules'].items()):
             if fn == docname:
                 del self.data['modules'][modname]
 
@@ -705,9 +705,9 @@ class MATLABDomain(Domain):
                                 contnode, name)
 
     def get_objects(self):
-        for modname, info in self.data['modules'].iteritems():
+        for modname, info in self.data['modules'].items():
             yield (modname, modname, 'module', info[0], 'module-' + modname, 0)
-        for refname, (docname, type) in self.data['objects'].iteritems():
+        for refname, (docname, type) in self.data['objects'].items():
             yield (refname, refname, type, docname, refname, 1)
 
 def setup(app):

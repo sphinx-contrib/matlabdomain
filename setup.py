@@ -7,7 +7,7 @@ with open('README.rst', 'r') as f_readme:
 
 version = '0.2.8'
 
-requires = ['Sphinx>=1.2', 'Pygments>=2.0.1']
+requires = ['Sphinx>=1.4.3', 'Pygments>=2.0.1']
 
 setup(
     name='sphinxcontrib-matlabdomain',
