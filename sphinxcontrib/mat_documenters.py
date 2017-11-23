@@ -8,7 +8,8 @@
     :copyright: Copyright 2014 Mark Mikofski
     :license: BSD, see LICENSE for details.
 """
-
+from __future__ import unicode_literals
+from builtins import *
 import re
 import sys
 import inspect
@@ -56,7 +57,7 @@ mat_ext_sig_re = re.compile(
           )? $                          # and nothing more
           ''', re.VERBOSE)
 
-from mat_types import *
+from .mat_types import *
 # import MatObject, MatModule, MatFunction, MatClass, MatProperty, MatMethod,
 # MatScript, MatException, MatModuleAnalyzer
 
@@ -158,12 +159,11 @@ class MatlabDocumenter(PyDocumenter):
         # set sourcename and add content from attribute documentation
         if self.analyzer:
             # prevent encoding errors when the file name is non-ASCII
-            if not isinstance(self.analyzer.srcname, unicode):
-                filename = unicode(self.analyzer.srcname,
-                                   sys.getfilesystemencoding(), 'replace')
+            if not isinstance(self.analyzer.srcname, str):
+                filename = str(self.analyzer.srcname)
             else:
                 filename = self.analyzer.srcname
-            sourcename = u'%s:docstring of %s' % (filename, self.fullname)
+            sourcename = '%s:docstring of %s' % (filename, self.fullname)
 
             attr_docs = self.analyzer.find_attr_docs()
             if self.objpath:
@@ -174,7 +174,7 @@ class MatlabDocumenter(PyDocumenter):
                     for i, line in enumerate(self.process_doc(docstrings)):
                         self.add_line(line, sourcename, i)
         else:
-            sourcename = u'docstring of %s' % self.fullname
+            sourcename = 'docstring of %s' % self.fullname
 
         # add content from docstrings
         if not no_docstring:
@@ -204,7 +204,7 @@ class MatlabDocumenter(PyDocumenter):
         if self.analyzer:
             attr_docs = self.analyzer.find_attr_docs()
             namespace = '.'.join(self.objpath)
-            for item in attr_docs.iteritems():
+            for item in attr_docs.items():
                 if item[0][0] == namespace:
                     analyzed_member_names.add(item[0][1])
         if not want_all:
@@ -235,7 +235,7 @@ class MatlabDocumenter(PyDocumenter):
                 members = []
             else:
                 members = [(mname, self.get_attr(self.object, mname, None))
-                           for mname in obj_dict.keys()]
+                           for mname in list(obj_dict.keys())]
         membernames = set(m[0] for m in members)
         # add instance attributes from the analyzer
         for aname in analyzed_member_names:
@@ -345,7 +345,7 @@ class MatlabDocumenter(PyDocumenter):
         # document non-skipped members
         memberdocumenters = []
         for (mname, member, isattr) in self.filter_members(members, want_all):
-            classes = [cls for cls in AutoDirective._registry.itervalues()
+            classes = [cls for cls in AutoDirective._registry.values()
                        if cls.can_document_member(member, mname, isattr, self)]
             if not classes:
                 # don't know how to document this member
@@ -417,7 +417,7 @@ class MatlabDocumenter(PyDocumenter):
             # parse right now, to get PycodeErrors on parsing (results will
             # be cached anyway)
             self.analyzer.find_attr_docs()
-        except PycodeError, err:
+        except PycodeError as err:
             self.env.app.debug('[autodoc] module analyzer failed: %s', err)
             # no source file -- e.g. for builtin and C modules
             self.analyzer = None
@@ -435,14 +435,14 @@ class MatlabDocumenter(PyDocumenter):
         # make sure that the result starts with an empty line.  This is
         # necessary for some situations where another directive preprocesses
         # reST and no starting newline is present
-        self.add_line(u'', '<autodoc>')
+        self.add_line('', '<autodoc>')
 
         # format the object's signature, if any
         sig = self.format_signature()
 
         # generate the directive header and options, if applicable
         self.add_directive_header(sig)
-        self.add_line(u'', '<autodoc>')
+        self.add_line('', '<autodoc>')
 
         # e.g. the module directive doesn't have content
         self.indent += self.content_indent
@@ -469,12 +469,12 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
         # add some module-specific options
         if self.options.synopsis:
             self.add_line(
-                u'   :synopsis: ' + self.options.synopsis, '<autodoc>')
+                '   :synopsis: ' + self.options.synopsis, '<autodoc>')
         if self.options.platform:
             self.add_line(
-                u'   :platform: ' + self.options.platform, '<autodoc>')
+                '   :platform: ' + self.options.platform, '<autodoc>')
         if self.options.deprecated:
-            self.add_line(u'   :deprecated:', '<autodoc>')
+            self.add_line('   :deprecated:', '<autodoc>')
 
     def get_object_members(self, want_all):
         if want_all:
@@ -698,12 +698,12 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
         # add inheritance info, if wanted
         if not self.doc_as_attr and self.options.show_inheritance:
-            self.add_line(u'', '<autodoc>')
+            self.add_line('', '<autodoc>')
             if len(self.object.__bases__):
-                bases = [not v and u':class:`%s`' % b or
-                         u':class:`%s.%s`' % (v.__module__, b)
-                         for b, v in self.object.__bases__.iteritems()]
-                self.add_line(_(u'   Bases: %s') % ', '.join(bases),
+                bases = [not v and ':class:`%s`' % b or
+                         ':class:`%s.%s`' % (v.__module__, b)
+                         for b, v in self.object.__bases__.items()]
+                self.add_line(_('   Bases: %s') % ', '.join(bases),
                               '<autodoc>')
 
     def get_doc(self, encoding=None, ignore=1):
@@ -741,7 +741,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                     docstrings.append(initdocstring)
         doc = []
         for docstring in docstrings:
-            if not isinstance(docstring, unicode):
+            if not isinstance(docstring, str):
                 docstring = force_decode(docstring, encoding)
             doc.append(prepare_docstring(docstring))
         return doc
@@ -857,11 +857,11 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 except ValueError:
                     pass
                 else:
-                    self.add_line(u'   :annotation: = ' + objrepr, '<autodoc>')
+                    self.add_line('   :annotation: = ' + objrepr, '<autodoc>')
         elif self.options.annotation is SUPPRESS:
             pass
         else:
-            self.add_line(u'   :annotation: %s' % self.options.annotation,
+            self.add_line('   :annotation: %s' % self.options.annotation,
                           '<autodoc>')
 
     def add_content(self, more_content, no_docstring=False):

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+from __future__ import print_function
 from sphinxcontrib import mat_documenters as doc
 from nose.tools import eq_, ok_
 import json
@@ -38,7 +38,7 @@ def test_matlabify_class():
     ok_(isinstance(my_abc, doc.MatClass))
     eq_(my_abc.getter('__name__'), 'MyAbstractClass')
     eq_(my_abc.getter('__module__'), 'test_data')
-    eq_(my_abc.bases, [u'MyHandleClass', 'MyClass'])
+    eq_(my_abc.bases, ['MyHandleClass', 'MyClass'])
     eq_(my_abc.attrs, {'Abstract': True, 'Sealed': True})
     eq_(my_abc.properties,
         {'y': {'default': None,
@@ -89,46 +89,46 @@ def test_method():
 if __name__ == '__main__':
     m, my_cls, x, my_abc, y, version = test_matlabify_class()
 
-    print '\nmodule: %s' % m
-    print 'docstring:\n%s' % m.getter('__doc__')
+    print('\nmodule: %s' % m)
+    print('docstring:\n%s' % m.getter('__doc__'))
    
-    print '\nclass: %s' % my_cls
-    print 'bases: %s' % my_cls.bases
-    print 'class attributes: %s' % my_cls.attrs
-    print 'properties:\n'
-    print json.dumps(my_cls.properties, indent=2, sort_keys=True)
-    print 'docstring:\n%s' % my_cls.getter('__doc__')
+    print('\nclass: %s' % my_cls)
+    print('bases: %s' % my_cls.bases)
+    print('class attributes: %s' % my_cls.attrs)
+    print('properties:\n')
+    print(json.dumps(my_cls.properties, indent=2, sort_keys=True))
+    print('docstring:\n%s' % my_cls.getter('__doc__'))
 
-    print '\nx property: %s' % x
-    print 'x default: %s' % x.default
-    print 'x docstring: %s' % x.__doc__
-    print 'x attrs: %s' % x.attrs
+    print('\nx property: %s' % x)
+    print('x default: %s' % x.default)
+    print('x docstring: %s' % x.__doc__)
+    print('x attrs: %s' % x.attrs)
    
-    print '\nclass: %s' % my_abc
-    print 'bases: %s' % my_abc.bases
-    print 'class attributes: %s' % my_abc.attrs
-    print 'properties:\n'
-    print json.dumps(my_abc.properties, indent=2, sort_keys=True)
-    print 'docstring:\n%s' % my_abc.docstring
+    print('\nclass: %s' % my_abc)
+    print('bases: %s' % my_abc.bases)
+    print('class attributes: %s' % my_abc.attrs)
+    print('properties:\n')
+    print(json.dumps(my_abc.properties, indent=2, sort_keys=True))
+    print('docstring:\n%s' % my_abc.docstring)
 
-    print '\ny property: %s' % y
-    print 'y docstring: %s' % y.__doc__
-    print 'y default: %s' % y.default
-    print 'y attrs: %s' % y.attrs
-    print 'version property: %s' % version
-    print 'version default: %s' % version.default
-    print 'version docstring: %s' % version.__doc__
-    print 'version attrs: %s' % version.attrs
-    print '\n'
+    print('\ny property: %s' % y)
+    print('y docstring: %s' % y.__doc__)
+    print('y default: %s' % y.default)
+    print('y attrs: %s' % y.attrs)
+    print('version property: %s' % version)
+    print('version default: %s' % version.default)
+    print('version docstring: %s' % version.__doc__)
+    print('version attrs: %s' % version.attrs)
+    print('\n')
 
     myfun = test_function()
-    print 'function: %s' % myfun
-    print 'returns: %s' % myfun.retv
-    print 'name: %s' % myfun.getter('__name__')
-    print 'args: %s' % myfun.args
-    print 'docstring:\n%s' % myfun.getter('__doc__')
+    print('function: %s' % myfun)
+    print('returns: %s' % myfun.retv)
+    print('name: %s' % myfun.getter('__name__'))
+    print('args: %s' % myfun.args)
+    print('docstring:\n%s' % myfun.getter('__doc__'))
 
     my_cls_meth, constructor, mymethod = test_method()
-    print my_cls_meth
-    print constructor
-    print mymethod
+    print(my_cls_meth)
+    print(constructor)
+    print(mymethod)

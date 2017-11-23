@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from __future__ import print_function
 
 from sphinxcontrib import mat_documenters as doc
 from nose.tools import eq_, ok_
@@ -115,33 +116,33 @@ def test_property_with_ellipsis():
 
 if __name__ == '__main__':
     f1 = test_ellipsis_after_equals
-    print f1.__name__
-    print f1.__module__
-    print f1.__doc__
+    print(f1.__name__)
+    print(f1.__module__)
+    print(f1.__doc__)
     f2 = test_no_args()
-    print f2.__name__
-    print f2.__module__
-    print f2.__doc__
+    print(f2.__name__)
+    print(f2.__module__)
+    print(f2.__doc__)
     f3 = test_no_outputs()
-    print f3.__name__
-    print f3.__module__
-    print f3.__doc__
+    print(f3.__name__)
+    print(f3.__module__)
+    print(f3.__doc__)
     f4 = test_output_with_ellipsis()
-    print f4.__name__
-    print f4.__module__
-    print f4.__doc__
+    print(f4.__name__)
+    print(f4.__module__)
+    print(f4.__doc__)
     f5 = test_output_without_commas()
-    print f5.__name__
-    print f5.__module__
-    print f5.__doc__
+    print(f5.__name__)
+    print(f5.__module__)
+    print(f5.__doc__)
     sfdm = test_inheritance()
-    print sfdm.__name__
-    print sfdm.__module__
-    print sfdm.__doc__
+    print(sfdm.__name__)
+    print(sfdm.__module__)
+    print(sfdm.__doc__)
     ep, A, B, C = test_property_with_ellipsis()
-    print ep.__name__
-    print ep.__module__
-    print ep.__doc__
+    print(ep.__name__)
+    print(ep.__module__)
+    print(ep.__doc__)
     pprint(A.__dict__)
     pprint(B.__dict__)
     pprint(C.__dict__)
