@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for details.
 """
 from __future__ import absolute_import, unicode_literals
+from builtins import dict
 from . import mat_documenters as doc
 
 import re
