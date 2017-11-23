@@ -6,6 +6,7 @@ install:
   - pip install tox
 script:
   - tox
+  - python setup.py bdist_wheel
 deploy:
   - provider: releases
     api_key: $GITHUB_OAUTH_TOKEN
