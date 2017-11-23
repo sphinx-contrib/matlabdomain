@@ -9,7 +9,7 @@
     :license: BSD, see LICENSE for details.
 """
 from __future__ import unicode_literals, print_function
-from builtins import dict
+from builtins import *
 import os
 import re
 import sys
