@@ -17,6 +17,8 @@ setup(
     license='BSD',
     author='Mark Mikofski',
     author_email='bwana.marko@yahoo.com',
+    maintainer='Jørgen Cederberg',
+    maintainer_email='jorgen@cederberg.be',
     description='Sphinx "matlabdomain" extension',
     long_description=long_desc,
     zip_safe=False,
