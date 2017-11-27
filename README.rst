@@ -1,8 +1,9 @@
 .. image:: https://travis-ci.org/sphinx-contrib/matlabdomain.svg?branch=master
     :target: https://travis-ci.org/sphinx-contrib/matlabdomain
 
-
 This package contains the MATLAB Sphinx domain and autodoc extensions.
+
+`Changes <https://github.com/sphinx-contrib/matlabdomain/blob/master/CHANGES.rst>`_
 
 Installation
 ============
@@ -173,5 +174,3 @@ Users
 
 * `Cantera <http://cantera.github.io/dev-docs/sphinx/html/compiling.html?highlight=matlabdomain#optional-programs>`_
 * `CoSMo MVPA <http://cosmomvpa.org/download.html?highlight=matlabdomain#developers>`_
-
-`Changes <https://bitbucket.org/bwanamarko/sphinxcontrib-matlabdomain/src/default/matlabdomain/CHANGES.rst>`_
