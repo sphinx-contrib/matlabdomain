@@ -1,3 +1,7 @@
+.. image:: https://travis-ci.org/sphinx-contrib/matlabdomain.svg?branch=master
+    :target: https://travis-ci.org/sphinx-contrib/matlabdomain
+
+
 This package contains the MATLAB Sphinx domain and autodoc extensions.
 
 Installation
