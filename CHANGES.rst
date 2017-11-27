@@ -1,3 +1,18 @@
+sphinxcontrib-matlabdomain-0.2.10 (2017-11-27)
+==============================================
+
+* Add Jørgen Cederberg as maintainer.
+* Change bitbucket links to github ditto.
+
+
+sphinxcontrib-matlabdomain-0.2.9 (2017-11-23)
+=============================================
+
+Development migrated to https://github.com/sphinx-contrib/matlabdomain
+
+* Merge `PR #1 <https://github.com/sphinx-contrib/matlabdomain/pull/1>`_
+
+
 sphinxcontrib-matlabdomain-0.2.8 (2016-12-15)
 =============================================
 
