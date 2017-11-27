@@ -12,7 +12,7 @@ requires = ['Sphinx>=1.4.3', 'Pygments>=2.0.1', 'future>=0.16.0']
 setup(
     name='sphinxcontrib-matlabdomain',
     version=version,
-    url='http://bitbucket.org/bwanamarko/sphinxcontrib-matlabdomain',
+    url='https://github.com/sphinx-contrib/matlabdomain',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-matlabdomain',
     license='BSD',
     author='Mark Mikofski',
@@ -32,6 +32,7 @@ setup(
         'Programming Language :: Python',
         'Topic :: Documentation',
         'Topic :: Utilities',
+        'Framework:: Sphinx:: Extension'
     ],
     platforms='any',
     packages=find_packages(),
