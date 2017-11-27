@@ -32,7 +32,7 @@ setup(
         'Programming Language :: Python',
         'Topic :: Documentation',
         'Topic :: Utilities',
-        'Framework:: Sphinx:: Extension'
+        'Framework :: Sphinx :: Extension'
     ],
     platforms='any',
     packages=find_packages(),
