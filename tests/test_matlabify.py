@@ -60,6 +60,7 @@ def test_function():
     assert myfun.getter('__name__') == 'myfun'
     assert myfun.retv == ['o1', 'o2', 'o3']
     assert myfun.args == ['a1', 'a2']
+    assert myfun.docstring == " a fun function\n\n :param a1: the first input\n :param a2: another input\n :returns: ``[o1, o2, o3]`` some outputs\n"
     return myfun
 
 
@@ -73,12 +74,16 @@ def test_method():
     my_cls_meth = m.getter('MyClass')
     assert isinstance(my_cls_meth, doc.MatClass)
     assert my_cls_meth.getter('__name__') == 'MyClass'
+    assert my_cls_meth.docstring == " test class methods\n\n :param a: the input to :class:`MyClass`\n"
     constructor = my_cls_meth.getter('MyClass')
     assert isinstance(constructor, doc.MatMethod)
     assert constructor.getter('__name__') == 'MyClass'
     mymethod = my_cls_meth.getter('mymethod')
     assert isinstance(mymethod, doc.MatMethod)
     assert mymethod.getter('__name__') == 'mymethod'
+    assert mymethod.args == ['obj', 'b']
+    assert mymethod.retv == ['c']
+    assert mymethod.docstring == " a method in :class:`MyClass`\n\n :param b: an input to :meth:`mymethod`\n"
     return my_cls_meth, constructor, mymethod
 
 if __name__ == '__main__':

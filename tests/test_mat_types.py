@@ -21,6 +21,7 @@ def test_ellipsis_after_equals():
     assert isinstance(f, doc.MatFunction)
     assert f.retv == ['output']
     assert f.args == ['arg']
+    assert f.docstring == " Tests a function with ellipsis in the output\n"
     return f
 
 
@@ -37,6 +38,7 @@ def test_no_args():
     assert isinstance(f, doc.MatFunction)
     assert f.retv == ['output', 'with', 'ellipsis']
     assert not f.args
+    assert f.docstring == " Tests a function with ellipsis in the output\n"
     return f
 
 def test_no_outputs():
@@ -52,6 +54,7 @@ def test_no_outputs():
     assert isinstance(f, doc.MatFunction)
     assert not f.retv
     assert f.args == ['arg']
+    assert f.docstring == " Tests a function with ellipsis in the output\n"
     return f
 
 def test_output_with_ellipsis():
@@ -67,6 +70,7 @@ def test_output_with_ellipsis():
     assert isinstance(f, doc.MatFunction)
     assert f.retv == ['output', 'with', 'ellipsis']
     assert f.args == ['arg']
+    assert f.docstring == " Tests a function with ellipsis in the output\n"
     return f
 
 def test_output_without_commas():
@@ -82,6 +86,7 @@ def test_output_without_commas():
     assert isinstance(f, doc.MatFunction)
     assert f.retv == ['output', 'with', 'ellipsis']
     assert f.args == ['arg']
+    assert f.docstring == " Tests a function with ellipsis in the output\n"
     return f
 
 def test_inheritance():
@@ -97,21 +102,27 @@ def test_inheritance():
     bases = sfdm.getter('__bases__')
     assert bases['MyAbstractClass'].module == 'test_data'
     assert bases['MyHandleClass'].module == 'test_data'
+    assert sfdm.docstring == " class which inherits bases from a different module\n"
     return sfdm
 
 def test_property_with_ellipsis():
     """
     test class property with ellipsis in an array or in an expression
     """
+    # TODO: Why does properties eat the trailing '\n'?
     test_data = doc.MatObject.matlabify('test_data')
     ellipsis_class = test_data.getter('EllipsisProperties')
     assert isinstance(ellipsis_class, doc.MatClass)
+    assert ellipsis_class.docstring == " stuff\n"
     A = ellipsis_class.getter('A')
     assert ellipsis_class.properties['A']['default'] == A.default
+    assert A.docstring == " an expression with ellipsis"
     B = ellipsis_class.getter('B')
     assert ellipsis_class.properties['B']['default'] == B.default
+    assert B.docstring == " a cell array with ellipsis and other array notation"
     C = ellipsis_class.getter('C')
     assert ellipsis_class.properties['C']['default'] == C.default
+    assert C.docstring == " using end inside array"
     return ellipsis_class, A, B, C
 
 if __name__ == '__main__':
