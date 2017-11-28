@@ -1,3 +1,13 @@
+sphinxcontrib-matlabdomain-0.2.11 (2017-11-28)
+==============================================
+
+* Fixed `Issue 42 https://github.com/sphinx-contrib/matlabdomain/issues/42`.
+  Comment strings after a function docstring are not included in the docstring
+  anymore.
+* Fixed `Issue 50 https://github.com/sphinx-contrib/matlabdomain/issues/50`.
+  Added Lukas Drude as author.
+
+
 sphinxcontrib-matlabdomain-0.2.10 (2017-11-27)
 ==============================================
 
