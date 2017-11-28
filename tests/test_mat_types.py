@@ -125,6 +125,17 @@ def test_property_with_ellipsis():
     assert C.docstring == " using end inside array"
     return ellipsis_class, A, B, C
 
+def test_function_with_comment_after_docstring():
+    test_data = doc.MatObject.matlabify('test_data')
+    test_submodule = test_data.getter('test_submodule')
+    assert isinstance(test_submodule, doc.MatModule)
+    assert test_submodule.__package__ == 'test_data.test_submodule'
+    f = test_submodule.getter('f_with_comment_after_docstring')
+    assert f.args == ['input']
+    assert f.retv == ['output']
+    assert f.docstring == " Tests a function with comments after docstring\n"
+
+
 if __name__ == '__main__':
     f1 = test_ellipsis_after_equals
     print(f1.__name__)
@@ -157,3 +168,4 @@ if __name__ == '__main__':
     pprint(A.__dict__)
     pprint(B.__dict__)
     pprint(C.__dict__)
+    test_function_with_comment_after_docstring()

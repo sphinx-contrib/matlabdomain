@@ -5,6 +5,7 @@ function [o1, o2, o3] = myfun(a1, a2)
 % :param a2: another input
 % :returns: ``[o1, o2, o3]`` some outputs
 
+% Check input args
 if nargin<1
   a1 = 0;
 end

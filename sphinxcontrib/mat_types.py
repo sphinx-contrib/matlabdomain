@@ -484,12 +484,20 @@ class MatFunction(MatObject):
         except IndexError:
             docstring = None
         while docstring and docstring[0] is Token.Comment:
-            self.docstring += docstring[1].lstrip('%') + '\n'  # concatenate
+            self.docstring += docstring[1].lstrip('%')
+            # Get newline if it exists and append to docstring
             try:
-                wht = tks.pop()  # skip whitespace
+                wht = tks.pop()  # We expect a newline
             except IndexError:
                 break
-            while wht in list(zip((Token.Text,) * 3, (' ', '\t', '\n'))):
+            if wht[0] == Token.Text and wht[1] == '\n':
+                self.docstring += '\n'
+            # Skip whitespace
+            try:
+                wht = tks.pop()  # We expect a newline
+            except IndexError:
+                break
+            while wht in list(zip((Token.Text,) * 3, (' ', '\t'))):
                 try:
                     wht = tks.pop()
                 except IndexError:
