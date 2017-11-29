@@ -425,9 +425,15 @@ class MatFunction(MatObject):
             raise TypeError('Object is not a function. Expected a function.')
             # TODO: what is a better error here?
         # skip blanks and tabs
-        if tks.pop()[0] is not Token.Text.Whitespace:  # @UndefinedVariable
-            raise TypeError('Expected a whitespace after function keyword.')
-            # TODO: what is a better error here?
+        whitespace = tks.pop()[0]
+        if whitespace is not Token.Text.Whitespace:  # @UndefinedVariable
+            # When the input args are wrong parsed, 
+            # the whitespace is not makred as (Token.Text, ' ')
+            # This hides a bug, when "..." are in the input args
+            if whitespace[1] != ' ':
+                raise TypeError('Expected a whitespace after function keyword.'
+                                'modname: {}, name: {}'.format(modname, name))
+                # TODO: what is a better error here?
         # =====================================================================
         # output args
         retv = tks.pop()  # return values
@@ -473,6 +479,12 @@ class MatFunction(MatObject):
             if tks.pop() != (Token.Punctuation, ')'):
                 raise TypeError('Token after outputs should be Punctuation.')
                 # TODO: raise an matlab token error or what?
+            elif args[0] is Token.Name:
+                raise TypeError('Expected input args. '
+                                'Probably  there is a not allowed "..." in '
+                                'the input args? '
+                                'modname: {}, name: {}, func name: {}'.format(
+                                    modname, name, self.name))
         # skip blanks and tabs
         if tks.pop()[0] is not Token.Text.Whitespace:  # @UndefinedVariable
             raise TypeError('Expected a whitespace after input args.')
