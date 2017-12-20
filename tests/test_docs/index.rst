@@ -25,47 +25,47 @@ This is the test data module
 
 :mod:`test_data` is a really cool module
 
-.. _MyHandleClass:
+.. _ClassInheritHandle:
 
-My Handle Class
-+++++++++++++++
-Does this work?
+A Handle Class
+++++++++++++++
+Should show inheritance and members.
 
-.. autoclass:: MyHandleClass
+.. autoclass:: ClassInheritHandle
     :show-inheritance:
     :members:
 
-.. _MyAbstractClass:
+.. _ClassAbstract:
 
-My Abstract Class
-+++++++++++++++++
-Does this work?
+A Abstract Class
+++++++++++++++++
+Should show inheritance and members.
 
-.. autoclass:: MyAbstractClass
+.. autoclass:: ClassAbstract
     :show-inheritance:
     :members:
 
-.. _myfun:
+.. _f_example:
 
-my function
-+++++++++++
-Do these work?
+Example Function
+++++++++++++++++
+Should show parameter and return values.
 
-.. autofunction:: myfun
+.. autofunction:: f_example
 
-.. _nested_fun:
+.. _f_with_nested_function:
 
 Function with nested function
 +++++++++++++++++++++++++++++
-.. autofunction:: nested_fun
+.. autofunction:: f_with_nested_function
 
-.. _MyClass:
+.. _ClassExample:
 
-My Class
-++++++++
-How about this?
+An Example Class
+++++++++++++++++
+Should show inheritance and members.
 
-.. autoclass:: MyClass
+.. autoclass:: ClassExample
     :show-inheritance:
     :members:
 
@@ -73,91 +73,106 @@ How about this?
 
 my method
 ~~~~~~~~~
-How about this too?
+A method in ClassExample
 
-.. automethod:: MyClass.mymethod
+.. automethod:: ClassExample.mymethod
 
-Ellipsis Properties
-+++++++++++++++++++
+A class with ellipsis properties
+++++++++++++++++++++++++++++++++
 Some edge cases that have ellipsis inside arrays.
 
-.. autoclass:: EllipsisProperties
+.. autoclass:: ClassWithEllipsisProperties
     :show-inheritance:
     :members:
 
-+myPackage
-++++++++++
++package
+++++++++
 This is the test package
 
-.. automodule:: test_data.+myPackage
+.. automodule:: test_data.+package
 
 packageFunc
 ~~~~~~~~~~~
 
-.. autofunction:: packageFunc
+.. autofunction:: package_func
 
-@myClassFolder
-++++++++++++++
+@ClassFolder
+++++++++++++
 This is the test class folder
 
-.. automodule:: test_data.@myClassFolder
+.. automodule:: test_data.@ClassFolder
 
-myClassFolder
-~~~~~~~~~~~~~
+ClassFolder
+~~~~~~~~~~~
 
-.. autoclass:: myClassFolder
+.. autoclass:: ClassFolder
 
 classMethod
 ~~~~~~~~~~~
 
 .. autofunction:: classMethod
 
-My Static Function
-~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: my_static_func
+A Static Function
+~~~~~~~~~~~~~~~~~
+
+.. autofunction:: a_static_func
+
 
 Submodule
 +++++++++
-This is the test data module
+This is the test_data module
 
-.. automodule:: test_data.test_submodule
+.. automodule:: test_data.submodule
+
 
 Ellipsis after equals
 ~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: f_ellipsis_after_equals
 
+
 No Arguments
 ~~~~~~~~~~~~
-.. autofunction:: f_no_args
+.. autofunction:: f_no_input
+
 
 No Outputs
 ~~~~~~~~~~
-.. autofunction:: f_no_outputs
+.. autofunction:: f_no_output
+
 
 Output with Ellipsis
 ~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: f_output_with_ellipsis
+.. autofunction:: f_ellipsis_in_output
 
-Output with no commas
-~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: f_output_without_commas
 
-Super from different module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: super_from_diff_mod
+Ellipsis in input and no spaces in output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: f_ellipsis_in_input
+
+
+Function with no parentheses in input
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: f_no_input_parentheses
+
+
+Class that inherits from different modules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Insert text here
+
+.. autoclass:: ClassInheritDifferentModules
     :members:
     :show-inheritance:
 
+
 TestFibonacci
 ~~~~~~~~~~~~~
+A Matlab unittest class
+
 .. autoclass:: TestFibonacci
     :members:
     :show-inheritance:
 
-Function with no parentheses
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: f_constant
 
 Indices and tables
 ==================

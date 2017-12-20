@@ -37,7 +37,6 @@ __all__ = ['MatObject', 'MatModule', 'MatFunction', 'MatClass',  \
 # TODO: subfunctions (not nested) and private folders/functions/classes
 # TODO: script files
 
-
 class MatObject(object):
     """
     Base MATLAB object to which all others are subclassed.
@@ -103,7 +102,7 @@ class MatObject(object):
         :attr:`MatObject.basedir`. For example:
         ``my_project.my_package.sub_pkg.MyClass`` represents either a folder
         ``basedir/my_project/my_package/sub_pkg/MyClass`` or an mfile
-        ``basedir/my_project/my_package/sub_pkg/MyClass.m``. If there is both a
+        ``basedir/my_project/my_package/sub_pkg/ClassExample.m``. If there is both a
         folder and an mfile with the same name, the folder takes precedence
         over the mfile.
         """
@@ -155,6 +154,9 @@ class MatObject(object):
         with open(mfile, 'r') as code_f:
             code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
         # functions must be contained in one line, no ellipsis, classdef is OK
+        pat = r"^([^%\n]*)(\.\.\..*\n)"
+        code = re.sub(pat, '\g<1>', code, flags=re.MULTILINE)
+
         pat = r"""^[ \t]*function[ \t.\n]*  # keyword (function)
                   (\[?[\w, \t.\n]*\]?)      # outputs: group(1)
                   [ \t.\n]*=[ \t.\n]*       # punctuation (eq)
@@ -163,8 +165,7 @@ class MatObject(object):
         pat = re.compile(pat, re.X | re.MULTILINE)  # search start of every line
         # replacement function
         def repl(m):
-            # replace any ellipsis found in function signatures
-            retv = m.group(0).replace('...\n', ' ')
+            retv = m.group(0)
             # if no args and doesn't end with parentheses, append "()"
             if not (m.group(3) or m.group(0).endswith('()')):
                 retv = retv.replace(m.group(2), m.group(2) + "()")
@@ -239,9 +240,9 @@ class MatModule(MatObject):
 
     @property
     def __all__(self):
-        results = self.safe_getmembers
+        results = self.safe_getmembers()
         if results:
-            results = list(zip(*self.safe_getmembers))[0]
+            results = list(zip(*self.safe_getmembers()))[0]
         return results
 
     @property
@@ -367,6 +368,12 @@ class MatMixin(object):
         return idx - idx0  # indentation
 
 
+def skip_whitespace(tks):
+    """ Eats whitespace from list of tokens """
+    while tks and tks[-1][0] == Token.Text.Whitespace:
+        tks.pop()
+
+
 class MatFunction(MatObject):
     """
     A MATLAB function.
@@ -425,15 +432,16 @@ class MatFunction(MatObject):
             raise TypeError('Object is not a function. Expected a function.')
             # TODO: what is a better error here?
         # skip blanks and tabs
-        whitespace = tks.pop()[0]
-        if whitespace is not Token.Text.Whitespace:  # @UndefinedVariable
-            # When the input args are wrong parsed, 
-            # the whitespace is not makred as (Token.Text, ' ')
-            # This hides a bug, when "..." are in the input args
-            if whitespace[1] != ' ':
-                raise TypeError('Expected a whitespace after function keyword.'
-                                'modname: {}, name: {}'.format(modname, name))
-                # TODO: what is a better error here?
+        skip_whitespace(tks)
+        # whitespace = tks.pop()[0]
+        # if whitespace is not Token.Text.Whitespace:  # @UndefinedVariable
+        #     # When the input args are wrong parsed,
+        #     # the whitespace is not makred as (Token.Text, ' ')
+        #     # This hides a bug, when "..." are in the input args
+        #     if whitespace[1] != ' ':
+        #         raise TypeError('Expected a whitespace after function keyword.'
+        #                         'modname: {}, name: {}'.format(modname, name))
+        #         # TODO: what is a better error here?
         # =====================================================================
         # output args
         retv = tks.pop()  # return values
@@ -450,10 +458,7 @@ class MatFunction(MatObject):
             if tks.pop() != (Token.Punctuation, '='):
                 raise TypeError('Token after outputs should be Punctuation.')
                 # TODO: raise an matlab token error or what?
-            # check for whitespace after equal sign
-            wht = tks.pop()
-            if wht[0] is not Token.Text.Whitespace:  # @UndefinedVariable
-                tks.append(wht)  # if not whitespace, put it back in list
+            skip_whitespace(tks)
         elif retv[0] is Token.Name.Function:  # @UndefinedVariable
             tks.append(retv)
         # =====================================================================
@@ -485,10 +490,7 @@ class MatFunction(MatObject):
                                 'the input args? '
                                 'modname: {}, name: {}, func name: {}'.format(
                                     modname, name, self.name))
-        # skip blanks and tabs
-        if tks.pop()[0] is not Token.Text.Whitespace:  # @UndefinedVariable
-            raise TypeError('Expected a whitespace after input args.')
-            # TODO: what is a better error here?
+        skip_whitespace(tks)
         # =====================================================================
         # docstring
         try:
@@ -516,8 +518,11 @@ class MatFunction(MatObject):
                     break
             docstring = wht  # check if Token is Comment
         # =====================================================================
+        # Is this code even used?
         # main body
         # find Keywords - "end" pairs
+        if docstring is None:
+            return
         kw = docstring  # last token
         lastkw = 0  # set last keyword placeholder
         kw_end = 1  # count function keyword

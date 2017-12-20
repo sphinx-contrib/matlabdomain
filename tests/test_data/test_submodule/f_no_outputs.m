@@ -1,3 +1,0 @@
-function [] ...
-    = f_no_outputs(arg)
-% Tests a function with ellipsis in the output
