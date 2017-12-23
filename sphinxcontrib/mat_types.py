@@ -843,6 +843,22 @@ class MatClass(MatMixin, MatObject):
                         self.methods[meth.name] = meth  # update methods
                         idx += self._whitespace(idx)
                 idx += 1
+            if self._tk_eq(idx, (Token.Keyword, 'events')):
+                msg = '[%s] ignoring ''events'' in ''classdef %s.'''
+                MatObject.sphinx_dbg(msg, MAT_DOM, self.name)
+                idx += 1
+                # Token.Keyword: "end" terminates events block
+                while self._tk_ne(idx, (Token.Keyword, 'end')):
+                    idx += 1
+            if self._tk_eq(idx, (Token.Name, 'enumeration')):
+                msg = '[%s] ignoring ''enumeration'' in ''classdef %s.'''
+                MatObject.sphinx_dbg(msg, MAT_DOM, self.name)
+                idx += 1
+                # Token.Keyword: "end" terminates events block
+                while self._tk_ne(idx, (Token.Keyword, 'end')):
+                    idx += 1
+
+
         self.rem_tks = idx  # index of last token
 
     def attributes(self, idx, attr_types):

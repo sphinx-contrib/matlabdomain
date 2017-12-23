@@ -140,6 +140,21 @@ def test_ClassWithEndOfLineComment():
     # assert method_test1.docstring == ''
 
 
+def test_ClassWithEvent():
+    # TODO: handle 'events' block
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithEvent.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithEvent', 'test_data')
+    assert obj.name == 'ClassWithEvent'
+    assert obj.docstring == ""
+
+
+def test_EnumerationBool():
+    # TODO: handle 'enumeration' block
+    mfile = os.path.join(DIRNAME, 'test_data', 'Bool.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'Bool', 'test_data')
+    assert obj.name == 'Bool'
+    assert obj.docstring == ""
+
 
 
 if __name__ == '__main__':

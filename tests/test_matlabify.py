@@ -36,9 +36,12 @@ def test_module(mod):
     assert mod.getter('__package__') == 'test_data'
     assert not mod.getter('__module__')
     assert not mod.getter('__doc__')
-    assert set(mod.getter('__all__')) == set(('+package', '@ClassFolder', 'ClassAbstract', 'ClassExample', 'ClassInheritHandle',
-                                     'ClassWithEllipsisProperties', 'ClassWithEndOfLineComment', 'f_example',
-                                     'f_with_nested_function', 'submodule', 'script'))
+    all_items = set(mod.getter('__all__'))
+    expected_items = set(('+package', '@ClassFolder', 'ClassAbstract', 'ClassExample',
+                          'ClassInheritHandle', 'ClassWithEllipsisProperties',
+                          'ClassWithEndOfLineComment', 'f_example', 'f_with_nested_function',
+                          'submodule', 'script', 'Bool', 'ClassWithEvent'))
+    assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 
 
