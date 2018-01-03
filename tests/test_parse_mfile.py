@@ -17,7 +17,6 @@ def test_ClassExample():
     assert obj.name == 'ClassExample'
     assert obj.docstring == " test class methods\n\n :param a: the input to :class:`ClassExample`\n"
     mymethod = obj.methods['mymethod']
-    print(dir(mymethod))
     assert mymethod.name == 'mymethod'
     assert mymethod.retv == ['c']
     assert mymethod.args == ['obj', 'b']
@@ -129,7 +128,6 @@ def test_ClassWithEndOfLineComment():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithEndOfLineComment', 'test_data')
     assert obj.name == 'ClassWithEndOfLineComment'
     assert obj.docstring == ''
-    print(obj.methods)
     method_test1 = obj.methods['test1']
     assert method_test1.name == 'test1'
     # TODO: Trailing comment get passed as docstring
