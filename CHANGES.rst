@@ -1,3 +1,15 @@
+sphinxcontrib-matlabdomain-0.2.12 (2018-01-10)
+==============================================
+
+* Fixed `Issue 27 https://github.com/sphinx-contrib/matlabdomain/issues/27`.
+  An "events" block in a class causes Sphinx to hang.
+* Fixed `Issue 52 https://github.com/sphinx-contrib/matlabdomain/issues/52`.
+  An "enumeration" block in a class causes Sphinx to hang
+* Merge `PR 51 https://github.com/sphinx-contrib/matlabdomain/pull/51`
+  better exception, when input args contains "..."
+* Added Christoph Boeddeker as author.
+
+
 sphinxcontrib-matlabdomain-0.2.11 (2017-11-28)
 ==============================================
 
