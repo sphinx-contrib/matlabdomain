@@ -370,7 +370,8 @@ class MatMixin(object):
 
 def skip_whitespace(tks):
     """ Eats whitespace from list of tokens """
-    while tks and tks[-1][0] == Token.Text.Whitespace:
+    while tks and (tks[-1][0] == Token.Text.Whitespace or
+                   tks[-1][0] == Token.Text and tks[-1][1] in [' ', '\t']):
         tks.pop()
 
 
