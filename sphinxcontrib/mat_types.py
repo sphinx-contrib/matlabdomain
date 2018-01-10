@@ -372,7 +372,8 @@ class MatMixin(object):
 
 def skip_whitespace(tks):
     """ Eats whitespace from list of tokens """
-    while tks and tks[-1][0] == Token.Text.Whitespace:
+    while tks and (tks[-1][0] == Token.Text.Whitespace or
+                   tks[-1][0] == Token.Text and tks[-1][1] in [' ', '\t']):
         tks.pop()
 
 
@@ -431,7 +432,8 @@ class MatFunction(MatObject):
         # check function keyword
         func_kw = tks.pop()  # function keyword
         if func_kw[0] is not Token.Keyword or func_kw[1].strip() != 'function':
-            raise TypeError('Object is not a function. Expected a function.')
+            raise TypeError('Object is not a function. Expected a function.'
+                            'modname: {}, name: {}'.format(modname, name))
             # TODO: what is a better error here?
         # skip blanks and tabs
         skip_whitespace(tks)
@@ -458,7 +460,8 @@ class MatFunction(MatObject):
                     self.retv = [rv for rv_tab in self.retv[0].split('\t')
                                  for rv in rv_tab.split(' ')]
             if tks.pop() != (Token.Punctuation, '='):
-                raise TypeError('Token after outputs should be Punctuation.')
+                raise TypeError('Token after outputs should be Punctuation.'
+                                'modname: {}, name: {}'.format(modname, name))
                 # TODO: raise an matlab token error or what?
             skip_whitespace(tks)
         elif retv[0] is Token.Name.Function:  # @UndefinedVariable
@@ -471,6 +474,7 @@ class MatFunction(MatObject):
                 self.name = func_name[1]
             else:
                 errmsg = 'Unexpected function name: "%s".' % func_name[1]
+                errmsg += 'modname: {}, name: {}'.format(modname, name)
                 raise Exception(errmsg)
                 # TODO: create mat_types or tokens exceptions!
         # =====================================================================
@@ -484,7 +488,8 @@ class MatFunction(MatObject):
                 tks.append(args)  # put closing parenthesis back in stack
             # check if function args parsed correctly
             if tks.pop() != (Token.Punctuation, ')'):
-                raise TypeError('Token after outputs should be Punctuation.')
+                raise TypeError('Token after outputs should be Punctuation.'
+                                'modname: {}, name: {}'.format(modname, name))
                 # TODO: raise an matlab token error or what?
             elif args[0] is Token.Name:
                 raise TypeError('Expected input args. '

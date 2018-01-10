@@ -154,6 +154,13 @@ def test_EnumerationBool():
     assert obj.docstring == ""
 
 
+def test_no_input_no_output_no_parentheses():
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_no_input_no_output_no_parentheses.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'f_no_input_no_output_no_parentheses', 'test_data')
+    assert obj.name == 'f_no_input_no_output_no_parentheses'
+    assert obj.docstring == " Tests a function without parentheses in input and no return value\n"
+
+
 
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])
