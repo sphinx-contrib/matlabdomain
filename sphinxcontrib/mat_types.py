@@ -130,6 +130,8 @@ class MatObject(object):
                 return MatModule(name, fullpath, package)  # import package
         elif os.path.isfile(fullpath + '.m'):
             mfile = fullpath + '.m'
+            msg = '[%s] matlabify %s from\n\t%s.'
+            MatObject.sphinx_dbg(msg, MAT_DOM, package, mfile)
             return MatObject.parse_mfile(mfile, name, path)  # parse mfile
         return None
 
