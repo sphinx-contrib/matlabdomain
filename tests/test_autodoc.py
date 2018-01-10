@@ -8,7 +8,7 @@ from sphinx.testing.util import assert_node
 from sphinx import addnodes
 import os
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def rootdir():
     return path(os.path.dirname(__file__)).abspath()
 
