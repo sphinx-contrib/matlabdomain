@@ -1059,7 +1059,7 @@ class MatScript(MatObject):
 
 class MatException(MatObject):
     def __init__(self, name, path, tks):
-        super(MatScript, self).__init__(name)
+        super(MatException, self).__init__(name)
         self.path = path
         self.tks = tks
         self.docstring = ''
