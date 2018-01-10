@@ -36,6 +36,7 @@ def test_setup(rootdir, make_app):
     refnodes = list(doctree.traverse(addnodes.pending_xref))
 
     assert_refnode(refnodes[0],  u'test_data', None, u'test_data', u'mod')
+    app.cleanup()
 
 
 if __name__ == '__main__':
