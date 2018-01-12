@@ -159,9 +159,9 @@ def test_folder_class(mod):
     func = cls_mod.getter('classMethod')
     assert isinstance(func, doc.MatFunction)
     assert func.name == 'classMethod'
-    assert func.args == ['self', 'varargin']
+    assert func.args == ['obj', 'varargin']
     assert func.retv == ['varargout']
-    assert func.docstring == ' CLASSMETHOD A function within a package\n\n :param self: An instance of this class.\n :param varargin: Variable input arguments.\n :returns: varargout\n'
+    assert func.docstring == ' CLASSMETHOD A function within a package\n\n :param obj: An instance of this class.\n :param varargin: Variable input arguments.\n :returns: varargout\n'
 
 
 def test_function(mod):
