@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.2.13 (2018-01-12)
+==============================================
+
+* Fix bug when parsing a function without output and no parentheses.
+* Better error messages during parsing of functions.
+
+
 sphinxcontrib-matlabdomain-0.2.12 (2018-01-10)
 ==============================================
 
