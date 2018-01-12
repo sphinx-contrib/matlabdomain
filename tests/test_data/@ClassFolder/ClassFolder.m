@@ -11,6 +11,11 @@ classdef ClassFolder
             self.p = p
         end
         % comments on last line cause issues
+
+        function method_inside_classdef(obj, a, b)
+        % Method inside class definition
+            a = b;
+        end
     end
 
     methods (Static)

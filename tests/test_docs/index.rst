@@ -111,6 +111,7 @@ classMethod
 ~~~~~~~~~~~
 
 .. autofunction:: classMethod
+.. automethod:: ClassFolder.method_inside_classdef
 
 
 A Static Function
