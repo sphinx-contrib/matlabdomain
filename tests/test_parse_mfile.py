@@ -163,6 +163,13 @@ def test_no_input_no_output_no_parentheses():
     assert obj.docstring == " Tests a function without parentheses in input and no return value\n"
 
 
+def test_PropTypeOld():
+    mfile = os.path.join(DIRNAME, 'test_data', 'PropTypeOld.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'PropTypeOld', 'test_data')
+    assert obj.name == 'PropTypeOld'
+    assert obj.docstring == ""
+
+
 
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])

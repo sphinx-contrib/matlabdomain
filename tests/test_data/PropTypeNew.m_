@@ -1,0 +1,8 @@
+classdef PropTypeNew
+    properties
+        link_name string = 'none';
+        pos(3,1) double = zeros(3,1);
+        rotm(3,3) double = eye(3,3);
+        idx uint8 = 0;
+    end
+end

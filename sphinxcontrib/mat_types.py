@@ -707,6 +707,7 @@ class MatClass(MatMixin, MatObject):
             # =================================================================
             # properties blocks
             if self._tk_eq(idx, (Token.Keyword, 'properties')):
+                prop_name = ''
                 idx += 1
                 # property "attributes"
                 attr_dict, idx = self.attributes(idx, MatClass.prop_attr_types)
@@ -726,6 +727,11 @@ class MatClass(MatMixin, MatObject):
                         prop_name = self.tokens[idx][1]
                         self.properties[prop_name] = {'attrs': attr_dict}
                         idx += 1
+                        # collect property types:
+                        if self.tokens[idx] == (Token.Punctuation, '@'):
+                            idx += 1
+                        while self.tokens[idx][0] in (Token.Text, Token.Name):
+                            idx += 1
                     # subtype of Name EG Name.Builtin used as Name
                     elif self.tokens[idx][0] in Token.Name.subtypes:  # @UndefinedVariable
                         prop_name = self.tokens[idx][1]

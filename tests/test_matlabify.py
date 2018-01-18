@@ -41,7 +41,7 @@ def test_module(mod):
                           'ClassInheritHandle', 'ClassWithEllipsisProperties',
                           'ClassWithEndOfLineComment', 'f_example', 'f_with_nested_function',
                           'submodule', 'script', 'Bool', 'ClassWithEvent',
-                          'f_no_input_no_output_no_parentheses'))
+                          'f_no_input_no_output_no_parentheses', 'PropTypeOld'))
     assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 
