@@ -168,7 +168,18 @@ def test_PropTypeOld():
     obj = mat_types.MatObject.parse_mfile(mfile, 'PropTypeOld', 'test_data')
     assert obj.name == 'PropTypeOld'
     assert obj.docstring == ""
-
+    assert obj.properties == {'link_name': {'docstring': None, 'attrs': {},
+                                            'type': ['char'], 'default': "'none'"},
+                              'pos': {'docstring': None, 'attrs': {},
+                                      'type': ['double', 'vector'],
+                                      'default': 'zeros(3,1)'},
+                              'rotm': {'docstring': None, 'attrs': {},
+                                       'type': ['double', 'matrix'],
+                                       'default': 'zeros(3,3)'},
+                              'idx': {'docstring': None, 'attrs': {},
+                                      'type': ['uint8', 'scalar'],
+                                      'default': '0'}
+                              }
 
 
 if __name__ == '__main__':

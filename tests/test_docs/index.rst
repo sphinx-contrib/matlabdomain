@@ -85,6 +85,12 @@ Some edge cases that have ellipsis inside arrays.
     :show-inheritance:
     :members:
 
+A class with old style properties
++++++++++++++++++++++++++++++++++
+
+.. autoclass:: PropTypeOld
+    :members:
+
 +package
 ++++++++
 This is the test package
@@ -118,6 +124,7 @@ A Static Function
 ~~~~~~~~~~~~~~~~~
 
 .. autofunction:: a_static_func
+
 
 
 Submodule

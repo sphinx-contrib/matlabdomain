@@ -725,13 +725,19 @@ class MatClass(MatMixin, MatObject):
                     # with "%:" directive trumps docstring after property
                     if self.tokens[idx][0] is Token.Name:
                         prop_name = self.tokens[idx][1]
-                        self.properties[prop_name] = {'attrs': attr_dict}
+                        self.properties[prop_name] = {'attrs': attr_dict,
+                                                      'type': None}
                         idx += 1
                         # collect property types:
                         if self.tokens[idx] == (Token.Punctuation, '@'):
                             idx += 1
+                        prop_type = []
                         while self.tokens[idx][0] in (Token.Text, Token.Name):
+                            if self.tokens[idx][0] == Token.Name:
+                                prop_type.append(self.tokens[idx][1])
                             idx += 1
+                        if prop_type:
+                            self.properties[prop_name]['type'] = prop_type
                     # subtype of Name EG Name.Builtin used as Name
                     elif self.tokens[idx][0] in Token.Name.subtypes:  # @UndefinedVariable
                         prop_name = self.tokens[idx][1]
@@ -1025,6 +1031,7 @@ class MatProperty(MatObject):
         self.attrs = attrs['attrs']
         self.default = attrs['default']
         self.docstring = attrs['docstring']
+        self.type = attrs['type']
 
     @property
     def __doc__(self):
