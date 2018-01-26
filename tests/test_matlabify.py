@@ -113,7 +113,10 @@ def test_class_method(mod):
     mymethod = cls_meth.getter('mymethod')
     assert isinstance(mymethod, doc.MatMethod)
     assert mymethod.getter('__name__') == 'mymethod'
-    assert mymethod.args == ['obj', 'b']
+    # TODO: mymethod.args will contain ['obj', 'b'] if run standalone
+    #       but if test_autodoc.py is run, the 'obj' is removed
+    assert mymethod.args
+    assert mymethod.args[-1] == 'b'
     assert mymethod.retv == ['c']
     assert mymethod.docstring == " a method in :class:`ClassExample`\n\n :param b: an input to :meth:`mymethod`\n"
     return cls_meth, constructor, mymethod

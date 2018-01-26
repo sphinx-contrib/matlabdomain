@@ -14,10 +14,7 @@ import re
 import sys
 import inspect
 import traceback
-from types import FunctionType, BuiltinFunctionType, MethodType
 
-from docutils import nodes
-from docutils.utils import assemble_option_dict
 from docutils.statemachine import ViewList
 
 from sphinx.util import rpartition, force_decode
