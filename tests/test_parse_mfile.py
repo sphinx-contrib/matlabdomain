@@ -17,7 +17,6 @@ def test_ClassExample():
     assert obj.name == 'ClassExample'
     assert obj.docstring == " test class methods\n\n :param a: the input to :class:`ClassExample`\n"
     mymethod = obj.methods['mymethod']
-    print(dir(mymethod))
     assert mymethod.name == 'mymethod'
     assert mymethod.retv == ['c']
     assert mymethod.args == ['obj', 'b']
@@ -96,7 +95,6 @@ def test_no_docstring():
     assert obj.docstring == ''
 
 
-
 def test_no_output():
     mfile = os.path.join(TESTDATA_SUB, 'f_no_output.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'f_no_output', '')
@@ -129,7 +127,6 @@ def test_ClassWithEndOfLineComment():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithEndOfLineComment', 'test_data')
     assert obj.name == 'ClassWithEndOfLineComment'
     assert obj.docstring == ''
-    print(obj.methods)
     method_test1 = obj.methods['test1']
     assert method_test1.name == 'test1'
     # TODO: Trailing comment get passed as docstring
@@ -161,6 +158,30 @@ def test_no_input_no_output_no_parentheses():
     obj = mat_types.MatObject.parse_mfile(mfile, 'f_no_input_no_output_no_parentheses', 'test_data')
     assert obj.name == 'f_no_input_no_output_no_parentheses'
     assert obj.docstring == " Tests a function without parentheses in input and no return value\n"
+
+
+def test_ClassWithCommentHeader():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithCommentHeader.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithCommentHeader', 'test_data')
+    assert obj.name == 'ClassWithCommentHeader'
+    assert obj.docstring == " A class with a comment header on the top.\n"
+    method_get_tform = obj.methods['getTransformation']
+    assert method_get_tform.name == 'getTransformation'
+    assert method_get_tform.retv == ['tform']
+    assert method_get_tform.args == ['obj']
+
+
+def test_with_comment_header():
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_comment_header.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_comment_header', 'test_data')
+    assert obj.name == 'f_with_comment_header'
+    assert obj.docstring == " A simple function with a comment header on the top.\n"
+
+
+def test_script_with_comment_header():
+    mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header', 'test_data')
+    assert obj.docstring == ""
 
 
 def test_PropTypeOld():

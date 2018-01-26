@@ -130,6 +130,8 @@ class MatObject(object):
                 return MatModule(name, fullpath, package)  # import package
         elif os.path.isfile(fullpath + '.m'):
             mfile = fullpath + '.m'
+            msg = '[%s] matlabify %s from\n\t%s.'
+            MatObject.sphinx_dbg(msg, MAT_DOM, package, mfile)
             return MatObject.parse_mfile(mfile, name, path)  # parse mfile
         return None
 
@@ -153,6 +155,8 @@ class MatObject(object):
         # read mfile code
         with open(mfile, 'r') as code_f:
             code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
+        # remove the top comment header (if there is one) from the code string
+        code = MatObject._remove_comment_header(code)
         # functions must be contained in one line, no ellipsis, classdef is OK
         pat = r"^([^%\n]*)(\.\.\..*\n)"
         code = re.sub(pat, '\g<1>', code, flags=re.MULTILINE)
@@ -188,6 +192,30 @@ class MatObject(object):
             # it's a script file
             return MatScript(name, modname, tks)
         return None
+
+    @staticmethod
+    def _remove_comment_header(code):
+        """
+        Removes the comment header (if there is one) and empty lines from the
+        top of the current read code.
+        :param code: Current code string.
+        :type code: str
+        :returns: Code string without comments above a function, class or
+                  procedure/script.
+        """
+        # get the line number when the comment header ends (incl. empty lines)
+        ln_pos = 0
+        for line in code.splitlines(1):
+            if re.match(r"[ \t]*(%|\n)", line):
+                ln_pos += 1
+            else:
+                break
+
+        if ln_pos > 0:
+            # remove the header block and empty lines from the top of the code
+            code = code.split('\n', ln_pos)[ln_pos:][0]
+
+        return code
 
 
 # TODO: get docstring and __all__ from contents.m if exists
@@ -848,7 +876,7 @@ class MatClass(MatMixin, MatObject):
                         idx += 1 + self._whitespace(idx + 1)
                     elif self._tk_eq(idx, (Token.Keyword, 'end')):
                         idx += 1
-                        break 
+                        break
                     else:
                         # find methods
                         meth = MatMethod(self.module, self.tokens[idx:],
@@ -1075,7 +1103,7 @@ class MatScript(MatObject):
 
 class MatException(MatObject):
     def __init__(self, name, path, tks):
-        super(MatScript, self).__init__(name)
+        super(MatException, self).__init__(name)
         self.path = path
         self.tks = tks
         self.docstring = ''
