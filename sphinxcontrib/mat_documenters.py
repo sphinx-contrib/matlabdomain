@@ -22,7 +22,6 @@ from sphinx.locale import _
 from sphinx.pycode import ModuleAnalyzer as PyModuleAnalyzer, PycodeError
 from sphinx.application import ExtensionError
 from sphinx.util.nodes import nested_parse_with_titles
-from sphinx.util.compat import Directive
 from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
      safe_getattr, is_builtin_class_method
 try:
@@ -34,7 +33,7 @@ except ImportError:
 from sphinx.util.docstrings import prepare_docstring
 
 from sphinx.ext.autodoc import py_ext_sig_re as mat_ext_sig_re, \
-    DefDict, identity, Options, ALL, INSTANCEATTR, members_option, \
+    identity, Options, ALL, INSTANCEATTR, members_option, \
     members_set_option, SUPPRESS, annotation_option, bool_option, \
     Documenter as PyDocumenter, \
     ModuleDocumenter as PyModuleDocumenter, \
