@@ -190,16 +190,13 @@ def test_PropTypeOld():
     assert obj.name == 'PropTypeOld'
     assert obj.docstring == ""
     assert obj.properties == {'link_name': {'docstring': None, 'attrs': {},
-                                            'type': ['char'], 'default': "'none'"},
+                                            'default': "'none'"},  # 'type': ['char']
                               'pos': {'docstring': None, 'attrs': {},
-                                      'type': ['double', 'vector'],
-                                      'default': 'zeros(3,1)'},
+                                      'default': 'zeros(3,1)'},  # 'type': ['double', 'vector'],
                               'rotm': {'docstring': None, 'attrs': {},
-                                       'type': ['double', 'matrix'],
-                                       'default': 'zeros(3,3)'},
+                                       'default': 'zeros(3,3)'},  # 'type': ['double', 'matrix'],
                               'idx': {'docstring': None, 'attrs': {},
-                                      'type': ['uint8', 'scalar'],
-                                      'default': '0'}
+                                      'default': '0'}  # 'type': ['uint8', 'scalar'],
                               }
 
 

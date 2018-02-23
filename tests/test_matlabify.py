@@ -43,7 +43,7 @@ def test_module(mod):
                           'submodule', 'script', 'Bool', 'ClassWithEvent',
                           'f_no_input_no_output_no_parentheses', 'ClassWithCommentHeader',
                           'f_with_comment_header', 'script_with_comment_header',
-                          'PropTypeOld'))
+                          'PropTypeOld', 'ValidateProps'))
     assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 
@@ -65,8 +65,8 @@ def test_classes(mod):
     assert cls.attrs == {}
     assert cls.properties == {'x': {'attrs': {},
                                     'default': None,
-                                    'docstring': ' a property',
-                                    'type': None}
+                                    'docstring': ' a property'}
+
                               }
     assert cls.getter('__doc__') == ' a handle class\n\n :param x: a variable\n'
     x = cls.getter('x')
@@ -85,12 +85,10 @@ def test_abstract_class(mod):
     assert abc.properties == {'y': {'default': None,
                                     'docstring': ' y variable',
                                     'attrs': {'GetAccess': 'private', 'SetAccess': 'private'},
-                                    'type': None
                                     },
                               'version': {'default': "'0.1.1-beta'",
                                           'docstring': ' version',
                                           'attrs': {'Constant': True},
-                                          'type': None
                                           }
                              }
     assert abc.getter('__doc__') == ' an abstract class\n\n :param y: a variable\n :type y: double\n'
@@ -158,7 +156,7 @@ def test_folder_class(mod):
     assert cls.properties == {'p': {'attrs': {},
                                     'default': None,
                                     'docstring': ' a property of a class folder',
-                                    'type': None}}
+                                    }}
 
     assert 'ClassFolder' in cls.methods
 

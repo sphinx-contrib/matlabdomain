@@ -91,6 +91,14 @@ A class with old style properties
 .. autoclass:: PropTypeOld
     :members:
 
+ValidateProps
++++++++++++++
+A Matlab class with property validation
+
+.. autoclass:: ValidateProps
+    :members:
+
+
 +package
 ++++++++
 This is the test package
@@ -180,6 +188,8 @@ A Matlab unittest class
 .. autoclass:: TestFibonacci
     :members:
     :show-inheritance:
+
+
 
 
 Indices and tables

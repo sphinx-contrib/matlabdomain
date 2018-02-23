@@ -753,19 +753,23 @@ class MatClass(MatMixin, MatObject):
                     # with "%:" directive trumps docstring after property
                     if self.tokens[idx][0] is Token.Name:
                         prop_name = self.tokens[idx][1]
-                        self.properties[prop_name] = {'attrs': attr_dict,
-                                                      'type': None}
-                        idx += 1
-                        # collect property types:
-                        if self.tokens[idx] == (Token.Punctuation, '@'):
+                        self.properties[prop_name] = {'attrs': attr_dict}
+
+                        # skip size, class and functions specifiers
+                        # TODO: Parse old and new style property extras
+                        while self._tk_eq(idx, (Token.Punctuation, '@')) or \
+                              self._tk_eq(idx, (Token.Punctuation, '(')) or \
+                              self._tk_eq(idx, (Token.Punctuation, ')')) or \
+                              self._tk_eq(idx, (Token.Punctuation, ',')) or \
+                              self._tk_eq(idx, (Token.Punctuation, ':')) or \
+                              self.tokens[idx][0] == Token.Literal.Number.Integer or \
+                              self._tk_eq(idx, (Token.Punctuation, '{')) or \
+                              self._tk_eq(idx, (Token.Punctuation, '}')) or \
+                              self._tk_eq(idx, (Token.Punctuation, '.')) or \
+                              self.tokens[idx][0] == Token.Literal.String or \
+                              self.tokens[idx][0] == Token.Name or \
+                              self.tokens[idx][0] == Token.Text:
                             idx += 1
-                        prop_type = []
-                        while self.tokens[idx][0] in (Token.Text, Token.Name):
-                            if self.tokens[idx][0] == Token.Name:
-                                prop_type.append(self.tokens[idx][1])
-                            idx += 1
-                        if prop_type:
-                            self.properties[prop_name]['type'] = prop_type
                     # subtype of Name EG Name.Builtin used as Name
                     elif self.tokens[idx][0] in Token.Name.subtypes:  # @UndefinedVariable
                         prop_name = self.tokens[idx][1]
@@ -783,7 +787,7 @@ class MatClass(MatMixin, MatObject):
                         idx += 1
                         continue
                     else:
-                        raise TypeError('Expected property.')
+                        raise TypeError('Expected property - got %s' % str(self.tokens[idx]))
                     idx += self._blanks(idx)  # skip blanks
                     # =========================================================
                     # defaults
@@ -1059,7 +1063,8 @@ class MatProperty(MatObject):
         self.attrs = attrs['attrs']
         self.default = attrs['default']
         self.docstring = attrs['docstring']
-        self.type = attrs['type']
+        # self.class = attrs['class']
+
 
     @property
     def __doc__(self):
