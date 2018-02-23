@@ -1,7 +1,7 @@
 sphinxcontrib-matlabdomain-0.2.14 (2018-02-23)
 ==============================================
 
-* Merge `PR 60 https://github.com/sphinx-contrib/matlabdomain/pull/60`_
+* Merge `PR #60 <https://github.com/sphinx-contrib/matlabdomain/pull/60>`_
   Dependency fix for Sphinx 1.7.
 * Added cleobis to as contributor
 
@@ -16,11 +16,11 @@ sphinxcontrib-matlabdomain-0.2.13 (2018-01-12)
 sphinxcontrib-matlabdomain-0.2.12 (2018-01-10)
 ==============================================
 
-* Fixed `Issue 27 https://github.com/sphinx-contrib/matlabdomain/issues/27`_.
+* Fixed `Issue #27 <https://github.com/sphinx-contrib/matlabdomain/issues/27>`_.
   An "events" block in a class causes Sphinx to hang.
-* Fixed `Issue 52 https://github.com/sphinx-contrib/matlabdomain/issues/52`_.
+* Fixed `Issue #52 <https://github.com/sphinx-contrib/matlabdomain/issues/52>`_.
   An "enumeration" block in a class causes Sphinx to hang
-* Merge `PR 51 https://github.com/sphinx-contrib/matlabdomain/pull/51`_
+* Merge `PR #51 <https://github.com/sphinx-contrib/matlabdomain/pull/51>`_
   better exception, when input args contains "..."
 * Added Christoph Boeddeker as author.
 
@@ -28,10 +28,10 @@ sphinxcontrib-matlabdomain-0.2.12 (2018-01-10)
 sphinxcontrib-matlabdomain-0.2.11 (2017-11-28)
 ==============================================
 
-* Fixed `Issue 42 https://github.com/sphinx-contrib/matlabdomain/issues/42`_.
+* Fixed `Issue #42 <https://github.com/sphinx-contrib/matlabdomain/issues/42>`_.
   Comment strings after a function docstring are not included in the docstring
   anymore.
-* Fixed `Issue 50 https://github.com/sphinx-contrib/matlabdomain/issues/50`_.
+* Fixed `Issue #50 <https://github.com/sphinx-contrib/matlabdomain/issues/50>`_.
   Added Lukas Drude as author.
 
 
