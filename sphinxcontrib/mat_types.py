@@ -735,6 +735,7 @@ class MatClass(MatMixin, MatObject):
             # =================================================================
             # properties blocks
             if self._tk_eq(idx, (Token.Keyword, 'properties')):
+                prop_name = ''
                 idx += 1
                 # property "attributes"
                 attr_dict, idx = self.attributes(idx, MatClass.prop_attr_types)
@@ -753,7 +754,22 @@ class MatClass(MatMixin, MatObject):
                     if self.tokens[idx][0] is Token.Name:
                         prop_name = self.tokens[idx][1]
                         self.properties[prop_name] = {'attrs': attr_dict}
-                        idx += 1
+
+                        # skip size, class and functions specifiers
+                        # TODO: Parse old and new style property extras
+                        while self._tk_eq(idx, (Token.Punctuation, '@')) or \
+                              self._tk_eq(idx, (Token.Punctuation, '(')) or \
+                              self._tk_eq(idx, (Token.Punctuation, ')')) or \
+                              self._tk_eq(idx, (Token.Punctuation, ',')) or \
+                              self._tk_eq(idx, (Token.Punctuation, ':')) or \
+                              self.tokens[idx][0] == Token.Literal.Number.Integer or \
+                              self._tk_eq(idx, (Token.Punctuation, '{')) or \
+                              self._tk_eq(idx, (Token.Punctuation, '}')) or \
+                              self._tk_eq(idx, (Token.Punctuation, '.')) or \
+                              self.tokens[idx][0] == Token.Literal.String or \
+                              self.tokens[idx][0] == Token.Name or \
+                              self.tokens[idx][0] == Token.Text:
+                            idx += 1
                     # subtype of Name EG Name.Builtin used as Name
                     elif self.tokens[idx][0] in Token.Name.subtypes:  # @UndefinedVariable
                         prop_name = self.tokens[idx][1]
@@ -771,7 +787,7 @@ class MatClass(MatMixin, MatObject):
                         idx += 1
                         continue
                     else:
-                        raise TypeError('Expected property.')
+                        raise TypeError('Expected property - got %s' % str(self.tokens[idx]))
                     idx += self._blanks(idx)  # skip blanks
                     # =========================================================
                     # defaults
@@ -1047,6 +1063,8 @@ class MatProperty(MatObject):
         self.attrs = attrs['attrs']
         self.default = attrs['default']
         self.docstring = attrs['docstring']
+        # self.class = attrs['class']
+
 
     @property
     def __doc__(self):

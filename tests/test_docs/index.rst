@@ -85,6 +85,20 @@ Some edge cases that have ellipsis inside arrays.
     :show-inheritance:
     :members:
 
+A class with old style properties
++++++++++++++++++++++++++++++++++
+
+.. autoclass:: PropTypeOld
+    :members:
+
+ValidateProps
++++++++++++++
+A Matlab class with property validation
+
+.. autoclass:: ValidateProps
+    :members:
+
+
 +package
 ++++++++
 This is the test package
@@ -118,6 +132,7 @@ A Static Function
 ~~~~~~~~~~~~~~~~~
 
 .. autofunction:: a_static_func
+
 
 
 Submodule
@@ -173,6 +188,8 @@ A Matlab unittest class
 .. autoclass:: TestFibonacci
     :members:
     :show-inheritance:
+
+
 
 
 Indices and tables
