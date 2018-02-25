@@ -616,14 +616,18 @@ class MatClass(MatMixin, MatObject):
     """
     #: dictionary of MATLAB class "attributes"
     # http://www.mathworks.com/help/matlab/matlab_oop/class-attributes.html
+    # https://mathworks.com/help/matlab/matlab_oop/property-attributes.html
+    # https://se.mathworks.com/help/matlab/ref/matlab.unittest.testcase-class.html
     cls_attr_types = {'Abstract': bool, 'AllowedSubclasses': list,
                       'ConstructOnLoad': bool, 'HandleCompatible': bool,
                       'Hidden': bool, 'InferiorClasses': list, 'Sealed': bool}
+
     prop_attr_types = {'AbortSet': bool, 'Abstract': bool, 'Access': list,
                        'Constant': bool, 'Dependent': bool, 'GetAccess': list,
                        'GetObservable': bool, 'Hidden': bool,
-                       'SetAccess': list, 'SetObservable': bool,
-                       'Transient': bool, 'ClassSetupParameter': bool,
+                       'NonCopyable': bool, 'SetAccess': list,
+                       'SetObservable': bool, 'Transient': bool,
+                       'ClassSetupParameter': bool,
                        'MethodSetupParameter': bool, 'TestParameter': bool}
     meth_attr_types = {'Abstract': bool, 'Access': list, 'Hidden': bool,
                        'Sealed': list, 'Static': bool, 'Test': bool,
@@ -928,7 +932,7 @@ class MatClass(MatMixin, MatObject):
                     attr_dict[attr_name] = True  # add attibute to dictionary
                     idx += 1
                 else:
-                    errmsg = 'Unexpected attribute: "%s".' % attr_name
+                    errmsg = 'Unexpected attribute: "%s".' % str(self.tokens[idx])
                     raise Exception(errmsg)
                     # TODO: make matlab exception
                 idx += self._blanks(idx)  # skip blanks
@@ -940,9 +944,9 @@ class MatClass(MatMixin, MatObject):
                 elif self._tk_eq(idx, (Token.Punctuation, '=')):
                     idx += 1
                     idx += self._blanks(idx)  # skip blanks
-                    # logical value
                     k, attr_val = self.tokens[idx]  # split token key, value
                     if (k is Token.Name and attr_val in ['true', 'false']):
+                        # logical value
                         if attr_val == 'false':
                             attr_dict[attr_name] = False
                         idx += 1
@@ -964,20 +968,28 @@ class MatClass(MatMixin, MatObject):
                     elif self._tk_eq(idx, (Token.Punctuation, '{')):
                         idx += 1
                         # closing curly braces terminate cell array
+                        attr_dict[attr_name] = []
                         while self._tk_ne(idx, (Token.Punctuation, '}')):
                             idx += self._blanks(idx)  # skip blanks
                             # concatenate attr value string
                             attr_val = ''
                             # TODO: use _blanks or _indent instead
-                            while (self._tk_ne(idx, (Token.Text, ' ')) and
-                                   self._tk_ne(idx, (Token.Text, '\t')) and
-                                   self._tk_ne(idx, (Token.Punctuation, ','))):
+                            while self._tk_ne(idx, (Token.Punctuation, ',')) and self._tk_ne(idx, (Token.Punctuation, '}')):
                                 attr_val += self.tokens[idx][1]
                                 idx += 1
-                            idx += 1
+                            if self._tk_eq(idx, (Token.Punctuation, ',')):
+                                idx += 1
                             if attr_val:
                                 attr_dict[attr_name].append(attr_val)
                         idx += 1
+                    elif self.tokens[idx][0] == Token.Literal.String and \
+                        self.tokens[idx+1][0] == Token.Literal.String:
+                        # String
+                        attr_val += self.tokens[idx][1] + self.tokens[idx+1][1]
+                        idx += 2
+                        attr_dict[attr_name] = attr_val.strip("'")
+
+
                     idx += self._blanks(idx)  # skip blanks
                     # continue to next attribute separated by commas
                     if self._tk_eq(idx, (Token.Punctuation, ',')):

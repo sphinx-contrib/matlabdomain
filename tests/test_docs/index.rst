@@ -98,6 +98,13 @@ A Matlab class with property validation
 .. autoclass:: ValidateProps
     :members:
 
+ClassWithMethodAttributes
++++++++++++++++++++++++++
+A Matlab class with different method attributes
+
+.. autoclass:: ClassWithMethodAttributes
+    :members:
+
 
 +package
 ++++++++

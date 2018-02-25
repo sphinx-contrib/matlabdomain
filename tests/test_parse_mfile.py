@@ -207,5 +207,16 @@ def test_ValidateProps():
     assert obj.docstring == ""
 
 
+def test_ClassWithMethodAttributes():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithMethodAttributes.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithMethodAttributes', 'test_data')
+    assert obj.name == 'ClassWithMethodAttributes'
+    assert obj.docstring == " Class with different method attributes\n"
+    assert obj.methods['test1'].attrs == {}
+    assert obj.methods['test2'].attrs == {'Access': 'private'}
+    assert obj.methods['test3'].attrs == {'Access': 'private'}
+    assert obj.methods['test4'].attrs == {'Access': '?OtherClass'}
+    assert obj.methods['test5'].attrs == {'Access': ['?OtherClass', '?pack.OtherClass2']}
+
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])
