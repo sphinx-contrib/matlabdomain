@@ -1,3 +1,13 @@
+sphinxcontrib-matlabdomain-0.2.15 (2018-02-25)
+==============================================
+
+* Fixed `Issue #30 <https://github.com/sphinx-contrib/matlabdomain/issues/30>`_.
+  Some definition of attributes for the "properties" or "methods" blocks causes
+  Sphinx to crash.
+* Fixed `Issue #57 <https://github.com/sphinx-contrib/matlabdomain/issues/57>`_.
+  Parser fails while parsing new syntax extensions for the class properties.
+
+
 sphinxcontrib-matlabdomain-0.2.14 (2018-02-23)
 ==============================================
 
