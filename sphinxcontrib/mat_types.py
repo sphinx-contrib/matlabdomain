@@ -705,26 +705,19 @@ class MatClass(MatMixin, MatObject):
             idx += 1  # end of classdef signature
         # =====================================================================
         # docstring
-        # Must be immediately after class and indented
-        indent = self._indent(idx)  # calculation indentation
-        if indent:
-            idx += indent
-            # concatenate docstring
-            while self.tokens[idx][0] is Token.Comment:
-                self.docstring += self.tokens[idx][1].lstrip('%')
+        idx += self._indent(idx)  # calculation indentation
+        # concatenate docstring
+        while self.tokens[idx][0] is Token.Comment:
+            self.docstring += self.tokens[idx][1].lstrip('%')
+            idx += 1
+            # append newline to docstring
+            if self._tk_eq(idx, (Token.Text, '\n')):
+                self.docstring += self.tokens[idx][1]
                 idx += 1
-                # append newline to docstring
-                if self._tk_eq(idx, (Token.Text, '\n')):
-                    self.docstring += self.tokens[idx][1]
-                    idx += 1
-                # skip tab
-                indent = self._indent(idx)  # calculation indentation
-                if indent:
-                    idx += indent
-        elif self.tokens[idx][0] is Token.Comment:
-            raise Exception('Comments must be indented.')
-            # TODO: add to matlab domain exceptions
-        # =====================================================================
+            # skip tab
+            indent = self._indent(idx)  # calculation indentation
+            idx += indent
+    # =====================================================================
         # properties & methods blocks
         # loop over code body searching for blocks until end of class
         while self._tk_ne(idx, (Token.Keyword, 'end')):

@@ -218,5 +218,13 @@ def test_ClassWithMethodAttributes():
     assert obj.methods['test4'].attrs == {'Access': '?OtherClass'}
     assert obj.methods['test5'].attrs == {'Access': ['?OtherClass', '?pack.OtherClass2']}
 
+
+def test_ClassWithoutIndent():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithoutIndent.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithoutIndent', 'test_data')
+    assert obj.name == 'ClassWithoutIndent'
+    assert obj.docstring == " First line is not indented\n Second line line is indented\n"
+
+
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])
