@@ -226,5 +226,13 @@ def test_ClassWithoutIndent():
     assert obj.docstring == " First line is not indented\n Second line line is indented\n"
 
 
+def test_f_with_utf8():
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_utf8.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_utf8', 'test_data')
+    assert obj.name == 'f_with_utf8'
+    assert obj.docstring == " Cambia ubicación de partículas.\n"
+
+
+
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])

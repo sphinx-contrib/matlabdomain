@@ -37,14 +37,14 @@ def test_module(mod):
     assert not mod.getter('__module__')
     assert not mod.getter('__doc__')
     all_items = set(mod.getter('__all__'))
-    expected_items = set(('+package', '@ClassFolder', 'ClassAbstract', 'ClassExample',
-                          'ClassInheritHandle', 'ClassWithEllipsisProperties',
-                          'ClassWithEndOfLineComment', 'f_example', 'f_with_nested_function',
-                          'submodule', 'script', 'Bool', 'ClassWithEvent',
-                          'f_no_input_no_output_no_parentheses', 'ClassWithCommentHeader',
-                          'f_with_comment_header', 'script_with_comment_header',
-                          'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes',
-                          'ClassWithoutIndent'))
+    expected_items = {'+package', '@ClassFolder', 'ClassAbstract', 'ClassExample',
+                      'ClassInheritHandle', 'ClassWithEllipsisProperties',
+                      'ClassWithEndOfLineComment', 'f_example', 'f_with_nested_function',
+                      'submodule', 'script', 'Bool', 'ClassWithEvent',
+                      'f_no_input_no_output_no_parentheses', 'ClassWithCommentHeader',
+                      'f_with_comment_header', 'script_with_comment_header',
+                      'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes',
+                      'ClassWithoutIndent', 'f_with_utf8'}
     assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 

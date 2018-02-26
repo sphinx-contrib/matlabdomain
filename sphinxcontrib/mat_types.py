@@ -153,7 +153,7 @@ class MatObject(object):
         """
         # use Pygments to parse mfile to determine type: function/classdef
         # read mfile code
-        with open(mfile, 'r') as code_f:
+        with open(mfile, 'r', encoding='utf-8') as code_f:
             code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
         # remove the top comment header (if there is one) from the code string
         code = MatObject._remove_comment_header(code)
