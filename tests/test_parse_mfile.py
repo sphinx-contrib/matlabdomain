@@ -1,9 +1,9 @@
 #! /usr/bin/env python
-from __future__ import print_function
+# -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals
 from sphinxcontrib import mat_types
 import os
 import pytest
-from pprint import pprint
 
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
@@ -224,6 +224,14 @@ def test_ClassWithoutIndent():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithoutIndent', 'test_data')
     assert obj.name == 'ClassWithoutIndent'
     assert obj.docstring == " First line is not indented\n Second line line is indented\n"
+
+
+def test_f_with_utf8():
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_utf8.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_utf8', 'test_data')
+    assert obj.name == 'f_with_utf8'
+    assert obj.docstring == " Cambia ubicación de partículas.\n"
+
 
 
 if __name__ == '__main__':
