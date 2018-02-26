@@ -1,9 +1,9 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 from sphinxcontrib import mat_types
 import os
 import pytest
-from pprint import pprint
 
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
