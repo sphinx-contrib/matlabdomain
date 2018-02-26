@@ -10,6 +10,7 @@
 """
 from __future__ import unicode_literals, print_function
 from builtins import *
+from io import open  # for opening files with encoding in Python 2
 import os
 import re
 import sys
