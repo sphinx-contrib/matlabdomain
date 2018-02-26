@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from sphinxcontrib import mat_documenters as doc
 import os
 import sys
