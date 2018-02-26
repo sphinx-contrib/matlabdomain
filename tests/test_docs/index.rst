@@ -106,6 +106,10 @@ A Matlab class with different method attributes
     :members:
 
 
+FunctionWith
+++++++++++++
+.. autofunction:: f_with_name_mismatch
+
 +package
 ++++++++
 This is the test package

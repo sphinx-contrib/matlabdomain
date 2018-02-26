@@ -226,5 +226,14 @@ def test_ClassWithoutIndent():
     assert obj.docstring == " First line is not indented\n Second line line is indented\n"
 
 
+def test_f_with_name_mismatch(caplog):
+    import logging
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_name_mismatch.m')
+    mat_types.MatObject.parse_mfile(mfile, 'f_with_name_mismatch', 'test_data')
+    assert caplog.record_tuples == [
+        ('root', logging.WARNING, 'boo arg'),
+    ]
+
+
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])
