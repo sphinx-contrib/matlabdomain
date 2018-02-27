@@ -45,7 +45,7 @@ def test_module(mod):
                           'f_no_input_no_output_no_parentheses', 'ClassWithCommentHeader',
                           'f_with_comment_header', 'script_with_comment_header',
                           'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes',
-                          'ClassWithoutIndent'))
+                          'ClassWithoutIndent', 'f_with_name_mismatch'))
     assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 

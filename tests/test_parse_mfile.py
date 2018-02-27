@@ -228,10 +228,13 @@ def test_ClassWithoutIndent():
 
 def test_f_with_name_mismatch(caplog):
     import logging
+    caplog.set_level(logging.WARNING)
     mfile = os.path.join(DIRNAME, 'test_data', 'f_with_name_mismatch.m')
+    caplog.clear()
     mat_types.MatObject.parse_mfile(mfile, 'f_with_name_mismatch', 'test_data')
     assert caplog.record_tuples == [
-        ('root', logging.WARNING, 'boo arg'),
+        ('sphinxcontrib.mat_types', logging.WARNING,
+         'WARNING: [sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch". Expected "f_with_name_mismatch" in module "test_data".'),
     ]
 
 
