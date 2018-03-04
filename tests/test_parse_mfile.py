@@ -3,7 +3,6 @@ from __future__ import print_function
 from sphinxcontrib import mat_types
 import os
 import pytest
-from pprint import pprint
 
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
@@ -227,15 +226,15 @@ def test_ClassWithoutIndent():
 
 
 def test_f_with_name_mismatch(caplog):
-    import logging
-    caplog.set_level(logging.WARNING)
-    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_name_mismatch.m')
+    from logging import WARNING
     caplog.clear()
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_name_mismatch.m')
     mat_types.MatObject.parse_mfile(mfile, 'f_with_name_mismatch', 'test_data')
-    assert caplog.record_tuples == [
-        ('sphinxcontrib.mat_types', logging.WARNING,
-         'WARNING: [sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch". Expected "f_with_name_mismatch" in module "test_data".'),
-    ]
+    records = caplog.record_tuples
+    assert records == [
+         ('sphinx.matlab-domain', WARNING,
+          '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch". Expected "f_with_name_mismatch" in module "test_data".'),
+     ]
 
 
 if __name__ == '__main__':

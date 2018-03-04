@@ -14,7 +14,7 @@ import os
 import re
 import sys
 from copy import copy
-import logging
+from sphinx.util import logging
 
 # Pygments MatlabLexer is in pygments.lexers.math, but recommended way to load
 # is from lexers, which has LEXERS dictionary, which PyDev doesn't see.
@@ -22,7 +22,7 @@ from pygments.lexers import MatlabLexer  # @UnresolvedImport
 # PyDev doesn't see Token methods and subtypes that are generated at runtime
 from pygments.token import Token
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('matlab-domain')
 
 MAT_DOM = 'MATLAB-domain'
 __all__ = ['MatObject', 'MatModule', 'MatFunction', 'MatClass',  \
