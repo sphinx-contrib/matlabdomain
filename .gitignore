@@ -6,3 +6,4 @@ tests/__pycache__/
 .tox/
 tests/test_docs/_build/
 .cache/
+.pytest_cache/

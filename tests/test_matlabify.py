@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 from sphinxcontrib import mat_documenters as doc
 import os
@@ -44,7 +45,7 @@ def test_module(mod):
                       'f_no_input_no_output_no_parentheses', 'ClassWithCommentHeader',
                       'f_with_comment_header', 'script_with_comment_header',
                       'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes',
-                      'ClassWithoutIndent', 'f_with_utf8'}
+                      'ClassWithoutIndent', 'f_with_utf8', 'f_with_name_mismatch'}
     assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 

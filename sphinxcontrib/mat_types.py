@@ -15,12 +15,15 @@ import os
 import re
 import sys
 from copy import copy
+from sphinx.util import logging
 
 # Pygments MatlabLexer is in pygments.lexers.math, but recommended way to load
 # is from lexers, which has LEXERS dictionary, which PyDev doesn't see.
 from pygments.lexers import MatlabLexer  # @UnresolvedImport
 # PyDev doesn't see Token methods and subtypes that are generated at runtime
 from pygments.token import Token
+
+logger = logging.getLogger('matlab-domain')
 
 MAT_DOM = 'MATLAB-domain'
 __all__ = ['MatObject', 'MatModule', 'MatFunction', 'MatClass',  \
@@ -500,9 +503,12 @@ class MatFunction(MatObject):
             if isinstance(self, MatMethod):
                 self.name = func_name[1]
             else:
-                errmsg = 'Unexpected function name: "%s".' % func_name[1]
-                errmsg += 'modname: {}, name: {}'.format(modname, name)
-                raise Exception(errmsg)
+                msg = '[sphinxcontrib-matlabdomain] Unexpected function name: "%s".' % func_name[1]
+                msg += ' Expected "{}" in module "{}".'.format(name, modname)
+                logger.warning(msg)
+
+                #raise Exception(errmsg)
+                return
                 # TODO: create mat_types or tokens exceptions!
         # =====================================================================
         # input args

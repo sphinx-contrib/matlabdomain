@@ -233,6 +233,17 @@ def test_f_with_utf8():
     assert obj.docstring == " Cambia ubicación de partículas.\n"
 
 
+def test_f_with_name_mismatch(caplog):
+    from logging import WARNING
+    caplog.clear()
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_name_mismatch.m')
+    mat_types.MatObject.parse_mfile(mfile, 'f_with_name_mismatch', 'test_data')
+    records = caplog.record_tuples
+    assert records == [
+        ('sphinx.matlab-domain', WARNING,
+         '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch". Expected "f_with_name_mismatch" in module "test_data".'),
+    ]
+
 
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])
