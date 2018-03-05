@@ -1,3 +1,14 @@
+sphinxcontrib-matlabdomain-0.2.16 (2018-03-05)
+==============================================
+
+* Fixed `Issue 13 <https://github.com/sphinx-contrib/matlabdomain/issues/13>`_.
+  crashes if filename and classname are different.
+* Fixed `Issue 19 <https://github.com/sphinx-contrib/matlabdomain/issues/19>`_.
+  crashes if classdef docstring is not indented
+* Fixed `Issue #41 <https://github.com/sphinx-contrib/matlabdomain/issues/41>`_.
+  Problem with non ascii characters.
+
+
 sphinxcontrib-matlabdomain-0.2.15 (2018-02-25)
 ==============================================
 
