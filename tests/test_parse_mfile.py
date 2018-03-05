@@ -1,5 +1,6 @@
 #! /usr/bin/env python
-from __future__ import print_function
+# -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals
 from sphinxcontrib import mat_types
 import os
 import pytest
@@ -225,6 +226,13 @@ def test_ClassWithoutIndent():
     assert obj.docstring == " First line is not indented\n Second line line is indented\n"
 
 
+def test_f_with_utf8():
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_utf8.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_utf8', 'test_data')
+    assert obj.name == 'f_with_utf8'
+    assert obj.docstring == " Cambia ubicación de partículas.\n"
+
+
 def test_f_with_name_mismatch(caplog):
     from logging import WARNING
     caplog.clear()
@@ -232,9 +240,9 @@ def test_f_with_name_mismatch(caplog):
     mat_types.MatObject.parse_mfile(mfile, 'f_with_name_mismatch', 'test_data')
     records = caplog.record_tuples
     assert records == [
-         ('sphinx.matlab-domain', WARNING,
-          '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch". Expected "f_with_name_mismatch" in module "test_data".'),
-     ]
+        ('sphinx.matlab-domain', WARNING,
+         '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch". Expected "f_with_name_mismatch" in module "test_data".'),
+    ]
 
 
 if __name__ == '__main__':
