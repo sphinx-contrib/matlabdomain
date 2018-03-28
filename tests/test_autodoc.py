@@ -1,49 +1,63 @@
-from __future__ import print_function, unicode_literals
-import pytest
-import sphinx
-import sphinxcontrib.matlab as mat
-from sphinx.testing.fixtures import test_params, make_app
-from sphinx.testing.path import path
-from sphinx.testing.util import assert_node
-from sphinx import addnodes
+# -*- coding: utf-8 -*-
+"""
+    test_autodoc
+    ~~~~~~~~~~~~
+
+    Test the autodoc extension.
+
+    :copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
+    :license: BSD, see LICENSE for details.
+"""
+
+import pickle
 import os
 
-app = make_app('')
+import pytest
+
+from sphinx import addnodes
+from sphinx import version_info
+from sphinx.testing.fixtures import test_params, make_app
+from sphinx.testing.path import path
+
 
 @pytest.fixture(scope='module')
 def rootdir():
     return path(os.path.dirname(__file__)).abspath()
 
-
-def test_setup(rootdir, make_app):
+@pytest.mark.skipif(version_info[:2] > (1, 6), reason="requires Sphinx < 1.7")
+def test_setup(make_app, rootdir):
+    print(version_info)
     srcdir = rootdir / 'roots' / 'test_autodoc'
     app = make_app(srcdir=srcdir)
     app.builder.build_all()
 
-    def assert_refnode(node, module_name, class_name, target, reftype=None,
-                       domain='mat'):
-        attributes = {
-            'refdomain': domain,
-            'reftarget': target,
-        }
-        if reftype is not None:
-            attributes['reftype'] = reftype
-        if module_name is not False:
-            attributes['mat:module'] = module_name
-        if class_name is not False:
-            attributes['mat:class'] = class_name
-        assert_node(node, **attributes)
+    content = pickle.loads((app.doctreedir / 'contents.doctree').bytes())
 
-    doctree = app.env.get_doctree('index')
-    for e1 in doctree:
-        for e2 in e1:
-            print(e2)
-    #refnodes = list(doctree.traverse(addnodes.pending_xref))
+    assert isinstance(content[3], addnodes.desc)
+    assert content[3][0].astext() == 'class target.ClassExamplea'
+    assert content[3][1].astext() == """Bases: handle
 
-    #assert_refnode(refnodes[0],  u'test_data', None, u'test_data', u'mod')
-    #assert_refnode(refnodes[1], u'test_data', u'ClassInheritHandle', u'handle')
+Example class
+
+Parameters
+
+a – a property of ClassExample
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-s'])
+
+a = None
+
+a property
+
+
+
+mymethodb
+
+A method in ClassExample
+
+Parameters
+
+b – an input to mymethod()"""
+    # We still have warning regarding overriding auto...
+    # assert app._warning.getvalue() == ''
 
