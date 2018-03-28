@@ -8,3 +8,4 @@ tests/test_docs/_build/
 .cache/
 .pytest_cache/
 .vscode/
+_build
