@@ -24,9 +24,8 @@ from sphinx.testing.path import path
 def rootdir():
     return path(os.path.dirname(__file__)).abspath()
 
-@pytest.mark.skipif(version_info[:2] > (1, 6), reason="requires Sphinx < 1.7")
+
 def test_setup(make_app, rootdir):
-    print(version_info)
     srcdir = rootdir / 'roots' / 'test_autodoc'
     app = make_app(srcdir=srcdir)
     app.builder.build_all()
@@ -61,3 +60,6 @@ b – an input to mymethod()"""
     # We still have warning regarding overriding auto...
     # assert app._warning.getvalue() == ''
 
+
+if __name__ == '__main__':
+    pytest.main([__file__])

@@ -6,14 +6,26 @@ import os
 import sys
 import pytest
 
-
-# NOTE: Sets doc.MatObject.basedir to this directory.
-#       Enables importing test_data folder
-DIRNAME = doc.MatObject.basedir = os.path.abspath(os.path.dirname(__file__))
+from sphinx.testing.fixtures import test_params, make_app
+from sphinx.testing.path import path
 
 
-@pytest.fixture(scope="module")
-def mod():
+rootdir = path(os.path.dirname(__file__)).abspath()
+matlab_src_dir = os.path.join(rootdir, 'test_data')
+doc.MatObject.basedir = matlab_src_dir
+
+
+@pytest.fixture
+def app(make_app):
+    # Create app to setup build environment
+    srcdir = rootdir / 'test_docs'
+    app = make_app(srcdir=srcdir)
+    doc.MatObject.basedir = app.config.matlab_src_dir
+    return app
+
+
+@pytest.fixture
+def mod(app):
     return doc.MatObject.matlabify('test_data')
 
 
@@ -25,15 +37,16 @@ def test_unknown():
     assert doc.MatObject.matlabify('not_test_data') is None
 
 
-def test_script(mod):
+def test_script(mod, caplog):
+
     script = mod.getter('script')
     assert isinstance(script, doc.MatScript)
 
 
 def test_module(mod):
     assert mod.getter('__name__') == 'test_data'
-    assert mod.getter('__path__')[0] == os.path.join(DIRNAME, 'test_data')
-    assert mod.getter('__file__') == os.path.join(DIRNAME, 'test_data')
+    assert mod.getter('__path__')[0] == matlab_src_dir
+    assert mod.getter('__file__') == matlab_src_dir
     assert mod.getter('__package__') == 'test_data'
     assert not mod.getter('__module__')
     assert not mod.getter('__doc__')
@@ -71,7 +84,6 @@ def test_classes(mod):
 
                               }
     assert cls.getter('__doc__') == ' a handle class\n\n :param x: a variable\n'
-    x = cls.getter('x')
 
 
 def test_abstract_class(mod):
