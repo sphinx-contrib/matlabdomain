@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 with open('README.rst', 'r') as f_readme:
     long_desc = f_readme.read()
 
-version = '0.2.16'
+version = '0.2.17'
 
 requires = ['Sphinx<1.7.0', 'Pygments>=2.0.1', 'future>=0.16.0']
 

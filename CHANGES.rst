@@ -1,3 +1,12 @@
+sphinxcontrib-matlabdomain-0.2.17 (2018-04-09)
+==============================================
+
+* Fixed `Issue 66 <https://github.com/sphinx-contrib/matlabdomain/issues/66>`_.
+  Sphinx 1.7 broke autodoc :members: functionality. In this release Sphinx is
+  locked to versions below 1.7, the next release will require Sphinx > 1.7.
+* Added tests of autodoc capabilities.
+
+
 sphinxcontrib-matlabdomain-0.2.16 (2018-03-05)
 ==============================================
 
