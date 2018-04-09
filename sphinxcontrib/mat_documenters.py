@@ -14,7 +14,6 @@ import re
 import sys
 import inspect
 import traceback
-from six import itervalues
 
 from docutils.statemachine import ViewList
 
@@ -342,8 +341,7 @@ class MatlabDocumenter(PyDocumenter):
         # document non-skipped members
         memberdocumenters = []
         for (mname, member, isattr) in self.filter_members(members, want_all):
-            classes = [cls for cls in itervalues(self.documenters)
-#             classes = [cls for cls in AutoDirective._registry.values()
+            classes = [cls for cls in AutoDirective._registry.values()
                        if cls.can_document_member(member, mname, isattr, self)]
             if not classes:
                 # don't know how to document this member
