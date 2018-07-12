@@ -1,3 +1,9 @@
+sphinxcontrib-matlabdomain-0.3.1 (2018-07-12)
+=============================================
+
+* Fixed bug where a MATLAB script with only comments would cause an error.
+
+
 sphinxcontrib-matlabdomain-0.3.0 (2018-04-10)
 ==============================================
 
