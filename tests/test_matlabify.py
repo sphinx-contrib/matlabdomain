@@ -60,7 +60,7 @@ def test_module(mod):
                       'script_with_comment_header_2',
                       'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes',
                       'ClassWithoutIndent', 'f_with_utf8', 'f_with_name_mismatch',
-                      'ClassWithBuiltinOverload'}
+                      'ClassWithBuiltinOverload', 'ClassWithFunctionVariable'}
     assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 

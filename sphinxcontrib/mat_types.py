@@ -163,6 +163,8 @@ class MatObject(object):
         code = MatObject._remove_comment_header(code)
         # functions must be contained in one line, no ellipsis, classdef is OK
         code = MatObject._fix_function_signatures(code)
+        # The word "function*" cannot be used anywhere (expected comments
+        code = MatObject._rename_function_variables(code)
         
         tks = list(MatlabLexer().get_tokens(code))  # tokenenize code
         modname = path.replace(os.sep, '.')  # module name
@@ -241,6 +243,26 @@ class MatObject(object):
         msg = '[%s] replaced ellipsis & appended parentheses in function signatures'
         MatObject.sphinx_dbg(msg, MAT_DOM)
         return code
+
+    @staticmethod
+    def _rename_function_variables(code):
+        """
+        Rename variables in code starting with function*, as Pygments parses
+        this incorrectly.
+
+        :param code:
+        :type code: str
+        :return: Code string without function-variable names.
+        """
+        pat = r"""        
+                .    
+            
+        """
+        pat = re.compile(r"""^(?!\s*%)              # Ignore comments
+                             .*                     # Match everything before  
+                             (\bfunction[\w\d;.,])+ # function with trailing chars
+                             """, re.X | re.MULTILINE)
+        return pat.sub('funky', code)
 
 
 # TODO: get docstring and __all__ from contents.m if exists

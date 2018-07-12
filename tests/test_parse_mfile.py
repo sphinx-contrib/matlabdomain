@@ -265,5 +265,12 @@ def test_f_with_name_mismatch(caplog):
          '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch". Expected "f_with_name_mismatch" in module "test_data".'),
     ]
 
+
+def test_ClassWithFunctionVariable():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithFunctionVariable.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithFunctionVariable', 'test_data')
+    assert obj.name == 'ClassWithFunctionVariable'
+
+
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])
