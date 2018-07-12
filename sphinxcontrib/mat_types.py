@@ -162,25 +162,8 @@ class MatObject(object):
         # remove the top comment header (if there is one) from the code string
         code = MatObject._remove_comment_header(code)
         # functions must be contained in one line, no ellipsis, classdef is OK
-        pat = r"^([^%\n]*)(\.\.\..*\n)"
-        code = re.sub(pat, '\g<1>', code, flags=re.MULTILINE)
-
-        pat = r"""^[ \t]*function[ \t.\n]*  # keyword (function)
-                  (\[?[\w, \t.\n]*\]?)      # outputs: group(1)
-                  [ \t.\n]*=[ \t.\n]*       # punctuation (eq)
-                  (\w+)[ \t.\n]*            # name: group(2)
-                  \(?([\w, \t.\n]*)\)?"""   # args: group(3)
-        pat = re.compile(pat, re.X | re.MULTILINE)  # search start of every line
-        # replacement function
-        def repl(m):
-            retv = m.group(0)
-            # if no args and doesn't end with parentheses, append "()"
-            if not (m.group(3) or m.group(0).endswith('()')):
-                retv = retv.replace(m.group(2), m.group(2) + "()")
-            return retv
-        code = pat.sub(repl, code)  # search for functions and apply replacement
-        msg = '[%s] replaced ellipsis & appended parentheses in function signatures'
-        MatObject.sphinx_dbg(msg, MAT_DOM)
+        code = MatObject._fix_function_signatures(code)
+        
         tks = list(MatlabLexer().get_tokens(code))  # tokenenize code
         modname = path.replace(os.sep, '.')  # module name
         # assume that functions and classes always start with a keyword
@@ -223,6 +206,40 @@ class MatObject(object):
                 # only header and empty lines.
                 code = ''
 
+        return code
+
+    @staticmethod
+    def _fix_function_signatures(code):
+        """
+        Transforms function signatures with line continuations to a function
+        on a single line with () appended. Required because pygments cannot
+        handle this situation correctly.
+
+        :param code:
+        :type code: str
+        :return: Code string with functions on single line
+        """
+        pat = r"^([^%\n]*)(\.\.\..*\n)"
+        code = re.sub(pat, '\g<1>', code, flags=re.MULTILINE)
+
+        pat = r"""^[ \t]*function[ \t.\n]*  # keyword (function)
+                              (\[?[\w, \t.\n]*\]?)      # outputs: group(1)
+                              [ \t.\n]*=[ \t.\n]*       # punctuation (eq)
+                              (\w+)[ \t.\n]*            # name: group(2)
+                              \(?([\w, \t.\n]*)\)?"""  # args: group(3)
+        pat = re.compile(pat, re.X | re.MULTILINE)  # search start of every line
+
+        # replacement function
+        def repl(m):
+            retv = m.group(0)
+            # if no args and doesn't end with parentheses, append "()"
+            if not (m.group(3) or m.group(0).endswith('()')):
+                retv = retv.replace(m.group(2), m.group(2) + "()")
+            return retv
+
+        code = pat.sub(repl, code)  # search for functions and apply replacement
+        msg = '[%s] replaced ellipsis & appended parentheses in function signatures'
+        MatObject.sphinx_dbg(msg, MAT_DOM)
         return code
 
 
