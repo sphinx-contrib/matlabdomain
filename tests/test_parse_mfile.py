@@ -247,6 +247,12 @@ def test_f_with_utf8():
     assert obj.docstring == " Cambia ubicación de partículas.\n"
 
 
+def test_ClassWithBuiltinOverload():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithBuiltinOverload.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithBuiltinOverload', 'test_data')
+    assert obj.name == 'ClassWithBuiltinOverload'
+    assert obj.docstring == " Class that overloads a builtin\n"
+
 @pytest.mark.skip("wont catch warning if other tests have run.")
 def test_f_with_name_mismatch(caplog):
     from logging import WARNING
