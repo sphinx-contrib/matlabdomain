@@ -57,6 +57,7 @@ def test_module(mod):
                       'submodule', 'script', 'Bool', 'ClassWithEvent',
                       'f_no_input_no_output_no_parentheses', 'ClassWithCommentHeader',
                       'f_with_comment_header', 'script_with_comment_header',
+                      'script_with_comment_header_2',
                       'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes',
                       'ClassWithoutIndent', 'f_with_utf8', 'f_with_name_mismatch'}
     assert all_items == expected_items

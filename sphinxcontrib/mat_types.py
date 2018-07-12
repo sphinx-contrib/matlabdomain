@@ -209,7 +209,7 @@ class MatObject(object):
         """
         # get the line number when the comment header ends (incl. empty lines)
         ln_pos = 0
-        for line in code.splitlines(1):
+        for line in code.splitlines(True):
             if re.match(r"[ \t]*(%|\n)", line):
                 ln_pos += 1
             else:
@@ -217,7 +217,11 @@ class MatObject(object):
 
         if ln_pos > 0:
             # remove the header block and empty lines from the top of the code
-            code = code.split('\n', ln_pos)[ln_pos:][0]
+            try:
+                code = code.split('\n', ln_pos)[ln_pos:][0]
+            except IndexError:
+                # only header and empty lines.
+                code = ''
 
         return code
 
