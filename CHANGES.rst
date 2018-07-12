@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.3.2 (2018-07-12)
+=============================================
+
+* Fixed bug where a MATLAB class method containing a variable starting with
+  'function' would cause the parser to fail.
+
+
 sphinxcontrib-matlabdomain-0.3.1 (2018-07-12)
 =============================================
 
