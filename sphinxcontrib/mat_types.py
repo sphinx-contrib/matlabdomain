@@ -227,7 +227,7 @@ class MatObject(object):
         code = re.sub(pat, '\g<1>', code, flags=re.MULTILINE)
         return code
 
-
+    @staticmethod
     def _fix_function_signatures(code):
         """
         Transforms function signatures with line continuations to a function
