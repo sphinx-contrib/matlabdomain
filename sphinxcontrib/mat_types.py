@@ -162,6 +162,7 @@ class MatObject(object):
         # remove the top comment header (if there is one) from the code string
         code = MatObject._remove_comment_header(code)
         # functions must be contained in one line, no ellipsis, classdef is OK
+        code = MatObject._remove_line_continuations(code)
         code = MatObject._fix_function_signatures(code)
         # The word "function*" cannot be used anywhere (expected comments
         code = MatObject._rename_function_variables(code)
@@ -211,6 +212,22 @@ class MatObject(object):
         return code
 
     @staticmethod
+    def _remove_line_continuations(code):
+        """
+        Removes line continuations (...) from code as functions must be on a
+        single line
+        :param code:
+        :type code: str
+        :return:
+        """
+        pat = r"('.*)(\.\.\.)(.*')"
+        code = re.sub(pat, '\g<1>\g<3>', code, flags=re.MULTILINE)
+
+        pat = r"^([^%\n]*)(\.\.\..*\n)"
+        code = re.sub(pat, '\g<1>', code, flags=re.MULTILINE)
+        return code
+
+
     def _fix_function_signatures(code):
         """
         Transforms function signatures with line continuations to a function
@@ -221,9 +238,6 @@ class MatObject(object):
         :type code: str
         :return: Code string with functions on single line
         """
-        pat = r"^([^%\n]*)(\.\.\..*\n)"
-        code = re.sub(pat, '\g<1>', code, flags=re.MULTILINE)
-
         pat = r"""^[ \t]*function[ \t.\n]*  # keyword (function)
                               (\[?[\w, \t.\n]*\]?)      # outputs: group(1)
                               [ \t.\n]*=[ \t.\n]*       # punctuation (eq)
