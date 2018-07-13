@@ -255,13 +255,10 @@ class MatObject(object):
         :return: Code string without function-variable names.
         """
         pat = r"""        
-                .    
-            
+                .                
         """
-        pat = re.compile(r"""^(?!\s*%)              # Ignore comments
-                             .*                     # Match everything before  
-                             (\bfunction[\w\d;.,])+ # function with trailing chars
-                             """, re.X | re.MULTILINE)
+        pat = re.compile(r"(?!\s*%)(\bfunction)[\w\d;.,]+", re.MULTILINE)
+        m = pat.findall(code)
         return pat.sub('funky', code)
 
 
