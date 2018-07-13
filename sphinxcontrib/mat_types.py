@@ -271,9 +271,17 @@ class MatObject(object):
         pat = r"""        
                 .                
         """
-        pat = re.compile(r"(?!\s*%)(\bfunction)[\w\d;.,]+", re.MULTILINE)
+        pat = re.compile(r"([ \t]*%+)*(.+?)(\bfunction([\w\d;.,]))+", re.MULTILINE)
+        def repl(match):
+            # If a line starts with a comment, we return the entire match
+            # otherwise, replace function with func.
+            retv = match.group(0)
+            if match.group(1):
+                return retv
+            else:
+                return match.group(2) + 'func' + match.group(4)
         m = pat.findall(code)
-        return pat.sub('funky', code)
+        return pat.sub(repl, code)
 
 
 # TODO: get docstring and __all__ from contents.m if exists

@@ -1,5 +1,5 @@
 classdef ClassWithFunctionVariable
-   % A class with a method with a variable starting with function
+   % This line contains functions!
    
    properties
       info;
@@ -8,7 +8,7 @@ classdef ClassWithFunctionVariable
    methods
       function obj = ClassWithFunctionVariable(the_functions)       
          % Constructor
-         
+
          % Determine the name and M-file location of the function handle.
          functionHandleInfo = functions(testFcn);
          self.Name = functionHandleInfo.function;

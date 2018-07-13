@@ -270,6 +270,8 @@ def test_ClassWithFunctionVariable():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithFunctionVariable.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithFunctionVariable', 'test_data')
     assert obj.name == 'ClassWithFunctionVariable'
+    assert obj.docstring == " This line contains functions!\n"
+    assert list(obj.methods.keys()) == ['ClassWithFunctionVariable']
 
 
 if __name__ == '__main__':
