@@ -1,3 +1,13 @@
+sphinxcontrib-matlabdomain-0.3.3 (2018-07-13)
+=============================================
+
+* Fixed bug where a line continuation (...) in a string could cause the parser
+  to fail.
+  
+* Fixed bug introduced in 0.3.2. The word 'function' was also replaced in 
+  docstrings.
+
+
 sphinxcontrib-matlabdomain-0.3.2 (2018-07-12)
 =============================================
 
