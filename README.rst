@@ -172,5 +172,6 @@ http://bwanamarko.alwaysdata.net/matlabdomain/
 Users
 -----
 
-* `Cantera <http://cantera.github.io/dev-docs/sphinx/html/compiling.html?highlight=matlabdomain#optional-programs>`_
+* `Cantera <http://cantera.github.io/docs/sphinx/html/compiling/dependencies.html?highlight=matlabdomain>`_
 * `CoSMo MVPA <http://cosmomvpa.org/download.html?highlight=matlabdomain#developers>`_
+* `The Cobra Toolbox <https://opencobra.github.io/cobratoolbox/stable/index.html#>`_
