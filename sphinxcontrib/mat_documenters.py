@@ -21,10 +21,10 @@ from docutils.statemachine import ViewList
 from sphinx.util import rpartition, force_decode
 from sphinx.locale import _
 from sphinx.pycode import ModuleAnalyzer as PyModuleAnalyzer, PycodeError
-from sphinx.application import ExtensionError
 from sphinx.util.nodes import nested_parse_with_titles
 from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
      safe_getattr, is_builtin_class_method
+from sphinx.util import logging   
 try:
     # Sphinx >= 1.3.0
     from sphinx.util.inspect import object_description
@@ -59,6 +59,9 @@ from .mat_types import *
 # MatScript, MatException, MatModuleAnalyzer
 
 # TODO: check MRO's for all classes, attributes and methods!!!
+
+
+logger = logging.getLogger('matlab-domain')
 
 
 class MatlabDocumenter(PyDocumenter):
@@ -111,26 +114,24 @@ class MatlabDocumenter(PyDocumenter):
         Returns True if successful, False if an error occurred.
         """
         # get config_value with absolute path to MATLAB source files
-        basedir = self.env.config.matlab_src_dir
-        dbg = self.env.app.debug
+        basedir = self.env.config.matlab_src_dir        
         MatObject.basedir = basedir  # set MatObject base directory
         MatObject.sphinx_env = self.env  # pass env to MatObject cls
-        MatObject.sphinx_app = self.env.app  # pass app to MatObject cls
-        MatObject.sphinx_dbg = dbg  # pass dbg to MatObject cls
+        MatObject.sphinx_app = self.env.app  # pass app to MatObject cls        
         if self.objpath:
-            dbg('[autodoc] from %s import %s',
+            logger.debug('[autodoc] from %s import %s',
                 self.modname, '.'.join(self.objpath))
         try:
-            dbg('[autodoc] import %s', self.modname)
+            logger.debug('[autodoc] import %s', self.modname)
             MatObject.matlabify(self.modname)
             parent = None
             obj = self.module = sys.modules[self.modname]
-            dbg('[autodoc] => %r', obj)
+            logger.debug('[autodoc] => %r', obj)
             for part in self.objpath:
                 parent = obj
-                dbg('[autodoc] getattr(_, %r)', part)
+                logger.debug('[autodoc] getattr(_, %r)', part)
                 obj = self.get_attr(obj, part)
-                dbg('[autodoc] => %r', obj)
+                logger.debug('[autodoc] => %r', obj)
                 self.object_name = part
             self.parent = parent
             self.object = obj
@@ -146,7 +147,7 @@ class MatlabDocumenter(PyDocumenter):
                          (self.objtype, self.fullname)
             errmsg += '; the following exception was raised:\n%s' % \
                       traceback.format_exc()
-            dbg(errmsg)
+            logger.debug(errmsg)
             self.directive.warn(errmsg)
             self.env.note_reread()
             return False

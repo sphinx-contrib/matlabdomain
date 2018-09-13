@@ -25,7 +25,7 @@ from pygments.token import Token
 
 logger = logging.getLogger('matlab-domain')
 
-MAT_DOM = 'MATLAB-domain'
+MAT_DOM = 'sphinxcontrib-matlabdomain'
 __all__ = ['MatObject', 'MatModule', 'MatFunction', 'MatClass',  \
            'MatProperty', 'MatMethod', 'MatScript', 'MatException', \
            'MatModuleAnalyzer', 'MAT_DOM']
@@ -84,7 +84,7 @@ class MatObject(object):
             return self.__name__
         elif len(defargs) == 0:
             warn_msg = '[%s] WARNING Attribute "%s" was not found in %s.'
-            MatObject.sphinx_dbg(warn_msg, MAT_DOM, name, self)
+            logger.debug(warn_msg, MAT_DOM, name, self)
             return None
         elif len(defargs) == 1:
             return defargs[0]
@@ -126,16 +126,16 @@ class MatObject(object):
             mod = sys.modules.get(package)
             if mod:
                 msg = '[%s] mod %s already loaded.'
-                MatObject.sphinx_dbg(msg, MAT_DOM, package)
+                logger.debug(msg, MAT_DOM, package)
                 return mod
             else:
                 msg = '[%s] matlabify %s from\n\t%s.'
-                MatObject.sphinx_dbg(msg, MAT_DOM, package, fullpath)
+                logger.debug(msg, MAT_DOM, package, fullpath)
                 return MatModule(name, fullpath, package)  # import package
         elif os.path.isfile(fullpath + '.m'):
             mfile = fullpath + '.m'
             msg = '[%s] matlabify %s from\n\t%s.'
-            MatObject.sphinx_dbg(msg, MAT_DOM, package, mfile)
+            logger.debug(msg, MAT_DOM, package, mfile)
             return MatObject.parse_mfile(mfile, name, path)  # parse mfile
         return None
 
@@ -171,11 +171,11 @@ class MatObject(object):
         modname = path.replace(os.sep, '.')  # module name
         # assume that functions and classes always start with a keyword
         if tks[0] == (Token.Keyword, 'function'):
-            MatObject.sphinx_dbg('[%s] parsing function %s from %s.', MAT_DOM,
+            logger.debug('[%s] parsing function %s from %s.', MAT_DOM,
                                  name, modname)
             return MatFunction(name, modname, tks)
         elif tks[0] == (Token.Keyword, 'classdef'):
-            MatObject.sphinx_dbg('[%s] parsing classdef %s from %s.', MAT_DOM,
+            logger.debug('[%s] parsing classdef %s from %s.', MAT_DOM,
                                  name, modname)
             return MatClass(name, modname, tks)
         else:
@@ -255,7 +255,7 @@ class MatObject(object):
 
         code = pat.sub(repl, code)  # search for functions and apply replacement
         msg = '[%s] replaced ellipsis & appended parentheses in function signatures'
-        MatObject.sphinx_dbg(msg, MAT_DOM)
+        logger.debug(msg, MAT_DOM)
         return code
 
     @staticmethod
@@ -369,18 +369,18 @@ class MatModule(MatObject):
             return self.__package__
         elif name == '__module__':
             msg = '[%s] mod %s is a package does not have __module__.'
-            MatObject.sphinx_dbg(msg, MAT_DOM, self)
+            logger.debug(msg, MAT_DOM, self)
             return None
         else:
             if hasattr(self, name):
                 msg = '[%s] mod %s already has attr %s.'
-                MatObject.sphinx_dbg(msg, MAT_DOM, self, name)
+                logger.debug(msg, MAT_DOM, self, name)
                 return getattr(self, name)
             attr = MatObject.matlabify('.'.join([self.package, name]))
             if attr:
                 setattr(self, name, attr)
                 msg = '[%s] attr %s imported from mod %s.'
-                MatObject.sphinx_dbg(msg, MAT_DOM, name, self)
+                logger.debug(msg, MAT_DOM, name, self)
                 return attr
             else:
                 super(MatModule, self).getter(name, *defargs)
@@ -841,7 +841,7 @@ class MatClass(MatMixin, MatObject):
                         prop_name = self.tokens[idx][1]
                         warn_msg = ' '.join(['[%s] WARNING %s.%s.%s is',
                                              'a Builtin Name'])
-                        MatObject.sphinx_dbg(warn_msg, MAT_DOM, self.module,
+                        logger.debug(warn_msg, MAT_DOM, self.module,
                                              self.name, prop_name)
                         self.properties[prop_name] = {'attrs': attr_dict}
                         idx += 1
@@ -940,9 +940,8 @@ class MatClass(MatMixin, MatObject):
                         self._tk_eq(idx, (Token.Punctuation, '(')) or
                         self._tk_eq(idx, (Token.Punctuation, ')')) or
                         self._tk_eq(idx, (Token.Punctuation, ','))):
-                        msg = ['[%s] Skipping tokens for methods defined in separate files.',
-                               'token #%d: %r']
-                        MatClass.sphinx_dbg('\n'.join(msg), MAT_DOM, idx, self.tokens[idx])
+                        msg = '[%s] Skipping tokens for methods defined in separate files. (token #%d: %r)'
+                        MatClass.sphinx_dbg(msg, MAT_DOM, idx, self.tokens[idx])
                         idx += 1 + self._whitespace(idx + 1)
                     elif self._tk_eq(idx, (Token.Keyword, 'end')):
                         idx += 1
@@ -960,14 +959,14 @@ class MatClass(MatMixin, MatObject):
                 idx += 1
             if self._tk_eq(idx, (Token.Keyword, 'events')):
                 msg = '[%s] ignoring ''events'' in ''classdef %s.'''
-                MatObject.sphinx_dbg(msg, MAT_DOM, self.name)
+                logger.debug(msg, MAT_DOM, self.name)
                 idx += 1
                 # Token.Keyword: "end" terminates events block
                 while self._tk_ne(idx, (Token.Keyword, 'end')):
                     idx += 1
             if self._tk_eq(idx, (Token.Name, 'enumeration')):
                 msg = '[%s] ignoring ''enumeration'' in ''classdef %s.'''
-                MatObject.sphinx_dbg(msg, MAT_DOM, self.name)
+                logger.debug(msg, MAT_DOM, self.name)
                 idx += 1
                 # Token.Keyword: "end" terminates events block
                 while self._tk_ne(idx, (Token.Keyword, 'end')):
