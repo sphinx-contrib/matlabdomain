@@ -281,5 +281,12 @@ def test_ClassWithEnumMethod():
     assert list(obj.methods.keys()) == ['myfunc']
 
 
+def test_ClassWithEventMethod():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithEventMethod.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithEventMethod', 'test_data')
+    assert obj.name == 'ClassWithEventMethod'    
+    assert list(obj.methods.keys()) == ['myfunc']
+
+
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])
