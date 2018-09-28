@@ -274,5 +274,12 @@ def test_ClassWithFunctionVariable():
     assert list(obj.methods.keys()) == ['ClassWithFunctionVariable']
 
 
+def test_ClassWithEnumMethod():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithEnumMethod.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithEnumMethod', 'test_data')
+    assert obj.name == 'ClassWithEnumMethod'    
+    assert list(obj.methods.keys()) == ['myfunc']
+
+
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])

@@ -221,10 +221,10 @@ class MatObject(object):
         :return:
         """
         pat = r"('.*)(\.\.\.)(.*')"
-        code = re.sub(pat, '\g<1>\g<3>', code, flags=re.MULTILINE)
+        code = re.sub(pat, r'\g<1>\g<3>', code, flags=re.MULTILINE)
 
         pat = r"^([^%\n]*)(\.\.\..*\n)"
-        code = re.sub(pat, '\g<1>', code, flags=re.MULTILINE)
+        code = re.sub(pat, r'\g<1>', code, flags=re.MULTILINE)
         return code
 
     @staticmethod
@@ -964,6 +964,7 @@ class MatClass(MatMixin, MatObject):
                 # Token.Keyword: "end" terminates events block
                 while self._tk_ne(idx, (Token.Keyword, 'end')):
                     idx += 1
+                idx += 1
             if self._tk_eq(idx, (Token.Name, 'enumeration')):
                 msg = '[%s] ignoring ''enumeration'' in ''classdef %s.'''
                 logger.debug(msg, MAT_DOM, self.name)
@@ -971,6 +972,7 @@ class MatClass(MatMixin, MatObject):
                 # Token.Keyword: "end" terminates events block
                 while self._tk_ne(idx, (Token.Keyword, 'end')):
                     idx += 1
+                idx += 1
 
 
         self.rem_tks = idx  # index of last token
