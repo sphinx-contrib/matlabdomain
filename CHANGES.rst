@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.3.5 (2018-09-28)
+=============================================
+
+* Fixed `Issue 79 <https://github.com/sphinx-contrib/matlabdomain/issues/79>`_.
+  Enumerations and events cause premature end of m-file parsing.
+
+
 sphinxcontrib-matlabdomain-0.3.4 (2018-09-13)
 =============================================
 
