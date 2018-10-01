@@ -189,13 +189,33 @@ def test_with_comment_header():
 def test_script_with_comment_header():
     mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header', 'test_data')
-    assert obj.docstring == ""
+    assert obj.docstring == """ This is a Comment Header
+ Copyright (C) <year>, by <full_name>
+
+ Some descriptions ...
+
+ This header and all further comments above the first command line
+ of the script will be ignored by the documentation system.
+
+ Lisence (GPL, BSD, etc.)
+
+"""
 
 
 def test_script_with_comment_header_2():
     mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header_2.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header_2', 'test_data')
-    assert obj.docstring == ""
+    assert obj.docstring == """ This is a Comment Header
+ Copyright (C) <year>, by <full_name>
+
+ Some descriptions ...
+
+ This header and all further comments above the first command line
+ of the script will be ignored by the documentation system.
+
+ Lisence (GPL, BSD, etc.)
+
+"""
 
 
 def test_PropTypeOld():
