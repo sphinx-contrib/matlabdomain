@@ -1212,39 +1212,6 @@ class MatScript(MatObject):
                 except IndexError:
                     break
             docstring = wht  # check if Token is Comment
-        # =====================================================================
-        # Is this code even used?
-        # main body
-        # find Keywords - "end" pairs
-        if docstring is None:
-            return
-        kw = docstring  # last token
-        lastkw = 0  # set last keyword placeholder
-        kw_end = 1  # count function keyword
-        while kw_end > 0:
-            # increment keyword-end pairs count
-            if kw in MatFunction.mat_kws:
-                kw_end += 1
-            # nested function definition
-            elif kw[0] is Token.Keyword and kw[1].strip() == 'function':
-                kw_end += 1
-            # decrement keyword-end pairs count but
-            # don't decrement `end` if used as index
-            elif kw == (Token.Keyword, 'end') and not lastkw:
-                kw_end -= 1
-            # save last punctuation
-            elif kw in list(zip((Token.Punctuation,) * 2, ('(', '{'))):
-                lastkw += 1
-            elif kw in list(zip((Token.Punctuation,) * 2, (')', '}'))):
-                lastkw -= 1
-            try:
-                kw = tks.pop()
-            except IndexError:
-                break
-        tks.append(kw)  # put last token back in list
-        # if there are any tokens left save them
-        if len(tks) > 0:
-            self.rem_tks = tks  # save extra tokens
 
     @property
     def __doc__(self):
