@@ -217,6 +217,13 @@ def test_script_with_comment_header_2():
 
 """
 
+def test_script_with_comment_header_3():
+    mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header_3.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header_3', 'test_data')
+    assert obj.docstring == """ This is a Comment Header with empty lines above
+ and many line comments.
+
+"""
 
 def test_PropTypeOld():
     mfile = os.path.join(DIRNAME, 'test_data', 'PropTypeOld.m')
