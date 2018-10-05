@@ -58,6 +58,7 @@ def test_module(mod):
                       'f_no_input_no_output_no_parentheses', 'ClassWithCommentHeader',
                       'f_with_comment_header', 'script_with_comment_header',
                       'script_with_comment_header_2', 'script_with_comment_header_3',
+                      'script_with_comment_header_4',
                       'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes',
                       'ClassWithoutIndent', 'f_with_utf8', 'f_with_name_mismatch',
                       'ClassWithBuiltinOverload', 'ClassWithFunctionVariable',

@@ -1190,6 +1190,9 @@ class MatScript(MatObject):
         # docstring
         try:
             docstring = tks.pop()
+            # Skip any statements before first documentation header
+            while docstring and docstring[0] is not Token.Comment:
+                docstring = tks.pop()
         except IndexError:
             docstring = None
         while docstring and docstring[0] is Token.Comment:
