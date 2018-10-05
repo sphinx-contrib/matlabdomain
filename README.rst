@@ -65,6 +65,9 @@ Directive                             MATLAB object
 ``.. function:: funcname``            **function definition and signature**
 ``.. autofunction:: funcname()``      * auto-document
 ``:func:`funcname```                  * reference
+``.. script:: scriptname``            **script definition**
+``.. autoscript:: scriptname``        * auto-document
+``:scpt:`scriptname```                * reference
 ``.. class:: classname()``            **class definition and optional signature**
 ``.. autoclass:: classname``          * auto-document
 ``:class:`classname```                * reference

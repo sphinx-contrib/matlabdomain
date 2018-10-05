@@ -160,6 +160,7 @@ class MatObject(object):
         with open(mfile, 'r', encoding='utf-8') as code_f:
             code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
         # remove the top comment header (if there is one) from the code string
+        full_code = code
         code = MatObject._remove_comment_header(code)
         # functions must be contained in one line, no ellipsis, classdef is OK
         code = MatObject._remove_line_continuations(code)
@@ -179,7 +180,8 @@ class MatObject(object):
                                  name, modname)
             return MatClass(name, modname, tks)
         else:
-            # it's a script file
+            # it's a script file retoken with header comment
+            tks = list(MatlabLexer().get_tokens(full_code))
             return MatScript(name, modname, tks)
         return None
 
@@ -1170,16 +1172,57 @@ class MatMethod(MatFunction):
 
 
 class MatScript(MatObject):
-    def __init__(self, name, path, tks):
+    def __init__(self, name, modname, tks):
         super(MatScript, self).__init__(name)
-        self.path = path
-        self.tks = tks
+        #: Path of folder containing :class:`MatScript`.
+        self.module = modname
+        #: List of tokens parsed from mfile by Pygments.
+        self.tokens = tks
+        #: docstring
         self.docstring = ''
+        #: remaining tokens after main function is parsed
+        self.rem_tks = None
+
+        tks = copy(self.tokens)  # make a copy of tokens
+        tks.reverse()  # reverse in place for faster popping, stacks are LiLo
+        skip_whitespace(tks)
+        # =====================================================================
+        # docstring
+        try:
+            docstring = tks.pop()
+            # Skip any statements before first documentation header
+            while docstring and docstring[0] is not Token.Comment:
+                docstring = tks.pop()
+        except IndexError:
+            docstring = None
+        while docstring and docstring[0] is Token.Comment:
+            self.docstring += docstring[1].lstrip('%')
+            # Get newline if it exists and append to docstring
+            try:
+                wht = tks.pop()  # We expect a newline
+            except IndexError:
+                break
+            if wht[0] == Token.Text and wht[1] == '\n':
+                self.docstring += '\n'
+            # Skip whitespace
+            try:
+                wht = tks.pop()  # We expect a newline
+            except IndexError:
+                break
+            while wht in list(zip((Token.Text,) * 3, (' ', '\t'))):
+                try:
+                    wht = tks.pop()
+                except IndexError:
+                    break
+            docstring = wht  # check if Token is Comment
 
     @property
     def __doc__(self):
         return str(self.docstring)
 
+    @property
+    def __module__(self):
+        return self.module
 
 class MatException(MatObject):
     def __init__(self, name, path, tks):

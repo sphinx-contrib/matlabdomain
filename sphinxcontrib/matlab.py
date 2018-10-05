@@ -568,6 +568,7 @@ class MATLABDomain(Domain):
         'staticmethod': ObjType(_('static method'), 'meth', 'obj'),
         'attribute':    ObjType(_('attribute'),     'attr', 'obj'),
         'module':       ObjType(_('module'),        'mod', 'obj'),
+        'script':       ObjType(_('script'),        'scpt', 'obj'),
     }
 
     directives = {
@@ -583,6 +584,7 @@ class MATLABDomain(Domain):
         'currentmodule':   MatCurrentModule,
         'decorator':       MatDecoratorFunction,
         'decoratormethod': MatDecoratorMethod,
+        'script':            MatModulelevel,
     }
     roles = {
         'data':  MatXRefRole(),
@@ -594,6 +596,7 @@ class MATLABDomain(Domain):
         'meth':  MatXRefRole(fix_parens=True),
         'mod':   MatXRefRole(),
         'obj':   MatXRefRole(),
+        'scpt':   MatXRefRole(),
     }
     initial_data = {
         'objects': {},  # fullname -> docname, objtype
@@ -724,3 +727,4 @@ def setup(app):
     app.add_autodocumenter(doc.MatMethodDocumenter)
     app.add_autodocumenter(doc.MatAttributeDocumenter)
     app.add_autodocumenter(doc.MatInstanceAttributeDocumenter)
+    app.add_autodocumenter(doc.MatScriptDocumenter)

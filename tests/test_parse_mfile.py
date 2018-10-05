@@ -189,14 +189,49 @@ def test_with_comment_header():
 def test_script_with_comment_header():
     mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header', 'test_data')
-    assert obj.docstring == ""
+    assert obj.docstring == """ This is a Comment Header
+ Copyright (C) <year>, by <full_name>
+
+ Some descriptions ...
+
+ This header and all further comments above the first command line
+ of the script will be ignored by the documentation system.
+
+ Lisence (GPL, BSD, etc.)
+
+"""
 
 
 def test_script_with_comment_header_2():
     mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header_2.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header_2', 'test_data')
-    assert obj.docstring == ""
+    assert obj.docstring == """ This is a Comment Header
+ Copyright (C) <year>, by <full_name>
 
+ Some descriptions ...
+
+ This header and all further comments above the first command line
+ of the script will be ignored by the documentation system.
+
+ Lisence (GPL, BSD, etc.)
+
+"""
+
+def test_script_with_comment_header_3():
+    mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header_3.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header_3', 'test_data')
+    assert obj.docstring == """ This is a Comment Header with empty lines above
+ and many line comments.
+
+"""
+
+def test_script_with_comment_header_4():
+    mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header_4.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header_4', 'test_data')
+    assert obj.docstring == """ This is a Comment Header with a single instruction above
+ and many line comments.
+
+"""
 
 def test_PropTypeOld():
     mfile = os.path.join(DIRNAME, 'test_data', 'PropTypeOld.m')

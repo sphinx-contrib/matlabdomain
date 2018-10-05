@@ -906,3 +906,16 @@ class MatInstanceAttributeDocumenter(MatAttributeDocumenter):
         # MatAttributeDocumenter.add_content(self, more_content,
         #                                    no_docstring=True)
         MatAttributeDocumenter.add_content(self, more_content, no_docstring)
+
+class MatScriptDocumenter(MatModuleLevelDocumenter):
+    """
+    Specialized Documenter subclass for scripts.
+    """
+    objtype = 'script'
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        return isinstance(member, MatScript)
+
+    def document_members(self, all_members=False):
+        pass
