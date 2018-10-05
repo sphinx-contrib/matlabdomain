@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.4.0 (2018-10-05)
+=============================================
+
+* Fixed `Issue 69 <https://github.com/sphinx-contrib/matlabdomain/issues/69>`_.
+  Autodoc for script header. Thanks to Hugo Leblanc for this contribution.
+  
+
 sphinxcontrib-matlabdomain-0.3.5 (2018-09-28)
 =============================================
 
