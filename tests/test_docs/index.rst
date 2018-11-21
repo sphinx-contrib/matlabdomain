@@ -104,6 +104,26 @@ A Matlab class with different method attributes
 
 .. autoclass:: ClassWithMethodAttributes
     :members:
+    :show-inheritance:
+
+
+ClassWithAttributes
++++++++++++++++++++
+
+A MATLAB class with class attributes.
+
+.. autoclass:: ClassWithAttributes
+    :members:
+    :show-inheritance:
+
+ClassWithUnknownAttributes
+++++++++++++++++++++++++++
+
+A MATLAB class with unknown class attributes.
+
+.. autoclass:: ClassWithUnknownAttributes
+    :members:
+    :show-inheritance:
 
 
 FunctionWith
@@ -199,8 +219,6 @@ A Matlab unittest class
 .. autoclass:: TestFibonacci
     :members:
     :show-inheritance:
-
-
 
 
 Indices and tables

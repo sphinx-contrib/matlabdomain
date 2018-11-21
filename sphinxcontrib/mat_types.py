@@ -518,139 +518,126 @@ class MatFunction(MatObject):
         # XXX: Pygments does not tolerate MATLAB continuation ellipsis!
         tks = copy(self.tokens)  # make a copy of tokens
         tks.reverse()  # reverse in place for faster popping, stacks are LiLo
-        # =====================================================================
-        # parse function signature
-        # function [output] = name(inputs)
-        # % docstring
-        # =====================================================================
-        # check function keyword
-        func_kw = tks.pop()  # function keyword
-        if func_kw[0] is not Token.Keyword or func_kw[1].strip() != 'function':
-            raise TypeError('Object is not a function. Expected a function.'
-                            'modname: {}, name: {}'.format(modname, name))
-            # TODO: what is a better error here?
-        # skip blanks and tabs
-        skip_whitespace(tks)
-        # whitespace = tks.pop()[0]
-        # if whitespace is not Token.Text.Whitespace:  # @UndefinedVariable
-        #     # When the input args are wrong parsed,
-        #     # the whitespace is not makred as (Token.Text, ' ')
-        #     # This hides a bug, when "..." are in the input args
-        #     if whitespace[1] != ' ':
-        #         raise TypeError('Expected a whitespace after function keyword.'
-        #                         'modname: {}, name: {}'.format(modname, name))
-        #         # TODO: what is a better error here?
-        # =====================================================================
-        # output args
-        retv = tks.pop()  # return values
-        if retv[0] is Token.Text:
-            self.retv = [rv.strip() for rv in retv[1].strip('[ ]').split(',')]
-            if len(self.retv) == 1:
-                # check if return is empty
-                if not self.retv[0]:
-                    self.retv = None
-                # check if return delimited by whitespace
-                elif ' ' in self.retv[0] or '\t' in self.retv[0]:
-                    self.retv = [rv for rv_tab in self.retv[0].split('\t')
-                                 for rv in rv_tab.split(' ')]
-            if tks.pop() != (Token.Punctuation, '='):
-                raise TypeError('Token after outputs should be Punctuation.'
-                                'modname: {}, name: {}'.format(modname, name))
-                # TODO: raise an matlab token error or what?
-            skip_whitespace(tks)
-        elif retv[0] is Token.Name.Function:  # @UndefinedVariable
-            tks.append(retv)
-        # =====================================================================
-        # function name
-        func_name = tks.pop()
-        if func_name != (Token.Name.Function, self.name):  # @UndefinedVariable
-            if isinstance(self, MatMethod):
-                self.name = func_name[1]
-            else:
-                msg = '[sphinxcontrib-matlabdomain] Unexpected function name: "%s".' % func_name[1]
-                msg += ' Expected "{}" in module "{}".'.format(name, modname)
-                logger.warning(msg)
-
-                #raise Exception(errmsg)
-                return
-                # TODO: create mat_types or tokens exceptions!
-        # =====================================================================
-        # input args
-        if tks.pop() == (Token.Punctuation, '('):
-            args = tks.pop()
-            if args[0] is Token.Text:
-                self.args = [arg.strip() for arg in args[1].split(',')]\
-            # no arguments given
-            elif args == (Token.Punctuation, ')'):
-                tks.append(args)  # put closing parenthesis back in stack
-            # check if function args parsed correctly
-            if tks.pop() != (Token.Punctuation, ')'):
-                raise TypeError('Token after outputs should be Punctuation.'
-                                'modname: {}, name: {}'.format(modname, name))
-                # TODO: raise an matlab token error or what?
-            elif args[0] is Token.Name:
-                raise TypeError('Expected input args. '
-                                'Probably  there is a not allowed "..." in '
-                                'the input args? '
-                                'modname: {}, name: {}, func name: {}'.format(
-                                    modname, name, self.name))
-        skip_whitespace(tks)
-        # =====================================================================
-        # docstring
         try:
-            docstring = tks.pop()
-        except IndexError:
-            docstring = None
-        while docstring and docstring[0] is Token.Comment:
-            self.docstring += docstring[1].lstrip('%')
-            # Get newline if it exists and append to docstring
+            # =====================================================================
+            # parse function signature
+            # function [output] = name(inputs)
+            # % docstring
+            # =====================================================================
+            # Skip function token - already checked in MatObject.parse_mfile
+            tks.pop()
+            skip_whitespace(tks)
+
+            #  Check for return values
+            retv = tks.pop()
+            if retv[0] is Token.Text:
+                self.retv = [rv.strip() for rv in retv[1].strip('[ ]').split(',')]
+                if len(self.retv) == 1:
+                    # check if return is empty
+                    if not self.retv[0]:
+                        self.retv = None
+                    # check if return delimited by whitespace
+                    elif ' ' in self.retv[0] or '\t' in self.retv[0]:
+                        self.retv = [rv for rv_tab in self.retv[0].split('\t')
+                                     for rv in rv_tab.split(' ')]
+                if tks.pop() != (Token.Punctuation, '='):
+                    # Unlikely to end here. But never-the-less warn!
+                    msg = '[sphinxcontrib-matlabdomain] Parsing failed in {}.{}. Expected "=".'.format(modname, name)
+                    logger.warning(msg)
+                    return
+
+                skip_whitespace(tks)
+            elif retv[0] is Token.Name.Function:
+                tks.append(retv)
+            # =====================================================================
+            # function name
+            func_name = tks.pop()
+            if func_name != (Token.Name.Function, self.name):  # @UndefinedVariable
+                if isinstance(self, MatMethod):
+                    self.name = func_name[1]
+                else:
+                    msg = '[sphinxcontrib-matlabdomain] Unexpected function name: "%s".' % func_name[1]
+                    msg += ' Expected "{}" in module "{}".'.format(name, modname)
+                    logger.warning(msg)
+
+            # =====================================================================
+            # input args
+            if tks.pop() == (Token.Punctuation, '('):
+                args = tks.pop()
+                if args[0] is Token.Text:
+                    self.args = [arg.strip() for arg in args[1].split(',')]\
+                # no arguments given
+                elif args == (Token.Punctuation, ')'):
+                    # put closing parenthesis back in stack
+                    tks.append(args)
+                # check if function args parsed correctly
+                if tks.pop() != (Token.Punctuation, ')'):
+                    # Unlikely to end here. But never-the-less warn!
+                    msg = '[sphinxcontrib-matlabdomain] Parsing failed in {}.{}. Expected ")".'.format(modname, name)
+                    logger.warning(msg)
+                    return
+
+            skip_whitespace(tks)
+            # =====================================================================
+            # docstring
             try:
-                wht = tks.pop()  # We expect a newline
+                docstring = tks.pop()
             except IndexError:
-                break
-            if wht[0] == Token.Text and wht[1] == '\n':
-                self.docstring += '\n'
-            # Skip whitespace
-            try:
-                wht = tks.pop()  # We expect a newline
-            except IndexError:
-                break
-            while wht in list(zip((Token.Text,) * 3, (' ', '\t'))):
+                docstring = None
+            while docstring and docstring[0] is Token.Comment:
+                self.docstring += docstring[1].lstrip('%')
+                # Get newline if it exists and append to docstring
                 try:
-                    wht = tks.pop()
+                    wht = tks.pop()  # We expect a newline
                 except IndexError:
                     break
-            docstring = wht  # check if Token is Comment
-        # =====================================================================
-        # Is this code even used?
-        # main body
-        # find Keywords - "end" pairs
-        if docstring is None:
-            return
-        kw = docstring  # last token
-        lastkw = 0  # set last keyword placeholder
-        kw_end = 1  # count function keyword
-        while kw_end > 0:
-            # increment keyword-end pairs count
-            if kw in MatFunction.mat_kws:
-                kw_end += 1
-            # nested function definition
-            elif kw[0] is Token.Keyword and kw[1].strip() == 'function':
-                kw_end += 1
-            # decrement keyword-end pairs count but
-            # don't decrement `end` if used as index
-            elif kw == (Token.Keyword, 'end') and not lastkw:
-                kw_end -= 1
-            # save last punctuation
-            elif kw in list(zip((Token.Punctuation,) * 2, ('(', '{'))):
-                lastkw += 1
-            elif kw in list(zip((Token.Punctuation,) * 2, (')', '}'))):
-                lastkw -= 1
-            try:
-                kw = tks.pop()
-            except IndexError:
-                break
-        tks.append(kw)  # put last token back in list
+                if wht[0] == Token.Text and wht[1] == '\n':
+                    self.docstring += '\n'
+                # Skip whitespace
+                try:
+                    wht = tks.pop()  # We expect a newline
+                except IndexError:
+                    break
+                while wht in list(zip((Token.Text,) * 3, (' ', '\t'))):
+                    try:
+                        wht = tks.pop()
+                    except IndexError:
+                        break
+                docstring = wht  # check if Token is Comment
+            # =====================================================================
+            # Is this code even used?
+            # main body
+            # find Keywords - "end" pairs
+            if docstring is None:
+                return
+            kw = docstring  # last token
+            lastkw = 0  # set last keyword placeholder
+            kw_end = 1  # count function keyword
+            while kw_end > 0:
+                # increment keyword-end pairs count
+                if kw in MatFunction.mat_kws:
+                    kw_end += 1
+                # nested function definition
+                elif kw[0] is Token.Keyword and kw[1].strip() == 'function':
+                    kw_end += 1
+                # decrement keyword-end pairs count but
+                # don't decrement `end` if used as index
+                elif kw == (Token.Keyword, 'end') and not lastkw:
+                    kw_end -= 1
+                # save last punctuation
+                elif kw in list(zip((Token.Punctuation,) * 2, ('(', '{'))):
+                    lastkw += 1
+                elif kw in list(zip((Token.Punctuation,) * 2, (')', '}'))):
+                    lastkw -= 1
+                try:
+                    kw = tks.pop()
+                except IndexError:
+                    break
+            tks.append(kw)  # put last token back in list
+        except IndexError:
+            msg = '[sphinxcontrib-matlabdomain] Parsing failed in {}.{}. Check if valid MATLAB code.'.format(
+                modname, name)
+            logger.warning(msg)
         # if there are any tokens left save them
         if len(tks) > 0:
             self.rem_tks = tks  # save extra tokens
@@ -727,255 +714,253 @@ class MatClass(MatMixin, MatObject):
         # =====================================================================
         # parse tokens
         # TODO: use generator and next() instead of stepping index!
-        idx = 0  # token index
-        # check classdef keyword
-        if self._tk_ne(idx, (Token.Keyword, 'classdef')):
-            raise TypeError('Object is not a class. Expected a class.')
-        idx += 1
-        # TODO: allow continuation dots "..." in signature
-        # parse classdef signature
-        # classdef [(Attributes [= true], Attributes [= {}] ...)] name ...
-        #   [< bases & ...]
-        # % docstring
-        # =====================================================================
-        # class "attributes"
-        self.attrs, idx = self.attributes(idx, MatClass.cls_attr_types)
-        # =====================================================================
-        # classname
-        idx += self._blanks(idx)  # skip blanks
-        if self._tk_ne(idx, (Token.Name, self.name)):
-            errmsg = 'Unexpected class name: "%s".' % self.tokens[idx][1]
-            raise Exception(errmsg)
-            # TODO: create exception classes
-        idx += 1
-        idx += self._blanks(idx)  # skip blanks
-        # =====================================================================
-        # super classes
-        if self._tk_eq(idx, (Token.Operator, '<')):
-            idx += 1
-            # newline terminates superclasses
-            while self._tk_ne(idx, (Token.Text, '\n')):
-                idx += self._blanks(idx)  # skip blanks
-                # concatenate base name
-                base_name = ''
-                while not self._whitespace(idx):
-                    base_name += self.tokens[idx][1]
-                    idx += 1
-                # if newline, don't increment index
-                if self._tk_ne(idx, (Token.Text, '\n')):
-                    idx += 1
-                if base_name:
-                    self.bases.append(base_name)
-                idx += self._blanks(idx)  # skip blanks
-                # continue to next super class separated by &
-                if self._tk_eq(idx, (Token.Operator, '&')):
-                    idx += 1
-            idx += 1  # end of super classes
-        # newline terminates classdef signature
-        elif self._tk_eq(idx, (Token.Text, '\n')):
-            idx += 1  # end of classdef signature
-        # =====================================================================
-        # docstring
-        idx += self._indent(idx)  # calculation indentation
-        # concatenate docstring
-        while self.tokens[idx][0] is Token.Comment:
-            self.docstring += self.tokens[idx][1].lstrip('%')
-            idx += 1
-            # append newline to docstring
-            if self._tk_eq(idx, (Token.Text, '\n')):
-                self.docstring += self.tokens[idx][1]
-                idx += 1
-            # skip tab
-            indent = self._indent(idx)  # calculation indentation
-            idx += indent
-    # =====================================================================
-        # properties & methods blocks
-        # loop over code body searching for blocks until end of class
-        while self._tk_ne(idx, (Token.Keyword, 'end')):
-            # skip comments and whitespace
-            while (self._whitespace(idx) or
-                   self.tokens[idx][0] is Token.Comment):
-                whitespace = self._whitespace(idx)
-                if whitespace:
-                    idx += whitespace
-                else:
-                    idx += 1
-            # =================================================================
-            # properties blocks
-            if self._tk_eq(idx, (Token.Keyword, 'properties')):
-                prop_name = ''
-                idx += 1
-                # property "attributes"
-                attr_dict, idx = self.attributes(idx, MatClass.prop_attr_types)
-                # Token.Keyword: "end" terminates properties & methods block
-                while self._tk_ne(idx, (Token.Keyword, 'end')):
-                    # skip comments and whitespace
-                    while (self._whitespace(idx) or
-                           self.tokens[idx][0] is Token.Comment):
-                        whitespace = self._whitespace(idx)
-                        if whitespace:
-                            idx += whitespace
-                        else:
-                            idx += 1
-                    # TODO: alternate multiline docstring before property
-                    # with "%:" directive trumps docstring after property
-                    if self.tokens[idx][0] is Token.Name:
-                        prop_name = self.tokens[idx][1]
-                        self.properties[prop_name] = {'attrs': attr_dict}
+        try:
+            # Skip classdef token - already checked in MatObject.parse_mfile
+            idx = 1  # token index
 
-                        # skip size, class and functions specifiers
-                        # TODO: Parse old and new style property extras
-                        while self._tk_eq(idx, (Token.Punctuation, '@')) or \
-                              self._tk_eq(idx, (Token.Punctuation, '(')) or \
-                              self._tk_eq(idx, (Token.Punctuation, ')')) or \
-                              self._tk_eq(idx, (Token.Punctuation, ',')) or \
-                              self._tk_eq(idx, (Token.Punctuation, ':')) or \
-                              self.tokens[idx][0] == Token.Literal.Number.Integer or \
-                              self._tk_eq(idx, (Token.Punctuation, '{')) or \
-                              self._tk_eq(idx, (Token.Punctuation, '}')) or \
-                              self._tk_eq(idx, (Token.Punctuation, '.')) or \
-                              self.tokens[idx][0] == Token.Literal.String or \
-                              self.tokens[idx][0] == Token.Name or \
-                              self.tokens[idx][0] == Token.Text:
-                            idx += 1
-                    # subtype of Name EG Name.Builtin used as Name
-                    elif self.tokens[idx][0] in Token.Name.subtypes:  # @UndefinedVariable
-                        prop_name = self.tokens[idx][1]
-                        warn_msg = ' '.join(['[%s] WARNING %s.%s.%s is',
-                                             'a Builtin Name'])
-                        logger.debug(warn_msg, MAT_DOM, self.module,
-                                             self.name, prop_name)
-                        self.properties[prop_name] = {'attrs': attr_dict}
-                        idx += 1
-                    elif self._tk_eq(idx, (Token.Keyword, 'end')):
-                        idx += 1
-                        break
-                    # skip semicolon after property name, but no default
-                    elif self._tk_eq(idx, (Token.Punctuation, ';')):
-                        idx += 1
-                        continue
-                    else:
-                        raise TypeError('Expected property - got %s' % str(self.tokens[idx]))
+            # class "attributes"
+            self.attrs, idx = self.attributes(idx, MatClass.cls_attr_types)
+            # =====================================================================
+            # classname
+            idx += self._blanks(idx)  # skip blanks
+            if self._tk_ne(idx, (Token.Name, self.name)):
+                msg = '[sphinxcontrib-matlabdomain] Unexpected class name: "%s".' % self.tokens[idx][1]
+                msg += ' Expected "{0}" in "{1}.{0}".'.format(name, modname)
+                logger.warning(msg)
+            idx += 1
+            idx += self._blanks(idx)  # skip blanks
+            # =====================================================================
+            # super classes
+            if self._tk_eq(idx, (Token.Operator, '<')):
+                idx += 1
+                # newline terminates superclasses
+                while self._tk_ne(idx, (Token.Text, '\n')):
                     idx += self._blanks(idx)  # skip blanks
-                    # =========================================================
-                    # defaults
-                    default = {'default': None}
-                    if self._tk_eq(idx, (Token.Punctuation, '=')):
+                    # concatenate base name
+                    base_name = ''
+                    while not self._whitespace(idx):
+                        base_name += self.tokens[idx][1]
                         idx += 1
-                        idx += self._blanks(idx)  # skip blanks
-                        # concatenate default value until newline or comment
-                        default = ''
-                        punc_ctr = 0  # punctuation placeholder
-                        # keep reading until newline or comment
-                        # only if all punctuation pairs are closed
-                        # and comment is **not** continuation ellipsis
-                        while ((self._tk_ne(idx, (Token.Text, '\n')) and
-                                self.tokens[idx][0] is not Token.Comment) or
-                               punc_ctr > 0 or
-                               (self.tokens[idx][0] is Token.Comment and
-                                self.tokens[idx][1].startswith('...'))):
-                            token = self.tokens[idx]
-                            # default has an array spanning multiple lines
-                            if (token in list(zip((Token.Punctuation,) * 3,
-                                ('(', '{', '[')))):
-                                punc_ctr += 1  # increment punctuation counter
-                            # look for end of array
-                            elif (token in list(zip((Token.Punctuation,) * 3,
-                                       (')', '}', ']')))):
-                                punc_ctr -= 1  # decrement punctuation counter
-                            # Pygments treats continuation ellipsis as comments
-                            # text from ellipsis until newline is in token
-                            elif (token[0] is Token.Comment and
-                                  token[1].startswith('...')):
-                                idx += 1  # skip ellipsis comments
-                                # include newline which should follow comment
-                                if self._tk_eq(idx, (Token.Text, '\n')):
-                                    default += '\n'
-                                    idx += 1
-                                continue
-                            elif self._tk_eq(idx - 1, (Token.Text, '\n')):
-                                idx += self._blanks(idx)
-                                continue
-                            default += token[1]
-                            idx += 1
-                        if self.tokens[idx][0] is not Token.Comment:
-                            idx += 1
-                        if default:
-                            default = {'default': default.rstrip('; ')}
-                    self.properties[prop_name].update(default)
-                    # =========================================================
-                    # docstring
-                    docstring = {'docstring': None}
-                    if self.tokens[idx][0] is Token.Comment:
-                        docstring['docstring'] = \
-                            self.tokens[idx][1].lstrip('%')
+                    # if newline, don't increment index
+                    if self._tk_ne(idx, (Token.Text, '\n')):
                         idx += 1
-                    self.properties[prop_name].update(docstring)
-                    idx += self._whitespace(idx)
+                    if base_name:
+                        self.bases.append(base_name)
+                    idx += self._blanks(idx)  # skip blanks
+                    # continue to next super class separated by &
+                    if self._tk_eq(idx, (Token.Operator, '&')):
+                        idx += 1
+                idx += 1  # end of super classes
+            # newline terminates classdef signature
+            elif self._tk_eq(idx, (Token.Text, '\n')):
+                idx += 1  # end of classdef signature
+            # =====================================================================
+            # docstring
+            idx += self._indent(idx)  # calculation indentation
+            # concatenate docstring
+            while self.tokens[idx][0] is Token.Comment:
+                self.docstring += self.tokens[idx][1].lstrip('%')
                 idx += 1
-            # =================================================================
-            # method blocks
-            if self._tk_eq(idx, (Token.Keyword, 'methods')):
-                idx += 1
-                # method "attributes"
-                attr_dict, idx = self.attributes(idx, MatClass.meth_attr_types)
-                # Token.Keyword: "end" terminates properties & methods block
-                while self._tk_ne(idx, (Token.Keyword, 'end')):
-                    # skip comments and whitespace
-                    while (self._whitespace(idx) or
-                           self.tokens[idx][0] is Token.Comment):
-                        whitespace = self._whitespace(idx)
-                        if whitespace:
-                            idx += whitespace
-                        else:
-                            idx += 1
-                    # skip methods defined in other files
-                    meth_tk = self.tokens[idx]
-                    if (meth_tk[0] is Token.Name or
-                        meth_tk[0] is Token.Name.Function or
-                        (meth_tk[0] is Token.Keyword and
-                         meth_tk[1].strip() == 'function'
-                         and self.tokens[idx+1][0] is Token.Name.Function) or
-                        self._tk_eq(idx, (Token.Punctuation, '[')) or
-                        self._tk_eq(idx, (Token.Punctuation, ']')) or
-                        self._tk_eq(idx, (Token.Punctuation, '=')) or
-                        self._tk_eq(idx, (Token.Punctuation, '(')) or
-                        self._tk_eq(idx, (Token.Punctuation, ')')) or
-                        self._tk_eq(idx, (Token.Punctuation, ','))):
-                        msg = '[%s] Skipping tokens for methods defined in separate files. (token #%d: %r)'
-                        MatClass.sphinx_dbg(msg, MAT_DOM, idx, self.tokens[idx])
-                        idx += 1 + self._whitespace(idx + 1)
-                    elif self._tk_eq(idx, (Token.Keyword, 'end')):
-                        idx += 1
-                        break
+                # append newline to docstring
+                if self._tk_eq(idx, (Token.Text, '\n')):
+                    self.docstring += self.tokens[idx][1]
+                    idx += 1
+                # skip tab
+                indent = self._indent(idx)  # calculation indentation
+                idx += indent
+        # =====================================================================
+            # properties & methods blocks
+            # loop over code body searching for blocks until end of class
+            while self._tk_ne(idx, (Token.Keyword, 'end')):
+                # skip comments and whitespace
+                while (self._whitespace(idx) or
+                       self.tokens[idx][0] is Token.Comment):
+                    whitespace = self._whitespace(idx)
+                    if whitespace:
+                        idx += whitespace
                     else:
-                        # find methods
-                        meth = MatMethod(self.module, self.tokens[idx:],
-                                         self, attr_dict)
-                        # replace dot in get/set methods with underscore
-                        if meth.name.split('.')[0] in ['get', 'set']:
-                            meth.name = meth.name.replace('.', '_')
-                        idx += meth.reset_tokens()  # reset method tokens and index
-                        self.methods[meth.name] = meth  # update methods
-                        idx += self._whitespace(idx)
-                idx += 1
-            if self._tk_eq(idx, (Token.Keyword, 'events')):
-                msg = '[%s] ignoring ''events'' in ''classdef %s.'''
-                logger.debug(msg, MAT_DOM, self.name)
-                idx += 1
-                # Token.Keyword: "end" terminates events block
-                while self._tk_ne(idx, (Token.Keyword, 'end')):
+                        idx += 1
+                # =================================================================
+                # properties blocks
+                if self._tk_eq(idx, (Token.Keyword, 'properties')):
+                    prop_name = ''
                     idx += 1
-                idx += 1
-            if self._tk_eq(idx, (Token.Name, 'enumeration')):
-                msg = '[%s] ignoring ''enumeration'' in ''classdef %s.'''
-                logger.debug(msg, MAT_DOM, self.name)
-                idx += 1
-                # Token.Keyword: "end" terminates events block
-                while self._tk_ne(idx, (Token.Keyword, 'end')):
-                    idx += 1
-                idx += 1
+                    # property "attributes"
+                    attr_dict, idx = self.attributes(idx, MatClass.prop_attr_types)
+                    # Token.Keyword: "end" terminates properties & methods block
+                    while self._tk_ne(idx, (Token.Keyword, 'end')):
+                        # skip comments and whitespace
+                        while (self._whitespace(idx) or
+                               self.tokens[idx][0] is Token.Comment):
+                            whitespace = self._whitespace(idx)
+                            if whitespace:
+                                idx += whitespace
+                            else:
+                                idx += 1
+                        # TODO: alternate multiline docstring before property
+                        # with "%:" directive trumps docstring after property
+                        if self.tokens[idx][0] is Token.Name:
+                            prop_name = self.tokens[idx][1]
+                            self.properties[prop_name] = {'attrs': attr_dict}
 
+                            # skip size, class and functions specifiers
+                            # TODO: Parse old and new style property extras
+                            while self._tk_eq(idx, (Token.Punctuation, '@')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, '(')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, ')')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, ',')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, ':')) or \
+                                  self.tokens[idx][0] == Token.Literal.Number.Integer or \
+                                  self._tk_eq(idx, (Token.Punctuation, '{')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, '}')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, '.')) or \
+                                  self.tokens[idx][0] == Token.Literal.String or \
+                                  self.tokens[idx][0] == Token.Name or \
+                                  self.tokens[idx][0] == Token.Text:
+                                idx += 1
+                        # subtype of Name EG Name.Builtin used as Name
+                        elif self.tokens[idx][0] in Token.Name.subtypes:  # @UndefinedVariable
+                            prop_name = self.tokens[idx][1]
+                            warn_msg = ' '.join(['[%s] WARNING %s.%s.%s is',
+                                                 'a Builtin Name'])
+                            logger.debug(warn_msg, MAT_DOM, self.module, self.name, prop_name)
+                            self.properties[prop_name] = {'attrs': attr_dict}
+                            idx += 1
+                        elif self._tk_eq(idx, (Token.Keyword, 'end')):
+                            idx += 1
+                            break
+                        # skip semicolon after property name, but no default
+                        elif self._tk_eq(idx, (Token.Punctuation, ';')):
+                            idx += 1
+                            continue
+                        else:
+                            msg = '[sphinxcontrib-matlabdomain] Expected property - got %s' % str(self.tokens[idx])
+                            logger.warning(msg)
+                            return
+                        idx += self._blanks(idx)  # skip blanks
+                        # =========================================================
+                        # defaults
+                        default = {'default': None}
+                        if self._tk_eq(idx, (Token.Punctuation, '=')):
+                            idx += 1
+                            idx += self._blanks(idx)  # skip blanks
+                            # concatenate default value until newline or comment
+                            default = ''
+                            punc_ctr = 0  # punctuation placeholder
+                            # keep reading until newline or comment
+                            # only if all punctuation pairs are closed
+                            # and comment is **not** continuation ellipsis
+                            while ((self._tk_ne(idx, (Token.Text, '\n')) and
+                                    self.tokens[idx][0] is not Token.Comment) or
+                                   punc_ctr > 0 or
+                                   (self.tokens[idx][0] is Token.Comment and
+                                    self.tokens[idx][1].startswith('...'))):
+                                token = self.tokens[idx]
+                                # default has an array spanning multiple lines
+                                if (token in list(zip((Token.Punctuation,) * 3,
+                                    ('(', '{', '[')))):
+                                    punc_ctr += 1  # increment punctuation counter
+                                # look for end of array
+                                elif (token in list(zip((Token.Punctuation,) * 3,
+                                           (')', '}', ']')))):
+                                    punc_ctr -= 1  # decrement punctuation counter
+                                # Pygments treats continuation ellipsis as comments
+                                # text from ellipsis until newline is in token
+                                elif (token[0] is Token.Comment and
+                                      token[1].startswith('...')):
+                                    idx += 1  # skip ellipsis comments
+                                    # include newline which should follow comment
+                                    if self._tk_eq(idx, (Token.Text, '\n')):
+                                        default += '\n'
+                                        idx += 1
+                                    continue
+                                elif self._tk_eq(idx - 1, (Token.Text, '\n')):
+                                    idx += self._blanks(idx)
+                                    continue
+                                default += token[1]
+                                idx += 1
+                            if self.tokens[idx][0] is not Token.Comment:
+                                idx += 1
+                            if default:
+                                default = {'default': default.rstrip('; ')}
+                        self.properties[prop_name].update(default)
+                        # =========================================================
+                        # docstring
+                        docstring = {'docstring': None}
+                        if self.tokens[idx][0] is Token.Comment:
+                            docstring['docstring'] = \
+                                self.tokens[idx][1].lstrip('%')
+                            idx += 1
+                        self.properties[prop_name].update(docstring)
+                        idx += self._whitespace(idx)
+                    idx += 1
+                # =================================================================
+                # method blocks
+                if self._tk_eq(idx, (Token.Keyword, 'methods')):
+                    idx += 1
+                    # method "attributes"
+                    attr_dict, idx = self.attributes(idx, MatClass.meth_attr_types)
+                    # Token.Keyword: "end" terminates properties & methods block
+                    while self._tk_ne(idx, (Token.Keyword, 'end')):
+                        # skip comments and whitespace
+                        while (self._whitespace(idx) or
+                               self.tokens[idx][0] is Token.Comment):
+                            whitespace = self._whitespace(idx)
+                            if whitespace:
+                                idx += whitespace
+                            else:
+                                idx += 1
+                        # skip methods defined in other files
+                        meth_tk = self.tokens[idx]
+                        if (meth_tk[0] is Token.Name or
+                            meth_tk[0] is Token.Name.Function or
+                            (meth_tk[0] is Token.Keyword and
+                             meth_tk[1].strip() == 'function'
+                             and self.tokens[idx+1][0] is Token.Name.Function) or
+                            self._tk_eq(idx, (Token.Punctuation, '[')) or
+                            self._tk_eq(idx, (Token.Punctuation, ']')) or
+                            self._tk_eq(idx, (Token.Punctuation, '=')) or
+                            self._tk_eq(idx, (Token.Punctuation, '(')) or
+                            self._tk_eq(idx, (Token.Punctuation, ')')) or
+                            self._tk_eq(idx, (Token.Punctuation, ','))):
+                            msg = ['[%s] Skipping tokens for methods defined in separate files.',
+                                   'token #%d: %r']
+                            MatClass.sphinx_dbg('\n'.join(msg), MAT_DOM, idx, self.tokens[idx])
+                            idx += 1 + self._whitespace(idx + 1)
+                        elif self._tk_eq(idx, (Token.Keyword, 'end')):
+                            idx += 1
+                            break
+                        else:
+                            # find methods
+                            meth = MatMethod(self.module, self.tokens[idx:],
+                                             self, attr_dict)
+                            # replace dot in get/set methods with underscore
+                            if meth.name.split('.')[0] in ['get', 'set']:
+                                meth.name = meth.name.replace('.', '_')
+                            idx += meth.reset_tokens()  # reset method tokens and index
+                            self.methods[meth.name] = meth  # update methods
+                            idx += self._whitespace(idx)
+                    idx += 1
+                if self._tk_eq(idx, (Token.Keyword, 'events')):
+                    msg = '[%s] ignoring ''events'' in ''classdef %s.'''
+                    logger.debug(msg, MAT_DOM, self.name)
+                    idx += 1
+                    # Token.Keyword: "end" terminates events block
+                    while self._tk_ne(idx, (Token.Keyword, 'end')):
+                        idx += 1
+                    idx += 1
+                if self._tk_eq(idx, (Token.Name, 'enumeration')):
+                    msg = '[%s] ignoring ''enumeration'' in ''classdef %s.'''
+                    logger.debug(msg, MAT_DOM, self.name)
+                    idx += 1
+                    # Token.Keyword: "end" terminates events block
+                    while self._tk_ne(idx, (Token.Keyword, 'end')):
+                        idx += 1
+                    idx += 1
+        except IndexError:
+            msg = '[sphinxcontrib-matlabdomain] Parsing failed in {}.{}. Check if valid MATLAB code.'.format(
+                modname, name)
+            logger.warning(msg)
 
         self.rem_tks = idx  # index of last token
 
@@ -996,10 +981,12 @@ class MatClass(MatMixin, MatObject):
                 if k is Token.Name and attr_name in attr_types:
                     attr_dict[attr_name] = True  # add attibute to dictionary
                     idx += 1
-                else:
-                    errmsg = 'Unexpected attribute: "%s".' % str(self.tokens[idx])
-                    raise Exception(errmsg)
-                    # TODO: make matlab exception
+                elif k is Token.Name:
+                    msg = '[sphinxcontrib-matlabdomain] Unexpected class attribute: "%s".' % str(self.tokens[idx][1])
+                    msg += ' In "{0}.{1}".'.format(self.module, self.name)
+                    logger.warning(msg)
+                    idx += 1
+
                 idx += self._blanks(idx)  # skip blanks
                 # continue to next attribute separated by commas
                 if self._tk_eq(idx, (Token.Punctuation, ',')):
