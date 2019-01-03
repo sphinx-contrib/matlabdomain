@@ -247,15 +247,96 @@ class MatlabDocumenter(PyDocumenter):
 
         Members are skipped if
 
-        - they are private (except if given explicitly or the private-members
-          option is set)
         - they are special methods (except if given explicitly or the
           special-members option is set)
+        - they are private (except if given explicitly or the private-members
+          option is set)
+        - they are protected (except if given explicitly or the protected-members
+          option is set)
+        - they are hidden (except if given explicitly or the hidden-members
+          option is set)
+        - they are friend (except if given explicitly or the friend-members
+          option is set)
+
         - they are undocumented (except if the undoc-members option is set)
 
         The user can override the skipping decision by connecting to the
         ``autodoc-skip-member`` event.
         """
+        def member_is_special(member):
+            # TODO implement special matlab methods: disp, subsref, etc.
+            return False
+
+        def member_is_private(member):
+            attrs = self.get_attr(member, 'attrs', None)
+            if attrs:
+                access = attrs.get('Access', None)
+                get_access = attrs.get('GetAccess', None)
+                if access:
+                    if access == 'private':
+                        return True
+                elif get_access:
+                    if get_access == 'private':
+                        return True
+                return False
+            else:
+                return False
+
+        def member_is_protected(member):
+            attrs = self.get_attr(member, 'attrs', None)
+            if attrs:
+                access = attrs.get('Access', None)
+                get_access = attrs.get('GetAccess', None)
+                if access:
+                    if access == 'protected':
+                        return True
+                elif get_access:
+                    if get_access == 'protected':
+                        return True
+                return False
+            else:
+                return False
+
+        def member_is_hidden(member):
+            attrs = self.get_attr(member, 'attrs', None)
+            if attrs:
+                hidden = attrs.get('Hidden', None)
+                # It is either None or True
+                if hidden:
+                    return True
+                return False
+            else:
+                return False
+
+        def member_is_friend(member):
+            attrs = self.get_attr(member, 'attrs', None)
+            if attrs:
+                access = attrs.get('Access', None)
+                if access:
+                    # Only friend meta classes define access lists
+                    if isinstance(access, list):
+                        return True
+                    elif access:
+                        # This is a friend meta class
+                        return access[0] == '?'
+                return False
+            else:
+                return False
+
+        def member_is_friend_of(member, friends):
+            attrs = self.get_attr(member, 'attrs', None)
+            if attrs:
+                access = attrs.get('Access', None)
+                if not isinstance(access, list):
+                    access = [access]
+                for has_access in access:
+                    if has_access in friends:
+                        return True
+                else:
+                     return False
+            else:
+                return False
+
         ret = []
 
         # search for members in source code too
@@ -282,20 +363,46 @@ class MatlabDocumenter(PyDocumenter):
             has_doc = bool(doc)
 
             keep = False
-            if want_all and membername.startswith('__') and \
-                   membername.endswith('__') and len(membername) > 4:
-                # special __methods__
-                if self.options.special_members is ALL and \
-                        membername != '__doc__':
+            if want_all and member_is_special(member):
+                # special methods
+                if self.options.special_members is ALL:
                     keep = has_doc or self.options.undoc_members
                 elif self.options.special_members and \
-                     self.options.special_members is not ALL and \
+                    self.options.special_members is not ALL and \
                         membername in self.options.special_members:
                     keep = has_doc or self.options.undoc_members
-            elif want_all and membername.startswith('_'):
-                # ignore members whose name starts with _ by default
-                keep = self.options.private_members and \
-                       (has_doc or self.options.undoc_members)
+            elif want_all and member_is_private(member):
+                # ignore private members
+                if self.options.private_members is ALL:
+                    keep = has_doc or self.options.undoc_members
+                elif self.options.private_members and \
+                    self.options.private_members is not ALL and \
+                        membername in self.options.private_members:
+                    keep = has_doc or self.options.undoc_members
+            elif want_all and member_is_protected(member):
+                # ignore protected members
+                if self.options.protected_members is ALL:
+                    keep = has_doc or self.options.undoc_members
+                elif self.options.protected_members and \
+                    self.options.protected_members is not ALL and \
+                        membername in self.options.protected_members:
+                    keep = has_doc or self.options.undoc_members
+            elif want_all and member_is_hidden(member):
+                # ignore hidden members
+                if self.options.hidden_members is ALL:
+                    keep = has_doc or self.options.undoc_members
+                elif self.options.hidden_members and \
+                    self.options.hidden_members is not ALL and \
+                        membername in self.options.hidden_members:
+                    keep = has_doc or self.options.undoc_members
+            elif want_all and member_is_friend(member):
+                # ignore friend members
+                if self.options.friend_members is ALL:
+                    keep = has_doc or self.options.undoc_members
+                elif self.options.friend_members and \
+                        self.options.friend_members is not ALL and \
+                        member_is_friend_of(member, self.options.friend_members):
+                    keep = has_doc or self.options.undoc_members
             elif (namespace, membername) in attr_docs:
                 # keep documented attributes
                 keep = True
@@ -638,8 +745,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         'members': members_option, 'undoc-members': bool_option,
         'noindex': bool_option, 'inherited-members': bool_option,
         'show-inheritance': bool_option, 'member-order': identity,
-        'exclude-members': members_set_option,
-        'private-members': bool_option, 'special-members': members_option,
+        'exclude-members': members_set_option, 'special-members': members_option,
+        'private-members': members_option, 'protected-members': members_option,
+        'hidden-members': members_option,
+        'friend-members': members_option,
     }
 
     @classmethod
