@@ -2,37 +2,58 @@ classdef ClassWithMethodAttributes
     % Class with different method attributes
 
     methods
-        function test1(obj)
-            % test1 function
-            disp('test1');
+        function testNormal(obj)
+            % testNormal function
+            disp('testNormal');
+        end
+    end
+
+    methods
+        function testPublic(obj)
+            % testPublic function
+            disp('testPublic');
+        end
+    end
+
+    methods (Access = protected)
+        function testProtected(obj)
+            % testProtected function
+            disp('testProtected');
         end
     end
 
     methods (Access = private)
-        function test2(obj)
-            % test2 function
-            disp('test2');
+        function testPrivate1(obj)
+            % testPrivate1 function
+            disp('testPrivate1');
         end
     end
 
     methods (Access = 'private')
-        function test3(obj)
-            % test3 function
-            disp('test3');
+        function testPrivate2(obj)
+            % testPrivate2 function
+            disp('testPrivate2');
+        end
+    end
+
+    methods (Hidden)
+        function testHidden(obj)
+            % testHidden function
+            disp('testHidden');
         end
     end
 
     methods (Access = ?OtherClass)
-        function test4(obj)
-            % test4 function
-            disp('test4');
+        function testFriend1(obj)
+            % testFriend1 function
+            disp('testFriend1');
         end
     end
 
     methods (Access = {?OtherClass, ?pack.OtherClass2})
-        function test5(obj)
-            % test5 function
-            disp('test5');
+        function testFriend2(obj)
+            % testFriend2 function
+            disp('testFriend2');
         end
     end
     

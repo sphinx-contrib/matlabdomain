@@ -100,12 +100,107 @@ A Matlab class with property validation
 
 ClassWithMethodAttributes
 +++++++++++++++++++++++++
+
 A Matlab class with different method attributes
+
+.. literalinclude:: ../test_data/ClassWithMethodAttributes.m
+   :language: matlab
+
+Public methods
+~~~~~~~~~~~~~~
+
+By default only the public methods will be included
 
 .. autoclass:: ClassWithMethodAttributes
     :members:
     :show-inheritance:
 
+Protected methods
+~~~~~~~~~~~~~~~~~
+
+Including the protected members as well
+
+.. autoclass:: ClassWithMethodAttributes
+    :members:
+    :show-inheritance:
+    :protected-members:
+
+Private methods
+~~~~~~~~~~~~~~~
+
+Including the private members as well
+
+.. autoclass:: ClassWithMethodAttributes
+    :members:
+    :show-inheritance:
+    :private-members:
+
+Hidden methods
+~~~~~~~~~~~~~~
+
+Including the hidden members as well
+
+.. autoclass:: ClassWithMethodAttributes
+    :members:
+    :show-inheritance:
+    :hidden-members:
+
+Friend methods
+~~~~~~~~~~~~~~
+
+Including the friend members as well
+
+.. autoclass:: ClassWithMethodAttributes
+    :members:
+    :show-inheritance:
+    :friend-members:
+
+ClassWithPropertyAttributes
++++++++++++++++++++++++++++
+
+A Matlab class with different property attributes
+
+.. literalinclude:: ../test_data/ClassWithPropertyAttributes.m
+   :language: matlab
+
+Public properties
+~~~~~~~~~~~~~~~~~
+
+By default only the public properties will be included
+
+.. autoclass:: ClassWithPropertyAttributes
+    :members:
+    :show-inheritance:
+
+Protected properties
+~~~~~~~~~~~~~~~~~~~~
+
+Including the protected members as well
+
+.. autoclass:: ClassWithPropertyAttributes
+    :members:
+    :show-inheritance:
+    :protected-members:
+
+Private properties
+~~~~~~~~~~~~~~~~~~
+
+Including the private members as well
+
+.. autoclass:: ClassWithPropertyAttributes
+    :members:
+    :show-inheritance:
+    :private-members:
+
+Hidden properties
+~~~~~~~~~~~~~~~~~
+
+Including the hidden members as well
+
+.. autoclass:: ClassWithPropertyAttributes
+    :members:
+    :show-inheritance:
+    :hidden-members:
 
 ClassWithAttributes
 +++++++++++++++++++
