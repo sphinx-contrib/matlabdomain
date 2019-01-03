@@ -37,8 +37,8 @@ Should show inheritance and members.
 
 .. _ClassAbstract:
 
-A Abstract Class
-++++++++++++++++
+An Abstract Class
++++++++++++++++++
 Should show inheritance and members.
 
 .. autoclass:: ClassAbstract
@@ -76,6 +76,16 @@ my method
 A method in ClassExample
 
 .. automethod:: ClassExample.mymethod
+
+A class using bysource ordering
++++++++++++++++++++++++++++++
+
+Using `bysource` ordering instead of default `alphabetic`
+
+.. autoclass:: ClassBySource
+    :show-inheritance:
+    :members:
+    :member-order: bysource
 
 A class with ellipsis properties
 ++++++++++++++++++++++++++++++++
