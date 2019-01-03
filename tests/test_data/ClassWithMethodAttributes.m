@@ -8,7 +8,7 @@ classdef ClassWithMethodAttributes
         end
     end
 
-    methods
+    methods (Access = public)
         function testPublic(obj)
             % testPublic function
             disp('testPublic');
@@ -40,6 +40,13 @@ classdef ClassWithMethodAttributes
         function testHidden(obj)
             % testHidden function
             disp('testHidden');
+        end
+    end
+
+    methods (Static)
+        function testStatic()
+            % testStatic function
+            disp('testStatic');
         end
     end
 
