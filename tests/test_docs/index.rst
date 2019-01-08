@@ -78,7 +78,7 @@ A method in ClassExample
 .. automethod:: ClassExample.mymethod
 
 A class using bysource ordering
-+++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++
 
 Using `bysource` ordering instead of default `alphabetic`
 
