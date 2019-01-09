@@ -1297,8 +1297,9 @@ class MatModuleAnalyzer(object):
             if isinstance(v, MatClass):
                 for mk, mv in v.getter('__dict__').items():
                     namespace = '.'.join([mod.package, k])
+                    tagname = '%s.%s' % (k, mk)
                     attr_visitor_collected[namespace, mk] = mv.docstring
-                    attr_visitor_tagorder[mk] = tagnumber
+                    attr_visitor_tagorder[tagname] = tagnumber
                     tagnumber += 1
         self.attr_docs = attr_visitor_collected
         self.tagorder = attr_visitor_tagorder

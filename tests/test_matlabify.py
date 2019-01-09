@@ -51,7 +51,7 @@ def test_module(mod):
     assert not mod.getter('__module__')
     assert not mod.getter('__doc__')
     all_items = set(mod.getter('__all__'))
-    expected_items = {'+package', '@ClassFolder', 'ClassAbstract', 'ClassExample',
+    expected_items = {'+package', '@ClassFolder', 'ClassAbstract', 'ClassExample', 'ClassBySource',
                       'ClassInheritHandle', 'ClassWithEllipsisProperties',
                       'ClassWithEndOfLineComment', 'f_example', 'f_with_nested_function',
                       'submodule', 'script', 'Bool', 'ClassWithEvent',
@@ -59,7 +59,7 @@ def test_module(mod):
                       'f_with_comment_header', 'script_with_comment_header',
                       'script_with_comment_header_2', 'script_with_comment_header_3',
                       'script_with_comment_header_4',
-                      'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes',
+                      'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes', 'ClassWithPropertyAttributes',
                       'ClassWithoutIndent', 'f_with_utf8', 'f_with_name_mismatch',
                       'ClassWithBuiltinOverload', 'ClassWithFunctionVariable',
                       'ClassWithErrors', 'f_inputargs_error',

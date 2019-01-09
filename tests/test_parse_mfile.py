@@ -270,11 +270,33 @@ def test_ClassWithMethodAttributes():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithMethodAttributes', 'test_data')
     assert obj.name == 'ClassWithMethodAttributes'
     assert obj.docstring == " Class with different method attributes\n"
-    assert obj.methods['test1'].attrs == {}
-    assert obj.methods['test2'].attrs == {'Access': 'private'}
-    assert obj.methods['test3'].attrs == {'Access': 'private'}
-    assert obj.methods['test4'].attrs == {'Access': '?OtherClass'}
-    assert obj.methods['test5'].attrs == {'Access': ['?OtherClass', '?pack.OtherClass2']}
+    assert obj.methods['testNormal'].attrs == {}
+    assert obj.methods['testPublic'].attrs == {'Access': 'public'}
+    assert obj.methods['testProtected'].attrs == {'Access': 'protected'}
+    assert obj.methods['testPrivate1'].attrs == {'Access': 'private'}
+    assert obj.methods['testPrivate2'].attrs == {'Access': 'private'}
+    assert obj.methods['testHidden'].attrs == {'Hidden': True}
+    assert obj.methods['testStatic'].attrs == {'Static': True}
+    assert obj.methods['testFriend1'].attrs == {'Access': '?OtherClass'}
+    assert obj.methods['testFriend2'].attrs == {'Access': ['?OtherClass', '?pack.OtherClass2']}
+
+
+def test_ClassWithPropertyAttributes():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithPropertyAttributes.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithPropertyAttributes', 'test_data')
+    assert obj.name == 'ClassWithPropertyAttributes'
+    assert obj.docstring == " Class with different property attributes\n"
+    assert obj.properties['testNormal']['attrs'] == {}
+    assert obj.properties['testPublic']['attrs'] == {'Access': 'public'}
+    assert obj.properties['testProtected']['attrs'] == {'Access': 'protected'}
+    assert obj.properties['testPrivate']['attrs'] == {'Access': 'private'}
+    assert obj.properties['testGetPublic']['attrs'] == {'GetAccess': 'public', 'SetAccess': 'protected'}
+    assert obj.properties['testGetProtected']['attrs'] == {'GetAccess': 'protected', 'SetAccess': 'private'}
+    assert obj.properties['testGetPrivate']['attrs'] == {'GetAccess': 'private', 'SetAccess': 'private'}
+    assert obj.properties['TEST_CONSTANT']['attrs'] == {'Constant': True}
+    assert obj.properties['TEST_CONSTANT_PROTECTED']['attrs'] == {'Access': 'protected', 'Constant': True}
+    assert obj.properties['testDependent']['attrs'] == {'Dependent': True}
+    assert obj.properties['testHidden']['attrs'] == {'Hidden': True}
 
 
 def test_ClassWithoutIndent():
