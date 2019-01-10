@@ -339,7 +339,7 @@ def test_ClassWithFunctionVariable():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithFunctionVariable', 'test_data')
     assert obj.name == 'ClassWithFunctionVariable'
     assert obj.docstring == " This line contains functions!\n"
-    assert list(obj.methods.keys()) == ['ClassWithFunctionVariable']
+    assert list(obj.methods.keys()) == ['ClassWithFunctionVariable', 'anotherMethodWithFunctions']
 
 
 def test_f_inputargs_error():
@@ -406,20 +406,29 @@ def test_ClassWithUnknownAttributes(caplog):
         ('sphinx.matlab-domain', WARNING,
          '[sphinxcontrib-matlabdomain] Unexpected class attribute: "Unknown". In "test_data.ClassWithUnknownAttributes".'),
     ]
-	
-	
+
+
 def test_ClassWithEnumMethod():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithEnumMethod.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithEnumMethod', 'test_data')
-    assert obj.name == 'ClassWithEnumMethod'    
+    assert obj.name == 'ClassWithEnumMethod'
     assert list(obj.methods.keys()) == ['myfunc']
 
 
 def test_ClassWithEventMethod():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithEventMethod.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithEventMethod', 'test_data')
-    assert obj.name == 'ClassWithEventMethod'    
+    assert obj.name == 'ClassWithEventMethod'
     assert list(obj.methods.keys()) == ['myfunc']
+
+
+def test_f_with_function_variable():
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_function_variable.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_function_variable', 'test_data')
+    assert obj.name == 'f_with_function_variable'
+    assert obj.retv == ['obj']
+    assert obj.args == ['the_functions', '~']
+    print(obj.docstring)
 
 
 if __name__ == '__main__':

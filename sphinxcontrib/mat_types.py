@@ -159,16 +159,19 @@ class MatObject(object):
         # read mfile code
         with open(mfile, 'r', encoding='utf-8') as code_f:
             code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
+        
         # remove the top comment header (if there is one) from the code string
         full_code = code
         code = MatObject._remove_comment_header(code)
+        
         # functions must be contained in one line, no ellipsis, classdef is OK
         code = MatObject._remove_line_continuations(code)
         code = MatObject._fix_function_signatures(code)
-        # The word "function*" cannot be used anywhere (expected comments
-        code = MatObject._rename_function_variables(code)
         
-        tks = list(MatlabLexer().get_tokens(code))  # tokenenize code
+        # Produce tokes, but fix incorrect (Token.Keyword, 'function')
+        tks = list(MatlabLexer().get_tokens(code))
+        tks = MatObject._fix_function_variables(tks)
+
         modname = path.replace(os.sep, '.')  # module name
         # assume that functions and classes always start with a keyword
         if tks[0] == (Token.Keyword, 'function'):
@@ -261,29 +264,31 @@ class MatObject(object):
         return code
 
     @staticmethod
-    def _rename_function_variables(code):
-        """
-        Rename variables in code starting with function*, as Pygments parses
-        this incorrectly.
+    def _fix_function_variables(tokens):
+        """ Fixes invalid `function` tokens
 
-        :param code:
-        :type code: str
-        :return: Code string without function-variable names.
+        Pygments will mark any text matching `token` as Token.Keyword. This
+        function fixes this issue, by converting invalid marked functions as
+        Token.Text.
+
+        :param tokens:
+        :type code: list of Tokens
+        :return: Modified list of tokens
         """
-        pat = r"""        
-                .                
-        """
-        pat = re.compile(r"([ \t]*%+)*(.+?)(\bfunction([\w\d;.,]))+", re.MULTILINE)
-        def repl(match):
-            # If a line starts with a comment, we return the entire match
-            # otherwise, replace function with func.
-            retv = match.group(0)
-            if match.group(1):
-                return retv
-            else:
-                return match.group(2) + 'func' + match.group(4)
-        m = pat.findall(code)
-        return pat.sub(repl, code)
+        for idx, token in enumerate(tokens):
+            temp_token = (token[0], token[1].lstrip())
+            if temp_token == (Token.Keyword, 'function'):
+                previous_token = tokens[idx-1] if idx > 0 else None
+                if previous_token and not previous_token == (Token.Text, '\n'):
+                    # This is not a real function as it is not after a new line
+                    tokens[idx] = (Token.Text, token[1])
+                    continue
+                next_token = tokens[idx+1] if idx < len(tokens)-1 else None
+                if next_token and not re.match(r'[\s[]', next_token[1]):
+                    # This is not a real function as it is not followed by '\s' or '['
+                    tokens[idx] = (Token.Text, token[1])
+                    continue
+        return tokens
 
 
 # TODO: get docstring and __all__ from contents.m if exists
