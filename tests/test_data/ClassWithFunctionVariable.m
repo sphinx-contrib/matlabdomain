@@ -21,7 +21,7 @@ classdef ClassWithFunctionVariable
       end
 
       function anotherMethodWithFunctions(obj, the_functions)       
-         % Constructor
+         
 
          % Determine the name and M-file location of the function handle.
          functionHandleInfo = functions(testFcn);

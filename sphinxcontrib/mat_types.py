@@ -649,7 +649,7 @@ class MatFunction(MatObject):
 
     @property
     def __doc__(self):
-        return str(self.docstring)
+        return self.docstring
 
     @property
     def __module__(self):
@@ -1060,7 +1060,7 @@ class MatClass(MatMixin, MatObject):
 
     @property
     def __doc__(self):
-        return str(self.docstring)
+        return self.docstring
 
     @property
     def __bases__(self):
@@ -1137,7 +1137,7 @@ class MatProperty(MatObject):
 
     @property
     def __doc__(self):
-        return str(self.docstring)
+        return self.docstring
 
 
 class MatMethod(MatFunction):
@@ -1160,7 +1160,7 @@ class MatMethod(MatFunction):
 
     @property
     def __doc__(self):
-        return str(self.docstring)
+        return self.docstring
 
 
 class MatScript(MatObject):
@@ -1210,7 +1210,7 @@ class MatScript(MatObject):
 
     @property
     def __doc__(self):
-        return str(self.docstring)
+        return self.docstring
 
     @property
     def __module__(self):
@@ -1225,7 +1225,7 @@ class MatException(MatObject):
 
     @property
     def __doc__(self):
-        return str(self.docstring)
+        return self.docstring
 
 
 class MatcodeError(Exception):

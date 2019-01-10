@@ -87,6 +87,22 @@ Using `bysource` ordering instead of default `alphabetic`
     :members:
     :member-order: bysource
 
+A class with undocumented members
++++++++++++++++++++++++++++++++++
+
+List all members of a class, even those without documentation by using
+`:undoc-members:`.
+
+.. autoclass:: ClassWithUndocumentedMembers
+    :members:
+    :undoc-members: 
+
+Default is to only list documented members.
+
+.. autoclass:: ClassWithUndocumentedMembers
+    :members:
+
+
 A class with ellipsis properties
 ++++++++++++++++++++++++++++++++
 Some edge cases that have ellipsis inside arrays.
