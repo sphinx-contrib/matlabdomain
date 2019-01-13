@@ -339,7 +339,8 @@ def test_ClassWithFunctionVariable():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithFunctionVariable', 'test_data')
     assert obj.name == 'ClassWithFunctionVariable'
     assert obj.docstring == " This line contains functions!\n"
-    assert {*obj.methods.keys()} == {'ClassWithFunctionVariable', 'anotherMethodWithFunctions'}
+    methods = {*list(obj.methods.keys())}
+    assert methods == {'ClassWithFunctionVariable', 'anotherMethodWithFunctions'}
 
 
 def test_f_inputargs_error():
