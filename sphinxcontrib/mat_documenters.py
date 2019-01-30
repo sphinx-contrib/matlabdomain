@@ -24,7 +24,7 @@ from sphinx.pycode import ModuleAnalyzer as PyModuleAnalyzer, PycodeError
 from sphinx.util.nodes import nested_parse_with_titles
 from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
      safe_getattr, is_builtin_class_method
-from sphinx.util import logging   
+from sphinx.util import logging
 try:
     # Sphinx >= 1.3.0
     from sphinx.util.inspect import object_description
@@ -114,10 +114,10 @@ class MatlabDocumenter(PyDocumenter):
         Returns True if successful, False if an error occurred.
         """
         # get config_value with absolute path to MATLAB source files
-        basedir = self.env.config.matlab_src_dir        
+        basedir = self.env.config.matlab_src_dir
         MatObject.basedir = basedir  # set MatObject base directory
         MatObject.sphinx_env = self.env  # pass env to MatObject cls
-        MatObject.sphinx_app = self.env.app  # pass app to MatObject cls        
+        MatObject.sphinx_app = self.env.app  # pass app to MatObject cls
         if self.objpath:
             logger.debug('[autodoc] from %s import %s',
                 self.modname, '.'.join(self.objpath))
@@ -723,13 +723,9 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin,
 
     def format_args(self):
         if self.object.args:
-            argspec = inspect.ArgSpec(self.object.args, None, None, None)
+            return '('+ ', '.join(self.object.args) + ')'
         else:
             return None
-        args = inspect.formatargspec(*argspec)
-        # escape backslashes for reST
-        args = args.replace('\\', '\\\\')
-        return args
 
     def document_members(self, all_members=False):
         pass
@@ -775,12 +771,12 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         if initmeth is None or not isinstance(initmeth, MatMethod):
             return None
         if initmeth.args:
-            argspec = inspect.ArgSpec(initmeth.args, None, None, None)
+            if initmeth.args[0] == 'obj':
+                return '('+ ', '.join(initmeth.args[1:]) + ')'
+            else:
+                return '('+ ', '.join(initmeth.args) + ')'
         else:
             return None
-        if argspec[0] and argspec[0][0] in ('obj', ):
-            del argspec[0][0]
-        return inspect.formatargspec(*argspec)
 
     def format_signature(self):
         if self.doc_as_attr:
@@ -909,12 +905,10 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def format_args(self):
         if self.object.args:
-            argspec = inspect.ArgSpec(self.object.args, None, None, None)
-        else:
-            return None
-        if argspec[0] and argspec[0][0] in ('obj', ):
-            del argspec[0][0]
-        return inspect.formatargspec(*argspec)
+            if self.object.args[0] == 'obj':
+                return '('+ ', '.join(self.object.args[1:]) + ')'
+            else:
+                return '('+ ', '.join(self.object.args) + ')'
 
     def document_members(self, all_members=False):
         pass
