@@ -432,5 +432,15 @@ def test_f_with_function_variable():
     print(obj.docstring)
 
 
+def test_ClassWithGetterSetter():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithGetterSetter.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithGetterSetter', 'test_data')
+    assert isinstance(obj, mat_types.MatClass)
+    assert obj.name == 'ClassWithGetterSetter'
+    assert list(obj.methods.keys()) == ['ClassWithGetterSetter']
+    assert obj.properties == {'a': {'docstring': ' A nice property', 'attrs': {},
+                                            'default': None }}
+
+
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])

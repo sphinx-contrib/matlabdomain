@@ -159,15 +159,15 @@ class MatObject(object):
         # read mfile code
         with open(mfile, 'r', encoding='utf-8') as code_f:
             code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
-        
+
         # remove the top comment header (if there is one) from the code string
         full_code = code
         code = MatObject._remove_comment_header(code)
-        
+
         # functions must be contained in one line, no ellipsis, classdef is OK
         code = MatObject._remove_line_continuations(code)
         code = MatObject._fix_function_signatures(code)
-        
+
         # Produce tokes, but fix incorrect (Token.Keyword, 'function')
         tks = list(MatlabLexer().get_tokens(code))
         tks = MatObject._fix_function_variables(tks)
@@ -939,11 +939,11 @@ class MatClass(MatMixin, MatObject):
                             # find methods
                             meth = MatMethod(self.module, self.tokens[idx:],
                                              self, attr_dict)
-                            # replace dot in get/set methods with underscore
-                            if meth.name.split('.')[0] in ['get', 'set']:
-                                meth.name = meth.name.replace('.', '_')
+                            # Detect getter/setter methods - these are not documented
+                            if not meth.name.split('.')[0] in ['get', 'set']:
+                                self.methods[meth.name] = meth  # update methods
                             idx += meth.reset_tokens()  # reset method tokens and index
-                            self.methods[meth.name] = meth  # update methods
+
                             idx += self._whitespace(idx)
                     idx += 1
                 if self._tk_eq(idx, (Token.Keyword, 'events')):

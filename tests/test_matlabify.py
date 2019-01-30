@@ -66,7 +66,7 @@ def test_module(mod):
                       'ClassWithAttributes', 'ClassWithLineContinuation',
                       'ClassWithUnknownAttributes', 'ClassWithNameMismatch',
                       'ClassWithEnumMethod', 'ClassWithEventMethod', 'f_with_function_variable',
-                      'ClassWithUndocumentedMembers'}
+                      'ClassWithUndocumentedMembers', 'ClassWithGetterSetter'}
     assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 
