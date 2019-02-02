@@ -1,9 +1,28 @@
+sphinxcontrib-matlabdomain-0.5.0 (2019-02-02)
+=============================================
+
+* Fixed `Issue 84 <https://github.com/sphinx-contrib/matlabdomain/issues/84>`_.
+  Undocumented members are always included regardless of :undoc-members:.
+* Fixed `Issue 85 <https://github.com/sphinx-contrib/matlabdomain/issues/65>`_.
+  Matlab parsing "seems" to hang if code contains a bunch of "%" consecutively.
+  Thanks to GulyasGergelyR for reporting and providing a much better solution.
+* Fixed `Issue 86 <https://github.com/sphinx-contrib/matlabdomain/issues/86>`_.
+  Handles the ``DeprecationWarning: `formatargspec` is deprecated since Python 3.5. Use `signature` and the `Signature` object directly.
+* Fixed `Issue 87 <https://github.com/sphinx-contrib/matlabdomain/issues/87>`_.
+  Strings in double quotes are not parsed correctly by pygments.
+* Closed `Issue 82 <https://github.com/sphinx-contrib/matlabdomain/issues/82>`_.
+  Instead of renaming getter and setter functions to `get_whatever`, they are
+  not documented anymore. This is in line with MATLAB documentation
+  https://se.mathworks.com/help/matlab/matlab_oop/property-access-methods.html,
+  as these functions cannot be called directly.
+
+
 sphinxcontrib-matlabdomain-0.4.0 (2018-10-05)
 =============================================
 
 * Fixed `Issue 69 <https://github.com/sphinx-contrib/matlabdomain/issues/69>`_.
   Autodoc for script header. Thanks to Hugo Leblanc for this contribution.
-  
+
 
 sphinxcontrib-matlabdomain-0.3.5 (2018-09-28)
 =============================================
@@ -23,8 +42,8 @@ sphinxcontrib-matlabdomain-0.3.3 (2018-07-13)
 
 * Fixed bug where a line continuation (...) in a string could cause the parser
   to fail.
-  
-* Fixed bug introduced in 0.3.2. The word 'function' was also replaced in 
+
+* Fixed bug introduced in 0.3.2. The word 'function' was also replaced in
   docstrings.
 
 
