@@ -446,8 +446,7 @@ def test_ClassWithDoubleQuotedString():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithDoubleQuotedString', 'test_data')
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == 'ClassWithDoubleQuotedString'
-    print(list(obj.methods.keys()))
-    assert list(obj.methods.keys()) == ['ClassWithDoubleQuotedString', 'method1']
+    assert set(obj.methods.keys()) == set(['ClassWithDoubleQuotedString', 'method1'])
     assert obj.properties == {'Property1': {'docstring': None, 'attrs': {},
                                             'default': None }}
 
