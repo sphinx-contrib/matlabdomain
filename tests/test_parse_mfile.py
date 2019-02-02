@@ -441,6 +441,17 @@ def test_ClassWithGetterSetter():
     assert obj.properties == {'a': {'docstring': ' A nice property', 'attrs': {},
                                             'default': None }}
 
+def test_ClassWithDoubleQuotedString():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithDoubleQuotedString.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithDoubleQuotedString', 'test_data')
+    assert isinstance(obj, mat_types.MatClass)
+    assert obj.name == 'ClassWithDoubleQuotedString'
+    print(list(obj.methods.keys()))
+    assert list(obj.methods.keys()) == ['ClassWithDoubleQuotedString', 'method1']
+    assert obj.properties == {'Property1': {'docstring': None, 'attrs': {},
+                                            'default': None }}
+
+
 
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])

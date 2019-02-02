@@ -167,6 +167,7 @@ class MatObject(object):
         # functions must be contained in one line, no ellipsis, classdef is OK
         code = MatObject._remove_line_continuations(code)
         code = MatObject._fix_function_signatures(code)
+        code = MatObject._fix_string_double_quotes(code)
 
         # Produce tokes, but fix incorrect (Token.Keyword, 'function')
         tks = list(MatlabLexer().get_tokens(code))
@@ -289,6 +290,32 @@ class MatObject(object):
                     tokens[idx] = (Token.Text, token[1])
                     continue
         return tokens
+
+    @staticmethod
+    def _fix_string_double_quotes(code):
+        """
+        Convert double quotes to single qoute strings, pygments doesn't know
+        these.
+
+        :param code:
+        :type code: str
+        :return: Code string where %s is removed from strings
+        """
+        pat = r"(?!\s*%)(.*)([\"].*[\"]{1})(.*)"
+        pat = re.compile(pat, re.X | re.MULTILINE)  # search start of every line
+
+        # replacement function
+        def repl(m):
+            retv = m.group(0)
+            if m.group(2):
+                retv = m.group(1) + "''" + m.group(3)
+            return retv
+
+        code = pat.sub(repl, code)  # search for string spec and apply replacement
+        return code
+
+
+
 
 
 # TODO: get docstring and __all__ from contents.m if exists

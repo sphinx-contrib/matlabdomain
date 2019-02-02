@@ -66,7 +66,8 @@ def test_module(mod):
                       'ClassWithAttributes', 'ClassWithLineContinuation',
                       'ClassWithUnknownAttributes', 'ClassWithNameMismatch',
                       'ClassWithEnumMethod', 'ClassWithEventMethod', 'f_with_function_variable',
-                      'ClassWithUndocumentedMembers', 'ClassWithGetterSetter'}
+                      'ClassWithUndocumentedMembers', 'ClassWithGetterSetter',
+                      'ClassWithDoubleQuotedString'}
     assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 
@@ -223,6 +224,7 @@ def test_package_function(mod):
     assert func.retv == ['o1', 'o2', 'o3']
     assert func.args == ['a1', 'a2']
     assert func.docstring == " a fun function\n\n :param a1: the first input\n :param a2: another input\n :returns: ``[o1, o2, o3]`` some outputs\n"
+
 
 
 if __name__ == '__main__':

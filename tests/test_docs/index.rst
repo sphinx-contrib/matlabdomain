@@ -95,7 +95,7 @@ List all members of a class, even those without documentation by using
 
 .. autoclass:: ClassWithUndocumentedMembers
     :members:
-    :undoc-members: 
+    :undoc-members:
 
 Default is to only list documented members.
 
@@ -245,6 +245,25 @@ A MATLAB class with unknown class attributes.
 .. autoclass:: ClassWithUnknownAttributes
     :members:
     :show-inheritance:
+
+
+ClassWithGetterSetter
++++++++++++++++++++++
+
+A MATLAB class with getter and setter methods for a property, these are should
+not be documented.
+
+.. autoclass:: ClassWithGetterSetter
+    :members:
+    :show-inheritance:
+
+ClassWithDoubleQuotedString
++++++++++++++++++++++++++++
+
+A MATLAB class with strings using double quotes.
+
+.. autoclass:: ClassWithDoubleQuotedString
+    :members:
 
 
 FunctionWith
