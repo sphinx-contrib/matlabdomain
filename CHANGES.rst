@@ -1,3 +1,9 @@
+sphinxcontrib-matlabdomain-0.7.0 (2019-03-29)
+=============================================
+* Support for Sphinx >=2.0.0. Fixes
+  `Issue 89 <https://github.com/sphinx-contrib/matlabdomain/issues/84>`_.
+
+
 sphinxcontrib-matlabdomain-0.6.0 (2019-03-29)
 =============================================
 * Limit to Sphinx <2.0.0 as a temporary fix, until support for Sphinx 2.0.0 is

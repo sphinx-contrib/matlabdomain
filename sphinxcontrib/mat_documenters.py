@@ -42,8 +42,7 @@ from sphinx.ext.autodoc import py_ext_sig_re as mat_ext_sig_re, \
     ClassDocumenter as PyClassDocumenter, \
     ExceptionDocumenter as PyExceptionDocumenter, \
     DataDocumenter as PyDataDocumenter, \
-    MethodDocumenter as PyMethodDocumenter, \
-    AutoDirective
+    MethodDocumenter as PyMethodDocumenter
 
 mat_ext_sig_re = re.compile(
     r'''^ ([+@]?[+@\w.]+::)?            # explicit module name
@@ -451,7 +450,6 @@ class MatlabDocumenter(PyDocumenter):
         memberdocumenters = []
         for (mname, member, isattr) in self.filter_members(members, want_all):
             classes = [cls for cls in itervalues(self.documenters)
-#             classes = [cls for cls in AutoDirective._registry.values()
                        if cls.can_document_member(member, mname, isattr, self)]
             if not classes:
                 # don't know how to document this member
