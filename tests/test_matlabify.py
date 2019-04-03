@@ -56,7 +56,7 @@ def test_module(mod):
                       'ClassWithEndOfLineComment', 'f_example', 'f_with_nested_function',
                       'submodule', 'script', 'Bool', 'ClassWithEvent',
                       'f_no_input_no_output_no_parentheses', 'ClassWithCommentHeader',
-                      'f_with_comment_header', 'script_with_comment_header',
+                      'f_with_comment_header', 'f_with_dummy_argument', 'script_with_comment_header',
                       'script_with_comment_header_2', 'script_with_comment_header_3',
                       'script_with_comment_header_4',
                       'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes', 'ClassWithPropertyAttributes',
@@ -67,7 +67,7 @@ def test_module(mod):
                       'ClassWithUnknownAttributes', 'ClassWithNameMismatch',
                       'ClassWithEnumMethod', 'ClassWithEventMethod', 'f_with_function_variable',
                       'ClassWithUndocumentedMembers', 'ClassWithGetterSetter',
-                      'ClassWithDoubleQuotedString'}
+                      'ClassWithDoubleQuotedString', 'ClassWithDummyArguments'}
     assert all_items == expected_items
     assert mod.getter('__name__') in sys.modules
 

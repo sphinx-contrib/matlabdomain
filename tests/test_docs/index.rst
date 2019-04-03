@@ -265,10 +265,22 @@ A MATLAB class with strings using double quotes.
 .. autoclass:: ClassWithDoubleQuotedString
     :members:
 
+ClassWithDummyArguments
++++++++++++++++++++++++
 
-FunctionWith
-++++++++++++
+A MATLAB class where one method, has a dummy argument as first argument.
+
+.. autoclass:: ClassWithDummyArguments
+    :members:
+
+FunctionWithNameMismatch
+++++++++++++++++++++++++
+
 .. autofunction:: f_with_name_mismatch
+
+FunctionWithDummyArgument
++++++++++++++++++++++++++
+.. autofunction:: f_with_dummy_argument
 
 +package
 ++++++++

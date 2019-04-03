@@ -1,4 +1,4 @@
-function obj = f_with_function_variable(the_functions, ~)       
+function obj = f_with_function_variable(the_functions, ~)
     % Constructor functionVar functionVar
     % function[
     % function(

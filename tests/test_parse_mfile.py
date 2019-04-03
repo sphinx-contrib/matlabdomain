@@ -334,6 +334,16 @@ def test_f_with_name_mismatch(caplog):
     ]
 
 
+def test_f_with_dummy_argument():
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_dummy_argument.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_dummy_argument', '')
+    assert obj.name == 'f_with_dummy_argument'
+    assert obj.retv == ['obj']
+    assert obj.args == ['~', 'name']
+    assert obj.docstring == " Could be a callback, where first argument is ignored.\n"
+
+
+
 def test_ClassWithFunctionVariable():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithFunctionVariable.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithFunctionVariable', 'test_data')
@@ -450,6 +460,16 @@ def test_ClassWithDoubleQuotedString():
     assert obj.properties == {'Property1': {'docstring': None, 'attrs': {},
                                             'default': None }}
 
+def test_ClassWithDummyArguments():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithDummyArguments.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithDummyArguments', 'test_data')
+    assert isinstance(obj, mat_types.MatClass)
+    assert obj.name == 'ClassWithDummyArguments'
+    assert set(obj.methods.keys()) == set(['someMethod1', 'someMethod2'])
+    m1 = obj.methods['someMethod1']
+    assert m1.args == ['obj', 'argument']
+    m2 = obj.methods['someMethod2']
+    assert m2.args == ['~', 'argument']
 
 
 if __name__ == '__main__':
