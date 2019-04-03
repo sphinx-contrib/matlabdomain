@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.7.1 (2019-04-03)
+=============================================
+
+* Fixed ``Issue 90 <https://github.com/sphinx-contrib/matlabdomain/issues/90>`_.
+  Wrong function name parsed when method escapes first argument with ~.
+
+
 sphinxcontrib-matlabdomain-0.7.0 (2019-03-29)
 =============================================
 * Support for Sphinx >=2.0.0. Fixes
