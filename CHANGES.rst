@@ -1,3 +1,12 @@
+sphinxcontrib-matlabdomain-0.8.0 (2019-05-11)
+=============================================
+
+* Fixed ``Issue 91 <https://github.com/sphinx-contrib/matlabdomain/issues/91>`_.
+  Static methods in folder based classes.
+* Replaced Pygments MATLAB lexer with own. Removes issues with functions being
+  incorrectly parsed, handles double qouted string correctly.
+
+
 sphinxcontrib-matlabdomain-0.7.1 (2019-04-03)
 =============================================
 
