@@ -8,19 +8,14 @@
     :copyright: Copyright 2014 Mark Mikofski
     :license: BSD, see LICENSE for details.
 """
-from __future__ import unicode_literals, print_function
-from builtins import *
+from __future__ import unicode_literals
 from io import open  # for opening files with encoding in Python 2
 import os
 import re
 import sys
 from copy import copy
 from sphinx.util import logging
-
-# Pygments MatlabLexer is in pygments.lexers.math, but recommended way to load
-# is from lexers, which has LEXERS dictionary, which PyDev doesn't see.
-from pygments.lexers import MatlabLexer  # @UnresolvedImport
-# PyDev doesn't see Token methods and subtypes that are generated at runtime
+from sphinxcontrib.mat_lexer import MatlabLexer
 from pygments.token import Token
 
 logger = logging.getLogger('matlab-domain')
@@ -54,18 +49,9 @@ class MatObject(object):
     :class:`MatFunction` and :class:`MatClass` must begin with either
     ``function`` or ``classdef`` keywords.
     """
-
-    @staticmethod
-    def dbg(msg, *args):
-        """
-        Alternate for sphinx_dbg for test-mode.
-        """
-        print('\t<test-mode>\n' + msg % args)
-
     basedir = None
     sphinx_env = None
     sphinx_app = None
-    sphinx_dbg = dbg
 
     def __init__(self, name):
         #: name of MATLAB object
@@ -158,31 +144,31 @@ class MatObject(object):
         # use Pygments to parse mfile to determine type: function/classdef
         # read mfile code
         with open(mfile, 'r', encoding='utf-8') as code_f:
-            code = code_f.read().replace('\r\n', '\n')  # repl crlf with lf
+            code = code_f.read().replace('\r\n', '\n')
 
-        # remove the top comment header (if there is one) from the code string
         full_code = code
+        # remove the top comment header (if there is one) from the code string
         code = MatObject._remove_comment_header(code)
-
-        # functions must be contained in one line, no ellipsis, classdef is OK
         code = MatObject._remove_line_continuations(code)
         code = MatObject._fix_function_signatures(code)
-        code = MatObject._fix_string_double_quotes(code)
 
-        # Produce tokes, but fix incorrect (Token.Keyword, 'function')
         tks = list(MatlabLexer().get_tokens(code))
-        tks = MatObject._fix_function_variables(tks)
 
         modname = path.replace(os.sep, '.')  # module name
+
         # assume that functions and classes always start with a keyword
-        if tks[0] == (Token.Keyword, 'function'):
-            logger.debug('[%s] parsing function %s from %s.', MAT_DOM,
-                                 name, modname)
-            return MatFunction(name, modname, tks)
-        elif tks[0] == (Token.Keyword, 'classdef'):
-            logger.debug('[%s] parsing classdef %s from %s.', MAT_DOM,
-                                 name, modname)
+        def isFunction(token):
+            return token == (Token.Keyword, 'function')
+
+        def isClass(token):
+            return token == (Token.Keyword, 'classdef')
+
+        if isClass(tks[0]):
+            logger.debug('[%s] parsing classdef %s from %s.', MAT_DOM, name, modname)
             return MatClass(name, modname, tks)
+        elif isFunction(tks[0]):
+            logger.debug('[%s] parsing function %s from %s.', MAT_DOM, name, modname)
+            return MatFunction(name, modname, tks)
         else:
             # it's a script file retoken with header comment
             tks = list(MatlabLexer().get_tokens(full_code))
@@ -263,59 +249,6 @@ class MatObject(object):
         msg = '[%s] replaced ellipsis & appended parentheses in function signatures'
         logger.debug(msg, MAT_DOM)
         return code
-
-    @staticmethod
-    def _fix_function_variables(tokens):
-        """ Fixes invalid `function` tokens
-
-        Pygments will mark any text matching `token` as Token.Keyword. This
-        function fixes this issue, by converting invalid marked functions as
-        Token.Text.
-
-        :param tokens:
-        :type code: list of Tokens
-        :return: Modified list of tokens
-        """
-        for idx, token in enumerate(tokens):
-            temp_token = (token[0], token[1].lstrip())
-            if temp_token == (Token.Keyword, 'function'):
-                previous_token = tokens[idx-1] if idx > 0 else None
-                if previous_token and not previous_token == (Token.Text, '\n'):
-                    # This is not a real function as it is not after a new line
-                    tokens[idx] = (Token.Text, token[1])
-                    continue
-                next_token = tokens[idx+1] if idx < len(tokens)-1 else None
-                if next_token and not re.match(r'[\s[]', next_token[1]):
-                    # This is not a real function as it is not followed by '\s' or '['
-                    tokens[idx] = (Token.Text, token[1])
-                    continue
-        return tokens
-
-    @staticmethod
-    def _fix_string_double_quotes(code):
-        """
-        Convert double quotes to single qoute strings, pygments doesn't know
-        these.
-
-        :param code:
-        :type code: str
-        :return: Code string where %s is removed from strings
-        """
-        pat = r"(?!\s*%)(.*)([\"].*[\"]{1})(.*)"
-        pat = re.compile(pat, re.X | re.MULTILINE)  # search start of every line
-
-        # replacement function
-        def repl(m):
-            retv = m.group(0)
-            if m.group(2):
-                retv = m.group(1) + "''" + m.group(3)
-            return retv
-
-        code = pat.sub(repl, code)  # search for string spec and apply replacement
-        return code
-
-
-
 
 
 # TODO: get docstring and __all__ from contents.m if exists
@@ -956,9 +889,8 @@ class MatClass(MatMixin, MatObject):
                             self._tk_eq(idx, (Token.Punctuation, '(')) or
                             self._tk_eq(idx, (Token.Punctuation, ')')) or
                             self._tk_eq(idx, (Token.Punctuation, ','))):
-                            msg = ['[%s] Skipping tokens for methods defined in separate files.',
-                                   'token #%d: %r']
-                            MatClass.sphinx_dbg('\n'.join(msg), MAT_DOM, idx, self.tokens[idx])
+                            msg = '[%s] Skipping tokens for methods defined in separate files.\ntoken #%d: %r'
+                            logger.debug(msg, MAT_DOM, idx, self.tokens[idx])
                             idx += 1 + self._whitespace(idx + 1)
                         elif self._tk_eq(idx, (Token.Keyword, 'end')):
                             idx += 1
@@ -1021,6 +953,12 @@ class MatClass(MatMixin, MatObject):
                     idx += 1
 
                 idx += self._blanks(idx)  # skip blanks
+
+                # Continue if attribute is assigned a boolean value
+                if self.tokens[idx][0] == Token.Name.Builtin:
+                    idx += 1
+                    continue
+
                 # continue to next attribute separated by commas
                 if self._tk_eq(idx, (Token.Punctuation, ',')):
                     idx += 1

@@ -471,6 +471,17 @@ def test_ClassWithDummyArguments():
     m2 = obj.methods['someMethod2']
     assert m2.args == ['~', 'argument']
 
+def test_ClassFolderClassdef():
+    mfile = os.path.join(DIRNAME, 'test_data', '@ClassFolder', 'ClassFolder.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassFolder', '@ClassFolder')
+    assert isinstance(obj, mat_types.MatClass)
+    assert obj.name == 'ClassFolder'
+    assert set(obj.methods.keys()) == set(['ClassFolder', 'method_inside_classdef'])
+    m1 = obj.methods['ClassFolder']
+    assert m1.args == ['p']
+    m2 = obj.methods['method_inside_classdef']
+    assert m2.args == ['obj', 'a', 'b']
+
 
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])

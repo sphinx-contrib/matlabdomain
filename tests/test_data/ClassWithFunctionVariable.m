@@ -1,12 +1,12 @@
 classdef ClassWithFunctionVariable
    % This line contains functions!
-   
+
    properties
       info;
    end
-      
+
    methods
-      function obj = ClassWithFunctionVariable(the_functions)       
+      function obj = ClassWithFunctionVariable(the_functions)
          % Constructor
 
          % Determine the name and M-file location of the function handle.
@@ -20,9 +20,7 @@ classdef ClassWithFunctionVariable
          end
       end
 
-      function anotherMethodWithFunctions(obj, the_functions)       
-         
-
+      function anotherMethodWithFunctions(obj, the_functions)
          % Determine the name and M-file location of the function handle.
          functionHandleInfo = functions(testFcn);
          self.Name = functionHandleInfo.function;
