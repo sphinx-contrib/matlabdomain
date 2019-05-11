@@ -26,4 +26,8 @@ classdef ClassFolder
             of, args)
         function_with_no_io  % not a real method, just another test
     end
+
+    methods(Static)
+        out = StaticFunction();
+    end
 end

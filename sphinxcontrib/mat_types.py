@@ -888,6 +888,7 @@ class MatClass(MatMixin, MatObject):
                             self._tk_eq(idx, (Token.Punctuation, '=')) or
                             self._tk_eq(idx, (Token.Punctuation, '(')) or
                             self._tk_eq(idx, (Token.Punctuation, ')')) or
+                            self._tk_eq(idx, (Token.Punctuation, ';')) or
                             self._tk_eq(idx, (Token.Punctuation, ','))):
                             msg = '[%s] Skipping tokens for methods defined in separate files.\ntoken #%d: %r'
                             logger.debug(msg, MAT_DOM, idx, self.tokens[idx])
