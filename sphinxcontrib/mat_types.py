@@ -50,6 +50,7 @@ class MatObject(object):
     ``function`` or ``classdef`` keywords.
     """
     basedir = None
+    encoding = None
     sphinx_env = None
     sphinx_app = None
 
@@ -122,11 +123,11 @@ class MatObject(object):
             mfile = fullpath + '.m'
             msg = '[%s] matlabify %s from\n\t%s.'
             logger.debug(msg, MAT_DOM, package, mfile)
-            return MatObject.parse_mfile(mfile, name, path)  # parse mfile
+            return MatObject.parse_mfile(mfile, name, path, MatObject.encoding)  # parse mfile
         return None
 
     @staticmethod
-    def parse_mfile(mfile, name, path):
+    def parse_mfile(mfile, name, path, encoding=None):
         """
         Use Pygments to parse mfile to determine type: function or class.
 
@@ -136,14 +137,21 @@ class MatObject(object):
         :type name: str
         :param path: Path of module containing :class:`MatObject`.
         :type path: str
+        :param encoding: Encoding of the Matlab file to load (default = utf-8)
+        :type encoding: str
         :returns: :class:`MatObject` that represents the type of mfile.
 
         Assumes that the first token in the file is either one of the keywords:
         "classdef" or "function" otherwise it is assumed to be a script.
+
+        File encoding can be set using sphinx config ``matlab_src_encoding``
+        Default behaviour : replaces parsing errors with ? chars
         """
         # use Pygments to parse mfile to determine type: function/classdef
         # read mfile code
-        with open(mfile, 'r', encoding='utf-8') as code_f:
+        if encoding is None:
+            encoding = 'utf-8'
+        with open(mfile, 'r', encoding=encoding, errors='replace') as code_f:
             code = code_f.read().replace('\r\n', '\n')
 
         full_code = code

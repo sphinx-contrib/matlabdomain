@@ -116,6 +116,9 @@ class MatlabDocumenter(PyDocumenter):
         MatObject.basedir = basedir  # set MatObject base directory
         MatObject.sphinx_env = self.env  # pass env to MatObject cls
         MatObject.sphinx_app = self.env.app  # pass app to MatObject cls
+
+        # sets Matlab src file encoding for parsing
+        MatObject.encoding = self.env.config.matlab_src_encoding
         if self.objpath:
             logger.debug('[autodoc] from %s import %s',
                 self.modname, '.'.join(self.objpath))
