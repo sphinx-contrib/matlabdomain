@@ -44,6 +44,9 @@ In order for the Sphinx MATLAB domain to auto-document MATLAB source code, set
 the config value of ``matlab_src_dir`` to the absolute path instead of adding
 them to ``sys.path``. Currently only one MATLAB path can be specified, but all
 subfolders in that tree will be searched.
+The encoding of the matlab files can be specified using the config value of
+``matlab_src_encoding``. By default, the files will be read as utf-8 and parsing
+errors will be replaced using ? chars.
 
 For convenience the `primary domain <http://sphinx-doc.org/config.html#confval-primary_domain>`_
 can be set to ``mat``.

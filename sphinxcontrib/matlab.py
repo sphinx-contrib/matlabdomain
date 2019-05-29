@@ -716,6 +716,7 @@ def setup(app):
     app.add_domain(MATLABDomain)
     # autodoc
     app.add_config_value('matlab_src_dir', None, 'env')
+    app.add_config_value('matlab_src_encoding', None, 'env')
     app.add_autodocumenter(doc.MatModuleDocumenter)
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
     app.add_autodocumenter(doc.MatClassDocumenter)

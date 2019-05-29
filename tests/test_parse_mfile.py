@@ -313,6 +313,13 @@ def test_f_with_utf8():
     assert obj.docstring == " Cambia ubicación de partículas.\n"
 
 
+def test_file_parsing_encoding_can_be_specified():
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_latin_1.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_latin_1', 'test_data', encoding='latin-1')
+    assert obj.name == 'f_with_latin_1'
+    assert obj.docstring == " Analyse de la réponse à un créneau\n"
+
+
 def test_ClassWithBuiltinOverload():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithBuiltinOverload.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithBuiltinOverload', 'test_data')
