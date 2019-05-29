@@ -282,6 +282,12 @@ FunctionWithDummyArgument
 +++++++++++++++++++++++++
 .. autofunction:: f_with_dummy_argument
 
+
+FunctionWithLatin1Encoding
+++++++++++++++++++++++++++
+.. autofunction:: f_with_latin_1
+
+
 +package
 ++++++++
 This is the test package

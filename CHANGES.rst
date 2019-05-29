@@ -1,7 +1,17 @@
+sphinxcontrib-matlabdomain-0.9.0 (2019-05-29)
+=============================================
+* Merge `PR #92 <https://github.com/sphinx-contrib/matlabdomain/pull/92>`_
+  Fix autodoc parsing error when source matlab file is not encoded as UTF-8.
+  This adds the option ``matlab_src_encoding``, where one can define a different
+  source file encoding. Default is to use utf-8, where unknown characters are
+  replaced with �. This fixes a long time issue with the parser failing with
+  non utf-8 files.
+
+
 sphinxcontrib-matlabdomain-0.8.0 (2019-05-11)
 =============================================
 
-* Fixed ``Issue 91 <https://github.com/sphinx-contrib/matlabdomain/issues/91>`_.
+* Fixed `Issue 91 <https://github.com/sphinx-contrib/matlabdomain/issues/91>`_.
   Static methods in folder based classes.
 * Replaced Pygments MATLAB lexer with own. Removes issues with functions being
   incorrectly parsed, handles double qouted string correctly.
@@ -10,7 +20,7 @@ sphinxcontrib-matlabdomain-0.8.0 (2019-05-11)
 sphinxcontrib-matlabdomain-0.7.1 (2019-04-03)
 =============================================
 
-* Fixed ``Issue 90 <https://github.com/sphinx-contrib/matlabdomain/issues/90>`_.
+* Fixed `Issue 90 <https://github.com/sphinx-contrib/matlabdomain/issues/90>`_.
   Wrong function name parsed when method escapes first argument with ~.
 
 
