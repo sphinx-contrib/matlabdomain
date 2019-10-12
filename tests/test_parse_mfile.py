@@ -452,8 +452,7 @@ def test_f_with_function_variable():
     obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_function_variable', 'test_data')
     assert obj.name == 'f_with_function_variable'
     assert obj.retv == ['obj']
-    assert obj.args == ['the_functions', '~']
-    print(obj.docstring)
+    assert obj.args == ['the_functions', '~']    
 
 
 def test_ClassWithGetterSetter():

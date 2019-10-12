@@ -27,14 +27,14 @@ def rootdir():
 
 def test_setup(make_app, rootdir):
     srcdir = rootdir / 'roots' / 'test_autodoc'
-    app = make_app(srcdir=srcdir)
+    app = make_app(srcdir=srcdir,)
     app.builder.build_all()
+    
+    contents = app.env.get_doctree('contents')
 
-    content = pickle.loads((app.doctreedir / 'contents.doctree').bytes())
-
-    assert isinstance(content[3], addnodes.desc)
-    assert content[3][0].astext() == 'class target.ClassExamplea'
-    assert content[3][1].astext() == """Bases: handle
+    assert isinstance(contents[3], addnodes.desc)
+    assert contents[3][0].astext() == 'class target.ClassExamplea'
+    assert contents[3][1].astext() == """Bases: handle
 
 Example class
 
@@ -59,7 +59,6 @@ Parameters
 b – an input to mymethod()"""
     # We still have warning regarding overriding auto...
     # assert app._warning.getvalue() == ''
-
 
 if __name__ == '__main__':
     pytest.main([__file__])

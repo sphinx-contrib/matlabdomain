@@ -44,9 +44,16 @@ In order for the Sphinx MATLAB domain to auto-document MATLAB source code, set
 the config value of ``matlab_src_dir`` to the absolute path instead of adding
 them to ``sys.path``. Currently only one MATLAB path can be specified, but all
 subfolders in that tree will be searched.
+
 The encoding of the matlab files can be specified using the config value of
 ``matlab_src_encoding``. By default, the files will be read as utf-8 and parsing
 errors will be replaced using ? chars.
+
+`Octave Doctest <https://github.com/catch22/octave-doctest>` is a feature 
+similar to `Python Doctest <https://docs.python.org/3.7/library/doctest.html>,
+which are rendered as code if they are present in a documentation string. To
+enable this feature set ``matlab_enable_doctest = True``. Anything prefixed
+with ``>> `` will be rendered as code, as it is assumed to be a doctest.
 
 For convenience the `primary domain <http://sphinx-doc.org/config.html#confval-primary_domain>`_
 can be set to ``mat``.

@@ -712,11 +712,20 @@ class MATLABDomain(Domain):
         for refname, (docname, type) in self.data['objects'].items():
             yield (refname, refname, type, docname, refname, 1)
 
+
+def config_inited(app, config):
+    """ Monkey-patching to allow Octave style doctests"""
+    from docutils.parsers.rst import states    
+    if config.matlab_enable_doctest:
+        states.Body.patterns["doctest"] = r'>>( +|$)'    
+        
+
 def setup(app):
     app.add_domain(MATLABDomain)
     # autodoc
     app.add_config_value('matlab_src_dir', None, 'env')
     app.add_config_value('matlab_src_encoding', None, 'env')
+    app.add_config_value('matlab_enable_doctest', None, 'env')
     app.add_autodocumenter(doc.MatModuleDocumenter)
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
     app.add_autodocumenter(doc.MatClassDocumenter)
@@ -727,4 +736,5 @@ def setup(app):
     app.add_autodocumenter(doc.MatMethodDocumenter)
     app.add_autodocumenter(doc.MatAttributeDocumenter)
     app.add_autodocumenter(doc.MatInstanceAttributeDocumenter)
-    app.add_autodocumenter(doc.MatScriptDocumenter)
+    app.add_autodocumenter(doc.MatScriptDocumenter)  
+    app.connect('config-inited', config_inited)
