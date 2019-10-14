@@ -113,13 +113,13 @@ def test_abstract_class(mod):
                                           'docstring': ' version',
                                           'attrs': {'Constant': True},
                                           }
-                             }
+                              }
     assert abc.getter('__doc__') == ' an abstract class\n\n :param y: a variable\n :type y: double\n'
     assert abc.getter('__doc__') == abc.docstring
 
     abc_y = abc.getter('y')
     assert isinstance(abc_y, doc.MatProperty)
-    assert abc_y.default == None
+    assert abc_y.default is None
     assert abc_y.docstring == ' y variable'
     assert abc_y.attrs == {'SetAccess': 'private', 'GetAccess': 'private'}
 
@@ -224,7 +224,6 @@ def test_package_function(mod):
     assert func.retv == ['o1', 'o2', 'o3']
     assert func.args == ['a1', 'a2']
     assert func.docstring == " a fun function\n\n :param a1: the first input\n :param a2: another input\n :returns: ``[o1, o2, o3]`` some outputs\n"
-
 
 
 if __name__ == '__main__':

@@ -8,15 +8,14 @@
     :copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
-from __future__ import unicode_literals 
+from __future__ import unicode_literals
 import pickle
 import os
 
 import pytest
 
 from sphinx import addnodes
-from sphinx import version_info
-from sphinx.testing.fixtures import test_params, make_app
+from sphinx.testing.fixtures import make_app, test_params   # noqa: F811;
 from sphinx.testing.path import path
 
 

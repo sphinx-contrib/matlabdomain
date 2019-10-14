@@ -10,6 +10,7 @@
 """
 from __future__ import absolute_import, unicode_literals
 from . import mat_documenters as doc
+from . import mat_directives
 
 import re
 
@@ -467,7 +468,7 @@ class MatXRefRole(XRefRole):
         refnode['mat:class'] = env.temp_data.get('mat:class')
         if not has_explicit_title:
             title = title.lstrip('.')   # only has a meaning for the target
-            target = target.lstrip('~') # only has a meaning for the title
+            target = target.lstrip('~')  # only has a meaning for the title
             # if the first character is a tilde, don't display the module/class
             # parts of the contents
             if title[0:1] == '~':
@@ -606,7 +607,7 @@ class MATLABDomain(Domain):
     ]
 
     def clear_doc(self, docname):
-        for fullname, (fn, _) in list(self.data['objects'].items()):
+        for fullname, (fn, _) in list(self.data['objects'].items()):  # noqa: 401
             if fn == docname:
                 del self.data['objects'][fullname]
         for modname, (fn, _, _, _) in list(self.data['modules'].items()):
@@ -659,15 +660,15 @@ class MATLABDomain(Domain):
             elif modname and modname + '.' + name in objects:
                 newname = modname + '.' + name
             elif modname and classname and \
-                     modname + '.' + classname + '.' + name in objects:
+                    modname + '.' + classname + '.' + name in objects:
                 newname = modname + '.' + classname + '.' + name
             # special case: builtin exceptions have module "exceptions" set
             elif type == 'exc' and '.' not in name and \
-                 'exceptions.' + name in objects:
+                    'exceptions.' + name in objects:
                 newname = 'exceptions.' + name
             # special case: object methods
             elif type in ('func', 'meth') and '.' not in name and \
-                 'object.' + name in objects:
+                    'object.' + name in objects:
                 newname = 'object.' + name
         if newname is not None:
             matches.append((newname, objects[newname]))
@@ -713,20 +714,11 @@ class MATLABDomain(Domain):
             yield (refname, refname, type, docname, refname, 1)
 
 
-# def add_autodocumenter(app, cls, override=False):
-#         logger.debug('[app] adding autodocumenter: %r', cls)
-#         import mat_directives
-#         app.registry.add_documenter(cls.objtype, cls)
-#         self.add_directive('auto' + cls.objtype, AutodocDirective, override=override)            
-
-
-from . import mat_directives
 def setup(app):
     app.add_domain(MATLABDomain)
     # autodoc
     app.add_config_value('matlab_src_dir', None, 'env')
     app.add_config_value('matlab_src_encoding', None, 'env')
-
 
     app.registry.add_documenter('mat:function', doc.MatFunctionDocumenter)
 
@@ -734,12 +726,10 @@ def setup(app):
                                 'autofunction',
                                 mat_directives.MatlabAutodocDirective)
 
-
     app.registry.add_documenter('mat:class', doc.MatClassDocumenter)
     app.add_directive_to_domain('mat',
                                 'autoclass',
-                                mat_directives.MatlabAutodocDirective)       
-                                                       
+                                mat_directives.MatlabAutodocDirective)
 
     app.add_autodocumenter(doc.MatModuleDocumenter)
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
