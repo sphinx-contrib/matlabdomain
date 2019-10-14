@@ -712,18 +712,42 @@ class MATLABDomain(Domain):
         for refname, (docname, type) in self.data['objects'].items():
             yield (refname, refname, type, docname, refname, 1)
 
+
+# def add_autodocumenter(app, cls, override=False):
+#         logger.debug('[app] adding autodocumenter: %r', cls)
+#         import mat_directives
+#         app.registry.add_documenter(cls.objtype, cls)
+#         self.add_directive('auto' + cls.objtype, AutodocDirective, override=override)            
+
+
+from . import mat_directives
 def setup(app):
     app.add_domain(MATLABDomain)
     # autodoc
     app.add_config_value('matlab_src_dir', None, 'env')
     app.add_config_value('matlab_src_encoding', None, 'env')
+
+
+    app.registry.add_documenter('mat:function', doc.MatFunctionDocumenter)
+
+    app.add_directive_to_domain('mat',
+                                'autofunction',
+                                mat_directives.MatlabAutodocDirective)
+
+
+    app.registry.add_documenter('mat:class', doc.MatClassDocumenter)
+    app.add_directive_to_domain('mat',
+                                'autoclass',
+                                mat_directives.MatlabAutodocDirective)       
+                                                       
+
     app.add_autodocumenter(doc.MatModuleDocumenter)
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
-    app.add_autodocumenter(doc.MatClassDocumenter)
+    # app.add_autodocumenter(doc.MatClassDocumenter)
     app.add_autodocumenter(doc.MatExceptionDocumenter)
     app.add_autodocumenter(doc.MatDataDocumenter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
-    app.add_autodocumenter(doc.MatFunctionDocumenter)
+    # app.add_autodocumenter(doc.MatFunctionDocumenter)
     app.add_autodocumenter(doc.MatMethodDocumenter)
     app.add_autodocumenter(doc.MatAttributeDocumenter)
     app.add_autodocumenter(doc.MatInstanceAttributeDocumenter)
