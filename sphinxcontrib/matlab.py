@@ -731,7 +731,12 @@ def setup(app):
                                 'autoclass',
                                 mat_directives.MatlabAutodocDirective)
 
-    app.add_autodocumenter(doc.MatModuleDocumenter)
+    app.registry.add_documenter('mat:module', doc.MatModuleDocumenter)
+    app.add_directive_to_domain('mat',
+                                'automodule',
+                                mat_directives.MatlabAutodocDirective)
+
+    # app.add_autodocumenter(doc.MatModuleDocumenter)
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
     # app.add_autodocumenter(doc.MatClassDocumenter)
     app.add_autodocumenter(doc.MatExceptionDocumenter)
