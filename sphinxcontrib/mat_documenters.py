@@ -121,19 +121,19 @@ class MatlabDocumenter(PyDocumenter):
         # sets Matlab src file encoding for parsing
         MatObject.encoding = self.env.config.matlab_src_encoding
         if self.objpath:
-            logger.debug('[autodoc-matlabdomain] from %s import %s',
+            logger.debug('[sphinxcontrib-matlabdomain] from %s import %s',
                          self.modname, '.'.join(self.objpath))
         try:
-            logger.debug('[autodoc-matlabdomain] import %s', self.modname)
+            logger.debug('[sphinxcontrib-matlabdomain] import %s', self.modname)
             MatObject.matlabify(self.modname)
             parent = None
             obj = self.module = sys.modules[self.modname]
-            logger.debug('[autodoc-matlabdomain] => %r', obj)
+            logger.debug('[sphinxcontrib-matlabdomain] => %r', obj)
             for part in self.objpath:
                 parent = obj
-                logger.debug('[autodoc-matlabdomain] getattr(_, %r)', part)
+                logger.debug('[sphinxcontrib-matlabdomain] getattr(_, %r)', part)
                 obj = self.get_attr(obj, part)
-                logger.debug('[autodoc-matlabdomain] => %r', obj)
+                logger.debug('[sphinxcontrib-matlabdomain] => %r', obj)
                 self.object_name = part
             self.parent = parent
             self.object = obj
@@ -142,10 +142,10 @@ class MatlabDocumenter(PyDocumenter):
         # but importing modules with side effects can raise all kinds of errors
         except Exception:
             if self.objpath:
-                errmsg = 'autodoc: failed to import %s %r from module %r' % \
+                errmsg = '[sphinxcontrib-matlabdomain]: failed to import %s %r from module %r' % \
                          (self.objtype, '.'.join(self.objpath), self.modname)
             else:
-                errmsg = 'autodoc: failed to import %s %r' % \
+                errmsg = '[sphinxcontrib-matlabdomain]: failed to import %s %r' % \
                          (self.objtype, self.fullname)
             errmsg += '; the following exception was raised:\n%s' % \
                       traceback.format_exc()
@@ -528,7 +528,7 @@ class MatlabDocumenter(PyDocumenter):
             # be cached anyway)
             self.analyzer.find_attr_docs()
         except PycodeError as err:
-            self.env.app.debug('[autodoc-matlabdomain] module analyzer failed: %s', err)
+            self.env.app.debug('[sphinxcontrib-matlabdomain] module analyzer failed: %s', err)
             # no source file -- e.g. for builtin and C modules
             self.analyzer = None
             # at least add the module.__file__ as a dependency

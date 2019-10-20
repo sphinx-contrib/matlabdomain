@@ -27,7 +27,7 @@ class MatlabAutodocDirective(AutodocDirective):
             source, lineno = reporter.get_source_and_line(self.lineno)  # type: ignore
         except AttributeError:
             source, lineno = (None, None)
-        logger.debug('[autodoc-matlab] %s:%s: input:\n%s', source, lineno, self.block_text)
+        logger.debug('[sphinxcontrib-matlabdomain] %s:%s: input:\n%s', source, lineno, self.block_text)
 
         # look up target Documenter
         objtype = self.name.replace('auto', '')  # Removes auto
@@ -49,7 +49,7 @@ class MatlabAutodocDirective(AutodocDirective):
         if not params.result:
             return []
 
-        logger.debug('[autodoc-matlab] output:\n%s', '\n'.join(params.result))
+        logger.debug('[sphinxcontrib-matlabdomain] output:\n%s', '\n'.join(params.result))
 
         # record all filenames as dependencies -- this will at least
         # partially make automatic invalidation possible
