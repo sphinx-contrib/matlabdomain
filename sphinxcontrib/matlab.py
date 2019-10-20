@@ -720,82 +720,50 @@ def setup(app):
     app.add_config_value('matlab_src_dir', None, 'env')
     app.add_config_value('matlab_src_encoding', None, 'env')
 
-    if 0:
-        app.add_autodocumenter(doc.MatModuleDocumenter)
-        app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
-        app.add_autodocumenter(doc.MatClassDocumenter)
-        app.add_autodocumenter(doc.MatExceptionDocumenter)
-        app.add_autodocumenter(doc.MatDataDocumenter)
-        app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
-        app.add_autodocumenter(doc.MatFunctionDocumenter)
-        app.add_autodocumenter(doc.MatMethodDocumenter)
-        app.add_autodocumenter(doc.MatAttributeDocumenter)
-        app.add_autodocumenter(doc.MatInstanceAttributeDocumenter)
-        app.add_autodocumenter(doc.MatScriptDocumenter)
+    app.registry.add_documenter('mat:module', doc.MatModuleDocumenter)
+    app.add_directive_to_domain('mat',
+                                'automodule',
+                                mat_directives.MatlabAutodocDirective)
 
-    else:
-        app.registry.add_documenter('mat:function', doc.MatFunctionDocumenter)
-        app.add_directive_to_domain('mat',
-                                    'autofunction',
-                                    mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter('mat:function', doc.MatFunctionDocumenter)
+    app.add_directive_to_domain('mat',
+                                'autofunction',
+                                mat_directives.MatlabAutodocDirective)
 
-        app.registry.add_documenter('mat:class', doc.MatClassDocumenter)
-        app.add_directive_to_domain('mat',
-                                    'autoclass',
-                                    mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter('mat:class', doc.MatClassDocumenter)
+    app.add_directive_to_domain('mat',
+                                'autoclass',
+                                mat_directives.MatlabAutodocDirective)
 
-        app.registry.add_documenter('mat:module', doc.MatModuleDocumenter)
-        app.add_directive_to_domain('mat',
-                                    'automodule',
-                                    mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter('mat:method', doc.MatMethodDocumenter)
+    app.add_directive_to_domain('mat',
+                                'automethod',
+                                mat_directives.MatlabAutodocDirective)
 
-        app.registry.add_documenter('mat:method', doc.MatMethodDocumenter)
-        app.add_directive_to_domain('mat',
-                                    'automethod',
-                                    mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter('mat:script', doc.MatScriptDocumenter)
+    app.add_directive_to_domain('mat',
+                                'autoscript',
+                                mat_directives.MatlabAutodocDirective)
 
-        app.registry.add_documenter('mat:script', doc.MatScriptDocumenter)
-        app.add_directive_to_domain('mat',
-                                    'autoscript',
-                                    mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter('mat:exception', doc.MatExceptionDocumenter)
+    app.add_directive_to_domain('mat',
+                                'autoexception',
+                                mat_directives.MatlabAutodocDirective)
 
-        app.registry.add_documenter('mat:exception', doc.MatExceptionDocumenter)
-        app.add_directive_to_domain('mat',
-                                    'autoexception',
-                                    mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter('mat:attribute', doc.MatAttributeDocumenter)
+    app.add_directive_to_domain('mat',
+                                'autoattribute',
+                                mat_directives.MatlabAutodocDirective)
 
-        app.registry.add_documenter('mat:attribute', doc.MatAttributeDocumenter)
-        app.add_directive_to_domain('mat',
-                                    'autoattribute',
-                                    mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter('mat:data', doc.MatDataDocumenter)
+    app.add_directive_to_domain('mat',
+                                'autodata',
+                                mat_directives.MatlabAutodocDirective)
 
-        app.registry.add_documenter('mat:data', doc.MatDataDocumenter)
-        app.add_directive_to_domain('mat',
-                                    'autodata',
-                                    mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter('mat:instanceattribute', doc.MatInstanceAttributeDocumenter)
+    app.add_directive_to_domain('mat',
+                                'autoinstanceattribute',
+                                mat_directives.MatlabAutodocDirective)
 
-        app.registry.add_documenter('mat:instanceattribute', doc.MatInstanceAttributeDocumenter)
-        app.add_directive_to_domain('mat',
-                                    'autoinstanceattribute',
-                                    mat_directives.MatlabAutodocDirective)
-        app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
-        app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
-
-    # app.add_autodocumenter(doc.MatClassDocumenter)
-    # app.add_autodocumenter(doc.MatModuleDocumenter)
-    # app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
-    # app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
-
-    # app.add_autodocumenter(doc.MatModuleDocumenter)
-    # app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
-    # app.add_autodocumenter(doc.MatClassDocumenter)
-    # app.add_autodocumenter(doc.MatExceptionDocumenter)
-    # app.add_autodocumenter(doc.MatDataDocumenter)
-    # app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
-    # app.add_autodocumenter(doc.MatFunctionDocumenter)
-    # app.add_autodocumenter(doc.MatMethodDocumenter)
-
-    # This does not work if it is registered on the domain
-    # app.add_autodocumenter(doc.MatAttributeDocumenter)
-    # app.add_autodocumenter(doc.MatInstanceAttributeDocumenter)
-    # app.add_autodocumenter(doc.MatScriptDocumenter)
+    app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
+    app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
