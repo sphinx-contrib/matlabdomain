@@ -1,6 +1,7 @@
 from sphinx.ext.autodoc.directive import AutodocDirective, DummyOptionSpec, DocumenterBridge
 from sphinx.ext.autodoc.directive import process_documenter_options, parse_generated_content
 from sphinx.util import logging
+from sphinx import version_info
 
 logger = logging.getLogger('matlab-domain')
 
@@ -43,7 +44,10 @@ class MatlabAutodocDirective(AutodocDirective):
             return []
 
         # generate the output
-        params = DocumenterBridge(self.env, reporter, documenter_options, lineno, self.state)
+        if version_info[0] >= 2:
+            params = DocumenterBridge(self.env, reporter, documenter_options, lineno, self.state)
+        else:
+            params = DocumenterBridge(self.env, reporter, documenter_options, lineno)
         documenter = doccls(params, self.arguments[0])
         documenter.generate(more_content=self.content)
         if not params.result:
