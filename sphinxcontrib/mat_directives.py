@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from sphinx.ext.autodoc.directive import AutodocDirective, DummyOptionSpec, DocumenterBridge
 from sphinx.ext.autodoc.directive import process_documenter_options, parse_generated_content
 from sphinx.util import logging

@@ -1,5 +1,5 @@
-.. automodule:: pysrc
-.. autofunction:: pysrc.func.main
+.. automodule:: func
+.. autofunction:: func.main
 
 .. mat:automodule:: matsrc
 .. mat:autofunction:: matsrc.func
