@@ -25,39 +25,17 @@ def rootdir():
 
 
 def test_setup(make_app, rootdir):
-    srcdir = rootdir / 'roots' / 'test_autodoc'
+    srcdir = rootdir / 'roots' / 'test_pymat'
     app = make_app(srcdir=srcdir)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / 'index.doctree').bytes())
 
     assert isinstance(content[3], addnodes.desc)
-    assert content[3][0].astext() == 'class target.ClassExamplea'
-    assert content[3][1].astext() == """Bases: handle
+    assert content[3].astext() == 'func.main\n\nReturns the answer.'
 
-Example class
-
-Parameters
-
-a – a property of ClassExample
-
-
-
-a = None
-
-a property
-
-
-
-mymethodb
-
-A method in ClassExample
-
-Parameters
-
-b – an input to mymethod()"""
-    # We still have warning regarding overriding auto...
-    # assert app._warning.getvalue() == ''
+    assert isinstance(content[7], addnodes.desc)
+    assert content[7].astext() == 'matsrc.funcx\n\nReturns x'
 
 
 if __name__ == '__main__':

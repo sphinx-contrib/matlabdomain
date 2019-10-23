@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 from sphinxcontrib import mat_types
-import os, sys
+import os
 import pytest
 
 
@@ -226,6 +226,7 @@ def test_script_with_comment_header_2():
 
 """
 
+
 def test_script_with_comment_header_3():
     mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header_3.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header_3', 'test_data')
@@ -234,6 +235,7 @@ def test_script_with_comment_header_3():
 
 """
 
+
 def test_script_with_comment_header_4():
     mfile = os.path.join(DIRNAME, 'test_data', 'script_with_comment_header_4.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'script_with_comment_header_4', 'test_data')
@@ -241,6 +243,7 @@ def test_script_with_comment_header_4():
  and many line comments.
 
 """
+
 
 def test_PropTypeOld():
     mfile = os.path.join(DIRNAME, 'test_data', 'PropTypeOld.m')
@@ -357,7 +360,6 @@ def test_f_with_dummy_argument():
     assert obj.docstring == " Could be a callback, where first argument is ignored.\n"
 
 
-
 def test_ClassWithFunctionVariable():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithFunctionVariable.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithFunctionVariable', 'test_data')
@@ -462,8 +464,10 @@ def test_ClassWithGetterSetter():
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == 'ClassWithGetterSetter'
     assert list(obj.methods.keys()) == ['ClassWithGetterSetter']
-    assert obj.properties == {'a': {'docstring': ' A nice property', 'attrs': {},
-                                            'default': None }}
+    assert obj.properties == {'a': {'docstring': ' A nice property',
+                                    'attrs': {},
+                                    'default': None}}
+
 
 def test_ClassWithDoubleQuotedString():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithDoubleQuotedString.m')
@@ -471,8 +475,10 @@ def test_ClassWithDoubleQuotedString():
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == 'ClassWithDoubleQuotedString'
     assert set(obj.methods.keys()) == set(['ClassWithDoubleQuotedString', 'method1'])
-    assert obj.properties == {'Property1': {'docstring': None, 'attrs': {},
-                                            'default': None }}
+    assert obj.properties == {'Property1': {'docstring': None,
+                                            'attrs': {},
+                                            'default': None}}
+
 
 def test_ClassWithDummyArguments():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithDummyArguments.m')
@@ -484,6 +490,7 @@ def test_ClassWithDummyArguments():
     assert m1.args == ['obj', 'argument']
     m2 = obj.methods['someMethod2']
     assert m2.args == ['~', 'argument']
+
 
 def test_ClassFolderClassdef():
     mfile = os.path.join(DIRNAME, 'test_data', '@ClassFolder', 'ClassFolder.m')

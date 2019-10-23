@@ -1,11 +1,13 @@
 .idea/
 .venv/
-sphinxcontrib/__pycache__/
+.eggs/
+__pycache__
+*.pyc
 sphinxcontrib_matlabdomain.egg-info/
-tests/__pycache__/
 .tox/
 tests/test_docs/_build/
 .cache/
 .pytest_cache/
 .vscode/
 _build
+

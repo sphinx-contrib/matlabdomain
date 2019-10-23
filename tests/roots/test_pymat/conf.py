@@ -1,8 +1,11 @@
 import os
-
+import sys
+sys.path.insert(0, os.path.abspath('pysrc'))
 matlab_src_dir = os.path.abspath('.')
+
 extensions = ['sphinx.ext.autodoc', 'sphinxcontrib.matlab']
-primary_domain = 'mat'
+
+# The master toctree document.
 master_doc = 'index'
 source_suffix = '.rst'
 nitpicky = True
