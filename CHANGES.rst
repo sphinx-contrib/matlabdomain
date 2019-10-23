@@ -1,3 +1,12 @@
+sphinxcontrib-matlabdomain-0.10.0 (2019-10-23)
+==============================================
+* Fixed `Issue 63 <https://github.com/sphinx-contrib/matlabdomain/issues/63>`_.
+  Finally, documents can have Python and MATLAB sources auto-documented
+  together. Before, the MATLAB autodoc directives shadowed the Python
+  directives, making it impossible for them to co-exist. The MATLAB modules now
+  have their own module index generated.
+
+
 sphinxcontrib-matlabdomain-0.9.0 (2019-05-29)
 =============================================
 * Merge `PR #92 <https://github.com/sphinx-contrib/matlabdomain/pull/92>`_

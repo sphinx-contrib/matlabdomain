@@ -491,7 +491,7 @@ class MATLABModuleIndex(Index):
 
     name = 'modindex'
     localname = _('MATLAB Module Index')
-    shortname = _('modules')
+    shortname = _('matlab index')
 
     def generate(self, docnames=None):
         content = {}
