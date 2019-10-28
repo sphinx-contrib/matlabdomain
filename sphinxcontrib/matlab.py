@@ -36,6 +36,15 @@ mat_sig_re = re.compile(
           ''', re.VERBOSE)
 
 
+def strip_package_prefix(varname):
+    """Remove the leading '+' prefix on package names"""
+
+    if not varname:
+        return varname
+
+    return '.'.join([s.lstrip('+') for s in varname.split('.')])
+
+
 def _pseudo_parse_arglist(signode, arglist):
     """"Parse" a list of arguments separated by commas.
 
@@ -141,6 +150,12 @@ class MatObject(ObjectDescription):
         # determine module and class name (if applicable), as well as full name
         modname = self.options.get(
             'module', self.env.temp_data.get('mat:module'))
+
+        if not self.env.config.matlab_keep_package_prefix:
+            modname = strip_package_prefix(modname)
+            name_prefix = strip_package_prefix(name_prefix)
+            name = strip_package_prefix(name)
+
         classname = self.env.temp_data.get('mat:class')
         if classname:
             add_module = False
@@ -180,6 +195,8 @@ class MatObject(ObjectDescription):
             modname = self.options.get(
                 'module', self.env.temp_data.get('mat:module'))
             if modname and modname != 'exceptions':
+                if not self.env.config.matlab_keep_package_prefix:
+                    modname = strip_package_prefix(modname)
                 nodetext = modname + '.'
                 signode += addnodes.desc_addname(nodetext, nodetext)
 
@@ -211,9 +228,17 @@ class MatObject(ObjectDescription):
         modname = self.options.get(
             'module', self.env.temp_data.get('mat:module'))
         fullname = (modname and modname + '.' or '') + name_cls[0]
+
+        if not self.env.config.matlab_keep_package_prefix:
+            modname_out = strip_package_prefix(modname)
+            fullname_out = (modname_out
+                    and modname_out + '.' or '') + name_cls[0]
+        else:
+            modname_out, fullname_out = modname, fullname
+
         # note target
         if fullname not in self.state.document.ids:
-            signode['names'].append(fullname)
+            signode['names'].append(fullname_out)
             signode['ids'].append(fullname)
             signode['first'] = (not self.names)
             self.state.document.note_explicit_target(signode)
@@ -227,7 +252,7 @@ class MatObject(ObjectDescription):
                     line=self.lineno)
             objects[fullname] = (self.env.docname, self.objtype)
 
-        indextext = self.get_index_text(modname, name_cls)
+        indextext = self.get_index_text(modname_out, name_cls)
         if indextext:
             entry = ('single', indextext, fullname, '', None)
             self.indexnode['entries'].append(entry)
@@ -417,6 +442,12 @@ class MatModule(Directive):
     def run(self):
         env = self.state.document.settings.env
         modname = self.arguments[0].strip()
+
+        if not env.config.matlab_keep_package_prefix:
+            modname_out = strip_package_prefix(modname)
+        else:
+            modname_out = modname
+
         noindex = 'noindex' in self.options
         env.temp_data['mat:module'] = modname
         ret = []
@@ -433,7 +464,7 @@ class MatModule(Directive):
             # the platform and synopsis aren't printed; in fact, they are only
             # used in the modindex currently
             ret.append(targetnode)
-            indextext = _('%s (module)') % modname
+            indextext = _('%s (module)') % modname_out
             entry = ('single', indextext, 'module-' + modname, '', None)
             inode = addnodes.index(entries=[entry])
             ret.append(inode)
@@ -476,6 +507,10 @@ class MatXRefRole(XRefRole):
                 dot = title.rfind('.')
                 if dot != -1:
                     title = title[dot+1:]
+
+            if not env.config.matlab_keep_package_prefix:
+                title = strip_package_prefix(title)
+
         # if the first character is a dot, search more specific namespaces first
         # else search builtins first
         if target[0:1] == '.':
@@ -520,7 +555,13 @@ class MATLABModuleIndex(Index):
             if not modname:
                 modname, stripped = stripped, ''
 
-            entries = content.setdefault(modname[0].lower(), [])
+            # Create nice mod-name
+            if not self.domain.env.config.matlab_keep_package_prefix:
+                modname_out = strip_package_prefix(modname)
+            else:
+                modname_out = modname
+
+            entries = content.setdefault(modname_out[0].lower(), [])
 
             package = modname.split('.')[0]
             if package != modname:
@@ -538,7 +579,7 @@ class MATLABModuleIndex(Index):
                 subtype = 0
 
             qualifier = deprecated and _('Deprecated') or ''
-            entries.append([stripped + modname, subtype, docname,
+            entries.append([stripped + modname_out, subtype, docname,
                             'module-' + stripped + modname, platforms,
                             qualifier, synopsis])
             prev_modname = modname
@@ -719,6 +760,7 @@ def setup(app):
     # autodoc
     app.add_config_value('matlab_src_dir', None, 'env')
     app.add_config_value('matlab_src_encoding', None, 'env')
+    app.add_config_value('matlab_keep_package_prefix', True, 'env')
 
     app.registry.add_documenter('mat:module', doc.MatModuleDocumenter)
     app.add_directive_to_domain('mat',

@@ -43,6 +43,12 @@ Additional Configuration
    The encoding of the MATLAB files. By default, the files will be read as utf-8
    and parsing errors will be replaced using ? chars.
 
+``matlab_keep_package_prefix``
+   Determines if the MATLAB package prefix ``+`` is displayed in the
+   generated documentation.  Default is true.  When false, packages are
+   still referred to in ReST using ``+pakage.+subpkg.func`` but the output
+   will be ``pakage.other.func()``.
+
 For convenience the `primary domain <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-primary_domain>`_
 can be set to ``mat``.
 
