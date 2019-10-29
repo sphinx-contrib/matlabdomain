@@ -736,6 +736,24 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin,
         pass
 
 
+def make_baseclass_links(obj):
+    """ Returns list of base class links """
+    obj_bases = obj.__bases__
+    links = []
+    if len(obj_bases):
+        base_classes = obj_bases.items()
+        for b, v in base_classes:
+            if not v:
+                links.append(':class:`%s`' % b)
+            else:
+                mod_name = v.__module__
+                if mod_name.startswith('+'):
+                    links.append(':class:`+%s`' % b)
+                else:
+                    links.append(':class:`%s.%s`' % (mod_name, b))
+    return links
+
+
 class MatClassDocumenter(MatModuleLevelDocumenter):
     """
     Specialized Documenter subclass for classes.
@@ -808,12 +826,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         # add inheritance info, if wanted
         if not self.doc_as_attr and self.options.show_inheritance:
             self.add_line('', '<autodoc>')
-            if len(self.object.__bases__):
-                bases = [not v and ':class:`%s`' % b or
-                         ':class:`%s.%s`' % (v.__module__, b)
-                         for b, v in self.object.__bases__.items()]
-                self.add_line(_('   Bases: %s') % ', '.join(bases),
-                              '<autodoc>')
+            base_class_links = make_baseclass_links(self.object)
+            if base_class_links:
+                self.add_line(_('   Bases: %s') % ', '.join(base_class_links), '<autodoc>')
 
     def get_doc(self, encoding=None, ignore=1):
         content = self.env.config.autoclass_content

@@ -1115,11 +1115,14 @@ class MatClass(MatMixin, MatObject):
                 # search folders
                 for m in dirs:
                     # check if module has been matlabified already
-                    mod = sys.modules.get('.'.join([root_mod, m]).lstrip('.'))
+                    mod_name = '.'.join([root_mod, m]).lstrip('.')
+                    mod = sys.modules.get(mod_name)
                     if not mod:
                         continue
                     # check if base class is attr of module
                     b_ = mod.getter(b, None)
+                    if not b_:
+                        b_ = mod.getter(b.lstrip(m.lstrip('+')), None)
                     if b_:
                         bases_[b] = b_
                         break
