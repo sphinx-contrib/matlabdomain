@@ -1,5 +1,21 @@
+sphinxcontrib-matlabdomain-0.11.0 (2019-10-29)
+==============================================
+
+* Fixed `Issue 93 <https://github.com/sphinx-contrib/matlabdomain/issues/93>`_.
+  If a package class inherited from another package class, the link to the base
+  class was incorrect. This is fixed now.
+* Merged `PR #96 <https://github.com/sphinx-contrib/matlabdomain/pull/96>`_,
+  which adds the option ``matlab_keep_package_prefix``. Setting this option,
+  strips the ``+`` from package names. This gives far better rendering of
+  documentation, as now closer resembles the actual usage for the end user.
+* Merged `PR #97 <https://github.com/sphinx-contrib/matlabdomain/pull/97>`_,
+  which adds support for documenting MATLAB application files with a new
+  directive ``application``. They are referenced with ``app``
+
+
 sphinxcontrib-matlabdomain-0.10.0 (2019-10-23)
 ==============================================
+
 * Fixed `Issue 63 <https://github.com/sphinx-contrib/matlabdomain/issues/63>`_.
   Finally, documents can have Python and MATLAB sources auto-documented
   together. Before, the MATLAB autodoc directives shadowed the Python
@@ -9,6 +25,7 @@ sphinxcontrib-matlabdomain-0.10.0 (2019-10-23)
 
 sphinxcontrib-matlabdomain-0.9.0 (2019-05-29)
 =============================================
+
 * Merge `PR #92 <https://github.com/sphinx-contrib/matlabdomain/pull/92>`_
   Fix autodoc parsing error when source matlab file is not encoded as UTF-8.
   This adds the option ``matlab_src_encoding``, where one can define a different
@@ -54,7 +71,8 @@ sphinxcontrib-matlabdomain-0.5.0 (2019-02-02)
   Matlab parsing "seems" to hang if code contains a bunch of "%" consecutively.
   Thanks to GulyasGergelyR for reporting and providing a much better solution.
 * Fixed `Issue 86 <https://github.com/sphinx-contrib/matlabdomain/issues/86>`_.
-  Handles the ``DeprecationWarning: `formatargspec` is deprecated since Python 3.5. Use `signature` and the `Signature` object directly.
+  Handles the ``DeprecationWarning: `formatargspec` is deprecated since Python
+  3.5. Use `signature` and the `Signature` object directly.
 * Fixed `Issue 87 <https://github.com/sphinx-contrib/matlabdomain/issues/87>`_.
   Strings in double quotes are not parsed correctly by pygments.
 * Closed `Issue 82 <https://github.com/sphinx-contrib/matlabdomain/issues/82>`_.
