@@ -268,7 +268,7 @@ class MatObject(ObjectDescription):
 
 class MatModulelevel(MatObject):
     """
-    Description of an object on module level (functions, data).
+    Description of an object on module level (functions, data, application).
     """
 
     def needs_arglist(self):
@@ -282,6 +282,10 @@ class MatModulelevel(MatObject):
         elif self.objtype == 'data':
             if not modname:
                 return _('%s (built-in variable)') % name_cls[0]
+            return _('%s (in module %s)') % (name_cls[0], modname)
+        elif self.objtype == 'application':
+            if not modname:
+                return _('%s (built-in application)') % name_cls[0]
             return _('%s (in module %s)') % (name_cls[0], modname)
         else:
             return ''
@@ -610,6 +614,7 @@ class MATLABDomain(Domain):
         'attribute':    ObjType(_('attribute'),     'attr', 'obj'),
         'module':       ObjType(_('module'),        'mod', 'obj'),
         'script':       ObjType(_('script'),        'scpt', 'obj'),
+        'application':  ObjType(_('application'),   'app', 'obj'),
     }
 
     directives = {
@@ -625,7 +630,8 @@ class MATLABDomain(Domain):
         'currentmodule':   MatCurrentModule,
         'decorator':       MatDecoratorFunction,
         'decoratormethod': MatDecoratorMethod,
-        'script':            MatModulelevel,
+        'script':          MatModulelevel,
+        'application':     MatModulelevel,
     }
     roles = {
         'data':  MatXRefRole(),
@@ -637,7 +643,8 @@ class MATLABDomain(Domain):
         'meth':  MatXRefRole(fix_parens=True),
         'mod':   MatXRefRole(),
         'obj':   MatXRefRole(),
-        'scpt':   MatXRefRole(),
+        'scpt':  MatXRefRole(),
+        'app':   MatXRefRole(),
     }
     initial_data = {
         'objects': {},  # fullname -> docname, objtype
@@ -805,6 +812,11 @@ def setup(app):
     app.registry.add_documenter('mat:instanceattribute', doc.MatInstanceAttributeDocumenter)
     app.add_directive_to_domain('mat',
                                 'autoinstanceattribute',
+                                mat_directives.MatlabAutodocDirective)
+
+    app.registry.add_documenter('mat:application', doc.MatApplicationDocumenter)
+    app.add_directive_to_domain('mat',
+                                'autoapplication',
                                 mat_directives.MatlabAutodocDirective)
 
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)

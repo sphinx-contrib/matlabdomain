@@ -11,7 +11,8 @@
 from __future__ import unicode_literals
 
 from .mat_types import (MatModule, MatObject, MatFunction, MatClass, MatProperty,
-                        MatMethod, MatScript, MatException, MatModuleAnalyzer)
+                        MatMethod, MatScript, MatException, MatModuleAnalyzer,
+                        MatApplication)
 
 
 import re
@@ -1028,3 +1029,17 @@ class MatScriptDocumenter(MatModuleLevelDocumenter):
 
     def document_members(self, all_members=False):
         pass
+
+class MatApplicationDocumenter(MatModuleLevelDocumenter):
+    """
+    Specialized Documenter subclass for Matlab Applications (.mlapp)
+    """
+    objtype = 'application'
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        return isinstance(member, MatApplication)
+
+    def document_members(self, all_members=False):
+        pass
+

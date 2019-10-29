@@ -17,13 +17,15 @@ from copy import copy
 from sphinx.util import logging
 from sphinxcontrib.mat_lexer import MatlabLexer
 from pygments.token import Token
+from zipfile import ZipFile
+import xml.etree.ElementTree as ET
 
 logger = logging.getLogger('matlab-domain')
 
 MAT_DOM = 'sphinxcontrib-matlabdomain'
 __all__ = ['MatObject', 'MatModule', 'MatFunction', 'MatClass',  \
            'MatProperty', 'MatMethod', 'MatScript', 'MatException', \
-           'MatModuleAnalyzer', 'MAT_DOM']
+           'MatModuleAnalyzer', 'MatApplication', 'MAT_DOM']
 
 # TODO: use `self.tokens.pop()` instead of idx += 1, see MatFunction
 
@@ -43,11 +45,14 @@ class MatObject(object):
     :param name: Name of MATLAB object.
     :type name: str
 
-    MATLAB objects can be :class:`MatModule`, :class:`MatFunction` or
-    :class:`MatClass`. :class:`MatModule` are just folders that define a psuedo
-    namespace for :class:`MatFunction` and :class:`MatClass` in that folder.
+    MATLAB objects can be :class:`MatModule`, :class:`MatFunction`,
+    :class:`MatApplication` or :class:`MatClass`.
+    :class:`MatModule` are just folders that define a psuedo
+    namespace for :class:`MatFunction`, :class:`MatApplication`
+    and :class:`MatClass` in that folder.
     :class:`MatFunction` and :class:`MatClass` must begin with either
     ``function`` or ``classdef`` keywords.
+    :class:`MatApplication` must be a ``.mlapp`` file.
     """
     basedir = None
     encoding = None
@@ -124,6 +129,11 @@ class MatObject(object):
             msg = '[%s] matlabify %s from\n\t%s.'
             logger.debug(msg, MAT_DOM, package, mfile)
             return MatObject.parse_mfile(mfile, name, path, MatObject.encoding)  # parse mfile
+        elif os.path.isfile(fullpath + '.mlapp'):
+            mlappfile = fullpath + '.mlapp'
+            msg = '[%s] matlabify %s from\n\t%s.'
+            logger.debug(msg, MAT_DOM, package, mlappfile)
+            return MatObject.parse_mlappfile(mlappfile, name, path)
         return None
 
     @staticmethod
@@ -182,6 +192,53 @@ class MatObject(object):
             tks = list(MatlabLexer().get_tokens(full_code))
             return MatScript(name, modname, tks)
         return None
+
+    @staticmethod
+    def parse_mlappfile(mlappfile, name, path):
+        """
+        Uses ZipFile to read the metadata/appMetadata.xml file and
+        the metadata/coreProperties.xml file description tags.
+        Parses XML content using ElementTree.
+
+        :param mlappfile: Full path of ``.mlapp`` file.
+        :type mlappfile: str
+        :param name: Name of :class:`MatApplication`.
+        :type name: str
+        :param path: Path of module containing :class:`MatApplication`.
+        :type path: str
+        :returns: :class:`MatApplication` representing the application.
+        """
+
+        # TODO: We could use this method to parse other matlab binaries
+
+        # Read contents of meta-data file
+        # This might change in different Matlab versions
+        with ZipFile(mlappfile, 'r') as mlapp:
+            meta = ET.fromstring(mlapp.read('metadata/appMetadata.xml'))
+            core = ET.fromstring(mlapp.read('metadata/coreProperties.xml'))
+
+        metaNs = { 'ns' : "http://schemas.mathworks.com/appDesigner/app/2017/appMetadata" }
+        coreNs = {
+                'cp': "http://schemas.openxmlformats.org/package/2006/metadata/core-properties",
+                'dc': "http://purl.org/dc/elements/1.1/",
+                'dcmitype': "http://purl.org/dc/dcmitype/",
+                'dcterms': "http://purl.org/dc/terms/",
+                'xsi': "http://www.w3.org/2001/XMLSchema-instance"
+                }
+
+        coreDesc = core.find('dc:description', coreNs)
+        metaDesc = meta.find('ns:description', metaNs)
+
+        doc = []
+        if coreDesc is not None:
+            doc.append(coreDesc.text)
+        if metaDesc is not None:
+            doc.append(metaDesc.text)
+        docstring = '\n\n'.join(doc)
+
+        modname = path.replace(os.sep, '.')  # module name
+
+        return MatApplication(name, modname, docstring)
 
     @staticmethod
     def _remove_comment_header(code):
@@ -1190,6 +1247,35 @@ class MatScript(MatObject):
     @property
     def __module__(self):
         return self.module
+
+
+class MatApplication(MatObject):
+    """
+    Representation of the documentation in a Matlab Application.
+
+    :param name: Name of :class:`MatObject`.
+    :type name: str
+    :param modname: Name of folder containing :class:`MatObject`.
+    :type modname: str
+    :param desc: Summary and description string.
+    :type desc: str
+    """
+
+    def __init__(self, name, modname, desc):
+        super(MatApplication, self).__init__(name)
+        #: Path of folder containing :class:`MatApplication`.
+        self.module = modname
+        #: docstring
+        self.docstring = desc
+
+    @property
+    def __doc__(self):
+        return self.docstring
+
+    @property
+    def __module__(self):
+        return self.module
+
 
 class MatException(MatObject):
     def __init__(self, name, path, tks):

@@ -378,6 +378,12 @@ A Matlab unittest class
     :members:
     :show-inheritance:
 
+A matlab application (``.mlapp`` file)
+++++++++++++++++++++++++++++++++++++++
+
+.. autoapplication:: test_data.Application
+
+This is a reference to an application :app:`test_data.Application`
 
 Indices and tables
 ==================

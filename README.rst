@@ -87,6 +87,9 @@ Directive                             MATLAB object
 ``.. attribute:: attrname``           **property definition**
 ``.. autoattribute:: attrname``       * auto-document
 ``:attr:`attrname```                  * reference
+``.. application:: appname``          **application definition**
+``.. autoapplication:: appname``      * auto-document
+``:app:`appname```                    * reference
 ====================================  ===========================================
 
 Several options are available for auto-directives.
