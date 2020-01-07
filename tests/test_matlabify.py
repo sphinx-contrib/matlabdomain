@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 from sphinxcontrib import mat_documenters as doc
+from sphinxcontrib.mat_types import modules
 import os
 import sys
 import pytest
@@ -69,7 +70,7 @@ def test_module(mod):
                       'ClassWithUndocumentedMembers', 'ClassWithGetterSetter',
                       'ClassWithDoubleQuotedString', 'ClassWithDummyArguments'}
     assert all_items == expected_items
-    assert mod.getter('__name__') in sys.modules
+    assert mod.getter('__name__') in modules
 
 
 def test_parse_twice(mod):

@@ -12,7 +12,7 @@ from __future__ import unicode_literals
 
 from .mat_types import (MatModule, MatObject, MatFunction, MatClass, MatProperty,
                         MatMethod, MatScript, MatException, MatModuleAnalyzer,
-                        MatApplication)
+                        MatApplication, modules)
 
 
 import re
@@ -128,7 +128,7 @@ class MatlabDocumenter(PyDocumenter):
             logger.debug('[sphinxcontrib-matlabdomain] import %s', self.modname)
             MatObject.matlabify(self.modname)
             parent = None
-            obj = self.module = sys.modules[self.modname]
+            obj = self.module = modules[self.modname]
             logger.debug('[sphinxcontrib-matlabdomain] => %r', obj)
             for part in self.objpath:
                 parent = obj

@@ -22,6 +22,8 @@ import xml.etree.ElementTree as ET
 
 logger = logging.getLogger('matlab-domain')
 
+modules = {}
+
 MAT_DOM = 'sphinxcontrib-matlabdomain'
 __all__ = ['MatObject', 'MatModule', 'MatFunction', 'MatClass',  \
            'MatProperty', 'MatMethod', 'MatScript', 'MatException', \
@@ -115,7 +117,7 @@ class MatObject(object):
         fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
         # package folders imported over mfile with same name
         if os.path.isdir(fullpath):
-            mod = sys.modules.get(package)
+            mod = modules.get(package)
             if mod:
                 msg = '[%s] mod %s already loaded.'
                 logger.debug(msg, MAT_DOM, package)
@@ -337,7 +339,7 @@ class MatModule(MatObject):
         #: name of package (full path from basedir to module)
         self.package = package
         # add module to system dictionary
-        sys.modules[package] = self
+        modules[package] = self
 
     def safe_getmembers(self):
         results = []
@@ -1116,7 +1118,7 @@ class MatClass(MatMixin, MatObject):
                 for m in dirs:
                     # check if module has been matlabified already
                     mod_name = '.'.join([root_mod, m]).lstrip('.')
-                    mod = sys.modules.get(mod_name)
+                    mod = modules.get(mod_name)
                     if not mod:
                         continue
                     # check if base class is attr of module
@@ -1319,7 +1321,7 @@ class MatModuleAnalyzer(object):
             if isinstance(entry, MatcodeError):
                 raise entry
             return entry
-        mod = sys.modules.get(modname)
+        mod = modules.get(modname)
         if mod:
             obj = cls.for_folder(mod.path, modname)
         else:
@@ -1356,7 +1358,7 @@ class MatModuleAnalyzer(object):
         attr_visitor_collected = {}
         attr_visitor_tagorder = {}
         tagnumber = 0
-        mod = sys.modules[self.modname]
+        mod = modules[self.modname]
         # walk package tree
         for k, v in mod.safe_getmembers():
             if hasattr(v, 'docstring'):
