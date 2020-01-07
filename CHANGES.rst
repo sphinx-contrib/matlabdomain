@@ -1,3 +1,11 @@
+sphinxcontrib-matlabdomain-0.11.1 (2020-01-07)
+==============================================
+
+* Fixed bug when Python and MATLAB sources are in the same base folder. Reported
+  by Alec Weiss. Historically we stored parsed MATLAB objects in
+  ``sys.modules``. However, this conflicts with Python modules.
+
+
 sphinxcontrib-matlabdomain-0.11.0 (2019-10-29)
 ==============================================
 
