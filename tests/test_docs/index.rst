@@ -265,6 +265,14 @@ A MATLAB class with strings using double quotes.
 .. autoclass:: ClassWithDoubleQuotedString
     :members:
 
+ClassWithStrings
+++++++++++++++++
+
+A MATLAB class with strings using single and double quotes.
+
+.. autoclass:: ClassWithStrings
+    :members:
+
 ClassWithDummyArguments
 +++++++++++++++++++++++
 

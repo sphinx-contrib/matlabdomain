@@ -479,6 +479,13 @@ def test_ClassWithDoubleQuotedString():
                                             'attrs': {},
                                             'default': None}}
 
+def test_ClassWithStrings():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithStrings.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithStrings', 'test_data')
+    assert isinstance(obj, mat_types.MatClass)
+    assert obj.name == 'ClassWithStrings'
+    assert set(obj.methods.keys()) == set(['raiseError'])
+
 
 def test_ClassWithDummyArguments():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithDummyArguments.m')
