@@ -1,3 +1,12 @@
+sphinxcontrib-matlabdomain-0.11.2 (2020-05-18)
+==============================================
+
+* Fixed `Issue 103 <https://github.com/sphinx-contrib/matlabdomain/issues/103>`_.
+  If a double quoted string was followed by a single qouted string, the lexer
+  would produce incorrect token, causing the a parser warning. Fixed by merging
+  parts from pygments.
+
+
 sphinxcontrib-matlabdomain-0.11.1 (2020-01-07)
 ==============================================
 
