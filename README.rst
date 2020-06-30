@@ -218,3 +218,4 @@ Users
 * `Cantera <http://cantera.github.io/docs/sphinx/html/compiling/dependencies.html?highlight=matlabdomain>`_
 * `CoSMo MVPA <http://cosmomvpa.org/download.html?highlight=matlabdomain#developers>`_
 * `The Cobra Toolbox <https://opencobra.github.io/cobratoolbox/stable/index.html#>`_
+* `The RepLAB Toolbox <https://replab.github.io/replab>`_
