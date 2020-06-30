@@ -29,7 +29,7 @@ def test_setup(make_app, rootdir):
     app = make_app(srcdir=srcdir)
     app.builder.build_all()
 
-    content = pickle.loads((app.doctreedir / 'index.doctree').bytes())
+    content = pickle.loads((app.doctreedir / 'index.doctree').read_bytes())
 
     assert isinstance(content[4], addnodes.desc)
     assert content[4].astext().startswith('class base.PythonClass.PythonClass')

@@ -32,7 +32,7 @@ def test_with_prefix(make_app, rootdir):
     app = make_app(srcdir=srcdir)
     app.builder.build_all()
 
-    content = pickle.loads((app.doctreedir / 'contents.doctree').bytes())
+    content = pickle.loads((app.doctreedir / 'contents.doctree').read_bytes())
 
     assert isinstance(content[3], addnodes.desc)
     assert content[3].astext() == 'class +replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’'
@@ -47,7 +47,7 @@ def test_without_prefix(make_app, rootdir):
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
-    content = pickle.loads((app.doctreedir / 'contents.doctree').bytes())
+    content = pickle.loads((app.doctreedir / 'contents.doctree').read_bytes())
 
     assert isinstance(content[3], addnodes.desc)
     assert content[3].astext() == 'class replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’'
