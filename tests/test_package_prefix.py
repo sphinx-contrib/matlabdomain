@@ -32,7 +32,7 @@ def test_with_prefix(make_app, rootdir):
     content = pickle.loads((app.doctreedir / 'index.doctree').bytes())
 
     assert isinstance(content[4], addnodes.desc)
-    assert content[4].astext() == '+package.funcx\n\nReturns x'
+    assert content[4].astext() == '+package.func(x)\n\nReturns x'
 
 
 def test_without_prefix(make_app, rootdir):
@@ -44,7 +44,7 @@ def test_without_prefix(make_app, rootdir):
     content = pickle.loads((app.doctreedir / 'index.doctree').bytes())
 
     assert isinstance(content[4], addnodes.desc)
-    assert content[4].astext() == 'package.funcx\n\nReturns x'
+    assert content[4].astext() == 'package.func(x)\n\nReturns x'
 
 
 if __name__ == '__main__':

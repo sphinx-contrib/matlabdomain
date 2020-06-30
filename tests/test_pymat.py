@@ -32,10 +32,10 @@ def test_setup(make_app, rootdir):
     content = pickle.loads((app.doctreedir / 'index.doctree').bytes())
 
     assert isinstance(content[3], addnodes.desc)
-    assert content[3].astext() == 'func.main\n\nReturns the answer.'
+    assert content[3].astext() == 'func.main()\n\nReturns the answer.'
 
     assert isinstance(content[7], addnodes.desc)
-    assert content[7].astext() == 'matsrc.funcx\n\nReturns x'
+    assert content[7].astext() == 'matsrc.func(x)\n\nReturns x'
 
 
 if __name__ == '__main__':

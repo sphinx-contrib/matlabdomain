@@ -32,7 +32,7 @@ def test_setup(make_app, rootdir):
     content = pickle.loads((app.doctreedir / 'index.doctree').bytes())
 
     assert isinstance(content[3], addnodes.desc)
-    assert content[3][0].astext() == 'class target.ClassExamplea'
+    assert content[3][0].astext() == 'class target.ClassExample(a)'
     assert content[3][1].astext() == """Bases: handle
 
 Example class
@@ -49,7 +49,7 @@ a property
 
 
 
-mymethodb
+mymethod(b)
 
 A method in ClassExample
 
