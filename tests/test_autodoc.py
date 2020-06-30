@@ -11,6 +11,7 @@
 from __future__ import unicode_literals
 import pickle
 import os
+import sys
 
 import pytest
 
@@ -24,15 +25,16 @@ def rootdir():
     return path(os.path.dirname(__file__)).abspath()
 
 
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_setup(make_app, rootdir):
     srcdir = rootdir / 'roots' / 'test_autodoc'
     app = make_app(srcdir=srcdir)
     app.builder.build_all()
 
-    content = pickle.loads((app.doctreedir / 'index.doctree').bytes())
+    content = pickle.loads((app.doctreedir / 'index.doctree').read_bytes())
 
     assert isinstance(content[3], addnodes.desc)
-    assert content[3][0].astext() == 'class target.ClassExamplea'
+    assert content[3][0].astext() == 'class target.ClassExample(a)'
     assert content[3][1].astext() == """Bases: handle
 
 Example class
@@ -49,7 +51,7 @@ a property
 
 
 
-mymethodb
+mymethod(b)
 
 A method in ClassExample
 

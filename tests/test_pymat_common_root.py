@@ -11,6 +11,7 @@
 from __future__ import unicode_literals
 import pickle
 import os
+import sys
 
 import pytest
 
@@ -24,12 +25,13 @@ def rootdir():
     return path(os.path.dirname(__file__)).abspath()
 
 
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_setup(make_app, rootdir):
     srcdir = rootdir / 'roots' / 'test_pymat_common_root'
     app = make_app(srcdir=srcdir)
     app.builder.build_all()
 
-    content = pickle.loads((app.doctreedir / 'index.doctree').bytes())
+    content = pickle.loads((app.doctreedir / 'index.doctree').read_bytes())
 
     assert isinstance(content[4], addnodes.desc)
     assert content[4].astext().startswith('class base.PythonClass.PythonClass')
