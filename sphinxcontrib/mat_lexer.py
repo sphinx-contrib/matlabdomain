@@ -118,7 +118,7 @@ class MatlabLexer(RegexLexer):
 
             # quote can be transpose, instead of string:
             # (not great, but handles common cases...)
-            (r'(?<=[\w)\].])\'+', Operator),
+            (r'(?<=[\w)}\].])\'+', Operator),
 
             (r'(\d+\.\d*|\d*\.\d+)([eEf][+-]?[0-9]+)?', Number.Float),
             (r'\d+[eEf][+-]?[0-9]+', Number.Float),
@@ -126,8 +126,8 @@ class MatlabLexer(RegexLexer):
 
             (r'"(""|[^"])*"', String),
 
-            (r'(?<![\w)\].])\'', String, 'string'),
-			
+            (r'(?<![\w)}\].])\'', String, 'string'),
+
             (r'[a-zA-Z_]\w*', Name),
             (r'.', Text),
         ],
