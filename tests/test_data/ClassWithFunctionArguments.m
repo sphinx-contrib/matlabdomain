@@ -9,7 +9,7 @@ classdef ClassWithFunctionArguments < handle
     methods
         function mc = ClassExample(a)
             arguments
-                a;
+                a
             end
             mc.a = a
         end
@@ -18,8 +18,8 @@ classdef ClassWithFunctionArguments < handle
         %
         % :param b: an input to :meth:`mymethod`
             arguments
-                obj;
-                b = 1;
+                obj
+                b = 1
             end
             for n = 1:10
                 if n > 5
@@ -31,8 +31,8 @@ classdef ClassWithFunctionArguments < handle
         end
         function c = nondocumentedmethod(obj, b)
             arguments
-                obj;
-                b = 1;
+                obj
+                b = 1
             end
             for n = 1:10
                 if n > 5
