@@ -96,10 +96,11 @@ class MatlabLexer(RegexLexer):
 
             # from 'iskeyword' on version 7.11 (R2010):
             (words((
-                'break', 'case', 'catch', 'classdef', 'continue', 'else', 'elseif',
-                'end', 'enumerated', 'events', 'for', 'global', 'if',
-                'methods', 'otherwise', 'parfor', 'persistent', 'properties',
-                'return', 'spmd', 'switch', 'try', 'while'), suffix=r'\b'),
+                'arguments', 'break', 'case', 'catch', 'classdef', 'continue', 
+                'else', 'elseif', 'end', 'enumerated', 'events', 'for', 
+                'global', 'if', 'methods', 'otherwise', 'parfor',
+                'persistent', 'properties', 'return', 'spmd', 'switch', 'try', 
+                'while'), suffix=r'\b'),
              Keyword),
 
             ("(" + "|".join(elfun + specfun + elmat) + r')\b',  Name.Builtin),
