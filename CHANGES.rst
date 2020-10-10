@@ -1,3 +1,17 @@
+sphinxcontrib-matlabdomain-0.11.3 (2020-10-10)
+==============================================
+
+* Fixed `Issue 108 <https://github.com/sphinx-contrib/matlabdomain/issues/108>`_.
+  Quote is not recognized as transpose after a closing curly brace.
+
+* Fixed `Issue 109 <https://github.com/sphinx-contrib/matlabdomain/issues/109`_.
+  Sphinx 3.1.1 changed API causing tests to fail.
+
+* Fixed `Issue 111 <https://github.com/sphinx-contrib/matlabdomain/issues/111>`_.
+  fnable Function Arguments Support.
+
+
+
 sphinxcontrib-matlabdomain-0.11.2 (2020-05-18)
 ==============================================
 
