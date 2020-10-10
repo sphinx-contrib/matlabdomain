@@ -515,8 +515,8 @@ class MatFunction(MatObject):
     :type tokens: list
     """
     # MATLAB keywords that increment keyword-end pair count
-    mat_kws = list(zip((Token.Keyword,) * 5,
-                  ('if', 'while', 'for', 'switch', 'try')))
+    mat_kws = list(zip((Token.Keyword,) * 6,
+                  ('arguments', 'for', 'if', 'switch', 'try', 'while')))
 
     def __init__(self, name, modname, tokens):
         super(MatFunction, self).__init__(name)

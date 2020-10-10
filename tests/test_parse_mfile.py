@@ -162,6 +162,19 @@ def test_ClassWithEvent():
     assert obj.docstring == ""
 
 
+def test_ClassWithFunctionArguments():
+    # TODO: handle 'events' block
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithFunctionArguments.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithFunctionArguments', 'test_data')
+    assert obj.name == 'ClassWithFunctionArguments'
+    assert obj.docstring == " test class methods with function arguments\n\n :param a: the input to :class:`ClassWithFunctionArguments`\n"
+    mymethod = obj.methods['mymethod']
+    assert mymethod.name == 'mymethod'
+    assert mymethod.retv == ['c']
+    assert mymethod.args == ['obj', 'b']
+    assert mymethod.docstring == " a method in :class:`ClassWithFunctionArguments`\n\n :param b: an input to :meth:`mymethod`\n"
+
+
 def test_EnumerationBool():
     # TODO: handle 'enumeration' block
     mfile = os.path.join(DIRNAME, 'test_data', 'Bool.m')
