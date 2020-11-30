@@ -18,7 +18,6 @@ from .mat_types import (MatModule, MatObject, MatFunction, MatClass, MatProperty
 import re
 import sys
 import traceback
-from six import itervalues
 
 from docutils.statemachine import ViewList
 
