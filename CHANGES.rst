@@ -1,3 +1,11 @@
+sphinxcontrib-matlabdomain-0.11.5 (2021-01-05)
+==============================================
+
+* Fixed `Issue 114 <https://github.com/sphinx-contrib/matlabdomain/issues/114>`_.
+  NoneType AttributeError in import_object. It was caused by a bug when parsing
+  method names with trailing spaces.
+
+
 sphinxcontrib-matlabdomain-0.11.4 (2020-11-30)
 ==============================================
 
