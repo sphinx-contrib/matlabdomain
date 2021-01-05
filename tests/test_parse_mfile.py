@@ -523,6 +523,17 @@ def test_ClassFolderClassdef():
     m2 = obj.methods['method_inside_classdef']
     assert m2.args == ['obj', 'a', 'b']
 
+def test_ClassWithMethodsWithSpaces():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithMethodsWithSpaces.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithMethodsWithSpaces', 'test_data')
+    assert isinstance(obj, mat_types.MatClass)
+    assert obj.name == 'ClassWithMethodsWithSpaces'
+    assert set(obj.methods.keys()) == set(['static_method'])       
+    assert obj.docstring == " Class with methods that have space after the function name.\n"
+    assert obj.methods['static_method'].attrs == {'Static': True}
+
+
+
 
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])
