@@ -584,7 +584,7 @@ class MatFunction(MatObject):
             # =====================================================================
             # function name
             func_name = tks.pop()
-            func_name = (func_name[0], func_name[1].strip('()'))  # Strip () in case of dummy arg
+            func_name = (func_name[0], func_name[1].strip(' ()'))  # Strip () in case of dummy arg
             if func_name != (Token.Name.Function, self.name):  # @UndefinedVariable
                 if isinstance(self, MatMethod):
                     self.name = func_name[1]
