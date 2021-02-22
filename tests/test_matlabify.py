@@ -69,7 +69,8 @@ def test_module(mod):
                       'ClassWithEnumMethod', 'ClassWithEventMethod', 'f_with_function_variable',
                       'ClassWithUndocumentedMembers', 'ClassWithGetterSetter',
                       'ClassWithDoubleQuotedString', 'ClassWithDummyArguments',
-                      'ClassWithStrings', 'ClassWithFunctionArguments', 'ClassWithMethodsWithSpaces'}
+                      'ClassWithStrings', 'ClassWithFunctionArguments', 'ClassWithMethodsWithSpaces',
+                      'ClassContainingParfor'}
     assert all_items == expected_items
     assert mod.getter('__name__') in modules
 

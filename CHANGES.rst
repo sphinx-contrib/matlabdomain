@@ -1,3 +1,11 @@
+sphinxcontrib-matlabdomain-0.11.6 (2021-02-23)
+==============================================
+
+* Fixed `Issue 116 <https://github.com/sphinx-contrib/matlabdomain/issues/116>`_.
+  Failure on parfor statements in class methods. Fix `MatFunction` class to
+  also take `parfor` into account when counting `end`.
+
+
 sphinxcontrib-matlabdomain-0.11.5 (2021-01-05)
 ==============================================
 

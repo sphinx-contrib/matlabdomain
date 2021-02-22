@@ -532,6 +532,14 @@ def test_ClassWithMethodsWithSpaces():
     assert obj.docstring == " Class with methods that have space after the function name.\n"
     assert obj.methods['static_method'].attrs == {'Static': True}
 
+def test_ClassContainingParfor():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassContainingParfor.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassContainingParfor', 'test_data')
+    assert isinstance(obj, mat_types.MatClass)
+    assert obj.name == 'ClassContainingParfor'
+    assert set(obj.methods.keys()) == set(['test'])       
+    assert obj.docstring == " Parfor is a keyword\n"
+
 
 
 
