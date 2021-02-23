@@ -372,6 +372,12 @@ def test_f_with_dummy_argument():
     assert obj.args == ['~', 'name']
     assert obj.docstring == " Could be a callback, where first argument is ignored.\n"
 
+def test_f_with_string_ellipsis():
+    mfile = os.path.join(DIRNAME, 'test_data', 'f_with_string_ellipsis.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_string_ellipsis', 'test_data')
+    assert obj.name == 'f_with_string_ellipsis'
+    assert obj.docstring == " A function with a string with ellipsis\n"    
+
 
 def test_ClassWithFunctionVariable():
     mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithFunctionVariable.m')
@@ -382,10 +388,13 @@ def test_ClassWithFunctionVariable():
     assert methods == {'ClassWithFunctionVariable', 'anotherMethodWithFunctions'}
 
 
+
+
+
+
 def test_f_inputargs_error():
     mfile = os.path.join(DIRNAME, 'test_data', 'f_inputargs_error.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'f_inputargs_error', 'test_data')
-
 
 # Fails when running with other test files. Warnings are already logged.
 @pytest.mark.xfail
@@ -540,6 +549,14 @@ def test_ClassContainingParfor():
     assert set(obj.methods.keys()) == set(['test'])       
     assert obj.docstring == " Parfor is a keyword\n"
 
+
+def test_ClassWithStringEllipsis():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithStringEllipsis.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithStringEllipsis', 'test_data')
+    assert isinstance(obj, mat_types.MatClass)
+    assert obj.name == 'ClassWithStringEllipsis'
+    assert set(obj.methods.keys()) == set(['test'])       
+    assert obj.docstring == " Contains ellipsis in string\n"
 
 
 

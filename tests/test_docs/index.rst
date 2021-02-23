@@ -386,6 +386,13 @@ A Matlab unittest class
     :members:
     :show-inheritance:
 
+Class with string ellipsis
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+A class that tests the lexer.
+
+.. autoclass:: ClassWithStringEllipsis
+    :members:    
+
 A matlab application (``.mlapp`` file)
 ++++++++++++++++++++++++++++++++++++++
 

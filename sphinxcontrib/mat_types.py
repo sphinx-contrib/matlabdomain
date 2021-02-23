@@ -282,7 +282,7 @@ class MatObject(object):
         pat = r"('.*)(\.\.\.)(.*')"
         code = re.sub(pat, r'\g<1>\g<3>', code, flags=re.MULTILINE)
 
-        pat = r"^([^%\n]*)(\.\.\..*\n)"
+        pat = r"^([^%'\"\n]*)(\.\.\..*\n)"
         code = re.sub(pat, r'\g<1>', code, flags=re.MULTILINE)
         return code
 

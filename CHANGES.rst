@@ -1,3 +1,11 @@
+sphinxcontrib-matlabdomain-0.11.7 (2021-02-24)
+==============================================
+
+* Fixed `Issue 117 <https://github.com/sphinx-contrib/matlabdomain/issues/117>`_.
+  Parsing errors due to `"..."`.  Fix `MatObject::_remove_line_continuations`
+  to take MATLAB strings into account.
+  
+
 sphinxcontrib-matlabdomain-0.11.6 (2021-02-23)
 ==============================================
 
