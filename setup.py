@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 with open('README.rst', 'r') as f_readme:
     long_desc = f_readme.read()
 
-requires = ['Sphinx>=1.7.2', 'Pygments>=2.0.1', 'future>=0.16.0']
+requires = ['Sphinx>=1.7.2', 'Sphinx<4.0.0', 'Pygments>=2.0.1', 'future>=0.16.0']
 
 setup(
     name='sphinxcontrib-matlabdomain',
