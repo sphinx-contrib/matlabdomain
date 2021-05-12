@@ -23,6 +23,10 @@ The Python package must be installed with::
 
 In general, the usage is the same as for documenting Python code.
 
+For a Python 2 compatible version the package must be installed with::
+
+   pip install sphinxcontrib-matlabdomain==0.11.8
+
 Configuration
 -------------
 In your Sphinx ``conf.py`` file add ``sphinxcontrib.matlab`` to the list of
