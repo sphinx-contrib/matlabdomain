@@ -1,10 +1,9 @@
 from __future__ import unicode_literals
 from sphinx.ext.autodoc.directive import AutodocDirective, DummyOptionSpec, DocumenterBridge
 from sphinx.ext.autodoc.directive import process_documenter_options, parse_generated_content
-from sphinx.util import logging
+import sphinx.util
 
-logger = logging.getLogger('matlab-domain')
-
+logger = sphinx.util.logging.getLogger('matlab-domain')
 
 class MatlabAutodocDirective(AutodocDirective):
     """A directive class for all MATLAB autodoc directives.

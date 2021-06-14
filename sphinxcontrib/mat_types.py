@@ -14,13 +14,13 @@ import os
 import re
 import sys
 from copy import copy
-from sphinx.util import logging
+import sphinx.util
 from sphinxcontrib.mat_lexer import MatlabLexer
 from pygments.token import Token
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
-logger = logging.getLogger('matlab-domain')
+logger = sphinx.util.logging.getLogger('matlab-domain')
 
 modules = {}
 
