@@ -10,4 +10,6 @@ tests/test_docs/_build/
 .pytest_cache/
 .vscode/
 _build
+htmlcov
+.coverage
 
