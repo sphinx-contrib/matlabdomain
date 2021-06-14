@@ -673,7 +673,7 @@ class MatDocstringSignatureMixin(object):
         if not self.objpath or base != self.objpath[-1]:
             return
         # re-prepare docstring to ignore indentation after signature
-        docstrings = MatlabDocumenter.get_doc(self, encoding, 2)
+        docstrings = MatlabDocumenter.get_doc(self, encoding)
         doclines = docstrings[0]
         # ok, now jump over remaining empty lines and set the remaining
         # lines as the new doclines
@@ -683,11 +683,11 @@ class MatDocstringSignatureMixin(object):
         setattr(self, '__new_doclines', doclines[i:])
         return args, retann
 
-    def get_doc(self, encoding=None, ignore=1):
+    def get_doc(self, encoding=None):
         lines = getattr(self, '__new_doclines', None)
         if lines is not None:
             return [lines]
-        return MatlabDocumenter.get_doc(self, encoding, ignore)
+        return MatlabDocumenter.get_doc(self, encoding)
 
     def format_signature(self):
         if self.args is None and self.env.config.autodoc_docstring_signature:
@@ -815,7 +815,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             if base_class_links:
                 self.add_line(_('   Bases: %s') % ', '.join(base_class_links), '<autodoc>')
 
-    def get_doc(self, encoding=None, ignore=1):
+    def get_doc(self, encoding=None):
         content = self.env.config.autoclass_content
 
         docstrings = []
