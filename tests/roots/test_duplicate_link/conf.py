@@ -47,7 +47,7 @@ extensions = ['sphinx.ext.autodoc',   # for enumeration of objects stuff
 autodoc_default_options = {'members': True, 'show-inheritance': True}
 autosummary_generate = True
 
-matlab_keep_package_prefix = False
+matlab_keep_package_prefix = True
 
 matlab_src_dir = os.path.dirname(os.path.abspath(__file__ + "/"))+"/_src"
 primary_domain = 'mat'
