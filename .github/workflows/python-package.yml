@@ -23,6 +23,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
+        python -m pip install pytest-cov
         python setup.py install        
     - name: Lint with flake8
       run: |
@@ -32,4 +33,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest
+        pytest --junitxml=junit/test-results.xml --cov=sphinxcontrib --cov-report=xml --cov-report=html
+        
