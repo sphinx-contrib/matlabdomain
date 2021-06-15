@@ -41,7 +41,6 @@ release = '0.6.0-SNAPSHOT'
 extensions = ['sphinx.ext.autodoc',   # for enumeration of objects stuff
               'sphinx.ext.autosummary',
               'sphinxcontrib.matlab', # support for Matlab
-              'sphinx.ext.napoleon',  # support for shorthand syntax
 ]
 
 autodoc_default_options = {'members': True, 'show-inheritance': True}
@@ -79,7 +78,3 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
-
-# -- Options for HTML output -------------------------------------------------
-
-html_theme = 'sphinx_rtd_theme'
