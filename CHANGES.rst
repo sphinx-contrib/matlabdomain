@@ -1,3 +1,20 @@
+sphinxcontrib-matlabdomain-0.12.0 (2021-06-12)
+==============================================
+
+* Only Sphinx >= 4.0.0 is now supported.
+* Only Python >= 3.6 is supported.
+* Fixed numerous warnings due to `deprecated Sphinx API`_.
+  * Use ``sphinx.ext.autodoc.directive.DocumenterBridge.record_dependencies``
+    insted of ``sphinx.ext.autodoc.directive.DocumenterBridge.filename_set``.
+  * Use ``str.rpartition()`` insted of ``sphinx.util.rpartition()``
+  * Remove use of ``sphinx.util.force_decode()``.
+  * Use ``inspect.getmembers()`` insted of
+    ``sphinx.util.inspect.safe_getmembers()``.
+  * Remove use of encoding argument in ``autodoc.Documenter.get_doc()``.
+* Fixed `Issue 101 <https://github.com/sphinx-contrib/matlabdomain/issues/101>`_.
+* CI now tests on Python 3.6, 3.7, 3.8 and 3.9.
+
+
 sphinxcontrib-matlabdomain-0.11.8 (2021-05-12)
 ==============================================
 
@@ -356,3 +373,5 @@ sphinxcontrib-matlabdomain-0.1 (2013-04-25)
 
 * create a Sphinx domain for MATLAB
 * override standard domain to remove py modules index
+
+.. _`deprecated Sphinx API`: https://www.sphinx-doc.org/en/master/extdev/deprecated.html
