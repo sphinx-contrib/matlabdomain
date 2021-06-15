@@ -24,6 +24,9 @@ from sphinx.domains import Domain, ObjType, Index
 from sphinx.directives import ObjectDescription
 from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, GroupedField, TypedField
+import sphinx.util
+
+logger = sphinx.util.logging.getLogger('matlab-domain')
 
 
 # REs for MATLAB signatures
@@ -732,10 +735,9 @@ class MATLABDomain(Domain):
         if not matches:
             return None
         elif len(matches) > 1:
-            env.warn_node(
-                'more than one target found for cross-reference '
-                '%r: %s' % (target, ', '.join(match[0] for match in matches)),
-                node)
+            logger.warning('[sphinxcontrib-matlabdomain] more than one target found for cross-reference %r: %s',
+                           target, ', '.join(match[0] for match in matches), type='ref', subtype='python', location=node)
+                
         name, obj = matches[0]
 
         if obj[1] == 'module':
