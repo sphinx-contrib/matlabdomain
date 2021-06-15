@@ -14,29 +14,16 @@ from .mat_types import (MatModule, MatObject, MatFunction, MatClass, MatProperty
                         MatMethod, MatScript, MatException, MatModuleAnalyzer,
                         MatApplication, modules)
 
-
 import re
 import sys
 import traceback
+import inspect
 
 from docutils.statemachine import ViewList
 
-from sphinx.util import rpartition, force_decode
+import sphinx.util
 from sphinx.locale import _
 from sphinx.pycode import PycodeError
-# from sphinx.util.nodes import nested_parse_with_titles
-# from sphinx.util.inspect import getargspec, isdescriptor, safe_getmembers, \
-#      safe_getattr, is_builtin_class_method
-from sphinx.util.inspect import safe_getmembers, safe_getattr
-from sphinx.util import logging
-try:
-    # Sphinx >= 1.3.0
-    from sphinx.util.inspect import object_description
-except ImportError:
-    # Sphinx < 1.3.0
-    from sphinx.util.inspect import safe_repr as object_description
-from sphinx.util.docstrings import prepare_docstring
-
 from sphinx.ext.autodoc import py_ext_sig_re as mat_ext_sig_re, \
     identity, Options, ALL, INSTANCEATTR, members_option, \
     members_set_option, SUPPRESS, annotation_option, bool_option, \
@@ -61,7 +48,7 @@ mat_ext_sig_re = re.compile(
 # TODO: check MRO's for all classes, attributes and methods!!!
 
 
-logger = logging.getLogger('matlab-domain')
+logger = sphinx.util.logging.getLogger('matlab-domain')
 
 
 class MatlabDocumenter(PyDocumenter):
@@ -82,7 +69,7 @@ class MatlabDocumenter(PyDocumenter):
         try:
             explicit_modname, path, base, args, retann = \
                  mat_ext_sig_re.match(self.name).groups()
-        except AttributeError:
+        except AttributeError:            
             self.directive.warn('invalid signature for auto%s (%r)' %
                                 (self.objtype, self.name))
             return False
@@ -148,9 +135,8 @@ class MatlabDocumenter(PyDocumenter):
                 errmsg = '[sphinxcontrib-matlabdomain]: failed to import %s %r' % \
                          (self.objtype, self.fullname)
             errmsg += '; the following exception was raised:\n%s' % \
-                      traceback.format_exc()
-            logger.debug(errmsg)
-            self.directive.warn(errmsg)
+                      traceback.format_exc()            
+            logger.warning(errmsg)
             self.env.note_reread()
             return False
 
@@ -222,7 +208,7 @@ class MatlabDocumenter(PyDocumenter):
         elif self.options.inherited_members:
             # safe_getmembers() uses dir() which pulls in members from all
             # base classes
-            members = safe_getmembers(self.object, attr_getter=self.get_attr)
+            members = inspect.get_members(self.object, attr_getter=self.get_attr)
         else:
             # __dict__ contains only the members directly defined in
             # the class (but get them via getattr anyway, to e.g. get
@@ -533,9 +519,9 @@ class MatlabDocumenter(PyDocumenter):
             self.analyzer = None
             # at least add the module.__file__ as a dependency
             if hasattr(self.module, '__file__') and self.module.__file__:
-                self.directive.filename_set.add(self.module.__file__)
+                self.directive.record_dependencies.add(self.module.__file__)
         else:
-            self.directive.filename_set.add(self.analyzer.srcname)
+            self.directive.record_dependencies.add(self.analyzer.srcname)
 
         # check __module__ of object (for members not given explicitly)
         if check_module:
@@ -608,7 +594,7 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                 self.directive.warn(
                     'missing attribute mentioned in :members: or __all__: '
                     'module %s, attribute %s' % (
-                    safe_getattr(self.object, '__name__', '???'), mname))
+                    sphinx.util.inspect.safe_getattr(self.object, '__name__', '???'), mname))
         return False, ret
 
 
@@ -653,7 +639,7 @@ class MatClassLevelDocumenter(MatlabDocumenter):
                 # ... if still None, there's no way to know
                 if mod_cls is None:
                     return None, []
-            modname, cls = rpartition(mod_cls, '.')
+            modname, _,  cls = mod_cls.rpartition('.')
             parents = [cls]
             # if the module name is still missing, get it like above
             if not modname:
@@ -687,7 +673,7 @@ class MatDocstringSignatureMixin(object):
         if not self.objpath or base != self.objpath[-1]:
             return
         # re-prepare docstring to ignore indentation after signature
-        docstrings = MatlabDocumenter.get_doc(self, encoding, 2)
+        docstrings = MatlabDocumenter.get_doc(self, encoding)
         doclines = docstrings[0]
         # ok, now jump over remaining empty lines and set the remaining
         # lines as the new doclines
@@ -697,11 +683,11 @@ class MatDocstringSignatureMixin(object):
         setattr(self, '__new_doclines', doclines[i:])
         return args, retann
 
-    def get_doc(self, encoding=None, ignore=1):
+    def get_doc(self, encoding=None):
         lines = getattr(self, '__new_doclines', None)
         if lines is not None:
             return [lines]
-        return MatlabDocumenter.get_doc(self, encoding, ignore)
+        return MatlabDocumenter.get_doc(self, encoding)
 
     def format_signature(self):
         if self.args is None and self.env.config.autodoc_docstring_signature:
@@ -829,7 +815,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             if base_class_links:
                 self.add_line(_('   Bases: %s') % ', '.join(base_class_links), '<autodoc>')
 
-    def get_doc(self, encoding=None, ignore=1):
+    def get_doc(self, encoding=None):
         content = self.env.config.autoclass_content
 
         docstrings = []
@@ -864,14 +850,12 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                     docstrings.append(initdocstring)
         doc = []
         for docstring in docstrings:
-            if not isinstance(docstring, str):
-                docstring = force_decode(docstring, encoding)
-            doc.append(prepare_docstring(docstring))
+            doc.append(sphinx.util.docstrings.prepare_docstring(docstring))
         return doc
 
     def add_content(self, more_content, no_docstring=False):
         if self.doc_as_attr:
-            classname = safe_getattr(self.object, '__name__', None)
+            classname = sphinx.util.inspect.safe_getattr(self.object, '__name__', None)
             if classname:
                 content = ViewList(
                     [_('alias of :class:`%s`') % classname], source='')
@@ -975,7 +959,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         if not self.options.annotation:
             if not self._datadescriptor:
                 try:
-                    objrepr = object_description(self.object.default)  # display default
+                    objrepr = sphinx.util.inspect.object_description(self.object.default)  # display default
                 except ValueError:
                     pass
                 else:

@@ -1,11 +1,9 @@
 from __future__ import unicode_literals
 from sphinx.ext.autodoc.directive import AutodocDirective, DummyOptionSpec, DocumenterBridge
 from sphinx.ext.autodoc.directive import process_documenter_options, parse_generated_content
-from sphinx.util import logging
-from sphinx import version_info
+import sphinx.util
 
-logger = logging.getLogger('matlab-domain')
-
+logger = sphinx.util.logging.getLogger('matlab-domain')
 
 class MatlabAutodocDirective(AutodocDirective):
     """A directive class for all MATLAB autodoc directives.
@@ -44,11 +42,8 @@ class MatlabAutodocDirective(AutodocDirective):
                          (self.name, exc), location=(source, lineno))
             return []
 
-        # generate the output
-        if version_info[0] >= 2:
-            params = DocumenterBridge(self.env, reporter, documenter_options, lineno, self.state)
-        else:
-            params = DocumenterBridge(self.env, reporter, documenter_options, lineno)
+        # generate the output        
+        params = DocumenterBridge(self.env, reporter, documenter_options, lineno, self.state)        
         documenter = doccls(params, self.arguments[0])
         documenter.generate(more_content=self.content)
         if not params.result:
@@ -58,7 +53,7 @@ class MatlabAutodocDirective(AutodocDirective):
 
         # record all filenames as dependencies -- this will at least
         # partially make automatic invalidation possible
-        for fn in params.filename_set:
+        for fn in params.record_dependencies:
             self.state.document.settings.record_dependencies.add(fn)
 
         result = parse_generated_content(self.state, params.result, documenter)
