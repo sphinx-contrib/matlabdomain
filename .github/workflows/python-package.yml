@@ -34,4 +34,11 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --junitxml=junit/test-results.xml --cov=sphinxcontrib --cov-report=xml --cov-report=html
+    - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: 'junit/test-results.xml'        
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: 'junit/test-results.xml'        
         
