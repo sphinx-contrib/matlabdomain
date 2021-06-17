@@ -35,5 +35,5 @@ jobs:
     - name: Build test docs
       run: |
         cd tests/test_docs
-        sphinx-build -b html
+        sphinx-build -b html . _build
 
