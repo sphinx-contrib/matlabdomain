@@ -20,6 +20,7 @@ setup(
     maintainer_email='jorgen@cederberg.be',
     description='Sphinx "matlabdomain" extension',
     long_description=long_desc,
+    long_description_content_type='text/x-rst',
     zip_safe=False,
     classifiers=[
         'Development Status :: 4 - Beta',
