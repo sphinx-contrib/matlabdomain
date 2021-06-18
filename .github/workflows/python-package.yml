@@ -6,7 +6,8 @@ name: Test and publish Python 🐍 package 📦
 on: [push]
 
 jobs:
-  test-with-python-version:
+  test:
+    name: Run tests and build test documentation
     runs-on: ubuntu-latest
     strategy:
       matrix:

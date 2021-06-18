@@ -4,11 +4,16 @@
 sphinxcontrib-matlabdomain -- Sphinx domain for auto-documenting MATLAB
 =======================================================================
 
-This Sphinx contrib extension provides a `Sphinx
-<http://www.sphinx-doc.org/en/master/index.html>`_ domain for auto-documenting
-MATLAB source files, in similar manner as `sphinx.ext.autodoc
-<http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_. It works
-really well with `sphinx.ext.napoleon
+This extension provides a `Sphinx <http://www.sphinx-doc.org/en/master/index.html>`_
+*domain* for automatically generating doumentation from MATLAB source files.
+It is modelled after the `Python autodoc <http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_.
+
+The extension allows you to have your documentation and source files together
+and use the powerful `Sphinx <http://www.sphinx-doc.org/en/master/index.html>`_
+documentation tool. All your MATLAB file help text can be automatically
+included in the your documentation and output as for instance HTML.
+
+The extension works really well with `sphinx.ext.napoleon
 <https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html>`_.
 
 Recent `Changes <https://github.com/sphinx-contrib/matlabdomain/blob/master/CHANGES.rst>`_.
@@ -21,7 +26,7 @@ The Python package must be installed with::
 
    pip install -U sphinxcontrib-matlabdomain
 
-In general, the usage is the same as for documenting Python code. The package 
+In general, the usage is the same as for documenting Python code. The package
 requires Python >= 3.6 and Sphinx >= 4.0.0.
 
 For a Python 2 compatible version the package must be installed with::
