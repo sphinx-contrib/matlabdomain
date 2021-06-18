@@ -1,5 +1,17 @@
-.. image:: https://travis-ci.org/sphinx-contrib/matlabdomain.svg?branch=master
-    :target: https://travis-ci.org/sphinx-contrib/matlabdomain
+
+.. |travis-badge| image:: https://travis-ci.com/sphinx-contrib/matlabdomain.svg?branch=master
+   :scale: 100%
+   :align: middle
+   :target: https://travis-ci.org/sphinx-contrib/matlabdomain
+.. |github-action-badge| image:: httpps://github.com/sphinx-contrib/matlabdomain/actions/workflows/python-package.yml/badge.svg
+   :scale: 100%
+   :align: middle
+
++----------------+-----------------------+
+| Travis-CI      | |travis-badge|        |
++----------------+-----------------------+
++ Github Actions | |github-action-badge| |
++----------------+-----------------------+
 
 sphinxcontrib-matlabdomain -- Sphinx domain for auto-documenting MATLAB
 =======================================================================
