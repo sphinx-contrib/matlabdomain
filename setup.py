@@ -9,7 +9,10 @@ requires = ['Sphinx>=4.0.0', 'Pygments>=2.0.1', 'future>=0.16.0']
 
 setup(
     name='sphinxcontrib-matlabdomain',
-    use_scm_version=True,
+    use_scm_version={
+        'version_scheme': 'guess-next-dev',
+        'local_scheme': 'no-local-version'
+    },
     setup_requires=['setuptools_scm<6.0.0'],
     url='https://github.com/sphinx-contrib/matlabdomain',
     download_url='http://pypi.python.org/pypi/sphinxcontrib-matlabdomain',
