@@ -3,7 +3,7 @@
    :scale: 100%
    :align: middle
    :target: https://travis-ci.org/sphinx-contrib/matlabdomain
-.. |github-action-badge| image:: httpps://github.com/sphinx-contrib/matlabdomain/actions/workflows/python-package.yml/badge.svg
+.. |github-action-badge| image:: https://github.com/sphinx-contrib/matlabdomain/actions/workflows/python-package.yml/badge.svg
    :scale: 100%
    :align: middle
 
