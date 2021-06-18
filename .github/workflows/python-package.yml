@@ -6,11 +6,11 @@ name: Test and publish Python 🐍 package 📦
 on: [push]
 
 jobs:
-  test:
+  test-with-python-version:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9, 3.10]
+        python-version: [3.6, 3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
