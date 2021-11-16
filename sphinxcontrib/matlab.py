@@ -824,5 +824,5 @@ def setup(app):
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
 
-    return {'paralell_read_safe':False}
+    return {'parallel_read_safe':False}
     
