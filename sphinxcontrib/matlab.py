@@ -25,6 +25,12 @@ from sphinx.directives import ObjectDescription
 from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, GroupedField, TypedField
 import sphinx.util
+import importlib
+
+try:
+    __version__ = importlib.metadata.version("sphinxcontrib-matlabdomain")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = '0.0.0'
 
 logger = sphinx.util.logging.getLogger('matlab-domain')
 
@@ -737,7 +743,7 @@ class MATLABDomain(Domain):
         elif len(matches) > 1:
             logger.warning('[sphinxcontrib-matlabdomain] more than one target found for cross-reference %r: %s',
                            target, ', '.join(match[0] for match in matches), type='ref', subtype='python', location=node)
-                
+
         name, obj = matches[0]
 
         if obj[1] == 'module':
@@ -824,5 +830,5 @@ def setup(app):
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
 
-    return {'parallel_read_safe':False}
-    
+    return {'parallel_read_safe':False,
+            'version': '.'.join(__version__.split('.')[:3])}

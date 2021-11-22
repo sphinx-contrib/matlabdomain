@@ -1,3 +1,13 @@
+sphinxcontrib-matlabdomain-0.12.1 (2021-11-22)
+==============================================
+
+*  Additons to extension metadata:
+
+  * Add ``parallel_safe_false = false`` to suppress warnings. Fixed with
+    `PR 124 https://github.com/sphinx-contrib/matlabdomain/pull/124`.
+  * Add ``version`` field.
+
+
 sphinxcontrib-matlabdomain-0.12.0 (2021-06-12)
 ==============================================
 
