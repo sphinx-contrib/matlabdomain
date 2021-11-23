@@ -25,12 +25,16 @@ from sphinx.directives import ObjectDescription
 from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, GroupedField, TypedField
 import sphinx.util
-import importlib
 
 try:
-    __version__ = importlib.metadata.version("sphinxcontrib-matlabdomain")
-except importlib.metadata.PackageNotFoundError:
-    __version__ = '0.0.0'
+    from importlib import metadata
+except ImportError:
+    import importlib_metadata as metadata
+
+try:
+    __version__ = metadata.version("sphinxcontrib-matlabdomain")
+except metadata.PackageNotFoundError:
+    pass
 
 logger = sphinx.util.logging.getLogger('matlab-domain')
 
