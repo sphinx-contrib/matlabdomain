@@ -26,18 +26,11 @@ from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, GroupedField, TypedField
 import sphinx.util
 
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata
+import pbr.version
 
-try:
-    __version__ = metadata.version("sphinxcontrib-matlabdomain")
-except metadata.PackageNotFoundError:
-    pass
+__version__ = pbr.version.VersionInfo("sphinxcontrib-matlabdomain").version_string()
 
 logger = sphinx.util.logging.getLogger('matlab-domain')
-
 
 # REs for MATLAB signatures
 mat_sig_re = re.compile(
@@ -835,4 +828,4 @@ def setup(app):
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
 
     return {'parallel_read_safe':False,
-            'version': '.'.join(__version__.split('.')[:3])}
+            'version': __version__}
