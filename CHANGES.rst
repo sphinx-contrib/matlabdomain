@@ -1,3 +1,14 @@
+sphinxcontrib-matlabdomain-0.13.0 (2022-02-13)
+==============================================
+
+* Explicit set ``parallel_read_safe`` to ``False`` to avoid error in parallel
+  builds.
+* Fixed `Issue 125 <https://github.com/sphinx-contrib/matlabdomain/issues/125>`_.
+  Finally, we are able to support *long* docstrings for properties. It works as
+  the same as MATLAB. Comment lines above a ``property`` are now treated as
+  docstrings.
+
+
 sphinxcontrib-matlabdomain-0.12.0 (2021-06-12)
 ==============================================
 
