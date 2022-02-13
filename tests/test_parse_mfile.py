@@ -559,6 +559,17 @@ def test_ClassWithStringEllipsis():
     assert obj.docstring == " Contains ellipsis in string\n"
 
 
+def test_ClassLongProperty():
+    mfile = os.path.join(TESTDATA_ROOT, 'ClassLongProperty.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassLongProperty', 'test_data')
+    assert obj.name == 'ClassLongProperty'
+    assert obj.docstring == " test class property with long docstring\n\n " \
+            ":param a: the input to :class:`ClassExample`\n"
+    assert obj.properties['a']['docstring'] == " short description"
+    assert obj.properties['b']['docstring'] == " A property with a long " \
+        "documentation\n This is the second line\n And a third\n"
+    assert obj.properties['c']['docstring'] is None
+
 
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])

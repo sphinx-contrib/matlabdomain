@@ -71,7 +71,7 @@ def test_module(mod):
                       'ClassWithUndocumentedMembers', 'ClassWithGetterSetter',
                       'ClassWithDoubleQuotedString', 'ClassWithDummyArguments',
                       'ClassWithStrings', 'ClassWithFunctionArguments', 'ClassWithMethodsWithSpaces',
-                      'ClassContainingParfor', 'ClassWithStringEllipsis'}
+                      'ClassContainingParfor', 'ClassWithStringEllipsis', 'ClassLongProperty'}
     assert all_items == expected_items
     assert mod.getter('__name__') in modules
 
