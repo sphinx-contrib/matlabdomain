@@ -149,6 +149,10 @@ Example: given the following MATLAB source in folder ``test_data``::
         %% some comments
         properties
             x % a property
+
+            % Multiple lines before a
+            % property can also be used
+            y
         end
         methods
             function h = MyHandleClass(x)
