@@ -763,6 +763,16 @@ class MATLABDomain(Domain):
         for refname, (docname, type) in self.data['objects'].items():
             yield (refname, refname, type, docname, refname, 1)
 
+    def resolve_any_xref(self, env, fromdocname, builder, target, node, contnode):
+        ret = []
+        for role in self.roles:
+            matrole = f'mat:{role}'
+            element = self.resolve_xref(env, fromdocname, builder,
+                                        matrole, target, node, contnode)
+            if element:
+                ret.append((matrole, element))
+        return ret
+
 
 def setup(app):
     app.add_domain(MATLABDomain)
