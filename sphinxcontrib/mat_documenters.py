@@ -26,7 +26,7 @@ from sphinx.locale import _
 from sphinx.pycode import PycodeError
 from sphinx.ext.autodoc import py_ext_sig_re as mat_ext_sig_re, \
     identity, Options, ALL, INSTANCEATTR, members_option, \
-    members_set_option, SUPPRESS, annotation_option, bool_option, \
+    SUPPRESS, annotation_option, bool_option, \
     Documenter as PyDocumenter, \
     ModuleDocumenter as PyModuleDocumenter, \
     FunctionDocumenter as PyFunctionDocumenter, \
@@ -163,9 +163,8 @@ class MatlabDocumenter(PyDocumenter):
             sourcename = 'docstring of %s' % self.fullname
 
         # add content from docstrings
-        if not no_docstring:
-            encoding = self.analyzer and self.analyzer.encoding
-            docstrings = self.get_doc(encoding)
+        if not no_docstring:            
+            docstrings = self.get_doc()
             if not docstrings:
                 # append at least a dummy docstring, so that the event
                 # autodoc-process-docstring is fired and can add some
@@ -657,7 +656,7 @@ class MatDocstringSignatureMixin(object):
     """
 
     def _find_signature(self, encoding=None):
-        docstrings = MatlabDocumenter.get_doc(self, encoding)
+        docstrings = MatlabDocumenter.get_doc(self)
         if len(docstrings) != 1:
             return
         doclines = docstrings[0]
@@ -673,7 +672,7 @@ class MatDocstringSignatureMixin(object):
         if not self.objpath or base != self.objpath[-1]:
             return
         # re-prepare docstring to ignore indentation after signature
-        docstrings = MatlabDocumenter.get_doc(self, encoding)
+        docstrings = MatlabDocumenter.get_doc(self)
         doclines = docstrings[0]
         # ok, now jump over remaining empty lines and set the remaining
         # lines as the new doclines
@@ -687,7 +686,7 @@ class MatDocstringSignatureMixin(object):
         lines = getattr(self, '__new_doclines', None)
         if lines is not None:
             return [lines]
-        return MatlabDocumenter.get_doc(self, encoding)
+        return MatlabDocumenter.get_doc(self)
 
     def format_signature(self):
         if self.args is None and self.env.config.autodoc_docstring_signature:
@@ -749,7 +748,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         'members': members_option, 'undoc-members': bool_option,
         'noindex': bool_option, 'inherited-members': bool_option,
         'show-inheritance': bool_option, 'member-order': identity,
-        'exclude-members': members_set_option, 'special-members': members_option,
+        'exclude-members': members_option, 'special-members': members_option,
         'private-members': members_option, 'protected-members': members_option,
         'hidden-members': members_option,
         'friend-members': members_option,
@@ -835,7 +834,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                 init_doc.objpath = [self.object.name]
                 init_doc._find_signature()  # this effects to get_doc() result
                 initdocstring = '\n'.join(
-                    ['\n'.join(l) for l in init_doc.get_doc(encoding)])
+                    ['\n'.join(l) for l in init_doc.get_doc()])
             else:
                 initdocstring = self.get_attr(
                     self.get_attr(self.object, self.object.name, None),
