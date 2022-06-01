@@ -1,3 +1,9 @@
+sphinxcontrib-matlabdomain-0.14.0 (2022-01-06)
+==============================================
+
+* Sphinx >= 5.0.0 is now supported. Fixed errors due to `deprecated Sphinx API`_.
+
+
 sphinxcontrib-matlabdomain-0.13.0 (2022-02-13)
 ==============================================
 
