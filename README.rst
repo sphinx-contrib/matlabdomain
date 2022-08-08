@@ -72,7 +72,7 @@ can be set to ``mat``.
 Roles and Directives
 --------------------
 
-Please see `Sphinx Domains <http://sphinx-doc.org/domains.html>`_ and
+Please see `Sphinx Domains <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html>`_ and
 `sphinx.ext.autodoc
 <http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_ for
 documentation on the use of roles and directives. MATLAB code can be documented
