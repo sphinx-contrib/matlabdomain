@@ -1,6 +1,6 @@
 -e .
+wheel
 pytest
-pylint
 flake8
 sphinx_rtd_theme
 sphinxcontrib-napoleon
