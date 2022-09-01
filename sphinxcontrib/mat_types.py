@@ -946,8 +946,8 @@ class MatClass(MatMixin, MatObject):
                                 self.properties[prop_name]['docstring'] = docstring
                                 idx += 1
                         else:
-                            msg = '[sphinxcontrib-matlabdomain] Expected property - got %s' % str(self.tokens[idx])
-                            logger.warning(msg)
+                            msg = '[sphinxcontrib-matlabdomain] Expected property in %s.%s - got %s'
+                            logger.warning(msg, self.module, self.name, str(self.tokens[idx]))
                             return
                         idx += self._blanks(idx)  # skip blanks
                         # =========================================================
