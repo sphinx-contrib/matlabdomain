@@ -357,11 +357,14 @@ def test_ClassWithBuiltinProperties():
                                           'test_data')
     assert obj.name == 'ClassWithBuiltinProperties'
     assert obj.docstring == " Class with properties that overload a builtin\n"
+    assert set(obj.properties) == set(['omega', 'alpha', 'gamma', 'beta'])
     assert obj.properties['omega']['docstring'] == " a property"
     assert obj.properties['alpha']['docstring'] == (
                                         " a property overloading a builtin")
     assert obj.properties['gamma']['docstring'] == (
                         " a property overloading a builtin with validation")
+    assert obj.properties['beta']['docstring'] == (
+                                            " another overloaded property")
 
 
 # Fails when running with other test files. Warnings are already logged.
