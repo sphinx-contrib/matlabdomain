@@ -63,7 +63,7 @@ def test_module(mod):
                       'script_with_comment_header_4',
                       'PropTypeOld', 'ValidateProps', 'ClassWithMethodAttributes', 'ClassWithPropertyAttributes',
                       'ClassWithoutIndent', 'f_with_utf8', 'f_with_latin_1', 'f_with_name_mismatch',
-                      'ClassWithBuiltinOverload', 'ClassWithFunctionVariable',
+                      'ClassWithBuiltinOverload', 'ClassWithBuiltinProperties', 'ClassWithFunctionVariable',
                       'ClassWithErrors', 'f_inputargs_error',
                       'ClassWithAttributes', 'ClassWithLineContinuation',
                       'ClassWithUnknownAttributes', 'ClassWithNameMismatch',

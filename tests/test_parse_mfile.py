@@ -350,6 +350,20 @@ def test_ClassWithBuiltinOverload():
     assert obj.docstring == " Class that overloads a builtin\n"
 
 
+def test_ClassWithBuiltinProperties():
+    mfile = os.path.join(DIRNAME, 'test_data', 'ClassWithBuiltinProperties.m')
+    obj = mat_types.MatObject.parse_mfile(mfile,
+                                          'ClassWithBuiltinProperties',
+                                          'test_data')
+    assert obj.name == 'ClassWithBuiltinProperties'
+    assert obj.docstring == " Class with properties that overload a builtin\n"
+    assert obj.properties['omega']['docstring'] == " a property"
+    assert obj.properties['alpha']['docstring'] == (
+                                        " a property overloading a builtin")
+    assert obj.properties['gamma']['docstring'] == (
+                        " a property overloading a builtin with validation")
+
+
 # Fails when running with other test files. Warnings are already logged.
 @pytest.mark.xfail
 def test_f_with_name_mismatch(caplog):

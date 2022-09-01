@@ -896,12 +896,33 @@ class MatClass(MatMixin, MatObject):
                             
                         # subtype of Name EG Name.Builtin used as Name
                         elif self.tokens[idx][0] in Token.Name.subtypes:  # @UndefinedVariable
+                        
                             prop_name = self.tokens[idx][1]
                             warn_msg = ' '.join(['[%s] WARNING %s.%s.%s is',
                                                  'a Builtin Name'])
                             logger.debug(warn_msg, MAT_DOM, self.module, self.name, prop_name)
                             self.properties[prop_name] = {'attrs': attr_dict}
                             idx += 1
+                            
+                            # skip size, class and functions specifiers
+                            # TODO: Parse old and new style property extras
+                            while self._tk_eq(idx, (Token.Punctuation, '@')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, '(')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, ')')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, ',')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, ':')) or \
+                                  self.tokens[idx][0] == Token.Literal.Number.Integer or \
+                                  self._tk_eq(idx, (Token.Punctuation, '{')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, '}')) or \
+                                  self._tk_eq(idx, (Token.Punctuation, '.')) or \
+                                  self.tokens[idx][0] == Token.Literal.String or \
+                                  self.tokens[idx][0] == Token.Name or \
+                                  self.tokens[idx][0] == Token.Text:
+                                idx += 1
+                                
+                            if self._tk_eq(idx, (Token.Punctuation, ';')):
+                                continue
+                            
                         elif self._tk_eq(idx, (Token.Keyword, 'end')):
                             idx += 1
                             break
