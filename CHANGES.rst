@@ -1,10 +1,18 @@
-sphinxcontrib-matlabdomain-0.14.0 (2022-01-06)
+sphinxcontrib-matlabdomain-0.14.1 (2022-09-02)
+==============================================
+
+* Fix parsing of overloaded class parameters with validation functions.
+  `Issue 145 <https://github.com/sphinx-contrib/matlabdomain/issues/145>`_.
+* Fix link in readme file.
+
+
+sphinxcontrib-matlabdomain-0.14.0 (2022-06-01)
 ==============================================
 
 * Sphinx >= 5.0.0 is now supported. Fixed errors due to `deprecated Sphinx API`_.
 * Fixed `https://github.com/sphinx-contrib/matlabdomain/issues/134`_.
   JupyterBook complains if a domain doesn't support resolve_any_ref_.
- 
+
 .. _`resolve_any_ref`: https://www.sphinx-doc.org/en/master/extdev/domainapi.html?highlight=resolve_any_xref#sphinx.domains.Domain.resolve_any_xref
 
 
