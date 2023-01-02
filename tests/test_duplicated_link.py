@@ -8,7 +8,6 @@
     :copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
-from __future__ import unicode_literals
 import pickle
 import os
 import sys
@@ -37,12 +36,12 @@ def test_with_prefix(make_app, rootdir):
 
     assert isinstance(content[0], docutils.nodes.section)
     section = content[0][7]
-    assert section.astext() == 'NiceFiniteGroup\n\n\n\nclass +replab.NiceFiniteGroup\n\nBases: +replab.FiniteGroup\n\nA nice finite group is a finite group equipped with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv'    
+    assert section.astext() == 'NiceFiniteGroup\n\n\n\nclass +replab.NiceFiniteGroup\n\nBases: +replab.FiniteGroup\n\nA nice finite group is a finite group equipped with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv'
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_without_prefix(make_app, rootdir):
-    srcdir = rootdir / 'roots' / 'test_duplicate_link'    
+    srcdir = rootdir / 'roots' / 'test_duplicate_link'
     confdict = { 'matlab_keep_package_prefix' : False }
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
@@ -51,7 +50,7 @@ def test_without_prefix(make_app, rootdir):
 
     assert isinstance(content[0], docutils.nodes.section)
     section = content[0][7]
-    assert section.astext() == 'NiceFiniteGroup\n\n\n\nclass replab.NiceFiniteGroup\n\nBases: replab.FiniteGroup\n\nA nice finite group is a finite group equipped with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv'    
+    assert section.astext() == 'NiceFiniteGroup\n\n\n\nclass replab.NiceFiniteGroup\n\nBases: replab.FiniteGroup\n\nA nice finite group is a finite group equipped with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv'
 
 
 if __name__ == '__main__':

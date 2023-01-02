@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
 from sphinxcontrib import mat_documenters as doc
 from sphinxcontrib.mat_types import modules
 import os
@@ -151,7 +150,6 @@ def test_class_method(mod):
     assert mymethod.args[-1] == 'b'
     assert mymethod.retv == ['c']
     assert mymethod.docstring == " a method in :class:`ClassExample`\n\n :param b: an input to :meth:`mymethod`\n"
-    return cls_meth, constructor, mymethod
 
 
 def test_submodule_class(mod):

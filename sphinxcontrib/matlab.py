@@ -8,7 +8,6 @@
     :copyright: Copyright 2007-2011 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
-from __future__ import absolute_import, unicode_literals
 from . import mat_documenters as doc
 from . import mat_directives
 
@@ -737,7 +736,7 @@ class MATLABDomain(Domain):
         elif len(matches) > 1:
             logger.warning('[sphinxcontrib-matlabdomain] more than one target found for cross-reference %r: %s',
                            target, ', '.join(match[0] for match in matches), type='ref', subtype='python', location=node)
-                
+
         name, obj = matches[0]
 
         if obj[1] == 'module':
@@ -835,4 +834,3 @@ def setup(app):
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
 
     return {'parallel_read_safe':False}
-    

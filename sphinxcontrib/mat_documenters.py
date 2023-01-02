@@ -8,8 +8,6 @@
     :copyright: Copyright 2014 Mark Mikofski
     :license: BSD, see LICENSE for details.
 """
-from __future__ import unicode_literals
-
 from .mat_types import (MatModule, MatObject, MatFunction, MatClass, MatProperty,
                         MatMethod, MatScript, MatException, MatModuleAnalyzer,
                         MatApplication, modules)
@@ -69,7 +67,7 @@ class MatlabDocumenter(PyDocumenter):
         try:
             explicit_modname, path, base, args, retann = \
                  mat_ext_sig_re.match(self.name).groups()
-        except AttributeError:            
+        except AttributeError:
             self.directive.warn('invalid signature for auto%s (%r)' %
                                 (self.objtype, self.name))
             return False
@@ -135,7 +133,7 @@ class MatlabDocumenter(PyDocumenter):
                 errmsg = '[sphinxcontrib-matlabdomain]: failed to import %s %r' % \
                          (self.objtype, self.fullname)
             errmsg += '; the following exception was raised:\n%s' % \
-                      traceback.format_exc()            
+                      traceback.format_exc()
             logger.warning(errmsg)
             self.env.note_reread()
             return False
@@ -163,7 +161,7 @@ class MatlabDocumenter(PyDocumenter):
             sourcename = 'docstring of %s' % self.fullname
 
         # add content from docstrings
-        if not no_docstring:            
+        if not no_docstring:
             docstrings = self.get_doc()
             if not docstrings:
                 # append at least a dummy docstring, so that the event
