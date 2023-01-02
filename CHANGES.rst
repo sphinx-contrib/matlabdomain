@@ -3,7 +3,7 @@ sphinxcontrib-matlabdomain-0.15.0 (2023-01-02)
 
 * Pygments >= 2.14.0 is now supported. Pygments tokenization changed to return
   ``Token.Text.WhiteSpace`` for newline characters. This resulted in a infinite
-  loop when parsing through MATLAB files.
+  loop when parsing MATLAB files.
 
 
 sphinxcontrib-matlabdomain-0.14.1 (2022-09-02)
