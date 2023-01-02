@@ -477,7 +477,8 @@ class MatMixin(object):
         :type idx: int
         """
         idx0 = idx  # original index
-        while (self.tokens[idx][0] is Token.Text and
+        while ((self.tokens[idx][0] is Token.Text or
+                self.tokens[idx][0] is Token.Text.WhiteSpace) and
                self.tokens[idx][1] in [' ', '\n', '\t']):
             idx += 1
         return idx - idx0  # whitespace
@@ -829,44 +830,44 @@ class MatClass(MatMixin, MatObject):
                                 idx += whitespace
                             else:
                                 idx += 1
-                                
+
                         # =========================================================
                         # long docstring before property
                         if self.tokens[idx][0] is Token.Comment:
                             # docstring
                             docstring = ''
-                            
+
                             # Collect comment lines
                             while self.tokens[idx][0] is Token.Comment:
                                 docstring += self.tokens[idx][1].lstrip('%')
-                                idx += 1 
+                                idx += 1
                                 idx += self._blanks(idx)
-                                
+
                                 try:
                                     # Check if end of line was reached
                                     if self.tokens[idx][0] == Token.Text and self.tokens[idx][1] == '\n':
                                         docstring += '\n'
                                         idx += 1
                                         idx += self._blanks(idx)
-                                        
-                                    # Check if variable name is next                                        
+
+                                    # Check if variable name is next
                                     if self.tokens[idx][0] is Token.Name:
                                         prop_name = self.tokens[idx][1]
                                         self.properties[prop_name] = {'attrs': attr_dict}
                                         self.properties[prop_name]['docstring'] = docstring
                                         break
-                                    
-                                    # If there is an empty line at the end of 
+
+                                    # If there is an empty line at the end of
                                     # the comment: discard it
                                     elif self.tokens[idx][0] == Token.Text and self.tokens[idx][1] == '\n':
                                         docstring = ''
                                         idx += self._whitespace(idx)
                                         break
-                                    
+
                                 except IndexError:
                                     # EOF reached, quit gracefully
-                                    break    
-                            
+                                    break
+
                         # with "%:" directive trumps docstring after property
                         if self.tokens[idx][0] is Token.Name:
                             prop_name = self.tokens[idx][1]
@@ -890,20 +891,20 @@ class MatClass(MatMixin, MatObject):
                                   self.tokens[idx][0] == Token.Name or \
                                   self.tokens[idx][0] == Token.Text:
                                 idx += 1
-                                
+
                             if self._tk_eq(idx, (Token.Punctuation, ';')):
                                 continue
-                            
+
                         # subtype of Name EG Name.Builtin used as Name
                         elif self.tokens[idx][0] in Token.Name.subtypes:  # @UndefinedVariable
-                        
+
                             prop_name = self.tokens[idx][1]
                             warn_msg = ' '.join(['[%s] WARNING %s.%s.%s is',
                                                  'a Builtin Name'])
                             logger.debug(warn_msg, MAT_DOM, self.module, self.name, prop_name)
                             self.properties[prop_name] = {'attrs': attr_dict}
                             idx += 1
-                            
+
                             # skip size, class and functions specifiers
                             # TODO: Parse old and new style property extras
                             while self._tk_eq(idx, (Token.Punctuation, '@')) or \
@@ -919,10 +920,10 @@ class MatClass(MatMixin, MatObject):
                                   self.tokens[idx][0] == Token.Name or \
                                   self.tokens[idx][0] == Token.Text:
                                 idx += 1
-                                
+
                             if self._tk_eq(idx, (Token.Punctuation, ';')):
                                 continue
-                            
+
                         elif self._tk_eq(idx, (Token.Keyword, 'end')):
                             idx += 1
                             break
@@ -938,7 +939,7 @@ class MatClass(MatMixin, MatObject):
                                     self.properties[prop_name]['default'] = None
                                 if 'docstring' not in self.properties[prop_name].keys():
                                     self.properties[prop_name]['docstring'] = None
-                                                                         
+
                                 continue
                             elif self.tokens[idx][0] is Token.Comment:
                                 docstring = self.tokens[idx][1].lstrip('%')
@@ -1008,7 +1009,7 @@ class MatClass(MatMixin, MatObject):
                         elif self.tokens[idx][0] is Token.Comment:
                             # skip this comment
                             idx += 1
-                                
+
                         idx += self._whitespace(idx)
                     idx += 1
                 # =================================================================

@@ -151,7 +151,6 @@ def test_class_method(mod):
     assert mymethod.args[-1] == 'b'
     assert mymethod.retv == ['c']
     assert mymethod.docstring == " a method in :class:`ClassExample`\n\n :param b: an input to :meth:`mymethod`\n"
-    return cls_meth, constructor, mymethod
 
 
 def test_submodule_class(mod):
