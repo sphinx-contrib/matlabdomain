@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
 from sphinxcontrib import mat_types
 import os
 import pytest
@@ -393,7 +392,7 @@ def test_f_with_string_ellipsis():
     mfile = os.path.join(DIRNAME, 'test_data', 'f_with_string_ellipsis.m')
     obj = mat_types.MatObject.parse_mfile(mfile, 'f_with_string_ellipsis', 'test_data')
     assert obj.name == 'f_with_string_ellipsis'
-    assert obj.docstring == " A function with a string with ellipsis\n"    
+    assert obj.docstring == " A function with a string with ellipsis\n"
 
 
 def test_ClassWithFunctionVariable():
@@ -554,7 +553,7 @@ def test_ClassWithMethodsWithSpaces():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithMethodsWithSpaces', 'test_data')
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == 'ClassWithMethodsWithSpaces'
-    assert set(obj.methods.keys()) == set(['static_method'])       
+    assert set(obj.methods.keys()) == set(['static_method'])
     assert obj.docstring == " Class with methods that have space after the function name.\n"
     assert obj.methods['static_method'].attrs == {'Static': True}
 
@@ -563,7 +562,7 @@ def test_ClassContainingParfor():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassContainingParfor', 'test_data')
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == 'ClassContainingParfor'
-    assert set(obj.methods.keys()) == set(['test'])       
+    assert set(obj.methods.keys()) == set(['test'])
     assert obj.docstring == " Parfor is a keyword\n"
 
 
@@ -572,7 +571,7 @@ def test_ClassWithStringEllipsis():
     obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithStringEllipsis', 'test_data')
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == 'ClassWithStringEllipsis'
-    assert set(obj.methods.keys()) == set(['test'])       
+    assert set(obj.methods.keys()) == set(['test'])
     assert obj.docstring == " Contains ellipsis in string\n"
 
 

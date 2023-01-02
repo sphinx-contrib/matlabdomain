@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
 from sphinxcontrib import mat_documenters as doc
 from sphinxcontrib.mat_types import modules
 import os

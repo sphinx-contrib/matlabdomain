@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from sphinx.ext.autodoc.directive import AutodocDirective, DummyOptionSpec, DocumenterBridge
 from sphinx.ext.autodoc.directive import process_documenter_options, parse_generated_content
 import sphinx.util
@@ -42,8 +41,8 @@ class MatlabAutodocDirective(AutodocDirective):
                          (self.name, exc), location=(source, lineno))
             return []
 
-        # generate the output        
-        params = DocumenterBridge(self.env, reporter, documenter_options, lineno, self.state)        
+        # generate the output
+        params = DocumenterBridge(self.env, reporter, documenter_options, lineno, self.state)
         documenter = doccls(params, self.arguments[0])
         documenter.generate(more_content=self.content)
         if not params.result:
