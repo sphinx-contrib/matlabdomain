@@ -477,7 +477,7 @@ class MatMixin(object):
         """
         idx0 = idx  # original index
         while ((self.tokens[idx][0] is Token.Text or
-                self.tokens[idx][0] is Token.Text.WhiteSpace) and
+                self.tokens[idx][0] is Token.Text.Whitespace) and
                self.tokens[idx][1] in [' ', '\n', '\t']):
             idx += 1
         return idx - idx0  # whitespace
@@ -494,6 +494,10 @@ class MatMixin(object):
                self.tokens[idx][1] in [' ', '\t']):
             idx += 1
         return idx - idx0  # indentation
+
+    def _is_newline(self, idx):
+        """ Returns true if the token at index is a newline """
+        return self.tokens[idx][0] in (Token.Text, Token.Text.Whitespace) and self.tokens[idx][1]=='\n'
 
 
 def skip_whitespace(tks):
@@ -624,7 +628,7 @@ class MatFunction(MatObject):
                     wht = tks.pop()  # We expect a newline
                 except IndexError:
                     break
-                if wht[0] == Token.Text and wht[1] == '\n':
+                if wht[0] in (Token.Text, Token.Text.Whitespace) and wht[1] == '\n':
                     self.docstring += '\n'
                 # Skip whitespace
                 try:
@@ -767,15 +771,15 @@ class MatClass(MatMixin, MatObject):
             if self._tk_eq(idx, (Token.Operator, '<')):
                 idx += 1
                 # newline terminates superclasses
-                while self._tk_ne(idx, (Token.Text, '\n')):
+                while not self._is_newline(idx):
                     idx += self._blanks(idx)  # skip blanks
                     # concatenate base name
                     base_name = ''
                     while not self._whitespace(idx):
                         base_name += self.tokens[idx][1]
                         idx += 1
-                    # if newline, don't increment index
-                    if self._tk_ne(idx, (Token.Text, '\n')):
+                    # If it's a newline, we are done parsing.
+                    if not self._is_newline(idx):
                         idx += 1
                     if base_name:
                         self.bases.append(base_name)
@@ -785,7 +789,7 @@ class MatClass(MatMixin, MatObject):
                         idx += 1
                 idx += 1  # end of super classes
             # newline terminates classdef signature
-            elif self._tk_eq(idx, (Token.Text, '\n')):
+            elif self._is_newline(idx):
                 idx += 1  # end of classdef signature
             # =====================================================================
             # docstring
@@ -795,7 +799,7 @@ class MatClass(MatMixin, MatObject):
                 self.docstring += self.tokens[idx][1].lstrip('%')
                 idx += 1
                 # append newline to docstring
-                if self._tk_eq(idx, (Token.Text, '\n')):
+                if self._is_newline(idx):
                     self.docstring += self.tokens[idx][1]
                     idx += 1
                 # skip tab
@@ -844,7 +848,7 @@ class MatClass(MatMixin, MatObject):
 
                                 try:
                                     # Check if end of line was reached
-                                    if self.tokens[idx][0] == Token.Text and self.tokens[idx][1] == '\n':
+                                    if self._is_newline(idx):
                                         docstring += '\n'
                                         idx += 1
                                         idx += self._blanks(idx)
@@ -858,7 +862,7 @@ class MatClass(MatMixin, MatObject):
 
                                     # If there is an empty line at the end of
                                     # the comment: discard it
-                                    elif self.tokens[idx][0] == Token.Text and self.tokens[idx][1] == '\n':
+                                    elif self._is_newline(idx):
                                         docstring = ''
                                         idx += self._whitespace(idx)
                                         break
@@ -931,7 +935,7 @@ class MatClass(MatMixin, MatObject):
                             idx += 1
                             # A comment might come after semi-colon
                             idx += self._blanks(idx)
-                            if self._tk_eq(idx, (Token.Text, '\n')):
+                            if self._is_newline(idx):
                                 idx += 1
                                 # Property definition is finished; add missing values
                                 if 'default' not in self.properties[prop_name].keys():
@@ -962,7 +966,7 @@ class MatClass(MatMixin, MatObject):
                             # keep reading until newline or comment
                             # only if all punctuation pairs are closed
                             # and comment is **not** continuation ellipsis
-                            while ((self._tk_ne(idx, (Token.Text, '\n')) and
+                            while ((not self._is_newline(idx) and
                                     self.tokens[idx][0] is not Token.Comment) or
                                    punc_ctr > 0 or
                                    (self.tokens[idx][0] is Token.Comment and
@@ -982,11 +986,11 @@ class MatClass(MatMixin, MatObject):
                                       token[1].startswith('...')):
                                     idx += 1  # skip ellipsis comments
                                     # include newline which should follow comment
-                                    if self._tk_eq(idx, (Token.Text, '\n')):
+                                    if self._is_newline(idx):
                                         default += '\n'
                                         idx += 1
                                     continue
-                                elif self._tk_eq(idx - 1, (Token.Text, '\n')):
+                                elif self._is_newline(idx - 1):
                                     idx += self._blanks(idx)
                                     continue
                                 default += token[1]
@@ -1315,7 +1319,7 @@ class MatScript(MatObject):
                 wht = tks.pop()  # We expect a newline
             except IndexError:
                 break
-            if wht[0] == Token.Text and wht[1] == '\n':
+            if wht[0] in (Token.Text, Token.Text.Whitespace) and wht[1] == '\n':
                 self.docstring += '\n'
             # Skip whitespace
             try:
