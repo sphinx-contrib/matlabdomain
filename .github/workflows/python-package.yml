@@ -8,6 +8,7 @@ on: [push, pull_request]
 jobs:
   test:
     name: Run tests and build test documentation
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     strategy:
       matrix:
