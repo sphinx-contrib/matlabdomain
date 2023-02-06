@@ -281,6 +281,17 @@ A MATLAB class where one method, has a dummy argument as first argument.
 .. autoclass:: ClassWithDummyArguments
     :members:
 
+ClassWithGetMethod
+++++++++++++++++++
+
+A MATLAB class with a nmethod named ``get``.
+
+.. autoclass:: ClassWithGetMethod
+   :show-inheritance:
+   :members:
+   :undoc-members:
+
+
 FunctionWithNameMismatch
 ++++++++++++++++++++++++
 
