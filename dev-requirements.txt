@@ -1,5 +1,5 @@
 -e .
 pytest
-pylint
+pytest-cov
 flake8
 sphinxcontrib-napoleon
