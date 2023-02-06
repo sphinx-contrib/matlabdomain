@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.15.1 (2023-02-06)
+==============================================
+
+* Fix being unable to document methods with name ``get``.
+  `Issue 151 <https://github.com/sphinx-contrib/matlabdomain/issues/151>`_.
+
+
 sphinxcontrib-matlabdomain-0.15.0 (2023-01-02)
 ==============================================
 
