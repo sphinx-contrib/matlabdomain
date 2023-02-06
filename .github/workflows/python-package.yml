@@ -25,6 +25,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest pytest-cov
+        pip install sphinxcontrib-applehelp==1.0.2 sphinxcontrib-serializinghtml sphinxcontrib-devhelp sphinxcontrib-htmlhelp sphinxcontrib-jsmath sphinxcontrib-qthelp
         python setup.py install
     - name: Lint with flake8
       run: |
