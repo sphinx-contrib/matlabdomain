@@ -70,7 +70,7 @@ def test_module(mod):
                       'ClassWithUndocumentedMembers', 'ClassWithGetterSetter',
                       'ClassWithDoubleQuotedString', 'ClassWithDummyArguments',
                       'ClassWithStrings', 'ClassWithFunctionArguments', 'ClassWithMethodsWithSpaces',
-                      'ClassContainingParfor', 'ClassWithStringEllipsis', 'ClassLongProperty'}
+                      'ClassContainingParfor', 'ClassWithStringEllipsis', 'ClassLongProperty', 'ClassWithGetMethod'}
     assert all_items == expected_items
     assert mod.getter('__name__') in modules
 
@@ -226,6 +226,18 @@ def test_package_function(mod):
     assert func.retv == ['o1', 'o2', 'o3']
     assert func.args == ['a1', 'a2']
     assert func.docstring == " a fun function\n\n :param a1: the first input\n :param a2: another input\n :returns: ``[o1, o2, o3]`` some outputs\n"
+
+
+def test_class_with_get_method(mod):
+    the_class = mod.getter('ClassWithGetMethod')
+    assert isinstance(the_class, doc.MatClass)
+    assert the_class.getter('__name__') == 'ClassWithGetMethod'
+    assert the_class.docstring == " Class with a method named get\n"
+    the_method = the_class.getter('get')
+    assert isinstance(the_method, doc.MatMethod)
+    assert the_method.getter('__name__') == 'get'        
+    assert the_method.retv == ['varargout']
+    assert the_method.docstring.startswith(" Gets the numbers 1-n and fills in the outputs with them")
 
 
 if __name__ == '__main__':

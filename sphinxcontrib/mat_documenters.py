@@ -938,9 +938,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         ret = MatClassLevelDocumenter.import_object(self)
         # getset = self.object.name.split('_')
 
-        if (#getset[0] in ['get','set'] and
-            #getset[1:] in self.object.cls.propeties and
-            isinstance(self.object, MatMethod)):
+        if isinstance(self.object, MatMethod):
             self._datadescriptor = True
         else:
             # if it's not a data descriptor
