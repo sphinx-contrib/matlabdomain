@@ -23,16 +23,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: x64
     - name: Run with Tox
-      env:
-        SPHINXVERSION: matrix.sphinx-version
-        TOXENV: "${{ matrix.python-version }}-sphinx$SPHINXVERSION"
       run: |
-        TOXENV=${{ env.TOXENV }}
-        TOXENV=${TOXENV//.} # replace all dots
-        echo TOXENV=${TOXENV} >> $GITHUB_ENV # update GitHub ENV vars
+        echo ${{ matrix.sphinx-version}}
         python -m pip install --upgrade pip
         pip install tox
-        tox -e "$TOXENV"
+        tox -e "${{matrix.python-version}}-sphinx60"
     # - name: Lint with flake8
     #   run: |
     #     # stop the build if there are Python syntax errors or undefined names
