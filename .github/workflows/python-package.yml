@@ -14,16 +14,17 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         sphinx-version: ["40", "41", "42", "43", "44", "45", "50", "51", "52", "60", "latest"]
-    runs-on: ${{ matrix.python-version }}
 
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        sphinx-version: ${{ matrix.sphinx-version }}
+        python-version: ${{ matrix.python-version }}
         architecture: x64
     - name: Run with Tox
+      with:
+        sphinx-version: ${{ matrix.sphinx-version }}
       env:
         TOXENV: "${{ matrix.python-version }}-sphinx{{ matrix.sphinx-version }}"
       run: |
