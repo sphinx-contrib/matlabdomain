@@ -14,7 +14,7 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         sphinx-version: ["40", "41", "42", "43", "44", "45", "50", "51", "52", "60", "latest"]
-      runs-on: ${{ matrix.python-version }}
+    runs-on: ${{ matrix.python-version }}
 
     steps:
     - uses: actions/checkout@v3
