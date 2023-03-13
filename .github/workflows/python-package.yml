@@ -14,17 +14,6 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         sphinx-version: ["45", "53", "60", "latest"]
-        exclude:
-          - python-version: "3.11"
-            sphinx-version: "45"
-          - python-version: "3.8"
-            sphinx-version: "60"
-          - python-version: "3.8"
-            sphinx-version: "latest"
-          - python-version: "3.9"
-            sphinx-version: "60"
-          - python-version: "3.8"
-            sphinx-version: "latest"
 
 
     steps:
