@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
+        sphinx-version: ["40", "41", "42", "43", "44", "45", "50", "51", "52", "60", "latest"]
 
     steps:
     - uses: actions/checkout@v3
@@ -21,23 +22,28 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         architecture: x64
-    - name: Install dependencies
+    - name: Run with Tox
+      env:
+        TOXENV: "${{ matrix.python-version }}-sphinx{{ matrix.sphinx-version }}"
       run: |
+        TOXENV=${{ env.TOXENV }}
+        TOXENV=${TOXENV//.} # replace all dots
+        echo TOXENV=${TOXENV} >> $GITHUB_ENV # update GitHub ENV vars
         python -m pip install --upgrade pip
-        pip install flake8 pytest pytest-cov
-        pip install -r dev-requirements.txt        
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --exclude .git,__pycache__,.eggs --max-complexity=10 --max-line-length=127 --statistics
-    - name: Run tests
-      run: pytest tests
-    - name: Build test docs
-      run: |
-        cd tests/test_docs
-        sphinx-build -b html . _build
+        pip install tox
+        tox -e "$TOXENV"
+    # - name: Lint with flake8
+    #   run: |
+    #     # stop the build if there are Python syntax errors or undefined names
+    #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+    #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+    #     flake8 . --count --exit-zero --exclude .git,__pycache__,.eggs --max-complexity=10 --max-line-length=127 --statistics
+    # - name: Run tests
+    #   run: pytest tests
+    # - name: Build test docs
+    #   run: |
+    #     cd tests/test_docs
+    #     sphinx-build -b html . _build
 
   build-n-publish:
     if: startsWith(github.ref, 'refs/tags')
