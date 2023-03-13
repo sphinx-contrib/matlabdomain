@@ -23,10 +23,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: x64
     - name: Run with Tox
-      with:
-        sphinx-version: ${{ matrix.sphinx-version }}
       env:
-        TOXENV: "${{ matrix.python-version }}-sphinx{{ matrix.sphinx-version }}"
+        SPHINXVERSION: matrix.sphinx-version
+        TOXENV: "${{ matrix.python-version }}-sphinx$SPHINXVERSION"
       run: |
         TOXENV=${{ env.TOXENV }}
         TOXENV=${TOXENV//.} # replace all dots
