@@ -26,9 +26,9 @@ jobs:
     - name: Run with Tox
       run: |
         echo ${{ matrix.sphinx-version}}
-        python -m pip install --upgrade pip
         pip install tox
         tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}"
+        tox -e docs
     # - name: Lint with flake8
     #   run: |
     #     # stop the build if there are Python syntax errors or undefined names
