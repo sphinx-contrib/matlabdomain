@@ -892,8 +892,8 @@ class MatClass(MatMixin, MatObject):
                                   self._tk_eq(idx, (Token.Punctuation, '.')) or \
                                   self.tokens[idx][0] == Token.Literal.String or \
                                   self.tokens[idx][0] == Token.Name or \
-                                  self.tokens[idx][0] == Token.Text:
-                                  #(self.tokens[idx][0] == Token.Text and not self._is_newline(idx)):
+                                  (self.tokens[idx][0] == Token.Text and self.tokens[idx][1] != '\n'):
+                                #   self.tokens[idx][0] == Token.Text:
                                 idx += 1
 
                             if self._tk_eq(idx, (Token.Punctuation, ';')):
@@ -922,8 +922,8 @@ class MatClass(MatMixin, MatObject):
                                   self._tk_eq(idx, (Token.Punctuation, '.')) or \
                                   self.tokens[idx][0] == Token.Literal.String or \
                                   self.tokens[idx][0] == Token.Name or \
-                                  self.tokens[idx][0] == Token.Text:
-                                  #(self.tokens[idx][0] == Token.Text and not self._is_newline(idx)):
+                                  (self.tokens[idx][0] == Token.Text and self.tokens[idx][1] != '\n'):
+                                  #self.tokens[idx][0] == Token.Text:
                                 idx += 1
 
                             if self._tk_eq(idx, (Token.Punctuation, ';')):
