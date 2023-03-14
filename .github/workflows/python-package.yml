@@ -7,15 +7,13 @@ on: [push, pull_request]
 
 jobs:
   test:
-    name: Run tests and build test documentation
+    name: Run tests for Python ${{ matrix.python-version }} and Sphinx ${{ matrix.sphinx-version }}
     timeout-minutes: 5
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         sphinx-version: ["45", "53", "60", "latest"]
-
-
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -27,13 +25,27 @@ jobs:
       run: |
         pip install tox
         tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}"
+
+  check:
+    name: Run static analysis
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+        architecture: x64
     - name: Lint with flake8
       run: |
         pip install flake8
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 sphinxcontrib --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 tests --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --exclude .git,__pycache__,.eggs --max-complexity=10 --max-line-length=127 --statistics
+        flake8 sphinxcontrib --count --exit-zero --exclude .git,__pycache__,.eggs --max-complexity=10 --max-line-length=127 --statistics
+        flake8 tests --count --exit-zero --exclude .git,__pycache__,.eggs --max-complexity=10 --max-line-length=127 --statistics
 
 
   build-n-publish:
