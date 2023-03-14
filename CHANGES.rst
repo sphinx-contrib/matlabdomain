@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.15.2 (2023-03-14)
+==============================================
+
+* Fix issue with not parsing property docstrings correctly with Pygments 2.13.
+  `Issue 152 <https://github.com/sphinx-contrib/matlabdomain/issues/152>`_.
+
+
 sphinxcontrib-matlabdomain-0.15.1 (2023-02-06)
 ==============================================
 

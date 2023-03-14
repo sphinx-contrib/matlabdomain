@@ -587,5 +587,21 @@ def test_ClassLongProperty():
     assert obj.properties['c']['docstring'] is None
 
 
+def test_ClassWithLongPropertyDocstrings():
+    mfile = os.path.join(TESTDATA_ROOT, 'ClassWithLongPropertyDocstrings.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithLongPropertyDocstrings', 'test_data')
+    assert obj.name == 'ClassWithLongPropertyDocstrings'
+    assert  obj.properties['a']['docstring']== " This line is deleted\n" \
+        " This line documents another property\n"
+    assert obj.properties['b']['docstring'] == " Document this property\n"
+
+def test_ClassWithLongPropertyDocstrings():
+    mfile = os.path.join(TESTDATA_ROOT, 'ClassWithLongPropertyTrailingEmptyDocstrings.m')
+    obj = mat_types.MatObject.parse_mfile(mfile, 'ClassWithLongPropertyTrailingEmptyDocstrings', 'test_data')
+    assert obj.name == 'ClassWithLongPropertyTrailingEmptyDocstrings'
+    assert  obj.properties['a']['docstring']== " This line is deleted\n" \
+        " This line documents another property\n"
+    assert obj.properties['b']['docstring'] == " Document this property\n"
+
 if __name__ == '__main__':
     pytest.main([os.path.abspath(__file__)])
