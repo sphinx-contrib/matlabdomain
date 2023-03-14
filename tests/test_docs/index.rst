@@ -292,6 +292,21 @@ A MATLAB class with a nmethod named ``get``.
    :undoc-members:
 
 
+Class with Long Property Docstrings
++++++++++++++++++++++++++++++++++++
+.. autoclass:: ClassWithLongPropertyDocstrings
+   :show-inheritance:
+   :members:
+
+
+Class with Long Property Docstrings and Empty trailing docstring
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. autoclass:: ClassWithLongPropertyTrailingEmptyDocstrings
+   :show-inheritance:
+   :members:
+
+
 FunctionWithNameMismatch
 ++++++++++++++++++++++++
 
@@ -402,7 +417,9 @@ Class with string ellipsis
 A class that tests the lexer.
 
 .. autoclass:: ClassWithStringEllipsis
-    :members:    
+    :members:
+
+
 
 A matlab application (``.mlapp`` file)
 ++++++++++++++++++++++++++++++++++++++
