@@ -893,6 +893,7 @@ class MatClass(MatMixin, MatObject):
                                   self.tokens[idx][0] == Token.Literal.String or \
                                   self.tokens[idx][0] == Token.Name or \
                                   self.tokens[idx][0] == Token.Text:
+                                  #(self.tokens[idx][0] == Token.Text and not self._is_newline(idx)):
                                 idx += 1
 
                             if self._tk_eq(idx, (Token.Punctuation, ';')):
@@ -922,6 +923,7 @@ class MatClass(MatMixin, MatObject):
                                   self.tokens[idx][0] == Token.Literal.String or \
                                   self.tokens[idx][0] == Token.Name or \
                                   self.tokens[idx][0] == Token.Text:
+                                  #(self.tokens[idx][0] == Token.Text and not self._is_newline(idx)):
                                 idx += 1
 
                             if self._tk_eq(idx, (Token.Punctuation, ';')):
@@ -1055,7 +1057,7 @@ class MatClass(MatMixin, MatObject):
                             # find methods
                             meth = MatMethod(self.module, self.tokens[idx:],
                                              self, attr_dict)
-                            # Detect getter/setter methods - these are not documented                            
+                            # Detect getter/setter methods - these are not documented
                             if not (meth.name.startswith('get.') or meth.name.startswith('set.')):
                                 self.methods[meth.name] = meth  # update methods
                             idx += meth.reset_tokens()  # reset method tokens and index

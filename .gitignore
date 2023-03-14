@@ -1,5 +1,5 @@
 .idea/
-.venv/
+.venv*/
 .eggs/
 __pycache__
 *.pyc
@@ -12,4 +12,5 @@ tests/test_docs/_build/
 _build
 htmlcov
 .coverage
+build/
 
