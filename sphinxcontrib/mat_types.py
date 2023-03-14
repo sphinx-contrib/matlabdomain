@@ -495,6 +495,29 @@ class MatMixin(object):
             idx += 1
         return idx - idx0  # indentation
 
+    def _propspec(self, idx):
+        """
+        Returns number of "property" specification tokens
+
+        :param idx: Token index.
+        :type idx: int
+        """
+        idx0 = idx  # original index
+        while self._tk_eq(idx, (Token.Punctuation, '@')) or \
+                self._tk_eq(idx, (Token.Punctuation, '(')) or \
+                self._tk_eq(idx, (Token.Punctuation, ')')) or \
+                self._tk_eq(idx, (Token.Punctuation, ',')) or \
+                self._tk_eq(idx, (Token.Punctuation, ':')) or \
+                self.tokens[idx][0] == Token.Literal.Number.Integer or \
+                self._tk_eq(idx, (Token.Punctuation, '{')) or \
+                self._tk_eq(idx, (Token.Punctuation, '}')) or \
+                self._tk_eq(idx, (Token.Punctuation, '.')) or \
+                self.tokens[idx][0] == Token.Literal.String or \
+                self.tokens[idx][0] == Token.Name or \
+                (self.tokens[idx][0] == Token.Text and self.tokens[idx][1] != '\n'):
+            idx += 1
+        return idx - idx0  # property spec count.
+
     def _is_newline(self, idx):
         """ Returns true if the token at index is a newline """
         return self.tokens[idx][0] in (Token.Text, Token.Text.Whitespace) and self.tokens[idx][1]=='\n'
@@ -881,20 +904,7 @@ class MatClass(MatMixin, MatObject):
 
                             # skip size, class and functions specifiers
                             # TODO: Parse old and new style property extras
-                            while self._tk_eq(idx, (Token.Punctuation, '@')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, '(')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, ')')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, ',')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, ':')) or \
-                                  self.tokens[idx][0] == Token.Literal.Number.Integer or \
-                                  self._tk_eq(idx, (Token.Punctuation, '{')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, '}')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, '.')) or \
-                                  self.tokens[idx][0] == Token.Literal.String or \
-                                  self.tokens[idx][0] == Token.Name or \
-                                  (self.tokens[idx][0] == Token.Text and self.tokens[idx][1] != '\n'):
-                                #   self.tokens[idx][0] == Token.Text:
-                                idx += 1
+                            idx += self._propspec(idx)
 
                             if self._tk_eq(idx, (Token.Punctuation, ';')):
                                 continue
@@ -911,20 +921,7 @@ class MatClass(MatMixin, MatObject):
 
                             # skip size, class and functions specifiers
                             # TODO: Parse old and new style property extras
-                            while self._tk_eq(idx, (Token.Punctuation, '@')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, '(')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, ')')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, ',')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, ':')) or \
-                                  self.tokens[idx][0] == Token.Literal.Number.Integer or \
-                                  self._tk_eq(idx, (Token.Punctuation, '{')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, '}')) or \
-                                  self._tk_eq(idx, (Token.Punctuation, '.')) or \
-                                  self.tokens[idx][0] == Token.Literal.String or \
-                                  self.tokens[idx][0] == Token.Name or \
-                                  (self.tokens[idx][0] == Token.Text and self.tokens[idx][1] != '\n'):
-                                  #self.tokens[idx][0] == Token.Text:
-                                idx += 1
+                            idx += self._propspec(idx)
 
                             if self._tk_eq(idx, (Token.Punctuation, ';')):
                                 continue
