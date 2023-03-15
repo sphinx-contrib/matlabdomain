@@ -17,6 +17,5 @@ classdef ClassBySource
             disp('testA');
         end
     end
-    
-end
 
+end

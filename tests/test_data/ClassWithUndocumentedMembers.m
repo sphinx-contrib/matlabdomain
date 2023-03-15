@@ -1,6 +1,6 @@
 classdef ClassWithUndocumentedMembers
    % A class where some members are not documented.
-   
+
    methods
       function obj = ClassWithUndocumentedMembers()
          % Constructor
@@ -9,7 +9,7 @@ classdef ClassWithUndocumentedMembers
       end
 
       function documented(obj)
-          % Has documentation         
+          % Has documentation
           disp('documented')
       end
 
@@ -18,4 +18,3 @@ classdef ClassWithUndocumentedMembers
       end
    end
 end
-

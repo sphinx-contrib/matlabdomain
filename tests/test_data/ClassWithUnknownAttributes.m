@@ -6,6 +6,5 @@ classdef (Unknown) ClassWithUnknownAttributes
             % Constructor
         end
     end
-    
-end
 
+end

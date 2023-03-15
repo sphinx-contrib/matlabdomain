@@ -1,3 +1,3 @@
 def main():
-    """ Returns the answer. """
+    """Returns the answer."""
     return 42

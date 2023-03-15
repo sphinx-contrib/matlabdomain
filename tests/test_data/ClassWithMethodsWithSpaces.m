@@ -6,6 +6,5 @@ classdef ClassWithMethodsWithSpaces
             % a static method
         end
     end
-    
-end
 
+end

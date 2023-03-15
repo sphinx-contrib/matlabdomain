@@ -9,12 +9,12 @@ Monoid
 ++++++
 
 .. autoclass:: Monoid
-      
+
 .. _Group:
 
 Group
 +++++
-      
+
 .. autoclass:: Group
 
 .. _CompactGroup:

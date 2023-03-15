@@ -4,7 +4,7 @@ events
     update % An "events" block causes Sphinx to hang.
 end
 
-methods 
+methods
 function myfunc()
 end
 end

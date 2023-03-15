@@ -63,6 +63,5 @@ classdef ClassWithMethodAttributes
             disp('testFriend2');
         end
     end
-    
-end
 
+end

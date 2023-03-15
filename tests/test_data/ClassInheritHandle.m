@@ -25,5 +25,5 @@ classdef ClassInheritHandle < handle & my.super.Class
 
             w = z
         end
-    end    
+    end
 end

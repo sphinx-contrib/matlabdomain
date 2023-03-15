@@ -4,4 +4,3 @@
 .. autoclass:: ClassExample
     :show-inheritance:
     :members:
-

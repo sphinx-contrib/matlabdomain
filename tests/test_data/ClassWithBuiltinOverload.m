@@ -13,4 +13,3 @@ classdef ClassWithBuiltinOverload
         end
     end
 end
-

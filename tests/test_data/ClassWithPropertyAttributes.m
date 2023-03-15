@@ -44,6 +44,5 @@ classdef ClassWithPropertyAttributes
     properties (Hidden)
         testHidden % Hidden property
     end
-    
-end
 
+end

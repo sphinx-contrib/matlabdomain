@@ -1,10 +1,10 @@
 classdef ClassWithEnumMethod
 
-enumeration 
+enumeration
 MYENUM
 end
 
-methods 
+methods
 function myfunc()
 end
 end
