@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.16.0 (2023-03-15)
+==============================================
+
+* Add new option, ``matlab_show_property_default_value``. Default is now to not
+  show property values. If a property value is ``None``, is not shown anymore.
+
+
 sphinxcontrib-matlabdomain-0.15.2 (2023-03-14)
 ==============================================
 

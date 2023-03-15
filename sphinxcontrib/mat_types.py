@@ -124,6 +124,7 @@ class MatObject(object):
         objname = objname.replace(".", os.sep)  # objname may have dots
         # separate path from file/folder name
         path, name = os.path.split(objname)
+
         # make a full path out of basedir and objname
         fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
         # package folders imported over mfile with same name
@@ -708,10 +709,8 @@ class MatFunction(MatObject):
                     except IndexError:
                         break
                 docstring = wht  # check if Token is Comment
-            # =====================================================================
-            # Is this code even used?
-            # main body
-            # find Keywords - "end" pairs
+
+            # Find the end of the function - used in `MatMethod`` to determine where a method ends.
             if docstring is None:
                 return
             kw = docstring  # last token
@@ -986,9 +985,7 @@ class MatClass(MatMixin, MatObject):
                                 continue
 
                         # subtype of Name EG Name.Builtin used as Name
-                        elif (
-                            self.tokens[idx][0] in Token.Name.subtypes
-                        ):  # @UndefinedVariable
+                        elif self.tokens[idx][0] in Token.Name.subtypes:
                             prop_name = self.tokens[idx][1]
                             warn_msg = " ".join(
                                 ["[%s] WARNING %s.%s.%s is", "a Builtin Name"]
@@ -1151,14 +1148,16 @@ class MatClass(MatMixin, MatObject):
                             meth = MatMethod(
                                 self.module, self.tokens[idx:], self, attr_dict
                             )
-                            # Detect getter/setter methods - these are not documented
-                            if not (
-                                meth.name.startswith("get.")
-                                or meth.name.startswith("set.")
-                            ):
-                                self.methods[meth.name] = meth  # update methods
-                            idx += meth.reset_tokens()  # reset method tokens and index
 
+                            # Detect getter/setter methods - these are not documented
+                            isGetter = meth.name.startswith("get.")
+                            isSetter = meth.name.startswith("set.")
+                            if not (isGetter or isSetter):
+                                # Add the parsed method to methods dictionary
+                                self.methods[meth.name] = meth
+
+                            # Update idx with the number of parsed tokens.
+                            idx += meth.skip_tokens()
                             idx += self._whitespace(idx)
                     idx += 1
                 if self._tk_eq(idx, (Token.Keyword, "events")):
@@ -1377,7 +1376,8 @@ class MatMethod(MatFunction):
         self.cls = cls
         self.attrs = attrs
 
-    def reset_tokens(self):
+    def skip_tokens(self):
+        # Number of tokens to skip in `MatClass`
         num_rem_tks = len(self.rem_tks)
         len_meth = len(self.tokens) - num_rem_tks
         self.tokens = self.tokens[:-num_rem_tks]
