@@ -223,14 +223,14 @@ class MatObject(object):
         :type path: str
         :returns: :class:`MatApplication` representing the application.
         """
-
-        # TODO: We could use this method to parse other matlab binaries
-
         # Read contents of meta-data file
         # This might change in different Matlab versions
+        # Note: `code` is a verbatim copy of the MATLAB source inside the App
+        #       Variable `codeText` will contain the source.
         with ZipFile(mlappfile, "r") as mlapp:
             meta = ET.fromstring(mlapp.read("metadata/appMetadata.xml"))
             core = ET.fromstring(mlapp.read("metadata/coreProperties.xml"))
+            # code = ET.fromstring(mlapp.read("matlab/document.xml"))
 
         metaNs = {"ns": "http://schemas.mathworks.com/appDesigner/app/2017/appMetadata"}
         coreNs = {
@@ -240,9 +240,12 @@ class MatObject(object):
             "dcterms": "http://purl.org/dc/terms/",
             "xsi": "http://www.w3.org/2001/XMLSchema-instance",
         }
+        # codeNs = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 
         coreDesc = core.find("dc:description", coreNs)
         metaDesc = meta.find("ns:description", metaNs)
+        # codeDesc = code.find(".//w:t", codeNs)
+        # codeText = codeDesc.text
 
         doc = []
         if coreDesc is not None:
