@@ -8,4 +8,3 @@ classdef (Sealed) ClassWithAttributes
         end
     end
 end
-

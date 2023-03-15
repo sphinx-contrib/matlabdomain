@@ -1,10 +1,10 @@
 classdef ClassContainingParfor
     % Parfor is a keyword
-    
+
     properties
         Property1
     end
-    
+
     methods
         function obj = test(inputArg1,inputArg2)
             % A method with parfor

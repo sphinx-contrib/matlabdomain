@@ -2,7 +2,7 @@ classdef ClassWithFunctionArguments < handle
     % test class methods with function arguments
     %
     % :param a: the input to :class:`ClassWithFunctionArguments`
-    
+
     properties
         a % a property
     end

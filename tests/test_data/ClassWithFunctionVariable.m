@@ -34,4 +34,3 @@ classdef ClassWithFunctionVariable
 
    end
 end
-

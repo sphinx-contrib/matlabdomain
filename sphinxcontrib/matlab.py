@@ -25,17 +25,19 @@ from sphinx.util.nodes import make_refnode
 from sphinx.util.docfields import Field, GroupedField, TypedField
 import sphinx.util
 
-logger = sphinx.util.logging.getLogger('matlab-domain')
+logger = sphinx.util.logging.getLogger("matlab-domain")
 
 
 # REs for MATLAB signatures
 mat_sig_re = re.compile(
-    r'''^ ([+@]?[+@\w.]*\.)?            # class name(s)
+    r"""^ ([+@]?[+@\w.]*\.)?            # class name(s)
           ([+@]?\w+)  \s*               # thing name
           (?: \((.*)\)                  # optional: arguments
            (?:\s* -> \s* (.*))?         #           return annotation
           )? $                          # and nothing more
-          ''', re.VERBOSE)
+          """,
+    re.VERBOSE,
+)
 
 
 def strip_package_prefix(varname):
@@ -44,11 +46,11 @@ def strip_package_prefix(varname):
     if not varname:
         return varname
 
-    return '.'.join([s.lstrip('+') for s in varname.split('.')])
+    return ".".join([s.lstrip("+") for s in varname.split(".")])
 
 
 def _pseudo_parse_arglist(signode, arglist):
-    """"Parse" a list of arguments separated by commas.
+    """ "Parse" a list of arguments separated by commas.
 
     Arguments can have "optional" annotations given by enclosing them in
     brackets.  Currently, this will split at any comma, even if it's inside a
@@ -57,20 +59,20 @@ def _pseudo_parse_arglist(signode, arglist):
     paramlist = addnodes.desc_parameterlist()
     stack = [paramlist]
     try:
-        for argument in arglist.split(','):
+        for argument in arglist.split(","):
             argument = argument.strip()
             ends_open = ends_close = 0
-            while argument.startswith('['):
+            while argument.startswith("["):
                 stack.append(addnodes.desc_optional())
                 stack[-2] += stack[-1]
                 argument = argument[1:].strip()
-            while argument.startswith(']'):
+            while argument.startswith("]"):
                 stack.pop()
                 argument = argument[1:].strip()
-            while argument.endswith(']'):
+            while argument.endswith("]"):
                 ends_close += 1
                 argument = argument[:-1].strip()
-            while argument.endswith('['):
+            while argument.endswith("["):
                 ends_open += 1
                 argument = argument[:-1].strip()
             if argument:
@@ -98,36 +100,60 @@ class MatObject(ObjectDescription):
     """
     Description of a general MATLAB object.
     """
+
     option_spec = {
-        'noindex': directives.flag,
-        'module': directives.unchanged,
-        'annotation': directives.unchanged,
+        "noindex": directives.flag,
+        "module": directives.unchanged,
+        "annotation": directives.unchanged,
     }
 
     doc_field_types = [
-        TypedField('parameter', label=_('Parameters'),
-                   names=('param', 'parameter', 'arg', 'argument',
-                          'keyword', 'kwarg', 'kwparam'),
-                   typerolename='obj', typenames=('paramtype', 'type'),
-                   can_collapse=True),
-        TypedField('variable', label=_('Variables'), rolename='obj',
-                   names=('var', 'ivar', 'cvar'),
-                   typerolename='obj', typenames=('vartype',),
-                   can_collapse=True),
-        GroupedField('exceptions', label=_('Raises'), rolename='exc',
-                     names=('raises', 'raise', 'exception', 'except'),
-                     can_collapse=True),
-        Field('returnvalue', label=_('Returns'), has_arg=False,
-              names=('returns', 'return')),
-        Field('returntype', label=_('Return type'), has_arg=False,
-              names=('rtype',)),
+        TypedField(
+            "parameter",
+            label=_("Parameters"),
+            names=(
+                "param",
+                "parameter",
+                "arg",
+                "argument",
+                "keyword",
+                "kwarg",
+                "kwparam",
+            ),
+            typerolename="obj",
+            typenames=("paramtype", "type"),
+            can_collapse=True,
+        ),
+        TypedField(
+            "variable",
+            label=_("Variables"),
+            rolename="obj",
+            names=("var", "ivar", "cvar"),
+            typerolename="obj",
+            typenames=("vartype",),
+            can_collapse=True,
+        ),
+        GroupedField(
+            "exceptions",
+            label=_("Raises"),
+            rolename="exc",
+            names=("raises", "raise", "exception", "except"),
+            can_collapse=True,
+        ),
+        Field(
+            "returnvalue",
+            label=_("Returns"),
+            has_arg=False,
+            names=("returns", "return"),
+        ),
+        Field("returntype", label=_("Return type"), has_arg=False, names=("rtype",)),
     ]
 
     def get_signature_prefix(self, sig):
         """May return a prefix to put before the object name in the
         signature.
         """
-        return ''
+        return ""
 
     def needs_arglist(self):
         """May return true if an empty argument list is to be generated even if
@@ -150,40 +176,39 @@ class MatObject(ObjectDescription):
         name_prefix, name, arglist, retann = m.groups()
 
         # determine module and class name (if applicable), as well as full name
-        modname = self.options.get(
-            'module', self.env.temp_data.get('mat:module'))
+        modname = self.options.get("module", self.env.temp_data.get("mat:module"))
 
         if not self.env.config.matlab_keep_package_prefix:
             modname = strip_package_prefix(modname)
             name_prefix = strip_package_prefix(name_prefix)
             name = strip_package_prefix(name)
 
-        classname = self.env.temp_data.get('mat:class')
+        classname = self.env.temp_data.get("mat:class")
         if classname:
             add_module = False
             if name_prefix and name_prefix.startswith(classname):
                 fullname = name_prefix + name
                 # class name is given again in the signature
-                name_prefix = name_prefix[len(classname):].lstrip('.')
+                name_prefix = name_prefix[len(classname) :].lstrip(".")
             elif name_prefix:
                 # class name is given in the signature, but different
                 # (shouldn't happen)
-                fullname = classname + '.' + name_prefix + name
+                fullname = classname + "." + name_prefix + name
             else:
                 # class name is not given in the signature
-                fullname = classname + '.' + name
+                fullname = classname + "." + name
         else:
             add_module = True
             if name_prefix:
-                classname = name_prefix.rstrip('.')
+                classname = name_prefix.rstrip(".")
                 fullname = name_prefix + name
             else:
-                classname = ''
+                classname = ""
                 fullname = name
 
-        signode['module'] = modname
-        signode['class'] = classname
-        signode['fullname'] = fullname
+        signode["module"] = modname
+        signode["class"] = classname
+        signode["fullname"] = fullname
 
         sig_prefix = self.get_signature_prefix(sig)
         if sig_prefix:
@@ -194,15 +219,14 @@ class MatObject(ObjectDescription):
         # exceptions are a special case, since they are documented in the
         # 'exceptions' module.
         elif add_module and self.env.config.add_module_names:
-            modname = self.options.get(
-                'module', self.env.temp_data.get('mat:module'))
-            if modname and modname != 'exceptions':
+            modname = self.options.get("module", self.env.temp_data.get("mat:module"))
+            if modname and modname != "exceptions":
                 if not self.env.config.matlab_keep_package_prefix:
                     modname = strip_package_prefix(modname)
-                nodetext = modname + '.'
+                nodetext = modname + "."
                 signode += addnodes.desc_addname(nodetext, nodetext)
 
-        anno = self.options.get('annotation')
+        anno = self.options.get("annotation")
 
         signode += addnodes.desc_name(name, name)
         if not arglist:
@@ -212,52 +236,51 @@ class MatObject(ObjectDescription):
             if retann:
                 signode += addnodes.desc_returns(retann, retann)
             if anno:
-                signode += addnodes.desc_annotation(' ' + anno, ' ' + anno)
+                signode += addnodes.desc_annotation(" " + anno, " " + anno)
             return fullname, name_prefix
 
         _pseudo_parse_arglist(signode, arglist)
         if retann:
             signode += addnodes.desc_returns(retann, retann)
         if anno:
-            signode += addnodes.desc_annotation(' ' + anno, ' ' + anno)
+            signode += addnodes.desc_annotation(" " + anno, " " + anno)
         return fullname, name_prefix
 
     def get_index_text(self, modname, name):
         """Return the text for the index entry of the object."""
-        raise NotImplementedError('must be implemented in subclasses')
+        raise NotImplementedError("must be implemented in subclasses")
 
     def add_target_and_index(self, name_cls, sig, signode):
-        modname = self.options.get(
-            'module', self.env.temp_data.get('mat:module'))
-        fullname = (modname and modname + '.' or '') + name_cls[0]
+        modname = self.options.get("module", self.env.temp_data.get("mat:module"))
+        fullname = (modname and modname + "." or "") + name_cls[0]
 
         if not self.env.config.matlab_keep_package_prefix:
             modname_out = strip_package_prefix(modname)
-            fullname_out = (modname_out
-                    and modname_out + '.' or '') + name_cls[0]
+            fullname_out = (modname_out and modname_out + "." or "") + name_cls[0]
         else:
             modname_out, fullname_out = modname, fullname
 
         # note target
         if fullname not in self.state.document.ids:
-            signode['names'].append(fullname_out)
-            signode['ids'].append(fullname)
-            signode['first'] = (not self.names)
+            signode["names"].append(fullname_out)
+            signode["ids"].append(fullname)
+            signode["first"] = not self.names
             self.state.document.note_explicit_target(signode)
-            objects = self.env.domaindata['mat']['objects']
+            objects = self.env.domaindata["mat"]["objects"]
             if fullname in objects:
                 self.state_machine.reporter.warning(
-                    'duplicate object description of %s, ' % fullname +
-                    'other instance in ' +
-                    self.env.doc2path(objects[fullname][0]) +
-                    ', use :noindex: for one of them',
-                    line=self.lineno)
+                    "duplicate object description of %s, " % fullname
+                    + "other instance in "
+                    + self.env.doc2path(objects[fullname][0])
+                    + ", use :noindex: for one of them",
+                    line=self.lineno,
+                )
             objects[fullname] = (self.env.docname, self.objtype)
 
         indextext = self.get_index_text(modname_out, name_cls)
         if indextext:
-            entry = ('single', indextext, fullname, '', None)
-            self.indexnode['entries'].append(entry)
+            entry = ("single", indextext, fullname, "", None)
+            self.indexnode["entries"].append(entry)
 
     def before_content(self):
         # needed for automatic qualification of members (reset in subclasses)
@@ -265,7 +288,7 @@ class MatObject(ObjectDescription):
 
     def after_content(self):
         if self.clsname_set:
-            self.env.temp_data['mat:class'] = None
+            self.env.temp_data["mat:class"] = None
 
 
 class MatModulelevel(MatObject):
@@ -274,23 +297,23 @@ class MatModulelevel(MatObject):
     """
 
     def needs_arglist(self):
-        return self.objtype == 'function'
+        return self.objtype == "function"
 
     def get_index_text(self, modname, name_cls):
-        if self.objtype == 'function':
+        if self.objtype == "function":
             if not modname:
-                return _('%s() (built-in function)') % name_cls[0]
-            return _('%s() (in module %s)') % (name_cls[0], modname)
-        elif self.objtype == 'data':
+                return _("%s() (built-in function)") % name_cls[0]
+            return _("%s() (in module %s)") % (name_cls[0], modname)
+        elif self.objtype == "data":
             if not modname:
-                return _('%s (built-in variable)') % name_cls[0]
-            return _('%s (in module %s)') % (name_cls[0], modname)
-        elif self.objtype == 'application':
+                return _("%s (built-in variable)") % name_cls[0]
+            return _("%s (in module %s)") % (name_cls[0], modname)
+        elif self.objtype == "application":
             if not modname:
-                return _('%s (built-in application)') % name_cls[0]
-            return _('%s (in module %s)') % (name_cls[0], modname)
+                return _("%s (built-in application)") % name_cls[0]
+            return _("%s (in module %s)") % (name_cls[0], modname)
         else:
-            return ''
+            return ""
 
 
 class MatClasslike(MatObject):
@@ -299,22 +322,22 @@ class MatClasslike(MatObject):
     """
 
     def get_signature_prefix(self, sig):
-        return self.objtype + ' '
+        return self.objtype + " "
 
     def get_index_text(self, modname, name_cls):
-        if self.objtype == 'class':
+        if self.objtype == "class":
             if not modname:
-                return _('%s (built-in class)') % name_cls[0]
-            return _('%s (class in %s)') % (name_cls[0], modname)
-        elif self.objtype == 'exception':
+                return _("%s (built-in class)") % name_cls[0]
+            return _("%s (class in %s)") % (name_cls[0], modname)
+        elif self.objtype == "exception":
             return name_cls[0]
         else:
-            return ''
+            return ""
 
     def before_content(self):
         MatObject.before_content(self)
         if self.names:
-            self.env.temp_data['mat:class'] = self.names[0][0]
+            self.env.temp_data["mat:class"] = self.names[0][0]
             self.clsname_set = True
 
 
@@ -324,76 +347,74 @@ class MatClassmember(MatObject):
     """
 
     def needs_arglist(self):
-        return self.objtype.endswith('method')
+        return self.objtype.endswith("method")
 
     def get_signature_prefix(self, sig):
-        if self.objtype == 'staticmethod':
-            return 'static '
-        elif self.objtype == 'classmethod':
-            return 'classmethod '
-        return ''
+        if self.objtype == "staticmethod":
+            return "static "
+        elif self.objtype == "classmethod":
+            return "classmethod "
+        return ""
 
     def get_index_text(self, modname, name_cls):
         name, cls = name_cls
         add_modules = self.env.config.add_module_names
-        if self.objtype == 'method':
+        if self.objtype == "method":
             try:
-                clsname, methname = name.rsplit('.', 1)
+                clsname, methname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _('%s() (in module %s)') % (name, modname)
+                    return _("%s() (in module %s)") % (name, modname)
                 else:
-                    return '%s()' % name
+                    return "%s()" % name
             if modname and add_modules:
-                return _('%s() (%s.%s method)') % (methname, modname, clsname)
+                return _("%s() (%s.%s method)") % (methname, modname, clsname)
             else:
-                return _('%s() (%s method)') % (methname, clsname)
-        elif self.objtype == 'staticmethod':
+                return _("%s() (%s method)") % (methname, clsname)
+        elif self.objtype == "staticmethod":
             try:
-                clsname, methname = name.rsplit('.', 1)
+                clsname, methname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _('%s() (in module %s)') % (name, modname)
+                    return _("%s() (in module %s)") % (name, modname)
                 else:
-                    return '%s()' % name
+                    return "%s()" % name
             if modname and add_modules:
-                return _('%s() (%s.%s static method)') % (methname, modname,
-                                                          clsname)
+                return _("%s() (%s.%s static method)") % (methname, modname, clsname)
             else:
-                return _('%s() (%s static method)') % (methname, clsname)
-        elif self.objtype == 'classmethod':
+                return _("%s() (%s static method)") % (methname, clsname)
+        elif self.objtype == "classmethod":
             try:
-                clsname, methname = name.rsplit('.', 1)
+                clsname, methname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _('%s() (in module %s)') % (name, modname)
+                    return _("%s() (in module %s)") % (name, modname)
                 else:
-                    return '%s()' % name
+                    return "%s()" % name
             if modname:
-                return _('%s() (%s.%s class method)') % (methname, modname,
-                                                         clsname)
+                return _("%s() (%s.%s class method)") % (methname, modname, clsname)
             else:
-                return _('%s() (%s class method)') % (methname, clsname)
-        elif self.objtype == 'attribute':
+                return _("%s() (%s class method)") % (methname, clsname)
+        elif self.objtype == "attribute":
             try:
-                clsname, attrname = name.rsplit('.', 1)
+                clsname, attrname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _('%s (in module %s)') % (name, modname)
+                    return _("%s (in module %s)") % (name, modname)
                 else:
                     return name
             if modname and add_modules:
-                return _('%s (%s.%s attribute)') % (attrname, modname, clsname)
+                return _("%s (%s.%s attribute)") % (attrname, modname, clsname)
             else:
-                return _('%s (%s attribute)') % (attrname, clsname)
+                return _("%s (%s attribute)") % (attrname, clsname)
         else:
-            return ''
+            return ""
 
     def before_content(self):
         MatObject.before_content(self)
         lastname = self.names and self.names[-1][1]
-        if lastname and not self.env.temp_data.get('mat:class'):
-            self.env.temp_data['mat:class'] = lastname.strip('.')
+        if lastname and not self.env.temp_data.get("mat:class"):
+            self.env.temp_data["mat:class"] = lastname.strip(".")
             self.clsname_set = True
 
 
@@ -401,9 +422,10 @@ class MatDecoratorMixin(object):
     """
     Mixin for decorator directives.
     """
+
     def handle_signature(self, sig, signode):
         ret = super(MatDecoratorMixin, self).handle_signature(sig, signode)
-        signode.insert(0, addnodes.desc_addname('@', '@'))
+        signode.insert(0, addnodes.desc_addname("@", "@"))
         return ret
 
     def needs_arglist(self):
@@ -414,9 +436,10 @@ class MatDecoratorFunction(MatDecoratorMixin, MatModulelevel):
     """
     Directive to mark functions meant to be used as decorators.
     """
+
     def run(self):
         # a decorator function is a function after all
-        self.name = 'mat:function'
+        self.name = "mat:function"
         return MatModulelevel.run(self)
 
 
@@ -424,8 +447,9 @@ class MatDecoratorMethod(MatDecoratorMixin, MatClassmember):
     """
     Directive to mark methods meant to be used as decorators.
     """
+
     def run(self):
-        self.name = 'mat:method'
+        self.name = "mat:method"
         return MatClassmember.run(self)
 
 
@@ -439,10 +463,10 @@ class MatModule(Directive):
     optional_arguments = 0
     final_argument_whitespace = False
     option_spec = {
-        'platform': lambda x: x,
-        'synopsis': lambda x: x,
-        'noindex': directives.flag,
-        'deprecated': directives.flag,
+        "platform": lambda x: x,
+        "synopsis": lambda x: x,
+        "noindex": directives.flag,
+        "deprecated": directives.flag,
     }
 
     def run(self):
@@ -454,24 +478,26 @@ class MatModule(Directive):
         else:
             modname_out = modname
 
-        noindex = 'noindex' in self.options
-        env.temp_data['mat:module'] = modname
+        noindex = "noindex" in self.options
+        env.temp_data["mat:module"] = modname
         ret = []
         if not noindex:
-            env.domaindata['mat']['modules'][modname] = \
-                (env.docname, self.options.get('synopsis', ''),
-                 self.options.get('platform', ''), 'deprecated' in self.options)
+            env.domaindata["mat"]["modules"][modname] = (
+                env.docname,
+                self.options.get("synopsis", ""),
+                self.options.get("platform", ""),
+                "deprecated" in self.options,
+            )
             # make a duplicate entry in 'objects' to facilitate searching for
             # the module in MATLABDomain.find_obj()
-            env.domaindata['mat']['objects'][modname] = (env.docname, 'module')
-            targetnode = nodes.target('', '', ids=['module-' + modname],
-                                      ismod=True)
+            env.domaindata["mat"]["objects"][modname] = (env.docname, "module")
+            targetnode = nodes.target("", "", ids=["module-" + modname], ismod=True)
             self.state.document.note_explicit_target(targetnode)
             # the platform and synopsis aren't printed; in fact, they are only
             # used in the modindex currently
             ret.append(targetnode)
-            indextext = _('%s (module)') % modname_out
-            entry = ('single', indextext, 'module-' + modname, '', None)
+            indextext = _("%s (module)") % modname_out
+            entry = ("single", indextext, "module-" + modname, "", None)
             inode = addnodes.index(entries=[entry])
             ret.append(inode)
         return ret
@@ -492,36 +518,36 @@ class MatCurrentModule(Directive):
     def run(self):
         env = self.state.document.settings.env
         modname = self.arguments[0].strip()
-        if modname == 'None':
-            env.temp_data['mat:module'] = None
+        if modname == "None":
+            env.temp_data["mat:module"] = None
         else:
-            env.temp_data['mat:module'] = modname
+            env.temp_data["mat:module"] = modname
         return []
 
 
 class MatXRefRole(XRefRole):
     def process_link(self, env, refnode, has_explicit_title, title, target):
-        refnode['mat:module'] = env.temp_data.get('mat:module')
-        refnode['mat:class'] = env.temp_data.get('mat:class')
+        refnode["mat:module"] = env.temp_data.get("mat:module")
+        refnode["mat:class"] = env.temp_data.get("mat:class")
         if not has_explicit_title:
-            title = title.lstrip('.')   # only has a meaning for the target
-            target = target.lstrip('~')  # only has a meaning for the title
+            title = title.lstrip(".")  # only has a meaning for the target
+            target = target.lstrip("~")  # only has a meaning for the title
             # if the first character is a tilde, don't display the module/class
             # parts of the contents
-            if title[0:1] == '~':
+            if title[0:1] == "~":
                 title = title[1:]
-                dot = title.rfind('.')
+                dot = title.rfind(".")
                 if dot != -1:
-                    title = title[dot+1:]
+                    title = title[dot + 1 :]
 
             if not env.config.matlab_keep_package_prefix:
                 title = strip_package_prefix(title)
 
         # if the first character is a dot, search more specific namespaces first
         # else search builtins first
-        if target[0:1] == '.':
+        if target[0:1] == ".":
             target = target[1:]
-            refnode['refspecific'] = True
+            refnode["refspecific"] = True
         return title, target
 
 
@@ -530,20 +556,21 @@ class MATLABModuleIndex(Index):
     Index subclass to provide the MATLAB module index.
     """
 
-    name = 'modindex'
-    localname = _('MATLAB Module Index')
-    shortname = _('matlab index')
+    name = "modindex"
+    localname = _("MATLAB Module Index")
+    shortname = _("matlab index")
 
     def generate(self, docnames=None):
         content = {}
         # list of prefixes to ignore
-        ignores = self.domain.env.config['modindex_common_prefix']
+        ignores = self.domain.env.config["modindex_common_prefix"]
         ignores = sorted(ignores, key=len, reverse=True)
         # list of all modules, sorted by module name
-        modules = sorted(iter(self.domain.data['modules'].items()),
-                         key=lambda x: x[0].lower())
+        modules = sorted(
+            iter(self.domain.data["modules"].items()), key=lambda x: x[0].lower()
+        )
         # sort out collapsable modules
-        prev_modname = ''
+        prev_modname = ""
         num_toplevels = 0
         for modname, (docname, synopsis, platforms, deprecated) in modules:
             if docnames and docname not in docnames:
@@ -551,15 +578,15 @@ class MATLABModuleIndex(Index):
 
             for ignore in ignores:
                 if modname.startswith(ignore):
-                    modname = modname[len(ignore):]
+                    modname = modname[len(ignore) :]
                     stripped = ignore
                     break
             else:
-                stripped = ''
+                stripped = ""
 
             # we stripped the whole module name?
             if not modname:
-                modname, stripped = stripped, ''
+                modname, stripped = stripped, ""
 
             # Create nice mod-name
             if not self.domain.env.config.matlab_keep_package_prefix:
@@ -569,7 +596,7 @@ class MATLABModuleIndex(Index):
 
             entries = content.setdefault(modname_out[0].lower(), [])
 
-            package = modname.split('.')[0]
+            package = modname.split(".")[0]
             if package != modname:
                 # it's a submodule
                 if prev_modname == package:
@@ -578,16 +605,24 @@ class MATLABModuleIndex(Index):
                         entries[-1][1] = 1
                 elif not prev_modname.startswith(package):
                     # submodule without parent in list, add dummy entry
-                    entries.append([stripped + package, 1, '', '', '', '', ''])
+                    entries.append([stripped + package, 1, "", "", "", "", ""])
                 subtype = 2
             else:
                 num_toplevels += 1
                 subtype = 0
 
-            qualifier = deprecated and _('Deprecated') or ''
-            entries.append([stripped + modname_out, subtype, docname,
-                            'module-' + stripped + modname, platforms,
-                            qualifier, synopsis])
+            qualifier = deprecated and _("Deprecated") or ""
+            entries.append(
+                [
+                    stripped + modname_out,
+                    subtype,
+                    docname,
+                    "module-" + stripped + modname,
+                    platforms,
+                    qualifier,
+                    synopsis,
+                ]
+            )
             prev_modname = modname
 
         # apply heuristics when to collapse modindex at page load:
@@ -603,79 +638,80 @@ class MATLABModuleIndex(Index):
 
 class MATLABDomain(Domain):
     """MATLAB language domain."""
-    name = 'mat'
-    label = 'MATLAB'
+
+    name = "mat"
+    label = "MATLAB"
     object_types = {
-        'function':     ObjType(_('function'),      'func', 'obj'),
-        'data':         ObjType(_('data'),          'data', 'obj'),
-        'class':        ObjType(_('class'),         'class', 'obj'),
-        'exception':    ObjType(_('exception'),     'exc', 'obj'),
-        'method':       ObjType(_('method'),        'meth', 'obj'),
-        'classmethod':  ObjType(_('class method'),  'meth', 'obj'),
-        'staticmethod': ObjType(_('static method'), 'meth', 'obj'),
-        'attribute':    ObjType(_('attribute'),     'attr', 'obj'),
-        'module':       ObjType(_('module'),        'mod', 'obj'),
-        'script':       ObjType(_('script'),        'scpt', 'obj'),
-        'application':  ObjType(_('application'),   'app', 'obj'),
+        "function": ObjType(_("function"), "func", "obj"),
+        "data": ObjType(_("data"), "data", "obj"),
+        "class": ObjType(_("class"), "class", "obj"),
+        "exception": ObjType(_("exception"), "exc", "obj"),
+        "method": ObjType(_("method"), "meth", "obj"),
+        "classmethod": ObjType(_("class method"), "meth", "obj"),
+        "staticmethod": ObjType(_("static method"), "meth", "obj"),
+        "attribute": ObjType(_("attribute"), "attr", "obj"),
+        "module": ObjType(_("module"), "mod", "obj"),
+        "script": ObjType(_("script"), "scpt", "obj"),
+        "application": ObjType(_("application"), "app", "obj"),
     }
 
     directives = {
-        'function':        MatModulelevel,
-        'data':            MatModulelevel,
-        'class':           MatClasslike,
-        'exception':       MatClasslike,
-        'method':          MatClassmember,
-        'classmethod':     MatClassmember,
-        'staticmethod':    MatClassmember,
-        'attribute':       MatClassmember,
-        'module':          MatModule,
-        'currentmodule':   MatCurrentModule,
-        'decorator':       MatDecoratorFunction,
-        'decoratormethod': MatDecoratorMethod,
-        'script':          MatModulelevel,
-        'application':     MatModulelevel,
+        "function": MatModulelevel,
+        "data": MatModulelevel,
+        "class": MatClasslike,
+        "exception": MatClasslike,
+        "method": MatClassmember,
+        "classmethod": MatClassmember,
+        "staticmethod": MatClassmember,
+        "attribute": MatClassmember,
+        "module": MatModule,
+        "currentmodule": MatCurrentModule,
+        "decorator": MatDecoratorFunction,
+        "decoratormethod": MatDecoratorMethod,
+        "script": MatModulelevel,
+        "application": MatModulelevel,
     }
     roles = {
-        'data':  MatXRefRole(),
-        'exc':   MatXRefRole(),
-        'func':  MatXRefRole(fix_parens=True),
-        'class': MatXRefRole(),
-        'const': MatXRefRole(),
-        'attr':  MatXRefRole(),
-        'meth':  MatXRefRole(fix_parens=True),
-        'mod':   MatXRefRole(),
-        'obj':   MatXRefRole(),
-        'scpt':  MatXRefRole(),
-        'app':   MatXRefRole(),
+        "data": MatXRefRole(),
+        "exc": MatXRefRole(),
+        "func": MatXRefRole(fix_parens=True),
+        "class": MatXRefRole(),
+        "const": MatXRefRole(),
+        "attr": MatXRefRole(),
+        "meth": MatXRefRole(fix_parens=True),
+        "mod": MatXRefRole(),
+        "obj": MatXRefRole(),
+        "scpt": MatXRefRole(),
+        "app": MatXRefRole(),
     }
     initial_data = {
-        'objects': {},  # fullname -> docname, objtype
-        'modules': {},  # modname -> docname, synopsis, platform, deprecated
+        "objects": {},  # fullname -> docname, objtype
+        "modules": {},  # modname -> docname, synopsis, platform, deprecated
     }
     indices = [
         MATLABModuleIndex,
     ]
 
     def clear_doc(self, docname):
-        for fullname, (fn, _) in list(self.data['objects'].items()):  # noqa: 401
+        for fullname, (fn, _) in list(self.data["objects"].items()):  # noqa: 401
             if fn == docname:
-                del self.data['objects'][fullname]
-        for modname, (fn, _, _, _) in list(self.data['modules'].items()):
+                del self.data["objects"][fullname]
+        for modname, (fn, _, _, _) in list(self.data["modules"].items()):
             if fn == docname:
-                del self.data['modules'][modname]
+                del self.data["modules"][modname]
 
     def find_obj(self, env, modname, classname, name, type, searchmode=0):
         """Find a MATLAB object for "name", perhaps using the given module
         and/or classname.  Returns a list of (name, object entry) tuples.
         """
         # skip parens
-        if name[-2:] == '()':
+        if name[-2:] == "()":
             name = name[:-2]
 
         if not name:
             return []
 
-        objects = self.data['objects']
+        objects = self.data["objects"]
         matches = []
 
         newname = None
@@ -683,91 +719,107 @@ class MATLABDomain(Domain):
             objtypes = self.objtypes_for_role(type)
             if objtypes is not None:
                 if modname and classname:
-                    fullname = modname + '.' + classname + '.' + name
+                    fullname = modname + "." + classname + "." + name
                     if fullname in objects and objects[fullname][1] in objtypes:
                         newname = fullname
                 if not newname:
-                    if modname and modname + '.' + name in objects and \
-                       objects[modname + '.' + name][1] in objtypes:
-                        newname = modname + '.' + name
+                    if (
+                        modname
+                        and modname + "." + name in objects
+                        and objects[modname + "." + name][1] in objtypes
+                    ):
+                        newname = modname + "." + name
                     elif name in objects and objects[name][1] in objtypes:
                         newname = name
                     else:
                         # "fuzzy" searching mode
-                        searchname = '.' + name
-                        matches = [(oname, objects[oname]) for oname in objects
-                                   if oname.endswith(searchname)
-                                   and objects[oname][1] in objtypes]
+                        searchname = "." + name
+                        matches = [
+                            (oname, objects[oname])
+                            for oname in objects
+                            if oname.endswith(searchname)
+                            and objects[oname][1] in objtypes
+                        ]
         else:
             # NOTE: searching for exact match, object type is not considered
             if name in objects:
                 newname = name
-            elif type == 'mod':
+            elif type == "mod":
                 # only exact matches allowed for modules
                 return []
-            elif classname and classname + '.' + name in objects:
-                newname = classname + '.' + name
-            elif modname and modname + '.' + name in objects:
-                newname = modname + '.' + name
-            elif modname and classname and \
-                    modname + '.' + classname + '.' + name in objects:
-                newname = modname + '.' + classname + '.' + name
+            elif classname and classname + "." + name in objects:
+                newname = classname + "." + name
+            elif modname and modname + "." + name in objects:
+                newname = modname + "." + name
+            elif (
+                modname
+                and classname
+                and modname + "." + classname + "." + name in objects
+            ):
+                newname = modname + "." + classname + "." + name
             # special case: builtin exceptions have module "exceptions" set
-            elif type == 'exc' and '.' not in name and \
-                    'exceptions.' + name in objects:
-                newname = 'exceptions.' + name
+            elif type == "exc" and "." not in name and "exceptions." + name in objects:
+                newname = "exceptions." + name
             # special case: object methods
-            elif type in ('func', 'meth') and '.' not in name and \
-                    'object.' + name in objects:
-                newname = 'object.' + name
+            elif (
+                type in ("func", "meth")
+                and "." not in name
+                and "object." + name in objects
+            ):
+                newname = "object." + name
         if newname is not None:
             matches.append((newname, objects[newname]))
         return matches
 
-    def resolve_xref(self, env, fromdocname, builder,
-                     type, target, node, contnode):
-        modname = node.get('mat:module')
-        clsname = node.get('mat:class')
-        searchmode = node.hasattr('refspecific') and 1 or 0
-        matches = self.find_obj(env, modname, clsname, target,
-                                type, searchmode)
+    def resolve_xref(self, env, fromdocname, builder, type, target, node, contnode):
+        modname = node.get("mat:module")
+        clsname = node.get("mat:class")
+        searchmode = node.hasattr("refspecific") and 1 or 0
+        matches = self.find_obj(env, modname, clsname, target, type, searchmode)
         if not matches:
             return None
         elif len(matches) > 1:
-            logger.warning('[sphinxcontrib-matlabdomain] more than one target found for cross-reference %r: %s',
-                           target, ', '.join(match[0] for match in matches), type='ref', subtype='python', location=node)
+            logger.warning(
+                "[sphinxcontrib-matlabdomain] more than one target found for cross-reference %r: %s",
+                target,
+                ", ".join(match[0] for match in matches),
+                type="ref",
+                subtype="python",
+                location=node,
+            )
 
         name, obj = matches[0]
 
-        if obj[1] == 'module':
+        if obj[1] == "module":
             # get additional info for modules
-            docname, synopsis, platform, deprecated = self.data['modules'][name]
+            docname, synopsis, platform, deprecated = self.data["modules"][name]
             assert docname == obj[0]
             title = name
             if synopsis:
-                title += ': ' + synopsis
+                title += ": " + synopsis
             if deprecated:
-                title += _(' (deprecated)')
+                title += _(" (deprecated)")
             if platform:
-                title += ' (' + platform + ')'
-            return make_refnode(builder, fromdocname, docname,
-                                'module-' + name, contnode, title)
+                title += " (" + platform + ")"
+            return make_refnode(
+                builder, fromdocname, docname, "module-" + name, contnode, title
+            )
         else:
-            return make_refnode(builder, fromdocname, obj[0], name,
-                                contnode, name)
+            return make_refnode(builder, fromdocname, obj[0], name, contnode, name)
 
     def get_objects(self):
-        for modname, info in self.data['modules'].items():
-            yield (modname, modname, 'module', info[0], 'module-' + modname, 0)
-        for refname, (docname, type) in self.data['objects'].items():
+        for modname, info in self.data["modules"].items():
+            yield (modname, modname, "module", info[0], "module-" + modname, 0)
+        for refname, (docname, type) in self.data["objects"].items():
             yield (refname, refname, type, docname, refname, 1)
 
     def resolve_any_xref(self, env, fromdocname, builder, target, node, contnode):
         ret = []
         for role in self.roles:
-            matrole = f'mat:{role}'
-            element = self.resolve_xref(env, fromdocname, builder,
-                                        matrole, target, node, contnode)
+            matrole = f"mat:{role}"
+            element = self.resolve_xref(
+                env, fromdocname, builder, matrole, target, node, contnode
+            )
             if element:
                 ret.append((matrole, element))
         return ret
@@ -776,62 +828,64 @@ class MATLABDomain(Domain):
 def setup(app):
     app.add_domain(MATLABDomain)
     # autodoc
-    app.add_config_value('matlab_src_dir', None, 'env')
-    app.add_config_value('matlab_src_encoding', None, 'env')
-    app.add_config_value('matlab_keep_package_prefix', True, 'env')
-    app.add_config_value('matlab_show_property_default_value', False, 'env')
+    app.add_config_value("matlab_src_dir", None, "env")
+    app.add_config_value("matlab_src_encoding", None, "env")
+    app.add_config_value("matlab_keep_package_prefix", True, "env")
+    app.add_config_value("matlab_show_property_default_value", False, "env")
 
-    app.registry.add_documenter('mat:module', doc.MatModuleDocumenter)
-    app.add_directive_to_domain('mat',
-                                'automodule',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter("mat:module", doc.MatModuleDocumenter)
+    app.add_directive_to_domain(
+        "mat", "automodule", mat_directives.MatlabAutodocDirective
+    )
 
-    app.registry.add_documenter('mat:function', doc.MatFunctionDocumenter)
-    app.add_directive_to_domain('mat',
-                                'autofunction',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter("mat:function", doc.MatFunctionDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autofunction", mat_directives.MatlabAutodocDirective
+    )
 
-    app.registry.add_documenter('mat:class', doc.MatClassDocumenter)
-    app.add_directive_to_domain('mat',
-                                'autoclass',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter("mat:class", doc.MatClassDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autoclass", mat_directives.MatlabAutodocDirective
+    )
 
-    app.registry.add_documenter('mat:method', doc.MatMethodDocumenter)
-    app.add_directive_to_domain('mat',
-                                'automethod',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter("mat:method", doc.MatMethodDocumenter)
+    app.add_directive_to_domain(
+        "mat", "automethod", mat_directives.MatlabAutodocDirective
+    )
 
-    app.registry.add_documenter('mat:script', doc.MatScriptDocumenter)
-    app.add_directive_to_domain('mat',
-                                'autoscript',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter("mat:script", doc.MatScriptDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autoscript", mat_directives.MatlabAutodocDirective
+    )
 
-    app.registry.add_documenter('mat:exception', doc.MatExceptionDocumenter)
-    app.add_directive_to_domain('mat',
-                                'autoexception',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter("mat:exception", doc.MatExceptionDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autoexception", mat_directives.MatlabAutodocDirective
+    )
 
-    app.registry.add_documenter('mat:attribute', doc.MatAttributeDocumenter)
-    app.add_directive_to_domain('mat',
-                                'autoattribute',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter("mat:attribute", doc.MatAttributeDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autoattribute", mat_directives.MatlabAutodocDirective
+    )
 
-    app.registry.add_documenter('mat:data', doc.MatDataDocumenter)
-    app.add_directive_to_domain('mat',
-                                'autodata',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter("mat:data", doc.MatDataDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autodata", mat_directives.MatlabAutodocDirective
+    )
 
-    app.registry.add_documenter('mat:instanceattribute', doc.MatInstanceAttributeDocumenter)
-    app.add_directive_to_domain('mat',
-                                'autoinstanceattribute',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter(
+        "mat:instanceattribute", doc.MatInstanceAttributeDocumenter
+    )
+    app.add_directive_to_domain(
+        "mat", "autoinstanceattribute", mat_directives.MatlabAutodocDirective
+    )
 
-    app.registry.add_documenter('mat:application', doc.MatApplicationDocumenter)
-    app.add_directive_to_domain('mat',
-                                'autoapplication',
-                                mat_directives.MatlabAutodocDirective)
+    app.registry.add_documenter("mat:application", doc.MatApplicationDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autoapplication", mat_directives.MatlabAutodocDirective
+    )
 
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
 
-    return {'parallel_read_safe':False}
+    return {"parallel_read_safe": False}

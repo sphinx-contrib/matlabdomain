@@ -22,4 +22,3 @@ classdef ClassWithGetterSetter
 
     end
 end
-

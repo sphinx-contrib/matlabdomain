@@ -13,4 +13,3 @@ _build
 htmlcov
 .coverage
 build/
-

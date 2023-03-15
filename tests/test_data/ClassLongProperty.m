@@ -5,14 +5,14 @@ classdef ClassLongProperty
 
     properties
 		a  % short description
-        
+
 		% A property with a long documentation
 		% This is the second line
 		% And a third
 		b % a property
 
         % This comment is not for property c
-        
+
         c
     end
     methods
@@ -23,4 +23,3 @@ classdef ClassLongProperty
         end
 		end
 end
-

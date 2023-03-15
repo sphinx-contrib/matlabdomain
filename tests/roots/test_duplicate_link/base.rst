@@ -9,10 +9,10 @@ Str
 +++
 
 .. autoclass:: Str
-      
+
 .. _Domain:
 
 Domain
 ++++++
-      
+
 .. autoclass:: Domain
