@@ -34,19 +34,28 @@ def test_setup(make_app, rootdir):
 
     assert isinstance(content[3], addnodes.desc)
     assert content[3][0].astext() == 'class target.ClassExample(a)'
-    assert content[3][1].astext() == """Bases: handle
+    assert content[3][1].astext() == \
+"""Bases: handle
 
 Example class
 
 Parameters
 
-a – a property of ClassExample
+a – first property of ClassExample
+
+b – second property of ClassExample
 
 
 
-a = None
+a
 
 a property
+
+
+
+b
+
+a property with default value
 
 
 
@@ -57,9 +66,50 @@ A method in ClassExample
 Parameters
 
 b – an input to mymethod()"""
-    # We still have warning regarding overriding auto...
-    # assert app._warning.getvalue() == ''
 
+
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
+def test_setup_show_default_value(make_app, rootdir):
+    srcdir = rootdir / 'roots' / 'test_autodoc'
+    app = make_app(srcdir=srcdir, confoverrides={'matlab_show_property_default_value': True})
+    app.builder.build_all()
+
+    content = pickle.loads((app.doctreedir / 'index.doctree').read_bytes())
+
+    assert isinstance(content[3], addnodes.desc)
+    assert content[3][0].astext() == 'class target.ClassExample(a)'
+    assert content[3][1].astext() == \
+"""Bases: handle
+
+Example class
+
+Parameters
+
+a – first property of ClassExample
+
+b – second property of ClassExample
+
+
+
+a
+
+a property
+
+
+
+b = '10'
+
+a property with default value
+
+
+
+mymethod(b)
+
+A method in ClassExample
+
+Parameters
+
+b – an input to mymethod()"""
 
 if __name__ == '__main__':
     pytest.main([__file__])

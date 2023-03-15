@@ -958,7 +958,12 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 except ValueError:
                     pass
                 else:
-                    self.add_line('   :annotation: = ' + objrepr, '<autodoc>')
+                    if objrepr == "None" or self.env.config.matlab_show_property_default_value == False:
+                        objrepr_formatted = ''
+                    else:
+                        objrepr_formatted = f'= {objrepr}'
+
+                    self.add_line('   :annotation: ' + objrepr_formatted, '<autodoc>')
         elif self.options.annotation is SUPPRESS:
             pass
         else:
