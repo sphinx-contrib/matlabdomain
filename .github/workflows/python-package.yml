@@ -3,7 +3,12 @@
 
 name: Test and publish Python 🐍 package 📦
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    # Run everyday at 06:00 UTC
+    - cron:  '* 6 * * *'
 
 jobs:
   test:
