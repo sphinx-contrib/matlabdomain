@@ -243,11 +243,11 @@ Users
 
 * `Cantera <http://cantera.github.io/docs/sphinx/html/compiling/dependencies.html?highlight=matlabdomain>`_
 * `CoSMo MVPA <http://cosmomvpa.org/download.html?highlight=matlabdomain#developers>`_
-* `The Cobra Toolbox 
+* `The Cobra Toolbox <https://opencobra.github.io/cobratoolbox/stable/index.html#>`_
+* `The RepLAB Toolbox <https://replab.github.io/replab>`_
+
 
 Citation
 ========
 .. image:: https://zenodo.org/badge/105161090.svg
    :target: https://zenodo.org/badge/latestdoi/105161090
-<https://opencobra.github.io/cobratoolbox/stable/index.html#>`_
-* `The RepLAB Toolbox <https://replab.github.io/replab>`_
