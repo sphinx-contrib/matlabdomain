@@ -90,7 +90,7 @@ class MatlabDocumenter(PyDocumenter):
                 self.name
             ).groups()
         except AttributeError:
-            self.directive.warn(
+            logger.warning(
                 "invalid signature for auto%s (%r)" % (self.objtype, self.name)
             )
             return False
@@ -232,7 +232,7 @@ class MatlabDocumenter(PyDocumenter):
                     members.append((mname, self.get_attr(self.object, mname)))
                 except AttributeError:
                     if mname not in analyzed_member_names:
-                        self.directive.warn(
+                        logger.warning(
                             "missing attribute %s in object %s" % (mname, self.fullname)
                         )
         elif self.options.inherited_members:
@@ -547,7 +547,7 @@ class MatlabDocumenter(PyDocumenter):
         """
         if not self.parse_name():
             # need a module to import
-            self.directive.warn(
+            logger.warning(
                 "don't know which module to import for autodocumenting "
                 '%r (try placing a "module" or "currentmodule" directive '
                 "in the document, or giving an explicit module name)" % self.name
@@ -614,7 +614,7 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
     def parse_name(self):
         ret = MatlabDocumenter.parse_name(self)
         if self.args or self.retann:
-            self.directive.warn(
+            logger.warning(
                 "signature arguments or return annotation "
                 "given for automodule %s" % self.fullname
             )
@@ -650,7 +650,7 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                 else:
                     raise AttributeError
             except AttributeError:
-                self.directive.warn(
+                logger.warning(
                     "missing attribute mentioned in :members: or __all__: "
                     "module %s, attribute %s"
                     % (
