@@ -530,6 +530,8 @@ class MatMixin(object):
             or self.tokens[idx][0] == Token.Literal.Number.Integer
             or self._tk_eq(idx, (Token.Punctuation, "{"))
             or self._tk_eq(idx, (Token.Punctuation, "}"))
+            or self._tk_eq(idx, (Token.Punctuation, "["))
+            or self._tk_eq(idx, (Token.Punctuation, "]"))
             or self._tk_eq(idx, (Token.Punctuation, "."))
             or self.tokens[idx][0] == Token.Literal.String
             or self.tokens[idx][0] == Token.Name
