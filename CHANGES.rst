@@ -1,3 +1,14 @@
+sphinxcontrib-matlabdomain-0.17.0 (2023-03-24)
+==============================================
+
+* Replace ``directive.warn`` (deprecated) with ``logger.warning``. Reported in
+  `Issue 166 <https://github.com/sphinx-contrib/matlabdomain/issues/166>`_.
+* Fix property validation parsing reported in
+  `Issue 167 <https://github.com/sphinx-contrib/matlabdomain/issues/167>`_.
+* Updated Author to Jørgen Cederberg as agreed in
+  `Issue 164 <https://github.com/sphinx-contrib/matlabdomain/issues/164>`_.
+
+
 sphinxcontrib-matlabdomain-0.16.0 (2023-03-15)
 ==============================================
 
