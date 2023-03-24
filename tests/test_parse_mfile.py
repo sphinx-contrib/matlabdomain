@@ -728,5 +728,17 @@ def test_ClassWithLongPropertyDocstrings():
     assert obj.properties["b"]["docstring"] == " Document this property\n"
 
 
+def test_ClassWithPropertyValidators():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithPropertyValidators.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "ClassWithPropertyValidators", "test_data"
+    )
+    assert obj.name == "ClassWithPropertyValidators"
+    assert obj.properties["Location"]["docstring"] == " The location\n"
+    assert obj.properties["Label"]["docstring"] == " The label\n"
+    assert obj.properties["State"]["docstring"] == " The state\n"
+    assert obj.properties["ReportLevel"]["docstring"] == " The report level\n"
+
+
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])

@@ -107,6 +107,7 @@ def test_module(mod):
         "ClassWithGetMethod",
         "ClassWithLongPropertyDocstrings",
         "ClassWithLongPropertyTrailingEmptyDocstrings",
+        "ClassWithPropertyValidators",
     }
     assert all_items == expected_items
     assert mod.getter("__name__") in modules
