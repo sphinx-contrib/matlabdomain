@@ -249,7 +249,8 @@ def test_folder_class(mod):
     assert func.retv == ["varargout"]
     assert (
         func.docstring
-        == " CLASSMETHOD A function within a package\n\n :param obj: An instance of this class.\n :param varargin: Variable input arguments.\n :returns: varargout\n"
+        == " CLASSMETHOD A function within a package\n\n :param obj: An instance of this class.\n"
+        " :param varargin: Variable input arguments.\n :returns: varargout\n"
     )
 
 

@@ -38,7 +38,9 @@ def test_with_prefix(make_app, rootdir):
     section = content[0][7]
     assert (
         section.astext()
-        == "NiceFiniteGroup\n\n\n\nclass +replab.NiceFiniteGroup\n\nBases: +replab.FiniteGroup\n\nA nice finite group is a finite group equipped with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv"
+        == "NiceFiniteGroup\n\n\n\nclass +replab.NiceFiniteGroup\n\nBases: "
+        "+replab.FiniteGroup\n\nA nice finite group is a finite group equipped "
+        "with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv"
     )
 
 

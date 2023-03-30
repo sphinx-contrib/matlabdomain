@@ -10,20 +10,18 @@
 """
 from io import open  # for opening files with encoding in Python 2
 import os
-import re
-import sys
 from copy import copy
 import sphinx.util
 from sphinxcontrib.mat_lexer import MatlabLexer
 from pygments.token import Token
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
+import sphinxcontrib.mat_parser as mat_parser
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
 modules = {}
 
-MAT_DOM = "sphinxcontrib-matlabdomain"
 __all__ = [
     "MatObject",
     "MatModule",
@@ -35,7 +33,6 @@ __all__ = [
     "MatException",
     "MatModuleAnalyzer",
     "MatApplication",
-    "MAT_DOM",
 ]
 
 # TODO: use `self.tokens.pop()` instead of idx += 1, see MatFunction
@@ -88,8 +85,11 @@ class MatObject(object):
         if name == "__name__":
             return self.__name__
         elif len(defargs) == 0:
-            warn_msg = '[%s] WARNING Attribute "%s" was not found in %s.'
-            logger.debug(warn_msg, MAT_DOM, name, self)
+            logger.debug(
+                '[sphinxcontrib-matlabdomain] Warning attribute "%s" was not found in %s.',
+                name,
+                self,
+            )
             return None
         elif len(defargs) == 1:
             return defargs[0]
@@ -131,24 +131,30 @@ class MatObject(object):
         if os.path.isdir(fullpath):
             mod = modules.get(package)
             if mod:
-                msg = "[%s] mod %s already loaded."
-                logger.debug(msg, MAT_DOM, package)
+                logger.debug(
+                    "[sphinxcontrib-matlabdomain] Module %s already loaded.", package
+                )
                 return mod
             else:
-                msg = "[%s] matlabify %s from\n\t%s."
-                logger.debug(msg, MAT_DOM, package, fullpath)
+                logger.debug(
+                    "[sphinxcontrib-matlabdomain] matlabify %s from %s.",
+                    package,
+                    fullpath,
+                )
                 return MatModule(name, fullpath, package)  # import package
         elif os.path.isfile(fullpath + ".m"):
             mfile = fullpath + ".m"
-            msg = "[%s] matlabify %s from\n\t%s."
-            logger.debug(msg, MAT_DOM, package, mfile)
+            logger.debug(
+                "[sphinxcontrib-matlabdomain] matlabify %s from %s.", package, mfile
+            )
             return MatObject.parse_mfile(
                 mfile, name, path, MatObject.encoding
             )  # parse mfile
         elif os.path.isfile(fullpath + ".mlapp"):
             mlappfile = fullpath + ".mlapp"
-            msg = "[%s] matlabify %s from\n\t%s."
-            logger.debug(msg, MAT_DOM, package, mlappfile)
+            logger.debug(
+                "[sphinxcontrib-matlabdomain] matlabify %s from %s.", package, mlappfile
+            )
             return MatObject.parse_mlappfile(mlappfile, name, path)
         return None
 
@@ -181,10 +187,11 @@ class MatObject(object):
             code = code_f.read().replace("\r\n", "\n")
 
         full_code = code
+
         # remove the top comment header (if there is one) from the code string
-        code = MatObject._remove_comment_header(code)
-        code = MatObject._remove_line_continuations(code)
-        code = MatObject._fix_function_signatures(code)
+        code = mat_parser.remove_comment_header(code)
+        code = mat_parser.remove_line_continuations(code)
+        code = mat_parser.fix_function_signatures(code)
 
         tks = list(MatlabLexer().get_tokens(code))
 
@@ -198,10 +205,18 @@ class MatObject(object):
             return token == (Token.Keyword, "classdef")
 
         if isClass(tks[0]):
-            logger.debug("[%s] parsing classdef %s from %s.", MAT_DOM, name, modname)
+            logger.debug(
+                "[sphinxcontrib-matlabdomain] parsing classdef %s from %s.",
+                name,
+                modname,
+            )
             return MatClass(name, modname, tks)
         elif isFunction(tks[0]):
-            logger.debug("[%s] parsing function %s from %s.", MAT_DOM, name, modname)
+            logger.debug(
+                "[sphinxcontrib-matlabdomain] parsing function %s from %s.",
+                name,
+                modname,
+            )
             return MatFunction(name, modname, tks)
         else:
             # it's a script file retoken with header comment
@@ -258,81 +273,6 @@ class MatObject(object):
         modname = path.replace(os.sep, ".")  # module name
 
         return MatApplication(name, modname, docstring)
-
-    @staticmethod
-    def _remove_comment_header(code):
-        """
-        Removes the comment header (if there is one) and empty lines from the
-        top of the current read code.
-        :param code: Current code string.
-        :type code: str
-        :returns: Code string without comments above a function, class or
-                  procedure/script.
-        """
-        # get the line number when the comment header ends (incl. empty lines)
-        ln_pos = 0
-        for line in code.splitlines(True):
-            if re.match(r"[ \t]*(%|\n)", line):
-                ln_pos += 1
-            else:
-                break
-
-        if ln_pos > 0:
-            # remove the header block and empty lines from the top of the code
-            try:
-                code = code.split("\n", ln_pos)[ln_pos:][0]
-            except IndexError:
-                # only header and empty lines.
-                code = ""
-
-        return code
-
-    @staticmethod
-    def _remove_line_continuations(code):
-        """
-        Removes line continuations (...) from code as functions must be on a
-        single line
-        :param code:
-        :type code: str
-        :return:
-        """
-        pat = r"('.*)(\.\.\.)(.*')"
-        code = re.sub(pat, r"\g<1>\g<3>", code, flags=re.MULTILINE)
-
-        pat = r"^([^%'\"\n]*)(\.\.\..*\n)"
-        code = re.sub(pat, r"\g<1>", code, flags=re.MULTILINE)
-        return code
-
-    @staticmethod
-    def _fix_function_signatures(code):
-        """
-        Transforms function signatures with line continuations to a function
-        on a single line with () appended. Required because pygments cannot
-        handle this situation correctly.
-
-        :param code:
-        :type code: str
-        :return: Code string with functions on single line
-        """
-        pat = r"""^[ \t]*function[ \t.\n]*  # keyword (function)
-                              (\[?[\w, \t.\n]*\]?)      # outputs: group(1)
-                              [ \t.\n]*=[ \t.\n]*       # punctuation (eq)
-                              (\w+)[ \t.\n]*            # name: group(2)
-                              \(?([\w, \t.\n]*)\)?"""  # args: group(3)
-        pat = re.compile(pat, re.X | re.MULTILINE)  # search start of every line
-
-        # replacement function
-        def repl(m):
-            retv = m.group(0)
-            # if no args and doesn't end with parentheses, append "()"
-            if not (m.group(3) or m.group(0).endswith("()")):
-                retv = retv.replace(m.group(2), m.group(2) + "()")
-            return retv
-
-        code = pat.sub(repl, code)  # search for functions and apply replacement
-        msg = "[%s] replaced ellipsis & appended parentheses in function signatures"
-        logger.debug(msg, MAT_DOM)
-        return code
 
 
 # TODO: get docstring and __all__ from contents.m if exists
@@ -420,19 +360,27 @@ class MatModule(MatObject):
         elif name == "__package__":
             return self.__package__
         elif name == "__module__":
-            msg = "[%s] mod %s is a package does not have __module__."
-            logger.debug(msg, MAT_DOM, self)
+            logger.debug(
+                "[sphinxcontrib-matlabdomain] mod %s is a package does not have __module__.",
+                self,
+            )
             return None
         else:
             if hasattr(self, name):
-                msg = "[%s] mod %s already has attr %s."
-                logger.debug(msg, MAT_DOM, self, name)
+                logger.debug(
+                    "[sphinxcontrib-matlabdomain] mod %s already has attr %s.",
+                    self,
+                    name,
+                )
                 return getattr(self, name)
             attr = MatObject.matlabify(".".join([self.package, name]))
             if attr:
                 setattr(self, name, attr)
-                msg = "[%s] attr %s imported from mod %s."
-                logger.debug(msg, MAT_DOM, name, self)
+                logger.debug(
+                    "[sphinxcontrib-matlabdomain] attr %s imported from mod %s.",
+                    name,
+                    self,
+                )
                 return attr
             else:
                 super(MatModule, self).getter(name, *defargs)
@@ -637,10 +585,11 @@ class MatFunction(MatObject):
                         ]
                 if tks.pop() != (Token.Punctuation, "="):
                     # Unlikely to end here. But never-the-less warn!
-                    msg = '[sphinxcontrib-matlabdomain] Parsing failed in {}.{}. Expected "=".'.format(
-                        modname, name
+                    logger.warning(
+                        "[sphinxcontrib-matlabdomain] Parsing failed in %s.%s. Expected '='.",
+                        modname,
+                        name,
                     )
-                    logger.warning(msg)
                     return
 
                 skip_whitespace(tks)
@@ -657,12 +606,13 @@ class MatFunction(MatObject):
                 if isinstance(self, MatMethod):
                     self.name = func_name[1]
                 else:
-                    msg = (
-                        '[sphinxcontrib-matlabdomain] Unexpected function name: "%s".'
-                        % func_name[1]
+                    logger.warning(
+                        "[sphinxcontrib-matlabdomain] Unexpected function name: '%s'. "
+                        "Expected '%s' in module '%s'.",
+                        func_name[1],
+                        name,
+                        modname,
                     )
-                    msg += ' Expected "{}" in module "{}".'.format(name, modname)
-                    logger.warning(msg)
 
             # =====================================================================
             # input args
@@ -678,10 +628,11 @@ class MatFunction(MatObject):
                 # check if function args parsed correctly
                 if tks.pop() != (Token.Punctuation, ")"):
                     # Unlikely to end here. But never-the-less warn!
-                    msg = '[sphinxcontrib-matlabdomain] Parsing failed in {}.{}. Expected ")".'.format(
-                        modname, name
+                    logger.warning(
+                        "[sphinxcontrib-matlabdomain] Parsing failed in {}.{}. Expected ')'.",
+                        modname,
+                        name,
                     )
-                    logger.warning(msg)
                     return
 
             skip_whitespace(tks)
@@ -740,10 +691,11 @@ class MatFunction(MatObject):
                     break
             tks.append(kw)  # put last token back in list
         except IndexError:
-            msg = "[sphinxcontrib-matlabdomain] Parsing failed in {}.{}. Check if valid MATLAB code.".format(
-                modname, name
+            logger.warning(
+                "[sphinxcontrib-matlabdomain] Parsing failed in %s.%s. Check if valid MATLAB code.",
+                modname,
+                name,
             )
-            logger.warning(msg)
         # if there are any tokens left save them
         if len(tks) > 0:
             self.rem_tks = tks  # save extra tokens
@@ -855,12 +807,14 @@ class MatClass(MatMixin, MatObject):
             # classname
             idx += self._blanks(idx)  # skip blanks
             if self._tk_ne(idx, (Token.Name, self.name)):
-                msg = (
-                    '[sphinxcontrib-matlabdomain] Unexpected class name: "%s".'
-                    % self.tokens[idx][1]
+                logger.warning(
+                    "[sphinxcontrib-matlabdomain] Unexpected class name: '%s'."
+                    " Expected '%s' in '%s'.",
+                    self.tokens[idx][1],
+                    name,
+                    modname,
                 )
-                msg += ' Expected "{0}" in "{1}.{0}".'.format(name, modname)
-                logger.warning(msg)
+
             idx += 1
             idx += self._blanks(idx)  # skip blanks
             # =====================================================================
@@ -976,7 +930,7 @@ class MatClass(MatMixin, MatObject):
                             prop_name = self.tokens[idx][1]
                             idx += 1
                             # Initialize property if it was not already done
-                            if not prop_name in self.properties.keys():
+                            if prop_name not in self.properties.keys():
                                 self.properties[prop_name] = {"attrs": attr_dict}
 
                             # skip size, class and functions specifiers
@@ -989,11 +943,11 @@ class MatClass(MatMixin, MatObject):
                         # subtype of Name EG Name.Builtin used as Name
                         elif self.tokens[idx][0] in Token.Name.subtypes:
                             prop_name = self.tokens[idx][1]
-                            warn_msg = " ".join(
-                                ["[%s] WARNING %s.%s.%s is", "a Builtin Name"]
-                            )
                             logger.debug(
-                                warn_msg, MAT_DOM, self.module, self.name, prop_name
+                                "[sphinxcontrib-matlabdomain] WARNING %s.%s.%s is a builtin name.",
+                                self.module,
+                                self.name,
+                                prop_name,
                             )
                             self.properties[prop_name] = {"attrs": attr_dict}
                             idx += 1
@@ -1028,9 +982,11 @@ class MatClass(MatMixin, MatObject):
                                 self.properties[prop_name]["docstring"] = docstring
                                 idx += 1
                         else:
-                            msg = "[sphinxcontrib-matlabdomain] Expected property in %s.%s - got %s"
                             logger.warning(
-                                msg, self.module, self.name, str(self.tokens[idx])
+                                "sphinxcontrib-matlabdomain] Expected property in %s.%s - got %s",
+                                self.module,
+                                self.name,
+                                str(self.tokens[idx]),
                             )
                             return
                         idx += self._blanks(idx)  # skip blanks
@@ -1139,8 +1095,12 @@ class MatClass(MatMixin, MatObject):
                             or self._tk_eq(idx, (Token.Punctuation, ";"))
                             or self._tk_eq(idx, (Token.Punctuation, ","))
                         ):
-                            msg = "[%s] Skipping tokens for methods defined in separate files.\ntoken #%d: %r"
-                            logger.debug(msg, MAT_DOM, idx, self.tokens[idx])
+                            logger.debug(
+                                "[sphinxcontrib-matlabdomain] Skipping tokens for methods defined in separate files."
+                                "Token #%d: %r",
+                                idx,
+                                self.tokens[idx],
+                            )
                             idx += 1 + self._whitespace(idx + 1)
                         elif self._tk_eq(idx, (Token.Keyword, "end")):
                             idx += 1
@@ -1163,26 +1123,32 @@ class MatClass(MatMixin, MatObject):
                             idx += self._whitespace(idx)
                     idx += 1
                 if self._tk_eq(idx, (Token.Keyword, "events")):
-                    msg = "[%s] ignoring " "events" " in " "classdef %s." ""
-                    logger.debug(msg, MAT_DOM, self.name)
+                    logger.debug(
+                        "[sphinxcontrib-matlabdomain] ignoring 'events' in 'classdef %s.'",
+                        self.name,
+                    )
                     idx += 1
                     # Token.Keyword: "end" terminates events block
                     while self._tk_ne(idx, (Token.Keyword, "end")):
                         idx += 1
                     idx += 1
                 if self._tk_eq(idx, (Token.Name, "enumeration")):
-                    msg = "[%s] ignoring " "enumeration" " in " "classdef %s." ""
-                    logger.debug(msg, MAT_DOM, self.name)
+                    logger.debug(
+                        "[sphinxcontrib-matlabdomain] ignoring 'enumeration' in 'classdef %s'.",
+                        self.name,
+                    )
                     idx += 1
                     # Token.Keyword: "end" terminates events block
                     while self._tk_ne(idx, (Token.Keyword, "end")):
                         idx += 1
                     idx += 1
         except IndexError:
-            msg = "[sphinxcontrib-matlabdomain] Parsing failed in {}.{}. Check if valid MATLAB code.".format(
-                modname, name
+            logger.warning(
+                "[sphinxcontrib-matlabdomain] Parsing failed in %s.%s. "
+                "Check if valid MATLAB code.",
+                modname,
+                name,
             )
-            logger.warning(msg)
 
         self.rem_tks = idx  # index of last token
 
@@ -1204,12 +1170,13 @@ class MatClass(MatMixin, MatObject):
                     attr_dict[attr_name] = True  # add attibute to dictionary
                     idx += 1
                 elif k is Token.Name:
-                    msg = (
-                        '[sphinxcontrib-matlabdomain] Unexpected class attribute: "%s".'
-                        % str(self.tokens[idx][1])
+                    logger.warning(
+                        "[sphinxcontrib-matlabdomain] Unexpected class attribute: '%s'. "
+                        " In '%s.%s'.",
+                        str(self.tokens[idx][1]),
+                        self.module,
+                        self.name,
                     )
-                    msg += ' In "{0}.{1}".'.format(self.module, self.name)
-                    logger.warning(msg)
                     idx += 1
 
                 idx += self._blanks(idx)  # skip blanks

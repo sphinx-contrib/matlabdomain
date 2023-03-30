@@ -36,10 +36,10 @@ class MatlabAutodocDirective(AutodocDirective):
         except AttributeError:
             source, lineno = (None, None)
         logger.debug(
-            "[sphinxcontrib-matlabdomain] %s:%s: input:\n%s",
+            "[sphinxcontrib-matlabdomain] Input at %s:%s\n\n%s\n",
             source,
             lineno,
-            self.block_text,
+            self.block_text.strip(),
         )
 
         # look up target Documenter
@@ -54,8 +54,9 @@ class MatlabAutodocDirective(AutodocDirective):
         except (KeyError, ValueError, TypeError) as exc:
             # an option is either unknown or has a wrong type
             logger.error(
-                "An option to %s is either unknown or has an invalid value: %s"
-                % (self.name, exc),
+                "[sphinxcontrib-matlabdomain] An option to %s is either unknown or has an invalid value: %s",
+                self.name,
+                exc,
                 location=(source, lineno),
             )
             return []
@@ -69,8 +70,12 @@ class MatlabAutodocDirective(AutodocDirective):
         if not params.result:
             return []
 
+        lines = "\n".join(params.result)
         logger.debug(
-            "[sphinxcontrib-matlabdomain] output:\n%s", "\n".join(params.result)
+            "[sphinxcontrib-matlabdomain] Generated output at %s:%s\n%s",
+            source,
+            lineno,
+            lines,
         )
 
         # record all filenames as dependencies -- this will at least

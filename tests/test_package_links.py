@@ -41,7 +41,8 @@ def test_with_prefix(make_app, rootdir):
     assert isinstance(content[5], addnodes.desc)
     assert (
         content[5].astext()
-        == "class +replab.Action\n\nBases: +replab.Str\n\nAn action group …\n\n\n\nleftAction(self, g, p)\n\nReturns the left action"
+        == "class +replab.Action\n\nBases: +replab.Str\n\nAn action group"
+        " …\n\n\n\nleftAction(self, g, p)\n\nReturns the left action"
     )
 
 

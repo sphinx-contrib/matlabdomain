@@ -8,7 +8,7 @@
     :copyright: Copyright 2014 Mark Mikofski
     :license: BSD, see LICENSE for details.
 """
-from .mat_types import (
+from .mat_types import (  # noqa: E401
     MatModule,
     MatObject,
     MatFunction,
@@ -23,7 +23,6 @@ from .mat_types import (
 )
 
 import re
-import sys
 import traceback
 import inspect
 
@@ -91,7 +90,9 @@ class MatlabDocumenter(PyDocumenter):
             ).groups()
         except AttributeError:
             logger.warning(
-                "invalid signature for auto%s (%r)" % (self.objtype, self.name)
+                "[sphinxcontrib-matlabdomain] Invalid signature for mat:auto%s (%r)",
+                self.objtype,
+                self.name,
             )
             return False
 
@@ -155,11 +156,11 @@ class MatlabDocumenter(PyDocumenter):
         except Exception:
             if self.objpath:
                 errmsg = (
-                    "[sphinxcontrib-matlabdomain]: failed to import %s %r from module %r"
+                    "[sphinxcontrib-matlabdomain] Failed to import %s %r from module %r"
                     % (self.objtype, ".".join(self.objpath), self.modname)
                 )
             else:
-                errmsg = "[sphinxcontrib-matlabdomain]: failed to import %s %r" % (
+                errmsg = "[sphinxcontrib-matlabdomain] Failed to import %s %r" % (
                     self.objtype,
                     self.fullname,
                 )
@@ -233,7 +234,9 @@ class MatlabDocumenter(PyDocumenter):
                 except AttributeError:
                     if mname not in analyzed_member_names:
                         logger.warning(
-                            "missing attribute %s in object %s" % (mname, self.fullname)
+                            "[sphinxcontrib-matlabdomain] missing attribute %s in object %s",
+                            mname,
+                            self.fullname,
                         )
         elif self.options.inherited_members:
             # safe_getmembers() uses dir() which pulls in members from all
@@ -548,9 +551,10 @@ class MatlabDocumenter(PyDocumenter):
         if not self.parse_name():
             # need a module to import
             logger.warning(
-                "don't know which module to import for autodocumenting "
+                "[sphinxcontrib-matlabdomain] don't know which module to import for autodocumenting "
                 '%r (try placing a "module" or "currentmodule" directive '
-                "in the document, or giving an explicit module name)" % self.name
+                "in the document, or giving an explicit module name)",
+                self.name,
             )
             return
 
@@ -615,8 +619,8 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
         ret = MatlabDocumenter.parse_name(self)
         if self.args or self.retann:
             logger.warning(
-                "signature arguments or return annotation "
-                "given for automodule %s" % self.fullname
+                "[sphinxcontrib-matlabdomain] signature arguments or return annotation given for automodule %s",
+                self.fullname,
             )
         return ret
 
@@ -651,14 +655,10 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                     raise AttributeError
             except AttributeError:
                 logger.warning(
-                    "missing attribute mentioned in :members: or __all__: "
-                    "module %s, attribute %s"
-                    % (
-                        sphinx.util.inspect.safe_getattr(
-                            self.object, "__name__", "???"
-                        ),
-                        mname,
-                    )
+                    "[sphinxcontrib-matlabdomain] missing attribute mentioned"
+                    " in :members: or __all__: module %s, attribute %s",
+                    sphinx.util.inspect.safe_getattr(self.object, "__name__", "???"),
+                    mname,
                 )
         return False, ret
 
@@ -908,7 +908,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                 init_doc.object = self.get_attr(self.object, self.object.name, None)
                 init_doc.objpath = [self.object.name]
                 init_doc._find_signature()  # this effects to get_doc() result
-                initdocstring = "\n".join(["\n".join(l) for l in init_doc.get_doc()])
+                initdocstring = "\n".join(
+                    ["\n".join(line) for line in init_doc.get_doc()]
+                )
             else:
                 initdocstring = self.get_attr(
                     self.get_attr(self.object, self.object.name, None), "__doc__"
@@ -1038,7 +1040,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 else:
                     if (
                         objrepr == "None"
-                        or self.env.config.matlab_show_property_default_value == False
+                        or self.env.config.matlab_show_property_default_value is False
                     ):
                         objrepr_formatted = ""
                     else:
