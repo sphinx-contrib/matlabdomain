@@ -16,7 +16,8 @@
 """
 
 from pygments.lexer import RegexLexer, bygroups, words
-from pygments.token import (
+from pygments.token import (  # noqa: F401
+    Token,
     Text,
     Comment,
     Operator,

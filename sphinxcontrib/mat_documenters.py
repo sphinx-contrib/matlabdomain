@@ -8,7 +8,8 @@
     :copyright: Copyright 2014 Mark Mikofski
     :license: BSD, see LICENSE for details.
 """
-from .mat_types import (
+from .mat_types import (  # noqa: E401
+    MatModule,
     MatObject,
     MatFunction,
     MatClass,
