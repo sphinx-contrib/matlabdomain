@@ -15,11 +15,8 @@
     - Removed unused lexers (MatlabSessionLexer, OctaveLexer, ScilabLexer)
 """
 
-import re
-
-from pygments.lexer import Lexer, RegexLexer, bygroups, words, do_insertions
+from pygments.lexer import RegexLexer, bygroups, words
 from pygments.token import (
-    Token,
     Text,
     Comment,
     Operator,
@@ -28,11 +25,8 @@ from pygments.token import (
     String,
     Number,
     Punctuation,
-    Generic,
     Whitespace,
 )
-
-from pygments.lexers import _scilab_builtins
 
 __all__ = ["MatlabLexer"]
 

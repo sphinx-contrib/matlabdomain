@@ -456,7 +456,8 @@ def test_f_with_name_mismatch(caplog):
         (
             "sphinx.matlab-domain",
             WARNING,
-            '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch". Expected "f_with_name_mismatch" in module "test_data".',
+            '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch".'
+            ' Expected "f_with_name_mismatch" in module "test_data".',
         ),
     ]
 
@@ -534,7 +535,8 @@ def test_ClassWithNameMismatch(caplog):
         (
             "sphinx.matlab-domain",
             WARNING,
-            '[sphinxcontrib-matlabdomain] Unexpected class name: "ClassWithMismatch". Expected "ClassWithNameMismatch" in "test_data.ClassWithNameMismatch".',
+            '[sphinxcontrib-matlabdomain] Unexpected class name: "ClassWithMismatch". '
+            'Expected "ClassWithNameMismatch" in "test_data.ClassWithNameMismatch".',
         ),
     ]
 
@@ -713,7 +715,7 @@ def test_ClassWithLongPropertyDocstrings():
     assert obj.properties["b"]["docstring"] == " Document this property\n"
 
 
-def test_ClassWithLongPropertyDocstrings():
+def test_ClassWithLongPropertyTrailingEmptyDocstrings():
     mfile = os.path.join(
         TESTDATA_ROOT, "ClassWithLongPropertyTrailingEmptyDocstrings.m"
     )

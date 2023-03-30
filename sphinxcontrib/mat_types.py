@@ -10,8 +10,6 @@
 """
 from io import open  # for opening files with encoding in Python 2
 import os
-import re
-import sys
 from copy import copy
 import sphinx.util
 from sphinxcontrib.mat_lexer import MatlabLexer
@@ -932,7 +930,7 @@ class MatClass(MatMixin, MatObject):
                             prop_name = self.tokens[idx][1]
                             idx += 1
                             # Initialize property if it was not already done
-                            if not prop_name in self.properties.keys():
+                            if prop_name not in self.properties.keys():
                                 self.properties[prop_name] = {"attrs": attr_dict}
 
                             # skip size, class and functions specifiers

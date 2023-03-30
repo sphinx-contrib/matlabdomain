@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for details.
 """
 from .mat_types import (
-    MatModule,
     MatObject,
     MatFunction,
     MatClass,
@@ -23,7 +22,6 @@ from .mat_types import (
 )
 
 import re
-import sys
 import traceback
 import inspect
 
@@ -656,7 +654,8 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                     raise AttributeError
             except AttributeError:
                 logger.warning(
-                    "[sphinxcontrib-matlabdomain] missing attribute mentioned in :members: or __all__: module %s, attribute %s",
+                    "[sphinxcontrib-matlabdomain] missing attribute mentioned"
+                    " in :members: or __all__: module %s, attribute %s",
                     sphinx.util.inspect.safe_getattr(self.object, "__name__", "???"),
                     mname,
                 )
@@ -908,7 +907,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                 init_doc.object = self.get_attr(self.object, self.object.name, None)
                 init_doc.objpath = [self.object.name]
                 init_doc._find_signature()  # this effects to get_doc() result
-                initdocstring = "\n".join(["\n".join(l) for l in init_doc.get_doc()])
+                initdocstring = "\n".join(
+                    ["\n".join(line) for line in init_doc.get_doc()]
+                )
             else:
                 initdocstring = self.get_attr(
                     self.get_attr(self.object, self.object.name, None), "__doc__"
@@ -1038,7 +1039,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 else:
                     if (
                         objrepr == "None"
-                        or self.env.config.matlab_show_property_default_value == False
+                        or self.env.config.matlab_show_property_default_value is False
                     ):
                         objrepr_formatted = ""
                     else:
