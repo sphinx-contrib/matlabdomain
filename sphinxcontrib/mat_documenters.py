@@ -76,7 +76,9 @@ class MatlabDocumenter(PyDocumenter):
     domain = "mat"
 
     def parse_name(self):
-        """Determine what module to import and what attribute to document.
+        """
+        From: sphinx/ext/autodoc/__init__.py
+        Determine what module to import and what attribute to document.
 
         Returns True and sets *self.modname*, *self.objpath*, *self.fullname*,
         *self.args* and *self.retann* if parsing and resolving was successful.
@@ -114,6 +116,7 @@ class MatlabDocumenter(PyDocumenter):
         self.fullname = (self.modname or "") + (
             self.objpath and "." + ".".join(self.objpath) or ""
         )
+
         return True
 
     def import_object(self):
@@ -669,6 +672,17 @@ class MatModuleLevelDocumenter(MatlabDocumenter):
     classes, data/constants).
     """
 
+    """
+
+    From: sphinx\ext\autodoc\__init__.py
+    Resolve the module and name of the object to document given by the
+    arguments and the current module/class.
+
+    Must return a pair of the module name and a chain of attributes; for
+    example, it would return ``('zipfile', ['ZipFile', 'open'])`` for the
+    ``zipfile.ZipFile.open`` method.
+    """
+
     def resolve_name(self, modname, parents, path, base):
         if modname is None:
             if path:
@@ -852,7 +866,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         if initmeth is None or not isinstance(initmeth, MatMethod):
             return None
         if initmeth.args:
-            if initmeth.args[0] == "obj":
+            if initmeth.args[0] in ("obj", "self"):
                 return "(" + ", ".join(initmeth.args[1:]) + ")"
             else:
                 return "(" + ", ".join(initmeth.args) + ")"
@@ -980,7 +994,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def format_args(self):
         if self.object.args:
-            if self.object.args[0] == "obj":
+            if self.object.args[0] in ("obj", "self"):
                 return "(" + ", ".join(self.object.args[1:]) + ")"
             else:
                 return "(" + ", ".join(self.object.args) + ")"

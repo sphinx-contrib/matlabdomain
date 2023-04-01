@@ -71,6 +71,12 @@ Additional Configuration
    which is what MathWorks does in their documentation. *Added in Version
    0.16.0.*
 
+``matlab_short_links``
+   Shorten all class, package and functions to the minimum length. This assumes
+   that everything is in the path as we would expect it in MATLAB. This should
+   resemble a more MATLAB-like presentation. Default is ``True``.
+   *Added in Version 0.17.0.*
+
 For convenience the `primary domain <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-primary_domain>`_
 can be set to ``mat``.
 

@@ -220,9 +220,19 @@ class MatObject(ObjectDescription):
         # 'exceptions' module.
         elif add_module and self.env.config.add_module_names:
             modname = self.options.get("module", self.env.temp_data.get("mat:module"))
+
+            if self.env.config.matlab_short_links:
+                # modname is only used for package names
+                # - "target.+package" => "package"
+                # - "target" => ""
+                parts = modname.split(".")
+                parts = [part for part in parts if part.startswith("+")]
+                modname = ".".join(parts)
+
             if modname and modname != "exceptions":
                 if not self.env.config.matlab_keep_package_prefix:
                     modname = strip_package_prefix(modname)
+
                 nodetext = modname + "."
                 signode += addnodes.desc_addname(nodetext, nodetext)
 
@@ -252,6 +262,15 @@ class MatObject(ObjectDescription):
 
     def add_target_and_index(self, name_cls, sig, signode):
         modname = self.options.get("module", self.env.temp_data.get("mat:module"))
+
+        if self.env.config.matlab_short_links:
+            # modname is only used for package names
+            # - "target.+package" => "package"
+            # - "target" => ""
+            parts = modname.split(".")
+            parts = [part for part in parts if part.startswith("+")]
+            modname = ".".join(parts)
+
         fullname = (modname and modname + "." or "") + name_cls[0]
 
         if not self.env.config.matlab_keep_package_prefix:
@@ -261,25 +280,25 @@ class MatObject(ObjectDescription):
             modname_out, fullname_out = modname, fullname
 
         # note target
-        if fullname not in self.state.document.ids:
+        if fullname_out not in self.state.document.ids:
             signode["names"].append(fullname_out)
-            signode["ids"].append(fullname)
+            signode["ids"].append(fullname_out)
             signode["first"] = not self.names
             self.state.document.note_explicit_target(signode)
             objects = self.env.domaindata["mat"]["objects"]
-            if fullname in objects:
+            if fullname_out in objects:
                 self.state_machine.reporter.warning(
-                    "duplicate object description of %s, " % fullname
+                    "duplicate object description of %s, " % fullname_out
                     + "other instance in "
-                    + self.env.doc2path(objects[fullname][0])
+                    + self.env.doc2path(objects[fullname_out][0])
                     + ", use :noindex: for one of them",
                     line=self.lineno,
                 )
-            objects[fullname] = (self.env.docname, self.objtype)
+            objects[fullname_out] = (self.env.docname, self.objtype)
 
         indextext = self.get_index_text(modname_out, name_cls)
         if indextext:
-            entry = ("single", indextext, fullname, "", None)
+            entry = ("single", indextext, fullname_out, "", None)
             self.indexnode["entries"].append(entry)
 
     def before_content(self):
@@ -830,8 +849,9 @@ def setup(app):
     # autodoc
     app.add_config_value("matlab_src_dir", None, "env")
     app.add_config_value("matlab_src_encoding", None, "env")
-    app.add_config_value("matlab_keep_package_prefix", True, "env")
+    app.add_config_value("matlab_keep_package_prefix", False, "env")
     app.add_config_value("matlab_show_property_default_value", False, "env")
+    app.add_config_value("matlab_short_links", False, "env")
 
     app.registry.add_documenter("mat:module", doc.MatModuleDocumenter)
     app.add_directive_to_domain(
