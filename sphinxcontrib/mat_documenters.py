@@ -802,7 +802,7 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
         pass
 
 
-def make_baseclass_links(obj):
+def make_baseclass_links(env, obj):
     """Returns list of base class links"""
     obj_bases = obj.__bases__
     links = []
@@ -812,11 +812,20 @@ def make_baseclass_links(obj):
             if not v:
                 links.append(":class:`%s`" % b)
             else:
-                mod_name = v.__module__
-                if mod_name.startswith("+"):
+                modname = v.__module__
+
+                if env.config.matlab_short_links:
+                    # modname is only used for package names
+                    # - "target.+package" => "package"
+                    # - "target" => ""
+                    parts = modname.split(".")
+                    parts = [part for part in parts if part.startswith("+")]
+                    modname = ".".join(parts)
+
+                if modname.startswith("+"):
                     links.append(":class:`+%s`" % b)
                 else:
-                    links.append(":class:`%s.%s`" % (mod_name, b))
+                    links.append(":class:`%s.%s`" % (modname, b))
     return links
 
 
@@ -898,7 +907,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         # add inheritance info, if wanted
         if not self.doc_as_attr and self.options.show_inheritance:
             self.add_line("", "<autodoc>")
-            base_class_links = make_baseclass_links(self.object)
+            base_class_links = make_baseclass_links(self.env, self.object)
             if base_class_links:
                 self.add_line(
                     _("   Bases: %s") % ", ".join(base_class_links), "<autodoc>"

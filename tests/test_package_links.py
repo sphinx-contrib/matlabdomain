@@ -28,7 +28,8 @@ def rootdir():
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_with_prefix(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_package_links"
-    app = make_app(srcdir=srcdir)
+    confdict = {"matlab_keep_package_prefix": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
@@ -42,7 +43,7 @@ def test_with_prefix(make_app, rootdir):
     assert (
         content[5].astext()
         == "class +replab.Action\n\nBases: +replab.Str\n\nAn action group"
-        " …\n\n\n\nleftAction(self, g, p)\n\nReturns the left action"
+        " …\n\n\n\nleftAction(g, p)\n\nReturns the left action"
     )
 
 
@@ -63,7 +64,7 @@ def test_without_prefix(make_app, rootdir):
     assert isinstance(content[5], addnodes.desc)
     assert (
         content[5].astext()
-        == "class replab.Action\n\nBases: replab.Str\n\nAn action group …\n\n\n\nleftAction(self, g, p)\n\nReturns the left action"
+        == "class replab.Action\n\nBases: replab.Str\n\nAn action group …\n\n\n\nleftAction(g, p)\n\nReturns the left action"
     )
 
 

@@ -61,7 +61,7 @@ Additional Configuration
 
 ``matlab_keep_package_prefix``
    Determines if the MATLAB package prefix ``+`` is displayed in the
-   generated documentation.  Default is ``True``.  When ``False``, packages are
+   generated documentation.  Default is ``False``.  When ``False``, packages are
    still referred to in ReST using ``+pakage.+subpkg.func`` but the output
    will be ``pakage.other.func()``. *Added in Version
    0.11.0.*
