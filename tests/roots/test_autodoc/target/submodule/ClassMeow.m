@@ -1,9 +1,12 @@
-classdef ClassInheritDifferentModules < MyAbstractClass & MyHandleClass
-    % class which inherits bases from a different module
-    properties
-    end
+classdef ClassMeow < package.ClassBar
+    % Class which inherits from a package
+
     methods
-        function obj = ClassInheritDifferentModules()
+        function obj = ClassMeow()
+        end
+
+        function say(obj)
+            % Say Meow
         end
     end
 end

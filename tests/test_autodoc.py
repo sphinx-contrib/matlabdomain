@@ -118,5 +118,14 @@ b – an input to mymethod()"""
     )
 
 
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
+def test_setup_matlab_short_link(make_app, rootdir):
+    srcdir = rootdir / "roots" / "test_autodoc"
+    app = make_app(srcdir=srcdir, confoverrides={"matlab_short_links": True})
+    app.builder.build_all()
+
+    content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

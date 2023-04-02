@@ -1,15 +1,20 @@
 .. automodule:: target
 
-.. autoclass:: ClassExample
-    :show-inheritance:
-    :members:
+.. .. autoclass:: ClassExample
+..     :show-inheritance:
+..     :members:
 
 .. autoclass:: target.+package.ClassBar
     :show-inheritance:
     :members:
 
 
-References:
+.. autoclass:: target.submodule.ClassMeow
+    :show-inheritance:
+    :members:
 
 
-* :class:`package.ClassBar`
+Testing References
+------------------
+
+* :class:`target.+package.ClassBar`

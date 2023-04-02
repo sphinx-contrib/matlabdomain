@@ -1,4 +1,4 @@
-function [output] = f_comment_after_docstring(input)
+function [output] = funcMeow(input)
 % Tests a function with comments after docstring
 
 % A comment
