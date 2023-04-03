@@ -33,7 +33,7 @@ The Python package must be installed with::
    pip install -U sphinxcontrib-matlabdomain
 
 In general, the usage is the same as for documenting Python code. The package
-is tested with Python >= 3.8 and Sphinx >=4.0.0 and <6.0.0.
+is tested with Python >= 3.8 and Sphinx >=4.0.0.
 
 For a Python 2 compatible version the package must be installed with::
 
@@ -74,11 +74,13 @@ Additional Configuration
 ``matlab_short_links``
    Shorten all class, package and functions to the minimum length. This assumes
    that everything is in the path as we would expect it in MATLAB. This should
-   resemble a more MATLAB-like presentation. Default is ``True``.
-   *Added in Version 0.17.0.*
+   resemble a more MATLAB-like presentation. Default is ``False``.
+   *Added in Version 0.18.0.*
 
 For convenience the `primary domain <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-primary_domain>`_
-can be set to ``mat``.
+can be set to ``mat`` with.::
+
+   primary_domain = "mat"
 
 
 Roles and Directives
