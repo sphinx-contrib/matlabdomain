@@ -826,7 +826,10 @@ class MatClass(MatMixin, MatObject):
                     idx += self._blanks(idx)  # skip blanks
                     # concatenate base name
                     base_name = ""
-                    while not self._whitespace(idx):
+                    while (
+                        not self._whitespace(idx)
+                        and self.tokens[idx][0] is not Token.Comment
+                    ):
                         base_name += self.tokens[idx][1]
                         idx += 1
                     # If it's a newline, we are done parsing.
