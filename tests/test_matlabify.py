@@ -108,6 +108,7 @@ def test_module(mod):
         "ClassWithLongPropertyDocstrings",
         "ClassWithLongPropertyTrailingEmptyDocstrings",
         "ClassWithPropertyValidators",
+        "ClassWithTrailingCommentAfterBases",
     }
     assert all_items == expected_items
     assert mod.getter("__name__") in modules

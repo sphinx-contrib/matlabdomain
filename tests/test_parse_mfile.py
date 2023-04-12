@@ -742,5 +742,26 @@ def test_ClassWithPropertyValidators():
     assert obj.properties["ReportLevel"]["docstring"] == " The report level\n"
 
 
+def test_ClassWithTrailingCommentAfterBases():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithTrailingCommentAfterBases.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "ClassWithTrailingCommentAfterBases", "test_data"
+    )
+    assert obj.name == "ClassWithTrailingCommentAfterBases"
+    assert obj.bases == ["handle", "my.super.Class"]
+    assert (
+        obj.docstring
+        == " test class methods\n\n :param a: the input to :class:`ClassWithTrailingCommentAfterBases`\n"
+    )
+    mymethod = obj.methods["mymethod"]
+    assert mymethod.name == "mymethod"
+    assert mymethod.retv == ["c"]
+    assert mymethod.args == ["obj", "b"]
+    assert (
+        mymethod.docstring
+        == " a method in :class:`ClassWithTrailingCommentAfterBases`\n\n :param b: an input to :meth:`mymethod`\n"
+    )
+
+
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])
