@@ -1031,22 +1031,12 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         MatClassLevelDocumenter.add_directive_header(self, sig)
         if not self.options.annotation:
             if not self._datadescriptor:
-                try:
-                    objrepr = sphinx.util.inspect.object_description(
-                        self.object.default
-                    )  # display default
-                except ValueError:
-                    pass
-                else:
-                    if (
-                        objrepr == "None"
-                        or self.env.config.matlab_show_property_default_value is False
-                    ):
-                        objrepr_formatted = ""
-                    else:
-                        objrepr_formatted = f"= {objrepr}"
-
-                    self.add_line("   :annotation: " + objrepr_formatted, "<autodoc>")
+                obj_default = ""
+                if self.env.config.matlab_show_property_default_value:
+                    obj_default = self.object.default
+                if obj_default is None:
+                    obj_default = ""
+                self.add_line("   :annotation: " + obj_default, "<autodoc>")
         elif self.options.annotation is SUPPRESS:
             pass
         else:

@@ -102,7 +102,7 @@ a property
 
 
 
-b = '10'
+b 10
 
 a property with default value
 
