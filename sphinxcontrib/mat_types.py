@@ -1041,12 +1041,17 @@ class MatClass(MatMixin, MatObject):
                                 elif self._is_newline(idx - 1):
                                     idx += self._blanks(idx)
                                     continue
+                                elif token[0] is Token.Text and token[1] == " ":
+                                    # Skip spaces that are not in strings.
+                                    idx += 1
+                                    continue
                                 default += token[1]
                                 idx += 1
                             if self.tokens[idx][0] is not Token.Comment:
                                 idx += 1
                             if default:
                                 default = {"default": default.rstrip("; ")}
+
                         self.properties[prop_name].update(default)
                         # =========================================================
                         # docstring

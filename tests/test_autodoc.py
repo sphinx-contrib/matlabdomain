@@ -46,6 +46,8 @@ a – first property of ClassExample
 
 b – second property of ClassExample
 
+c – third property of ClassExample
+
 
 
 a
@@ -57,6 +59,12 @@ a property
 b
 
 a property with default value
+
+
+
+c
+
+a property with multiline default value
 
 
 
@@ -94,6 +102,8 @@ a – first property of ClassExample
 
 b – second property of ClassExample
 
+c – third property of ClassExample
+
 
 
 a
@@ -102,9 +112,15 @@ a property
 
 
 
-b 10
+b = 10
 
 a property with default value
+
+
+
+c = [10; ... 30]
+
+a property with multiline default value
 
 
 

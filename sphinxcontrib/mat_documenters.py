@@ -1036,11 +1036,20 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                     obj_default = self.object.default
                 if obj_default is None:
                     obj_default = ""
+                # Multi-line default values are truncated to the first part
+                # and postfixed with an ellipsis.
+                if "\n" in obj_default:
+                    obj_default_parts = obj_default.split("\n")
+                    obj_default = obj_default_parts[0] + " ... " + obj_default_parts[-1]
+
+                if obj_default:
+                    obj_default = " = " + obj_default
+
                 self.add_line("   :annotation: " + obj_default, "<autodoc>")
         elif self.options.annotation is SUPPRESS:
             pass
         else:
-            self.add_line("   :annotation: %s" % self.options.annotation, "<autodoc>")
+            self.add_line("   :annotation: = " + self.options.annotation, "<autodoc>")
 
     def add_content(self, more_content, no_docstring=False):
         # if not self._datadescriptor:

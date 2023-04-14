@@ -3,10 +3,14 @@ classdef ClassExample < handle
     %
     % :param a: first property of :class:`ClassExample`
     % :param b: second property of :class:`ClassExample`
+    % :param c: third property of :class:`ClassExample`
 
     properties
         a % a property
         b = 10 % a property with default value
+        c = [10;
+             20;
+             30]; % a property with multiline default value
     end
     methods
         function mc = ClassExample(a)
