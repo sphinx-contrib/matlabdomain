@@ -10,5 +10,6 @@ classdef ClassWithEllipsisProperties < handle
             } % a cell array with ellipsis and other array notation
         C = ClassWithEllipsisProperties.B(2:end, 1) % using end inside array
         D = '...'; % String with line continuation
+        E = 'some string with spaces' % The string with spaces
     end
 end

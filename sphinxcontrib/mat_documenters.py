@@ -1031,26 +1031,25 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         MatClassLevelDocumenter.add_directive_header(self, sig)
         if not self.options.annotation:
             if not self._datadescriptor:
-                try:
-                    objrepr = sphinx.util.inspect.object_description(
-                        self.object.default
-                    )  # display default
-                except ValueError:
-                    pass
-                else:
-                    if (
-                        objrepr == "None"
-                        or self.env.config.matlab_show_property_default_value is False
-                    ):
-                        objrepr_formatted = ""
-                    else:
-                        objrepr_formatted = f"= {objrepr}"
+                obj_default = ""
+                if self.env.config.matlab_show_property_default_value:
+                    obj_default = self.object.default
+                if obj_default is None:
+                    obj_default = ""
+                # Multi-line default values are truncated to the first part
+                # and postfixed with an ellipsis.
+                if "\n" in obj_default:
+                    obj_default_parts = obj_default.split("\n")
+                    obj_default = obj_default_parts[0] + " ... " + obj_default_parts[-1]
 
-                    self.add_line("   :annotation: " + objrepr_formatted, "<autodoc>")
+                if obj_default:
+                    obj_default = " = " + obj_default
+
+                self.add_line("   :annotation: " + obj_default, "<autodoc>")
         elif self.options.annotation is SUPPRESS:
             pass
         else:
-            self.add_line("   :annotation: %s" % self.options.annotation, "<autodoc>")
+            self.add_line("   :annotation: = " + self.options.annotation, "<autodoc>")
 
     def add_content(self, more_content, no_docstring=False):
         # if not self._datadescriptor:
