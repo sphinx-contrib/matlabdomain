@@ -47,6 +47,28 @@ __all__ = [
 # TODO: script files
 
 
+def recursive_all(obj):
+    for n, o in obj.entities:
+        if isinstance(o, MatModule):
+            o.safe_getmembers()
+            if o.entities:
+                recursive_all(o)
+
+
+def recursive_print(obj, indent=""):
+    for n, o in obj.entities:
+        print(indent + f"{n=}, {o=}")
+        if isinstance(o, MatModule):
+            if o.entities:
+                indent = indent + " "
+                names = [n_ for n_, o_ in o.entities]
+                print(indent + f"{names=}")
+                recursive_print(o, indent)
+                indent = indent[:-1]
+        if isinstance(o, MatClass):
+            print(indent + f"-> {o.name}, {o.methods}")
+
+
 def analyze(app):
     basedir = app.env.config.matlab_src_dir
     MatObject.basedir = basedir  # set MatObject base directory
@@ -55,6 +77,17 @@ def analyze(app):
     # root = MatModule
     root = MatObject.matlabify("")
     root.safe_getmembers()
+    recursive_all(root)
+
+    recursive_print(root)
+
+    # for name, obj in root.entities:
+    #     obj.__all__()
+    #     if obj.entities:
+    #         for name,
+
+    #         print(obj.entities)
+
     pass
     # parent = None
     # obj = self.module = modules[self.modname]
@@ -129,7 +162,7 @@ class MatObject(object):
         over the mfile.
         """
         # no object name given
-        logger.debug(f"[sphinxcontrib-matlabdomain] matlabify {objname=}.")
+        logger.debug(f"[sphinxcontrib-matlabdomain] enter matlabify {objname=}.")
 
         if objname is None:
             return None
@@ -160,6 +193,8 @@ class MatObject(object):
         )
         # package folders imported over mfile with same name
         if os.path.isdir(fullpath):
+            if package.startswith("_") or package.startswith("."):
+                return None
             mod = modules.get(package)
             if mod:
                 logger.debug(
@@ -182,7 +217,7 @@ class MatObject(object):
         elif os.path.isfile(fullpath + ".mlapp"):
             mlappfile = fullpath + ".mlapp"
             logger.debug(
-                f"[sphinxcontrib-matlabdomain] matlabify parse_mlappfile {package=}, {mfile=}"
+                f"[sphinxcontrib-matlabdomain] matlabify parse_mlappfile {package=}, {mlappfile=}"
             )
             return MatObject.parse_mlappfile(mlappfile, name, path)
         return None
@@ -338,6 +373,9 @@ class MatModule(MatObject):
         for key in os.listdir(self.path):
             # make full path
             path = os.path.join(self.path, key)
+
+            if os.path.isdir(path) and (key.startswith(".") or key.startswith("_")):
+                continue
             # don't visit vcs directories
             if os.path.isdir(path) and key in [".git", ".hg", ".svn", ".bzr"]:
                 continue
@@ -414,13 +452,11 @@ class MatModule(MatObject):
                 self.entities.append((name, entity))
                 # setattr(self, name, attr)
                 logger.debug(
-                    "[sphinxcontrib-matlabdomain] entity %s imported from mod %s.",
-                    name,
-                    self,
+                    f"[sphinxcontrib-matlabdomain] entity {name=} imported from {self=}"
                 )
                 return entity
-            else:
-                super(MatModule, self).getter(name, *defargs)
+            # else:
+            #     super(MatModule, self).getter(name, *defargs)
             # if hasattr(self, name):
             #     logger.debug(
             #         "[sphinxcontrib-matlabdomain] mod %s already has attr %s.",
