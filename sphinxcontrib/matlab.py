@@ -10,6 +10,7 @@
 """
 from . import mat_documenters as doc
 from . import mat_directives
+from . import mat_types
 
 import re
 
@@ -844,7 +845,13 @@ class MATLABDomain(Domain):
         return ret
 
 
+def analyze(app):
+    mat_types.analyze(app)
+
+
 def setup(app):
+    app.connect("builder-inited", analyze)
+
     app.add_domain(MATLABDomain)
     # autodoc
     app.add_config_value("matlab_src_dir", None, "env")

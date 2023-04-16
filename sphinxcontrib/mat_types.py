@@ -47,6 +47,19 @@ __all__ = [
 # TODO: script files
 
 
+def analyze(app):
+    basedir = app.env.config.matlab_src_dir
+    MatObject.basedir = basedir  # set MatObject base directory
+    MatObject.sphinx_env = app.env  # pass env to MatObject cls
+    MatObject.sphinx_app = app  # pass app to MatObject cls
+    # root = MatModule
+    root = MatObject.matlabify("")
+    root.safe_getmembers()
+    pass
+    # parent = None
+    # obj = self.module = modules[self.modname]
+
+
 class MatObject(object):
     """
     Base MATLAB object to which all others are subclassed.
@@ -116,17 +129,35 @@ class MatObject(object):
         over the mfile.
         """
         # no object name given
-        if not objname:
-            return None
-        # matlab modules are really packages
-        package = objname  # for packages it's namespace of __init__.py
-        # convert namespace to path
-        objname = objname.replace(".", os.sep)  # objname may have dots
-        # separate path from file/folder name
-        path, name = os.path.split(objname)
+        logger.debug(f"[sphinxcontrib-matlabdomain] matlabify {objname=}.")
 
-        # make a full path out of basedir and objname
-        fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
+        if objname is None:
+            return None
+        if objname == "":
+            path, name = os.path.split(MatObject.basedir)
+            package = ""
+            objname = name
+            # package os.path.join(MatObject.basedir)
+            # package = "."
+            # objname = "."
+            # path = os.path.join(MatObject.basedir)
+            # name = "."
+            fullpath = MatObject.basedir
+        else:
+            # matlab modules are really packages
+            objname = objname.lstrip(".")
+            package = objname  # for packages it's namespace of __init__.py
+            # convert namespace to path
+            objname = objname.replace(".", os.sep)  # objname may have dots
+            # separate path from file/folder name
+            path, name = os.path.split(objname)
+
+            # make a full path out of basedir and objname
+            fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
+
+        logger.debug(
+            f"[sphinxcontrib-matlabdomain] matlabify {package=}, {objname=}, {fullpath=}"
+        )
         # package folders imported over mfile with same name
         if os.path.isdir(fullpath):
             mod = modules.get(package)
@@ -137,15 +168,13 @@ class MatObject(object):
                 return mod
             else:
                 logger.debug(
-                    "[sphinxcontrib-matlabdomain] matlabify %s from %s.",
-                    package,
-                    fullpath,
+                    f"[sphinxcontrib-matlabdomain] matlabify MatModule {package=}, {fullpath=}"
                 )
                 return MatModule(name, fullpath, package)  # import package
         elif os.path.isfile(fullpath + ".m"):
             mfile = fullpath + ".m"
             logger.debug(
-                "[sphinxcontrib-matlabdomain] matlabify %s from %s.", package, mfile
+                f"[sphinxcontrib-matlabdomain] matlabify parse_mfile {package=}, {mfile=}"
             )
             return MatObject.parse_mfile(
                 mfile, name, path, MatObject.encoding
@@ -153,7 +182,7 @@ class MatObject(object):
         elif os.path.isfile(fullpath + ".mlapp"):
             mlappfile = fullpath + ".mlapp"
             logger.debug(
-                "[sphinxcontrib-matlabdomain] matlabify %s from %s.", package, mlappfile
+                f"[sphinxcontrib-matlabdomain] matlabify parse_mlappfile {package=}, {mfile=}"
             )
             return MatObject.parse_mlappfile(mlappfile, name, path)
         return None
@@ -296,10 +325,15 @@ class MatModule(MatObject):
         self.path = path
         #: name of package (full path from basedir to module)
         self.package = package
+        #: entities found in the module: class, function, module (subpath and +package)
+        self.entities = []
         # add module to system dictionary
         modules[package] = self
 
     def safe_getmembers(self):
+        logger.debug(
+            f"[sphinxcontrib-matlabdomain] MatModule.safe_getmembers {self.name=}, {self.path=}, {self.package=}"
+        )
         results = []
         for key in os.listdir(self.path):
             # make full path
@@ -317,6 +351,7 @@ class MatModule(MatObject):
                 value = self.getter(key, None)
                 if value:
                     results.append((key, value))
+        self.entities = results
         results.sort()
         return results
 
@@ -366,24 +401,46 @@ class MatModule(MatObject):
             )
             return None
         else:
-            if hasattr(self, name):
+            for entity_name, entity_content in self.entities:
+                if name == entity_name:
+                    logger.debug(
+                        "[sphinxcontrib-matlabdomain] mod %s already has entity %s.",
+                        self,
+                        name,
+                    )
+                    return entity_content
+            entity = MatObject.matlabify(".".join([self.package, name]))
+            if entity:
+                self.entities.append((name, entity))
+                # setattr(self, name, attr)
                 logger.debug(
-                    "[sphinxcontrib-matlabdomain] mod %s already has attr %s.",
-                    self,
-                    name,
-                )
-                return getattr(self, name)
-            attr = MatObject.matlabify(".".join([self.package, name]))
-            if attr:
-                setattr(self, name, attr)
-                logger.debug(
-                    "[sphinxcontrib-matlabdomain] attr %s imported from mod %s.",
+                    "[sphinxcontrib-matlabdomain] entity %s imported from mod %s.",
                     name,
                     self,
                 )
-                return attr
+                return entity
             else:
                 super(MatModule, self).getter(name, *defargs)
+            # if hasattr(self, name):
+            #     logger.debug(
+            #         "[sphinxcontrib-matlabdomain] mod %s already has attr %s.",
+            #         self,
+            #         name,
+            #     )
+            #     return getattr(self, name)
+            # package_name = ".".join([self.package, name])
+            # package_name = package_name.lstrip(".")
+            # attr = MatObject.matlabify(package_name)
+            # if attr:
+            #     setattr(self, name, attr)
+            #     logger.debug(
+            #         "[sphinxcontrib-matlabdomain] attr %s imported from mod %s.",
+            #         name,
+            #         self,
+            #     )
+            #     return attr
+            # else:
+            #     super(MatModule, self).getter(name, *defargs)
 
 
 class MatMixin(object):
