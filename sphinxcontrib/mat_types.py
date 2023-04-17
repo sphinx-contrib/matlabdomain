@@ -22,6 +22,8 @@ logger = sphinx.util.logging.getLogger("matlab-domain")
 
 modules = {}
 
+entities_table = {}
+
 __all__ = [
     "MatObject",
     "MatModule",
@@ -69,6 +71,17 @@ def recursive_print(obj, indent=""):
             print(indent + f"-> {o.name}, {o.methods}")
 
 
+def traverse_all(obj, path=""):
+    for n, o in obj.entities:
+        print(path + "." + n)
+        fullpath = path + "." + o.name
+        fullpath = fullpath.lstrip(".")
+        entities_table[fullpath] = o
+        if isinstance(o, MatModule):
+            if o.entities:
+                traverse_all(o, fullpath)
+
+
 def analyze(app):
     basedir = app.env.config.matlab_src_dir
     MatObject.basedir = basedir  # set MatObject base directory
@@ -80,6 +93,7 @@ def analyze(app):
     recursive_all(root)
 
     recursive_print(root)
+    traverse_all(root)
 
     # for name, obj in root.entities:
     #     obj.__all__()
