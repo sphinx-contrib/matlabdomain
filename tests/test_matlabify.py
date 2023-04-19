@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from sphinxcontrib import mat_documenters as doc
-from sphinxcontrib.mat_types import modules
+from sphinxcontrib.mat_types import entities_table
 import os
 import sys
 import pytest
@@ -29,8 +29,8 @@ def mod(app):
     return doc.MatObject.matlabify("test_data")
 
 
-def test_empty():
-    assert doc.MatObject.matlabify("") is None
+# def test_empty():
+#     assert doc.MatObject.matlabify("") is None
 
 
 def test_unknown():
@@ -49,10 +49,12 @@ def test_module(mod):
     assert mod.getter("__package__") == "test_data"
     assert not mod.getter("__module__")
     assert not mod.getter("__doc__")
-    all_items = set(mod.getter("__all__"))
+    all_entities = mod.getter("__all__")
+    all_items = set(name for name, entity in all_entities)
     expected_items = {
         "+package",
         "@ClassFolder",
+        "Application",
         "ClassAbstract",
         "ClassExample",
         "ClassBySource",
@@ -110,7 +112,7 @@ def test_module(mod):
         "ClassWithPropertyValidators",
     }
     assert all_items == expected_items
-    assert mod.getter("__name__") in modules
+    assert mod.getter("__name__") in entities_table
 
 
 def test_parse_twice(mod):

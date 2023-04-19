@@ -209,7 +209,7 @@ class MatObject(object):
         if os.path.isdir(fullpath):
             if package.startswith("_") or package.startswith("."):
                 return None
-            mod = modules.get(package)
+            mod = entities_table.get(package)
             if mod:
                 logger.debug(
                     "[sphinxcontrib-matlabdomain] Module %s already loaded.", package
@@ -377,24 +377,28 @@ class MatModule(MatObject):
         #: entities found in the module: class, function, module (subpath and +package)
         self.entities = []
         # add module to system dictionary
-        modules[package] = self
+        # modules[package] = self
 
     def safe_getmembers(self):
         logger.debug(
             f"[sphinxcontrib-matlabdomain] MatModule.safe_getmembers {self.name=}, {self.path=}, {self.package=}"
         )
+        if self.entities:
+            return self.entities
+
         results = []
         for key in os.listdir(self.path):
             # make full path
             path = os.path.join(self.path, key)
-
+            # Do not visit directories starting with:
+            # - "." (VCS and Editors)
+            # - "_" (build/temp folders in Sphinx)
             if os.path.isdir(path) and (key.startswith(".") or key.startswith("_")):
                 continue
-            # don't visit vcs directories
-            if os.path.isdir(path) and key in [".git", ".hg", ".svn", ".bzr"]:
-                continue
-            # only visit mfiles
-            if os.path.isfile(path) and not key.endswith(".m"):
+            # Only visit MATLAB files
+            if os.path.isfile(path) and not (
+                key.endswith(".m") or key.endswith(".mlapp")
+            ):
                 continue
             # trim file extension
             if os.path.isfile(path):
@@ -404,7 +408,7 @@ class MatModule(MatObject):
                 if value:
                     results.append((key, value))
         self.entities = results
-        results.sort()
+        # results.sort()
         return results
 
     @property
@@ -413,10 +417,11 @@ class MatModule(MatObject):
 
     @property
     def __all__(self):
-        results = self.safe_getmembers()
-        if results:
-            results = list(zip(*self.safe_getmembers()))[0]
-        return results
+        return self.entities
+        # results = self.safe_getmembers()
+        # if results:
+        #     results = list(zip(*self.safe_getmembers()))[0]
+        # return results
 
     @property
     def __path__(self):
@@ -453,6 +458,7 @@ class MatModule(MatObject):
             )
             return None
         else:
+            # Search if we already has this entity
             for entity_name, entity_content in self.entities:
                 if name == entity_name:
                     logger.debug(
@@ -461,6 +467,7 @@ class MatModule(MatObject):
                         name,
                     )
                     return entity_content
+            # If not - try to MATLABIFY it.
             entity = MatObject.matlabify(".".join([self.package, name]))
             if entity:
                 self.entities.append((name, entity))
@@ -1369,42 +1376,50 @@ class MatClass(MatMixin, MatObject):
     @property
     def __bases__(self):
         bases_ = dict.fromkeys(self.bases)  # make copy of bases
-        num_pths = len(MatObject.basedir.split(os.sep))
-        # walk tree to find bases
-        for root, dirs, files in os.walk(MatObject.basedir):
-            # namespace defined by root, doesn't include basedir
-            root_mod = ".".join(root.split(os.sep)[num_pths:])
-            # don't visit vcs directories
-            for vcs in [".git", ".hg", ".svn", ".bzr"]:
-                if vcs in dirs:
-                    dirs.remove(vcs)
-            # only visit mfiles
-            for f in tuple(files):
-                if not f.endswith(".m"):
-                    files.remove(f)
-            # search folders
-            for b in self.bases:
-                # search folders
-                for m in dirs:
-                    # check if module has been matlabified already
-                    mod_name = ".".join([root_mod, m]).lstrip(".")
-                    mod = modules.get(mod_name)
-                    if not mod:
-                        continue
-                    # check if base class is attr of module
-                    b_ = mod.getter(b, None)
-                    if not b_:
-                        b_ = mod.getter(b.lstrip(m.lstrip("+")), None)
-                    if b_:
-                        bases_[b] = b_
-                        break
-                if bases_[b]:
-                    continue
-                if b + ".m" in files:
-                    mfile = os.path.join(root, b) + ".m"
-                    bases_[b] = MatObject.parse_mfile(mfile, b, root)
-            # keep walking tree
-        # no matching folders or mfiles
+        class_entity_table = {}
+        for name, entity in entities_table.items():
+            if isinstance(entity, MatClass) or "@" in name:
+                class_entity_table[name] = entity
+
+        for base in self.bases:
+            if base in class_entity_table.keys():
+                bases_[base] = class_entity_table[base]
+        # num_pths = len(MatObject.basedir.split(os.sep))
+        # # walk tree to find bases
+        # for root, dirs, files in os.walk(MatObject.basedir):
+        #     # namespace defined by root, doesn't include basedir
+        #     root_mod = ".".join(root.split(os.sep)[num_pths:])
+        #     # don't visit vcs directories
+        #     for vcs in [".git", ".hg", ".svn", ".bzr"]:
+        #         if vcs in dirs:
+        #             dirs.remove(vcs)
+        #     # only visit mfiles
+        #     for f in tuple(files):
+        #         if not f.endswith(".m"):
+        #             files.remove(f)
+        #     # search folders
+        #     for b in self.bases:
+        #         # search folders
+        #         for m in dirs:
+        #             # check if module has been matlabified already
+        #             mod_name = ".".join([root_mod, m]).lstrip(".")
+        #             mod = modules.get(mod_name)
+        #             if not mod:
+        #                 continue
+        #             # check if base class is attr of module
+        #             b_ = mod.getter(b, None)
+        #             if not b_:
+        #                 b_ = mod.getter(b.lstrip(m.lstrip("+")), None)
+        #             if b_:
+        #                 bases_[b] = b_
+        #                 break
+        #         if bases_[b]:
+        #             continue
+        #         if b + ".m" in files:
+        #             mfile = os.path.join(root, b) + ".m"
+        #             bases_[b] = MatObject.parse_mfile(mfile, b, root)
+        #     # keep walking tree
+        # # no matching folders or mfiles
         return bases_
 
     def getter(self, name, *defargs):
@@ -1590,7 +1605,7 @@ class MatModuleAnalyzer(object):
             if isinstance(entry, MatcodeError):
                 raise entry
             return entry
-        mod = modules.get(modname)
+        mod = entities_table[modname]
         if mod:
             obj = cls.for_folder(mod.path, modname)
         else:
@@ -1627,7 +1642,8 @@ class MatModuleAnalyzer(object):
         attr_visitor_collected = {}
         attr_visitor_tagorder = {}
         tagnumber = 0
-        mod = modules[self.modname]
+        mod = entities_table[self.modname]
+
         # walk package tree
         for k, v in mod.safe_getmembers():
             if hasattr(v, "docstring"):
