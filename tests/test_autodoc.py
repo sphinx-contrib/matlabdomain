@@ -48,10 +48,6 @@ b – second property of ClassExample
 
 c – third property of ClassExample
 
-Constructor Summary
-
-
-
 Property Summary
 
 
@@ -115,10 +111,6 @@ a – first property of ClassExample
 b – second property of ClassExample
 
 c – third property of ClassExample
-
-Constructor Summary
-
-
 
 Property Summary
 

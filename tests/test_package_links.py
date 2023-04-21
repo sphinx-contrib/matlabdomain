@@ -36,7 +36,7 @@ def test_with_prefix(make_app, rootdir):
     assert isinstance(content[3], addnodes.desc)
     assert (
         content[3].astext()
-        == "class +replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’\n\nMethod Summary\n\n"
+        == "class +replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’"
     )
     assert isinstance(content[5], addnodes.desc)
     assert (
@@ -58,7 +58,7 @@ def test_without_prefix(make_app, rootdir):
     assert isinstance(content[3], addnodes.desc)
     assert (
         content[3].astext()
-        == "class replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’\n\nMethod Summary\n\n"
+        == "class replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’"
     )
     assert isinstance(content[5], addnodes.desc)
     assert (

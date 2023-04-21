@@ -947,32 +947,38 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         # find out which members are documentable
         members_check_module, members = self.get_object_members(want_all)
 
+        # use filtered members to check for empty sections
+        filtered_members = [
+            (membername, member)
+            for (membername, member, isattr) in self.filter_members(members, want_all)
+        ]
+
         # create list of properties
         prop_names = [
             membername
-            for (membername, member) in members
+            for (membername, member) in filtered_members
             if isinstance(member, MatProperty)
         ]
         # create list of constructors
-        if self.env.config.autoclass_content == "init":
+        if self.env.config.autoclass_content in ("both", "init"):
             # skip constructor section, since its docstring has already been used for the class
             cons_names = []
         else:
             cons_names = [
                 membername
-                for (membername, member) in members
+                for (membername, member) in filtered_members
                 if isinstance(member, MatMethod) and member.name == member.cls.name
             ]
         # create list of non-constructor methods
         meth_names = [
             membername
-            for (membername, member) in members
+            for (membername, member) in filtered_members
             if isinstance(member, MatMethod) and member.name != member.cls.name
         ]
         # create list of other members
         other_names = [
             membername
-            for (membername, member) in members
+            for (membername, member) in filtered_members
             if not isinstance(member, MatMethod) and not isinstance(member, MatProperty)
         ]
         # create list of members that are not properties
