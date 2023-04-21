@@ -659,7 +659,7 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                 # documenting imported objects
                 return True, self.object.safe_getmembers()
             else:
-                memberlist = self.object.__all__
+                memberlist = [name for name, obj in self.object.__all__]
         else:
             memberlist = self.options.members or []
         ret = []
