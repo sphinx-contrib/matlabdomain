@@ -2,17 +2,17 @@ classdef ClassBar < handle
 % The Bar and Foo handler
 
     properties
-        bars  % Number of bars
+        bars = 'bars' % Number of bars
 
         % Number of foos
-        foos
+        foos = 10
     end
 
     methods
         function obj = ClassBar()
             % Initialize the bars and foos
-            obj.bars = "bars";
-            obj.foos = "foos";
+            obj.bars = 'bars';
+            obj.foos = 42;
         end
 
         function doFoo(obj)

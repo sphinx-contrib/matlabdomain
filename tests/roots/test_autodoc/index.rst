@@ -1,20 +1,13 @@
+TEST_AUTODOC
+============
+
 .. automodule:: target
 
-.. .. autoclass:: ClassExample
-..     :show-inheritance:
-..     :members:
+.. toctree::
+   :maxdepth: 2
 
-.. autoclass:: target.+package.ClassBar
-    :show-inheritance:
-    :members:
-
-
-.. autoclass:: target.submodule.ClassMeow
-    :show-inheritance:
-    :members:
-
-
-Testing References
-------------------
-
-* :class:`target.+package.ClassBar`
+   index_classfolder
+   index_package
+   index_submodule
+   index_target
+   index_root

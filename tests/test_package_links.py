@@ -27,6 +27,7 @@ def rootdir():
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_with_prefix(make_app, rootdir):
+    # TODO: bases are shown without prefix
     srcdir = rootdir / "roots" / "test_package_links"
     confdict = {"matlab_keep_package_prefix": True}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
@@ -42,8 +43,7 @@ def test_with_prefix(make_app, rootdir):
     assert isinstance(content[5], addnodes.desc)
     assert (
         content[5].astext()
-        == "class +replab.Action\n\nBases: +replab.Str\n\nAn action group"
-        " …\n\n\n\nleftAction(g, p)\n\nReturns the left action"
+        == "class +replab.Action\n\nBases: replab.Str\n\nAn action group …\n\n\n\nleftAction(g, p)\n\nReturns the left action"
     )
 
 

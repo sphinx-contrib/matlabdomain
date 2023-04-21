@@ -1,8 +1,8 @@
 classdef ClassExample < handle
     % Example class
     %
-    % :param a: first property of :class:`ClassExample`
-    % :param b: second property of :class:`ClassExample`
+    % * ``a`` - first property of :class:`ClassExample`
+    % * ``b`` - second property of :class:`ClassExample`
 
     properties
         a % a property
