@@ -1384,42 +1384,7 @@ class MatClass(MatMixin, MatObject):
         for base in self.bases:
             if base in class_entity_table.keys():
                 bases_[base] = class_entity_table[base]
-        # num_pths = len(MatObject.basedir.split(os.sep))
-        # # walk tree to find bases
-        # for root, dirs, files in os.walk(MatObject.basedir):
-        #     # namespace defined by root, doesn't include basedir
-        #     root_mod = ".".join(root.split(os.sep)[num_pths:])
-        #     # don't visit vcs directories
-        #     for vcs in [".git", ".hg", ".svn", ".bzr"]:
-        #         if vcs in dirs:
-        #             dirs.remove(vcs)
-        #     # only visit mfiles
-        #     for f in tuple(files):
-        #         if not f.endswith(".m"):
-        #             files.remove(f)
-        #     # search folders
-        #     for b in self.bases:
-        #         # search folders
-        #         for m in dirs:
-        #             # check if module has been matlabified already
-        #             mod_name = ".".join([root_mod, m]).lstrip(".")
-        #             mod = modules.get(mod_name)
-        #             if not mod:
-        #                 continue
-        #             # check if base class is attr of module
-        #             b_ = mod.getter(b, None)
-        #             if not b_:
-        #                 b_ = mod.getter(b.lstrip(m.lstrip("+")), None)
-        #             if b_:
-        #                 bases_[b] = b_
-        #                 break
-        #         if bases_[b]:
-        #             continue
-        #         if b + ".m" in files:
-        #             mfile = os.path.join(root, b) + ".m"
-        #             bases_[b] = MatObject.parse_mfile(mfile, b, root)
-        #     # keep walking tree
-        # # no matching folders or mfiles
+
         return bases_
 
     def getter(self, name, *defargs):
