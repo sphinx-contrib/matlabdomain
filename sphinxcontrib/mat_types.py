@@ -20,7 +20,7 @@ import sphinxcontrib.mat_parser as mat_parser
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
-modules = {}
+# modules = {}
 
 entities_table = {}
 
@@ -87,6 +87,8 @@ def analyze(app):
     MatObject.basedir = basedir  # set MatObject base directory
     MatObject.sphinx_env = app.env  # pass env to MatObject cls
     MatObject.sphinx_app = app  # pass app to MatObject cls
+    entities_table.clear()
+    # modules.clear()
     # root = MatModule
     root = MatObject.matlabify("")
     root.safe_getmembers()

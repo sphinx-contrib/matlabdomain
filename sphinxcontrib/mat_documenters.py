@@ -19,7 +19,6 @@ from .mat_types import (  # noqa: E401
     MatException,
     MatModuleAnalyzer,
     MatApplication,
-    modules,
     entities_table,
 )
 
