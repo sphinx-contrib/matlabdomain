@@ -159,13 +159,16 @@ class MatlabDocumenter(PyDocumenter):
 
             # Lookup in entities_table
             # self.parent =
-            msg = f"[sphinxcontrib-matlabdomain] MatlabDocumenter.import_object {self.modname=}, {self.objpath}, {self.fullname=}."
+            msg = f"[sphinxcontrib-matlabdomain] MatlabDocumenter.import_object {self.modname=}, {self.objpath=}, {self.fullname=}."
             logger.debug(msg)
             if len(self.objpath) > 1:
-                obj = entities_table[".".join([self.modname, self.objpath[0]])]
+                lookup_name = ".".join([self.modname, self.objpath[0]])
+                lookup_name = lookup_name.lstrip(".")
+                obj = entities_table[lookup_name]
                 self.object = self.get_attr(obj, self.objpath[1])
             else:
-                self.object = entities_table[self.fullname]
+                lookup_name = self.fullname.lstrip(".")
+                self.object = entities_table[lookup_name]
             return True
         # this used to only catch SyntaxError, ImportError and AttributeError,
         # but importing modules with side effects can raise all kinds of errors
@@ -189,25 +192,25 @@ class MatlabDocumenter(PyDocumenter):
 
     def add_content(self, more_content, no_docstring=False):
         """Add content from docstrings, attribute documentation and user."""
-        # set sourcename and add content from attribute documentation
-        if self.analyzer:
-            # prevent encoding errors when the file name is non-ASCII
-            if not isinstance(self.analyzer.srcname, str):
-                filename = str(self.analyzer.srcname)
-            else:
-                filename = self.analyzer.srcname
-            sourcename = "%s:docstring of %s" % (filename, self.fullname)
+        # # set sourcename and add content from attribute documentation
+        # if self.analyzer:
+        #     # prevent encoding errors when the file name is non-ASCII
+        #     if not isinstance(self.analyzer.srcname, str):
+        #         filename = str(self.analyzer.srcname)
+        #     else:
+        #         filename = self.analyzer.srcname
+        #     sourcename = "%s:docstring of %s" % (filename, self.fullname)
 
-            attr_docs = self.analyzer.find_attr_docs()
-            if self.objpath:
-                key = (".".join(self.objpath[:-1]), self.objpath[-1])
-                if key in attr_docs:
-                    no_docstring = True
-                    docstrings = [attr_docs[key]]
-                    for i, line in enumerate(self.process_doc(docstrings)):
-                        self.add_line(line, sourcename, i)
-        else:
-            sourcename = "docstring of %s" % self.fullname
+        #     attr_docs = self.analyzer.find_attr_docs()
+        #     if self.objpath:
+        #         key = (".".join(self.objpath[:-1]), self.objpath[-1])
+        #         if key in attr_docs:
+        #             no_docstring = True
+        #             docstrings = [attr_docs[key]]
+        #             for i, line in enumerate(self.process_doc(docstrings)):
+        #                 self.add_line(line, sourcename, i)
+        # else:
+        sourcename = "docstring of %s" % self.fullname
 
         # add content from docstrings
         if not no_docstring:

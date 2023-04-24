@@ -96,6 +96,7 @@ def analyze(app):
 
     recursive_print(root)
     traverse_all(root)
+    entities_table["."] = root
 
     # for name, obj in root.entities:
     #     obj.__all__()
