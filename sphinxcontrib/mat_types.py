@@ -1621,7 +1621,9 @@ class MatModuleAnalyzer(object):
             if isinstance(v, MatClass):
                 for mk, mv in v.getter("__dict__").items():
                     namespace = ".".join([mod.package, k])
+                    namespace = namespace.lstrip(".")
                     tagname = "%s.%s" % (k, mk)
+                    tagname = tagname.lstrip(".")
                     attr_visitor_collected[namespace, mk] = mv.docstring
                     attr_visitor_tagorder[tagname] = tagnumber
                     tagnumber += 1

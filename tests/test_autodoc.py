@@ -128,13 +128,34 @@ def test_submodule_show_default_value(make_app, rootdir):
     )
 
 
-# @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
-# def test_setup_matlab_short_link(make_app, rootdir):
-#     srcdir = rootdir / "roots" / "test_autodoc"
-#     app = make_app(srcdir=srcdir, confoverrides={"matlab_short_links": True})
-#     app.builder.build_all()
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
+def test_root(make_app, rootdir):
+    srcdir = rootdir / "roots" / "test_autodoc"
+    app = make_app(srcdir=srcdir)
+    app.builder.build_all()
 
-#     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
+    content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
+    assert len(content) == 1
+    assert (
+        content[0].astext()
+        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\n\n\nBaseClass(args)\n\nThe constructor\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x"
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
+def test_root_show_default_value(make_app, rootdir):
+    srcdir = rootdir / "roots" / "test_autodoc"
+    app = make_app(
+        srcdir=srcdir, confoverrides={"matlab_show_property_default_value": True}
+    )
+    app.builder.build_all()
+
+    content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
+    assert len(content) == 1
+    assert (
+        content[0].astext()
+        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\n\n\nBaseClass(args)\n\nThe constructor\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x"
+    )
 
 
 if __name__ == "__main__":

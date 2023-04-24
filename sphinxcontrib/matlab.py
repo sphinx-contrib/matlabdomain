@@ -230,7 +230,9 @@ class MatObject(ObjectDescription):
                 parts = [part for part in parts if part.startswith("+")]
                 modname = ".".join(parts)
 
-            if modname and modname != "exceptions":
+            # Consider adding the module name, except for "." and "exceptions"
+            # - This avoids the ".." for root entities.
+            if modname and (modname not in (".", "exceptions")):
                 if not self.env.config.matlab_keep_package_prefix:
                     modname = strip_package_prefix(modname)
 
@@ -273,10 +275,12 @@ class MatObject(ObjectDescription):
             modname = ".".join(parts)
 
         fullname = (modname and modname + "." or "") + name_cls[0]
+        fullname = fullname.lstrip(".")
 
         if not self.env.config.matlab_keep_package_prefix:
             modname_out = strip_package_prefix(modname)
             fullname_out = (modname_out and modname_out + "." or "") + name_cls[0]
+            fullname_out = fullname_out.lstrip(".")
         else:
             modname_out, fullname_out = modname, fullname
 

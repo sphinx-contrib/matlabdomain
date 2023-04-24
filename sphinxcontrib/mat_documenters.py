@@ -116,6 +116,7 @@ class MatlabDocumenter(PyDocumenter):
         self.fullname = (self.modname or "") + (
             self.objpath and "." + ".".join(self.objpath) or ""
         )
+        self.fullname = self.fullname.lstrip(".")
 
         return True
 
