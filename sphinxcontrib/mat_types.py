@@ -49,6 +49,22 @@ __all__ = [
 # TODO: script files
 
 
+def shortest_name(dotted_path):
+    # Creates the shortest valid MATLAB name from a dotted path
+    parts = dotted_path.split(".")
+    if len(parts) == 1:
+        return parts[0].lstrip("+")
+
+    parts_to_keep = []
+    for part in parts[:-1]:
+        if part.startswith("+") or part.startswith("@"):
+            parts_to_keep.append(part.lstrip("+@"))
+        elif len(parts_to_keep) > 0:
+            parts_to_keep = []
+    parts_to_keep.append(parts[-1].lstrip("+@"))
+    return ".".join(parts_to_keep)
+
+
 def recursive_all(obj):
     for n, o in obj.entities:
         if isinstance(o, MatModule):
@@ -98,16 +114,30 @@ def analyze(app):
     traverse_all(root)
     entities_table["."] = root
 
-    # for name, obj in root.entities:
-    #     obj.__all__()
-    #     if obj.entities:
-    #         for name,
+    # Find alternative names to entities
+    # target.+package.+sub.Class -> package.sub.Class
+    # folder.subfolder.Class -> Class
+    #
+    # NOTE: Does not yet work with class folders
+    short_names = {}
+    for name, entity in entities_table.items():
+        short_name = shortest_name(name)
+        if short_name != name:
+            short_names[short_name] = entity
 
-    #         print(obj.entities)
-
+    entities_table.update(short_names)
     pass
     # parent = None
     # obj = self.module = modules[self.modname]
+
+
+def strip_package_prefix(varname):
+    """Remove the leading '+' prefix on package names"""
+
+    if not varname:
+        return varname
+
+    return ".".join([s.lstrip("+") for s in varname.split(".")])
 
 
 class MatObject(object):

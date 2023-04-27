@@ -41,15 +41,6 @@ mat_sig_re = re.compile(
 )
 
 
-def strip_package_prefix(varname):
-    """Remove the leading '+' prefix on package names"""
-
-    if not varname:
-        return varname
-
-    return ".".join([s.lstrip("+") for s in varname.split(".")])
-
-
 def _pseudo_parse_arglist(signode, arglist):
     """ "Parse" a list of arguments separated by commas.
 
@@ -180,9 +171,9 @@ class MatObject(ObjectDescription):
         modname = self.options.get("module", self.env.temp_data.get("mat:module"))
 
         if not self.env.config.matlab_keep_package_prefix:
-            modname = strip_package_prefix(modname)
-            name_prefix = strip_package_prefix(name_prefix)
-            name = strip_package_prefix(name)
+            modname = mat_types.strip_package_prefix(modname)
+            name_prefix = mat_types.strip_package_prefix(name_prefix)
+            name = mat_types.strip_package_prefix(name)
 
         classname = self.env.temp_data.get("mat:class")
         if classname:
@@ -234,7 +225,7 @@ class MatObject(ObjectDescription):
             # - This avoids the ".." for root entities.
             if modname and (modname not in (".", "exceptions")):
                 if not self.env.config.matlab_keep_package_prefix:
-                    modname = strip_package_prefix(modname)
+                    modname = mat_types.strip_package_prefix(modname)
 
                 nodetext = modname + "."
                 signode += addnodes.desc_addname(nodetext, nodetext)
@@ -278,7 +269,7 @@ class MatObject(ObjectDescription):
         fullname = fullname.lstrip(".")
 
         if not self.env.config.matlab_keep_package_prefix:
-            modname_out = strip_package_prefix(modname)
+            modname_out = mat_types.strip_package_prefix(modname)
             fullname_out = (modname_out and modname_out + "." or "") + name_cls[0]
             fullname_out = fullname_out.lstrip(".")
         else:
@@ -498,7 +489,7 @@ class MatModule(Directive):
         modname = self.arguments[0].strip()
 
         if not env.config.matlab_keep_package_prefix:
-            modname_out = strip_package_prefix(modname)
+            modname_out = mat_types.strip_package_prefix(modname)
         else:
             modname_out = modname
 
@@ -565,7 +556,7 @@ class MatXRefRole(XRefRole):
                     title = title[dot + 1 :]
 
             if not env.config.matlab_keep_package_prefix:
-                title = strip_package_prefix(title)
+                title = mat_types.strip_package_prefix(title)
 
         # if the first character is a dot, search more specific namespaces first
         # else search builtins first
@@ -614,7 +605,7 @@ class MATLABModuleIndex(Index):
 
             # Create nice mod-name
             if not self.domain.env.config.matlab_keep_package_prefix:
-                modname_out = strip_package_prefix(modname)
+                modname_out = mat_types.strip_package_prefix(modname)
             else:
                 modname_out = modname
 
@@ -853,7 +844,16 @@ def analyze(app):
     mat_types.analyze(app)
 
 
+def ensure_configuration(app, env):
+    if env.matlab_short_links:
+        logger.info(
+            "[sphinxcontrib-matlabdomain] matlab_short_links=True, forcing matlab_keep_package_prefix=False."
+        )
+        env.matlab_keep_package_prefix = False
+
+
 def setup(app):
+    app.connect("config-inited", ensure_configuration)
     app.connect("builder-inited", analyze)
 
     app.add_domain(MATLABDomain)

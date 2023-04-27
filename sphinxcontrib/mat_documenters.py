@@ -20,6 +20,7 @@ from .mat_types import (  # noqa: E401
     MatModuleAnalyzer,
     MatApplication,
     entities_table,
+    strip_package_prefix,
 )
 
 import re
@@ -687,10 +688,8 @@ class MatModuleLevelDocumenter(MatlabDocumenter):
     """
     Specialized Documenter subclass for objects on module level (functions,
     classes, data/constants).
-    """
 
-    """
-    From: sphinx\ext\autodoc\__init__.py
+    From: sphinx/ext/autodoc/__init__.py
     Resolve the module and name of the object to document given by the
     arguments and the current module/class.
 
@@ -824,11 +823,14 @@ def make_baseclass_links(env, obj):
     links = []
     if len(obj_bases):
         base_classes = obj_bases.items()
-        for b, v in base_classes:
-            if not v:
-                links.append(":class:`%s`" % b)
+        for base_class_name, entity in base_classes:
+            if not entity:
+                links.append(":class:`%s`" % base_class_name)
             else:
-                modname = v.__module__
+                modname = entity.__module__
+                classname = entity.name
+                if not env.config.matlab_keep_package_prefix:
+                    modname = strip_package_prefix(modname)
 
                 if env.config.matlab_short_links:
                     # modname is only used for package names
@@ -838,10 +840,14 @@ def make_baseclass_links(env, obj):
                     parts = [part for part in parts if part.startswith("+")]
                     modname = ".".join(parts)
 
-                if modname.startswith("+"):
-                    links.append(":class:`+%s`" % b)
-                else:
-                    links.append(":class:`%s.%s`" % (modname, b))
+                link_name = f"{modname}.{classname}"
+
+                links.append(f":class:`{base_class_name}<{link_name}>`")
+
+                # if modname.startswith("+"):
+                #     links.append(":class:`+%s`" % classname)
+                # else:
+                #     links.append(":class:`%s.%s`" % (modname, classname))
     return links
 
 
