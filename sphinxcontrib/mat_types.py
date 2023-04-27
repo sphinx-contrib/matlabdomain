@@ -20,10 +20,6 @@ import sphinxcontrib.mat_parser as mat_parser
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
-# modules = {}
-
-entities_table = {}
-
 __all__ = [
     "MatObject",
     "MatModule",
@@ -48,6 +44,13 @@ __all__ = [
 # TODO: subfunctions (not nested) and private folders/functions/classes
 # TODO: script files
 
+# Dictionary containing all MATLAB entities that are found in `matlab_src_dir`.
+# The dictionary keys are both the full dotted path, relative to the root.
+# Further, "short names" are added. Example:
+#   Given a dotted path of: target.+package.ClassBar
+#   Will result in a short name of: package.ClassBar
+entities_table = {}
+
 
 def shortest_name(dotted_path):
     # Creates the shortest valid MATLAB name from a dotted path
@@ -65,53 +68,72 @@ def shortest_name(dotted_path):
     return ".".join(parts_to_keep)
 
 
-def recursive_all(obj):
-    for n, o in obj.entities:
+def recursive_find_all(obj):
+    # Recursively finds all entities in all "modules" aka directories.
+    for _, o in obj.entities:
         if isinstance(o, MatModule):
             o.safe_getmembers()
             if o.entities:
-                recursive_all(o)
+                recursive_find_all(o)
 
 
-def recursive_print(obj, indent=""):
+def recursive_log_debug(obj, indent=""):
+    # Traverse the object hierarchy and log to debug
     for n, o in obj.entities:
-        print(indent + f"{n=}, {o=}")
+        logger.debug(
+            "[sphinxcontrib-matlabdomain] %s Name=%s, Entity=%s", indent, n, str(o)
+        )
         if isinstance(o, MatModule):
             if o.entities:
                 indent = indent + " "
                 names = [n_ for n_, o_ in o.entities]
-                print(indent + f"{names=}")
-                recursive_print(o, indent)
+                logger.debug(
+                    "[sphinxcontrib-matlabdomain] %s Names=%s", indent, str(names)
+                )
+                # print(indent + f"{names=}")
+                recursive_log_debug(o, indent)
                 indent = indent[:-1]
         if isinstance(o, MatClass):
-            print(indent + f"-> {o.name}, {o.methods}")
+            logger.debug(
+                "[sphinxcontrib-matlabdomain] %s -> name=%s, methods=%s",
+                indent,
+                str(o.name),
+                str(o.methods),
+            )
 
 
-def traverse_all(obj, path=""):
+def populate_entities_table(obj, path=""):
+    # Recursively scan the hiearachy of entities and populate the entities_table.
     for n, o in obj.entities:
-        print(path + "." + n)
         fullpath = path + "." + o.name
         fullpath = fullpath.lstrip(".")
         entities_table[fullpath] = o
         if isinstance(o, MatModule):
             if o.entities:
-                traverse_all(o, fullpath)
+                populate_entities_table(o, fullpath)
 
 
 def analyze(app):
+    # Using the "MatObject.matlabify" and "MatModule.safe_getmembers" the
+    # `matlab_src_dir` is recursively scanned for MATLAB objects only once.
+    # All entities found are stored in globally available `entities_table`
+
     basedir = app.env.config.matlab_src_dir
     MatObject.basedir = basedir  # set MatObject base directory
     MatObject.sphinx_env = app.env  # pass env to MatObject cls
     MatObject.sphinx_app = app  # pass app to MatObject cls
     entities_table.clear()
-    # modules.clear()
-    # root = MatModule
+
+    # Set the root object and get root members.
     root = MatObject.matlabify("")
     root.safe_getmembers()
-    recursive_all(root)
+    recursive_find_all(root)
 
-    recursive_print(root)
-    traverse_all(root)
+    # Print the hierarchy of entities to the log.
+    logger.debug("[sphinxcontrib-matlabdomain] Found the follow entities:")
+    recursive_log_debug(root)
+
+    populate_entities_table(root)
     entities_table["."] = root
 
     # Find alternative names to entities
@@ -126,9 +148,6 @@ def analyze(app):
             short_names[short_name] = entity
 
     entities_table.update(short_names)
-    pass
-    # parent = None
-    # obj = self.module = modules[self.modname]
 
 
 def strip_package_prefix(varname):
@@ -217,11 +236,6 @@ class MatObject(object):
             path, name = os.path.split(MatObject.basedir)
             package = ""
             objname = name
-            # package os.path.join(MatObject.basedir)
-            # package = "."
-            # objname = "."
-            # path = os.path.join(MatObject.basedir)
-            # name = "."
             fullpath = MatObject.basedir
         else:
             # matlab modules are really packages
@@ -409,8 +423,6 @@ class MatModule(MatObject):
         self.package = package
         #: entities found in the module: class, function, module (subpath and +package)
         self.entities = []
-        # add module to system dictionary
-        # modules[package] = self
 
     def safe_getmembers(self):
         logger.debug(

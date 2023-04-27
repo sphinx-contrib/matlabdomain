@@ -127,40 +127,7 @@ class MatlabDocumenter(PyDocumenter):
 
         Returns True if successful, False if an error occurred.
         """
-        # # get config_value with absolute path to MATLAB source files
-        # basedir = self.env.config.matlab_src_dir
-        # MatObject.basedir = basedir  # set MatObject base directory
-        # MatObject.sphinx_env = self.env  # pass env to MatObject cls
-        # MatObject.sphinx_app = self.env.app  # pass app to MatObject cls
-
-        # # sets Matlab src file encoding for parsing
-        # MatObject.encoding = self.env.config.matlab_src_encoding
-        # if self.objpath:
-        #     logger.debug(
-        #         "[sphinxcontrib-matlabdomain] from %s import %s",
-        #         self.modname,
-        #         ".".join(self.objpath),
-        #     )
         try:
-            # logger.debug(
-            #     f"[sphinxcontrib-matlabdomain] Searching for '%s'.", self.fullname
-            # )
-            # logger.debug("[sphinxcontrib-matlabdomain] import %s", self.modname)
-            # MatObject.matlabify(self.modname)
-            # parent = None
-            # obj = self.module = modules[self.modname]
-            # logger.debug("[sphinxcontrib-matlabdomain] => %r", obj)
-            # for part in self.objpath:
-            #     parent = obj
-            #     logger.debug("[sphinxcontrib-matlabdomain] getattr(_, %r)", part)
-            #     obj = self.get_attr(obj, part)
-            #     logger.debug("[sphinxcontrib-matlabdomain] => %r", obj)
-            #     self.object_name = part
-            # self.parent = parent
-            # self.object = obj
-
-            # Lookup in entities_table
-            # self.parent =
             msg = f"[sphinxcontrib-matlabdomain] MatlabDocumenter.import_object {self.modname=}, {self.objpath=}, {self.fullname=}."
             logger.debug(msg)
             if len(self.objpath) > 1:
@@ -841,13 +808,8 @@ def make_baseclass_links(env, obj):
                     modname = ".".join(parts)
 
                 link_name = f"{modname}.{classname}"
-
                 links.append(f":class:`{base_class_name}<{link_name}>`")
 
-                # if modname.startswith("+"):
-                #     links.append(":class:`+%s`" % classname)
-                # else:
-                #     links.append(":class:`%s.%s`" % (modname, classname))
     return links
 
 
