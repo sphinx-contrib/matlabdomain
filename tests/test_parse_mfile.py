@@ -742,5 +742,68 @@ def test_ClassWithPropertyValidators():
     assert obj.properties["ReportLevel"]["docstring"] == " The report level\n"
 
 
+def test_ClassWithTrailingCommentAfterBases():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithTrailingCommentAfterBases.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "ClassWithTrailingCommentAfterBases", "test_data"
+    )
+    assert obj.name == "ClassWithTrailingCommentAfterBases"
+    assert obj.bases == ["handle", "my.super.Class"]
+    assert (
+        obj.docstring
+        == " test class methods\n\n :param a: the input to :class:`ClassWithTrailingCommentAfterBases`\n"
+    )
+    mymethod = obj.methods["mymethod"]
+    assert mymethod.name == "mymethod"
+    assert mymethod.retv == ["c"]
+    assert mymethod.args == ["obj", "b"]
+    assert (
+        mymethod.docstring
+        == " a method in :class:`ClassWithTrailingCommentAfterBases`\n\n :param b: an input to :meth:`mymethod`\n"
+    )
+
+
+def test_ClassWithEllipsisProperties():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithEllipsisProperties.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "ClassWithEllipsisProperties", "test_data"
+    )
+    assert obj.name == "ClassWithEllipsisProperties"
+    assert obj.bases == ["handle"]
+    assert obj.docstring == " stuff\n"
+    assert len(obj.methods) == 0
+
+    assert obj.properties["A"]["docstring"] == " an expression with ellipsis"
+    assert obj.properties["A"]["default"] == "1+2+3+4+5"
+    assert (
+        obj.properties["B"]["docstring"]
+        == " a cell array with ellipsis and other array notation"
+    )
+    assert obj.properties["B"]["default"].startswith("{'hello','bye';")
+    assert obj.properties["B"]["default"].endswith("}")
+    assert obj.properties["C"]["docstring"] == " using end inside array"
+    assert obj.properties["C"]["default"] == "ClassWithEllipsisProperties.B(2:end,1)"
+    assert obj.properties["D"]["docstring"] == " String with line continuation"
+    assert obj.properties["D"]["default"] == "'...'"
+    assert obj.properties["E"]["docstring"] == " The string with spaces"
+    assert obj.properties["E"]["default"] == "'some string with spaces'"
+
+
+#         mymethod.docstring
+#         == " a method in :class:`ClassWithTrailingCommentAfterBases`\n\n :param b: an input to :meth:`mymethod`\n"
+#     )
+
+
+#  A = 1 + 2 + 3 + ... my butt
+#             4 + 5; % an expression with ellipsis
+#         B = {'hello', 'bye'; ...
+#             'foo', 'bar';
+#             'this', 'that'
+#             'also' 'too'
+#             } % a cell array with ellipsis and other array notation
+#         C = ClassWithEllipsisProperties.B(2:end, 1) % using end inside array
+#         D = '...'; % String with line continuation
+
+
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])

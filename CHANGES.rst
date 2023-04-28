@@ -1,3 +1,29 @@
+sphinxcontrib-matlabdomain-0.18.0 (2023-04-14)
+==============================================
+
+* Improved rendering of class property default values when
+  ``matlab_show_property_default_value = True``. Multiline default values are
+  now truncated to one line. Excessive spacing is removed and values are just
+  shown verbatim as they were parsed instead of in string.
+
+  * Before
+
+    .. image:: docs/render_default_values_0.17.1.png
+      :alt: Rendering default property values in 0.17.1
+
+  * After
+
+    .. image:: docs/render_default_values_0.18.0.png
+      :alt: Rendering default property values in 0.18.0
+
+
+sphinxcontrib-matlabdomain-0.17.1 (2023-04-12)
+==============================================
+
+* Fix issue with incorrect parsing of baseclasses with trailing comments.
+  Reported in `Issue 172 <https://github.com/sphinx-contrib/matlabdomain/issues/172>`_.
+
+
 sphinxcontrib-matlabdomain-0.17.0 (2023-03-24)
 ==============================================
 

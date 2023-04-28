@@ -48,8 +48,8 @@ def remove_line_continuations(code):
     :type code: str
     :return:
     """
-    pat = r"('.*)(\.\.\.)(.*')"
-    code = re.sub(pat, r"\g<1>\g<3>", code, flags=re.MULTILINE)
+    # pat = r"('.*)(\.\.\.)(.*')"
+    # code = re.sub(pat, r"\g<1>\g<3>", code, flags=re.MULTILINE)
 
     pat = r"^([^%'\"\n]*)(\.\.\..*\n)"
     code = re.sub(pat, r"\g<1>", code, flags=re.MULTILINE)
