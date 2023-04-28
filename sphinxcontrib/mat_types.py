@@ -516,33 +516,10 @@ class MatModule(MatObject):
             entity = MatObject.matlabify(".".join([self.package, name]))
             if entity:
                 self.entities.append((name, entity))
-                # setattr(self, name, attr)
                 logger.debug(
                     f"[sphinxcontrib-matlabdomain] entity {name=} imported from {self=}"
                 )
                 return entity
-            # else:
-            #     super(MatModule, self).getter(name, *defargs)
-            # if hasattr(self, name):
-            #     logger.debug(
-            #         "[sphinxcontrib-matlabdomain] mod %s already has attr %s.",
-            #         self,
-            #         name,
-            #     )
-            #     return getattr(self, name)
-            # package_name = ".".join([self.package, name])
-            # package_name = package_name.lstrip(".")
-            # attr = MatObject.matlabify(package_name)
-            # if attr:
-            #     setattr(self, name, attr)
-            #     logger.debug(
-            #         "[sphinxcontrib-matlabdomain] attr %s imported from mod %s.",
-            #         name,
-            #         self,
-            #     )
-            #     return attr
-            # else:
-            #     super(MatModule, self).getter(name, *defargs)
 
 
 class MatMixin(object):

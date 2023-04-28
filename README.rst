@@ -39,12 +39,19 @@ For a Python 2 compatible version the package must be installed with::
 
    pip install sphinxcontrib-matlabdomain==0.11.8
 
+
 Configuration
 -------------
 In your Sphinx ``conf.py`` file add ``sphinxcontrib.matlab`` to the list of
 extensions. ::
 
    extensions = ['sphinxcontrib.matlab', 'sphinx.ext.autodoc']
+
+For convenience the `primary domain <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-primary_domain>`_
+can be set to ``mat`` with.::
+
+   primary_domain = "mat"
+
 
 Additional Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,30 +64,38 @@ Additional Configuration
 
 ``matlab_src_encoding``
    The encoding of the MATLAB files. By default, the files will be read as utf-8
-   and parsing errors will be replaced using ? chars. *Added in Version 0.9.0.*
+   and parsing errors will be replaced using ? chars. *Added in Version 0.9.0*.
 
 ``matlab_keep_package_prefix``
    Determines if the MATLAB package prefix ``+`` is displayed in the
    generated documentation.  Default is ``False``.  When ``False``, packages are
    still referred to in ReST using ``+pakage.+subpkg.func`` but the output
    will be ``pakage.other.func()``. *Added in Version
-   0.11.0.*
+   0.11.0*.
 
 ``matlab_show_property_default_value``
    Show property default values in the rendered document. Default is ``False``,
    which is what MathWorks does in their documentation. *Added in Version
-   0.16.0.*
+   0.16.0*.
 
 ``matlab_short_links``
    Shorten all class, package and functions to the minimum length. This assumes
-   that everything is in the path as we would expect it in MATLAB. This should
-   resemble a more MATLAB-like presentation. Default is ``False``.
-   *Added in Version 0.18.0.*
+   that everything is in the path as we would expect it in MATLAB. This will
+   resemble a more MATLAB-like presentation. If it is ``True`` is forces
+   ``matlab_keep_package_prefix = False``. Further, it allows for much shorter and cleaner references.
+   Example, given a path to a class like ``target.subfolder.ClassFoo``.
+   * With ``False``::
 
-For convenience the `primary domain <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-primary_domain>`_
-can be set to ``mat`` with.::
+      :class:`target.subfolder.ClassFoo`
 
-   primary_domain = "mat"
+   * With ``True``::
+
+      :class:`ClassFoo`
+
+   Default is ``False``. *Added in Version 0.18.0*.
+
+If you want the closest to MATLAB documentation style, use ``matlab_short_links
+= True`` in your ``conf.py`` file.
 
 
 Roles and Directives
