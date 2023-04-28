@@ -171,7 +171,8 @@ class MatlabDocumenter(PyDocumenter):
                 # autodoc-process-docstring is fired and can add some
                 # content if desired
                 docstrings.append([])
-            docstrings = self.auto_link(docstrings)
+            if self.env.config.matlab_auto_link:
+                docstrings = self.auto_link(docstrings)
             for i, line in enumerate(self.process_doc(docstrings)):
                 self.add_line(line, sourcename, i)
 
