@@ -216,6 +216,10 @@ Use the following to document::
         :show-inheritance:
         :members:
 
+In version 0.19.0 the ``.. automodule::`` directive can also take a ``.`` as
+argument, which allows you to document classes or functions in the root of
+``matlab_src_dir``.
+
 
 Module Index
 ------------
