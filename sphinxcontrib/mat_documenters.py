@@ -183,31 +183,44 @@ class MatlabDocumenter(PyDocumenter):
 
     def auto_link(self, docstrings):
         # autolink known names in See also
-        see_also_re = re.compile("See also\s+(.+)")
-        see_also_line = False
-        for i in range(len(docstrings)):
-            for j in range(len(docstrings[i])):
-                line = docstrings[i][j]
-                if line:  # non-blank line
-                    if not see_also_line and see_also_re.search(line):
-                        see_also_line = True  # line begins with "See also"
-                elif see_also_line:  # blank line following see also section
-                    see_also_line = False  # end see also section
+        if self.env.config.matlab_auto_link == "see_also":
+            see_also_re = re.compile("See also\s+(.+)")
+            see_also_line = False
+            for i in range(len(docstrings)):
+                for j in range(len(docstrings[i])):
+                    line = docstrings[i][j]
+                    if line:  # non-blank line
+                        if not see_also_line and see_also_re.search(line):
+                            see_also_line = True  # line begins with "See also"
+                    elif see_also_line:  # blank line following see also section
+                        see_also_line = False  # end see also section
 
-                if see_also_line:
-                    for n, o in entities_table.items():
-                        if isinstance(o, MatClass):
-                            role = "class"
-                        elif isinstance(o, MatFunction):
-                            role = "func"
-                        else:
-                            role = None
-                        if role:
-                            nn = n.replace("+", "")  # remove + from name
-                            # escape . and add negative look-behind for `
-                            pat = "(?<!`)" + nn.replace(".", "\.")
-                            line = re.sub(pat, f":{role}:`{nn}`", line)
-                    docstrings[i][j] = line
+                    if see_also_line:
+                        for n, o in entities_table.items():
+                            role = o.ref_role()
+                            if role in ["class", "func"]:
+                                nn = n.replace("+", "")  # remove + from name
+                                # escape . and add negative look-behind for `
+                                pat = "(?<!`)" + nn.replace(".", "\.")
+                                line = re.sub(pat, f":{role}:`{nn}`", line)
+                        docstrings[i][j] = line
+
+        # replace everywhere
+        elif self.env.config.matlab_auto_link == "all":
+            for n, o in entities_table.items():
+                role = o.ref_role()
+                if role in ["class", "func"]:
+                    nn = n.replace("+", "")  # remove + from name
+                    pat = nn.replace(".", "\.")  # escape . in pattern
+                    pat = "(?<!`)" + pat  # add negative look-behind for `
+                    p = re.compile(pat)
+                    # print(f"auto_link: {self.fullname} : {self.objtype} - {nn} {role}")
+                    for i in range(len(docstrings)):
+                        for j in range(len(docstrings[i])):
+                            docstrings[i][j] = p.sub(
+                                f":{role}:`{nn}`", docstrings[i][j]
+                            )
+
         return docstrings
 
     def get_object_members(self, want_all):

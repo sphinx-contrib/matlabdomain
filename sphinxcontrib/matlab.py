@@ -863,7 +863,7 @@ def setup(app):
     app.add_config_value("matlab_keep_package_prefix", False, "env")
     app.add_config_value("matlab_show_property_default_value", False, "env")
     app.add_config_value("matlab_short_links", False, "env")
-    app.add_config_value("matlab_auto_link", False, "env")
+    app.add_config_value("matlab_auto_link", None, "env")
 
     app.registry.add_documenter("mat:module", doc.MatModuleDocumenter)
     app.add_directive_to_domain(

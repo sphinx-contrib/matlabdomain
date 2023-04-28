@@ -98,9 +98,15 @@ If you want the closest to MATLAB documentation style, use ``matlab_short_links
 = True`` in your ``conf.py`` file.
 
 ``matlab_auto_link``
-   Automatically link class and function names in docstring lines that begin
-   with "See also" (and any subsequent lines before a blank line).
-   Default is ``False``. *Added in Version 0.20.0*.
+   Automatically convert the names of known classes and functions to links using
+   the ``:class:`` and ``:func:`` roles, respectively. Valid values are ``"see_also"``
+   and ``"all"``.
+   * ``"see_also"`` - applies only to docstring lines that begin with "See also",
+     and any subsequent lines before the next blank line.
+
+   * ``"all"`` - applies to all docstring lines.
+
+   Default is ``None``. *Added in Version 0.20.0*.
 
 
 Roles and Directives
