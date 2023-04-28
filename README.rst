@@ -92,7 +92,7 @@ Additional Configuration
 
       :class:`ClassFoo`
 
-   Default is ``False``. *Added in Version 0.18.0*.
+   Default is ``False``. *Added in Version 0.19.0*.
 
 If you want the closest to MATLAB documentation style, use ``matlab_short_links
 = True`` in your ``conf.py`` file.

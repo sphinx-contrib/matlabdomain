@@ -130,7 +130,7 @@ def analyze(app):
     recursive_find_all(root)
 
     # Print the hierarchy of entities to the log.
-    logger.debug("[sphinxcontrib-matlabdomain] Found the follow entities:")
+    logger.debug("[sphinxcontrib-matlabdomain] Found the following entities:")
     recursive_log_debug(root)
 
     populate_entities_table(root)

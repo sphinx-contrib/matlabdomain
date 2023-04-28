@@ -161,24 +161,6 @@ class MatlabDocumenter(PyDocumenter):
 
     def add_content(self, more_content, no_docstring=False):
         """Add content from docstrings, attribute documentation and user."""
-        # # set sourcename and add content from attribute documentation
-        # if self.analyzer:
-        #     # prevent encoding errors when the file name is non-ASCII
-        #     if not isinstance(self.analyzer.srcname, str):
-        #         filename = str(self.analyzer.srcname)
-        #     else:
-        #         filename = self.analyzer.srcname
-        #     sourcename = "%s:docstring of %s" % (filename, self.fullname)
-
-        #     attr_docs = self.analyzer.find_attr_docs()
-        #     if self.objpath:
-        #         key = (".".join(self.objpath[:-1]), self.objpath[-1])
-        #         if key in attr_docs:
-        #             no_docstring = True
-        #             docstrings = [attr_docs[key]]
-        #             for i, line in enumerate(self.process_doc(docstrings)):
-        #                 self.add_line(line, sourcename, i)
-        # else:
         sourcename = "docstring of %s" % self.fullname
 
         # add content from docstrings
