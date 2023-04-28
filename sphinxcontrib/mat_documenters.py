@@ -1014,10 +1014,11 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         ]
 
         # container
-        self.add_line("", "<autodoc>")
-        self.add_line(".. container:: members", "<autodoc>")
-        self.add_line("", "<autodoc>")
-        self.indent += "   "
+        if cons_names or prop_names or meth_names or other_names:
+            self.add_line("", "<autodoc>")
+            self.add_line(".. container:: members", "<autodoc>")
+            self.add_line("", "<autodoc>")
+            self.indent += "   "
 
         # constructor
         if cons_names:

@@ -21,6 +21,7 @@ sphinxcontrib-matlabdomain-0.19.0 (2023-MM-DD)
 
     .. image:: docs/render_classes_0.19.0.png
       :alt: Rendering of default ``ClassBar.m`` in 0.19.0
+* Fixes `Issue 166 <https://github.com/sphinx-contrib/matlabdomain/issues/166>`_.
 
 
 sphinxcontrib-matlabdomain-0.18.0 (2023-04-14)
