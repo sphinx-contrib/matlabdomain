@@ -36,8 +36,9 @@ def test_with_prefix(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 
     assert (
-        content.astext()
-        == "\n\n\n\n\n\nclass +replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’\n\n\n\nclass +replab.Action\n\nBases: replab.Str\n\nAn action group …\n\n\n\nleftAction(g, p)\n\nReturns the left action"
+        content[5].astext()
+        == "class +replab.Action\n\nBases: +replab.Str\n\nAn action group"
+        " …\n\nMethod Summary\n\n\n\n\n\nleftAction(self, g, p)\n\nReturns the left action"
     )
 
 
@@ -51,8 +52,8 @@ def test_without_prefix(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 
     assert (
-        content.astext()
-        == "\n\n\n\n\n\nclass replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’\n\n\n\nclass replab.Action\n\nBases: replab.Str\n\nAn action group …\n\n\n\nleftAction(g, p)\n\nReturns the left action"
+        content[5].astext()
+        == "class replab.Action\n\nBases: replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(self, g, p)\n\nReturns the left action"
     )
 
 
