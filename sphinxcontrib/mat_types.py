@@ -191,6 +191,10 @@ class MatObject(object):
         #: name of MATLAB object
         self.name = name
 
+    def ref_role(self):
+        # role to use for references to this object (e.g. when generating auto-links)
+        return "ref"
+
     @property
     def __name__(self):
         return self.name
@@ -429,6 +433,10 @@ class MatModule(MatObject):
         self.package = package
         #: entities found in the module: class, function, module (subpath and +package)
         self.entities = []
+
+    def ref_role(self):
+        # role to use for references to this object (e.g. when generating auto-links)
+        return "mod"
 
     def safe_getmembers(self):
         logger.debug(
@@ -841,6 +849,10 @@ class MatFunction(MatObject):
         # if there are any tokens left save them
         if len(tks) > 0:
             self.rem_tks = tks  # save extra tokens
+
+    def ref_role(self):
+        # role to use for references to this object (e.g. when generating auto-links)
+        return "func"
 
     @property
     def __doc__(self):
@@ -1306,6 +1318,10 @@ class MatClass(MatMixin, MatObject):
 
         self.rem_tks = idx  # index of last token
 
+    def ref_role(self):
+        # role to use for references to this object (e.g. when generating auto-links)
+        return "class"
+
     def attributes(self, idx, attr_types):
         """
         Retrieve MATLAB class, property and method attributes.
@@ -1460,6 +1476,10 @@ class MatProperty(MatObject):
         self.docstring = attrs["docstring"]
         # self.class = attrs['class']
 
+    def ref_role(self):
+        # role to use for references to this object (e.g. when generating auto-links)
+        return "attr"
+
     @property
     def __doc__(self):
         return self.docstring
@@ -1471,6 +1491,10 @@ class MatMethod(MatFunction):
         super(MatMethod, self).__init__(None, modname, tks)
         self.cls = cls
         self.attrs = attrs
+
+    def ref_role(self):
+        # role to use for references to this object (e.g. when generating auto-links)
+        return "meth"
 
     def skip_tokens(self):
         # Number of tokens to skip in `MatClass`
