@@ -247,6 +247,10 @@ Instead use the ``mat:`` prefix before the desired directives::
 Online Demo
 ===========
 
+.. warning::
+
+   The online demo is highly outdated!
+
 The test docs in the repository are online here:
 http://bwanamarko.alwaysdata.net/matlabdomain/
 
@@ -254,11 +258,7 @@ http://bwanamarko.alwaysdata.net/matlabdomain/
 
     Sphinx style markup are used to document parameters, types, returns and
     exceptions. There must be a blank comment line before and after the
-    parameter descriptions. Currently property docstrings are only collected if
-    they are on the same line following the property definition. Getter and
-    setter methods are documented like methods currently, but the dot is
-    replaced by an underscore. Default values for properties are represented as
-    unicode strings, therefore strings will be double quoted.
+    parameter descriptions.
 
 
 Users

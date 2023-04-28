@@ -34,7 +34,7 @@ def test_target(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\na - first property of ClassExample\n\nb - second property of ClassExample\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nParameters\n\na – first property of ClassExample\n\nb – second property of ClassExample\n\nc – third property of ClassExample\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
 
 
@@ -50,7 +50,7 @@ def test_target_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\na - first property of ClassExample\n\nb - second property of ClassExample\n\n\n\na\n\na property\n\n\n\nb = '10'\n\na property with default value\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nParameters\n\na – first property of ClassExample\n\nb – second property of ClassExample\n\nc – third property of ClassExample\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
 
 
@@ -94,7 +94,7 @@ def test_package_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\n\n\nbars = \"'bars'\"\n\nNumber of bars\n\n\n\ndoBar()\n\nDoing bar\n\n\n\ndoFoo()\n\nDoing foo\n\n\n\nfoos = '10'\n\nNumber of foos\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo"
+        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\n\n\nbars = 'bars'\n\nNumber of bars\n\n\n\ndoBar()\n\nDoing bar\n\n\n\ndoFoo()\n\nDoing foo\n\n\n\nfoos = 10\n\nNumber of foos\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo"
     )
 
 
