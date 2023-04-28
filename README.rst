@@ -33,11 +33,12 @@ The Python package must be installed with::
    pip install -U sphinxcontrib-matlabdomain
 
 In general, the usage is the same as for documenting Python code. The package
-is tested with Python >= 3.8 and Sphinx >=4.0.0 and <6.0.0.
+is tested with Python >= 3.8 and Sphinx >=4.0.0.
 
 For a Python 2 compatible version the package must be installed with::
 
    pip install sphinxcontrib-matlabdomain==0.11.8
+
 
 Configuration
 -------------
@@ -45,6 +46,12 @@ In your Sphinx ``conf.py`` file add ``sphinxcontrib.matlab`` to the list of
 extensions. ::
 
    extensions = ['sphinxcontrib.matlab', 'sphinx.ext.autodoc']
+
+For convenience the `primary domain <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-primary_domain>`_
+can be set to ``mat`` with.::
+
+   primary_domain = "mat"
+
 
 Additional Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,22 +64,38 @@ Additional Configuration
 
 ``matlab_src_encoding``
    The encoding of the MATLAB files. By default, the files will be read as utf-8
-   and parsing errors will be replaced using ? chars. *Added in Version 0.9.0.*
+   and parsing errors will be replaced using ? chars. *Added in Version 0.9.0*.
 
 ``matlab_keep_package_prefix``
    Determines if the MATLAB package prefix ``+`` is displayed in the
-   generated documentation.  Default is ``True``.  When ``False``, packages are
+   generated documentation.  Default is ``False``.  When ``False``, packages are
    still referred to in ReST using ``+pakage.+subpkg.func`` but the output
    will be ``pakage.other.func()``. *Added in Version
-   0.11.0.*
+   0.11.0*.
 
 ``matlab_show_property_default_value``
    Show property default values in the rendered document. Default is ``False``,
    which is what MathWorks does in their documentation. *Added in Version
-   0.16.0.*
+   0.16.0*.
 
-For convenience the `primary domain <https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-primary_domain>`_
-can be set to ``mat``.
+``matlab_short_links``
+   Shorten all class, package and functions to the minimum length. This assumes
+   that everything is in the path as we would expect it in MATLAB. This will
+   resemble a more MATLAB-like presentation. If it is ``True`` is forces
+   ``matlab_keep_package_prefix = False``. Further, it allows for much shorter and cleaner references.
+   Example, given a path to a class like ``target.subfolder.ClassFoo``.
+   * With ``False``::
+
+      :class:`target.subfolder.ClassFoo`
+
+   * With ``True``::
+
+      :class:`ClassFoo`
+
+   Default is ``False``. *Added in Version 0.19.0*.
+
+If you want the closest to MATLAB documentation style, use ``matlab_short_links
+= True`` in your ``conf.py`` file.
 
 
 Roles and Directives
@@ -193,6 +216,10 @@ Use the following to document::
         :show-inheritance:
         :members:
 
+In version 0.19.0 the ``.. automodule::`` directive can also take a ``.`` as
+argument, which allows you to document classes or functions in the root of
+``matlab_src_dir``.
+
 
 Module Index
 ------------
@@ -224,6 +251,10 @@ Instead use the ``mat:`` prefix before the desired directives::
 Online Demo
 ===========
 
+.. warning::
+
+   The online demo is highly outdated!
+
 The test docs in the repository are online here:
 http://bwanamarko.alwaysdata.net/matlabdomain/
 
@@ -231,11 +262,7 @@ http://bwanamarko.alwaysdata.net/matlabdomain/
 
     Sphinx style markup are used to document parameters, types, returns and
     exceptions. There must be a blank comment line before and after the
-    parameter descriptions. Currently property docstrings are only collected if
-    they are on the same line following the property definition. Getter and
-    setter methods are documented like methods currently, but the dot is
-    replaced by an underscore. Default values for properties are represented as
-    unicode strings, therefore strings will be double quoted.
+    parameter descriptions.
 
 
 Users

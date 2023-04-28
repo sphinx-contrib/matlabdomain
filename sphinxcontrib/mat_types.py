@@ -20,8 +20,6 @@ import sphinxcontrib.mat_parser as mat_parser
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
-modules = {}
-
 __all__ = [
     "MatObject",
     "MatModule",
@@ -45,6 +43,120 @@ __all__ = [
 # TODO: +packages & @class folders
 # TODO: subfunctions (not nested) and private folders/functions/classes
 # TODO: script files
+
+# Dictionary containing all MATLAB entities that are found in `matlab_src_dir`.
+# The dictionary keys are both the full dotted path, relative to the root.
+# Further, "short names" are added. Example:
+#   Given a dotted path of: target.+package.ClassBar
+#   Will result in a short name of: package.ClassBar
+entities_table = {}
+
+
+def shortest_name(dotted_path):
+    # Creates the shortest valid MATLAB name from a dotted path
+    parts = dotted_path.split(".")
+    if len(parts) == 1:
+        return parts[0].lstrip("+")
+
+    parts_to_keep = []
+    for part in parts[:-1]:
+        if part.startswith("+") or part.startswith("@"):
+            parts_to_keep.append(part.lstrip("+@"))
+        elif len(parts_to_keep) > 0:
+            parts_to_keep = []
+    parts_to_keep.append(parts[-1].lstrip("+@"))
+    return ".".join(parts_to_keep)
+
+
+def recursive_find_all(obj):
+    # Recursively finds all entities in all "modules" aka directories.
+    for _, o in obj.entities:
+        if isinstance(o, MatModule):
+            o.safe_getmembers()
+            if o.entities:
+                recursive_find_all(o)
+
+
+def recursive_log_debug(obj, indent=""):
+    # Traverse the object hierarchy and log to debug
+    for n, o in obj.entities:
+        logger.debug(
+            "[sphinxcontrib-matlabdomain] %s Name=%s, Entity=%s", indent, n, str(o)
+        )
+        if isinstance(o, MatModule):
+            if o.entities:
+                indent = indent + " "
+                names = [n_ for n_, o_ in o.entities]
+                logger.debug(
+                    "[sphinxcontrib-matlabdomain] %s Names=%s", indent, str(names)
+                )
+                # print(indent + f"{names=}")
+                recursive_log_debug(o, indent)
+                indent = indent[:-1]
+        if isinstance(o, MatClass):
+            logger.debug(
+                "[sphinxcontrib-matlabdomain] %s -> name=%s, methods=%s",
+                indent,
+                str(o.name),
+                str(o.methods),
+            )
+
+
+def populate_entities_table(obj, path=""):
+    # Recursively scan the hiearachy of entities and populate the entities_table.
+    for n, o in obj.entities:
+        fullpath = path + "." + o.name
+        fullpath = fullpath.lstrip(".")
+        entities_table[fullpath] = o
+        if isinstance(o, MatModule):
+            if o.entities:
+                populate_entities_table(o, fullpath)
+
+
+def analyze(app):
+    # Using the "MatObject.matlabify" and "MatModule.safe_getmembers" the
+    # `matlab_src_dir` is recursively scanned for MATLAB objects only once.
+    # All entities found are stored in globally available `entities_table`
+
+    basedir = app.env.config.matlab_src_dir
+    MatObject.basedir = basedir  # set MatObject base directory
+    MatObject.sphinx_env = app.env  # pass env to MatObject cls
+    MatObject.sphinx_app = app  # pass app to MatObject cls
+    entities_table.clear()
+
+    # Set the root object and get root members.
+    root = MatObject.matlabify("")
+    root.safe_getmembers()
+    recursive_find_all(root)
+
+    # Print the hierarchy of entities to the log.
+    logger.debug("[sphinxcontrib-matlabdomain] Found the following entities:")
+    recursive_log_debug(root)
+
+    populate_entities_table(root)
+    entities_table["."] = root
+
+    # Find alternative names to entities
+    # target.+package.+sub.Class -> package.sub.Class
+    # folder.subfolder.Class -> Class
+    #
+    # NOTE: Does not yet work with class folders
+    short_names = {}
+    for name, entity in entities_table.items():
+        short_name = shortest_name(name)
+        if short_name != name:
+            short_names[short_name] = entity
+
+    entities_table.update(short_names)
+
+
+def strip_package_prefix(varname):
+    """Remove the leading '+' prefix on package names"""
+
+    if not varname:
+        return varname
+
+    return ".".join([s.lstrip("+") for s in varname.split(".")])
 
 
 class MatObject(object):
@@ -116,20 +228,35 @@ class MatObject(object):
         over the mfile.
         """
         # no object name given
-        if not objname:
-            return None
-        # matlab modules are really packages
-        package = objname  # for packages it's namespace of __init__.py
-        # convert namespace to path
-        objname = objname.replace(".", os.sep)  # objname may have dots
-        # separate path from file/folder name
-        path, name = os.path.split(objname)
+        logger.debug(f"[sphinxcontrib-matlabdomain] enter matlabify {objname=}.")
 
-        # make a full path out of basedir and objname
-        fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
+        if objname is None:
+            return None
+        if objname == "":
+            path, name = os.path.split(MatObject.basedir)
+            package = ""
+            objname = name
+            fullpath = MatObject.basedir
+        else:
+            # matlab modules are really packages
+            objname = objname.lstrip(".")
+            package = objname  # for packages it's namespace of __init__.py
+            # convert namespace to path
+            objname = objname.replace(".", os.sep)  # objname may have dots
+            # separate path from file/folder name
+            path, name = os.path.split(objname)
+
+            # make a full path out of basedir and objname
+            fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
+
+        logger.debug(
+            f"[sphinxcontrib-matlabdomain] matlabify {package=}, {objname=}, {fullpath=}"
+        )
         # package folders imported over mfile with same name
         if os.path.isdir(fullpath):
-            mod = modules.get(package)
+            if package.startswith("_") or package.startswith("."):
+                return None
+            mod = entities_table.get(package)
             if mod:
                 logger.debug(
                     "[sphinxcontrib-matlabdomain] Module %s already loaded.", package
@@ -137,15 +264,13 @@ class MatObject(object):
                 return mod
             else:
                 logger.debug(
-                    "[sphinxcontrib-matlabdomain] matlabify %s from %s.",
-                    package,
-                    fullpath,
+                    f"[sphinxcontrib-matlabdomain] matlabify MatModule {package=}, {fullpath=}"
                 )
                 return MatModule(name, fullpath, package)  # import package
         elif os.path.isfile(fullpath + ".m"):
             mfile = fullpath + ".m"
             logger.debug(
-                "[sphinxcontrib-matlabdomain] matlabify %s from %s.", package, mfile
+                f"[sphinxcontrib-matlabdomain] matlabify parse_mfile {package=}, {mfile=}"
             )
             return MatObject.parse_mfile(
                 mfile, name, path, MatObject.encoding
@@ -153,7 +278,7 @@ class MatObject(object):
         elif os.path.isfile(fullpath + ".mlapp"):
             mlappfile = fullpath + ".mlapp"
             logger.debug(
-                "[sphinxcontrib-matlabdomain] matlabify %s from %s.", package, mlappfile
+                f"[sphinxcontrib-matlabdomain] matlabify parse_mlappfile {package=}, {mlappfile=}"
             )
             return MatObject.parse_mlappfile(mlappfile, name, path)
         return None
@@ -296,19 +421,29 @@ class MatModule(MatObject):
         self.path = path
         #: name of package (full path from basedir to module)
         self.package = package
-        # add module to system dictionary
-        modules[package] = self
+        #: entities found in the module: class, function, module (subpath and +package)
+        self.entities = []
 
     def safe_getmembers(self):
+        logger.debug(
+            f"[sphinxcontrib-matlabdomain] MatModule.safe_getmembers {self.name=}, {self.path=}, {self.package=}"
+        )
+        if self.entities:
+            return self.entities
+
         results = []
         for key in os.listdir(self.path):
             # make full path
             path = os.path.join(self.path, key)
-            # don't visit vcs directories
-            if os.path.isdir(path) and key in [".git", ".hg", ".svn", ".bzr"]:
+            # Do not visit directories starting with:
+            # - "." (VCS and Editors)
+            # - "_" (build/temp folders in Sphinx)
+            if os.path.isdir(path) and (key.startswith(".") or key.startswith("_")):
                 continue
-            # only visit mfiles
-            if os.path.isfile(path) and not key.endswith(".m"):
+            # Only visit MATLAB files
+            if os.path.isfile(path) and not (
+                key.endswith(".m") or key.endswith(".mlapp")
+            ):
                 continue
             # trim file extension
             if os.path.isfile(path):
@@ -317,7 +452,8 @@ class MatModule(MatObject):
                 value = self.getter(key, None)
                 if value:
                     results.append((key, value))
-        results.sort()
+        self.entities = results
+        # results.sort()
         return results
 
     @property
@@ -326,10 +462,11 @@ class MatModule(MatObject):
 
     @property
     def __all__(self):
-        results = self.safe_getmembers()
-        if results:
-            results = list(zip(*self.safe_getmembers()))[0]
-        return results
+        return self.entities
+        # results = self.safe_getmembers()
+        # if results:
+        #     results = list(zip(*self.safe_getmembers()))[0]
+        # return results
 
     @property
     def __path__(self):
@@ -366,24 +503,23 @@ class MatModule(MatObject):
             )
             return None
         else:
-            if hasattr(self, name):
+            # Search if we already has this entity
+            for entity_name, entity_content in self.entities:
+                if name == entity_name:
+                    logger.debug(
+                        "[sphinxcontrib-matlabdomain] mod %s already has entity %s.",
+                        self,
+                        name,
+                    )
+                    return entity_content
+            # If not - try to MATLABIFY it.
+            entity = MatObject.matlabify(".".join([self.package, name]))
+            if entity:
+                self.entities.append((name, entity))
                 logger.debug(
-                    "[sphinxcontrib-matlabdomain] mod %s already has attr %s.",
-                    self,
-                    name,
+                    f"[sphinxcontrib-matlabdomain] entity {name=} imported from {self=}"
                 )
-                return getattr(self, name)
-            attr = MatObject.matlabify(".".join([self.package, name]))
-            if attr:
-                setattr(self, name, attr)
-                logger.debug(
-                    "[sphinxcontrib-matlabdomain] attr %s imported from mod %s.",
-                    name,
-                    self,
-                )
-                return attr
-            else:
-                super(MatModule, self).getter(name, *defargs)
+                return entity
 
 
 class MatMixin(object):
@@ -1270,42 +1406,15 @@ class MatClass(MatMixin, MatObject):
     @property
     def __bases__(self):
         bases_ = dict.fromkeys(self.bases)  # make copy of bases
-        num_pths = len(MatObject.basedir.split(os.sep))
-        # walk tree to find bases
-        for root, dirs, files in os.walk(MatObject.basedir):
-            # namespace defined by root, doesn't include basedir
-            root_mod = ".".join(root.split(os.sep)[num_pths:])
-            # don't visit vcs directories
-            for vcs in [".git", ".hg", ".svn", ".bzr"]:
-                if vcs in dirs:
-                    dirs.remove(vcs)
-            # only visit mfiles
-            for f in tuple(files):
-                if not f.endswith(".m"):
-                    files.remove(f)
-            # search folders
-            for b in self.bases:
-                # search folders
-                for m in dirs:
-                    # check if module has been matlabified already
-                    mod_name = ".".join([root_mod, m]).lstrip(".")
-                    mod = modules.get(mod_name)
-                    if not mod:
-                        continue
-                    # check if base class is attr of module
-                    b_ = mod.getter(b, None)
-                    if not b_:
-                        b_ = mod.getter(b.lstrip(m.lstrip("+")), None)
-                    if b_:
-                        bases_[b] = b_
-                        break
-                if bases_[b]:
-                    continue
-                if b + ".m" in files:
-                    mfile = os.path.join(root, b) + ".m"
-                    bases_[b] = MatObject.parse_mfile(mfile, b, root)
-            # keep walking tree
-        # no matching folders or mfiles
+        class_entity_table = {}
+        for name, entity in entities_table.items():
+            if isinstance(entity, MatClass) or "@" in name:
+                class_entity_table[name] = entity
+
+        for base in self.bases:
+            if base in class_entity_table.keys():
+                bases_[base] = class_entity_table[base]
+
         return bases_
 
     def getter(self, name, *defargs):
@@ -1491,7 +1600,7 @@ class MatModuleAnalyzer(object):
             if isinstance(entry, MatcodeError):
                 raise entry
             return entry
-        mod = modules.get(modname)
+        mod = entities_table[modname]
         if mod:
             obj = cls.for_folder(mod.path, modname)
         else:
@@ -1528,7 +1637,8 @@ class MatModuleAnalyzer(object):
         attr_visitor_collected = {}
         attr_visitor_tagorder = {}
         tagnumber = 0
-        mod = modules[self.modname]
+        mod = entities_table[self.modname]
+
         # walk package tree
         for k, v in mod.safe_getmembers():
             if hasattr(v, "docstring"):
@@ -1538,7 +1648,9 @@ class MatModuleAnalyzer(object):
             if isinstance(v, MatClass):
                 for mk, mv in v.getter("__dict__").items():
                     namespace = ".".join([mod.package, k])
+                    namespace = namespace.lstrip(".")
                     tagname = "%s.%s" % (k, mk)
+                    tagname = tagname.lstrip(".")
                     attr_visitor_collected[namespace, mk] = mv.docstring
                     attr_visitor_tagorder[tagname] = tagnumber
                     tagnumber += 1

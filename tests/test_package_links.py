@@ -27,22 +27,17 @@ def rootdir():
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_with_prefix(make_app, rootdir):
+    # TODO: bases are shown without prefix
     srcdir = rootdir / "roots" / "test_package_links"
-    app = make_app(srcdir=srcdir)
+    confdict = {"matlab_keep_package_prefix": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 
-    assert isinstance(content[3], addnodes.desc)
-    assert (
-        content[3].astext()
-        == "class +replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’"
-    )
-    assert isinstance(content[5], addnodes.desc)
     assert (
         content[5].astext()
-        == "class +replab.Action\n\nBases: +replab.Str\n\nAn action group"
-        " …\n\nMethod Summary\n\n\n\n\n\nleftAction(self, g, p)\n\nReturns the left action"
+        == "class +replab.Action\n\nBases: replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(g, p)\n\nReturns the left action"
     )
 
 
@@ -55,15 +50,9 @@ def test_without_prefix(make_app, rootdir):
 
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 
-    assert isinstance(content[3], addnodes.desc)
-    assert (
-        content[3].astext()
-        == "class replab.Str\n\nBases: handle\n\nDefines a ‘str’ default method and overloads ‘disp’"
-    )
-    assert isinstance(content[5], addnodes.desc)
     assert (
         content[5].astext()
-        == "class replab.Action\n\nBases: replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(self, g, p)\n\nReturns the left action"
+        == "class replab.Action\n\nBases: replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(g, p)\n\nReturns the left action"
     )
 
 

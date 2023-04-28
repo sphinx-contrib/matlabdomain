@@ -19,7 +19,8 @@ from .mat_types import (  # noqa: E401
     MatException,
     MatModuleAnalyzer,
     MatApplication,
-    modules,
+    entities_table,
+    strip_package_prefix,
 )
 
 import re
@@ -76,7 +77,9 @@ class MatlabDocumenter(PyDocumenter):
     domain = "mat"
 
     def parse_name(self):
-        """Determine what module to import and what attribute to document.
+        """
+        From: sphinx/ext/autodoc/__init__.py
+        Determine what module to import and what attribute to document.
 
         Returns True and sets *self.modname*, *self.objpath*, *self.fullname*,
         *self.args* and *self.retann* if parsing and resolving was successful.
@@ -114,6 +117,8 @@ class MatlabDocumenter(PyDocumenter):
         self.fullname = (self.modname or "") + (
             self.objpath and "." + ".".join(self.objpath) or ""
         )
+        self.fullname = self.fullname.lstrip(".")
+
         return True
 
     def import_object(self):
@@ -122,34 +127,17 @@ class MatlabDocumenter(PyDocumenter):
 
         Returns True if successful, False if an error occurred.
         """
-        # get config_value with absolute path to MATLAB source files
-        basedir = self.env.config.matlab_src_dir
-        MatObject.basedir = basedir  # set MatObject base directory
-        MatObject.sphinx_env = self.env  # pass env to MatObject cls
-        MatObject.sphinx_app = self.env.app  # pass app to MatObject cls
-
-        # sets Matlab src file encoding for parsing
-        MatObject.encoding = self.env.config.matlab_src_encoding
-        if self.objpath:
-            logger.debug(
-                "[sphinxcontrib-matlabdomain] from %s import %s",
-                self.modname,
-                ".".join(self.objpath),
-            )
         try:
-            logger.debug("[sphinxcontrib-matlabdomain] import %s", self.modname)
-            MatObject.matlabify(self.modname)
-            parent = None
-            obj = self.module = modules[self.modname]
-            logger.debug("[sphinxcontrib-matlabdomain] => %r", obj)
-            for part in self.objpath:
-                parent = obj
-                logger.debug("[sphinxcontrib-matlabdomain] getattr(_, %r)", part)
-                obj = self.get_attr(obj, part)
-                logger.debug("[sphinxcontrib-matlabdomain] => %r", obj)
-                self.object_name = part
-            self.parent = parent
-            self.object = obj
+            msg = f"[sphinxcontrib-matlabdomain] MatlabDocumenter.import_object {self.modname=}, {self.objpath=}, {self.fullname=}."
+            logger.debug(msg)
+            if len(self.objpath) > 1:
+                lookup_name = ".".join([self.modname, self.objpath[0]])
+                lookup_name = lookup_name.lstrip(".")
+                obj = entities_table[lookup_name]
+                self.object = self.get_attr(obj, self.objpath[1])
+            else:
+                lookup_name = self.fullname.lstrip(".")
+                self.object = entities_table[lookup_name]
             return True
         # this used to only catch SyntaxError, ImportError and AttributeError,
         # but importing modules with side effects can raise all kinds of errors
@@ -173,25 +161,7 @@ class MatlabDocumenter(PyDocumenter):
 
     def add_content(self, more_content, no_docstring=False):
         """Add content from docstrings, attribute documentation and user."""
-        # set sourcename and add content from attribute documentation
-        if self.analyzer:
-            # prevent encoding errors when the file name is non-ASCII
-            if not isinstance(self.analyzer.srcname, str):
-                filename = str(self.analyzer.srcname)
-            else:
-                filename = self.analyzer.srcname
-            sourcename = "%s:docstring of %s" % (filename, self.fullname)
-
-            attr_docs = self.analyzer.find_attr_docs()
-            if self.objpath:
-                key = (".".join(self.objpath[:-1]), self.objpath[-1])
-                if key in attr_docs:
-                    no_docstring = True
-                    docstrings = [attr_docs[key]]
-                    for i, line in enumerate(self.process_doc(docstrings)):
-                        self.add_line(line, sourcename, i)
-        else:
-            sourcename = "docstring of %s" % self.fullname
+        sourcename = "docstring of %s" % self.fullname
 
         # add content from docstrings
         if not no_docstring:
@@ -642,7 +612,7 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                 # documenting imported objects
                 return True, self.object.safe_getmembers()
             else:
-                memberlist = self.object.__all__
+                memberlist = [name for name, obj in self.object.__all__]
         else:
             memberlist = self.options.members or []
         ret = []
@@ -667,6 +637,14 @@ class MatModuleLevelDocumenter(MatlabDocumenter):
     """
     Specialized Documenter subclass for objects on module level (functions,
     classes, data/constants).
+
+    From: sphinx/ext/autodoc/__init__.py
+    Resolve the module and name of the object to document given by the
+    arguments and the current module/class.
+
+    Must return a pair of the module name and a chain of attributes; for
+    example, it would return ``('zipfile', ['ZipFile', 'open'])`` for the
+    ``zipfile.ZipFile.open`` method.
     """
 
     def resolve_name(self, modname, parents, path, base):
@@ -788,21 +766,32 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
         pass
 
 
-def make_baseclass_links(obj):
+def make_baseclass_links(env, obj):
     """Returns list of base class links"""
     obj_bases = obj.__bases__
     links = []
     if len(obj_bases):
         base_classes = obj_bases.items()
-        for b, v in base_classes:
-            if not v:
-                links.append(":class:`%s`" % b)
+        for base_class_name, entity in base_classes:
+            if not entity:
+                links.append(":class:`%s`" % base_class_name)
             else:
-                mod_name = v.__module__
-                if mod_name.startswith("+"):
-                    links.append(":class:`+%s`" % b)
-                else:
-                    links.append(":class:`%s.%s`" % (mod_name, b))
+                modname = entity.__module__
+                classname = entity.name
+                if not env.config.matlab_keep_package_prefix:
+                    modname = strip_package_prefix(modname)
+
+                if env.config.matlab_short_links:
+                    # modname is only used for package names
+                    # - "target.+package" => "package"
+                    # - "target" => ""
+                    parts = modname.split(".")
+                    parts = [part for part in parts if part.startswith("+")]
+                    modname = ".".join(parts)
+
+                link_name = f"{modname}.{classname}"
+                links.append(f":class:`{base_class_name}<{link_name}>`")
+
     return links
 
 
@@ -852,7 +841,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         if initmeth is None or not isinstance(initmeth, MatMethod):
             return None
         if initmeth.args:
-            if initmeth.args[0] == "obj":
+            if initmeth.args[0] in ("obj", "self"):
                 return "(" + ", ".join(initmeth.args[1:]) + ")"
             else:
                 return "(" + ", ".join(initmeth.args) + ")"
@@ -884,7 +873,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         # add inheritance info, if wanted
         if not self.doc_as_attr and self.options.show_inheritance:
             self.add_line("", "<autodoc>")
-            base_class_links = make_baseclass_links(self.object)
+            base_class_links = make_baseclass_links(self.env, self.object)
             if base_class_links:
                 self.add_line(
                     _("   Bases: %s") % ", ".join(base_class_links), "<autodoc>"
@@ -1007,10 +996,11 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         ]
 
         # container
-        self.add_line("", "<autodoc>")
-        self.add_line(".. container:: members", "<autodoc>")
-        self.add_line("", "<autodoc>")
-        self.indent += "   "
+        if cons_names or prop_names or meth_names or other_names:
+            self.add_line("", "<autodoc>")
+            self.add_line(".. container:: members", "<autodoc>")
+            self.add_line("", "<autodoc>")
+            self.indent += "   "
 
         # constructor
         if cons_names:
@@ -1089,7 +1079,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def format_args(self):
         if self.object.args:
-            if self.object.args[0] == "obj":
+            if self.object.args[0] in ("obj", "self"):
                 return "(" + ", ".join(self.object.args[1:]) + ")"
             else:
                 return "(" + ", ".join(self.object.args) + ")"
