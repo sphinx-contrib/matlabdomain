@@ -171,6 +171,7 @@ class MatlabDocumenter(PyDocumenter):
                 # autodoc-process-docstring is fired and can add some
                 # content if desired
                 docstrings.append([])
+            docstrings = self.auto_link(docstrings)
             for i, line in enumerate(self.process_doc(docstrings)):
                 self.add_line(line, sourcename, i)
 
@@ -178,6 +179,35 @@ class MatlabDocumenter(PyDocumenter):
         if more_content:
             for line, src in zip(more_content.data, more_content.items):
                 self.add_line(line, src[0], src[1])
+
+    def auto_link(self, docstrings):
+        # autolink known names in See also
+        see_also_re = re.compile("See also\s+(.+)")
+        see_also_line = False
+        for i in range(len(docstrings)):
+            for j in range(len(docstrings[i])):
+                line = docstrings[i][j]
+                if line:  # non-blank line
+                    if not see_also_line and see_also_re.search(line):
+                        see_also_line = True  # line begins with "See also"
+                elif see_also_line:  # blank line following see also section
+                    see_also_line = False  # end see also section
+
+                if see_also_line:
+                    for n, o in entities_table.items():
+                        if isinstance(o, MatClass):
+                            role = "class"
+                        elif isinstance(o, MatFunction):
+                            role = "func"
+                        else:
+                            role = None
+                        if role:
+                            nn = n.replace("+", "")  # remove + from name
+                            # escape . and add negative look-behind for `
+                            pat = "(?<!`)" + nn.replace(".", "\.")
+                            line = re.sub(pat, f":{role}:`{nn}`", line)
+                    docstrings[i][j] = line
+        return docstrings
 
     def get_object_members(self, want_all):
         """Return `(members_check_module, members)` where `members` is a
