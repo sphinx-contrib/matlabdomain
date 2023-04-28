@@ -940,7 +940,116 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
     def document_members(self, all_members=False):
         if self.doc_as_attr:
             return
+
+        want_all = (
+            all_members or self.options.inherited_members or self.options.members is ALL
+        )
+        # find out which members are documentable
+        members_check_module, members = self.get_object_members(want_all)
+
+        # use filtered members to check for empty sections
+        filtered_members = [
+            (membername, member)
+            for (membername, member, isattr) in self.filter_members(members, want_all)
+        ]
+
+        # create list of properties
+        prop_names = [
+            membername
+            for (membername, member) in filtered_members
+            if isinstance(member, MatProperty)
+        ]
+        # create list of constructors
+        if self.env.config.autoclass_content in ("both", "init"):
+            # skip constructor section, since its docstring has already been used for the class
+            cons_names = []
+        else:
+            cons_names = [
+                membername
+                for (membername, member) in filtered_members
+                if isinstance(member, MatMethod) and member.name == member.cls.name
+            ]
+        # create list of non-constructor methods
+        meth_names = [
+            membername
+            for (membername, member) in filtered_members
+            if isinstance(member, MatMethod) and member.name != member.cls.name
+        ]
+        # create list of other members
+        other_names = [
+            membername
+            for (membername, member) in filtered_members
+            if not isinstance(member, MatMethod) and not isinstance(member, MatProperty)
+        ]
+        # create list of members that are not properties
+        non_properties = [
+            membername
+            for (membername, member) in members
+            if not isinstance(member, MatProperty)
+        ]
+        # create list of members that are not constructors
+        non_constructors = [
+            membername
+            for (membername, member) in members
+            if not isinstance(member, MatMethod) or member.name != member.cls.name
+        ]
+        # create list of members that are not non-constructor methods
+        non_methods = [
+            membername
+            for (membername, member) in members
+            if not isinstance(member, MatMethod) or member.name == member.cls.name
+        ]
+        # create list of members that are not non-constructor methods
+        non_other = [
+            membername
+            for (membername, member) in members
+            if isinstance(member, MatMethod) or isinstance(member, MatProperty)
+        ]
+
+        # container
+        self.add_line("", "<autodoc>")
+        self.add_line(".. container:: members", "<autodoc>")
+        self.add_line("", "<autodoc>")
+        self.indent += "   "
+
+        # constructor
+        if cons_names:
+            self.document_member_section(
+                "Constructor Summary", non_constructors, all_members
+            )
+
+        # properties
+        if prop_names:
+            self.document_member_section(
+                "Property Summary", non_properties, all_members
+            )
+
+        # methods
+        if meth_names:
+            self.document_member_section("Method Summary", non_methods, all_members)
+
+        # other
+        if other_names:
+            self.document_member_section("Other", non_other, all_members)
+
+    def document_member_section(self, heading, new_excludes, all_members):
+        # save up original indent and exclude_members
+        indent = self.indent
+        if self.options.exclude_members:
+            exclude_members = self.options.exclude_members.copy()
+        else:
+            exclude_members = []
+
+        # output heading and section content
+        self.add_line(heading, "<autodoc>")
+        self.indent += "   "
+        self.add_line(".. ", "<autodoc>")  # a comment, to force a <dd> in the HTML
+        self.options.exclude_members = exclude_members + new_excludes
         MatModuleLevelDocumenter.document_members(self, all_members)
+
+        # restore original indent and exclude_members
+        self.indent = indent
+        self.options.exclude_members = exclude_members
 
 
 class MatExceptionDocumenter(MatlabDocumenter, PyExceptionDocumenter):

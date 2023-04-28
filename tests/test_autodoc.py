@@ -48,6 +48,10 @@ b – second property of ClassExample
 
 c – third property of ClassExample
 
+Property Summary
+
+
+
 
 
 a
@@ -65,6 +69,10 @@ a property with default value
 c
 
 a property with multiline default value
+
+Method Summary
+
+
 
 
 
@@ -104,6 +112,10 @@ b – second property of ClassExample
 
 c – third property of ClassExample
 
+Property Summary
+
+
+
 
 
 a
@@ -121,6 +133,10 @@ a property with default value
 c = [10; ... 30]
 
 a property with multiline default value
+
+Method Summary
+
+
 
 
 
