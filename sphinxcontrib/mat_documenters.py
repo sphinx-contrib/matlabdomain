@@ -213,6 +213,9 @@ class MatlabDocumenter(PyDocumenter):
                     nn = n.replace("+", "")  # remove + from name
                     pat = nn.replace(".", "\.")  # escape . in pattern
                     pat = "(?<!`)" + pat  # add negative look-behind for `
+                    pat = (
+                        pat + "(?!\s(Properties|Methods):)"
+                    )  # add negative look-ahead for " Properties:" or " Methods:"
                     p = re.compile(pat)
                     # print(f"auto_link: {self.fullname} : {self.objtype} - {nn} {role}")
                     for i in range(len(docstrings)):
