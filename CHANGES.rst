@@ -5,12 +5,13 @@ sphinxcontrib-matlabdomain-0.19.0 (2023-MM-DD)
   closer to render documentation closer to how MathWorks does it. The parsing of
   MATLAB functions, clasess, etc. was rewritten. We now parse all MATLAB files
   in ``matlab_src_dir``. Further, you can now generate docs for files in the
-  root folder (something that only worked for packages before). We also updated
-  the class rendering to be closer to that of MathWorks. Instead of putting both
-  properties and methods together, they are now grouped by: *Constructor
-  Summary*, *Property Summary* and *Method Summary*. Below is an example of how
-  the ``ClassBar`` from ``tests/roots/test_autodoc/target/+package/ClassBar.m``
-  was rendered before and after.
+  root folder (something that only worked for packages before).
+* We also updated the class rendering to be closer to that of MathWorks. Instead
+  of putting both properties and methods together, they are now grouped by:
+  *Constructor Summary*, *Property Summary* and *Method Summary*. Below is an
+  example of how the ``ClassBar`` from
+  ``tests/roots/test_autodoc/target/+package/ClassBar.m`` was rendered before
+  and after.
 
   Before
 
@@ -21,7 +22,6 @@ sphinxcontrib-matlabdomain-0.19.0 (2023-MM-DD)
 
     .. image:: docs/render_classes_0.19.0.png
       :alt: Rendering of default ``ClassBar.m`` in 0.19.0
-* Fixes `Issue 166 <https://github.com/sphinx-contrib/matlabdomain/issues/166>`_.
 
 
 sphinxcontrib-matlabdomain-0.18.0 (2023-04-14)
