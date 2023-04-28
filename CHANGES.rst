@@ -12,12 +12,12 @@ sphinxcontrib-matlabdomain-0.19.0 (2023-MM-DD)
 
   Before
 
-    .. image:: docs/render_class_0.18.0.png
+    .. image:: docs/render_classes_0.18.0.png
       :alt: Rendering of default ``ClassBar.m`` in 0.18.0
 
   After
 
-    .. image:: docs/render_class_0.19.0.png
+    .. image:: docs/render_classes_0.19.0.png
       :alt: Rendering of default ``ClassBar.m`` in 0.19.0
 
 
