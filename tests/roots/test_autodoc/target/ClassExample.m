@@ -4,6 +4,8 @@ classdef ClassExample < handle
     % :param a: first property of :class:`ClassExample`
     % :param b: second property of :class:`ClassExample`
     % :param c: third property of :class:`ClassExample`
+    %
+    % See also BaseClass, baseFunction.
 
     properties
         a % a property
