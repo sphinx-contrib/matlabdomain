@@ -200,8 +200,11 @@ class MatlabDocumenter(PyDocumenter):
                             role = o.ref_role()
                             if role in ["class", "func"]:
                                 nn = n.replace("+", "")  # remove + from name
-                                # escape . and add negative look-behind for `
-                                pat = r"(?<!`)\b" + nn.replace(".", "\.") + r"\b"
+                                pat = (
+                                    r"(?<!(`|\.|\+))\b"  # negative look-behind for ` or . or +
+                                    + nn.replace(".", "\.")  # escape .
+                                    + r"\b(?!`)"  # negative look-ahead for `
+                                )
                                 line = re.sub(pat, f":{role}:`{nn}`", line)
                         docstrings[i][j] = line
 
@@ -211,13 +214,12 @@ class MatlabDocumenter(PyDocumenter):
                 role = o.ref_role()
                 if role in ["class", "func"]:
                     nn = n.replace("+", "")  # remove + from name
-                    pat = nn.replace(".", "\.")  # escape . in pattern
-                    pat = r"(?<!`)\b" + pat  # add negative look-behind for `
                     pat = (
-                        pat + r"\b(?!\s(Properties|Methods):)"
-                    )  # add negative look-ahead for " Properties:" or " Methods:"
+                        r"(?<!(`|\.|\+))\b"  # negative look-behind for ` or . or +
+                        + nn.replace(".", "\.")  # escape .
+                        + r"\b(?!(`|\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
+                    )
                     p = re.compile(pat)
-                    # print(f"auto_link: {self.fullname} : {self.objtype} - {nn} {role}")
                     for i in range(len(docstrings)):
                         for j in range(len(docstrings[i])):
                             docstrings[i][j] = p.sub(

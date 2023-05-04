@@ -152,7 +152,7 @@ def test_root(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\nClassExample, baseFunction\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\nClassMeow\npackage.ClassBar"
+        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\ntarget.ClassExample, baseFunction\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar"
     )
 
 
@@ -168,7 +168,7 @@ def test_root_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\nClassExample, baseFunction\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\nClassMeow\npackage.ClassBar"
+        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\ntarget.ClassExample, baseFunction\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar"
     )
 
 
@@ -184,11 +184,11 @@ def test_root_auto_link_see_also(make_app, rootdir):
     assert len(content) == 1
     assert (
         see_also_line_1.rawsource
-        == "See Also\n:class:`ClassExample`, :func:`baseFunction`\n\n"
+        == "See Also\n:class:`target.ClassExample`, :func:`baseFunction`\n\n"
     )
     assert (
         see_also_line_2.rawsource
-        == "See Also:\n:class:`ClassMeow`\n:class:`package.ClassBar`"
+        == "See Also:\n:class:`target.submodule.ClassMeow`\n:class:`target.package.ClassBar`"
     )
 
 

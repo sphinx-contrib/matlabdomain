@@ -2,7 +2,7 @@ function y = baseFunction(x)
 % Return the base of x
 %
 % See Also:
-%     ClassMeow
-%     package.ClassBar
+%     target.submodule.ClassMeow
+%     target.package.ClassBar
 
 y = x;

@@ -2,7 +2,7 @@ classdef BaseClass
 % A class in the very root of the directory
 %
 % See Also
-%    ClassExample, baseFunction
+%    target.ClassExample, baseFunction
 
 methods
     function obj = BaseClass(obj,args)
