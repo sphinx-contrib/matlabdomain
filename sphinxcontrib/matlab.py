@@ -845,6 +845,11 @@ def analyze(app):
 
 
 def ensure_configuration(app, env):
+    if env.matlab_auto_link:
+        logger.info(
+            f"[sphinxcontrib-matlabdomain] matlab_auto_link='{env.matlab_auto_link}', forcing matlab_short_links=True."
+        )
+        env.matlab_short_links = True
     if env.matlab_short_links:
         logger.info(
             "[sphinxcontrib-matlabdomain] matlab_short_links=True, forcing matlab_keep_package_prefix=False."
