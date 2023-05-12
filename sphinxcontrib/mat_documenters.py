@@ -184,29 +184,51 @@ class MatlabDocumenter(PyDocumenter):
     def auto_link(self, docstrings):
         # autolink known names in See also
         if self.env.config.matlab_auto_link == "see_also":
-            see_also_re = re.compile(r"See also:?", re.IGNORECASE)
-            see_also_line = False
+            see_also_re = re.compile(r"(See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
+            see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
+            is_see_also_line = False
             for i in range(len(docstrings)):
                 for j in range(len(docstrings[i])):
                     line = docstrings[i][j]
                     if line:  # non-blank line
-                        if not see_also_line and see_also_re.search(line):
-                            see_also_line = True  # line begins with "See also"
-                    elif see_also_line:  # blank line following see also section
-                        see_also_line = False  # end see also section
+                        if is_see_also_line:
+                            match = see_also_cond_re.search(line)
+                            entries_str = match.group(2)  # the entries
+                        elif match := see_also_re.search(line):
+                            is_see_also_line = True  # line begins with "See also"
+                            entries_str = match.group(2)  # the entries
+                            entities_name_map = create_entities_name_map(entities_table)
+                    elif is_see_also_line:  # blank line following see also section
+                        is_see_also_line = False  # end see also section
 
-                    if see_also_line:
-                        for n, o in entities_table.items():
-                            role = o.ref_role()
-                            if role in ["class", "func"]:
-                                nn = n.replace("+", "")  # remove + from name
-                                pat = (
-                                    r"(?<!(`|\.|\+))\b"  # negative look-behind for ` or . or +
-                                    + nn.replace(".", "\.")  # escape .
-                                    + r"\b(?!`)"  # negative look-ahead for `
-                                )
-                                line = re.sub(pat, f":{role}:`{nn}`", line)
-                        docstrings[i][j] = line
+                    if is_see_also_line and entries_str:
+                        # split on ,
+                        entries = re.split(r"\s*,\s*", entries_str)
+                        for k in range(len(entries)):
+                            if entries[k].endswith("`"):
+                                continue
+
+                            if (
+                                self.env.config.matlab_keep_package_prefix
+                                and entries[k] in entities_table
+                            ):
+                                o = entities_table[entries[k]]
+                            elif (
+                                not self.env.config.matlab_keep_package_prefix
+                                and entries[k] in entities_name_map
+                            ):
+                                o = entities_table[entities_name_map[entries[k]]]
+                            else:
+                                o = None
+                            if o:
+                                role = o.ref_role()
+                                if role in ["class", "func"]:
+                                    entries[k] = f":{role}:`{entries[k]}`"
+                            else:
+                                entries[k] = f"``{entries[k]}``"
+                        docstrings[i][j] = (
+                            match.group(1) + ", ".join(entries) + match.group(3)
+                        )
 
         # replace everywhere
         elif self.env.config.matlab_auto_link == "all":
@@ -813,6 +835,13 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
 
     def document_members(self, all_members=False):
         pass
+
+
+def create_entities_name_map(entities_table):
+    entities_name_map = {}
+    for n, o in entities_table.items():
+        entities_name_map[strip_package_prefix(n)] = n
+    return entities_name_map
 
 
 def make_baseclass_links(env, obj):
