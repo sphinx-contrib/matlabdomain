@@ -1,4 +1,4 @@
-sphinxcontrib-matlabdomain-0.19.0 (2023-MM-DD)
+sphinxcontrib-matlabdomain-0.19.0 (2023-05-16)
 ==============================================
 
 * Added new configuration: ``matlab_short_links``. Finally, we are getting
