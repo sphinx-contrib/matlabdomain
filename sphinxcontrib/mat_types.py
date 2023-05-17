@@ -1006,6 +1006,7 @@ class MatClass(MatMixin, MatObject):
                         idx += whitespace
                     else:
                         idx += 1
+
                 # =================================================================
                 # properties blocks
                 if self._tk_eq(idx, (Token.Keyword, "properties")):
@@ -1285,6 +1286,9 @@ class MatClass(MatMixin, MatObject):
                     # Token.Keyword: "end" terminates events block
                     while self._tk_ne(idx, (Token.Keyword, "end")):
                         idx += 1
+                    idx += 1
+                if self._tk_eq(idx, (Token.Punctuation, ";")):
+                    # Skip trailing semicolon after end.
                     idx += 1
         except IndexError:
             logger.warning(

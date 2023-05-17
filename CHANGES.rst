@@ -1,3 +1,9 @@
+sphinxcontrib-matlabdomain-0.19.1 (2023-05-17)
+==============================================
+
+* Fix parsing of classes with trailing ``;`` after ``end``
+
+
 sphinxcontrib-matlabdomain-0.19.0 (2023-05-16)
 ==============================================
 

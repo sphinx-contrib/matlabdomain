@@ -805,5 +805,33 @@ def test_ClassWithEllipsisProperties():
 #         D = '...'; % String with line continuation
 
 
+def test_ClassWithTrailingSemicolons():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithTrailingSemicolons.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "ClassWithTrailingSemicolons", "test_data"
+    )
+    assert (
+        obj.docstring
+        == " Smoothing like it is performed withing Cxx >v7.0 (until v8.2 at least).\n Uses constant 228p_12k frequency vector:\n"
+    )
+    assert obj.bases == ["hgsetget"]
+    assert list(obj.methods.keys()) == [
+        "ClassWithTrailingSemicolons",
+        "CxxSmoothing",
+        "CalculateSigma",
+    ]
+    assert list(obj.properties.keys()) == [
+        "m_dSmoothingWidth",
+        "m_nExtL",
+        "m_nExtR",
+        "m_dSigmaSquared",
+        "m_dFreqExtended",
+        "m_dFreqLeft",
+        "m_dFreqRight",
+        "m_dBandWidth",
+        "m_dFreq",
+    ]
+
+
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])
