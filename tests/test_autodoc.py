@@ -41,9 +41,8 @@ def test_target(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(
-        srcdir=srcdir, confoverrides={"matlab_show_property_default_value": True}
-    )
+    confdict = {"matlab_show_property_default_value": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
@@ -57,7 +56,8 @@ def test_target_show_default_value(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_auto_link_see_also(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir, confoverrides={"matlab_auto_link": "see_also"})
+    confdict = {"matlab_auto_link": "see_also"}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
@@ -99,9 +99,8 @@ def test_package(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(
-        srcdir=srcdir, confoverrides={"matlab_show_property_default_value": True}
-    )
+    confdict = {"matlab_show_property_default_value": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
@@ -129,6 +128,8 @@ def test_submodule(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_submodule_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
+    confdict = {"matlab_auto_link": "see_also"}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app = make_app(
         srcdir=srcdir, confoverrides={"matlab_show_property_default_value": True}
     )
@@ -152,30 +153,30 @@ def test_root(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\ntarget.ClassExample, baseFunction\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar"
+        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
     )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(
-        srcdir=srcdir, confoverrides={"matlab_show_property_default_value": True}
-    )
+    confdict = {"matlab_show_property_default_value": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\ntarget.ClassExample, baseFunction\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar"
+        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
     )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_auto_link_see_also(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir, confoverrides={"matlab_auto_link": "see_also"})
+    confdict = {"matlab_auto_link": "see_also"}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
@@ -184,11 +185,11 @@ def test_root_auto_link_see_also(make_app, rootdir):
     assert len(content) == 1
     assert (
         see_also_line_1.rawsource
-        == "See Also\n:class:`target.ClassExample`, :func:`baseFunction`\n\n"
+        == "See Also\n:class:`target.ClassExample`, :func:`baseFunction`, :class:`ClassExample`\n\n"
     )
     assert (
         see_also_line_2.rawsource
-        == "See Also:\n:class:`target.submodule.ClassMeow`\n:class:`target.package.ClassBar`"
+        == "See Also:\n:class:`target.submodule.ClassMeow`\n:class:`target.package.ClassBar`\n:class:`ClassMeow`\n:class:`package.ClassBar`"
     )
 
 

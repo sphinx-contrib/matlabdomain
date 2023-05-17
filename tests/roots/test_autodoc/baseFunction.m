@@ -4,5 +4,7 @@ function y = baseFunction(x)
 % See Also:
 %     target.submodule.ClassMeow
 %     target.package.ClassBar
+%     ClassMeow
+%     package.ClassBar
 
 y = x;
