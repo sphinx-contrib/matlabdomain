@@ -5,7 +5,7 @@ classdef ClassExample < handle
     % :param b: second property of :class:`ClassExample`
     % :param c: third property of :class:`ClassExample`
     %
-    % See also BaseClass, baseFunction.
+    % See also BaseClass, baseFunction, unknownEntity.
 
     properties
         a % a property

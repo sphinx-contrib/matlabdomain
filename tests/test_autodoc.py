@@ -34,7 +34,7 @@ def test_target(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nParameters\n\na – first property of ClassExample\n\nb – second property of ClassExample\n\nc – third property of ClassExample\n\nSee also BaseClass, baseFunction.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nParameters\n\na – first property of ClassExample\n\nb – second property of ClassExample\n\nc – third property of ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
 
 
@@ -49,7 +49,7 @@ def test_target_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nParameters\n\na – first property of ClassExample\n\nb – second property of ClassExample\n\nc – third property of ClassExample\n\nSee also BaseClass, baseFunction.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nParameters\n\na – first property of ClassExample\n\nb – second property of ClassExample\n\nc – third property of ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
 
 
@@ -64,7 +64,8 @@ def test_target_auto_link_see_also(make_app, rootdir):
     see_also_line = content[0][2][1][3]  # a bit fragile, I know
     assert len(content) == 1
     assert (
-        see_also_line.rawsource == "See also :class:`BaseClass`, :func:`baseFunction`."
+        see_also_line.rawsource
+        == "See also :class:`BaseClass`, :func:`baseFunction`, ``unknownEntity``."
     )
 
 
