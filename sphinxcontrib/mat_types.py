@@ -124,6 +124,12 @@ def analyze(app):
     MatObject.sphinx_app = app  # pass app to MatObject cls
     entities_table.clear()
 
+    if basedir is None:
+        logger.debug(
+            "[sphinxcontrib-matlabdomain] matlab_src_dir is None, skipping parsing."
+        )
+        return
+
     # Set the root object and get root members.
     root = MatObject.matlabify("")
     root.safe_getmembers()

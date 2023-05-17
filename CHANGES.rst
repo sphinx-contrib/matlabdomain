@@ -2,6 +2,7 @@ sphinxcontrib-matlabdomain-0.19.1 (2023-05-17)
 ==============================================
 
 * Fix parsing of classes with trailing ``;`` after ``end``
+* Fix bug if extension is included, but ``matlab_src_dir`` is not set.
 
 
 sphinxcontrib-matlabdomain-0.19.0 (2023-05-16)
