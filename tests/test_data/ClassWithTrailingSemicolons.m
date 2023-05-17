@@ -1,7 +1,7 @@
 classdef ClassWithTrailingSemicolons < hgsetget
     % Smoothing like it is performed withing Cxx >v7.0 (until v8.2 at least).
     % Uses constant 228p_12k frequency vector:
-    
+
     properties
         m_dSmoothingWidth;                               % Smoothing Width
         m_nExtL;
@@ -27,7 +27,7 @@ classdef ClassWithTrailingSemicolons < hgsetget
         end;
         function smooth_curve = CxxSmoothing(obj, curve)
             smooth_curve = zeros(1, length(obj.m_dFreq));
-            
+
         end;
         function sigma = CalculateSigma(obj)
             sigma = obj.m_dFreq;
