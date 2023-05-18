@@ -184,7 +184,10 @@ class MatlabDocumenter(PyDocumenter):
 
     def auto_link(self, docstrings):
         # autolink known names in See also
-        if self.env.config.matlab_auto_link == "see_also":
+        if (
+            self.env.config.matlab_auto_link == "see_also"
+            or self.env.config.matlab_auto_link == "all"
+        ):
             see_also_re = re.compile(r"(See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
             see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
             is_see_also_line = False
@@ -230,8 +233,8 @@ class MatlabDocumenter(PyDocumenter):
                             match.group(1) + ", ".join(entries) + match.group(3)
                         )
 
-        # replace everywhere
-        elif self.env.config.matlab_auto_link == "all":
+        # auto-link everywhere
+        if self.env.config.matlab_auto_link == "all":
             for n, o in entities_table.items():
                 role = o.ref_role()
                 if role in ["class", "func"]:
