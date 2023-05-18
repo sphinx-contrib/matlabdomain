@@ -20,6 +20,7 @@ from .mat_types import (  # noqa: E401
     MatModuleAnalyzer,
     MatApplication,
     entities_table,
+    entities_name_map,
     strip_package_prefix,
 )
 
@@ -197,7 +198,6 @@ class MatlabDocumenter(PyDocumenter):
                         elif match := see_also_re.search(line):
                             is_see_also_line = True  # line begins with "See also"
                             entries_str = match.group(2)  # the entries
-                            entities_name_map = create_entities_name_map(entities_table)
                     elif is_see_also_line:  # blank line following see also section
                         is_see_also_line = False  # end see also section
 
@@ -835,13 +835,6 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
 
     def document_members(self, all_members=False):
         pass
-
-
-def create_entities_name_map(entities_table):
-    entities_name_map = {}
-    for n, o in entities_table.items():
-        entities_name_map[strip_package_prefix(n)] = n
-    return entities_name_map
 
 
 def make_baseclass_links(env, obj):

@@ -51,6 +51,12 @@ __all__ = [
 #   Will result in a short name of: package.ClassBar
 entities_table = {}
 
+# Dictionary containing a map of names WITHOUT '+' in package names to
+# the corresponding names WITH '+' in the package name. This is only
+# used if "matlab_auto_link" is on AND "matlab_keep_package_prefix"
+# is True AND a docstring with "see also" is encountered.
+entities_name_map = {}
+
 
 def shortest_name(dotted_path):
     # Creates the shortest valid MATLAB name from a dotted path
@@ -108,6 +114,7 @@ def populate_entities_table(obj, path=""):
         fullpath = path + "." + o.name
         fullpath = fullpath.lstrip(".")
         entities_table[fullpath] = o
+        entities_name_map[strip_package_prefix(fullpath)] = fullpath
         if isinstance(o, MatModule):
             if o.entities:
                 populate_entities_table(o, fullpath)
@@ -152,6 +159,7 @@ def analyze(app):
         short_name = shortest_name(name)
         if short_name != name:
             short_names[short_name] = entity
+            entities_name_map[short_name] = short_name
 
     entities_table.update(short_names)
 
