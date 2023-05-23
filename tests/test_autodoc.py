@@ -56,7 +56,7 @@ def test_target_show_default_value(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_auto_link_see_also(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "see_also"}
+    confdict = {"matlab_auto_link": "basic"}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
@@ -129,7 +129,7 @@ def test_submodule(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_submodule_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "see_also"}
+    confdict = {"matlab_auto_link": "basic"}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app = make_app(
         srcdir=srcdir, confoverrides={"matlab_show_property_default_value": True}
@@ -176,7 +176,7 @@ def test_root_show_default_value(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_auto_link_see_also(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "see_also"}
+    confdict = {"matlab_auto_link": "basic"}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 

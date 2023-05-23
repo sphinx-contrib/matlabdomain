@@ -251,7 +251,7 @@ class MatlabDocumenter(PyDocumenter):
     def auto_link(self, docstrings):
         # autolink known names in See also
         if (
-            self.env.config.matlab_auto_link == "see_also"
+            self.env.config.matlab_auto_link == "basic"
             or self.env.config.matlab_auto_link == "all"
         ):
             docstrings = self.auto_link_see_also(docstrings)

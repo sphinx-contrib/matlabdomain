@@ -99,9 +99,9 @@ If you want the closest to MATLAB documentation style, use ``matlab_short_links
 
 ``matlab_auto_link``
    Automatically convert the names of known classes and functions to links using
-   the ``:class:`` and ``:func:`` roles, respectively. Valid values are ``"see_also"``
+   the ``:class:`` and ``:func:`` roles, respectively. Valid values are ``"basic"``
    and ``"all"``.
-   * ``"see_also"`` - applies only to docstring lines that begin with "See also",
+   * ``"basic"`` - applies only to docstring lines that begin with "See also",
      and any subsequent lines before the next blank line.
 
    * ``"all"`` - applies to all docstring lines.
