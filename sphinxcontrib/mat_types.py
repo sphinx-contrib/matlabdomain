@@ -200,7 +200,7 @@ class MatObject(object):
         self.name = name
 
     def ref_role(self):
-        # role to use for references to this object (e.g. when generating auto-links)
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
         return "ref"
 
     @property
@@ -443,7 +443,7 @@ class MatModule(MatObject):
         self.entities = []
 
     def ref_role(self):
-        # role to use for references to this object (e.g. when generating auto-links)
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
         return "mod"
 
     def safe_getmembers(self):
@@ -859,7 +859,7 @@ class MatFunction(MatObject):
             self.rem_tks = tks  # save extra tokens
 
     def ref_role(self):
-        # role to use for references to this object (e.g. when generating auto-links)
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
         return "func"
 
     @property
@@ -1327,8 +1327,32 @@ class MatClass(MatMixin, MatObject):
         self.rem_tks = idx  # index of last token
 
     def ref_role(self):
-        # role to use for references to this object (e.g. when generating auto-links)
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
         return "class"
+
+    def fullname(self, env):
+        """Returns full name for class object, for use as link target"""
+        modname = self.__module__
+        classname = self.name
+        if not env.config.matlab_keep_package_prefix:
+            modname = strip_package_prefix(modname)
+
+        if env.config.matlab_short_links:
+            # modname is only used for package names
+            # - "target.+package" => "package"
+            # - "target" => ""
+            parts = modname.split(".")
+            parts = [part for part in parts if part.startswith("+")]
+            modname = ".".join(parts)
+
+        return f"{modname}.{classname}"
+
+    def link(self, env, name):
+        """Returns link for class object"""
+        if not name:
+            name = self.name
+        target = self.fullname(env)
+        return f":class:`{name}<{target}>`"
 
     def attributes(self, idx, attr_types):
         """
@@ -1485,7 +1509,7 @@ class MatProperty(MatObject):
         # self.class = attrs['class']
 
     def ref_role(self):
-        # role to use for references to this object (e.g. when generating auto-links)
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
         return "attr"
 
     @property
@@ -1501,7 +1525,7 @@ class MatMethod(MatFunction):
         self.attrs = attrs
 
     def ref_role(self):
-        # role to use for references to this object (e.g. when generating auto-links)
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
         return "meth"
 
     def skip_tokens(self):

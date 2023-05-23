@@ -859,21 +859,7 @@ def make_baseclass_links(env, obj):
             if not entity:
                 links.append(":class:`%s`" % base_class_name)
             else:
-                modname = entity.__module__
-                classname = entity.name
-                if not env.config.matlab_keep_package_prefix:
-                    modname = strip_package_prefix(modname)
-
-                if env.config.matlab_short_links:
-                    # modname is only used for package names
-                    # - "target.+package" => "package"
-                    # - "target" => ""
-                    parts = modname.split(".")
-                    parts = [part for part in parts if part.startswith("+")]
-                    modname = ".".join(parts)
-
-                link_name = f"{modname}.{classname}"
-                links.append(f":class:`{base_class_name}<{link_name}>`")
+                links.append(entity.link(env, base_class_name))
 
     return links
 
