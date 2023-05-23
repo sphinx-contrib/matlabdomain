@@ -182,6 +182,9 @@ class MatlabDocumenter(PyDocumenter):
             for line, src in zip(more_content.data, more_content.items):
                 self.add_line(line, src[0], src[1])
 
+    def auto_link_basic(self, docstrings):
+        return self.auto_link_see_also(docstrings)
+
     def auto_link_see_also(self, docstrings):
         # autolink known names in See also
         see_also_re = re.compile(r"(See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
@@ -249,12 +252,9 @@ class MatlabDocumenter(PyDocumenter):
         return docstrings
 
     def auto_link(self, docstrings):
-        # autolink known names in See also
-        if (
-            self.env.config.matlab_auto_link == "basic"
-            or self.env.config.matlab_auto_link == "all"
-        ):
-            docstrings = self.auto_link_see_also(docstrings)
+        # basic auto-linking
+        if self.env.config.matlab_auto_link:  # "basic" or "all" (i.e. not None)
+            docstrings = self.auto_link_basic(docstrings)
 
         # auto-link everywhere
         if self.env.config.matlab_auto_link == "all":
@@ -994,6 +994,48 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                 MatModuleLevelDocumenter.add_content(self, content, no_docstring=True)
         else:
             MatModuleLevelDocumenter.add_content(self, more_content)
+
+    def auto_link_basic(self, docstrings):
+        docstrings = MatlabDocumenter.auto_link_basic(self, docstrings)
+        return self.auto_link_class_members(docstrings)
+
+    def auto_link_class_members(self, docstrings):
+        # auto link property and method names in class docstring
+        prop_re = re.compile(r"(.* Properties:)", re.IGNORECASE)
+        meth_re = re.compile(r"(.* Methods:)", re.IGNORECASE)
+        is_prop_line = False
+        is_meth_line = False
+        for i in range(len(docstrings)):
+            for j in range(len(docstrings[i])):
+                line = docstrings[i][j]
+                if line:  # non-blank line
+                    if prop_re.search(line):  # line ends with "Properties:"
+                        is_prop_line = True
+                        is_meth_line = False
+                    elif meth_re.search(line):  # line ends with "Methods:"
+                        is_prop_line = False
+                        is_meth_line = True
+                    elif is_prop_line:
+                        # auto-link first word to corresponding property, if it exists
+                        docstrings[i][j] = self.link_member("attr", line)
+                    elif is_meth_line:
+                        # auto-link first word to corresponding method, if it exists
+                        docstrings[i][j] = self.link_member("meth", line)
+                elif is_prop_line:  # blank line following properties section
+                    is_prop_line = False  # end properties section
+                elif is_meth_line:  # blank line following methods section
+                    is_meth_line = False  # end methods section
+
+        return docstrings
+
+    def link_member(self, type, line):
+        p = re.compile(r"((\*\s*)?(\b\w*\b))(?=\s*-)")
+        if match := p.search(line):
+            name = match.group(3)
+            line = p.sub(
+                f"* :{type}:`{name} <{self.object.fullname(self.env)}.{name}>`", line, 1
+            )
+        return line
 
     def document_members(self, all_members=False):
         if self.doc_as_attr:
