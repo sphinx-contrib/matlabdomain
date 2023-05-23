@@ -182,74 +182,83 @@ class MatlabDocumenter(PyDocumenter):
             for line, src in zip(more_content.data, more_content.items):
                 self.add_line(line, src[0], src[1])
 
+    def auto_link_see_also(self, docstrings):
+        # autolink known names in See also
+        see_also_re = re.compile(r"(See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
+        see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
+        is_see_also_line = False
+        for i in range(len(docstrings)):
+            for j in range(len(docstrings[i])):
+                line = docstrings[i][j]
+                if line:  # non-blank line
+                    if is_see_also_line:
+                        # find name
+                        match = see_also_cond_re.search(line)
+                        entries_str = match.group(2)  # the entries
+                    elif match := see_also_re.search(line):
+                        is_see_also_line = True  # line begins with "See also"
+                        entries_str = match.group(2)  # the entries
+                elif is_see_also_line:  # blank line following see also section
+                    is_see_also_line = False  # end see also section
+
+                if is_see_also_line and entries_str:
+                    # split on ,
+                    entries = re.split(r"\s*,\s*", entries_str)
+                    for k in range(len(entries)):
+                        if entries[k].endswith("`"):
+                            continue
+
+                        if (
+                            self.env.config.matlab_keep_package_prefix
+                            and entries[k] in entities_table
+                        ):
+                            o = entities_table[entries[k]]
+                        elif (
+                            not self.env.config.matlab_keep_package_prefix
+                            and entries[k] in entities_name_map
+                        ):
+                            o = entities_table[entities_name_map[entries[k]]]
+                        else:
+                            o = None
+                        if o:
+                            role = o.ref_role()
+                            if role in ["class", "func"]:
+                                entries[k] = f":{role}:`{entries[k]}`"
+                        else:
+                            entries[k] = f"``{entries[k]}``"
+                    docstrings[i][j] = (
+                        match.group(1) + ", ".join(entries) + match.group(3)
+                    )
+        return docstrings
+
+    def auto_link_all(self, docstrings):
+        # auto-link everywhere
+        for n, o in entities_table.items():
+            role = o.ref_role()
+            if role in ["class", "func"]:
+                nn = n.replace("+", "")  # remove + from name
+                pat = (
+                    r"(?<!(`|\.|\+))\b"  # negative look-behind for ` or . or +
+                    + nn.replace(".", "\.")  # escape .
+                    + r"\b(?!(`|\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
+                )
+                p = re.compile(pat)
+                for i in range(len(docstrings)):
+                    for j in range(len(docstrings[i])):
+                        docstrings[i][j] = p.sub(f":{role}:`{nn}`", docstrings[i][j])
+        return docstrings
+
     def auto_link(self, docstrings):
         # autolink known names in See also
         if (
             self.env.config.matlab_auto_link == "see_also"
             or self.env.config.matlab_auto_link == "all"
         ):
-            see_also_re = re.compile(r"(See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
-            see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
-            is_see_also_line = False
-            for i in range(len(docstrings)):
-                for j in range(len(docstrings[i])):
-                    line = docstrings[i][j]
-                    if line:  # non-blank line
-                        if is_see_also_line:
-                            match = see_also_cond_re.search(line)
-                            entries_str = match.group(2)  # the entries
-                        elif match := see_also_re.search(line):
-                            is_see_also_line = True  # line begins with "See also"
-                            entries_str = match.group(2)  # the entries
-                    elif is_see_also_line:  # blank line following see also section
-                        is_see_also_line = False  # end see also section
-
-                    if is_see_also_line and entries_str:
-                        # split on ,
-                        entries = re.split(r"\s*,\s*", entries_str)
-                        for k in range(len(entries)):
-                            if entries[k].endswith("`"):
-                                continue
-
-                            if (
-                                self.env.config.matlab_keep_package_prefix
-                                and entries[k] in entities_table
-                            ):
-                                o = entities_table[entries[k]]
-                            elif (
-                                not self.env.config.matlab_keep_package_prefix
-                                and entries[k] in entities_name_map
-                            ):
-                                o = entities_table[entities_name_map[entries[k]]]
-                            else:
-                                o = None
-                            if o:
-                                role = o.ref_role()
-                                if role in ["class", "func"]:
-                                    entries[k] = f":{role}:`{entries[k]}`"
-                            else:
-                                entries[k] = f"``{entries[k]}``"
-                        docstrings[i][j] = (
-                            match.group(1) + ", ".join(entries) + match.group(3)
-                        )
+            docstrings = self.auto_link_see_also(docstrings)
 
         # auto-link everywhere
         if self.env.config.matlab_auto_link == "all":
-            for n, o in entities_table.items():
-                role = o.ref_role()
-                if role in ["class", "func"]:
-                    nn = n.replace("+", "")  # remove + from name
-                    pat = (
-                        r"(?<!(`|\.|\+))\b"  # negative look-behind for ` or . or +
-                        + nn.replace(".", "\.")  # escape .
-                        + r"\b(?!(`|\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
-                    )
-                    p = re.compile(pat)
-                    for i in range(len(docstrings)):
-                        for j in range(len(docstrings[i])):
-                            docstrings[i][j] = p.sub(
-                                f":{role}:`{nn}`", docstrings[i][j]
-                            )
+            docstrings = self.auto_link_all(docstrings)
 
         return docstrings
 
