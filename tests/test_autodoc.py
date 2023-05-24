@@ -31,10 +31,20 @@ def test_target(make_app, rootdir):
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
+    property_section = content[0][2][1][2][0]  # a bit fragile, I know
+    method_section = content[0][2][1][2][1]  # a bit fragile, I know
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nParameters\n\na – first property of ClassExample\n\nb – second property of ClassExample\n\nc – third property of ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+    )
+    assert (
+        property_section.rawsource
+        == "ClassExample Properties:\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample"
+    )
+    assert (
+        method_section.rawsource
+        == "ClassExample Methods:\nClassExample - the constructor\nmymethod - a method in ClassExample\n"
     )
 
 
@@ -46,23 +56,43 @@ def test_target_show_default_value(make_app, rootdir):
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
+    property_section = content[0][2][1][2][0]  # a bit fragile, I know
+    method_section = content[0][2][1][2][1]  # a bit fragile, I know
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nParameters\n\na – first property of ClassExample\n\nb – second property of ClassExample\n\nc – third property of ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+    )
+    assert (
+        property_section.rawsource
+        == "ClassExample Properties:\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample"
+    )
+    assert (
+        method_section.rawsource
+        == "ClassExample Methods:\nClassExample - the constructor\nmymethod - a method in ClassExample\n"
     )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
-def test_target_auto_link_see_also(make_app, rootdir):
+def test_target_auto_link_basic(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_auto_link": "basic"}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
+    property_section = content[0][2][1][2][0]  # a bit fragile, I know
+    method_section = content[0][2][1][2][1]  # a bit fragile, I know
     see_also_line = content[0][2][1][3]  # a bit fragile, I know
     assert len(content) == 1
+    assert (
+        property_section.rawsource
+        == "ClassExample Properties:\n* :attr:`a <target.ClassExample.a>` - first property of ClassExample\n* :attr:`b <target.ClassExample.b>` - second property of ClassExample\n* :attr:`c <target.ClassExample.c>` - third property of ClassExample"
+    )
+    assert (
+        method_section.rawsource
+        == "ClassExample Methods:\n* :meth:`ClassExample <target.ClassExample.ClassExample>` - the constructor\n* :meth:`mymethod <target.ClassExample.mymethod>` - a method in ClassExample\n"
+    )
     assert (
         see_also_line.rawsource
         == "See also :class:`BaseClass`, :func:`baseFunction`, ``unknownEntity``."
@@ -154,7 +184,7 @@ def test_root(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
+        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nBaseClass Methods:\n\nBaseClass - the constructor, whose description extends\n\nto the next line\n\nDoBase - another BaseClass method\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
     )
 
 
@@ -169,21 +199,26 @@ def test_root_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
+        == "root\n\n\n\nclass BaseClass(args)\n\nA class in the very root of the directory\n\nBaseClass Methods:\n\nBaseClass - the constructor, whose description extends\n\nto the next line\n\nDoBase - another BaseClass method\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
     )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
-def test_root_auto_link_see_also(make_app, rootdir):
+def test_root_auto_link_basic(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_auto_link": "basic"}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
-    see_also_line_1 = content[0][2][1][1][0]  # a bit fragile, I know
+    method_section = content[0][2][1][1][0]  # a bit fragile, I know
+    see_also_line_1 = content[0][2][1][1][1]  # a bit fragile, I know
     see_also_line_2 = content[0][4][1][1][0]  # a bit fragile, I know
     assert len(content) == 1
+    assert (
+        method_section.rawsource
+        == "BaseClass Methods:\n* :meth:`BaseClass <BaseClass.BaseClass>` - the constructor, whose description extends\n    to the next line\n* :meth:`DoBase <BaseClass.DoBase>` - another BaseClass method\n"
+    )
     assert (
         see_also_line_1.rawsource
         == "See Also\n:class:`target.ClassExample`, :func:`baseFunction`, :class:`ClassExample`\n\n"
