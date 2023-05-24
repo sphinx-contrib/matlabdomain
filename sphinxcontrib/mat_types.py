@@ -1345,7 +1345,7 @@ class MatClass(MatMixin, MatObject):
             parts = [part for part in parts if part.startswith("+")]
             modname = ".".join(parts)
 
-        return f"{modname}.{classname}"
+        return f"{modname}.{classname}".lstrip(".")
 
     def link(self, env, name):
         """Returns link for class object"""
