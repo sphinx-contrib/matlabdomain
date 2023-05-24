@@ -241,7 +241,7 @@ class MatlabDocumenter(PyDocumenter):
             if role in ["class", "func"]:
                 nn = n.replace("+", "")  # remove + from name
                 pat = (
-                    r"(?<!(`|\.|\+))\b"  # negative look-behind for ` or . or +
+                    r"(?<!(`|\.|\+|<))\b"  # negative look-behind for ` or . or + or <
                     + nn.replace(".", "\.")  # escape .
                     + r"\b(?!(`|\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
                 )
