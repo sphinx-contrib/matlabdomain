@@ -100,6 +100,32 @@ def test_target_auto_link_basic(make_app, rootdir):
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
+def test_target_auto_link_all(make_app, rootdir):
+    srcdir = rootdir / "roots" / "test_autodoc"
+    confdict = {"matlab_auto_link": "all"}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
+    app.builder.build_all()
+
+    content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
+    property_section = content[0][2][1][2][0]  # a bit fragile, I know
+    method_section = content[0][2][1][2][1]  # a bit fragile, I know
+    see_also_line = content[0][2][1][3]  # a bit fragile, I know
+    assert len(content) == 1
+    assert (
+        property_section.rawsource
+        == "ClassExample Properties:\n* :attr:`a <target.ClassExample.a>` - first property of :class:`ClassExample`\n* :attr:`b <target.ClassExample.b>` - second property of :class:`ClassExample`\n* :attr:`c <target.ClassExample.c>` - third property of :class:`ClassExample`"
+    )
+    assert (
+        method_section.rawsource
+        == "ClassExample Methods:\n* :meth:`ClassExample <target.ClassExample.ClassExample>` - the constructor\n* :meth:`mymethod <target.ClassExample.mymethod>` - a method in :class:`ClassExample`\n"
+    )
+    assert (
+        see_also_line.rawsource
+        == "See also :class:`BaseClass`, :func:`baseFunction`, ``unknownEntity``."
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_classfolder(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     app = make_app(srcdir=srcdir)
