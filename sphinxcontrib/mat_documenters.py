@@ -246,9 +246,25 @@ class MatlabDocumenter(PyDocumenter):
                     + r"\b(?!(`|\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
                 )
                 p = re.compile(pat)
+                no_link = 0  # normal mode (no literal block detected)
                 for i in range(len(docstrings)):
                     for j in range(len(docstrings[i])):
-                        docstrings[i][j] = p.sub(f":{role}:`{nn}`", docstrings[i][j])
+                        # skip over literal blocks (i.e. line ending with ::, blank line, indented line)
+                        if docstrings[i][j].endswith("::"):
+                            no_link = -1  # 1st sign of literal block
+                        elif not docstrings[i][j]:  # blank line
+                            if no_link == -1:  # if 1st sign already detected
+                                no_link = -2  # 2nd sign of literal block
+                            elif no_link == 1:  # if in literal block
+                                no_link = 0  # end the literal block, restart linking
+                        elif no_link == -2 and docstrings[i][j].startswith("  "):
+                            # indented line after 1st 2 signs
+                            no_link = 1  # beginning of literal block (stop linking!)
+                        elif no_link != 1:  # not in a literal block, go ahead and link
+                            docstrings[i][j] = p.sub(
+                                f":{role}:`{nn}`", docstrings[i][j]
+                            )
+
         return docstrings
 
     def auto_link(self, docstrings):
@@ -267,12 +283,25 @@ class MatlabDocumenter(PyDocumenter):
             # negative look-behind for ` or . or <, then <name>()
             pat = r"(?<!(`|\.|<))\b" + n + r"\(\)"
             p = re.compile(pat)
+            no_link = 0  # normal mode (no literal block detected)
             for i in range(len(docstrings)):
                 for j in range(len(docstrings[i])):
-                    docstrings[i][j] = p.sub(
-                        f":meth:`{n}() <{class_obj.fullname(self.env)}.{n}>`",
-                        docstrings[i][j],
-                    )
+                    # skip over literal blocks (i.e. line ending with ::, blank line, indented line)
+                    if docstrings[i][j].endswith("::"):
+                        no_link = -1  # 1st sign of literal block
+                    elif not docstrings[i][j]:  # blank line
+                        if no_link == -1:  # if 1st sign already detected
+                            no_link = -2  # 2nd sign of literal block
+                        elif no_link == 1:  # if in literal block
+                            no_link = 0  # end the literal block, start linking again
+                    elif no_link == -2 and docstrings[i][j].startswith("  "):
+                        # indented line after 1st 2 signs
+                        no_link = 1  # beginning of literal block (stop linking!)
+                    elif no_link != 1:  # not in a literal block, go ahead and link
+                        docstrings[i][j] = p.sub(
+                            f":meth:`{n}() <{class_obj.fullname(self.env)}.{n}>`",
+                            docstrings[i][j],
+                        )
 
         return docstrings
 
