@@ -1334,9 +1334,6 @@ class MatClass(MatMixin, MatObject):
         """Returns full name for class object, for use as link target"""
         modname = self.__module__
         classname = self.name
-        if not env.config.matlab_keep_package_prefix:
-            modname = strip_package_prefix(modname)
-
         if env.config.matlab_short_links:
             # modname is only used for package names
             # - "target.+package" => "package"
@@ -1344,6 +1341,9 @@ class MatClass(MatMixin, MatObject):
             parts = modname.split(".")
             parts = [part for part in parts if part.startswith("+")]
             modname = ".".join(parts)
+
+        if not env.config.matlab_keep_package_prefix:
+            modname = strip_package_prefix(modname)
 
         return f"{modname}.{classname}".lstrip(".")
 
