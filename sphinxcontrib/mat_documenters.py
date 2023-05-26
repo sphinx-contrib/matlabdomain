@@ -235,7 +235,7 @@ class MatlabDocumenter(PyDocumenter):
         return docstrings
 
     def auto_link_all(self, docstrings):
-        # auto-link everywhere
+        # auto-link known classes and functions everywhere
         for n, o in entities_table.items():
             role = o.ref_role()
             if role in ["class", "func"]:
@@ -1029,11 +1029,17 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         return docstrings
 
     def link_member(self, type, line):
+        if type == "meth":
+            parens = "()"
+        else:
+            parens = ""
         p = re.compile(r"((\*\s*)?(\b\w*\b))(?=\s*-)")
         if match := p.search(line):
             name = match.group(3)
             line = p.sub(
-                f"* :{type}:`{name} <{self.object.fullname(self.env)}.{name}>`", line, 1
+                f"* :{type}:`{name}{parens} <{self.object.fullname(self.env)}.{name}>`",
+                line,
+                1,
             )
         return line
 

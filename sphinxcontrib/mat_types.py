@@ -1352,7 +1352,7 @@ class MatClass(MatMixin, MatObject):
         if not name:
             name = self.name
         target = self.fullname(env)
-        return f":class:`{name}<{target}>`"
+        return f":class:`{name} <{target}>`"
 
     def attributes(self, idx, attr_types):
         """

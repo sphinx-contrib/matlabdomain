@@ -91,7 +91,7 @@ def test_target_auto_link_basic(make_app, rootdir):
     )
     assert (
         method_section.rawsource
-        == "ClassExample Methods:\n* :meth:`ClassExample <target.ClassExample.ClassExample>` - the constructor\n* :meth:`mymethod <target.ClassExample.mymethod>` - a method in ClassExample\n"
+        == "ClassExample Methods:\n* :meth:`ClassExample() <target.ClassExample.ClassExample>` - the constructor\n* :meth:`mymethod() <target.ClassExample.mymethod>` - a method in ClassExample\n"
     )
     assert (
         see_also_line.rawsource
@@ -117,7 +117,7 @@ def test_target_auto_link_all(make_app, rootdir):
     )
     assert (
         method_section.rawsource
-        == "ClassExample Methods:\n* :meth:`ClassExample <target.ClassExample.ClassExample>` - the constructor\n* :meth:`mymethod <target.ClassExample.mymethod>` - a method in :class:`ClassExample`\n"
+        == "ClassExample Methods:\n* :meth:`ClassExample() <target.ClassExample.ClassExample>` - the constructor\n* :meth:`mymethod() <target.ClassExample.mymethod>` - a method in :class:`ClassExample`\n"
     )
     assert (
         see_also_line.rawsource
@@ -243,7 +243,7 @@ def test_root_auto_link_basic(make_app, rootdir):
     assert len(content) == 1
     assert (
         method_section.rawsource
-        == "BaseClass Methods:\n* :meth:`BaseClass <BaseClass.BaseClass>` - the constructor, whose description extends\n    to the next line\n* :meth:`DoBase <BaseClass.DoBase>` - another BaseClass method\n"
+        == "BaseClass Methods:\n* :meth:`BaseClass() <BaseClass.BaseClass>` - the constructor, whose description extends\n    to the next line\n* :meth:`DoBase() <BaseClass.DoBase>` - another BaseClass method\n"
     )
     assert (
         see_also_line_1.rawsource
