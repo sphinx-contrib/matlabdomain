@@ -262,6 +262,20 @@ class MatlabDocumenter(PyDocumenter):
 
         return docstrings
 
+    def auto_link_methods(self, class_obj, docstrings):
+        for n, o in class_obj.methods.items():
+            # negative look-behind for ` or . or <, then <name>()
+            pat = r"(?<!(`|\.|<))\b" + n + r"\(\)"
+            p = re.compile(pat)
+            for i in range(len(docstrings)):
+                for j in range(len(docstrings[i])):
+                    docstrings[i][j] = p.sub(
+                        f":meth:`{n}() <{class_obj.fullname(self.env)}.{n}>`",
+                        docstrings[i][j],
+                    )
+
+        return docstrings
+
     def get_object_members(self, want_all):
         """Return `(members_check_module, members)` where `members` is a
         list of `(membername, member)` pairs of the members of *self.object*.
@@ -1043,6 +1057,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             )
         return line
 
+    def auto_link_all(self, docstrings):
+        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
+        return self.auto_link_methods(self.object, docstrings)
+
     def document_members(self, all_members=False):
         if self.doc_as_attr:
             return
@@ -1204,6 +1222,10 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
     def document_members(self, all_members=False):
         pass
 
+    def auto_link_all(self, docstrings):
+        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
+        return self.auto_link_methods(self.object.cls, docstrings)
+
 
 class MatAttributeDocumenter(MatClassLevelDocumenter):
     """
@@ -1273,6 +1295,10 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         #     # wrong thing to display
         #     no_docstring = True
         MatClassLevelDocumenter.add_content(self, more_content, no_docstring)
+
+    def auto_link_all(self, docstrings):
+        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
+        return self.auto_link_methods(self.object.cls, docstrings)
 
 
 class MatInstanceAttributeDocumenter(MatAttributeDocumenter):

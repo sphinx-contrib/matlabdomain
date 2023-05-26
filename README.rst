@@ -109,7 +109,9 @@ If you want the closest to MATLAB documentation style, use ``matlab_short_links
      in class docstrings.
 
    * ``"all"`` - Auto-links everything included with ``"basic"``, plus all
-     known classes and functions everywhere else they appear in any docstring.
+     known classes and functions everywhere else they appear in any docstring,
+     and any names ending with "()" within class, property, or method docstrings
+     that match a method of the corresponding class.
 
    Default is ``None``. *Added in Version 0.20.0*.
 

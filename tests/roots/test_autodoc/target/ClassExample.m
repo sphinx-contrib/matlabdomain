@@ -6,7 +6,7 @@ classdef ClassExample < handle
     %   b - second property of ClassExample
     %   c - third property of ClassExample
     % ClassExample Methods:
-    %   ClassExample - the constructor
+    %   ClassExample - the constructor and a reference to mymethod()
     %   mymethod - a method in ClassExample
     %
     % See also BaseClass, baseFunction, unknownEntity.
