@@ -1347,12 +1347,13 @@ class MatClass(MatMixin, MatObject):
 
         return f"{modname}.{classname}".lstrip(".")
 
-    def link(self, env, name):
+    def link(self, env, name=None):
         """Returns link for class object"""
-        if not name:
-            name = self.name
         target = self.fullname(env)
-        return f":class:`{name} <{target}>`"
+        if name:
+            return f":class:`{name} <{target}>`"
+        else:
+            return f":class:`{target}`"
 
     def attributes(self, idx, attr_types):
         """

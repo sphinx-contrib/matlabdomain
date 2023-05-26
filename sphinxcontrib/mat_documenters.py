@@ -873,7 +873,7 @@ def make_baseclass_links(env, obj):
             if not entity:
                 links.append(":class:`%s`" % base_class_name)
             else:
-                links.append(entity.link(env, base_class_name))
+                links.append(entity.link(env))
 
     return links
 

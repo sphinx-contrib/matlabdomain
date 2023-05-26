@@ -221,7 +221,7 @@ def test_submodule(make_app, rootdir):
         content[0].astext()
         == "submodule\n\n\n\nclass ClassMeow\n\nBases: package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\nfuncMeow(input)\n\nTests a function with comments after docstring"
     )
-    assert bases_line.rawsource == "Bases: :class:`package.ClassBar <package.ClassBar>`"
+    assert bases_line.rawsource == "Bases: :class:`package.ClassBar`"
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")

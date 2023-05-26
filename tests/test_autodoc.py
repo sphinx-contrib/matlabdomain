@@ -215,12 +215,9 @@ def test_submodule(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "submodule\n\n\n\nclass target.submodule.ClassMeow\n\nBases: package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\ntarget.submodule.funcMeow(input)\n\nTests a function with comments after docstring"
+        == "submodule\n\n\n\nclass target.submodule.ClassMeow\n\nBases: target.package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\ntarget.submodule.funcMeow(input)\n\nTests a function with comments after docstring"
     )
-    assert (
-        bases_line.rawsource
-        == "Bases: :class:`package.ClassBar <target.package.ClassBar>`"
-    )
+    assert bases_line.rawsource == "Bases: :class:`target.package.ClassBar`"
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
@@ -234,7 +231,7 @@ def test_submodule_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "submodule\n\n\n\nclass target.submodule.ClassMeow\n\nBases: package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\ntarget.submodule.funcMeow(input)\n\nTests a function with comments after docstring"
+        == "submodule\n\n\n\nclass target.submodule.ClassMeow\n\nBases: target.package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\ntarget.submodule.funcMeow(input)\n\nTests a function with comments after docstring"
     )
 
 
