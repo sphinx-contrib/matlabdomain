@@ -20,6 +20,7 @@ from .mat_types import (  # noqa: E401
     MatModuleAnalyzer,
     MatApplication,
     entities_table,
+    entities_name_map,
     strip_package_prefix,
 )
 
@@ -171,6 +172,8 @@ class MatlabDocumenter(PyDocumenter):
                 # autodoc-process-docstring is fired and can add some
                 # content if desired
                 docstrings.append([])
+            if self.env.config.matlab_auto_link:
+                docstrings = self.auto_link(docstrings)
             for i, line in enumerate(self.process_doc(docstrings)):
                 self.add_line(line, sourcename, i)
 
@@ -178,6 +181,129 @@ class MatlabDocumenter(PyDocumenter):
         if more_content:
             for line, src in zip(more_content.data, more_content.items):
                 self.add_line(line, src[0], src[1])
+
+    def auto_link_basic(self, docstrings):
+        return self.auto_link_see_also(docstrings)
+
+    def auto_link_see_also(self, docstrings):
+        # autolink known names in See also
+        see_also_re = re.compile(r"(See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
+        see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
+        is_see_also_line = False
+        for i in range(len(docstrings)):
+            for j in range(len(docstrings[i])):
+                line = docstrings[i][j]
+                if line:  # non-blank line
+                    if is_see_also_line:
+                        # find name
+                        match = see_also_cond_re.search(line)
+                        entries_str = match.group(2)  # the entries
+                    elif match := see_also_re.search(line):
+                        is_see_also_line = True  # line begins with "See also"
+                        entries_str = match.group(2)  # the entries
+                elif is_see_also_line:  # blank line following see also section
+                    is_see_also_line = False  # end see also section
+
+                if is_see_also_line and entries_str:
+                    # split on ,
+                    entries = re.split(r"\s*,\s*", entries_str)
+                    for k in range(len(entries)):
+                        if entries[k].endswith("`"):
+                            continue
+
+                        if (
+                            self.env.config.matlab_keep_package_prefix
+                            and entries[k] in entities_table
+                        ):
+                            o = entities_table[entries[k]]
+                        elif (
+                            not self.env.config.matlab_keep_package_prefix
+                            and entries[k] in entities_name_map
+                        ):
+                            o = entities_table[entities_name_map[entries[k]]]
+                        else:
+                            o = None
+                        if o:
+                            role = o.ref_role()
+                            if role in ["class", "func"]:
+                                entries[k] = f":{role}:`{entries[k]}`"
+                        else:
+                            entries[k] = f"``{entries[k]}``"
+                    docstrings[i][j] = (
+                        match.group(1) + ", ".join(entries) + match.group(3)
+                    )
+        return docstrings
+
+    def auto_link_all(self, docstrings):
+        # auto-link known classes and functions everywhere
+        for n, o in entities_table.items():
+            role = o.ref_role()
+            if role in ["class", "func"]:
+                nn = n.replace("+", "")  # remove + from name
+                pat = (
+                    r"(?<!(`|\.|\+|<))\b"  # negative look-behind for ` or . or + or <
+                    + nn.replace(".", "\.")  # escape .
+                    + r"\b(?!(`|\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
+                )
+                p = re.compile(pat)
+                no_link = 0  # normal mode (no literal block detected)
+                for i in range(len(docstrings)):
+                    for j in range(len(docstrings[i])):
+                        # skip over literal blocks (i.e. line ending with ::, blank line, indented line)
+                        if docstrings[i][j].endswith("::"):
+                            no_link = -1  # 1st sign of literal block
+                        elif not docstrings[i][j]:  # blank line
+                            if no_link == -1:  # if 1st sign already detected
+                                no_link = -2  # 2nd sign of literal block
+                            elif no_link == 1:  # if in literal block
+                                no_link = 0  # end the literal block, restart linking
+                        elif no_link == -2 and docstrings[i][j].startswith("  "):
+                            # indented line after 1st 2 signs
+                            no_link = 1  # beginning of literal block (stop linking!)
+                        elif no_link != 1:  # not in a literal block, go ahead and link
+                            docstrings[i][j] = p.sub(
+                                f":{role}:`{nn}`", docstrings[i][j]
+                            )
+
+        return docstrings
+
+    def auto_link(self, docstrings):
+        # basic auto-linking
+        if self.env.config.matlab_auto_link:  # "basic" or "all" (i.e. not None)
+            docstrings = self.auto_link_basic(docstrings)
+
+        # auto-link everywhere
+        if self.env.config.matlab_auto_link == "all":
+            docstrings = self.auto_link_all(docstrings)
+
+        return docstrings
+
+    def auto_link_methods(self, class_obj, docstrings):
+        for n, o in class_obj.methods.items():
+            # negative look-behind for ` or . or <, then <name>()
+            pat = r"(?<!(`|\.|<))\b" + n + r"\(\)"
+            p = re.compile(pat)
+            no_link = 0  # normal mode (no literal block detected)
+            for i in range(len(docstrings)):
+                for j in range(len(docstrings[i])):
+                    # skip over literal blocks (i.e. line ending with ::, blank line, indented line)
+                    if docstrings[i][j].endswith("::"):
+                        no_link = -1  # 1st sign of literal block
+                    elif not docstrings[i][j]:  # blank line
+                        if no_link == -1:  # if 1st sign already detected
+                            no_link = -2  # 2nd sign of literal block
+                        elif no_link == 1:  # if in literal block
+                            no_link = 0  # end the literal block, start linking again
+                    elif no_link == -2 and docstrings[i][j].startswith("  "):
+                        # indented line after 1st 2 signs
+                        no_link = 1  # beginning of literal block (stop linking!)
+                    elif no_link != 1:  # not in a literal block, go ahead and link
+                        docstrings[i][j] = p.sub(
+                            f":meth:`{n}() <{class_obj.fullname(self.env)}.{n}>`",
+                            docstrings[i][j],
+                        )
+
+        return docstrings
 
     def get_object_members(self, want_all):
         """Return `(members_check_module, members)` where `members` is a
@@ -776,21 +902,7 @@ def make_baseclass_links(env, obj):
             if not entity:
                 links.append(":class:`%s`" % base_class_name)
             else:
-                modname = entity.__module__
-                classname = entity.name
-                if not env.config.matlab_keep_package_prefix:
-                    modname = strip_package_prefix(modname)
-
-                if env.config.matlab_short_links:
-                    # modname is only used for package names
-                    # - "target.+package" => "package"
-                    # - "target" => ""
-                    parts = modname.split(".")
-                    parts = [part for part in parts if part.startswith("+")]
-                    modname = ".".join(parts)
-
-                link_name = f"{modname}.{classname}"
-                links.append(f":class:`{base_class_name}<{link_name}>`")
+                links.append(entity.link(env))
 
     return links
 
@@ -925,6 +1037,58 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                 MatModuleLevelDocumenter.add_content(self, content, no_docstring=True)
         else:
             MatModuleLevelDocumenter.add_content(self, more_content)
+
+    def auto_link_basic(self, docstrings):
+        docstrings = MatlabDocumenter.auto_link_basic(self, docstrings)
+        return self.auto_link_class_members(docstrings)
+
+    def auto_link_class_members(self, docstrings):
+        # auto link property and method names in class docstring
+        prop_re = re.compile(r"(.* Properties:)", re.IGNORECASE)
+        meth_re = re.compile(r"(.* Methods:)", re.IGNORECASE)
+        is_prop_line = False
+        is_meth_line = False
+        for i in range(len(docstrings)):
+            for j in range(len(docstrings[i])):
+                line = docstrings[i][j]
+                if line:  # non-blank line
+                    if prop_re.search(line):  # line ends with "Properties:"
+                        is_prop_line = True
+                        is_meth_line = False
+                    elif meth_re.search(line):  # line ends with "Methods:"
+                        is_prop_line = False
+                        is_meth_line = True
+                    elif is_prop_line:
+                        # auto-link first word to corresponding property, if it exists
+                        docstrings[i][j] = self.link_member("attr", line)
+                    elif is_meth_line:
+                        # auto-link first word to corresponding method, if it exists
+                        docstrings[i][j] = self.link_member("meth", line)
+                elif is_prop_line:  # blank line following properties section
+                    is_prop_line = False  # end properties section
+                elif is_meth_line:  # blank line following methods section
+                    is_meth_line = False  # end methods section
+
+        return docstrings
+
+    def link_member(self, type, line):
+        if type == "meth":
+            parens = "()"
+        else:
+            parens = ""
+        p = re.compile(r"((\*\s*)?(\b\w*\b))(?=\s*-)")
+        if match := p.search(line):
+            name = match.group(3)
+            line = p.sub(
+                f"* :{type}:`{name}{parens} <{self.object.fullname(self.env)}.{name}>`",
+                line,
+                1,
+            )
+        return line
+
+    def auto_link_all(self, docstrings):
+        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
+        return self.auto_link_methods(self.object, docstrings)
 
     def document_members(self, all_members=False):
         if self.doc_as_attr:
@@ -1087,6 +1251,10 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
     def document_members(self, all_members=False):
         pass
 
+    def auto_link_all(self, docstrings):
+        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
+        return self.auto_link_methods(self.object.cls, docstrings)
+
 
 class MatAttributeDocumenter(MatClassLevelDocumenter):
     """
@@ -1156,6 +1324,10 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         #     # wrong thing to display
         #     no_docstring = True
         MatClassLevelDocumenter.add_content(self, more_content, no_docstring)
+
+    def auto_link_all(self, docstrings):
+        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
+        return self.auto_link_methods(self.object.cls, docstrings)
 
 
 class MatInstanceAttributeDocumenter(MatAttributeDocumenter):

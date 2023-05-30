@@ -27,7 +27,8 @@ def rootdir():
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
+    confdict = {"matlab_short_links": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
@@ -36,7 +37,7 @@ def test_target(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
     assert (
         property_section.rawsource
@@ -51,7 +52,7 @@ def test_target(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_show_property_default_value": True}
+    confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
@@ -61,7 +62,7 @@ def test_target_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
     assert (
         property_section.rawsource
@@ -76,7 +77,7 @@ def test_target_show_default_value(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_auto_link_basic(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "basic"}
+    confdict = {"matlab_short_links": True, "matlab_auto_link": "basic"}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
@@ -87,11 +88,11 @@ def test_target_auto_link_basic(make_app, rootdir):
     assert len(content) == 1
     assert (
         property_section.rawsource
-        == "ClassExample Properties:\n* :attr:`a <target.ClassExample.a>` - first property of ClassExample\n* :attr:`b <target.ClassExample.b>` - second property of ClassExample\n* :attr:`c <target.ClassExample.c>` - third property of ClassExample"
+        == "ClassExample Properties:\n* :attr:`a <ClassExample.a>` - first property of ClassExample\n* :attr:`b <ClassExample.b>` - second property of ClassExample\n* :attr:`c <ClassExample.c>` - third property of ClassExample"
     )
     assert (
         method_section.rawsource
-        == "ClassExample Methods:\n* :meth:`ClassExample() <target.ClassExample.ClassExample>` - the constructor and a reference to mymethod()\n* :meth:`mymethod() <target.ClassExample.mymethod>` - a method in ClassExample\n"
+        == "ClassExample Methods:\n* :meth:`ClassExample() <ClassExample.ClassExample>` - the constructor and a reference to mymethod()\n* :meth:`mymethod() <ClassExample.mymethod>` - a method in ClassExample\n"
     )
     assert (
         see_also_line.rawsource
@@ -102,7 +103,7 @@ def test_target_auto_link_basic(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_auto_link_all(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "all"}
+    confdict = {"matlab_short_links": True, "matlab_auto_link": "all"}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
@@ -113,11 +114,11 @@ def test_target_auto_link_all(make_app, rootdir):
     assert len(content) == 1
     assert (
         property_section.rawsource
-        == "ClassExample Properties:\n* :attr:`a <target.ClassExample.a>` - first property of :class:`ClassExample`\n* :attr:`b <target.ClassExample.b>` - second property of :class:`ClassExample`\n* :attr:`c <target.ClassExample.c>` - third property of :class:`ClassExample`"
+        == "ClassExample Properties:\n* :attr:`a <ClassExample.a>` - first property of :class:`ClassExample`\n* :attr:`b <ClassExample.b>` - second property of :class:`ClassExample`\n* :attr:`c <ClassExample.c>` - third property of :class:`ClassExample`"
     )
     assert (
         method_section.rawsource
-        == "ClassExample Methods:\n* :meth:`ClassExample() <target.ClassExample.ClassExample>` - the constructor and a reference to :meth:`mymethod() <target.ClassExample.mymethod>`\n* :meth:`mymethod() <target.ClassExample.mymethod>` - a method in :class:`ClassExample`\n"
+        == "ClassExample Methods:\n* :meth:`ClassExample() <ClassExample.ClassExample>` - the constructor and a reference to :meth:`mymethod() <ClassExample.mymethod>`\n* :meth:`mymethod() <ClassExample.mymethod>` - a method in :class:`ClassExample`\n"
     )
     assert (
         see_also_line.rawsource
@@ -128,21 +129,23 @@ def test_target_auto_link_all(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_classfolder(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
+    confdict = {"matlab_short_links": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_classfolder.doctree").read_bytes())
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "classfolder\n\n\n\nclass target.@ClassFolder.ClassFolder(p)\n\nA class in a folder\n\nProperty Summary\n\n\n\n\n\np\n\na property of a class folder\n\nMethod Summary\n\n\n\n\n\nmethod_inside_classdef(a, b)\n\nMethod inside class definition"
+        == "classfolder\n\n\n\nclass ClassFolder(p)\n\nA class in a folder\n\nProperty Summary\n\n\n\n\n\np\n\na property of a class folder\n\nMethod Summary\n\n\n\n\n\nmethod_inside_classdef(a, b)\n\nMethod inside class definition"
     )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
+    confdict = {"matlab_short_links": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
@@ -152,7 +155,7 @@ def test_package(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with a doFoo() method.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\nDoing foo\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
+        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with a doFoo() method.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\nDoing foo\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
     )
     assert docstring1.rawsource == "The Bar and Foo handler, with a doFoo() method."
     assert docstring2.rawsource == "Number of foos, used by doBar() method"
@@ -162,7 +165,7 @@ def test_package(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_show_property_default_value": True}
+    confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
@@ -170,14 +173,14 @@ def test_package_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with a doFoo() method.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars = 'bars'\n\nNumber of bars\n\n\n\nfoos = 10\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\nDoing foo\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
+        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with a doFoo() method.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars = 'bars'\n\nNumber of bars\n\n\n\nfoos = 10\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\nDoing foo\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
     )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package_auto_link_all(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "all"}
+    confdict = {"matlab_short_links": True, "matlab_auto_link": "all"}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
@@ -188,26 +191,27 @@ def test_package_auto_link_all(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with a doFoo() method.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\nDoing foo\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction() and BaseClass, etc."
+        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with a doFoo() method.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\nDoing foo\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction() and BaseClass, etc."
     )
     assert (
         docstring1.rawsource
-        == "The Bar and Foo handler, with a :meth:`doFoo() <target.package.ClassBar.doFoo>` method."
+        == "The Bar and Foo handler, with a :meth:`doFoo() <package.ClassBar.doFoo>` method."
     )
     assert (
         docstring2.rawsource
-        == "Number of foos, used by :meth:`doBar() <target.package.ClassBar.doBar>` method"
+        == "Number of foos, used by :meth:`doBar() <package.ClassBar.doBar>` method"
     )
     assert (
         docstring3.rawsource
-        == "Doing bar, not called by :meth:`ClassBar() <target.package.ClassBar.ClassBar>`"
+        == "Doing bar, not called by :meth:`ClassBar() <package.ClassBar.ClassBar>`"
     )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_submodule(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
+    confdict = {"matlab_short_links": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_submodule.doctree").read_bytes())
@@ -215,15 +219,15 @@ def test_submodule(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "submodule\n\n\n\nclass target.submodule.ClassMeow\n\nBases: target.package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\ntarget.submodule.funcMeow(input)\n\nTests a function with comments after docstring"
+        == "submodule\n\n\n\nclass ClassMeow\n\nBases: package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\nfuncMeow(input)\n\nTests a function with comments after docstring"
     )
-    assert bases_line.rawsource == "Bases: :class:`target.package.ClassBar`"
+    assert bases_line.rawsource == "Bases: :class:`package.ClassBar`"
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_submodule_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_show_property_default_value": True}
+    confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
@@ -231,14 +235,15 @@ def test_submodule_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "submodule\n\n\n\nclass target.submodule.ClassMeow\n\nBases: target.package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\ntarget.submodule.funcMeow(input)\n\nTests a function with comments after docstring"
+        == "submodule\n\n\n\nclass ClassMeow\n\nBases: package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\nfuncMeow(input)\n\nTests a function with comments after docstring"
     )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
+    confdict = {"matlab_short_links": True}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
@@ -252,7 +257,7 @@ def test_root(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_show_property_default_value": True}
+    confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 
@@ -267,7 +272,7 @@ def test_root_show_default_value(make_app, rootdir):
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_auto_link_basic(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "basic"}
+    confdict = {"matlab_short_links": True, "matlab_auto_link": "basic"}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
 

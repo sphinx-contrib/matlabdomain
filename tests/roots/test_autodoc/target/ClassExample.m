@@ -1,9 +1,15 @@
 classdef ClassExample < handle
     % Example class
     %
-    % :param a: first property of :class:`ClassExample`
-    % :param b: second property of :class:`ClassExample`
-    % :param c: third property of :class:`ClassExample`
+    % ClassExample Properties:
+    %   a - first property of ClassExample
+    %   b - second property of ClassExample
+    %   c - third property of ClassExample
+    % ClassExample Methods:
+    %   ClassExample - the constructor and a reference to mymethod()
+    %   mymethod - a method in ClassExample
+    %
+    % See also BaseClass, baseFunction, unknownEntity.
 
     properties
         a % a property

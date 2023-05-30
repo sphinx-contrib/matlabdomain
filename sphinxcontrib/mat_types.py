@@ -51,6 +51,12 @@ __all__ = [
 #   Will result in a short name of: package.ClassBar
 entities_table = {}
 
+# Dictionary containing a map of names WITHOUT '+' in package names to
+# the corresponding names WITH '+' in the package name. This is only
+# used if "matlab_auto_link" is on AND "matlab_keep_package_prefix"
+# is True AND a docstring with "see also" is encountered.
+entities_name_map = {}
+
 
 def shortest_name(dotted_path):
     # Creates the shortest valid MATLAB name from a dotted path
@@ -108,6 +114,7 @@ def populate_entities_table(obj, path=""):
         fullpath = path + "." + o.name
         fullpath = fullpath.lstrip(".")
         entities_table[fullpath] = o
+        entities_name_map[strip_package_prefix(fullpath)] = fullpath
         if isinstance(o, MatModule):
             if o.entities:
                 populate_entities_table(o, fullpath)
@@ -152,6 +159,7 @@ def analyze(app):
         short_name = shortest_name(name)
         if short_name != name:
             short_names[short_name] = entity
+            entities_name_map[short_name] = short_name
 
     entities_table.update(short_names)
 
@@ -190,6 +198,10 @@ class MatObject(object):
     def __init__(self, name):
         #: name of MATLAB object
         self.name = name
+
+    def ref_role(self):
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        return "ref"
 
     @property
     def __name__(self):
@@ -429,6 +441,10 @@ class MatModule(MatObject):
         self.package = package
         #: entities found in the module: class, function, module (subpath and +package)
         self.entities = []
+
+    def ref_role(self):
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        return "mod"
 
     def safe_getmembers(self):
         logger.debug(
@@ -841,6 +857,10 @@ class MatFunction(MatObject):
         # if there are any tokens left save them
         if len(tks) > 0:
             self.rem_tks = tks  # save extra tokens
+
+    def ref_role(self):
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        return "func"
 
     @property
     def __doc__(self):
@@ -1306,6 +1326,35 @@ class MatClass(MatMixin, MatObject):
 
         self.rem_tks = idx  # index of last token
 
+    def ref_role(self):
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        return "class"
+
+    def fullname(self, env):
+        """Returns full name for class object, for use as link target"""
+        modname = self.__module__
+        classname = self.name
+        if env.config.matlab_short_links:
+            # modname is only used for package names
+            # - "target.+package" => "package"
+            # - "target" => ""
+            parts = modname.split(".")
+            parts = [part for part in parts if part.startswith("+")]
+            modname = ".".join(parts)
+
+        if not env.config.matlab_keep_package_prefix:
+            modname = strip_package_prefix(modname)
+
+        return f"{modname}.{classname}".lstrip(".")
+
+    def link(self, env, name=None):
+        """Returns link for class object"""
+        target = self.fullname(env)
+        if name:
+            return f":class:`{name} <{target}>`"
+        else:
+            return f":class:`{target}`"
+
     def attributes(self, idx, attr_types):
         """
         Retrieve MATLAB class, property and method attributes.
@@ -1460,6 +1509,10 @@ class MatProperty(MatObject):
         self.docstring = attrs["docstring"]
         # self.class = attrs['class']
 
+    def ref_role(self):
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        return "attr"
+
     @property
     def __doc__(self):
         return self.docstring
@@ -1471,6 +1524,10 @@ class MatMethod(MatFunction):
         super(MatMethod, self).__init__(None, modname, tks)
         self.cls = cls
         self.attrs = attrs
+
+    def ref_role(self):
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        return "meth"
 
     def skip_tokens(self):
         # Number of tokens to skip in `MatClass`

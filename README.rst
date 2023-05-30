@@ -97,6 +97,24 @@ Additional Configuration
 If you want the closest to MATLAB documentation style, use ``matlab_short_links
 = True`` in your ``conf.py`` file.
 
+``matlab_auto_link``
+   Automatically convert the names of known entities (e.g. classes, functions,
+   properties, methods) to links Valid values are ``"basic"``
+   and ``"all"``.
+   * ``"basic"`` - Auto-links (1) known classes or functions that appear
+     in docstring lines that begin with "See also" and any subsequent
+     lines before the next blank line (unknown names are wrapped in
+     double-backquotes), and (2) property and method names that appear in
+     lists under "<MyClass> Properties:" and "<MyClass> Methods:" headings
+     in class docstrings.
+
+   * ``"all"`` - Auto-links everything included with ``"basic"``, plus all
+     known classes and functions everywhere else they appear in any docstring,
+     and any names ending with "()" within class, property, or method docstrings
+     that match a method of the corresponding class.
+
+   Default is ``None``. *Added in Version 0.20.0*.
+
 
 Roles and Directives
 --------------------
