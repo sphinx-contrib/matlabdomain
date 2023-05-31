@@ -16,7 +16,7 @@ classdef ClassBar < handle
         end
 
         function doFoo(obj)
-            % Doing foo
+            % doFoo - Doing foo
         end
 
         function doBar(obj)
