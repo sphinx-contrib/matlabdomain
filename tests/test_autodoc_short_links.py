@@ -37,7 +37,7 @@ def test_target(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
     assert (
         property_section.rawsource
@@ -62,7 +62,7 @@ def test_target_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, unknownEntity.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass ClassExample(a)\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
     assert (
         property_section.rawsource
@@ -96,7 +96,7 @@ def test_target_auto_link_basic(make_app, rootdir):
     )
     assert (
         see_also_line.rawsource
-        == "See also :class:`BaseClass`, :func:`baseFunction`, ``unknownEntity``."
+        == "See also :class:`BaseClass`, :func:`baseFunction`, :attr:`b <ClassExample.b>`, ``unknownEntity``, :meth:`mymethod() <ClassExample.mymethod>`."
     )
 
 
@@ -122,7 +122,7 @@ def test_target_auto_link_all(make_app, rootdir):
     )
     assert (
         see_also_line.rawsource
-        == "See also :class:`BaseClass`, :func:`baseFunction`, ``unknownEntity``."
+        == "See also :class:`BaseClass`, :func:`baseFunction`, :attr:`b <ClassExample.b>`, ``unknownEntity``, :meth:`mymethod() <ClassExample.mymethod>`."
     )
 
 

@@ -184,6 +184,10 @@ class MatlabDocumenter(PyDocumenter):
             for line, src in zip(more_content.data, more_content.items):
                 self.add_line(line, src[0], src[1])
 
+    def class_object(self):
+        # the associated MatClass object (for class, property and method documenters)
+        return None
+
     def auto_link_basic(self, docstrings):
         return self.auto_link_see_also(docstrings)
 
@@ -213,6 +217,7 @@ class MatlabDocumenter(PyDocumenter):
                         if entries[k].endswith("`"):
                             continue
 
+                        # search in entities_table (for matching class or function name)
                         if (
                             self.env.config.matlab_keep_package_prefix
                             and entries[k] in entities_table
@@ -229,8 +234,26 @@ class MatlabDocumenter(PyDocumenter):
                             role = o.ref_role()
                             if role in ["class", "func"]:
                                 entries[k] = f":{role}:`{entries[k]}`"
-                        else:
-                            entries[k] = f"``{entries[k]}``"
+                                continue
+
+                        # if we have an associated class, search properties and methods
+                        cls = self.class_object()
+                        if cls:
+                            name = entries[k].rstrip("()")
+                            if name in cls.methods:
+                                entries[
+                                    k
+                                ] = f":meth:`{name}() <{cls.fullname(self.env)}.{name}>`"
+                                continue
+                            elif name in cls.properties:
+                                entries[
+                                    k
+                                ] = f":attr:`{name} <{cls.fullname(self.env)}.{name}>`"
+                                continue
+
+                        # not yet handled
+                        entries[k] = f"``{entries[k]}``"
+
                     docstrings[i][j] = (
                         match.group(1) + ", ".join(entries) + match.group(3)
                     )
@@ -1040,6 +1063,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         else:
             MatModuleLevelDocumenter.add_content(self, more_content)
 
+    def class_object(self):
+        # the associated MatClass object
+        return self.object
+
     def auto_link_basic(self, docstrings):
         docstrings = MatlabDocumenter.auto_link_basic(self, docstrings)
         return self.auto_link_class_members(docstrings)
@@ -1089,8 +1116,8 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         return line
 
     def auto_link_all(self, docstrings):
-        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
-        return self.auto_link_methods(self.object, docstrings)
+        docstrings = self.auto_link_methods(self.object, docstrings)
+        return MatlabDocumenter.auto_link_all(self, docstrings)
 
     def document_members(self, all_members=False):
         if self.doc_as_attr:
@@ -1256,9 +1283,13 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
     def document_members(self, all_members=False):
         pass
 
+    def class_object(self):
+        # the associated MatClass object
+        return self.object.cls
+
     def auto_link_all(self, docstrings):
-        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
-        return self.auto_link_methods(self.object.cls, docstrings)
+        docstrings = self.auto_link_methods(self.object.cls, docstrings)
+        return MatlabDocumenter.auto_link_all(self, docstrings)
 
 
 class MatAttributeDocumenter(MatClassLevelDocumenter):
@@ -1330,9 +1361,13 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         #     no_docstring = True
         MatClassLevelDocumenter.add_content(self, more_content, no_docstring)
 
+    def class_object(self):
+        # the associated MatClass object
+        return self.object.cls
+
     def auto_link_all(self, docstrings):
-        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
-        return self.auto_link_methods(self.object.cls, docstrings)
+        docstrings = self.auto_link_methods(self.object.cls, docstrings)
+        return MatlabDocumenter.auto_link_all(self, docstrings)
 
 
 class MatInstanceAttributeDocumenter(MatAttributeDocumenter):
