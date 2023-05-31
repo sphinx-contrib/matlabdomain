@@ -40,6 +40,8 @@ from sphinx.ext.autodoc import (
     ALL,
     INSTANCEATTR,
     members_option,
+    exclude_members_option,
+    EMPTY,
     SUPPRESS,
     annotation_option,
     bool_option,
@@ -242,7 +244,7 @@ class MatlabDocumenter(PyDocumenter):
                 nn = n.replace("+", "")  # remove + from name
                 pat = (
                     r"(?<!(`|\.|\+|<))\b"  # negative look-behind for ` or . or + or <
-                    + nn.replace(".", "\.")  # escape .
+                    + nn.replace(".", r"\.")  # escape .
                     + r"\b(?!(`|\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
                 )
                 p = re.compile(pat)
@@ -921,7 +923,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         "inherited-members": bool_option,
         "show-inheritance": bool_option,
         "member-order": identity,
-        "exclude-members": members_option,
+        "exclude-members": exclude_members_option,
         "special-members": members_option,
         "private-members": members_option,
         "protected-members": members_option,
@@ -1190,7 +1192,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         # save up original indent and exclude_members
         indent = self.indent
         if self.options.exclude_members:
-            exclude_members = self.options.exclude_members.copy()
+            exclude_members = self.options.exclude_members
         else:
             exclude_members = []
 
@@ -1198,7 +1200,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         self.add_line(heading, "<autodoc>")
         self.indent += "   "
         self.add_line(".. ", "<autodoc>")  # a comment, to force a <dd> in the HTML
-        self.options.exclude_members = exclude_members + new_excludes
+        if exclude_members is EMPTY:
+            self.options.exclude_members = set(new_excludes)
+        else:
+            self.options.exclude_members = set(list(exclude_members) + new_excludes)
         MatModuleLevelDocumenter.document_members(self, all_members)
 
         # restore original indent and exclude_members
