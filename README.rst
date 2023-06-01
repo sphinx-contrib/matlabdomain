@@ -84,6 +84,7 @@ Additional Configuration
    resemble a more MATLAB-like presentation. If it is ``True`` is forces
    ``matlab_keep_package_prefix = False``. Further, it allows for much shorter and cleaner references.
    Example, given a path to a class like ``target.subfolder.ClassFoo``.
+
    * With ``False``::
 
       :class:`target.subfolder.ClassFoo`
@@ -101,17 +102,18 @@ If you want the closest to MATLAB documentation style, use ``matlab_short_links
    Automatically convert the names of known entities (e.g. classes, functions,
    properties, methods) to links Valid values are ``"basic"``
    and ``"all"``.
-   * ``"basic"`` - Auto-links (1) known classes or functions that appear
-     in docstring lines that begin with "See also" and any subsequent
-     lines before the next blank line (unknown names are wrapped in
-     double-backquotes), and (2) property and method names that appear in
-     lists under "<MyClass> Properties:" and "<MyClass> Methods:" headings
-     in class docstrings.
 
-   * ``"all"`` - Auto-links everything included with ``"basic"``, plus all
-     known classes and functions everywhere else they appear in any docstring,
-     and any names ending with "()" within class, property, or method docstrings
-     that match a method of the corresponding class.
+   * ``"basic"`` - Auto-links (1) known classes or functions that appear
+     in docstring lines that begin with "See also" and any subsequent lines
+     before the next blank line (unknown names are wrapped in
+     double-backquotes), and (2) property and method names that appear in lists
+     under "<MyClass> Properties:" and "<MyClass> Methods:" headings in class
+     docstrings.
+
+   * ``"all"`` - Auto-links everything included with ``"basic"``, plus all known
+     classes and functions everywhere else they appear in any docstring, and any
+     names ending with "()" within class, property, or method docstrings that
+     match a method of the corresponding class.
 
    Default is ``None``. *Added in Version 0.20.0*.
 
