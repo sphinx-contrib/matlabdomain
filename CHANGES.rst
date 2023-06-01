@@ -1,3 +1,19 @@
+sphinxcontrib-matlabdomain-0.20.0 (2023-MM-DD)
+==============================================
+
+* Fixed `Issue 188`_ and `Issue 189`_, which caused the extension to crash if
+  the documentation contained ``:exclude-members:``.
+* Added a new configuration: ``matlab_auto_links``. It will automatically
+  convert the names of known entities (e.g. classes, functions, properties,
+  methods) to links! This means that we can write class documentation as `MATLAB
+  Class Help`_ suggests. Including property and methods lists in the class
+  docstring.
+
+.. _Issue 188: https://github.com/sphinx-contrib/matlabdomain/issues/188
+.. _Issue 189: https://github.com/sphinx-contrib/matlabdomain/issues/189
+.. _MATLAB Class Help:  https://mathworks.com/help/matlab/matlab_prog/create-help-for-classes.html
+
+
 sphinxcontrib-matlabdomain-0.19.1 (2023-05-17)
 ==============================================
 

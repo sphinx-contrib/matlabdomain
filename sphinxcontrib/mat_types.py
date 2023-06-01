@@ -1514,6 +1514,10 @@ class MatProperty(MatObject):
         return "attr"
 
     @property
+    def __module__(self):
+        return self.cls.module
+
+    @property
     def __doc__(self):
         return self.docstring
 
