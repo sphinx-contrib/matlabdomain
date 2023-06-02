@@ -114,7 +114,8 @@ If you want the closest to MATLAB documentation style, use ``matlab_short_links
      classes and functions everywhere else they appear in any docstring, any
      names ending with "()" within class, property, or method docstrings that
      match a method of the corresponding class, and any property or method names
-     in their own docstrings.
+     in their own docstrings. Note that a non-breaking space before or after
+     a name will prevent auto-linking.
 
    Default is ``None``. *Added in Version 0.20.0*.
 
