@@ -1303,7 +1303,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
                 if not_in_literal_block and docstrings[i][j]:  # also not blank line
                     if match := p.search(docstrings[i][j]):
                         docstrings[i][j] = p.sub(
-                            f":attr:`{name}() <{self.class_object().fullname(self.env)}.{name}>`",
+                            f":meth:`{name}() <{self.class_object().fullname(self.env)}.{name}>`",
                             docstrings[i][j],
                         )
         return docstrings
