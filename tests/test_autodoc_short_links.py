@@ -155,7 +155,7 @@ def test_package(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
+        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
     )
     assert (
         docstring1.rawsource
@@ -176,7 +176,7 @@ def test_package_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars = 'bars'\n\nNumber of bars\n\n\n\nfoos = 10\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
+        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars = 'bars'\n\nNumber of bars\n\n\n\nfoos = 10\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
     )
 
 
@@ -190,11 +190,13 @@ def test_package_auto_link_all(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
     docstring1 = content[0][2][1][1]  # a bit fragile, I know
     docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
-    docstring3 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
+    docstring3 = content[0][2][1][2][0][2][1][4][1][0][0]  # a bit fragile, I know
+    docstring4 = content[0][2][1][2][0][2][1][4][1][0][2]  # a bit fragile, I know
+    docstring5 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo() - Doing foo\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction() and BaseClass, etc."
+        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo() - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction() and BaseClass, etc."
     )
     assert (
         docstring1.rawsource
@@ -204,8 +206,10 @@ def test_package_auto_link_all(make_app, rootdir):
         docstring2.rawsource
         == "Number of :attr:`foos <package.ClassBar.foos>`, used by :meth:`doBar() <package.ClassBar.doBar>` method"
     )
+    assert docstring3.rawsource == ":meth:`doFoo() <package.ClassBar.doFoo>`"
+    assert docstring4.rawsource == "``@ClassExample``"
     assert (
-        docstring3.rawsource
+        docstring5.rawsource
         == "Doing bar, not called by :meth:`ClassBar() <package.ClassBar.ClassBar>`"
     )
 

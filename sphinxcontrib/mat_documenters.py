@@ -285,7 +285,7 @@ class MatlabDocumenter(PyDocumenter):
             if role in ["class", "func"]:
                 nn = n.replace("+", "")  # remove + from name
                 pat = (
-                    r"(?<!(`|\.|\+|<| ))\b"  # negative look-behind for ` or . or + or < or non-breaking space
+                    r"(?<!(`|\.|\+|<|@| ))\b"  # negative look-behind for ` . + < @ <non-breaking space>
                     + nn.replace(".", r"\.")  # escape .
                     + r"\b(?!(`| |\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
                 )
@@ -316,8 +316,8 @@ class MatlabDocumenter(PyDocumenter):
 
     def auto_link_methods(self, class_obj, docstrings):
         for n, o in class_obj.methods.items():
-            # negative look-behind for ` or . or < or non-breaking space, then <name>()
-            pat = r"(?<!(`|\.|<| ))\b" + n + r"\(\)(?! )"
+            # negative look-behind for ` . < @ <non-breaking space>, then <name>()
+            pat = r"(?<!(`|\.|<|@| ))\b" + n + r"\(\)(?! )"
             p = re.compile(pat)
             no_link_state = 0  # normal mode (no literal block detected)
             for i in range(len(docstrings)):
@@ -1292,8 +1292,8 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def auto_link_self(self, docstrings):
         name = self.object.name
-        # negative look-behind for ` or . or < or non-breaking space
-        p = re.compile(r"(?<!(`|\.|<| ))\b" + name + r"\b(?! )")
+        # negative look-behind for ` . < @ <non-breaking space>
+        p = re.compile(r"(?<!(`|\.|<|@| ))\b" + name + r"\b(?! )")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
