@@ -58,7 +58,7 @@ Additional Configuration
 
 ``matlab_src_dir``
    In order for the Sphinx MATLAB domain to auto-document MATLAB source code,
-   set the config value of ``matlab_src_dir`` to the absolute path. Currently
+   set the config value of ``matlab_src_dir`` to an absolute path. Currently
    only one MATLAB path can be specified, but that folder and all the subfolders
    in that tree will be searched.
 
@@ -66,8 +66,9 @@ Additional Configuration
    Shorten all class, package and functions to the minimum length. This assumes
    that everything is in the path as we would expect it in MATLAB. This will
    resemble a more MATLAB-like presentation. If it is ``True`` is forces
-   ``matlab_keep_package_prefix = False``. Further, it allows for much shorter and cleaner references.
-   Example, given a path to a class like ``target.subfolder.ClassFoo``.
+   ``matlab_keep_package_prefix = False``. Further, it allows for much shorter
+   and cleaner references. Example, given a path to a class like
+   ``target.subfolder.ClassFoo``.
 
    * With ``False``::
 
