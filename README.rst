@@ -114,7 +114,7 @@ Additional Configuration
    Determines if the MATLAB package prefix ``+`` is displayed in the generated
    documentation.  Default is ``False``.  When ``False``, packages are still
    referred to in ReST using ``+pakage.+subpkg.func`` but the output will be
-   ``pakage.other.func()``. Forced to ``False`` if  ``matlab_short_links`` is
+   ``pakage.subpkg.func()``. Forced to ``False`` if  ``matlab_short_links`` is
    ``True``. *Added in Version 0.11.0*.
 
 ``matlab_src_encoding``
