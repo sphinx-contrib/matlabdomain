@@ -56,27 +56,11 @@ can be set to ``mat`` with.::
 Additional Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. confval:: matlab_src_dir
+``matlab_src_dir``
    In order for the Sphinx MATLAB domain to auto-document MATLAB source code,
    set the config value of ``matlab_src_dir`` to the absolute path. Currently
-   only one MATLAB path can be specified, but all subfolders in that tree will
-   be searched.
-
-``matlab_src_encoding``
-   The encoding of the MATLAB files. By default, the files will be read as utf-8
-   and parsing errors will be replaced using ? chars. *Added in Version 0.9.0*.
-
-``matlab_keep_package_prefix``
-   Determines if the MATLAB package prefix ``+`` is displayed in the
-   generated documentation.  Default is ``False``.  When ``False``, packages are
-   still referred to in ReST using ``+pakage.+subpkg.func`` but the output
-   will be ``pakage.other.func()``. *Added in Version
-   0.11.0*.
-
-``matlab_show_property_default_value``
-   Show property default values in the rendered document. Default is ``False``,
-   which is what MathWorks does in their documentation. *Added in Version
-   0.16.0*.
+   only one MATLAB path can be specified, but that folder and all the subfolders
+   in that tree will be searched.
 
 ``matlab_short_links``
    Shorten all class, package and functions to the minimum length. This assumes
@@ -94,13 +78,6 @@ Additional Configuration
       :class:`ClassFoo`
 
    Default is ``False``. *Added in Version 0.19.0*.
-
-``matlab_class_signature``
-   Shows the constructor argument list in the class signature if ``True``.
-   Default is ``False``. *Added in Version 0.20.0*.
-
-If you want the closest to MATLAB documentation style, use ``matlab_short_links
-= True`` in your ``conf.py`` file.
 
 ``matlab_auto_link``
    Automatically convert the names of known entities (e.g. classes, functions,
@@ -122,6 +99,30 @@ If you want the closest to MATLAB documentation style, use ``matlab_short_links
      a name will prevent auto-linking.
 
    Default is ``None``. *Added in Version 0.20.0*.
+
+``matlab_show_property_default_value``
+   Show property default values in the rendered document. Default is ``False``,
+   which is what MathWorks does in their documentation. *Added in Version
+   0.16.0*.
+
+``matlab_class_signature``
+   Shows the constructor argument list in the class signature if ``True``.
+   Default is ``False``. *Added in Version 0.20.0*.
+
+``matlab_keep_package_prefix``
+   Determines if the MATLAB package prefix ``+`` is displayed in the generated
+   documentation.  Default is ``False``.  When ``False``, packages are still
+   referred to in ReST using ``+pakage.+subpkg.func`` but the output will be
+   ``pakage.other.func()``. Forced to ``False`` if  ``matlab_short_links`` is
+   ``True``. *Added in Version 0.11.0*.
+
+``matlab_src_encoding``
+   The encoding of the MATLAB files. By default, the files will be read as utf-8
+   and parsing errors will be replaced using ? chars. *Added in Version 0.9.0*.
+
+If you want the closest to MATLAB documentation style, use ``matlab_short_links
+= True`` and ``matlab_auto_link = "basic"`` or ``matlab_auto_link = "all"`` in
+your ``conf.py`` file.
 
 
 Roles and Directives
