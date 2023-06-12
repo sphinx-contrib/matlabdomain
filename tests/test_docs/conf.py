@@ -9,6 +9,7 @@ author = "Mark Mikofski, Jørgen Cederberg"
 
 sys.path.insert(0, os.path.abspath(os.path.join("..", "..")))
 matlab_src_dir = os.path.abspath("..")
+matlab_show_property_default_value = True
 
 extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 primary_domain = "mat"
