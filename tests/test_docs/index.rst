@@ -273,6 +273,15 @@ A MATLAB class with strings using single and double quotes.
 .. autoclass:: ClassWithStrings
     :members:
 
+
+Class with string ellipsis
+++++++++++++++++++++++++++
+A class that tests the lexer.
+
+.. autoclass:: ClassWithStringEllipsis
+    :members:
+
+
 ClassWithDummyArguments
 +++++++++++++++++++++++
 
@@ -412,12 +421,6 @@ A Matlab unittest class
     :members:
     :show-inheritance:
 
-Class with string ellipsis
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-A class that tests the lexer.
-
-.. autoclass:: ClassWithStringEllipsis
-    :members:
 
 
 
