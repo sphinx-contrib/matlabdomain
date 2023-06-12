@@ -46,7 +46,7 @@ def test_second(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "index_second.doctree").read_bytes())
     assert (
         content.astext()
-        == "Second Class\n\n\n\nclass target.SecondClass(a)\n\nSecond class with methods and properties\n\nConstructor Summary\n\n\n\n\n\nSecondClass(a)\n\nThe second class constructor\n\nProperty Summary\n\n\n\n\n\na\n\nThe a property\n\n\n\nb\n\nThe b property\n\nMethod Summary\n\n\n\n\n\nfirst_method(b)\n\n"
+        == "Second Class\n\n\n\nclass target.SecondClass\n\nSecond class with methods and properties\n\nConstructor Summary\n\n\n\n\n\nSecondClass(a)\n\nThe second class constructor\n\nProperty Summary\n\n\n\n\n\na\n\nThe a property\n\n\n\nb\n\nThe b property\n\nMethod Summary\n\n\n\n\n\nfirst_method(b)\n\n"
     )
 
 
