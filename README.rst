@@ -103,17 +103,19 @@ If you want the closest to MATLAB documentation style, use ``matlab_short_links
    properties, methods) to links Valid values are ``"basic"``
    and ``"all"``.
 
-   * ``"basic"`` - Auto-links (1) known classes or functions that appear
-     in docstring lines that begin with "See also" and any subsequent lines
-     before the next blank line (unknown names are wrapped in
+   * ``"basic"`` - Auto-links (1) known classes, functions, properties, or
+     methods that appear in docstring lines that begin with "See also" and any
+     subsequent lines before the next blank line (unknown names are wrapped in
      double-backquotes), and (2) property and method names that appear in lists
      under "<MyClass> Properties:" and "<MyClass> Methods:" headings in class
      docstrings.
 
    * ``"all"`` - Auto-links everything included with ``"basic"``, plus all known
-     classes and functions everywhere else they appear in any docstring, and any
+     classes and functions everywhere else they appear in any docstring, any
      names ending with "()" within class, property, or method docstrings that
-     match a method of the corresponding class.
+     match a method of the corresponding class, and any property or method names
+     in their own docstrings. Note that a non-breaking space before or after
+     a name will prevent auto-linking.
 
    Default is ``None``. *Added in Version 0.20.0*.
 

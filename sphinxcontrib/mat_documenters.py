@@ -184,6 +184,10 @@ class MatlabDocumenter(PyDocumenter):
             for line, src in zip(more_content.data, more_content.items):
                 self.add_line(line, src[0], src[1])
 
+    def class_object(self):
+        # the associated MatClass object (for class, property and method documenters)
+        return None
+
     def auto_link_basic(self, docstrings):
         return self.auto_link_see_also(docstrings)
 
@@ -213,6 +217,7 @@ class MatlabDocumenter(PyDocumenter):
                         if entries[k].endswith("`"):
                             continue
 
+                        # search in entities_table (for matching class or function name)
                         if (
                             self.env.config.matlab_keep_package_prefix
                             and entries[k] in entities_table
@@ -229,12 +234,49 @@ class MatlabDocumenter(PyDocumenter):
                             role = o.ref_role()
                             if role in ["class", "func"]:
                                 entries[k] = f":{role}:`{entries[k]}`"
-                        else:
-                            entries[k] = f"``{entries[k]}``"
+                                continue
+
+                        # if we have an associated class, search properties and methods
+                        cls = self.class_object()
+                        if cls:
+                            name = entries[k].rstrip("()")
+                            if name in cls.methods:
+                                entries[
+                                    k
+                                ] = f":meth:`{name}() <{cls.fullname(self.env)}.{name}>`"
+                                continue
+                            elif name in cls.properties:
+                                entries[
+                                    k
+                                ] = f":attr:`{name} <{cls.fullname(self.env)}.{name}>`"
+                                continue
+
+                        # not yet handled
+                        entries[k] = f"``{entries[k]}``"
+
                     docstrings[i][j] = (
                         match.group(1) + ", ".join(entries) + match.group(3)
                     )
         return docstrings
+
+    def detect_literal_block(self, line, no_link_state):
+        # skip over literal blocks (i.e. line ending with ::, blank line, indented line)
+        # returns not_in_literal_block = True if the line is not in a literal block
+        not_in_literal_block = False
+        if line.endswith("::"):
+            no_link_state = -1  # 1st sign of literal block
+        elif not line:  # blank line
+            if no_link_state == -1:  # if 1st sign already detected
+                no_link_state = -2  # 2nd sign of literal block
+            elif no_link_state == 1:  # if in literal block
+                no_link_state = 0  # end the literal block, restart linking
+        elif no_link_state == -2 and line.startswith("  "):
+            # indented line after 1st 2 signs
+            no_link_state = 1  # beginning of literal block (stop linking!)
+        elif no_link_state != 1:  # not in a literal block, go ahead and link
+            not_in_literal_block = True
+
+        return not_in_literal_block, no_link_state
 
     def auto_link_all(self, docstrings):
         # auto-link known classes and functions everywhere
@@ -243,26 +285,18 @@ class MatlabDocumenter(PyDocumenter):
             if role in ["class", "func"]:
                 nn = n.replace("+", "")  # remove + from name
                 pat = (
-                    r"(?<!(`|\.|\+|<))\b"  # negative look-behind for ` or . or + or <
+                    r"(?<!(`|\.|\+|<|@| ))\b"  # negative look-behind for ` . + < @ <non-breaking space>
                     + nn.replace(".", r"\.")  # escape .
-                    + r"\b(?!(`|\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
+                    + r"\b(?!(`| |\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
                 )
                 p = re.compile(pat)
-                no_link = 0  # normal mode (no literal block detected)
+                no_link_state = 0  # normal mode (no literal block detected)
                 for i in range(len(docstrings)):
                     for j in range(len(docstrings[i])):
-                        # skip over literal blocks (i.e. line ending with ::, blank line, indented line)
-                        if docstrings[i][j].endswith("::"):
-                            no_link = -1  # 1st sign of literal block
-                        elif not docstrings[i][j]:  # blank line
-                            if no_link == -1:  # if 1st sign already detected
-                                no_link = -2  # 2nd sign of literal block
-                            elif no_link == 1:  # if in literal block
-                                no_link = 0  # end the literal block, restart linking
-                        elif no_link == -2 and docstrings[i][j].startswith("  "):
-                            # indented line after 1st 2 signs
-                            no_link = 1  # beginning of literal block (stop linking!)
-                        elif no_link != 1:  # not in a literal block, go ahead and link
+                        not_in_literal_block, no_link_state = self.detect_literal_block(
+                            docstrings[i][j], no_link_state
+                        )
+                        if not_in_literal_block:
                             docstrings[i][j] = p.sub(
                                 f":{role}:`{nn}`", docstrings[i][j]
                             )
@@ -282,24 +316,16 @@ class MatlabDocumenter(PyDocumenter):
 
     def auto_link_methods(self, class_obj, docstrings):
         for n, o in class_obj.methods.items():
-            # negative look-behind for ` or . or <, then <name>()
-            pat = r"(?<!(`|\.|<))\b" + n + r"\(\)"
+            # negative look-behind for ` . < @ <non-breaking space>, then <name>()
+            pat = r"(?<!(`|\.|<|@| ))\b" + n + r"\(\)(?! )"
             p = re.compile(pat)
-            no_link = 0  # normal mode (no literal block detected)
+            no_link_state = 0  # normal mode (no literal block detected)
             for i in range(len(docstrings)):
                 for j in range(len(docstrings[i])):
-                    # skip over literal blocks (i.e. line ending with ::, blank line, indented line)
-                    if docstrings[i][j].endswith("::"):
-                        no_link = -1  # 1st sign of literal block
-                    elif not docstrings[i][j]:  # blank line
-                        if no_link == -1:  # if 1st sign already detected
-                            no_link = -2  # 2nd sign of literal block
-                        elif no_link == 1:  # if in literal block
-                            no_link = 0  # end the literal block, start linking again
-                    elif no_link == -2 and docstrings[i][j].startswith("  "):
-                        # indented line after 1st 2 signs
-                        no_link = 1  # beginning of literal block (stop linking!)
-                    elif no_link != 1:  # not in a literal block, go ahead and link
+                    not_in_literal_block, no_link_state = self.detect_literal_block(
+                        docstrings[i][j], no_link_state
+                    )
+                    if not_in_literal_block:
                         docstrings[i][j] = p.sub(
                             f":meth:`{n}() <{class_obj.fullname(self.env)}.{n}>`",
                             docstrings[i][j],
@@ -1040,6 +1066,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         else:
             MatModuleLevelDocumenter.add_content(self, more_content)
 
+    def class_object(self):
+        # the associated MatClass object
+        return self.object
+
     def auto_link_basic(self, docstrings):
         docstrings = MatlabDocumenter.auto_link_basic(self, docstrings)
         return self.auto_link_class_members(docstrings)
@@ -1089,8 +1119,8 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         return line
 
     def auto_link_all(self, docstrings):
-        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
-        return self.auto_link_methods(self.object, docstrings)
+        docstrings = self.auto_link_methods(self.object, docstrings)
+        return MatlabDocumenter.auto_link_all(self, docstrings)
 
     def document_members(self, all_members=False):
         if self.doc_as_attr:
@@ -1256,9 +1286,32 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
     def document_members(self, all_members=False):
         pass
 
+    def class_object(self):
+        # the associated MatClass object
+        return self.object.cls
+
+    def auto_link_self(self, docstrings):
+        name = self.object.name
+        # negative look-behind for ` . < @ <non-breaking space>
+        p = re.compile(r"(?<!(`|\.|<|@| ))\b" + name + r"\b(?! )")
+        no_link_state = 0  # normal mode (no literal block detected)
+        for i in range(len(docstrings)):
+            for j in range(len(docstrings[i])):
+                not_in_literal_block, no_link_state = self.detect_literal_block(
+                    docstrings[i][j], no_link_state
+                )
+                if not_in_literal_block and docstrings[i][j]:  # also not blank line
+                    if match := p.search(docstrings[i][j]):
+                        docstrings[i][j] = p.sub(
+                            f":meth:`{name}() <{self.class_object().fullname(self.env)}.{name}>`",
+                            docstrings[i][j],
+                        )
+        return docstrings
+
     def auto_link_all(self, docstrings):
-        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
-        return self.auto_link_methods(self.object.cls, docstrings)
+        docstrings = self.auto_link_methods(self.object.cls, docstrings)
+        docstrings = self.auto_link_self(docstrings)
+        return MatlabDocumenter.auto_link_all(self, docstrings)
 
 
 class MatAttributeDocumenter(MatClassLevelDocumenter):
@@ -1330,9 +1383,32 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         #     no_docstring = True
         MatClassLevelDocumenter.add_content(self, more_content, no_docstring)
 
+    def class_object(self):
+        # the associated MatClass object
+        return self.object.cls
+
+    def auto_link_self(self, docstrings):
+        name = self.object.name
+        # negative look-behind for ` or . or <
+        p = re.compile(r"(?<!(`|\.|<))\b" + name + r"\b")
+        no_link_state = 0  # normal mode (no literal block detected)
+        for i in range(len(docstrings)):
+            for j in range(len(docstrings[i])):
+                not_in_literal_block, no_link_state = self.detect_literal_block(
+                    docstrings[i][j], no_link_state
+                )
+                if not_in_literal_block and docstrings[i][j]:  # also not blank line
+                    if match := p.search(docstrings[i][j]):
+                        docstrings[i][j] = p.sub(
+                            f":attr:`{name} <{self.class_object().fullname(self.env)}.{name}>`",
+                            docstrings[i][j],
+                        )
+        return docstrings
+
     def auto_link_all(self, docstrings):
-        docstrings = MatlabDocumenter.auto_link_all(self, docstrings)
-        return self.auto_link_methods(self.object.cls, docstrings)
+        docstrings = self.auto_link_methods(self.object.cls, docstrings)
+        docstrings = self.auto_link_self(docstrings)
+        return MatlabDocumenter.auto_link_all(self, docstrings)
 
 
 class MatInstanceAttributeDocumenter(MatAttributeDocumenter):

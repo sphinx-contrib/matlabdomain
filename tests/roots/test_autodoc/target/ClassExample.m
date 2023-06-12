@@ -9,7 +9,7 @@ classdef ClassExample < handle
     %   ClassExample - the constructor and a reference to mymethod()
     %   mymethod - a method in ClassExample
     %
-    % See also BaseClass, baseFunction, unknownEntity.
+    % See also BaseClass, baseFunction, b, unknownEntity, mymethod.
 
     properties
         a % a property

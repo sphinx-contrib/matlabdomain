@@ -1,5 +1,5 @@
 classdef ClassBar < handle
-% The Bar and Foo handler, with a doFoo() method.
+% The Bar and Foo handler, with doFoo() and doBar() methods.
 
     properties
         bars = 'bars' % Number of bars
@@ -16,7 +16,7 @@ classdef ClassBar < handle
         end
 
         function doFoo(obj)
-            % Doing foo
+            % doFoo - Doing foo, without passing in ``@ClassExample``
         end
 
         function doBar(obj)
