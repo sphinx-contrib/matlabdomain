@@ -56,7 +56,7 @@ can be set to ``mat`` with.::
 Additional Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-``matlab_src_dir``
+.. confval:: matlab_src_dir
    In order for the Sphinx MATLAB domain to auto-document MATLAB source code,
    set the config value of ``matlab_src_dir`` to the absolute path. Currently
    only one MATLAB path can be specified, but all subfolders in that tree will
@@ -94,6 +94,10 @@ Additional Configuration
       :class:`ClassFoo`
 
    Default is ``False``. *Added in Version 0.19.0*.
+
+``matlab_class_signature``
+   Shows the constructor argument list in the class signature if ``True``.
+   Default is ``False``. *Added in Version 0.20.0*.
 
 If you want the closest to MATLAB documentation style, use ``matlab_short_links
 = True`` in your ``conf.py`` file.

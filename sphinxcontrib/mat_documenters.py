@@ -913,8 +913,6 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
     def format_args(self):
         if self.object.args:
             return "(" + ", ".join(self.object.args) + ")"
-        else:
-            return None
 
     def document_members(self, all_members=False):
         pass
@@ -973,20 +971,20 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         return ret
 
     def format_args(self):
-        # for classes, the relevant signature is the "constructor" method,
-        # which has the same name as the class definition
-        initmeth = self.get_attr(self.object, self.object.name, None)
-        # classes without constructor method, default constructor or
-        # constructor written in C?
-        if initmeth is None or not isinstance(initmeth, MatMethod):
+        """Format arguments
+
+        We use the method named the same as the class for arguments, but we only
+        renders the arguments if `matlab_class_signature` is True and the method
+        exist.
+        """
+        ctor = self.get_attr(self.object, self.object.name, None)
+
+        if ctor is None or not isinstance(ctor, MatMethod):
             return None
-        if initmeth.args:
-            if initmeth.args[0] in ("obj", "self"):
-                return "(" + ", ".join(initmeth.args[1:]) + ")"
-            else:
-                return "(" + ", ".join(initmeth.args) + ")"
-        else:
+        if ctor and not self.env.config.matlab_class_signature:
             return None
+        if ctor.args:
+            return "(" + ", ".join(ctor.args) + ")"
 
     def format_signature(self):
         if self.doc_as_attr:
@@ -1277,8 +1275,18 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         return ret
 
     def format_args(self):
+        """Format argument
+
+        We omit `obj` and `self` from the output if they are the first argument
+        unless it's a class constructor.
+
+        Rendering -> "(arg1, arg2, arg3)"
+
+        """
+        is_ctor = self.object.cls.name == self.object.name
+
         if self.object.args:
-            if self.object.args[0] in ("obj", "self"):
+            if self.object.args[0] in ("obj", "self") and not is_ctor:
                 return "(" + ", ".join(self.object.args[1:]) + ")"
             else:
                 return "(" + ", ".join(self.object.args) + ")"
