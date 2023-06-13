@@ -84,3 +84,85 @@ def fix_function_signatures(code):
     code = pat.sub(repl, code)  # search for functions and apply replacement
 
     return code
+
+
+def transform_empty_class_methods(code):
+    """
+    Transforms empty function definition in classes to look like functions.
+
+    Example
+
+    From:
+    classdef Name
+        methods
+            retv = funcA(args)
+            funcB(args)
+            funcC
+            funcD % trailing comment
+
+        end
+    end
+
+    To:
+    classdef Name
+        methods
+            function retv = func(args)
+            end
+            function funcB(args)
+            end
+            function funcC
+            end
+            function funcD % trailing comment
+            end
+        end
+    end
+
+    :param code:
+    :type code: str
+    :return: Code string with functions on single line
+    """
+    # Find the methods block using regular expression
+    in_methods = False
+    in_function = False
+
+    methods_re = re.compile(r"^\s*methods\s*\(.*\)")
+    keywords_re = re.compile(r"^\s*(arguments|for|if|switch|try|while|parfor).*")
+    end_re = re.compile(r"^\s*end")
+    function_re = re.compile(r"^\s*function\s*.*")
+    function_like_re = re.compile(r"^(?!$|\s*(?:function|%)).*$")
+
+    kw_stack = []
+
+    lines = code.splitlines(True)
+    modified_lines = []
+    for line in lines:
+        if methods_re.search(line):
+            in_methods = True
+
+        if in_methods and function_re.search(line):
+            in_function = True
+            assert len(kw_stack) == 0
+
+        if in_function and keywords_re.search(line):
+            kw_stack.append(line)
+
+        if in_function and end_re.search(line):
+            if len(kw_stack) > 0:
+                kw_stack.pop()
+            in_function = False
+
+        if in_methods and not in_function and end_re.search(line):
+            in_methods = False
+
+        if (
+            in_methods
+            and not in_function
+            and function_like_re.search(line)
+            and not methods_re.search(line)
+        ):
+            modified_lines.append("function " + line.split("%")[0].strip())
+            modified_lines.append("end\n")
+        else:
+            modified_lines.append(line)
+
+    return "".join(modified_lines)

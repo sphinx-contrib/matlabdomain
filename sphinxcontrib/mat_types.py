@@ -380,6 +380,7 @@ class MatObject(object):
         code = mat_parser.remove_comment_header(code)
         code = mat_parser.remove_line_continuations(code)
         code = mat_parser.fix_function_signatures(code)
+        code = mat_parser.transform_empty_class_methods(code)
 
         tks = list(MatlabLexer().get_tokens(code))
 
