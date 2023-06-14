@@ -33,16 +33,61 @@ __all__ = [
     "MatApplication",
 ]
 
-# TODO: use `self.tokens.pop()` instead of idx += 1, see MatFunction
+# MATLAB keywords that increment keyword-end pair count
+MATLAB_KEYWORD_REQUIRES_END = list(
+    zip(
+        (Token.Keyword,) * 7,
+        ("arguments", "for", "if", "switch", "try", "while", "parfor"),
+    )
+)
 
-# XXX: Don't use `type()` or metaclasses. Not trivial to create metafunctions.
-# XXX: Some special attributes **are** required even though `getter()` methods
-# are also used.
 
-# create some MATLAB objects
-# TODO: +packages & @class folders
-# TODO: subfunctions (not nested) and private folders/functions/classes
-# TODO: script files
+# MATLAB attribute type dictionaries.
+# From http://www.mathworks.com/help/matlab/matlab_oop/class-attributes.html
+MATLAB_CLASS_ATTRIBUTE_TYPES = {
+    "Abstract": bool,
+    "AllowedSubclasses": list,
+    "ConstructOnLoad": bool,
+    "HandleCompatible": bool,
+    "Hidden": bool,
+    "InferiorClasses": list,
+    "Sealed": bool,
+}
+
+# From https://mathworks.com/help/matlab/matlab_oop/property-attributes.html
+MATLAB_PROPERTY_ATTRIBUTE_TYPES = {
+    "AbortSet": bool,
+    "Abstract": bool,
+    "Access": list,
+    "Constant": bool,
+    "Dependent": bool,
+    "GetAccess": list,
+    "GetObservable": bool,
+    "Hidden": bool,
+    "NonCopyable": bool,
+    "SetAccess": list,
+    "SetObservable": bool,
+    "Transient": bool,
+    "ClassSetupParameter": bool,
+    "MethodSetupParameter": bool,
+    "TestParameter": bool,
+}
+
+# https://se.mathworks.com/help/matlab/ref/matlab.unittest.testcase-class.html
+MATLAB_METHOD_ATTRIBUTE_TYPES = {
+    "Abstract": bool,
+    "Access": list,
+    "Hidden": bool,
+    "Sealed": list,
+    "Static": bool,
+    "Test": bool,
+    "TestClassSetup": bool,
+    "TestMethodSetup": bool,
+    "TestClassTeardown": bool,
+    "TestMethodTeardown": bool,
+    "ParameterCombination": bool,
+}
+
 
 # Dictionary containing all MATLAB entities that are found in `matlab_src_dir`.
 # The dictionary keys are both the full dotted path, relative to the root.
@@ -676,14 +721,6 @@ class MatFunction(MatObject):
     :type tokens: list
     """
 
-    # MATLAB keywords that increment keyword-end pair count
-    mat_kws = list(
-        zip(
-            (Token.Keyword,) * 7,
-            ("arguments", "for", "if", "switch", "try", "while", "parfor"),
-        )
-    )
-
     def __init__(self, name, modname, tokens):
         super(MatFunction, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
@@ -829,7 +866,7 @@ class MatFunction(MatObject):
             kw_end = 1  # count function keyword
             while kw_end > 0:
                 # increment keyword-end pairs count
-                if kw in MatFunction.mat_kws:
+                if kw in MATLAB_KEYWORD_REQUIRES_END:
                     kw_end += 1
                 # nested function definition
                 elif kw[0] is Token.Keyword and kw[1].strip() == "function":
@@ -893,51 +930,6 @@ class MatClass(MatMixin, MatObject):
     :type tokens: list
     """
 
-    #: dictionary of MATLAB class "attributes"
-    # http://www.mathworks.com/help/matlab/matlab_oop/class-attributes.html
-    # https://mathworks.com/help/matlab/matlab_oop/property-attributes.html
-    # https://se.mathworks.com/help/matlab/ref/matlab.unittest.testcase-class.html
-    cls_attr_types = {
-        "Abstract": bool,
-        "AllowedSubclasses": list,
-        "ConstructOnLoad": bool,
-        "HandleCompatible": bool,
-        "Hidden": bool,
-        "InferiorClasses": list,
-        "Sealed": bool,
-    }
-
-    prop_attr_types = {
-        "AbortSet": bool,
-        "Abstract": bool,
-        "Access": list,
-        "Constant": bool,
-        "Dependent": bool,
-        "GetAccess": list,
-        "GetObservable": bool,
-        "Hidden": bool,
-        "NonCopyable": bool,
-        "SetAccess": list,
-        "SetObservable": bool,
-        "Transient": bool,
-        "ClassSetupParameter": bool,
-        "MethodSetupParameter": bool,
-        "TestParameter": bool,
-    }
-    meth_attr_types = {
-        "Abstract": bool,
-        "Access": list,
-        "Hidden": bool,
-        "Sealed": list,
-        "Static": bool,
-        "Test": bool,
-        "TestClassSetup": bool,
-        "TestMethodSetup": bool,
-        "TestClassTeardown": bool,
-        "TestMethodTeardown": bool,
-        "ParameterCombination": bool,
-    }
-
     def __init__(self, name, modname, tokens):
         super(MatClass, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
@@ -964,7 +956,7 @@ class MatClass(MatMixin, MatObject):
             idx = 1  # token index
 
             # class "attributes"
-            self.attrs, idx = self.attributes(idx, MatClass.cls_attr_types)
+            self.attrs, idx = self.attributes(idx, MATLAB_CLASS_ATTRIBUTE_TYPES)
             # =====================================================================
             # classname
             idx += self._blanks(idx)  # skip blanks
@@ -1039,7 +1031,9 @@ class MatClass(MatMixin, MatObject):
                     prop_name = ""
                     idx += 1
                     # property "attributes"
-                    attr_dict, idx = self.attributes(idx, MatClass.prop_attr_types)
+                    attr_dict, idx = self.attributes(
+                        idx, MATLAB_PROPERTY_ATTRIBUTE_TYPES
+                    )
                     # Token.Keyword: "end" terminates properties & methods block
                     while self._tk_ne(idx, (Token.Keyword, "end")):
                         # skip whitespace
@@ -1235,7 +1229,7 @@ class MatClass(MatMixin, MatObject):
                 if self._tk_eq(idx, (Token.Keyword, "methods")):
                     idx += 1
                     # method "attributes"
-                    attr_dict, idx = self.attributes(idx, MatClass.meth_attr_types)
+                    attr_dict, idx = self.attributes(idx, MATLAB_METHOD_ATTRIBUTE_TYPES)
                     # Token.Keyword: "end" terminates properties & methods block
                     while self._tk_ne(idx, (Token.Keyword, "end")):
                         # skip comments and whitespace
