@@ -194,6 +194,30 @@ def analyze(app):
     populate_entities_table(root)
     entities_table["."] = root
 
+    # Transform Class Folders classes from
+    #
+    # @ClassFolder (Module)
+    #     ClassFolder (Class)
+    #     method1 (Function)
+    #     method2 (Function)
+    #
+    # To
+    #
+    # ClassFolder (Class) with the method1 and method2 add to the ClassFolder Class.
+    class_folder_modules = {
+        k: v for k, v in entities_table.items() if "@" in k and isinstance(v, MatModule)
+    }
+    # For each Class Folder module
+    for cf_name, cf_entity in class_folder_modules.items():
+        # Find the class entity class.
+        class_entities = [e for e in cf_entity.entities if isinstance(e[1], MatClass)]
+        func_entities = [e for e in cf_entity.entities if isinstance(e[1], MatFunction)]
+        assert len(class_entities) == 1
+        class_entity = class_entities[0]
+        class_entity == class_entity
+
+    pass
+
     # Find alternative names to entities
     # target.+package.+sub.Class -> package.sub.Class
     # folder.subfolder.Class -> Class
@@ -380,7 +404,6 @@ class MatObject(object):
         code = mat_parser.remove_comment_header(code)
         code = mat_parser.remove_line_continuations(code)
         code = mat_parser.fix_function_signatures(code)
-        code = mat_parser.transform_empty_class_methods(code)
 
         tks = list(MatlabLexer().get_tokens(code))
 
