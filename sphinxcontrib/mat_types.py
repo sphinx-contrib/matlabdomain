@@ -452,9 +452,9 @@ class MatObject(object):
         # codeText = codeDesc.text
 
         doc = []
-        if coreDesc is not None:
+        if coreDesc is not None and coreDesc.text is not None:
             doc.append(coreDesc.text)
-        if metaDesc is not None:
+        if metaDesc is not None and metaDesc.text is not None:
             doc.append(metaDesc.text)
         docstring = "\n\n".join(doc)
 
