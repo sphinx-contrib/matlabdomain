@@ -211,12 +211,14 @@ def test_no_input_no_output_no_parentheses():
 
 
 def test_no_input_no_parentheses_no_docstring():
-    mfile = os.path.join(DIRNAME, "test_data", "f_no_input_no_parentheses_no_docstring.m")
+    mfile = os.path.join(
+        DIRNAME, "test_data", "f_no_input_no_parentheses_no_docstring.m"
+    )
     obj = mat_types.MatObject.parse_mfile(
         mfile, "f_no_input_no_parentheses_no_docstring", "test_data"
     )
     assert obj.name == "f_no_input_no_parentheses_no_docstring"
-    assert obj.retv == ['result']
+    assert obj.retv == ["result"]
     assert obj.args is None
 
 

@@ -342,12 +342,7 @@ class MatlabLexer(RegexLexer):
             (
                 r"(\s*)(?:(.+)(\s*)(=)(\s*))?([a-zA-Z_]\w*)",
                 bygroups(
-                    Whitespace,
-                    Text,
-                    Whitespace,
-                    Punctuation,
-                    Whitespace,
-                    Name.Function
+                    Whitespace, Text, Whitespace, Punctuation, Whitespace, Name.Function
                 ),
                 "#pop",
             ),
