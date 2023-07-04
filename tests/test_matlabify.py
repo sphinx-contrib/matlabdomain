@@ -68,6 +68,7 @@ def test_module(mod):
         "Bool",
         "ClassWithEvent",
         "f_no_input_no_output_no_parentheses",
+        "f_no_input_no_parentheses_no_docstring",
         "ClassWithCommentHeader",
         "f_with_comment_header",
         "f_with_dummy_argument",
