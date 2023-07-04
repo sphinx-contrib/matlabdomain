@@ -288,7 +288,7 @@ class MatlabDocumenter(PyDocumenter):
                 pat = (
                     r"(?<!(`|\.|\+|<|@| ))\b"  # negative look-behind for ` . + < @ <non-breaking space>
                     + nn.replace(".", r"\.")  # escape .
-                    + r"\b(?!(`| |\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
+                    + r"\b(?!(`| |\.\w|\sProperties:|\sMethods:))"  # negative look-ahead for ` or <non-breaking space> or .<alphanum> or " Properties:" or " Methods:"
                 )
                 p = re.compile(pat)
                 no_link_state = 0  # normal mode (no literal block detected)
@@ -1301,8 +1301,9 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def auto_link_self(self, docstrings):
         name = self.object.name
-        # negative look-behind for ` . < @ <non-breaking space>
-        p = re.compile(r"(?<!(`|\.|<|@| ))\b" + name + r"\b(?! )")
+        # negative look-behind for ` or . or < or @ or <non-breaking space>
+        # and negative look-ahead for <non-breaking space> or .<alphanum>
+        p = re.compile(r"(?<!(`|\.|<|@| ))\b" + name + r"\b(?! |\.\w)")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
@@ -1398,8 +1399,9 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     def auto_link_self(self, docstrings):
         name = self.object.name
-        # negative look-behind for ` or . or <
-        p = re.compile(r"(?<!(`|\.|<))\b" + name + r"\b")
+        # negative look-behind for ` or . or < or <non-breaking space>
+        # and negative look-ahead for <non-breaking space>
+        p = re.compile(r"(?<!(`|\.|<| ))\b" + name + r"\b(?! )")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
