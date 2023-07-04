@@ -338,7 +338,7 @@ class MatlabLexer(RegexLexer):
                 ),
                 "#pop",
             ),
-            # function with with outputs but no inputs
+            # function with outputs but no inputs
             (
                 r"(\s*)(?:(.+)(\s*)(=)(\s*))?([a-zA-Z_]\w*)",
                 bygroups(
