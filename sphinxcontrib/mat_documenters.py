@@ -270,7 +270,7 @@ class MatlabDocumenter(PyDocumenter):
                                 cls = entities_table[entities_name_map[m1]]
                             else:
                                 cls = None
-                            if cls:
+                            if cls and cls.ref_role() == "class":
                                 name = m2.rstrip("()")
                                 if name in cls.methods:
                                     entries[k] = f":meth:`{entries[k]}`"
