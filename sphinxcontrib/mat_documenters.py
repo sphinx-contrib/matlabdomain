@@ -285,12 +285,21 @@ class MatlabDocumenter(PyDocumenter):
             role = o.ref_role()
             if role in ["class", "func"]:
                 nn = n.replace("+", "")  # remove + from name
-                pat = (
-                    r"(?<!(`|\.|\+|<|@| ))\b"  # negative look-behind for ` . + < @ <non-breaking space>
-                    + nn.replace(".", r"\.")  # escape .
-                    + r"\b(?!(`| |\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
-                )
+                # negative look-behind for ` . + < @ <non-breaking space>
+                look_behind = r"(?<!(`|\.|\+|<|@| ))\b"
+                # negative look-ahead for ` or <non-breaking space> or
+                # " Properties:" or " Methods:" or .<alphanum>
+                look_ahead = r"\b(?!(`| |\sProperties:|\sMethods:|\.\w))"
+                look_ahead2 = r"\b(?!(`| |\sProperties:|\sMethods:))"
+                # entity_name is NOT followed by .<property_or_method>
+                pat = look_behind + nn.replace(".", r"\.") + look_ahead
                 p = re.compile(pat)
+                if role == "class":
+                    # entity_name IS followed by .<property_or_method>
+                    pat2 = (
+                        look_behind + nn.replace(".", r"\.") + r"\.(\w+)" + look_ahead2
+                    )
+                    p2 = re.compile(pat2)
                 no_link_state = 0  # normal mode (no literal block detected)
                 for i in range(len(docstrings)):
                     for j in range(len(docstrings[i])):
@@ -301,6 +310,24 @@ class MatlabDocumenter(PyDocumenter):
                             docstrings[i][j] = p.sub(
                                 f":{role}:`{nn}`", docstrings[i][j]
                             )
+                            if role == "class":
+                                if match := p2.search(docstrings[i][j]):
+                                    # if match.group(1) is a property
+                                    #   -> :attr:`{nn}.{match.group(1)}`
+                                    for nnn, ooo in o.properties.items():
+                                        if match.group(2) == nnn:
+                                            docstrings[i][j] = p2.sub(
+                                                f":attr:`{nn}.{nnn}`", docstrings[i][j]
+                                            )
+                                            break
+                                    # if match.group(1) is a method
+                                    #   -> :meth:`{nn}.{match.group(1)}`
+                                    for nnn, ooo in o.methods.items():
+                                        if match.group(2) == nnn:
+                                            docstrings[i][j] = p2.sub(
+                                                f":meth:`{nn}.{nnn}`", docstrings[i][j]
+                                            )
+                                            break
 
         return docstrings
 
@@ -1301,8 +1328,9 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def auto_link_self(self, docstrings):
         name = self.object.name
-        # negative look-behind for ` . < @ <non-breaking space>
-        p = re.compile(r"(?<!(`|\.|<|@| ))\b" + name + r"\b(?! )")
+        # negative look-behind for ` or . or < or @ or <non-breaking space>
+        # and negative look-ahead for <non-breaking space> or .<alphanum>
+        p = re.compile(r"(?<!(`|\.|<|@| ))\b" + name + r"\b(?! |\.\w)")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
@@ -1398,8 +1426,9 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     def auto_link_self(self, docstrings):
         name = self.object.name
-        # negative look-behind for ` or . or <
-        p = re.compile(r"(?<!(`|\.|<))\b" + name + r"\b")
+        # negative look-behind for ` or . or < or <non-breaking space>
+        # and negative look-ahead for <non-breaking space>
+        p = re.compile(r"(?<!(`|\.|<| ))\b" + name + r"\b(?! )")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):

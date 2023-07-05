@@ -20,6 +20,8 @@ classdef ClassExample < handle
     end
     methods
         function mc = ClassExample(a)
+            % Links to fully qualified names package.ClassBar.foos,
+            % package.ClassBar.doBar, and ClassExample.mymethod.
             mc.a = a;
         end
 

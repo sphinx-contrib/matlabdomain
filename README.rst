@@ -82,7 +82,7 @@ Additional Configuration
 
 ``matlab_auto_link``
    Automatically convert the names of known entities (e.g. classes, functions,
-   properties, methods) to links Valid values are ``"basic"``
+   properties, methods) to links. Valid values are ``"basic"``
    and ``"all"``.
 
    * ``"basic"`` - Auto-links (1) known classes, functions, properties, or
@@ -94,6 +94,7 @@ Additional Configuration
 
    * ``"all"`` - Auto-links everything included with ``"basic"``, plus all known
      classes and functions everywhere else they appear in any docstring, any
+     fully qualified (including class name) property or method names, any
      names ending with "()" within class, property, or method docstrings that
      match a method of the corresponding class, and any property or method names
      in their own docstrings. Note that a non-breaking space before or after
