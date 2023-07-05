@@ -195,6 +195,7 @@ class MatlabDocumenter(PyDocumenter):
         # autolink known names in See also
         see_also_re = re.compile(r"(See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
         see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
+        class_re = re.compile(r"(.*)\.([^\.]+)")
         is_see_also_line = False
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
@@ -251,6 +252,32 @@ class MatlabDocumenter(PyDocumenter):
                                     k
                                 ] = f":attr:`{name} <{cls.fullname(self.env)}.{name}>`"
                                 continue
+
+                        # see if it is a fully qualified property or method name we recognize
+                        match2 = class_re.search(entries[k])
+                        if match2:
+                            m1 = match2.group(1)
+                            m2 = match2.group(2)
+                            if (
+                                self.env.config.matlab_keep_package_prefix
+                                and m1 in entities_table
+                            ):
+                                cls = entities_table[entries[k]]
+                            elif (
+                                not self.env.config.matlab_keep_package_prefix
+                                and m1 in entities_name_map
+                            ):
+                                cls = entities_table[entities_name_map[m1]]
+                            else:
+                                cls = None
+                            if cls:
+                                name = m2.rstrip("()")
+                                if name in cls.methods:
+                                    entries[k] = f":meth:`{entries[k]}`"
+                                    continue
+                                elif name in cls.properties:
+                                    entries[k] = f":attr:`{entries[k]}`"
+                                    continue
 
                         # not yet handled
                         entries[k] = f"``{entries[k]}``"
