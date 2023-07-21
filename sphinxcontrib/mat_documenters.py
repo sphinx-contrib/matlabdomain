@@ -312,12 +312,12 @@ class MatlabDocumenter(PyDocumenter):
             role = o.ref_role()
             if role in ["class", "func"]:
                 nn = n.replace("+", "")  # remove + from name
-                # negative look-behind for ` . + < @ <non-breaking space>
-                look_behind = r"(?<!(`|\.|\+|<|@| ))\b"
-                # negative look-ahead for ` or <non-breaking space> or
+                # negative look-behind for ` . + < @ * <non-breaking space>
+                look_behind = r"(?<!(`|\.|\+|<|@|\*| ))\b"
+                # negative look-ahead for ` * or <non-breaking space> or
                 # " Properties:" or " Methods:" or .<alphanum>
-                look_ahead = r"\b(?!(`| |\sProperties:|\sMethods:|\.\w))"
-                look_ahead2 = r"\b(?!(`| |\sProperties:|\sMethods:))"
+                look_ahead = r"\b(?!(`|\*| |\sProperties:|\sMethods:|\.\w))"
+                look_ahead2 = r"\b(?!(`|\*| |\sProperties:|\sMethods:))"
                 # entity_name is NOT followed by .<property_or_method>
                 pat = look_behind + nn.replace(".", r"\.") + look_ahead
                 p = re.compile(pat)
@@ -371,8 +371,8 @@ class MatlabDocumenter(PyDocumenter):
 
     def auto_link_methods(self, class_obj, docstrings):
         for n, o in class_obj.methods.items():
-            # negative look-behind for ` . < @ <non-breaking space>, then <name>()
-            pat = r"(?<!(`|\.|<|@| ))\b" + n + r"\(\)(?! )"
+            # negative look-behind for ` . < @ * <non-breaking space>, then <name>()
+            pat = r"(?<!(`|\.|<|@|\*| ))\b" + n + r"\(\)(?! )"
             p = re.compile(pat)
             no_link_state = 0  # normal mode (no literal block detected)
             for i in range(len(docstrings)):
@@ -1355,9 +1355,9 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def auto_link_self(self, docstrings):
         name = self.object.name
-        # negative look-behind for ` or . or < or @ or <non-breaking space>
-        # and negative look-ahead for <non-breaking space> or .<alphanum>
-        p = re.compile(r"(?<!(`|\.|<|@| ))\b" + name + r"\b(?! |\.\w)")
+        # negative look-behind for ` or . or < or @ or * or <non-breaking space>
+        # and negative look-ahead for * or <non-breaking space> or .<alphanum>
+        p = re.compile(r"(?<!(`|\.|<|@|\*| ))\b" + name + r"\b(?!\*| |\.\w)")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
@@ -1453,9 +1453,9 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     def auto_link_self(self, docstrings):
         name = self.object.name
-        # negative look-behind for ` or . or < or <non-breaking space>
+        # negative look-behind for ` or . or < or * or <non-breaking space>
         # and negative look-ahead for <non-breaking space>
-        p = re.compile(r"(?<!(`|\.|<| ))\b" + name + r"\b(?! )")
+        p = re.compile(r"(?<!(`|\.|<|\*| ))\b" + name + r"\b(?! )")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
