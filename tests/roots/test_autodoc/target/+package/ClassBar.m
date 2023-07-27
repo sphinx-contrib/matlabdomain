@@ -20,7 +20,7 @@ classdef ClassBar < handle
         end
 
         function doBar(obj)
-            % Doing bar, not called by ClassBar()
+            % Implement **doBar** stage, not called by ClassBar()
         end
     end
 end
