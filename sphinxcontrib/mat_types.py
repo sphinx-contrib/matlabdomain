@@ -43,7 +43,9 @@ MATLAB_KEYWORD_REQUIRES_END = list(
 
 
 # MATLAB attribute type dictionaries.
-# From http://www.mathworks.com/help/matlab/matlab_oop/class-attributes.html
+
+# From:
+#  - http://www.mathworks.com/help/matlab/matlab_oop/class-attributes.html
 MATLAB_CLASS_ATTRIBUTE_TYPES = {
     "Abstract": bool,
     "AllowedSubclasses": list,
@@ -54,38 +56,46 @@ MATLAB_CLASS_ATTRIBUTE_TYPES = {
     "Sealed": bool,
 }
 
-# From https://mathworks.com/help/matlab/matlab_oop/property-attributes.html
+# From:
+#  - https://mathworks.com/help/matlab/matlab_oop/property-attributes.html
+#  - https://mathworks.com/help/matlab/matlab_prog/define-property-attributes-1.htm
+#  - https://mathworks.com/help/matlab/ref/matlab.unittest.testcase-class.html
 MATLAB_PROPERTY_ATTRIBUTE_TYPES = {
     "AbortSet": bool,
     "Abstract": bool,
     "Access": list,
+    "ClassSetupParameter": bool,
     "Constant": bool,
     "Dependent": bool,
+    "DiscreteState": bool,
     "GetAccess": list,
     "GetObservable": bool,
     "Hidden": bool,
+    "MethodSetupParameter": bool,
     "NonCopyable": bool,
+    "Nontunable": bool,
+    "PartialMatchPriority": bool,
     "SetAccess": list,
     "SetObservable": bool,
-    "Transient": bool,
-    "ClassSetupParameter": bool,
-    "MethodSetupParameter": bool,
     "TestParameter": bool,
+    "Transient": bool,
 }
 
-# https://se.mathworks.com/help/matlab/ref/matlab.unittest.testcase-class.html
+# From
+#  - https://mathworks.com/help/matlab/matlab_oop/method-attributes.html
+#  - https://mathworks.com/help/matlab/ref/matlab.unittest.testcase-class.html
 MATLAB_METHOD_ATTRIBUTE_TYPES = {
     "Abstract": bool,
     "Access": list,
     "Hidden": bool,
+    "ParameterCombination": bool,
     "Sealed": list,
     "Static": bool,
     "Test": bool,
     "TestClassSetup": bool,
-    "TestMethodSetup": bool,
     "TestClassTeardown": bool,
+    "TestMethodSetup": bool,
     "TestMethodTeardown": bool,
-    "ParameterCombination": bool,
 }
 
 
