@@ -13,3 +13,5 @@ _build
 htmlcov
 .coverage
 build/
+
+generated

@@ -921,4 +921,6 @@ def setup(app):
     app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
 
+    app.setup_extension("sphinxcontrib.mat_autosummary")
+
     return {"parallel_read_safe": False}
