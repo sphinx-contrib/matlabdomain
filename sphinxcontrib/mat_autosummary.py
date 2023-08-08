@@ -25,10 +25,7 @@ from sphinx import __display_version__, package_dir
 from sphinx.application import Sphinx
 from sphinx.builders import Builder
 from sphinx.ext.autodoc.importer import import_module
-from sphinx.ext.autosummary import (
-    ImportExceptionGroup,
-    import_ivar_by_name,
-)
+
 from sphinx.locale import __
 from sphinx.pycode import ModuleAnalyzer, PycodeError
 from sphinx.util import logging, rst, split_full_qualified_name
@@ -315,7 +312,10 @@ def generate_autosummary_content(
 def import_by_name(
     name: str, prefixes: list[str | None] = [None]
 ) -> tuple[str, Any, Any, str]:
-    obj = entities_table[name]
+    try:
+        obj = entities_table[name]
+    except KeyError:
+        raise ImportError(f"Could not import {name}")
     name_split = name.split(".")
     if len(name_split) == 1:
         parent = None
@@ -324,6 +324,124 @@ def import_by_name(
         modname = ".".join(name_split[:-1])
         parent = entities_table[modname]
     return name, obj, parent, modname
+
+
+# -- Finding documented entries in files ---------------------------------------
+from sphinx.ext.autosummary.generate import (
+    AutosummaryEntry,
+    find_autosummary_in_docstring,
+)
+
+
+def find_autosummary_in_files(filenames: list[str]) -> list[AutosummaryEntry]:
+    """Find out what items are documented in source/*.rst.
+
+    See `find_autosummary_in_lines`.
+    """
+    documented: list[AutosummaryEntry] = []
+    for filename in filenames:
+        with open(filename, encoding="utf-8", errors="ignore") as f:
+            lines = f.read().splitlines()
+            documented.extend(find_autosummary_in_lines(lines, filename=filename))
+    return documented
+
+
+import re
+
+
+def find_autosummary_in_lines(
+    lines: list[str],
+    module: str | None = None,
+    filename: str | None = None,
+) -> list[AutosummaryEntry]:
+    """Find out what items appear in autosummary:: directives in the
+    given lines.
+
+    Returns a list of (name, toctree, template) where *name* is a name
+    of an object and *toctree* the :toctree: path of the corresponding
+    autosummary directive (relative to the root of the file name), and
+    *template* the value of the :template: option. *toctree* and
+    *template* ``None`` if the directive does not have the
+    corresponding options set.
+    """
+    autosummary_re = re.compile(r"^(\s*)\.\.\s+autosummary::\s*")
+    automodule_re = re.compile(r"^\s*\.\.\s+automodule::\s*([A-Za-z0-9_.]+)\s*$")
+    module_re = re.compile(r"^\s*\.\.\s+(current)?module::\s*([a-zA-Z0-9_.]+)\s*$")
+    autosummary_item_re = re.compile(r"^\s+(~?[_a-zA-Z][a-zA-Z0-9_.+@]*)\s*.*?")
+    recursive_arg_re = re.compile(r"^\s+:recursive:\s*$")
+    toctree_arg_re = re.compile(r"^\s+:toctree:\s*(.*?)\s*$")
+    template_arg_re = re.compile(r"^\s+:template:\s*(.*?)\s*$")
+
+    documented: list[AutosummaryEntry] = []
+
+    recursive = False
+    toctree: str | None = None
+    template = None
+    current_module = module
+    in_autosummary = False
+    base_indent = ""
+
+    for line in lines:
+        if in_autosummary:
+            m = recursive_arg_re.match(line)
+            if m:
+                recursive = True
+                continue
+
+            m = toctree_arg_re.match(line)
+            if m:
+                toctree = m.group(1)
+                if filename:
+                    toctree = os.path.join(os.path.dirname(filename), toctree)
+                continue
+
+            m = template_arg_re.match(line)
+            if m:
+                template = m.group(1).strip()
+                continue
+
+            if line.strip().startswith(":"):
+                continue  # skip options
+
+            m = autosummary_item_re.match(line)
+            if m:
+                name = m.group(1).strip()
+                if name.startswith("~"):
+                    name = name[1:]
+                if current_module and not name.startswith(current_module + "."):
+                    name = f"{current_module}.{name}"
+                documented.append(AutosummaryEntry(name, toctree, template, recursive))
+                continue
+
+            if not line.strip() or line.startswith(base_indent + " "):
+                continue
+
+            in_autosummary = False
+
+        m = autosummary_re.match(line)
+        if m:
+            in_autosummary = True
+            base_indent = m.group(1)
+            recursive = False
+            toctree = None
+            template = None
+            continue
+
+        m = automodule_re.search(line)
+        if m:
+            current_module = m.group(1).strip()
+            # recurse into the automodule docstring
+            documented.extend(
+                find_autosummary_in_docstring(current_module, filename=filename)
+            )
+            continue
+
+        m = module_re.match(line)
+        if m:
+            current_module = m.group(2)
+            continue
+
+    return documented
 
 
 def generate_autosummary_docs(
@@ -378,24 +496,13 @@ def generate_autosummary_docs(
                 qualname = name.replace(modname + ".", "")
             else:
                 qualname = name
-        except ImportExceptionGroup as exc:
-            try:
-                # try to import as an instance attribute
-                name, obj, parent, modname = import_ivar_by_name(entry.name)
-                qualname = name.replace(modname + ".", "")
-            except ImportError as exc2:
-                if exc2.__cause__:
-                    exceptions: list[BaseException] = exc.exceptions + [exc2.__cause__]
-                else:
-                    exceptions = exc.exceptions + [exc2]
-
-                errors = list({f"* {type(e).__name__}: {e}" for e in exceptions})
-                logger.warning(
-                    __("[autosummary] failed to import %s.\nPossible hints:\n%s"),
-                    entry.name,
-                    "\n".join(errors),
-                )
-                continue
+        except ImportError as exc:
+            logger.warning(
+                __("[mat_autosummary] failed to import %s.\nPossible hints:\n%s"),
+                entry.name,
+                exc,
+            )
+            continue
 
         context: dict[str, Any] = {}
         if app:
@@ -533,12 +640,11 @@ class MatAutosummary(Autosummary):
                 real_name, obj, parent, modname = self.import_by_name(
                     name, prefixes=prefixes
                 )
-            except ImportExceptionGroup as exc:
-                errors = list({f"* {type(e).__name__}: {e}" for e in exc.exceptions})
+            except ImportError as exc:
                 logger.warning(
-                    __("autosummary: failed to import %s.\nPossible hints:\n%s"),
+                    __("mat_autosummary: failed to import %s.\nPossible hints:\n%s"),
                     name,
-                    "\n".join(errors),
+                    exc,
                     location=self.get_location(),
                 )
                 continue
