@@ -18,6 +18,7 @@ import pkgutil
 from os import path
 from typing import TYPE_CHECKING, Any, Sequence
 
+from jinja2 import TemplateNotFound
 from jinja2.sandbox import SandboxedEnvironment
 
 import sphinx.locale
@@ -98,6 +99,20 @@ class MatAutosummaryRenderer(AutosummaryRenderer):
         if app.translator:
             self.env.add_extension("jinja2.ext.i18n")
             self.env.install_gettext_translations(app.translator)
+
+    def render(self, template_name: str, context: dict) -> str:
+        """Render a template file."""
+        try:
+            template = self.env.get_template(template_name)
+        except TemplateNotFound:
+            try:
+                # objtype is given as template_name
+                template = self.env.get_template("mat%s.rst" % template_name)
+            except TemplateNotFound:
+                # fallback to base.rst
+                template = self.env.get_template("matbase.rst")
+
+        return template.render(context)
 
 
 def generate_autosummary_content(
@@ -670,34 +685,15 @@ class MatAutosummary(Autosummary):
 
 
 def setup(app: Sphinx) -> dict[str, Any]:
-    # I need autodoc
-    app.setup_extension("sphinx.ext.autodoc")
-    app.add_node(
-        autosummary_toc,
-        html=(autosummary_toc_visit_html, autosummary_noop),
-        latex=(autosummary_noop, autosummary_noop),
-        text=(autosummary_noop, autosummary_noop),
-        man=(autosummary_noop, autosummary_noop),
-        texinfo=(autosummary_noop, autosummary_noop),
-    )
-    app.add_node(
-        autosummary_table,
-        html=(autosummary_table_visit_html, autosummary_noop),
-        latex=(autosummary_noop, autosummary_noop),
-        text=(autosummary_noop, autosummary_noop),
-        man=(autosummary_noop, autosummary_noop),
-        texinfo=(autosummary_noop, autosummary_noop),
-    )
+    # sphinx.ext.autosummary
+    app.setup_extension("sphinx.ext.autosummary")
+
     app.add_directive_to_domain("mat", "autosummary", MatAutosummary)
+
+    # replace autosummary generate with our own
+    for listener in app.events.listeners.get("builder-inited", []):
+        if listener.handler.__name__ == "process_generate_options":
+            app.disconnect(listener.id)
     app.connect("builder-inited", process_generate_options)
-    app.add_config_value("autosummary_context", {}, True)
-    app.add_config_value("autosummary_filename_map", {}, "html")
-    app.add_config_value("autosummary_generate", True, True, [bool, list])
-    app.add_config_value("autosummary_generate_overwrite", True, False)
-    app.add_config_value(
-        "autosummary_mock_imports", lambda config: config.autodoc_mock_imports, "env"
-    )
-    app.add_config_value("autosummary_imported_members", [], False, [bool])
-    app.add_config_value("autosummary_ignore_module_all", True, "env", bool)
 
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
