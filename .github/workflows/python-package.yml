@@ -29,7 +29,7 @@ jobs:
         architecture: x64
     - name: Run with Tox
       run: |
-        pip install tox
+        pip install tox==4.8.0
         tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}-pygments${{matrix.pygments-version}}"
 
   check:
