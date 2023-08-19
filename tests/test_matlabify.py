@@ -4,14 +4,14 @@ from sphinxcontrib import mat_documenters as doc
 from sphinxcontrib.mat_types import entities_table
 import os
 import sys
+from pathlib import Path
 import pytest
 
 from sphinx.testing.fixtures import test_params, make_app
-from sphinx.testing.path import path
 
 
-rootdir = path(os.path.dirname(__file__)).abspath()
-matlab_src_dir = os.path.join(rootdir, "test_data")
+rootdir = Path(os.path.dirname(__file__)).absolute()
+matlab_src_dir = str(rootdir / "test_data")
 doc.MatObject.basedir = matlab_src_dir
 
 

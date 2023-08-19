@@ -11,17 +11,17 @@
 import pickle
 import os
 import sys
+from pathlib import Path
 
 import pytest
 
 from sphinx import addnodes
 from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;
-from sphinx.testing.path import path
 
 
 @pytest.fixture(scope="module")
 def rootdir():
-    return path(os.path.dirname(__file__)).abspath()
+    return Path(os.path.dirname(__file__)).absolute()
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
