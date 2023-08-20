@@ -9,23 +9,20 @@
     :license: BSD, see LICENSE for details.
 """
 import pickle
-import os
 import sys
-from pathlib import Path
-
 import pytest
-
+import helper
 from sphinx import addnodes
 from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;
 
 
 @pytest.fixture(scope="module")
 def rootdir():
-    return Path(os.path.dirname(__file__)).absolute()
+    return helper.rootdir(__file__)
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
-def test_target(make_app, rootdir: Path):
+def test_target(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     app = make_app(srcdir=srcdir)
     app.builder.build_all()

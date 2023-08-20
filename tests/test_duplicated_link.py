@@ -9,10 +9,9 @@
     :license: BSD, see LICENSE for details.
 """
 import pickle
-import os
 import sys
 import docutils
-from pathlib import Path
+import helper
 
 import pytest
 
@@ -23,7 +22,7 @@ from sphinx.testing.fixtures import test_params, make_app
 
 @pytest.fixture(scope="module")
 def rootdir():
-    return Path(os.path.dirname(__file__)).absolute()
+    return helper.rootdir(__file__)
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
