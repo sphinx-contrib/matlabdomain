@@ -34,7 +34,8 @@ def test_with_prefix(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "groups.doctree").read_bytes())
 
     assert isinstance(content[0], docutils.nodes.section)
-    section = content[0][7]
+    elems = len(content[0])
+    section = content[0][elems - 1]
     assert (
         section.astext()
         == "NiceFiniteGroup\n\n\n\nclass +replab.NiceFiniteGroup\n\nBases: "
@@ -53,7 +54,8 @@ def test_without_prefix(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "groups.doctree").read_bytes())
 
     assert isinstance(content[0], docutils.nodes.section)
-    section = content[0][7]
+    elems = len(content[0])
+    section = content[0][elems - 1]
     assert (
         section.astext()
         == "NiceFiniteGroup\n\n\n\nclass replab.NiceFiniteGroup\n\nBases: replab.FiniteGroup\n\nA nice finite group is a finite group equipped with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv"
