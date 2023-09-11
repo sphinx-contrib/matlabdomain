@@ -2,16 +2,14 @@
 # -*- coding: utf-8 -*-
 from sphinxcontrib import mat_documenters as doc
 from sphinxcontrib.mat_types import entities_table
-import os
-import sys
+import helper
 import pytest
 
 from sphinx.testing.fixtures import test_params, make_app
-from sphinx.testing.path import path
 
 
-rootdir = path(os.path.dirname(__file__)).abspath()
-matlab_src_dir = os.path.join(rootdir, "test_data")
+rootdir = helper.rootdir(__file__)
+matlab_src_dir = str(rootdir / "test_data")
 doc.MatObject.basedir = matlab_src_dir
 
 
@@ -68,6 +66,7 @@ def test_module(mod):
         "Bool",
         "ClassWithEvent",
         "f_no_input_no_output_no_parentheses",
+        "f_no_input_no_parentheses_no_docstring",
         "ClassWithCommentHeader",
         "f_with_comment_header",
         "f_with_dummy_argument",

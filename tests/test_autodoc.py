@@ -9,19 +9,16 @@
     :license: BSD, see LICENSE for details.
 """
 import pickle
-import os
 import sys
-
 import pytest
-
+import helper
 from sphinx import addnodes
 from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;
-from sphinx.testing.path import path
 
 
 @pytest.fixture(scope="module")
 def rootdir():
-    return path(os.path.dirname(__file__)).abspath()
+    return helper.rootdir(__file__)
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
@@ -36,7 +33,7 @@ def test_target(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass target.ClassExample\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod,\npackage.ClassBar.bars, package.ClassBar.doFoo.\n\nConstructor Summary\n\n\n\n\n\nClassExample(a)\n\nLinks to fully qualified names package.ClassBar.foos,\npackage.ClassBar.doBar, and ClassExample.mymethod.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
     assert (
         property_section.rawsource
@@ -61,7 +58,7 @@ def test_target_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "target\n\n\n\nclass target.ClassExample\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+        == "target\n\n\n\nclass target.ClassExample\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod,\npackage.ClassBar.bars, package.ClassBar.doFoo.\n\nConstructor Summary\n\n\n\n\n\nClassExample(a)\n\nLinks to fully qualified names package.ClassBar.foos,\npackage.ClassBar.doBar, and ClassExample.mymethod.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
     )
     assert (
         property_section.rawsource
@@ -95,7 +92,7 @@ def test_target_auto_link_basic(make_app, rootdir):
     )
     assert (
         see_also_line.rawsource
-        == "See also :class:`BaseClass`, :func:`baseFunction`, :attr:`b <target.ClassExample.b>`, ``unknownEntity``, :meth:`mymethod() <target.ClassExample.mymethod>`."
+        == "See also :class:`BaseClass`, :func:`baseFunction`, :attr:`b <target.ClassExample.b>`, ``unknownEntity``, :meth:`mymethod() <target.ClassExample.mymethod>`,\n:attr:`package.ClassBar.bars`, :meth:`package.ClassBar.doFoo`."
     )
 
 
@@ -110,6 +107,7 @@ def test_target_auto_link_all(make_app, rootdir):
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
     see_also_line = content[0][2][1][3]  # a bit fragile, I know
+    constructor_desc = content[0][2][1][4][0][0][1][2][1][0]  # a bit fragile, I know
     assert len(content) == 1
     assert (
         property_section.rawsource
@@ -121,7 +119,11 @@ def test_target_auto_link_all(make_app, rootdir):
     )
     assert (
         see_also_line.rawsource
-        == "See also :class:`BaseClass`, :func:`baseFunction`, :attr:`b <target.ClassExample.b>`, ``unknownEntity``, :meth:`mymethod() <target.ClassExample.mymethod>`."
+        == "See also :class:`BaseClass`, :func:`baseFunction`, :attr:`b <target.ClassExample.b>`, ``unknownEntity``, :meth:`mymethod() <target.ClassExample.mymethod>`,\n:attr:`package.ClassBar.bars`, :meth:`package.ClassBar.doFoo`."
+    )
+    assert (
+        constructor_desc.rawsource
+        == "Links to fully qualified names :attr:`package.ClassBar.foos`,\n:meth:`package.ClassBar.doBar`, and :meth:`ClassExample.mymethod`."
     )
 
 
@@ -152,14 +154,14 @@ def test_package(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
+        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
     )
     assert (
         docstring1.rawsource
         == "The Bar and Foo handler, with doFoo() and doBar() methods."
     )
     assert docstring2.rawsource == "Number of foos, used by doBar() method"
-    assert docstring3.rawsource == "Doing bar, not called by ClassBar()"
+    assert docstring3.rawsource == "Implement **doBar** stage, not called by ClassBar()"
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
@@ -173,7 +175,7 @@ def test_package_show_default_value(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars = 'bars'\n\nNumber of bars\n\n\n\nfoos = 10\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
+        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars = 'bars'\n\nNumber of bars\n\n\n\nfoos = 10\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
     )
 
 
@@ -193,7 +195,7 @@ def test_package_auto_link_all(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nDoing bar, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo() - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction() and BaseClass, etc."
+        == "package\n\n\n\nclass target.package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo() - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\ntarget.package.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction() and BaseClass, etc."
     )
     assert (
         docstring1.rawsource
@@ -207,7 +209,7 @@ def test_package_auto_link_all(make_app, rootdir):
     assert docstring4.rawsource == "``@ClassExample``"
     assert (
         docstring5.rawsource
-        == "Doing bar, not called by :meth:`ClassBar() <target.package.ClassBar.ClassBar>`"
+        == "Implement **doBar** stage, not called by :meth:`ClassBar() <target.package.ClassBar.ClassBar>`"
     )
 
 

@@ -9,7 +9,8 @@ classdef ClassExample < handle
     %   ClassExample - the constructor and a reference to mymethod()
     %   mymethod - a method in ClassExample
     %
-    % See also BaseClass, baseFunction, b, unknownEntity, mymethod.
+    % See also BaseClass, baseFunction, b, unknownEntity, mymethod,
+    % package.ClassBar.bars, package.ClassBar.doFoo.
 
     properties
         a % a property
@@ -20,6 +21,8 @@ classdef ClassExample < handle
     end
     methods
         function mc = ClassExample(a)
+            % Links to fully qualified names package.ClassBar.foos,
+            % package.ClassBar.doBar, and ClassExample.mymethod.
             mc.a = a;
         end
 

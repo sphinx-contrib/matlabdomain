@@ -195,6 +195,7 @@ class MatlabDocumenter(PyDocumenter):
         # autolink known names in See also
         see_also_re = re.compile(r"(See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
         see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
+        class_re = re.compile(r"(.*)\.([^\.]+)")
         is_see_also_line = False
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
@@ -203,7 +204,8 @@ class MatlabDocumenter(PyDocumenter):
                     if is_see_also_line:
                         # find name
                         match = see_also_cond_re.search(line)
-                        entries_str = match.group(2)  # the entries
+                        if match is not None:
+                            entries_str = match.group(2)  # the entries
                     elif match := see_also_re.search(line):
                         is_see_also_line = True  # line begins with "See also"
                         entries_str = match.group(2)  # the entries
@@ -251,6 +253,32 @@ class MatlabDocumenter(PyDocumenter):
                                 ] = f":attr:`{name} <{cls.fullname(self.env)}.{name}>`"
                                 continue
 
+                        # see if it is a fully qualified property or method name we recognize
+                        match2 = class_re.search(entries[k])
+                        if match2:
+                            m1 = match2.group(1)
+                            m2 = match2.group(2)
+                            if (
+                                self.env.config.matlab_keep_package_prefix
+                                and m1 in entities_table
+                            ):
+                                cls = entities_table[entries[k]]
+                            elif (
+                                not self.env.config.matlab_keep_package_prefix
+                                and m1 in entities_name_map
+                            ):
+                                cls = entities_table[entities_name_map[m1]]
+                            else:
+                                cls = None
+                            if cls and cls.ref_role() == "class":
+                                name = m2.rstrip("()")
+                                if name in cls.methods:
+                                    entries[k] = f":meth:`{entries[k]}`"
+                                    continue
+                                elif name in cls.properties:
+                                    entries[k] = f":attr:`{entries[k]}`"
+                                    continue
+
                         # not yet handled
                         entries[k] = f"``{entries[k]}``"
 
@@ -284,12 +312,21 @@ class MatlabDocumenter(PyDocumenter):
             role = o.ref_role()
             if role in ["class", "func"]:
                 nn = n.replace("+", "")  # remove + from name
-                pat = (
-                    r"(?<!(`|\.|\+|<|@| ))\b"  # negative look-behind for ` . + < @ <non-breaking space>
-                    + nn.replace(".", r"\.")  # escape .
-                    + r"\b(?!(`| |\sProperties|\sMethods):)"  # negative look-ahead for ` or " Properties:" or " Methods:"
-                )
+                # negative look-behind for ` . + < @ * <non-breaking space>
+                look_behind = r"(?<!(`|\.|\+|<|@|\*| ))\b"
+                # negative look-ahead for ` * or <non-breaking space> or
+                # " Properties:" or " Methods:" or .<alphanum>
+                look_ahead = r"\b(?!(`|\*| |\sProperties:|\sMethods:|\.\w))"
+                look_ahead2 = r"\b(?!(`|\*| |\sProperties:|\sMethods:))"
+                # entity_name is NOT followed by .<property_or_method>
+                pat = look_behind + nn.replace(".", r"\.") + look_ahead
                 p = re.compile(pat)
+                if role == "class":
+                    # entity_name IS followed by .<property_or_method>
+                    pat2 = (
+                        look_behind + nn.replace(".", r"\.") + r"\.(\w+)" + look_ahead2
+                    )
+                    p2 = re.compile(pat2)
                 no_link_state = 0  # normal mode (no literal block detected)
                 for i in range(len(docstrings)):
                     for j in range(len(docstrings[i])):
@@ -300,6 +337,24 @@ class MatlabDocumenter(PyDocumenter):
                             docstrings[i][j] = p.sub(
                                 f":{role}:`{nn}`", docstrings[i][j]
                             )
+                            if role == "class":
+                                if match := p2.search(docstrings[i][j]):
+                                    # if match.group(1) is a property
+                                    #   -> :attr:`{nn}.{match.group(1)}`
+                                    for nnn, ooo in o.properties.items():
+                                        if match.group(2) == nnn:
+                                            docstrings[i][j] = p2.sub(
+                                                f":attr:`{nn}.{nnn}`", docstrings[i][j]
+                                            )
+                                            break
+                                    # if match.group(1) is a method
+                                    #   -> :meth:`{nn}.{match.group(1)}`
+                                    for nnn, ooo in o.methods.items():
+                                        if match.group(2) == nnn:
+                                            docstrings[i][j] = p2.sub(
+                                                f":meth:`{nn}.{nnn}`", docstrings[i][j]
+                                            )
+                                            break
 
         return docstrings
 
@@ -316,8 +371,8 @@ class MatlabDocumenter(PyDocumenter):
 
     def auto_link_methods(self, class_obj, docstrings):
         for n, o in class_obj.methods.items():
-            # negative look-behind for ` . < @ <non-breaking space>, then <name>()
-            pat = r"(?<!(`|\.|<|@| ))\b" + n + r"\(\)(?! )"
+            # negative look-behind for ` . < @ * <non-breaking space>, then <name>()
+            pat = r"(?<!(`|\.|<|@|\*| ))\b" + n + r"\(\)(?! )"
             p = re.compile(pat)
             no_link_state = 0  # normal mode (no literal block detected)
             for i in range(len(docstrings)):
@@ -1300,8 +1355,9 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def auto_link_self(self, docstrings):
         name = self.object.name
-        # negative look-behind for ` . < @ <non-breaking space>
-        p = re.compile(r"(?<!(`|\.|<|@| ))\b" + name + r"\b(?! )")
+        # negative look-behind for ` or . or < or @ or * or <non-breaking space>
+        # and negative look-ahead for * or <non-breaking space> or .<alphanum>
+        p = re.compile(r"(?<!(`|\.|<|@|\*| ))\b" + name + r"\b(?!\*| |\.\w)")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
@@ -1397,8 +1453,9 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     def auto_link_self(self, docstrings):
         name = self.object.name
-        # negative look-behind for ` or . or <
-        p = re.compile(r"(?<!(`|\.|<))\b" + name + r"\b")
+        # negative look-behind for ` or . or < or * or <non-breaking space>
+        # and negative look-ahead for <non-breaking space>
+        p = re.compile(r"(?<!(`|\.|<|\*| ))\b" + name + r"\b(?! )")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
