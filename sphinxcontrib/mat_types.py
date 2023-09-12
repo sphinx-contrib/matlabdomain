@@ -119,14 +119,35 @@ def shortest_name(dotted_path):
     if len(parts) == 1:
         return parts[0].lstrip("+")
 
+    if "@" in dotted_path:
+        return dotted_path
+
     parts_to_keep = []
     for part in parts[:-1]:
-        if part.startswith("+") or part.startswith("@"):
-            parts_to_keep.append(part.lstrip("+@"))
+        if part.startswith("+"):
+            parts_to_keep.append(part.lstrip("+"))
         elif len(parts_to_keep) > 0:
             parts_to_keep = []
-    parts_to_keep.append(parts[-1].lstrip("+@"))
+    parts_to_keep.append(parts[-1].lstrip("+"))
     return ".".join(parts_to_keep)
+
+
+def classfolder_class_name(dotted_path):
+    # Returns a @ClassFolder classname if applicable, otherwise the dotted_path is returned
+    #
+    if "@" not in dotted_path:
+        return dotted_path
+
+    parts = dotted_path.split(".")
+    if len(parts) == 1:
+        return dotted_path
+
+    stripped_parts = [part.lstrip("@") for part in parts]
+
+    if stripped_parts[-1] == stripped_parts[-2]:
+        return ".".join(parts[0:-2] + [stripped_parts[-1]])
+    else:
+        return dotted_path
 
 
 def recursive_find_all(obj):
@@ -223,10 +244,23 @@ def analyze(app):
         class_entities = [e for e in cf_entity.entities if isinstance(e[1], MatClass)]
         func_entities = [e for e in cf_entity.entities if isinstance(e[1], MatFunction)]
         assert len(class_entities) == 1
-        class_entity = class_entities[0]
-        class_entity == class_entity
+        cls = class_entities[0][1]
 
-    pass
+        # Add functions to class
+        for func_name, func in func_entities:
+            func.__class__ = MatMethod
+            func.cls = cls
+            # TODO: Find the method attributes defined in classfolder class defintion.
+            func.attrs = {}
+            cls.methods[func.name] = func
+
+    # Transform @ClassFolder names. Specifically
+    class_folder_names = {}
+    for name, entity in entities_table.items():
+        alt_name = classfolder_class_name(name)
+        if name != alt_name:
+            class_folder_names[alt_name] = entity
+    entities_table.update(class_folder_names)
 
     # Find alternative names to entities
     # target.+package.+sub.Class -> package.sub.Class
