@@ -1,4 +1,4 @@
-sphinxcontrib-matlabdomain-0.20.0 (2023-MM-DD)
+sphinxcontrib-matlabdomain-0.20.0 (2023-09-13)
 ==============================================
 
 * Fixed `Issue 188`_ and `Issue 189`_, which caused the extension to crash if
@@ -8,7 +8,7 @@ sphinxcontrib-matlabdomain-0.20.0 (2023-MM-DD)
   methods) to links! This means that we can write class documentation as `MATLAB
   Class Help`_ suggests. Including property and methods lists in the class
   docstring.
-* Fixed `Issue 56`_. Folders containing class definition, i.e. prefixed with
+* Fixed `Issue 56`_. `MATLAB Folder Class definitions`_, i.e. prefixed with
   ``@``, are now treated as normal classes. All methods defined in the class
   defintion and in files in the ``@``-folder are availble. Further, it can
   referenced by a shortened name. Before you had to explicity write out the
