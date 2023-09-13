@@ -137,7 +137,7 @@ def test_classfolder(make_app, rootdir):
     assert len(content) == 1
     assert (
         content[0].astext()
-        == "classfolder\n\n\n\nclass target.@ClassFolder.ClassFolder\n\nA class in a folder\n\nProperty Summary\n\n\n\n\n\np\n\na property of a class folder\n\nMethod Summary\n\n\n\n\n\nmethod_inside_classdef(a, b)\n\nMethod inside class definition"
+        == "classfolder\n\n\n\nclass target.@ClassFolder.ClassFolder\n\nA class in a folder\n\nProperty Summary\n\n\n\n\n\np\n\na property of a class folder\n\nMethod Summary\n\n\n\n\n\na_static_func(args)\n\nA static method in @ClassFolder\n\n\n\nclassMethod(varargin)\n\nCLASSMETHOD A function within a package\n\nParameters\n\nobj – An instance of this class.\n\nvarargin – Variable input arguments.\n\nReturns\n\nvarargout\n\n\n\nmethod_inside_classdef(a, b)\n\nMethod inside class definition"
     )
 
 

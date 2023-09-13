@@ -30,10 +30,10 @@ Usage
 
 The Python package must be installed with::
 
-   pip install -U sphinxcontrib-matlabdomain
+   pip install sphinxcontrib-matlabdomain
 
 In general, the usage is the same as for documenting Python code. The package
-is tested with Python >= 3.8 and Sphinx >=4.0.0.
+is tested with Python >= 3.8 and Sphinx >= 4.5.0.
 
 For a Python 2 compatible version the package must be installed with::
 
@@ -67,16 +67,20 @@ Additional Configuration
    that everything is in the path as we would expect it in MATLAB. This will
    resemble a more MATLAB-like presentation. If it is ``True`` is forces
    ``matlab_keep_package_prefix = False``. Further, it allows for much shorter
-   and cleaner references. Example, given a path to a class like
-   ``target.subfolder.ClassFoo``.
+   and cleaner references. Example, given a path to classes like
+   ``target.subfolder.ClassFoo`` and ``target.@ClassFolder.Classfolder``
 
    * With ``False``::
 
       :class:`target.subfolder.ClassFoo`
 
+      :class:`target.@ClassFolder.Classfolder`
+
    * With ``True``::
 
       :class:`ClassFoo`
+
+      :class:`ClassFolder`
 
    Default is ``False``. *Added in Version 0.19.0*.
 
