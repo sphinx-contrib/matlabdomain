@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.20.1 (2023-09-14)
+==============================================
+
+* Fixed `Issue 214`_. After fixing `Issue 56`_, we introduced a bug parsing
+  ``private`` folders incorrectly.
+
+
 sphinxcontrib-matlabdomain-0.20.0 (2023-09-13)
 ==============================================
 

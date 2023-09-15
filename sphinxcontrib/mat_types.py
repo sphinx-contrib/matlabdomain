@@ -235,8 +235,18 @@ def analyze(app):
     # To
     #
     # ClassFolder (Class) with the method1 and method2 add to the ClassFolder Class.
+
+    def isClassFolderModule(name, entity):
+        if not isinstance(entity, MatModule):
+            return False
+
+        parts = name.split(".")
+        if "@" in name and parts[-1] != "private":
+            return True
+        return False
+
     class_folder_modules = {
-        k: v for k, v in entities_table.items() if "@" in k and isinstance(v, MatModule)
+        k: v for k, v in entities_table.items() if isClassFolderModule(k, v)
     }
     # For each Class Folder module
     for cf_name, cf_entity in class_folder_modules.items():
