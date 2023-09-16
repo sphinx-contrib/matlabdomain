@@ -241,9 +241,7 @@ def analyze(app):
             return False
 
         parts = name.split(".")
-        if "@" in name and parts[-1] != "private":
-            return True
-        return False
+        return parts[-1].startswith("@")
 
     class_folder_modules = {
         k: v for k, v in entities_table.items() if isClassFolderModule(k, v)

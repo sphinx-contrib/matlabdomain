@@ -1,3 +1,9 @@
+sphinxcontrib-matlabdomain-0.20.2 (2023-09-15)
+==============================================
+
+* Fixed `Issue 214`_ again. Any folder below a ``@classfolder`` must be ignored.
+
+
 sphinxcontrib-matlabdomain-0.20.1 (2023-09-14)
 ==============================================
 
