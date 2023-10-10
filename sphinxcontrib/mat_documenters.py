@@ -1454,8 +1454,8 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
     def auto_link_self(self, docstrings):
         name = self.object.name
         # negative look-behind for ` or . or < or * or <non-breaking space>
-        # and negative look-ahead for <non-breaking space>
-        p = re.compile(r"(?<!(`|\.|<|\*| ))\b" + name + r"\b(?! )")
+        # and negative look-ahead for ` * or <non-breaking space>
+        p = re.compile(r"(?<!(`|\.|<|\*| ))\b" + name + r"\b(?!`|\*| )")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
