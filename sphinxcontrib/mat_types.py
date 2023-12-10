@@ -252,8 +252,7 @@ def analyze(app):
         class_entities = [e for e in cf_entity.entities if isinstance(e[1], MatClass)]
         func_entities = [e for e in cf_entity.entities if isinstance(e[1], MatFunction)]
 
-        empty_class_folder = not class_entities and not func_entities
-        if empty_class_folder:
+        if not class_entities:
             continue
         assert len(class_entities) == 1
         cls = class_entities[0][1]
