@@ -845,5 +845,17 @@ def test_ClassWithTrailingSemicolons():
     ]
 
 
+def test_ClassWithSeperatedComments():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithSeperatedComments.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "ClassWithSeperatedComments", "test_data"
+    )
+    assert obj.name == "ClassWithSeperatedComments"
+    assert obj.bases == []
+    assert "prop" in obj.properties
+    prop = obj.properties["prop"]
+    assert prop["docstring"] == " Another comment\n"
+
+
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])

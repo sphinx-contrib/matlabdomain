@@ -1,10 +1,13 @@
 sphinxcontrib-matlabdomain-0.X.Y (2023-MM-DD)
 ==============================================
 
-* Fixed `Issue 225`. Empty ``@classfolder`` would throw an assertion error.
+* Fixed `Issue 220`. Parsing of property docstring could throw warning if there
+  were blank lines between comments.
 * Fixed `Issue 221`. Using builtin's in class folder defintion for methods
   defined in other files, threw a parsing warning.
+* Fixed `Issue 225`. Empty ``@classfolder`` would throw an assertion error.
 
+.. _Issue 220: https://github.com/sphinx-contrib/matlabdomain/issues/220
 .. _Issue 221: https://github.com/sphinx-contrib/matlabdomain/issues/221
 .. _Issue 225: https://github.com/sphinx-contrib/matlabdomain/issues/225
 
