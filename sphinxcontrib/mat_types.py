@@ -1220,6 +1220,10 @@ class MatClass(MatMixin, MatObject):
                                 docstring += "\n"
                                 self.properties[prop_name]["docstring"] = docstring
                                 idx += 1
+                        elif self.tokens[idx][0] is Token.Comment:
+                            # Comments seperated with blank lines.
+                            idx = idx - 1
+                            continue
                         else:
                             logger.warning(
                                 "sphinxcontrib-matlabdomain] Expected property in %s.%s - got %s",

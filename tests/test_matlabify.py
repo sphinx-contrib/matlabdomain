@@ -115,6 +115,7 @@ def test_module(mod):
         "ClassWithPropertyValidators",
         "ClassWithTrailingCommentAfterBases",
         "ClassWithTrailingSemicolons",
+        "ClassWithSeperatedComments",
     }
     assert all_items == expected_items
     assert mod.getter("__name__") in entities_table
