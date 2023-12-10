@@ -1,3 +1,11 @@
+sphinxcontrib-matlabdomain-0.X.Y (2023-MM-DD)
+==============================================
+
+* Fixed `Issue 225`. Empty ``@classfolder`` would throw an assertion error.
+
+.. _Issue 225: https://github.com/sphinx-contrib/matlabdomain/issues/225
+
+
 sphinxcontrib-matlabdomain-0.20.2 (2023-09-15)
 ==============================================
 

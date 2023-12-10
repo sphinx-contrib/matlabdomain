@@ -17,7 +17,7 @@ if sphinx_version_info[0] >= 7 and sphinx_version_info[1] >= 2:
     from pathlib import Path
 
     def rootdir(the_file):
-        return Path(os.path.dirname(__file__)).absolute()
+        return Path(os.path.dirname(__file__)).resolve().absolute()
 
 else:
     from sphinx.testing.path import path as sphinx_path
