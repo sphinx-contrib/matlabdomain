@@ -52,7 +52,10 @@ def test_module(mod):
     expected_items = {
         "+package",
         "@ClassFolder",
+        "@ClassFolderWithoutClassDefinition",
+        "@ClassFolderUsingBuiltins",
         "@EmptyClassFolder",
+        "@NestedClassFolder",
         "Application",
         "ClassAbstract",
         "ClassExample",

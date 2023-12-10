@@ -2,7 +2,10 @@ sphinxcontrib-matlabdomain-0.X.Y (2023-MM-DD)
 ==============================================
 
 * Fixed `Issue 225`. Empty ``@classfolder`` would throw an assertion error.
+* Fixed `Issue 221`. Using builtin's in class folder defintion for methods
+  defined in other files, threw a parsing warning.
 
+.. _Issue 221: https://github.com/sphinx-contrib/matlabdomain/issues/221
 .. _Issue 225: https://github.com/sphinx-contrib/matlabdomain/issues/225
 
 

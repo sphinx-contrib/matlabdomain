@@ -252,8 +252,7 @@ def analyze(app):
         class_entities = [e for e in cf_entity.entities if isinstance(e[1], MatClass)]
         func_entities = [e for e in cf_entity.entities if isinstance(e[1], MatFunction)]
 
-        empty_class_folder = not class_entities and not func_entities
-        if empty_class_folder:
+        if not class_entities:
             continue
         assert len(class_entities) == 1
         cls = class_entities[0][1]
@@ -1326,6 +1325,7 @@ class MatClass(MatMixin, MatObject):
                         meth_tk = self.tokens[idx]
                         if (
                             meth_tk[0] is Token.Name
+                            or meth_tk[0] is Token.Name.Builtin
                             or meth_tk[0] is Token.Name.Function
                             or (
                                 meth_tk[0] is Token.Keyword
