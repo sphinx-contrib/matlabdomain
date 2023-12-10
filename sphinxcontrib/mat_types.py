@@ -1325,6 +1325,7 @@ class MatClass(MatMixin, MatObject):
                         meth_tk = self.tokens[idx]
                         if (
                             meth_tk[0] is Token.Name
+                            or meth_tk[0] is Token.Name.Builtin
                             or meth_tk[0] is Token.Name.Function
                             or (
                                 meth_tk[0] is Token.Keyword

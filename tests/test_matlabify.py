@@ -53,6 +53,7 @@ def test_module(mod):
         "+package",
         "@ClassFolder",
         "@ClassFolderWithoutClassDefinition",
+        "@ClassFolderUsingBuiltins",
         "@EmptyClassFolder",
         "@NestedClassFolder",
         "Application",
