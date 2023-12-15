@@ -201,18 +201,18 @@ def analyze(app):
     # `matlab_src_dir` is recursively scanned for MATLAB objects only once.
     # All entities found are stored in globally available `entities_table`
 
+    if app.env.config.matlab_src_dir is None:
+        logger.debug(
+            "[sphinxcontrib-matlabdomain] matlab_src_dir is None, skipping parsing."
+        )
+        return
+
     # Interpret `matlab_src_dir` relative to the sphinx source directory.
     basedir = os.path.normpath(os.path.join(app.env.srcdir, app.env.config.matlab_src_dir))
     MatObject.basedir = basedir  # set MatObject base directory
     MatObject.sphinx_env = app.env  # pass env to MatObject cls
     MatObject.sphinx_app = app  # pass app to MatObject cls
     entities_table.clear()
-
-    if basedir is None:
-        logger.debug(
-            "[sphinxcontrib-matlabdomain] matlab_src_dir is None, skipping parsing."
-        )
-        return
 
     # Set the root object and get root members.
     root = MatObject.matlabify("")
