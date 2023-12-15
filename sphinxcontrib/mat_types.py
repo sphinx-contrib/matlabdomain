@@ -208,7 +208,9 @@ def analyze(app):
         return
 
     # Interpret `matlab_src_dir` relative to the sphinx source directory.
-    basedir = os.path.normpath(os.path.join(app.env.srcdir, app.env.config.matlab_src_dir))
+    basedir = os.path.normpath(
+        os.path.join(app.env.srcdir, app.env.config.matlab_src_dir)
+    )
     MatObject.basedir = basedir  # set MatObject base directory
     MatObject.sphinx_env = app.env  # pass env to MatObject cls
     MatObject.sphinx_app = app  # pass app to MatObject cls
