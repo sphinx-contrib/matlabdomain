@@ -22,12 +22,16 @@ def rootdir():
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
-def test_target(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_class_subfolder"
+def test_index(make_app, rootdir):
+    srcdir = rootdir / "roots" / "test_module_class_names"
     app = make_app(srcdir=srcdir)
     app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
+    assert (
+        content.astext()
+        == "\n\n\n\n\n\nclass Myclass.Myclass\n\nmytest\n\nProperty Summary\n\n\n\n\n\nprop\n\nprop\n\nMethod Summary\n\n\n\n\n\nf()\n\nfunction\n\nOther\n\n"
+    )
 
 
 if __name__ == "__main__":

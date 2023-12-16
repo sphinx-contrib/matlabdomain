@@ -22,6 +22,7 @@ from .mat_types import (  # noqa: E401
     entities_table,
     entities_name_map,
     strip_package_prefix,
+    try_get_module_entity_or_default,
 )
 
 import re
@@ -140,9 +141,7 @@ class MatlabDocumenter(PyDocumenter):
                 self.object = self.get_attr(obj, self.objpath[1])
             else:
                 lookup_name = self.fullname.lstrip(".")
-                mod = entities_table[lookup_name]
-                if isinstance(mod, dict):
-                    mod = mod["mod"]
+                mod = try_get_module_entity_or_default(lookup_name)
                 self.object = mod
             return True
         # this used to only catch SyntaxError, ImportError and AttributeError,

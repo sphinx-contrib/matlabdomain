@@ -196,6 +196,13 @@ def populate_entities_table(obj, path=""):
                 populate_entities_table(o, fullpath)
 
 
+def try_get_module_entity_or_default(entity_name):
+    maybe_mod = entities_table.get(entity_name)
+    if isinstance(maybe_mod, dict):
+        return maybe_mod["mod"]
+    return maybe_mod
+
+
 def analyze(app):
     # Using the "MatObject.matlabify" and "MatModule.safe_getmembers" the
     # `matlab_src_dir` is recursively scanned for MATLAB objects only once.
@@ -408,9 +415,7 @@ class MatObject(object):
         if os.path.isdir(fullpath):
             if package.startswith("_") or package.startswith("."):
                 return None
-            mod = entities_table.get(package)
-            if isinstance(mod, dict):
-                mod = mod["mod"]
+            mod = try_get_module_entity_or_default(package)
             if mod:
                 logger.debug(
                     "[sphinxcontrib-matlabdomain] Module %s already loaded.", package
@@ -1761,9 +1766,7 @@ class MatModuleAnalyzer(object):
             if isinstance(entry, MatcodeError):
                 raise entry
             return entry
-        mod = entities_table[modname]
-        if isinstance(mod, dict):
-            mod = mod["mod"]
+        mod = try_get_module_entity_or_default(modname)
         if mod:
             obj = cls.for_folder(mod.path, modname)
         else:
@@ -1800,9 +1803,7 @@ class MatModuleAnalyzer(object):
         attr_visitor_collected = {}
         attr_visitor_tagorder = {}
         tagnumber = 0
-        mod = entities_table[self.modname]
-        if isinstance(mod, dict):
-            mod = mod["mod"]
+        mod = try_get_module_entity_or_default(self.modname)
 
         # walk package tree
         for k, v in mod.safe_getmembers():
