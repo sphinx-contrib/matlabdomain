@@ -1,3 +1,12 @@
+sphinxcontrib-matlabdomain-0.21.1 (2023-12-16)
+==============================================
+
+* Fixed `Issue 204`_, that caused an ``AttributeError`` to be thrown if a module
+  was named the same as the short name for a class.
+
+.. _Issue 204: https://github.com/sphinx-contrib/matlabdomain/issues/204
+
+
 sphinxcontrib-matlabdomain-0.21.0 (2023-12-16)
 ==============================================
 
