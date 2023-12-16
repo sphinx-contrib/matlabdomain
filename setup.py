@@ -31,6 +31,7 @@ setup(
         "Topic :: Documentation",
         "Topic :: Utilities",
         "Framework :: Sphinx :: Extension",
+        "Framework :: Sphinx :: Domain",
     ],
     platforms="any",
     packages=find_packages(),
