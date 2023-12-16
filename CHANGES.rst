@@ -1,6 +1,8 @@
-sphinxcontrib-matlabdomain-0.X.Y (2023-MM-DD)
+sphinxcontrib-matlabdomain-0.21.0 (2023-12-16)
 ==============================================
 
+* Allow ``matlab_src_dir`` to be a relative path of the ``conf.py`` file. See
+  `PR 224`_ and `PR 225`_.
 * Fixed `Issue 220`. Parsing of property docstring could throw warning if there
   were blank lines between comments.
 * Fixed `Issue 221`. Using builtin's in class folder defintion for methods
@@ -10,6 +12,8 @@ sphinxcontrib-matlabdomain-0.X.Y (2023-MM-DD)
 .. _Issue 220: https://github.com/sphinx-contrib/matlabdomain/issues/220
 .. _Issue 221: https://github.com/sphinx-contrib/matlabdomain/issues/221
 .. _Issue 225: https://github.com/sphinx-contrib/matlabdomain/issues/225
+.. _PR 224: https://github.com/sphinx-contrib/matlabdomain/pull/224
+.. _PR 225: https://github.com/sphinx-contrib/matlabdomain/pull/225
 
 
 sphinxcontrib-matlabdomain-0.20.2 (2023-09-15)
