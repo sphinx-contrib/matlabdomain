@@ -259,6 +259,21 @@ def test_root(make_app, rootdir):
 
 
 @pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
+def test_root_relative_matlab_src_dir(make_app, rootdir):
+    srcdir = rootdir / "roots" / "test_autodoc"
+    confdict = {"matlab_src_dir": "."}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
+    app.builder.build_all()
+
+    content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
+    assert len(content) == 1
+    assert (
+        content[0].astext()
+        == "root\n\n\n\nclass BaseClass\n\nA class in the very root of the directory\n\nBaseClass Methods:\n\nBaseClass - the constructor, whose description extends\n\nto the next line\n\nDoBase - another BaseClass method\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(obj, args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_show_property_default_value": True}
