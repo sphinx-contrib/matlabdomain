@@ -140,7 +140,10 @@ class MatlabDocumenter(PyDocumenter):
                 self.object = self.get_attr(obj, self.objpath[1])
             else:
                 lookup_name = self.fullname.lstrip(".")
-                self.object = entities_table[lookup_name]
+                mod = entities_table[lookup_name]
+                if isinstance(mod, dict):
+                    mod = mod["mod"]
+                self.object = mod
             return True
         # this used to only catch SyntaxError, ImportError and AttributeError,
         # but importing modules with side effects can raise all kinds of errors

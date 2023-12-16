@@ -284,7 +284,15 @@ def analyze(app):
     for name, entity in entities_table.items():
         short_name = shortest_name(name)
         if short_name != name:
-            short_names[short_name] = entity
+            if short_name in entities_table:
+                # Special Case - ClassName/ClassName.m
+                existing_entity = entities_table[short_name]
+                short_names[short_name] = {
+                    entity.ref_role(): entity,
+                    existing_entity.ref_role(): existing_entity,
+                }
+            else:
+                short_names[short_name] = entity
             entities_name_map[short_name] = short_name
 
     entities_table.update(short_names)
@@ -401,6 +409,8 @@ class MatObject(object):
             if package.startswith("_") or package.startswith("."):
                 return None
             mod = entities_table.get(package)
+            if isinstance(mod, dict):
+                mod = mod["mod"]
             if mod:
                 logger.debug(
                     "[sphinxcontrib-matlabdomain] Module %s already loaded.", package
@@ -1752,6 +1762,8 @@ class MatModuleAnalyzer(object):
                 raise entry
             return entry
         mod = entities_table[modname]
+        if isinstance(mod, dict):
+            mod = mod["mod"]
         if mod:
             obj = cls.for_folder(mod.path, modname)
         else:
@@ -1789,6 +1801,8 @@ class MatModuleAnalyzer(object):
         attr_visitor_tagorder = {}
         tagnumber = 0
         mod = entities_table[self.modname]
+        if isinstance(mod, dict):
+            mod = mod["mod"]
 
         # walk package tree
         for k, v in mod.safe_getmembers():
