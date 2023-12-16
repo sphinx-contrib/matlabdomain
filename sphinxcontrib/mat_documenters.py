@@ -141,8 +141,7 @@ class MatlabDocumenter(PyDocumenter):
                 self.object = self.get_attr(obj, self.objpath[1])
             else:
                 lookup_name = self.fullname.lstrip(".")
-                mod = try_get_module_entity_or_default(lookup_name)
-                self.object = mod
+                self.object = try_get_module_entity_or_default(lookup_name)
             return True
         # this used to only catch SyntaxError, ImportError and AttributeError,
         # but importing modules with side effects can raise all kinds of errors
