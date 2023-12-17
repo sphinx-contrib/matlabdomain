@@ -1,3 +1,12 @@
+sphinxcontrib-matlabdomain-0.21.2 (2023-12-17)
+==============================================
+
+* Interpret ``matlab_src_dir`` relative to the Sphinx source directory to be
+  compatible with `sphinx-multiversion`_.
+
+.. _sphinx-multiversion: https://pypi.org/project/sphinx-multiversion/
+
+
 sphinxcontrib-matlabdomain-0.21.1 (2023-12-16)
 ==============================================
 

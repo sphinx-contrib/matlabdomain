@@ -59,7 +59,7 @@ Additional Configuration
 ``matlab_src_dir``
    In order for the Sphinx MATLAB domain to auto-document MATLAB source code,
    set the config value of ``matlab_src_dir`` to an absolute path or a path
-   relative to the ``conf.py`` file. Currently only one MATLAB path can be
+   relative to the source directory. Currently only one MATLAB path can be
    specified, but that folder and all the subfolders in that tree will be
    searched.
 
