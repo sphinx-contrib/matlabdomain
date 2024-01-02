@@ -857,5 +857,20 @@ def test_ClassWithSeperatedComments():
     assert prop["docstring"] == " Another comment\n"
 
 
+def test_ClassWithKeywordsAsFieldnames():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithKeywordsAsFieldnames.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "ClassWithKeywordsAsFieldnames", "test_data"
+    )
+    assert obj.name == "ClassWithKeywordsAsFieldnames"
+    assert obj.bases == []
+    assert "a" in obj.properties
+    assert "b" in obj.properties
+    assert "c" in obj.properties
+    assert "calculate" in obj.methods
+    meth = obj.methods["calculate"]
+    assert meth.docstring == " Returns the value of `d`\n"
+
+
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])

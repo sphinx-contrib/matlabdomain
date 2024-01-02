@@ -1,13 +1,14 @@
-# -*- coding: utf-8 -*-
 """
     sphinxcontrib.matlab
     ~~~~~~~~~~~~~~~~~~~~
 
     The MATLAB domain.
 
-    :copyright: Copyright 2007-2011 by the Sphinx team, see AUTHORS.
+    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
+
+
 from . import mat_documenters as doc
 from . import mat_directives
 from . import mat_types
