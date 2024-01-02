@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 """
     sphinxcontrib.mat_documenters
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Extend autodoc directives to matlabdomain.
 
-    :copyright: Copyright 2014 Mark Mikofski
+    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
+
 from .mat_types import (  # noqa: E401
     MatModule,
     MatObject,

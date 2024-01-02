@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     pygments.lexers.matlab
     ~~~~~~~~~~~~~~~~~~~~~~
@@ -288,7 +287,8 @@ class MatlabLexer(RegexLexer):
                         "try",
                         "while",
                     ),
-                    suffix=r"\b",
+                    prefix=r"(?<!\.)(",
+                    suffix=r")\b",
                 ),
                 Keyword,
             ),

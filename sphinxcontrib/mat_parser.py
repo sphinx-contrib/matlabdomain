@@ -1,9 +1,11 @@
-# -*- coding: utf-8 -*-
 """
-Functions for parsing MatlabLexer output.
+    sphinxcontrib.mat_parser
+    ~~~~~~~~~~~~~~~~~~~~~~~~
 
-:copyright: Copyright 2023 Jørgen Cederberg
-:license: BSD, see LICENSE for details.
+    Functions for parsing MatlabLexer output.
+
+    :copyright: Copyright 2023-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+    :license: BSD, see LICENSE for details.
 """
 
 import re

@@ -1,3 +1,11 @@
+sphinxcontrib-matlabdomain-0.21.3 (2024-01-02)
+==============================================
+
+* Fix issue with parsing of MATLAB files, where keywords were used in ``struct``
+  fieldnames. E.g. ``a = pkg.arguments``. These were mistaken as ``keyword``
+  tokens and could result in warnings with ``Check if valid MATLAB code.``.
+* Bump copyright to 2024.
+
 sphinxcontrib-matlabdomain-0.21.2 (2023-12-17)
 ==============================================
 

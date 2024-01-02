@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 """
     sphinxcontrib.mat_types
     ~~~~~~~~~~~~~~~~~~~~~~~
 
     Types for MATLAB.
 
-    :copyright: Copyright 2014 Mark Mikofski
+    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
+
 from io import open  # for opening files with encoding in Python 2
 import os
 from copy import copy
