@@ -30,7 +30,7 @@ def test_index(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
     assert (
         content.astext()
-        == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\n\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\n\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
+        == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\nThe Myclass constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\nThe YourClass constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
     )
 
 
@@ -44,7 +44,7 @@ def test_index_auto_link_all(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
     assert (
         content.astext()
-        == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\n\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\n\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
+        == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\nThe Myclass() constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\nThe YourClass() constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
     )
 
 

@@ -10,6 +10,7 @@ classdef YourClass
     end
     methods
         function obj = YourClass()
+            % The YourClass constructor
             obj.prop = 10;
         end
 

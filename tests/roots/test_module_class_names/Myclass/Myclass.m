@@ -10,6 +10,7 @@ classdef Myclass
     end
     methods
         function obj = Myclass()
+            % The Myclass constructor
             obj.prop = 10;
         end
 
