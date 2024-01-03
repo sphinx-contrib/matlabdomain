@@ -1057,10 +1057,10 @@ class MatClass(MatMixin, MatObject):
 
             # class "attributes"
             self.attrs, idx = self.attributes(idx, MATLAB_CLASS_ATTRIBUTE_TYPES)
-            # =====================================================================
-            # classname
-            idx += self._blanks(idx)  # skip blanks
-            if self._tk_ne(idx, (Token.Name, self.name)):
+
+            # Check if self.name matches the name in the file.
+            idx += self._blanks(idx)
+            if not self.tokens[idx][1] == self.name:
                 logger.warning(
                     "[sphinxcontrib-matlabdomain] Unexpected class name: '%s'."
                     " Expected '%s' in '%s'.",
