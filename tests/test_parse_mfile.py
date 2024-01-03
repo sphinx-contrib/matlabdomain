@@ -872,5 +872,17 @@ def test_ClassWithKeywordsAsFieldnames():
     assert meth.docstring == " Returns the value of `d`\n"
 
 
+def test_ClassWithNamedAsArguments():
+    mfile = os.path.join(TESTDATA_ROOT, "arguments.m")
+    obj = mat_types.MatObject.parse_mfile(mfile, "arguments", "test_data")
+    assert obj.name == "arguments"
+    assert obj.bases == ["handle", "matlab.mixin.Copyable"]
+    assert "value" in obj.properties
+    meth = obj.methods["arguments"]
+    assert meth.docstring == " Constructor for arguments\n"
+    meth = obj.methods["add"]
+    assert meth.docstring == " Add new argument\n"
+
+
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])
