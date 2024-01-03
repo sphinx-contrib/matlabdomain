@@ -1,13 +1,16 @@
-Description
-===========
+Myclass
+=======
 
-In this directory we test features used in the NUMAD project.
+.. currentmodule:: Myclass
 
-Table of contents
-=================
+.. autoclass:: Myclass
+    :members:
 
-.. toctree::
-   :maxdepth: 2
 
-   myclass
-   yourclass
+YourClass
+=========
+
+.. currentmodule:: .
+
+.. autoclass:: YourClass
+    :members:
