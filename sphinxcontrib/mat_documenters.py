@@ -1225,6 +1225,8 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             membername
             for (membername, member) in filtered_members
             if not isinstance(member, MatMethod) and not isinstance(member, MatProperty)
+            # exclude parent modules with names matching members (as in Myclass.Myclass)
+            and not (hasattr(member, 'module') and member.name == member.module)
         ]
         # create list of members that are not properties
         non_properties = [

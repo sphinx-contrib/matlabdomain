@@ -14,3 +14,6 @@ YourClass
 
 .. autoclass:: YourClass
     :members:
+
+.. automodule:: Myclass.MyOtherClass
+    :members:

@@ -31,6 +31,7 @@ def test_index(make_app, rootdir):
     assert (
         content.astext()
         == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\nThe Myclass constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\nThe YourClass constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
+        + "\n\n\n\n\n\n\n\nclass MyOtherClass\n\nmyothertest\n\nProperty Summary\n\n\n\n\n\notherprop\n\nprop\n\nMethod Summary\n\n\n\n\n\notherf()\n\nfunction"
     )
 
 
@@ -45,6 +46,7 @@ def test_index_auto_link_all(make_app, rootdir):
     assert (
         content.astext()
         == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\nThe Myclass() constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\nThe YourClass() constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
+        + "\n\n\n\n\n\n\n\nclass MyOtherClass\n\nmyothertest\n\nProperty Summary\n\n\n\n\n\notherprop\n\nprop\n\nMethod Summary\n\n\n\n\n\notherf()\n\nfunction"
     )
 
 
