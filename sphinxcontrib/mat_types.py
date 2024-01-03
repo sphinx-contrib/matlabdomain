@@ -294,8 +294,8 @@ def analyze(app):
     for name, entity in entities_table.items():
         short_name = shortest_name(name)
         if short_name != name and not (short_name in long_names and name in long_names):
-            # All directories are handled as MatModule type, so restrict shortening to entities
-            # of this type
+            # Only handle the below special case when overwriting entries in entities_table will not
+            # introduce conflicts
             if short_name in entities_table:
                 # Special Case - ClassName/ClassName.m
                 existing_entity = entities_table[short_name]
