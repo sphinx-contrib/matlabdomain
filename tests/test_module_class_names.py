@@ -30,7 +30,21 @@ def test_index(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
     assert (
         content.astext()
-        == "\n\n\n\n\n\nclass Myclass.Myclass\n\nmytest\n\nProperty Summary\n\n\n\n\n\nprop\n\nprop\n\nMethod Summary\n\n\n\n\n\nf()\n\nfunction\n\nOther\n\n"
+        == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\n\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\n\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
+def test_index_auto_link_all(make_app, rootdir):
+    srcdir = rootdir / "roots" / "test_module_class_names"
+    confdict = {"matlab_auto_link": "all"}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
+    app.builder.build_all()
+
+    content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
+    assert (
+        content.astext()
+        == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\n\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\n\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
     )
 
 

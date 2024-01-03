@@ -234,6 +234,8 @@ class MatlabDocumenter(PyDocumenter):
                         else:
                             o = None
                         if o:
+                            if isinstance(o, dict):
+                                o = o["class"]
                             role = o.ref_role()
                             if role in ["class", "func"]:
                                 entries[k] = f":{role}:`{entries[k]}`"
@@ -271,6 +273,8 @@ class MatlabDocumenter(PyDocumenter):
                                 cls = entities_table[entities_name_map[m1]]
                             else:
                                 cls = None
+                            if isinstance(cls, dict):
+                                cls = cls["class"]
                             if cls and cls.ref_role() == "class":
                                 name = m2.rstrip("()")
                                 if name in cls.methods:
@@ -310,6 +314,8 @@ class MatlabDocumenter(PyDocumenter):
     def auto_link_all(self, docstrings):
         # auto-link known classes and functions everywhere
         for n, o in entities_table.items():
+            if isinstance(o, dict):
+                o = o["class"]
             role = o.ref_role()
             if role in ["class", "func"]:
                 nn = n.replace("+", "")  # remove + from name

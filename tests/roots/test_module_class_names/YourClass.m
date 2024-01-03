@@ -1,7 +1,7 @@
-classdef Myclass
-    % Myclass
+classdef YourClass
+    % YourClass
     %
-    % See Also: YourClass
+    % See Also: Myclass
     %
 
     properties
@@ -9,7 +9,7 @@ classdef Myclass
         prop;
     end
     methods
-        function obj = Myclass()
+        function obj = YourClass()
             obj.prop = 10;
         end
 
