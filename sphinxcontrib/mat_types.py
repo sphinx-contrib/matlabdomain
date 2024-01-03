@@ -293,7 +293,9 @@ def analyze(app):
     for name, entity in entities_table.items():
         short_name = shortest_name(name)
         if short_name != name:
-            if short_name in entities_table:
+            # All directories are handled as MatModule type, so restrict shortening to entities
+            # of this type
+            if short_name in entities_table and isinstance(entities_table[short_name].ref_role(), MatModule):
                 # Special Case - ClassName/ClassName.m
                 existing_entity = entities_table[short_name]
                 short_names[short_name] = {
