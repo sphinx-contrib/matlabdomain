@@ -1,3 +1,10 @@
+sphinxcontrib-matlabdomain-0.21.X (2024-MM-DD)
+==============================================
+
+* Fixed issue with warning if there is a mismatch between filename and
+  classname, if the classname is a reserved word (like arguments).
+
+
 sphinxcontrib-matlabdomain-0.21.3 (2024-01-02)
 ==============================================
 
