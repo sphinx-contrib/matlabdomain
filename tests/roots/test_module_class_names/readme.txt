@@ -8,7 +8,7 @@ Testing that we can have a structure like:
    MyModule/
    YourClass.m
 
-Without getting conclicts over the names in `entitities_table`. Further, we test
+Without getting conclicts over the names in `entities_table`. Further, we test
 that auto-linking also works.
 
 Regular build.::
