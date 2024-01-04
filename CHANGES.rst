@@ -1,4 +1,4 @@
-sphinxcontrib-matlabdomain-0.21.X (2024-MM-DD)
+sphinxcontrib-matlabdomain-0.21.4 (2024-01-04)
 ==============================================
 
 * Fixed issue with warning if there is a mismatch between filename and
