@@ -290,9 +290,12 @@ def analyze(app):
     #
     # NOTE: Does not yet work with class folders
     short_names = {}
+    long_names = entities_table.keys()
     for name, entity in entities_table.items():
         short_name = shortest_name(name)
-        if short_name != name:
+        if short_name != name and not (short_name in long_names and name in long_names):
+            # Only handle the below special case when overwriting entries in entities_table will not
+            # introduce conflicts
             if short_name in entities_table:
                 # Special Case - ClassName/ClassName.m
                 existing_entity = entities_table[short_name]
@@ -1769,8 +1772,10 @@ class MatModuleAnalyzer(object):
                 raise entry
             return entry
         mod = try_get_module_entity_or_default(modname)
-        if mod:
+        if isinstance(mod, MatModule):
             obj = cls.for_folder(mod.path, modname)
+        elif isinstance(mod, MatClass):
+            obj = cls.for_folder(mod.module, modname)
         else:
             err = MatcodeError("error importing %r" % modname)
             cls.cache["module", modname] = err

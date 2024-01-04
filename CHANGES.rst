@@ -1,8 +1,14 @@
-sphinxcontrib-matlabdomain-0.21.X (2024-MM-DD)
+sphinxcontrib-matlabdomain-0.21.4 (2024-01-04)
 ==============================================
 
 * Fixed issue with warning if there is a mismatch between filename and
   classname, if the classname is a reserved word (like arguments).
+* Fixed a problem with `PR 230`_ introduced in solving `Issue 204`_: when more
+  than one (sub)directory in the project had the same name, a dict was added to
+  ``entities_table`` that broke autolinking (see also `Issue 235`_).
+
+.. _PR 230: https://github.com/sphinx-contrib/matlabdomain/pull/230
+.. _Issue 235: https://github.com/sphinx-contrib/matlabdomain/issues/235
 
 
 sphinxcontrib-matlabdomain-0.21.3 (2024-01-02)
@@ -12,6 +18,7 @@ sphinxcontrib-matlabdomain-0.21.3 (2024-01-02)
   fieldnames. E.g. ``a = pkg.arguments``. These were mistaken as ``keyword``
   tokens and could result in warnings with ``Check if valid MATLAB code.``.
 * Bump copyright to 2024.
+
 
 sphinxcontrib-matlabdomain-0.21.2 (2023-12-17)
 ==============================================
@@ -36,11 +43,11 @@ sphinxcontrib-matlabdomain-0.21.0 (2023-12-16)
 
 * Allow ``matlab_src_dir`` to be a relative path of the ``conf.py`` file. See
   `PR 224`_ and `PR 225`_.
-* Fixed `Issue 220`. Parsing of property docstring could throw warning if there
+* Fixed `Issue 220`_. Parsing of property docstring could throw warning if there
   were blank lines between comments.
-* Fixed `Issue 221`. Using builtin's in class folder defintion for methods
+* Fixed `Issue 221`_. Using builtin's in class folder defintion for methods
   defined in other files, threw a parsing warning.
-* Fixed `Issue 225`. Empty ``@classfolder`` would throw an assertion error.
+* Fixed `Issue 225`_. Empty ``@classfolder`` would throw an assertion error.
 
 .. _Issue 220: https://github.com/sphinx-contrib/matlabdomain/issues/220
 .. _Issue 221: https://github.com/sphinx-contrib/matlabdomain/issues/221
