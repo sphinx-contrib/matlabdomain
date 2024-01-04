@@ -223,9 +223,12 @@ def analyze(app):
     MatObject.sphinx_app = app  # pass app to MatObject cls
 
     entities_table.clear()
+    entities_name_map.clear()
 
     # Set the root object and get root members.
     root = MatObject.matlabify("")
+    if not root:
+        return
     root.safe_getmembers()
     recursive_find_all(root)
 
