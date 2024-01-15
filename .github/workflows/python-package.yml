@@ -31,8 +31,8 @@ jobs:
       run: |
         pip install tox==4.8.0
         pip install sphinxcontrib-applehelp==1.0.7
-        pip install sphinxcontrib-applehelp==1.0.5
-        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}-pygments${{matrix.pygments-version}}
+        pip install sphinxcontrib-devhelp==1.0.5
+        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}-pygments${{matrix.pygments-version}}"
 
 
   test-sphinx-newer:
@@ -44,7 +44,6 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         sphinx-version: ["53", "60", "latest"]
         pygments-version: ["213", "latest"]
-        applehelp-version: ["107", "latest"]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
