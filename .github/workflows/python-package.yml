@@ -11,14 +11,35 @@ on:
     - cron:  '* 6 * * *'
 
 jobs:
-  test:
+  test-sphinx-45:
+    name: Run tests for Python ${{ matrix.python-version }}, Sphinx 4.5, Pygments ${{ matrix.pygments-version }}
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9"]
+        pygments-version: ["213", "latest"]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: x64
+    - name: Run with Tox
+      run: |
+        pip install tox==4.8.0
+        tox -e "${{matrix.python-version}}-sphinx45-pygments${{matrix.pygments-version}}"
+
+
+  test-sphinx-newer:
     name: Run tests for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }},  Pygments ${{ matrix.pygments-version }}
     timeout-minutes: 5
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-        sphinx-version: ["45", "53", "60", "latest"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        sphinx-version: ["53", "60", "latest"]
         pygments-version: ["213", "latest"]
     steps:
     - uses: actions/checkout@v3
