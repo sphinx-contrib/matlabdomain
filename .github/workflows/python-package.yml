@@ -29,8 +29,6 @@ jobs:
     - name: Run with Tox
       run: |
         pip install tox==4.8.0
-        pip install sphinxcontrib-devhelp==1.0.2
-        pip install sphinxcontrib-applehelp==1.0.4
         tox -e "${{matrix.python-version}}-sphinx45-pygments${{matrix.pygments-version}}"
 
 
