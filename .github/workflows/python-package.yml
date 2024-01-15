@@ -12,7 +12,7 @@ on:
 
 jobs:
   test:
-    name: Run tests for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }},  Pygments ${{ matrix.pygments-version }}
+    name: Run tests for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }},  Pygments ${{ matrix.pygments-version }}, Applehelp ${{ matrix.applehelp-version}}
     timeout-minutes: 5
     runs-on: ubuntu-latest
     strategy:
@@ -20,6 +20,7 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         sphinx-version: ["45", "53", "60", "latest"]
         pygments-version: ["213", "latest"]
+        applehelp-version: ["107", "latest"]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -30,7 +31,7 @@ jobs:
     - name: Run with Tox
       run: |
         pip install tox==4.8.0
-        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}-pygments${{matrix.pygments-version}}"
+        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}-pygments${{matrix.pygments-version}}-pygments${{matrix.pygments-version}}-applehelp${{matrix.applehelp-version}}"
 
   check:
     name: Run static analysis
