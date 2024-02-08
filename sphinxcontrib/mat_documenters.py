@@ -302,10 +302,13 @@ class MatlabDocumenter(PyDocumenter):
             if no_link_state == -1:  # if 1st sign already detected
                 no_link_state = -2  # 2nd sign of literal block
             elif no_link_state == 1:  # if in literal block
-                no_link_state = 0  # end the literal block, restart linking
-        elif no_link_state == -2 and line.startswith("  "):
-            # indented line after 1st 2 signs
-            no_link_state = 1  # beginning of literal block (stop linking!)
+                no_link_state = -2  # need to look again for indented line
+        elif no_link_state == -2:  # following 1st 2 signs
+            if line.startswith("  "):  # indented line, literal block
+                no_link_state = 1  # no linking!
+            else:  # not indented line, literal block has ended
+                no_link_state = 0  # restart linking!
+                not_in_literal_block = True  # including in this line
         elif no_link_state != 1:  # not in a literal block, go ahead and link
             not_in_literal_block = True
 
