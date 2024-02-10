@@ -1,3 +1,12 @@
+sphinxcontrib-matlabdomain-0.21.5 (2024-02-10)
+==============================================
+
+* Fixed `Issue 240`_, where links in literal blocks where not detected
+  correctly.
+
+.. _Issue 240: https://github.com/sphinx-contrib/matlabdomain/issues/240
+
+
 sphinxcontrib-matlabdomain-0.21.4 (2024-01-04)
 ==============================================
 
