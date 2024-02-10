@@ -3,6 +3,7 @@ function [x, y] = funcFoo(u, t)
 % ::
 %
 %   x = package.funcFoo(u)
+%
 %   [x, y] = package.funcFoo(u, t)
 %
 % Test for auto-linking with baseFunction and BaseClass, etc.
