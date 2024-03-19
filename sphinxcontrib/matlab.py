@@ -258,14 +258,6 @@ class MatObject(ObjectDescription):
     def add_target_and_index(self, name_cls, sig, signode):
         modname = self.options.get("module", self.env.temp_data.get("mat:module"))
 
-        if self.env.config.matlab_short_links and not name_cls[0] == modname:
-            # modname is only used for package names
-            # - "target.+package" => "package"
-            # - "target" => ""
-            parts = modname.split(".")
-            parts = [part for part in parts if part.startswith("+")]
-            modname = ".".join(parts)
-
         fullname = (modname and modname + "." or "") + name_cls[0]
         fullname = fullname.lstrip(".")
 
