@@ -235,7 +235,10 @@ class MatlabDocumenter(PyDocumenter):
                             o = None
                         if o:
                             if isinstance(o, dict):
-                                o = o["class"]
+                                if "class" in o:
+                                    o = o["class"]
+                                elif "func" in o:
+                                    o = o["func"]
                             role = o.ref_role()
                             if role in ["class", "func"]:
                                 entries[k] = f":{role}:`{entries[k]}`"
@@ -318,7 +321,10 @@ class MatlabDocumenter(PyDocumenter):
         # auto-link known classes and functions everywhere
         for n, o in entities_table.items():
             if isinstance(o, dict):
-                o = o["class"]
+                if "class" in o:
+                    o = o["class"]
+                elif "func" in o:
+                    o = o["func"]
             role = o.ref_role()
             if role in ["class", "func"]:
                 nn = n.replace("+", "")  # remove + from name
