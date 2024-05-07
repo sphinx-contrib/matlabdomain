@@ -884,5 +884,16 @@ def test_ClassWithNamedAsArguments():
     assert meth.docstring == " Add new argument\n"
 
 
+def test_ClassWithPropertyCellValues():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithPropertyCellValues.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "ClassWithPropertyCellValues", "test_data"
+    )
+    assert obj.name == "ClassWithPropertyCellValues"
+    assert obj.bases == []
+    assert "fields" in obj.properties
+    assert "getLevel" in obj.methods
+
+
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])

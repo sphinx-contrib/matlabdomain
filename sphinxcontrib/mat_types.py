@@ -99,6 +99,11 @@ MATLAB_METHOD_ATTRIBUTE_TYPES = {
 }
 
 
+MATLAB_FUNC_BRACES_BEGIN = tuple(zip((Token.Punctuation,) * 2, ("(", "{")))
+MATLAB_FUNC_BRACES_END = tuple(zip((Token.Punctuation,) * 2, (")", "}")))
+MATLAB_PROP_BRACES_BEGIN = tuple(zip((Token.Punctuation,) * 3, ("(", "{", "[")))
+MATLAB_PROP_BRACES_END = tuple(zip((Token.Punctuation,) * 3, (")", "}", "]")))
+
 # Dictionary containing all MATLAB entities that are found in `matlab_src_dir`.
 # The dictionary keys are both the full dotted path, relative to the root.
 # Further, "short names" are added. Example:
@@ -980,9 +985,9 @@ class MatFunction(MatObject):
                 elif kw == (Token.Keyword, "end") and not lastkw:
                     kw_end -= 1
                 # save last punctuation
-                elif kw in list(zip((Token.Punctuation,) * 2, ("(", "{"))):
+                elif kw in MATLAB_FUNC_BRACES_BEGIN:
                     lastkw += 1
-                elif kw in list(zip((Token.Punctuation,) * 2, (")", "}"))):
+                elif kw in MATLAB_FUNC_BRACES_END:
                     lastkw -= 1
                 try:
                     kw = tks.pop()
@@ -1266,7 +1271,7 @@ class MatClass(MatMixin, MatObject):
                             idx += self._blanks(idx)  # skip blanks
                             # concatenate default value until newline or comment
                             default = ""
-                            punc_ctr = 0  # punctuation placeholder
+                            brace_count = 0
                             # keep reading until newline or comment
                             # only if all punctuation pairs are closed
                             # and comment is **not** continuation ellipsis
@@ -1275,7 +1280,7 @@ class MatClass(MatMixin, MatObject):
                                     not self._is_newline(idx)
                                     and self.tokens[idx][0] is not Token.Comment
                                 )
-                                or punc_ctr > 0
+                                or brace_count > 0
                                 or (
                                     self.tokens[idx][0] is Token.Comment
                                     and self.tokens[idx][1].startswith("...")
@@ -1283,15 +1288,12 @@ class MatClass(MatMixin, MatObject):
                             ):
                                 token = self.tokens[idx]
                                 # default has an array spanning multiple lines
-                                if token in list(
-                                    zip((Token.Punctuation,) * 3, ("(", "{", "["))
-                                ):
-                                    punc_ctr += 1  # increment punctuation counter
+                                # keep track of braces
+                                if token in MATLAB_PROP_BRACES_BEGIN:
+                                    brace_count += 1
                                 # look for end of array
-                                elif token in list(
-                                    zip((Token.Punctuation,) * 3, (")", "}", "]"))
-                                ):
-                                    punc_ctr -= 1  # decrement punctuation counter
+                                elif token in MATLAB_PROP_BRACES_END:
+                                    brace_count -= 1
                                 # Pygments treats continuation ellipsis as comments
                                 # text from ellipsis until newline is in token
                                 elif token[0] is Token.Comment and token[1].startswith(
@@ -1303,7 +1305,9 @@ class MatClass(MatMixin, MatObject):
                                         default += "\n"
                                         idx += 1
                                     continue
-                                elif self._is_newline(idx - 1):
+                                elif self._is_newline(idx - 1) and not self._is_newline(
+                                    idx
+                                ):
                                     idx += self._blanks(idx)
                                     continue
                                 elif token[0] is Token.Text and token[1] == " ":

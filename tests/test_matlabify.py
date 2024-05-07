@@ -117,6 +117,7 @@ def test_module(mod):
         "ClassWithTrailingSemicolons",
         "ClassWithSeperatedComments",
         "ClassWithKeywordsAsFieldnames",
+        "ClassWithPropertyCellValues",
         "arguments",
     }
     assert all_items == expected_items
