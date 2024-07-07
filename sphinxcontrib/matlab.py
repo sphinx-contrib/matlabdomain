@@ -336,6 +336,25 @@ class MatClasslike(MatObject):
     Description of a class-like object (classes, interfaces, exceptions).
     """
 
+    def _object_hierarchy_parts(self, sig):
+        """
+        Returns a tuple of strings, one entry for each part of the object's
+        hierarchy (e.g. ``('module', 'submodule', 'Class', 'method')``). The
+        returned tuple is used to properly nest children within parents in the
+        table of contents, and can also be used within the
+        :py:meth:`_toc_entry_name` method.
+
+        This method must not be used outwith table of contents generation.
+        """
+        parts = sig.attributes.get('module').split('.')
+        parts.append(sig.attributes.get('fullname'))
+        #import pdb;pdb.set_trace()
+        return tuple(parts)
+
+    def _toc_entry_name(self, sig):
+        # TODO respecting the configuration setting ``toc_object_entries_show_parents``
+        return sig.attributes.get('fullname')
+
     def get_signature_prefix(self, sig):
         return self.objtype + " "
 
