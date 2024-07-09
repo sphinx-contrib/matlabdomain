@@ -712,6 +712,7 @@ class MATLABDomain(Domain):
         "class": MatXRefRole(),
         "const": MatXRefRole(),
         "attr": MatXRefRole(),
+        "enum": MatXRefRole(),
         "meth": MatXRefRole(fix_parens=True),
         "mod": MatXRefRole(),
         "obj": MatXRefRole(),
@@ -919,6 +920,11 @@ def setup(app):
     app.registry.add_documenter("mat:attribute", doc.MatAttributeDocumenter)
     app.add_directive_to_domain(
         "mat", "autoattribute", mat_directives.MatlabAutodocDirective
+    )
+
+    app.registry.add_documenter("mat:enum", doc.MatAttributeDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autoenum", mat_directives.MatlabAutodocDirective
     )
 
     app.registry.add_documenter("mat:data", doc.MatDataDocumenter)

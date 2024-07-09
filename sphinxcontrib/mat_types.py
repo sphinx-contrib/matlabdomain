@@ -26,6 +26,7 @@ __all__ = [
     "MatFunction",
     "MatClass",
     "MatProperty",
+    "MatEnumerations",
     "MatMethod",
     "MatScript",
     "MatException",
@@ -1068,6 +1069,8 @@ class MatClass(MatMixin, MatObject):
         self.properties = {}
         #: dictionary of class methods
         self.methods = {}
+        #: dictionary of class enumerations
+        self.enumerations = {}
         #: remaining tokens after main class definition is parsed
         self.rem_tks = None
         # =====================================================================
@@ -1421,10 +1424,143 @@ class MatClass(MatMixin, MatObject):
                         "[sphinxcontrib-matlabdomain] ignoring 'enumeration' in 'classdef %s'.",
                         self.name,
                     )
+                    # no attributes for enums
                     idx += 1
                     # Token.Keyword: "end" terminates events block
                     while self._tk_ne(idx, (Token.Keyword, "end")):
-                        idx += 1
+                        # skip whitespace
+                        while self._whitespace(idx):
+                            whitespace = self._whitespace(idx)
+                            if whitespace:
+                                idx += whitespace
+                            else:
+                                idx += 1
+
+                        # =========================================================
+                        # long docstring before property
+                        if self.tokens[idx][0] is Token.Comment:
+                            # docstring
+                            docstring = ""
+
+                            # Collect comment lines
+                            while self.tokens[idx][0] is Token.Comment:
+                                docstring += self.tokens[idx][1].lstrip("%")
+                                idx += 1
+                                idx += self._blanks(idx)
+
+                                try:
+                                    # Check if end of line was reached
+                                    if self._is_newline(idx):
+                                        docstring += "\n"
+                                        idx += 1
+                                        idx += self._blanks(idx)
+
+                                    # Check if variable name is next
+                                    if self.tokens[idx][0] is Token.Name:
+                                        enum_name = self.tokens[idx][1]
+                                        self.enumerations[enum_name] = {}
+                                        self.enumerations[enum_name][
+                                            "docstring"
+                                        ] = docstring
+                                        break
+
+                                    # If there is an empty line at the end of
+                                    # the comment: discard it
+                                    elif self._is_newline(idx):
+                                        docstring = ""
+                                        idx += self._whitespace(idx)
+                                        break
+
+                                except IndexError:
+                                    # EOF reached, quit gracefully
+                                    break
+
+                        # with "%:" directive trumps docstring after property
+                        if self.tokens[idx][0] is Token.Name:
+                            enum_name = self.tokens[idx][1]
+                            idx += 1
+                            # Initialize property if it was not already done
+                            if enum_name not in self.enumerations.keys():
+                                self.enumerations[enum_name] = {}
+
+                            # skip size, class and functions specifiers
+                            # TODO: parse args and do a postprocessing step.
+                            idx += self._propspec(idx)
+
+                            if self._tk_eq(idx, (Token.Punctuation, ";")):
+                                continue
+
+                            # This is because matlab allows comma separated list of enums 
+                            if self._tk_eq(idx, (Token.Punctuation, ",")):
+                                continue
+
+                        # subtype of Name EG Name.Builtin used as Name
+                        elif self.tokens[idx][0] in Token.Name.subtypes:
+                            prop_name = self.tokens[idx][1]
+                            logger.debug(
+                                "[sphinxcontrib-matlabdomain] WARNING %s.%s.%s is a builtin name.",
+                                self.module,
+                                self.name,
+                                prop_name,
+                            )
+                            self.properties[prop_name] = {"attrs": attr_dict}
+                            idx += 1
+
+                            # skip size, class and functions specifiers
+                            # TODO: Parse old and new style property extras
+                            idx += self._propspec(idx)
+
+                            if self._tk_eq(idx, (Token.Punctuation, ";")):
+                                continue
+
+                        elif self._tk_eq(idx, (Token.Keyword, "end")):
+                            idx += 1
+                            break
+                        # skip semicolon after property name, but no default
+                        elif self._tk_eq(idx, (Token.Punctuation, ";")):
+                            idx += 1
+                            # A comment might come after semi-colon
+                            idx += self._blanks(idx)
+                            if self._is_newline(idx):
+                                idx += 1
+                                # Property definition is finished; add missing values
+                                if "default" not in self.properties[prop_name].keys():
+                                    self.properties[prop_name]["default"] = None
+                                if "docstring" not in self.properties[prop_name].keys():
+                                    self.properties[prop_name]["docstring"] = None
+
+                                continue
+                            elif self.tokens[idx][0] is Token.Comment:
+                                docstring = self.tokens[idx][1].lstrip("%")
+                                docstring += "\n"
+                                self.properties[prop_name]["docstring"] = docstring
+                                idx += 1
+                        elif self.tokens[idx][0] is Token.Comment:
+                            # Comments seperated with blank lines.
+                            idx = idx - 1
+                            continue
+                        else:
+                            logger.warning(
+                                "sphinxcontrib-matlabdomain] Expected enumeration in %s.%s - got %s",
+                                self.module,
+                                self.name,
+                                str(self.tokens[idx]),
+                            )
+                            return
+                        idx += self._blanks(idx)  # skip blanks
+
+                        # docstring
+                        if "docstring" not in self.enumerations[enum_name].keys():
+                            docstring = {"docstring": None}
+                            if self.tokens[idx][0] is Token.Comment:
+                                docstring["docstring"] = self.tokens[idx][1].lstrip("%")
+                                idx += 1
+                            self.enumerations[enum_name].update(docstring)
+                        elif self.tokens[idx][0] is Token.Comment:
+                            # skip this comment
+                            idx += 1
+
+                        idx += self._whitespace(idx)
                     idx += 1
                 if self._tk_eq(idx, (Token.Punctuation, ";")):
                     # Skip trailing semicolon after end.
@@ -1603,11 +1739,16 @@ class MatClass(MatMixin, MatObject):
             return self.__bases__
         elif name in self.properties:
             return MatProperty(name, self, self.properties[name])
+        elif name in self.enumerations:
+            return MatEnumeration(name, self, self.enumerations[name])
         elif name in self.methods:
             return self.methods[name]
+        elif name in self.enumerations:
+            return
         elif name == "__dict__":
             objdict = dict([(pn, self.getter(pn)) for pn in self.properties.keys()])
             objdict.update(self.methods)
+            objdict.update(dict([(en, self.getter(en)) for en in self.enumerations.keys()]))
             return objdict
         else:
             super(MatClass, self).getter(name, *defargs)
@@ -1634,6 +1775,23 @@ class MatProperty(MatObject):
     def __doc__(self):
         return self.docstring
 
+class MatEnumeration(MatObject):
+    def __init__(self, name, cls, attrs):
+        super(MatEnumeration, self).__init__(name)
+        self.cls = cls
+        self.docstring = attrs["docstring"]
+        
+    def ref_role(self):
+        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        return "enum"
+
+    @property
+    def __module__(self):
+        return self.cls.module
+
+    @property
+    def __doc__(self):
+        return self.docstring
 
 class MatMethod(MatFunction):
     def __init__(self, modname, tks, cls, attrs):
