@@ -1,6 +1,6 @@
 from textmate_grammar.parsers.matlab import MatlabParser
 
-rpath = "../../../syscop/software/nosnoc/+nosnoc/+model/Base.m"
+rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
 
 
 def find_first_child(curr, tok):
@@ -8,7 +8,6 @@ def find_first_child(curr, tok):
     if not ind:
         return None
     return (curr.children[ind[0]], ind[0])
-
 
 class MatClassParser():
     def __init__(self, path):
@@ -97,12 +96,58 @@ class MatClassParser():
         idxs = [i for i in range(len(section.children)) if section.children[i].token == "meta.assignment.definition.property.matlab"]
         for idx in idxs:
             prop_tok = section.children[idx]
-            prop_name = prop_tok.begin[0].content # TODO is this always the name?
+            prop_name = prop_tok.begin[0].content
+            self.properties[prop_name] = {}  # Create entry for property
+            self._parse_property_validation(prop_name, prop_tok)  # Parse property validation.
+
+            # Get inline docstring
+            inline_comment_gen = prop_tok.find(tokens=comment.line.percentage.matlab, attribute='end')
+            try:
+                inline_comment_tok,_ = next(inline_comment_gen)
+                inline_comment = inline_comment_tok.content[1:]  # strip leading % sign
+            except StopIteration:
+                inline_comment = None
+
+            # Walk backwards to get preceding docstring.
+            walk_idx = idx-1
+            while walk_idx >= 0:
+                walk_tok = section.children[walk_idx]
+                walk_idx -= 1
+            
             # TODO walk forward and backward to get property docstring.
             # TODO if we have mutliple possible docstrings what is given priority?
-            # TODO parse out property validations syntax
-            self.properties[prop_name] = {}
+            
 
+    def _parse_property_validation(self, prop_name, prop):
+        '''Parses property validation syntax'''
+        # First get the size if found
+        size_gen = prop.find(tokens="meta.parens.size.matlab", depth=1)
+        try:  # We have a size, therefore parse the comma separated list into tuple
+            size_tok,_ = next(size_gen)
+            size_elem_gen = size_tok.find(tokens=["constant.numeric.decimal.matlab", "keyword.operator.vector.colon.matlab"], depth=1)
+            size = tuple([elem[0].content for elem in size_elem_gen])
+            self.properties[prop_name]['size'] = size
+        except StopIteration:
+            pass
+        
+        # Now find the type if it exists
+        # TODO this should be mapped to known types (though perhaps as a postprocess)
+        type_gen = prop.find(tokens="storage.type.matlab", depth=1)
+        try:
+            self.properties[prop_name]['type'] = next(type_gen)[0].content
+        except StopIteration:
+            pass
+        
+        # Now find list of validators
+        validator_gen = prop.find(tokens="meta.block.validation.matlab", depth=1)
+        try:
+            validator_tok, _ = next(validator_gen)
+            validator_toks = validator_tok.findall(tokens="variable.other.readwrite.matlab", depth=1)  # TODO Probably bug here in MATLAB-Language-grammar
+            self.properties[prop_name]['validators'] = [tok[0].content for tok in validator_toks]
+        except StopIteration:
+            pass
+        
+        
     def _parse_method_section(self, section):
         # TODO parse property section attrs
         idxs = [i for i in range(len(section.children)) if section.children[i].token == "meta.function.matlab"]
@@ -112,7 +157,7 @@ class MatClassParser():
             # TODO walk forward and backward to get property docstring.
             # TODO if we have mutliple possible docstrings what is given priority?
             # TODO parse out property validations syntax
-            self.properties[prop_name] = {}
+            self.methods[prop_name] = {}
 
     def _parse_enum_section(self, section):
         # TODO parse property section attrs
