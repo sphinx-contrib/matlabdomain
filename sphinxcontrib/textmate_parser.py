@@ -1,6 +1,6 @@
 from textmate_grammar.parsers.matlab import MatlabParser
 
-rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+rpath = "../../../syscop/software/nosnoc/+nosnoc/+model/Pss.m"
 
 
 def find_first_child(curr, tok):
@@ -101,7 +101,7 @@ class MatClassParser():
             self._parse_property_validation(prop_name, prop_tok)  # Parse property validation.
 
             # Get inline docstring
-            inline_comment_gen = prop_tok.find(tokens=comment.line.percentage.matlab, attribute='end')
+            inline_comment_gen = prop_tok.find(tokens="comment.line.percentage.matlab", attribute='end')
             try:
                 inline_comment_tok,_ = next(inline_comment_gen)
                 inline_comment = inline_comment_tok.content[1:]  # strip leading % sign
@@ -109,18 +109,53 @@ class MatClassParser():
                 inline_comment = None
 
             # Walk backwards to get preceding docstring.
-            walk_idx = idx-1
-            while walk_idx >= 0:
-                walk_tok = section.children[walk_idx]
-                walk_idx -= 1
-            
-            # TODO walk forward and backward to get property docstring.
+            preceding_docstring = ""
+            walk_back_idx = idx-1
+            while walk_back_idx >= 0:
+                walk_tok = section.children[walk_back_idx]
+                # TODO Check for multiline comment immediately before first
+                if walk_tok.token == "comment.line.percentage.matlab":
+                    # TODO check linebreak
+                    preceding_docstring = walk_tok.content[1:] + preceding_docstring  # [1:] strips %
+                    walk_back_idx -= 1
+                elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
+                    walk_back_idx -= 1
+                else:
+                    break
+            if not preceding_docstring:
+                preceding_docstring = None
+                
+            # Walk forwards to get following docstring
+            following_docstring = ""
+            walk_fwd_idx = idx+1
+            while walk_fwd_idx < len(section.children):
+                walk_tok = section.children[walk_fwd_idx]
+                # TODO Check for multiline comment immediately after first
+                if walk_tok.token == "comment.line.percentage.matlab":
+                    # TODO check linebreak
+                    following_docstring = following_docstring + walk_tok.content[1:]  # [1:] strips %
+                    walk_fwd_idx += 1
+                elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
+                    walk_fwd_idx += 1
+                else:
+                    break
+            if not following_docstring:
+                following_docstring = None
+
             # TODO if we have mutliple possible docstrings what is given priority?
-            
+            if inline_comment:
+                self.properties[prop_name]['docstring'] = inline_comment
+            elif preceding_docstring:
+                self.properties[prop_name]['docstring'] = preceding_docstring
+            elif following_docstring:
+                self.properties[prop_name]['docstring'] = following_docstring
+            else:
+                self.properties[prop_name]['docstring'] = None
+                
 
     def _parse_property_validation(self, prop_name, prop):
         '''Parses property validation syntax'''
-        # First get the size if found
+        # First get the szize if found
         size_gen = prop.find(tokens="meta.parens.size.matlab", depth=1)
         try:  # We have a size, therefore parse the comma separated list into tuple
             size_tok,_ = next(size_gen)
@@ -152,12 +187,77 @@ class MatClassParser():
         # TODO parse property section attrs
         idxs = [i for i in range(len(section.children)) if section.children[i].token == "meta.function.matlab"]
         for idx in idxs:
-            prop_tok = section.children[idx]
-            prop_name = prop_tok.begin[0].content # TODO is this always the name?
+            meth_tok = section.children[idx]
+            self._parse_function(meth_tok)
             # TODO walk forward and backward to get property docstring.
             # TODO if we have mutliple possible docstrings what is given priority?
             # TODO parse out property validations syntax
-            self.methods[prop_name] = {}
+
+    def _parse_function(self, fun_tok):
+        """Parse Function definition"""
+        # First find the function name
+        name_gen = fun_tok.find(tokens="entity.name.function.matlab")
+        try:
+            name_tok,_ = next(name_gen)
+            fun_name = name_tok.content
+        except StopIteration:
+            # TODO correct error here
+            raise Exception("Couldn't find function name")
+
+        # Find outputs and parameters
+        output_gen = fun_tok.find(tokens="variable.parameter.output.matlab")
+        param_gen = fun_tok.find(tokens="variable.parameter.input.matlab")
+
+        self.methods[fun_name] = {}
+        self.methods[fun_name]['outputs'] = {}
+        self.methods[fun_name]['params'] = {}
+
+        for out,_ in output_gen:
+            self.methods[fun_name]['outputs'][out.content] = {}
+            
+        for param,_ in param_gen:
+            self.methods[fun_name]['params'][param.content] = {}
+
+        # find arguments blocks
+        for arg_section,_ in fun_tok.find(tokens="meta.arguments.matlab"):
+            self._parse_argument_section(fun_name, arg_section)
+        
+    def _parse_argument_section(self, fun_name, section):
+        modifiers = [mod.content for mod,_ in section.find(tokens="storage.modifier.arguments.matlab")]
+        arg_def_gen = section.find(tokens="meta.assignment.definition.property.matlab")
+        for arg_def,_ in arg_def_gen:
+            arg_name = arg_def.begin[0].content  # Get argument name that is being defined
+            self._parse_argument_validation(fun_name, arg_name, arg_def, modifiers)
+            
+    def _parse_argument_validation(self, fun_name, arg_name, arg, modifiers):
+        # TODO This should be identical to propery validation I thint. Refactor
+        # First get the size if found
+        section = "output" if "Output" in modifiers else "params"
+        size_gen = arg.find(tokens="meta.parens.size.matlab", depth=1)
+        try:  # We have a size, therefore parse the comma separated list into tuple
+            size_tok,_ = next(size_gen)
+            size_elem_gen = size_tok.find(tokens=["constant.numeric.decimal.matlab", "keyword.operator.vector.colon.matlab"], depth=1)
+            size = tuple([elem[0].content for elem in size_elem_gen])
+            self.methods[fun_name][section][arg_name]['size'] = size
+        except StopIteration:
+            pass
+        
+        # Now find the type if it exists
+        # TODO this should be mapped to known types (though perhaps as a postprocess)
+        type_gen = arg.find(tokens="storage.type.matlab", depth=1)
+        try:
+            self.methods[fun_name][section][arg_name]['type'] = next(type_gen)[0].content
+        except StopIteration:
+            pass
+        
+        # Now find list of validators
+        validator_gen = arg.find(tokens="meta.block.validation.matlab", depth=1)
+        try:
+            validator_tok, _ = next(validator_gen)
+            validator_toks = validator_tok.findall(tokens="variable.other.readwrite.matlab", depth=1)  # TODO Probably bug here in MATLAB-Language-grammar
+            self.methods[fun_name][section][arg_name]['validators'] = [tok[0].content for tok in validator_toks]
+        except StopIteration:
+            pass
 
     def _parse_enum_section(self, section):
         # TODO parse property section attrs
@@ -169,10 +269,6 @@ class MatClassParser():
             # TODO if we have mutliple possible docstrings what is given priority?
             # TODO parse out property validations syntax
             self.enumerations[enum_name] = {}
-
-    def _parse_function(self, function):
-        # TODO break this out into a separate class?
-        pass
     
 if __name__ == "__main__":
     cls_parse = MatClassParser(rpath)
