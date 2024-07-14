@@ -1,6 +1,6 @@
 from textmate_grammar.parsers.matlab import MatlabParser
 
-rpath = "../../../syscop/software/nosnoc/+nosnoc/+model/Pss.m"
+rpath = "../../../syscop/software/nosnoc/src/CrossCompMode.m"
 
 
 def find_first_child(curr, tok):
@@ -261,10 +261,10 @@ class MatClassParser():
 
     def _parse_enum_section(self, section):
         # TODO parse property section attrs
-        idxs = [i for i in range(len(section.children)) if section.children[i].token == "variable.other.enummember.matlab"]
+        idxs = [i for i in range(len(section.children)) if section.children[i].token == "meta.assignment.definition.enummember.matlab"]
         for idx in idxs:
             enum_tok = section.children[idx]
-            enum_name = prop_tok.children[0].content # TODO is this always the name?
+            enum_name = enum_tok.children[0].content # TODO is this always the name?
             # TODO walk forward and backward to get property docstring.
             # TODO if we have mutliple possible docstrings what is given priority?
             # TODO parse out property validations syntax
