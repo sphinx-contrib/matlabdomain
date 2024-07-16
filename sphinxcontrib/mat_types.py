@@ -54,6 +54,8 @@ MATLAB_CLASS_ATTRIBUTE_TYPES = {
     "Hidden": bool,
     "InferiorClasses": list,
     "Sealed": bool,
+    "SharedTestFixtures": list,
+    "TestTags": list,
 }
 
 # From:
@@ -96,6 +98,7 @@ MATLAB_METHOD_ATTRIBUTE_TYPES = {
     "TestClassTeardown": bool,
     "TestMethodSetup": bool,
     "TestMethodTeardown": bool,
+    "TestTags": list,
 }
 
 
