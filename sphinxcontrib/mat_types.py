@@ -17,6 +17,7 @@ from pygments.token import Token
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 import sphinxcontrib.mat_parser as mat_parser
+import sphinxcontrib.mat_textmate_parser as mat_textmate_parser
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
@@ -523,7 +524,7 @@ class MatObject(object):
                 name,
                 modname,
             )
-            return MatFunction(name, modname, tks)
+            return MatFunction(name, modname, tks, mfile)
         else:
             # it's a script file retoken with header comment
             tks = list(MatlabLexer().get_tokens(full_code))
@@ -839,7 +840,7 @@ class MatFunction(MatObject):
     :type tokens: list
     """
 
-    def __init__(self, name, modname, tokens):
+    def __init__(self, name, modname, tokens, path):
         super(MatFunction, self).__init__(name)
         #: Path of folder containing :class:`MatObject`.
         self.module = modname
@@ -853,6 +854,13 @@ class MatFunction(MatObject):
         self.args = None
         #: remaining tokens after main function is parsed
         self.rem_tks = None
+        obj = mat_textmate_parser.parseFunction(path)
+        self.docstring = obj["docstring"]
+        self.retv = obj["retv"]
+        self.args = obj["args"]
+
+        return
+
         # =====================================================================
         # parse tokens
         # XXX: Pygments always reads MATLAB function signature as:
