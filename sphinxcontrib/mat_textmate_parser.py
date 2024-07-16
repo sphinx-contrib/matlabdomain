@@ -264,11 +264,65 @@ class MatClassParser():
         idxs = [i for i in range(len(section.children)) if section.children[i].token == "meta.assignment.definition.enummember.matlab"]
         for idx in idxs:
             enum_tok = section.children[idx]
-            enum_name = enum_tok.children[0].content # TODO is this always the name?
-            # TODO walk forward and backward to get property docstring.
-            # TODO if we have mutliple possible docstrings what is given priority?
-            # TODO parse out property validations syntax
+            enum_name = enum_tok.children[0].content
             self.enumerations[enum_name] = {}
+            if section.children[idx+1].token == "meta.parens.matlab":  # Parse out args
+                args = tuple([arg.content for arg in section.children[idx+1].children if arg.token != "punctuation.separator.comma.matlab"])
+                self.enumerations[enum_name]["args"] = args
+                
+            # TODO inline comments not parsed the same way because the enum block is
+            #      fix this to handle inline coments differently.
+            # Get inline docstring
+            inline_comment_gen = enum_tok.find(tokens="comment.line.percentage.matlab", attribute='end')
+            try:
+                inline_comment_tok,_ = next(inline_comment_gen)
+                inline_comment = inline_comment_tok.content[1:]  # strip leading % sign
+            except StopIteration:
+                inline_comment = None
+
+            # Walk backwards to get preceding docstring.
+            preceding_docstring = ""
+            walk_back_idx = idx-1
+            while walk_back_idx >= 0:
+                walk_tok = section.children[walk_back_idx]
+                # TODO Check for multiline comment immediately before first
+                if walk_tok.token == "comment.line.percentage.matlab":
+                    # TODO check linebreak
+                    preceding_docstring = walk_tok.content[1:] + preceding_docstring  # [1:] strips %
+                    walk_back_idx -= 1
+                elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
+                    walk_back_idx -= 1
+                else:
+                    break
+            if not preceding_docstring:
+                preceding_docstring = None
+                
+            # Walk forwards to get following docstring
+            following_docstring = ""
+            walk_fwd_idx = idx+1
+            while walk_fwd_idx < len(section.children):
+                walk_tok = section.children[walk_fwd_idx]
+                # TODO Check for multiline comment immediately after first
+                if walk_tok.token == "comment.line.percentage.matlab":
+                    # TODO check linebreak
+                    following_docstring = following_docstring + walk_tok.content[1:]  # [1:] strips %
+                    walk_fwd_idx += 1
+                elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
+                    walk_fwd_idx += 1
+                else:
+                    break
+            if not following_docstring:
+                following_docstring = None
+
+             # TODO if we have mutliple possible docstrings what is given priority?
+            if inline_comment:
+                self.enumerations[enum_name]['docstring'] = inline_comment
+            elif preceding_docstring:
+                self.enumerations[enum_name]['docstring'] = preceding_docstring
+            elif following_docstring:
+                self.enumerations[enum_name]['docstring'] = following_docstring
+            else:
+                self.enumerations[enum_name]['docstring'] = None
     
 if __name__ == "__main__":
     cls_parse = MatClassParser(rpath)
