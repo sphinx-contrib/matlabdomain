@@ -895,5 +895,15 @@ def test_ClassWithPropertyCellValues():
     assert "getLevel" in obj.methods
 
 
+def test_ClassWithTests():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithTests.m")
+    obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithTests", "test_data")
+    assert obj.name == "ClassWithTests"
+    assert obj.bases == ["matlab.unittest.TestCase"]
+    assert "testRunning" in obj.methods
+    testRunning = obj.methods["testRunning"]
+    assert testRunning.attrs["TestTags"] == ["'Unit'"]
+
+
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])

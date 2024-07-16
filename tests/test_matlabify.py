@@ -118,6 +118,7 @@ def test_module(mod):
         "ClassWithSeperatedComments",
         "ClassWithKeywordsAsFieldnames",
         "ClassWithPropertyCellValues",
+        "ClassWithTests",
         "arguments",
     }
     assert all_items == expected_items
