@@ -1412,7 +1412,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
-        return isinstance(member, MatProperty) and member.attrs.get("Constant")
+        return isinstance(member, MatProperty)
 
     def document_members(self, all_members=False):
         pass
@@ -1495,45 +1495,6 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         docstrings = self.auto_link_methods(self.object.cls, docstrings)
         docstrings = self.auto_link_self(docstrings)
         return MatlabDocumenter.auto_link_all(self, docstrings)
-
-
-class MatInstanceAttributeDocumenter(MatAttributeDocumenter):
-    """
-    Specialized Documenter subclass for attributes that cannot be imported
-    because they are instance attributes (e.g. assigned in __init__).
-    """
-
-    objtype = "instanceattribute"
-    directivetype = "attribute"
-    member_order = 60
-
-    # must be higher than AttributeDocumenter
-    priority = 11
-
-    # @classmethod
-    # def can_document_member(cls, member, membername, isattr, parent):
-    #     """This documents only INSTANCEATTR members."""
-    #     return isattr and (member is INSTANCEATTR)
-
-    @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):
-        is_instance_attr = isinstance(member, MatProperty) and not member.attrs.get(
-            "Constant"
-        )
-        return is_instance_attr
-
-    # def import_object(self):
-    #     """Never import anything."""
-    #     # disguise as an attribute
-    #     self.objtype = 'attribute'
-    #     self._datadescriptor = False
-    #     return True
-
-    def add_content(self, more_content, no_docstring=False):
-        """Never try to get a docstring from the object."""
-        # MatAttributeDocumenter.add_content(self, more_content,
-        #                                    no_docstring=True)
-        MatAttributeDocumenter.add_content(self, more_content, no_docstring)
 
 
 class MatScriptDocumenter(MatModuleLevelDocumenter):
