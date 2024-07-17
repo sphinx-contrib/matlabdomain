@@ -264,66 +264,93 @@ class MatClassParser():
         idxs = [i for i in range(len(section.children)) if section.children[i].token == "meta.assignment.definition.enummember.matlab"]
         for idx in idxs:
             enum_tok = section.children[idx]
+            next_idx = idx
             enum_name = enum_tok.children[0].content
             self.enumerations[enum_name] = {}
-            if section.children[idx+1].token == "meta.parens.matlab":  # Parse out args
+            if section.children[idx+1].token == "meta.parens.matlab":  # Parse out args TODO this should be part of enummember assignment definition
                 args = tuple([arg.content for arg in section.children[idx+1].children if arg.token != "punctuation.separator.comma.matlab"])
                 self.enumerations[enum_name]["args"] = args
+                next_idx += 1
                 
-            # TODO inline comments not parsed the same way because the enum block is
-            #      fix this to handle inline coments differently.
-            # Get inline docstring
-            inline_comment_gen = enum_tok.find(tokens="comment.line.percentage.matlab", attribute='end')
-            try:
-                inline_comment_tok,_ = next(inline_comment_gen)
-                inline_comment = inline_comment_tok.content[1:]  # strip leading % sign
-            except StopIteration:
-                inline_comment = None
-
             # Walk backwards to get preceding docstring.
             preceding_docstring = ""
             walk_back_idx = idx-1
+            next_tok = enum_tok
             while walk_back_idx >= 0:
                 walk_tok = section.children[walk_back_idx]
-                # TODO Check for multiline comment immediately before first
+                if self._is_empty_line_between_tok(walk_tok, next_tok):
+                        # Once there is an empty line between consecutive tokens we are done.
+                        break
+
                 if walk_tok.token == "comment.line.percentage.matlab":
-                    # TODO check linebreak
-                    preceding_docstring = walk_tok.content[1:] + preceding_docstring  # [1:] strips %
+                    preceding_docstring = walk_tok.content[1:] + "\n" +  preceding_docstring  # [1:] strips %
                     walk_back_idx -= 1
+                    next_tok = walk_tok
                 elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
                     walk_back_idx -= 1
+                    # Dont update next_tok for whitespace
                 else:
                     break
-            if not preceding_docstring:
-                preceding_docstring = None
                 
-            # Walk forwards to get following docstring
+            # Walk forwards to get following docstring or inline one.
+            inline_docstring = ""
             following_docstring = ""
-            walk_fwd_idx = idx+1
+            walk_fwd_idx = next_idx+1
+            prev_tok = section.children[next_idx]
             while walk_fwd_idx < len(section.children):
                 walk_tok = section.children[walk_fwd_idx]
-                # TODO Check for multiline comment immediately after first
+                
+                if self._is_empty_line_between_tok(prev_tok, walk_tok):
+                    # Once there is an empty line between consecutive tokens we are done.
+                    break
+                
                 if walk_tok.token == "comment.line.percentage.matlab":
-                    # TODO check linebreak
-                    following_docstring = following_docstring + walk_tok.content[1:]  # [1:] strips %
+                    
+                    # In the case the comment is on the same line as the end of the enum declaration, take it as inline comment and exit.
+                    if self._toks_on_same_line(section.children[idx], walk_tok):
+                        inline_docstring = walk_tok.content[1:]
+                        break
+                    
+                    following_docstring = following_docstring + "\n" + walk_tok.content[1:]  # [1:] strips %
                     walk_fwd_idx += 1
+                    prev_tok = walk_tok
                 elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
                     walk_fwd_idx += 1
+                    # Dont update prev_tok for whitespace
                 else:
                     break
-            if not following_docstring:
-                following_docstring = None
+
+
 
              # TODO if we have mutliple possible docstrings what is given priority?
-            if inline_comment:
-                self.enumerations[enum_name]['docstring'] = inline_comment
-            elif preceding_docstring:
-                self.enumerations[enum_name]['docstring'] = preceding_docstring
+            if preceding_docstring:
+                self.enumerations[enum_name]['docstring'] = preceding_docstring.strip()
+            elif inline_docstring:
+                self.enumerations[enum_name]['docstring'] = inline_docstring.strip()
             elif following_docstring:
-                self.enumerations[enum_name]['docstring'] = following_docstring
+                self.enumerations[enum_name]['docstring'] = following_docstring.strip()
             else:
                 self.enumerations[enum_name]['docstring'] = None
-    
+
+    def _toks_on_same_line(self, tok1, tok2):
+        """Note: pass the tokens in order they appear in case of multiline tokens, otherwise this may return incorrect results"""
+        line1 = self._get_last_line_of_tok(tok1)
+        line2 = self._get_first_line_of_tok(tok2)
+        return line1 == line2
+
+    def _is_empty_line_between_tok(self, tok1, tok2):
+        """Note: pass tokens in order they appear"""
+        line1 = self._get_last_line_of_tok(tok1)
+        line2 = self._get_first_line_of_tok(tok2)
+        return line2-line1 > 1
+
+    def _get_first_line_of_tok(self, tok):
+        return min([loc[0] for loc in tok.characters.keys()])
+
+    def _get_last_line_of_tok(self, tok):
+        return max([loc[0] for loc in tok.characters.keys()])
+            
+
 if __name__ == "__main__":
     cls_parse = MatClassParser(rpath)
     
