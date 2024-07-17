@@ -1631,6 +1631,7 @@ class MatProperty(MatObject):
         self.attrs = attrs["attrs"]
         self.default = attrs["default"]
         self.docstring = attrs["docstring"]
+        self.specs = attrs["specs"]
         # self.class = attrs['class']
 
     def ref_role(self):
