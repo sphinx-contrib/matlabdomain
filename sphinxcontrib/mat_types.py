@@ -807,7 +807,11 @@ class MatMixin(object):
             or (self.tokens[idx][0] == Token.Text and self.tokens[idx][1] != "\n")
         ):
             idx += 1
-        return idx - idx0  # property spec count.
+
+        count = idx - idx0  # property spec count.
+        propspec = "".join([content for _, content in self.tokens[idx0 : idx0 + count]])
+        propspec = propspec.strip()
+        return count, propspec
 
     def _is_newline(self, idx):
         """Returns true if the token at index is a newline"""
@@ -1204,44 +1208,29 @@ class MatClass(MatMixin, MatObject):
                                     break
 
                         # with "%:" directive trumps docstring after property
-                        if self.tokens[idx][0] is Token.Name:
+                        isTokenName = self.tokens[idx][0] is Token.Name
+                        isTokenNameSubtype = self.tokens[idx][0] in Token.Name.subtypes
+                        if isTokenName or isTokenNameSubtype:
                             prop_name = self.tokens[idx][1]
                             idx += 1
+                            if isTokenNameSubtype:
+                                logger.debug(
+                                    "[sphinxcontrib-matlabdomain] WARNING %s.%s.%s is a builtin name.",
+                                    self.module,
+                                    self.name,
+                                    prop_name,
+                                )
+
                             # Initialize property if it was not already done
                             if prop_name not in self.properties.keys():
                                 self.properties[prop_name] = {"attrs": attr_dict}
 
                             # Capture (dimensions) class {validators} as "specs"
                             # https://mathworks.com/help/matlab/matlab_oop/defining-properties.html
-                            count = self._propspec(idx)
-                            propspec = "".join(
-                                [
-                                    content
-                                    for _, content in self.tokens[idx : idx + count]
-                                ]
-                            )
-                            self.properties[prop_name]["specs"] = propspec.strip()
+                            count, propspec = self._propspec(idx)
+                            self.properties[prop_name]["specs"] = propspec
 
                             idx = idx + count
-                            if self._tk_eq(idx, (Token.Punctuation, ";")):
-                                continue
-
-                        # subtype of Name EG Name.Builtin used as Name
-                        elif self.tokens[idx][0] in Token.Name.subtypes:
-                            prop_name = self.tokens[idx][1]
-                            logger.debug(
-                                "[sphinxcontrib-matlabdomain] WARNING %s.%s.%s is a builtin name.",
-                                self.module,
-                                self.name,
-                                prop_name,
-                            )
-                            self.properties[prop_name] = {"attrs": attr_dict}
-                            idx += 1
-
-                            # skip size, class and functions specifiers
-                            # TODO: Parse old and new style property extras
-                            idx += self._propspec(idx)
-
                             if self._tk_eq(idx, (Token.Punctuation, ";")):
                                 continue
 
@@ -1631,6 +1620,8 @@ class MatProperty(MatObject):
         self.attrs = attrs["attrs"]
         self.default = attrs["default"]
         self.docstring = attrs["docstring"]
+        if "specs" not in attrs:
+            logger.error(f"name = {name}")
         self.specs = attrs["specs"]
         # self.class = attrs['class']
 
