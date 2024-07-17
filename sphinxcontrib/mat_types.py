@@ -1620,10 +1620,7 @@ class MatProperty(MatObject):
         self.attrs = attrs["attrs"]
         self.default = attrs["default"]
         self.docstring = attrs["docstring"]
-        if "specs" not in attrs:
-            logger.error(f"name = {name}")
         self.specs = attrs["specs"]
-        # self.class = attrs['class']
 
     def ref_role(self):
         """Returns role to use for references to this object (e.g. when generating auto-links)"""
