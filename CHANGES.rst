@@ -1,3 +1,19 @@
+sphinxcontrib-matlabdomain-0.22.0 (TBD)
+==============================================
+
+* Fixed `Issue 249`_. Parsing of property default values.
+* Fixed `Issue 252`_. Added missing class and method attributes.
+* Fixed `Issue 243`_. Fixed issue with autolinking when the *short name* matches
+  a module name.
+* Added new configuration: ``matlab_show_property_specs``. When set to ``True``
+  it will print the property specification for class properties.
+
+  * Example
+
+    .. image:: docs/render_property_specs_0.22.0.png
+      :alt: Rendering property specs in 0.22.0
+
+
 sphinxcontrib-matlabdomain-0.21.5 (2024-02-10)
 ==============================================
 
