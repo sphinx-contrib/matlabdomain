@@ -141,7 +141,7 @@ def test_classes(mod):
     assert cls.bases == ["handle", "my.super.Class"]
     assert cls.attrs == {}
     assert cls.properties == {
-        "x": {"attrs": {}, "default": None, "docstring": " a property"}
+        "x": {"attrs": {}, "default": None, "docstring": " a property", "specs": ""}
     }
     assert cls.getter("__doc__") == " a handle class\n\n :param x: a variable\n"
 
@@ -161,11 +161,13 @@ def test_abstract_class(mod):
             "default": None,
             "docstring": " y variable",
             "attrs": {"GetAccess": "private", "SetAccess": "private"},
+            "specs": "",
         },
         "version": {
             "default": "'0.1.1-beta'",
             "docstring": " version",
             "attrs": {"Constant": True},
+            "specs": "",
         },
     }
     assert (
@@ -243,6 +245,7 @@ def test_folder_class(mod):
             "attrs": {},
             "default": None,
             "docstring": " a property of a class folder",
+            "specs": "",
         }
     }
 

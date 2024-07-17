@@ -320,22 +320,26 @@ def test_PropTypeOld():
             "docstring": None,
             "attrs": {},
             "default": "'none'",
-        },  # 'type': ['char']
+            "specs": "@char",
+        },
         "pos": {
             "docstring": None,
             "attrs": {},
             "default": "zeros(3,1)",
-        },  # 'type': ['double', 'vector'],
+            "specs": "@double vector",
+        },
         "rotm": {
             "docstring": None,
             "attrs": {},
             "default": "zeros(3,3)",
-        },  # 'type': ['double', 'matrix'],
+            "specs": "@double matrix",
+        },
         "idx": {
             "docstring": None,
             "attrs": {},
             "default": "0",
-        },  # 'type': ['uint8', 'scalar'],
+            "specs": "@uint8 scalar",
+        },
     }
 
 
@@ -616,7 +620,12 @@ def test_ClassWithGetterSetter():
     assert obj.name == "ClassWithGetterSetter"
     assert list(obj.methods.keys()) == ["ClassWithGetterSetter"]
     assert obj.properties == {
-        "a": {"docstring": " A nice property", "attrs": {}, "default": None}
+        "a": {
+            "docstring": " A nice property",
+            "attrs": {},
+            "default": None,
+            "specs": "",
+        }
     }
 
 
@@ -629,7 +638,7 @@ def test_ClassWithDoubleQuotedString():
     assert obj.name == "ClassWithDoubleQuotedString"
     assert set(obj.methods.keys()) == set(["ClassWithDoubleQuotedString", "method1"])
     assert obj.properties == {
-        "Property1": {"docstring": None, "attrs": {}, "default": None}
+        "Property1": {"docstring": None, "attrs": {}, "default": None, "specs": ""}
     }
 
 

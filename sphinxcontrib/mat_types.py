@@ -1211,10 +1211,18 @@ class MatClass(MatMixin, MatObject):
                             if prop_name not in self.properties.keys():
                                 self.properties[prop_name] = {"attrs": attr_dict}
 
-                            # skip size, class and functions specifiers
-                            # TODO: Parse old and new style property extras
-                            idx += self._propspec(idx)
+                            # Capture (dimensions) class {validators} as "specs"
+                            # https://mathworks.com/help/matlab/matlab_oop/defining-properties.html
+                            count = self._propspec(idx)
+                            propspec = "".join(
+                                [
+                                    content
+                                    for _, content in self.tokens[idx : idx + count]
+                                ]
+                            )
+                            self.properties[prop_name]["specs"] = propspec.strip()
 
+                            idx = idx + count
                             if self._tk_eq(idx, (Token.Punctuation, ";")):
                                 continue
 
