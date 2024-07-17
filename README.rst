@@ -1,6 +1,5 @@
 
 .. |github-action-badge| image:: https://github.com/sphinx-contrib/matlabdomain/actions/workflows/python-package.yml/badge.svg
-   :scale: 100%
    :align: middle
 
 +----------------+-----------------------+
