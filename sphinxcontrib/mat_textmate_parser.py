@@ -1,6 +1,6 @@
 from textmate_grammar.parsers.matlab import MatlabParser
 
-rpath = "../../../syscop/software/nosnoc/src/CrossCompMode.m"
+rpath = "../../../syscop/software/nosnoc/+nosnoc/+model/Pss.m"
 
 
 def find_first_child(curr, tok):
@@ -101,54 +101,70 @@ class MatClassParser():
             self._parse_property_validation(prop_name, prop_tok)  # Parse property validation.
 
             # Get inline docstring
-            inline_comment_gen = prop_tok.find(tokens="comment.line.percentage.matlab", attribute='end')
+            inline_docstring_gen = prop_tok.find(tokens="comment.line.percentage.matlab", attribute='end')
             try:
-                inline_comment_tok,_ = next(inline_comment_gen)
-                inline_comment = inline_comment_tok.content[1:]  # strip leading % sign
+                inline_docstring_tok,_ = next(inline_docstring_gen)
+                inline_docstring = inline_docstring_tok.content[1:]  # strip leading % sign
             except StopIteration:
-                inline_comment = None
+                inline_docstring = None
 
             # Walk backwards to get preceding docstring.
             preceding_docstring = ""
             walk_back_idx = idx-1
+            next_tok = prop_tok
             while walk_back_idx >= 0:
                 walk_tok = section.children[walk_back_idx]
-                # TODO Check for multiline comment immediately before first
-                if walk_tok.token == "comment.line.percentage.matlab":
-                    # TODO check linebreak
-                    preceding_docstring = walk_tok.content[1:] + preceding_docstring  # [1:] strips %
+                if self._is_empty_line_between_tok(walk_tok, next_tok):
+                    # Once there is an empty line between consecutive tokens we are done.
+                    break
+
+                if not preceding_docstring and walk_tok.token == "comment.block.percentage.matlab":
+                    # block comment immediately preceding enum so we are done.
+                    # TODO we might need to do some postprocessing here to handle indents gracefully
+                    preceding_docstring = walk_tok.content.strip()[2:-2]
+                    break
+                elif walk_tok.token == "comment.line.percentage.matlab":
+                    preceding_docstring = walk_tok.content[1:] + "\n" +  preceding_docstring  # [1:] strips %
                     walk_back_idx -= 1
+                    next_tok = walk_tok
                 elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
                     walk_back_idx -= 1
+                    # Dont update next_tok for whitespace
                 else:
                     break
-            if not preceding_docstring:
-                preceding_docstring = None
                 
-            # Walk forwards to get following docstring
+            # Walk forwards to get following docstring or inline one.
             following_docstring = ""
             walk_fwd_idx = idx+1
+            prev_tok = prop_tok
             while walk_fwd_idx < len(section.children):
                 walk_tok = section.children[walk_fwd_idx]
-                # TODO Check for multiline comment immediately after first
-                if walk_tok.token == "comment.line.percentage.matlab":
-                    # TODO check linebreak
-                    following_docstring = following_docstring + walk_tok.content[1:]  # [1:] strips %
+                
+                if self._is_empty_line_between_tok(prev_tok, walk_tok):
+                    # Once there is an empty line between consecutive tokens we are done.
+                    break
+
+                if not following_docstring and walk_tok.token == "comment.block.percentage.matlab":
+                    # block comment immediately following enum so we are done.
+                    # TODO we might need to do some postprocessing here to handle indents gracefully
+                    following_docstring = walk_tok.content.strip()[2:-2]
+                    break
+                elif walk_tok.token == "comment.line.percentage.matlab":                    
+                    following_docstring = following_docstring + "\n" + walk_tok.content[1:]  # [1:] strips %
                     walk_fwd_idx += 1
+                    prev_tok = walk_tok
                 elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
                     walk_fwd_idx += 1
+                    # Dont update prev_tok for whitespace
                 else:
                     break
-            if not following_docstring:
-                following_docstring = None
 
-            # TODO if we have mutliple possible docstrings what is given priority?
-            if inline_comment:
-                self.properties[prop_name]['docstring'] = inline_comment
-            elif preceding_docstring:
-                self.properties[prop_name]['docstring'] = preceding_docstring
+            if preceding_docstring:
+                self.properties[prop_name]['docstring'] = preceding_docstring.strip()
+            elif inline_docstring:
+                self.properties[prop_name]['docstring'] = inline_docstring.strip()
             elif following_docstring:
-                self.properties[prop_name]['docstring'] = following_docstring
+                self.properties[prop_name]['docstring'] = following_docstring.strip()
             else:
                 self.properties[prop_name]['docstring'] = None
                 
