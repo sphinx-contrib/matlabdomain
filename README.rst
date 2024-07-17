@@ -112,6 +112,11 @@ Additional Configuration
    which is what MathWorks does in their documentation. *Added in Version
    0.16.0*.
 
+``matlab_show_property_specs``
+   Show property *specifiers*, the size, class and validators, in the rendered
+   document. Default is ``False``, which is what MathWorks does in their
+   documentation. *Added in Version 0.22.0*.
+
 ``matlab_class_signature``
    Shows the constructor argument list in the class signature if ``True``.
    Default is ``False``. *Added in Version 0.20.0*.

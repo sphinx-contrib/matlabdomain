@@ -8,7 +8,6 @@
     :license: BSD, see LICENSE for details.
 """
 
-
 from . import mat_documenters as doc
 from . import mat_directives
 from . import mat_types
@@ -863,6 +862,7 @@ def setup(app):
     app.add_config_value("matlab_src_encoding", None, "env")
     app.add_config_value("matlab_keep_package_prefix", False, "env")
     app.add_config_value("matlab_show_property_default_value", False, "env")
+    app.add_config_value("matlab_show_property_specs", False, "env")
     app.add_config_value("matlab_short_links", False, "env")
     app.add_config_value("matlab_auto_link", None, "env")
     app.add_config_value("matlab_class_signature", False, "env")

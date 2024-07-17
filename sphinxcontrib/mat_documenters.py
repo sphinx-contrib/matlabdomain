@@ -1452,6 +1452,9 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 if obj_default:
                     obj_default = " = " + obj_default
 
+                if self.env.config.matlab_show_property_specs:
+                    obj_default = self.object.specs + obj_default
+
                 self.add_line("   :annotation: " + obj_default, "<autodoc>")
         elif self.options.annotation is SUPPRESS:
             pass
