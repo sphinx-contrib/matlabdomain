@@ -47,7 +47,7 @@ class MatClassParser():
         if self.cls.children[1].token == "comment.line.percentage.matlab":
             self._docstring_lines()
         elif self.cls.children[1].token == "comment.block.percentage.matlab":
-            self.docstring = self.cls.children[1].content[2:-2].strip()  # [2,-2] strips out block comment delimiters
+            self.docstring = self.cls.children[1].content.strip()[2:-2].strip()  # [2,-2] strips out block comment delimiters
         else:
             print("found no docstring")
 
@@ -230,7 +230,7 @@ class MatClassParser():
             self._parse_argument_validation(fun_name, arg_name, arg_def, modifiers)
             
     def _parse_argument_validation(self, fun_name, arg_name, arg, modifiers):
-        # TODO This should be identical to propery validation I thint. Refactor
+        # TODO This should be identical to propery validation I think. Refactor
         # First get the size if found
         section = "output" if "Output" in modifiers else "params"
         size_gen = arg.find(tokens="meta.parens.size.matlab", depth=1)
@@ -279,10 +279,15 @@ class MatClassParser():
             while walk_back_idx >= 0:
                 walk_tok = section.children[walk_back_idx]
                 if self._is_empty_line_between_tok(walk_tok, next_tok):
-                        # Once there is an empty line between consecutive tokens we are done.
-                        break
+                    # Once there is an empty line between consecutive tokens we are done.
+                    break
 
-                if walk_tok.token == "comment.line.percentage.matlab":
+                if not preceding_docstring and walk_tok.token == "comment.block.percentage.matlab":
+                    # block comment immediately preceding enum so we are done.
+                    # TODO we might need to do some postprocessing here to handle indents gracefully
+                    preceding_docstring = walk_tok.content.strip()[2:-2]
+                    break
+                elif walk_tok.token == "comment.line.percentage.matlab":
                     preceding_docstring = walk_tok.content[1:] + "\n" +  preceding_docstring  # [1:] strips %
                     walk_back_idx -= 1
                     next_tok = walk_tok
@@ -303,8 +308,13 @@ class MatClassParser():
                 if self._is_empty_line_between_tok(prev_tok, walk_tok):
                     # Once there is an empty line between consecutive tokens we are done.
                     break
-                
-                if walk_tok.token == "comment.line.percentage.matlab":
+
+                if not following_docstring and walk_tok.token == "comment.block.percentage.matlab":
+                    # block comment immediately following enum so we are done.
+                    # TODO we might need to do some postprocessing here to handle indents gracefully
+                    following_docstring = walk_tok.content.strip()[2:-2]
+                    break
+                elif walk_tok.token == "comment.line.percentage.matlab":
                     
                     # In the case the comment is on the same line as the end of the enum declaration, take it as inline comment and exit.
                     if self._toks_on_same_line(section.children[idx], walk_tok):
