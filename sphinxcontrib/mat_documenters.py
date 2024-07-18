@@ -790,14 +790,14 @@ class MatlabDocumenter(PyDocumenter):
         # make sure that the result starts with an empty line.  This is
         # necessary for some situations where another directive preprocesses
         # reST and no starting newline is present
-        self.add_line("", "<autodoc>")
+        self.add_line("", "<matlab-autodoc>")
 
         # format the object's signature, if any
         sig = self.format_signature()
 
         # generate the directive header and options, if applicable
         self.add_directive_header(sig)
-        self.add_line("", "<autodoc>")
+        self.add_line("", "<matlab-autodoc>")
 
         # e.g. the module directive doesn't have content
         self.indent += self.content_indent
@@ -824,11 +824,11 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
 
         # add some module-specific options
         if self.options.synopsis:
-            self.add_line("   :synopsis: " + self.options.synopsis, "<autodoc>")
+            self.add_line("   :synopsis: " + self.options.synopsis, "<matlab-autodoc>")
         if self.options.platform:
-            self.add_line("   :platform: " + self.options.platform, "<autodoc>")
+            self.add_line("   :platform: " + self.options.platform, "<matlab-autodoc>")
         if self.options.deprecated:
-            self.add_line("   :deprecated:", "<autodoc>")
+            self.add_line("   :deprecated:", "<matlab-autodoc>")
 
     def get_object_members(self, want_all):
         if want_all:
@@ -1081,11 +1081,11 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
         # add inheritance info, if wanted
         if not self.doc_as_attr and self.options.show_inheritance:
-            self.add_line("", "<autodoc>")
+            self.add_line("", "<matlab-autodoc>")
             base_class_links = make_baseclass_links(self.env, self.object)
             if base_class_links:
                 self.add_line(
-                    _("   Bases: %s") % ", ".join(base_class_links), "<autodoc>"
+                    _("   Bases: %s") % ", ".join(base_class_links), "<matlab-autodoc>"
                 )
 
     def get_doc(self, encoding=None):
@@ -1264,9 +1264,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
         # container
         if cons_names or prop_names or meth_names or other_names:
-            self.add_line("", "<autodoc>")
-            self.add_line(".. container:: members", "<autodoc>")
-            self.add_line("", "<autodoc>")
+            self.add_line("", "<matlab-autodoc>")
+            self.add_line(".. container:: members", "<matlab-autodoc>")
+            self.add_line("", "<matlab-autodoc>")
             self.indent += "   "
 
         # constructor
@@ -1298,9 +1298,11 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             exclude_members = []
 
         # output heading and section content
-        self.add_line(heading, "<autodoc>")
+        self.add_line(heading, "<matlab-autodoc>")
         self.indent += "   "
-        self.add_line(".. ", "<autodoc>")  # a comment, to force a <dd> in the HTML
+        self.add_line(
+            ".. ", "<matlab-autodoc>"
+        )  # a comment, to force a <dd> in the HTML
         if exclude_members is EMPTY:
             self.options.exclude_members = set(new_excludes)
         else:
@@ -1455,11 +1457,13 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 if self.env.config.matlab_show_property_specs:
                     obj_default = self.object.specs + obj_default
 
-                self.add_line("   :annotation: " + obj_default, "<autodoc>")
+                self.add_line("   :annotation: " + obj_default, "<matlab-autodoc>")
         elif self.options.annotation is SUPPRESS:
             pass
         else:
-            self.add_line("   :annotation: = " + self.options.annotation, "<autodoc>")
+            self.add_line(
+                "   :annotation: = " + self.options.annotation, "<matlab-autodoc>"
+            )
 
     def add_content(self, more_content, no_docstring=False):
         # if not self._datadescriptor:
