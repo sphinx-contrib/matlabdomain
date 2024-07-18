@@ -541,6 +541,8 @@ class MatCurrentModule(Directive):
 
 
 class MatXRefRole(XRefRole):
+    # def process_link(self, env: BuildEnvironment, refnode: Element, has_explicit_title: bool,
+    #                  title: str, target: str) -> tuple[str, str]:
     def process_link(self, env, refnode, has_explicit_title, title, target):
         refnode["mat:module"] = env.temp_data.get("mat:module")
         refnode["mat:class"] = env.temp_data.get("mat:class")
@@ -563,6 +565,11 @@ class MatXRefRole(XRefRole):
         if target[0:1] == ".":
             target = target[1:]
             refnode["refspecific"] = True
+
+        # If short links are enabled, we should
+        if env.config.matlab_short_links:
+            pass
+
         return title, target
 
 
@@ -748,13 +755,25 @@ class MATLABDomain(Domain):
                         newname = name
                     else:
                         # "fuzzy" searching mode
-                        searchname = "." + name
-                        matches = [
-                            (oname, objects[oname])
-                            for oname in objects
-                            if oname.endswith(searchname)
-                            and objects[oname][1] in objtypes
-                        ]
+                        # The `.<name>` and then if name is a dotted path
+                        # <part1>.<part2>.<>.<partn>
+                        # <part2>.<>.<partn>
+                        # <partn>
+                        parts = name.split(".")
+                        searchnames = ["." + name]
+                        for i in range(len(parts)):
+                            searchnames.append(".".join(parts[i:]))
+
+                        matches = []
+                        for oname in objects:
+                            for searchname in searchnames:
+                                if (
+                                    oname.endswith(searchname)
+                                    and objects[oname][1] in objtypes
+                                ):
+                                    matches.append((oname, objects[oname]))
+                                    break
+
         else:
             # NOTE: searching for exact match, object type is not considered
             if name in objects:
@@ -790,6 +809,7 @@ class MATLABDomain(Domain):
         modname = node.get("mat:module")
         clsname = node.get("mat:class")
         searchmode = node.hasattr("refspecific") and 1 or 0
+        searchmode = 1
         matches = self.find_obj(env, modname, clsname, target, type, searchmode)
         if not matches:
             return None
@@ -799,7 +819,7 @@ class MATLABDomain(Domain):
                 target,
                 ", ".join(match[0] for match in matches),
                 type="ref",
-                subtype="python",
+                subtype="matlab",
                 location=node,
             )
 
