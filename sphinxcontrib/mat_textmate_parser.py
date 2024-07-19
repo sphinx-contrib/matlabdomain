@@ -1,6 +1,6 @@
 from textmate_grammar.parsers.matlab import MatlabParser
 
-rpath = "../tests/test_data/ClassWithPropertyValidators.m"
+rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
 
 
 def find_first_child(curr, tok):
@@ -49,71 +49,119 @@ class MatClassParser:
         pdb.set_trace()
 
     def _find_class_docstring(self):
-        if self.cls.children[1].token == "comment.line.percentage.matlab":
+        try:
+            possible_comment_tok = self.cls.children[1]
+        except IndexError:
+            print("found no docstring")
+            return
+
+        if possible_comment_tok.token == "comment.line.percentage.matlab":
             self._docstring_lines()
-        elif self.cls.children[1].token == "comment.block.percentage.matlab":
-            self.docstring = (
-                self.cls.children[1].content.strip()[2:-2].strip()
-            )  # [2,-2] strips out block comment delimiters
+        elif possible_comment_tok.token == "comment.block.percentage.matlab":
+            self.docstring = possible_comment_tok.content.strip()[
+                2:-2
+            ].strip()  # [2,-2] strips out block comment delimiters
         else:
             print("found no docstring")
 
     def _docstring_lines(self):
         idx = 1
-        while self.cls.children[idx].token == "comment.line.percentage.matlab":
+        cls_children = self.cls.children
+
+        while (
+            idx < len(cls_children)
+            and cls_children[idx].token == "comment.line.percentage.matlab"
+        ):
             self.docstring += (
-                self.cls.children[idx].content[1:] + "\n"
+                cls_children[idx].content[1:] + "\n"
             )  # [1:] strips out percent sign
             idx += 1
         self.docstring = self.docstring.strip()
 
     def _parse_clsdef(self):
-        for child in self.clsdef.children:
-            child.print()
+        # Try parsing attrs
+        attrs_tok_gen = self.clsdef.find(tokens="storage.modifier.section.class.matlab")
+        try:
+            attrs_tok, _ = next(attrs_tok_gen)
+            self._parse_class_attributes(attrs_tok)
+        except StopIteration:
+            pass
 
+        # Parse classname
+        classname_tok_gen = self.clsdef.find(tokens="entity.name.type.class.matlab")
+        try:
+            classname_tok, _ = next(classname_tok_gen)
+            self.name = classname_tok.content
+        except StopIteration:
+            print("ClassName not found")  # TODO this is probably fatal
+
+        # Parse interited classes
+        parent_class_toks = self.clsdef.findall(tokens="meta.inherited-class.matlab")
+
+        for parent_class_tok, _ in parent_class_toks:
+            sections = parent_class_tok.findall(
+                tokens=[
+                    "entity.name.namespace.matlab",
+                    "entity.other.inherited-class.matlab",
+                ]
+            )
+            super_cls = tuple([sec.content for sec, _ in sections])
+            self.supers.append(super_cls)
         # Parse Attributes TODO maybe there is a smarter way to do this?
         idx = 0
         while self.clsdef.children[idx].token == "storage.modifier.class.matlab":
-            attr = self.clsdef.children[idx].content
+            attr_tok = self.clsdef.children[idx]
+            attr = attr_tok.content
             val = None  # TODO maybe do some typechecking here or we can assume that you give us valid Matlab
             idx += 1
-            if (
-                self.clsdef.children[idx].token == "keyword.operator.assignment.matlab"
-            ):  # pull out r.h.s
+            if attr_tok.token == "keyword.operator.assignment.matlab":  # pull out r.h.s
                 idx += 1
                 val = self.clsdef.children[idx].content
                 idx += 1
             if (
-                self.clsdef.children[idx].token
-                == "punctuation.separator.modifier.comma.matlab"
+                attr_tok.token == "punctuation.separator.modifier.comma.matlab"
             ):  # skip commas
                 idx += 1
             self.attrs[attr] = val
 
-        if (
-            self.clsdef.children[idx].token == "punctuation.section.parens.end.matlab"
-        ):  # Skip end of attrs
-            idx += 1
-
-        # name must be next
-        self.name = self.clsdef.children[idx].content
-        idx += 1
-
-        while idx < len(
-            self.clsdef.children
-        ):  # No children we care about after this except inherited classes
-            if self.clsdef.children[idx].token == "meta.inherited-class.matlab":
-                super_cls_tok = self.clsdef.children[idx]
-                # collect superclass as a tuple
-                super_cls = tuple(
-                    [
-                        child.content
-                        for child in super_cls_tok.children
-                        if not child.token.startswith("punctuation")
-                    ]
-                )
-                self.supers.append(super_cls)
-            idx += 1
+    def _parse_class_attributes(self, attrs_tok):
+        # walk down child list and parse manually
+        # TODO perhaps contribute a delimited list find to textmate-grammar-python
+        children = attrs_tok.children
+        idx = 0
+        while idx < len(children):
+            child_tok = children[idx]
+            if child_tok.token == "storage.modifier.class.matlab":
+                attr = child_tok.content
+                val = None
+                idx += 1  # walk to next token
+                maybe_assign_tok = children[idx]
+                if maybe_assign_tok.token == "keyword.operator.assignment.matlab":
+                    idx += 1
+                    rhs_tok = children[idx]  # parse right hand side
+                    if rhs_tok.token == "meta.cell.literal.matlab":
+                        # A cell. For now just take the whole cell as value.
+                        # TODO parse out the cell array of metaclass literals.
+                        val = "{" + rhs_tok.content + "}"
+                        idx += 1
+                    elif rhs_tok.token == "constant.language.boolean.matlab":
+                        val = rhs_tok.content
+                        idx += 1
+                    elif rhs_tok.token == "keyword.operator.other.question.matlab":
+                        idx += 1
+                        metaclass_tok = children[idx]
+                        metaclass_components = metaclass_tok.findall(
+                            tokens=[
+                                "entity.name.namespace.matlab",
+                                "entity.other.class.matlab",
+                            ]
+                        )
+                        val = tuple([comp.content for comp, _ in metaclass_components])
+                    else:
+                        pass
+                self.attrs[attr] = val
+            else:  # Comma or continuation therefore skip
+                idx += 1
 
     def _parse_property_section(self, section):
         # TODO parse property section attrs
@@ -241,12 +289,13 @@ class MatClassParser:
         # Now find list of validators
         validator_gen = prop.find(tokens="meta.block.validation.matlab", depth=1)
         try:
-            import pdb
-
-            pdb.set_trace()
             validator_tok, _ = next(validator_gen)
             validator_toks = validator_tok.findall(
-                tokens="variable.other.readwrite.matlab", depth=1
+                tokens=[
+                    "variable.other.readwrite.matlab",
+                    "meta.function-call.parens.matlab",
+                ],
+                depth=1,
             )  # TODO Probably bug here in MATLAB-Language-grammar
             self.properties[prop_name]["validators"] = [
                 tok[0].content for tok in validator_toks
