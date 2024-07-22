@@ -10,6 +10,151 @@ def find_first_child(curr, tok):
     return (curr.children[ind[0]], ind[0])
 
 
+def _toks_on_same_line(tok1, tok2):
+    """Note: pass the tokens in order they appear in case of multiline tokens, otherwise this may return incorrect results"""
+    line1 = _get_last_line_of_tok(tok1)
+    line2 = _get_first_line_of_tok(tok2)
+    return line1 == line2
+
+
+def _is_empty_line_between_tok(tok1, tok2):
+    """Note: pass tokens in order they appear"""
+    line1 = _get_last_line_of_tok(tok1)
+    line2 = _get_first_line_of_tok(tok2)
+    return line2 - line1 > 1
+
+
+def _get_first_line_of_tok(tok):
+    return min([loc[0] for loc in tok.characters.keys()])
+
+
+def _get_last_line_of_tok(tok):
+    return max([loc[0] for loc in tok.characters.keys()])
+
+
+class MatFunctionParser:
+    def __init__(self, fun_tok):
+        """Parse Function definition"""
+        # First find the function name
+        name_gen = fun_tok.find(tokens="entity.name.function.matlab")
+        try:
+            name_tok, _ = next(name_gen)
+            self.name = name_tok.content
+        except StopIteration:
+            # TODO correct error here
+            raise Exception("Couldn't find function name")
+
+        # Find outputs and parameters
+        output_gen = fun_tok.find(tokens="variable.parameter.output.matlab")
+        param_gen = fun_tok.find(tokens="variable.parameter.input.matlab")
+
+        self.outputs = {}
+        self.params = {}
+
+        for out, _ in output_gen:
+            self.outputs[out.content] = {}
+
+        for param, _ in param_gen:
+            self.params[param.content] = {}
+
+        # find arguments blocks
+        arg_section = None
+        for arg_section, _ in fun_tok.find(tokens="meta.arguments.matlab"):
+            self._parse_argument_section(arg_section)
+
+        fun_decl_gen = fun_tok.find(tokens="meta.function.declaration.matlab")
+        try:
+            fun_decl_tok, _ = next(fun_decl_gen)
+        except StopIteration:
+            raise Exception(
+                "missing function declaration"
+            )  # This cant happen as we'd be missing a function name
+
+        # Now parse for docstring
+        docstring = ""
+        comment_toks = fun_tok.findall(
+            tokens=["comment.line.percentage.matlab", "comment.block.percentage.matlab"]
+        )
+        last_tok = arg_section if arg_section is not None else fun_decl_tok
+
+        for comment_tok, _ in comment_toks:
+            if _is_empty_line_between_tok(last_tok, comment_tok):
+                # If we have non-consecutive tokens quit right away.
+                break
+            elif (
+                not docstring and comment_tok.token == "comment.block.percentage.matlab"
+            ):
+                # If we have no previous docstring lines and a comment block we take
+                # the comment block as the docstring and exit.
+                docstring = comment_tok.content.strip()[
+                    2:-2
+                ].strip()  # [2,-2] strips out block comment delimiters
+                break
+            elif comment_tok.token == "comment.line.percentage.matlab":
+                # keep parsing comments
+                docstring += comment_tok.content[1:] + "\n"
+            else:
+                # we are done.
+                break
+            last_tok = comment_tok
+
+        self.docstring = docstring if docstring else None
+
+    def _parse_argument_section(self, section):
+        modifiers = [
+            mod.content
+            for mod, _ in section.find(tokens="storage.modifier.arguments.matlab")
+        ]
+        arg_def_gen = section.find(tokens="meta.assignment.definition.property.matlab")
+        for arg_def, _ in arg_def_gen:
+            arg_name = arg_def.begin[
+                0
+            ].content  # Get argument name that is being defined
+            self._parse_argument_validation(fun_name, arg_name, arg_def, modifiers)
+
+    def _parse_argument_validation(self, arg_name, arg, modifiers):
+        # TODO This should be identical to propery validation I think. Refactor
+        # First get the size if found
+        section = "output" if "Output" in modifiers else "params"
+        size_gen = arg.find(tokens="meta.parens.size.matlab", depth=1)
+        try:  # We have a size, therefore parse the comma separated list into tuple
+            size_tok, _ = next(size_gen)
+            size_elem_gen = size_tok.find(
+                tokens=[
+                    "constant.numeric.decimal.matlab",
+                    "keyword.operator.vector.colon.matlab",
+                ],
+                depth=1,
+            )
+            size = tuple([elem[0].content for elem in size_elem_gen])
+            self.methods[fun_name][section][arg_name]["size"] = size
+        except StopIteration:
+            pass
+
+        # Now find the type if it exists
+        # TODO this should be mapped to known types (though perhaps as a postprocess)
+        type_gen = arg.find(tokens="storage.type.matlab", depth=1)
+        try:
+            self.methods[fun_name][section][arg_name]["type"] = next(type_gen)[
+                0
+            ].content
+        except StopIteration:
+            pass
+
+        # Now find list of validators
+        validator_gen = arg.find(tokens="meta.block.validation.matlab", depth=1)
+        try:
+            validator_tok, _ = next(validator_gen)
+            validator_toks = validator_tok.findall(
+                tokens="variable.other.readwrite.matlab", depth=1
+            )  # TODO Probably bug here in MATLAB-Language-grammar
+            self.methods[fun_name][section][arg_name]["validators"] = [
+                tok[0].content for tok in validator_toks
+            ]
+        except StopIteration:
+            pass
+
+
 class MatClassParser:
     def __init__(self, path):
         # DATA
@@ -196,7 +341,7 @@ class MatClassParser:
             next_tok = prop_tok
             while walk_back_idx >= 0:
                 walk_tok = section.children[walk_back_idx]
-                if self._is_empty_line_between_tok(walk_tok, next_tok):
+                if _is_empty_line_between_tok(walk_tok, next_tok):
                     # Once there is an empty line between consecutive tokens we are done.
                     break
 
@@ -227,7 +372,7 @@ class MatClassParser:
             while walk_fwd_idx < len(section.children):
                 walk_tok = section.children[walk_fwd_idx]
 
-                if self._is_empty_line_between_tok(prev_tok, walk_tok):
+                if _is_empty_line_between_tok(prev_tok, walk_tok):
                     # Once there is an empty line between consecutive tokens we are done.
                     break
 
@@ -312,131 +457,8 @@ class MatClassParser:
         ]
         for idx in idxs:
             meth_tok = section.children[idx]
-            self._parse_function(meth_tok)
-
-    def _parse_function(self, fun_tok):
-        """Parse Function definition"""
-        # First find the function name
-        name_gen = fun_tok.find(tokens="entity.name.function.matlab")
-        try:
-            name_tok, _ = next(name_gen)
-            fun_name = name_tok.content
-        except StopIteration:
-            # TODO correct error here
-            raise Exception("Couldn't find function name")
-
-        # Find outputs and parameters
-        output_gen = fun_tok.find(tokens="variable.parameter.output.matlab")
-        param_gen = fun_tok.find(tokens="variable.parameter.input.matlab")
-
-        self.methods[fun_name] = {}
-        self.methods[fun_name]["outputs"] = {}
-        self.methods[fun_name]["params"] = {}
-
-        for out, _ in output_gen:
-            self.methods[fun_name]["outputs"][out.content] = {}
-
-        for param, _ in param_gen:
-            self.methods[fun_name]["params"][param.content] = {}
-
-        # find arguments blocks
-        arg_section = None
-        for arg_section, _ in fun_tok.find(tokens="meta.arguments.matlab"):
-            self._parse_argument_section(fun_name, arg_section)
-
-        fun_decl_gen = fun_tok.find(tokens="meta.function.declaration.matlab")
-        try:
-            fun_decl_tok, _ = next(fun_decl_gen)
-        except StopIteration:
-            raise Exception(
-                "missing function declaration"
-            )  # This cant happen as we'd be missing a function name
-
-        # Now parse for docstring
-        docstring = ""
-        comment_toks = fun_tok.findall(
-            tokens=["comment.line.percentage.matlab", "comment.block.percentage.matlab"]
-        )
-        last_tok = arg_section if arg_section is not None else fun_decl_tok
-        import pdb
-
-        pdb.set_trace()
-        for comment_tok, _ in comment_toks:
-            if self._is_empty_line_between_tok(last_tok, comment_tok):
-                # If we have non-consecutive tokens quit right away.
-                break
-            elif (
-                not docstring and comment_tok.token == "comment.block.percentage.matlab"
-            ):
-                # If we have no previous docstring lines and a comment block we take
-                # the comment block as the docstring and exit.
-                docstring = comment_tok.content.strip()[
-                    2:-2
-                ].strip()  # [2,-2] strips out block comment delimiters
-                break
-            elif comment_tok.token == "comment.line.percentage.matlab":
-                # keep parsing comments
-                docstring += comment_tok.content[1:] + "\n"
-            else:
-                # we are done.
-                break
-            last_tok = comment_tok
-
-        self.methods[fun_name]["docstring"] = docstring if docstring else None
-
-    def _parse_argument_section(self, fun_name, section):
-        modifiers = [
-            mod.content
-            for mod, _ in section.find(tokens="storage.modifier.arguments.matlab")
-        ]
-        arg_def_gen = section.find(tokens="meta.assignment.definition.property.matlab")
-        for arg_def, _ in arg_def_gen:
-            arg_name = arg_def.begin[
-                0
-            ].content  # Get argument name that is being defined
-            self._parse_argument_validation(fun_name, arg_name, arg_def, modifiers)
-
-    def _parse_argument_validation(self, fun_name, arg_name, arg, modifiers):
-        # TODO This should be identical to propery validation I think. Refactor
-        # First get the size if found
-        section = "output" if "Output" in modifiers else "params"
-        size_gen = arg.find(tokens="meta.parens.size.matlab", depth=1)
-        try:  # We have a size, therefore parse the comma separated list into tuple
-            size_tok, _ = next(size_gen)
-            size_elem_gen = size_tok.find(
-                tokens=[
-                    "constant.numeric.decimal.matlab",
-                    "keyword.operator.vector.colon.matlab",
-                ],
-                depth=1,
-            )
-            size = tuple([elem[0].content for elem in size_elem_gen])
-            self.methods[fun_name][section][arg_name]["size"] = size
-        except StopIteration:
-            pass
-
-        # Now find the type if it exists
-        # TODO this should be mapped to known types (though perhaps as a postprocess)
-        type_gen = arg.find(tokens="storage.type.matlab", depth=1)
-        try:
-            self.methods[fun_name][section][arg_name]["type"] = next(type_gen)[
-                0
-            ].content
-        except StopIteration:
-            pass
-
-        # Now find list of validators
-        validator_gen = arg.find(tokens="meta.block.validation.matlab", depth=1)
-        try:
-            validator_tok, _ = next(validator_gen)
-            validator_toks = validator_tok.findall(
-                tokens="variable.other.readwrite.matlab", depth=1
-            )  # TODO Probably bug here in MATLAB-Language-grammar
-            self.methods[fun_name][section][arg_name]["validators"] = [
-                tok[0].content for tok in validator_toks
-            ]
-        except StopIteration:
-            pass
+            parsed_function = MatFunctionParser(meth_tok)
+            self.methods[parsed_function.name] = parsed_function
 
     def _parse_enum_section(self, section):
         # TODO parse property section attrs
@@ -470,7 +492,7 @@ class MatClassParser:
             next_tok = enum_tok
             while walk_back_idx >= 0:
                 walk_tok = section.children[walk_back_idx]
-                if self._is_empty_line_between_tok(walk_tok, next_tok):
+                if _is_empty_line_between_tok(walk_tok, next_tok):
                     # Once there is an empty line between consecutive tokens we are done.
                     break
 
@@ -502,7 +524,7 @@ class MatClassParser:
             while walk_fwd_idx < len(section.children):
                 walk_tok = section.children[walk_fwd_idx]
 
-                if self._is_empty_line_between_tok(prev_tok, walk_tok):
+                if _is_empty_line_between_tok(prev_tok, walk_tok):
                     # Once there is an empty line between consecutive tokens we are done.
                     break
 
@@ -516,7 +538,7 @@ class MatClassParser:
                     break
                 elif walk_tok.token == "comment.line.percentage.matlab":
                     # In the case the comment is on the same line as the end of the enum declaration, take it as inline comment and exit.
-                    if self._toks_on_same_line(section.children[idx], walk_tok):
+                    if _toks_on_same_line(section.children[idx], walk_tok):
                         inline_docstring = walk_tok.content[1:]
                         break
 
@@ -539,24 +561,6 @@ class MatClassParser:
                 self.enumerations[enum_name]["docstring"] = following_docstring.strip()
             else:
                 self.enumerations[enum_name]["docstring"] = None
-
-    def _toks_on_same_line(self, tok1, tok2):
-        """Note: pass the tokens in order they appear in case of multiline tokens, otherwise this may return incorrect results"""
-        line1 = self._get_last_line_of_tok(tok1)
-        line2 = self._get_first_line_of_tok(tok2)
-        return line1 == line2
-
-    def _is_empty_line_between_tok(self, tok1, tok2):
-        """Note: pass tokens in order they appear"""
-        line1 = self._get_last_line_of_tok(tok1)
-        line2 = self._get_first_line_of_tok(tok2)
-        return line2 - line1 > 1
-
-    def _get_first_line_of_tok(self, tok):
-        return min([loc[0] for loc in tok.characters.keys()])
-
-    def _get_last_line_of_tok(self, tok):
-        return max([loc[0] for loc in tok.characters.keys()])
 
 
 if __name__ == "__main__":
