@@ -36,14 +36,14 @@ class MatClassParser:
         method_sections = self.cls.findall(tokens="meta.methods.matlab", depth=1)
         enumeration_sections = self.cls.findall(tokens="meta.enum.matlab", depth=1)
 
-        for section in property_sections:
-            self._parse_property_section(section[0])
+        for section, _ in property_sections:
+            self._parse_property_section(section)
 
-        for section in method_sections:
-            self._parse_method_section(section[0])
+        for section, _ in method_sections:
+            self._parse_method_section(section)
 
-        for section in enumeration_sections:
-            self._parse_enum_section(section[0])
+        for section, _ in enumeration_sections:
+            self._parse_enum_section(section)
         import pdb
 
         pdb.set_trace()
@@ -313,9 +313,6 @@ class MatClassParser:
         for idx in idxs:
             meth_tok = section.children[idx]
             self._parse_function(meth_tok)
-            # TODO walk forward and backward to get property docstring.
-            # TODO if we have mutliple possible docstrings what is given priority?
-            # TODO parse out property validations syntax
 
     def _parse_function(self, fun_tok):
         """Parse Function definition"""
@@ -343,8 +340,49 @@ class MatClassParser:
             self.methods[fun_name]["params"][param.content] = {}
 
         # find arguments blocks
+        arg_section = None
         for arg_section, _ in fun_tok.find(tokens="meta.arguments.matlab"):
             self._parse_argument_section(fun_name, arg_section)
+
+        fun_decl_gen = fun_tok.find(tokens="meta.function.declaration.matlab")
+        try:
+            fun_decl_tok, _ = next(fun_decl_gen)
+        except StopIteration:
+            raise Exception(
+                "missing function declaration"
+            )  # This cant happen as we'd be missing a function name
+
+        # Now parse for docstring
+        docstring = ""
+        comment_toks = fun_tok.findall(
+            tokens=["comment.line.percentage.matlab", "comment.block.percentage.matlab"]
+        )
+        last_tok = arg_section if arg_section is not None else fun_decl_tok
+        import pdb
+
+        pdb.set_trace()
+        for comment_tok, _ in comment_toks:
+            if self._is_empty_line_between_tok(last_tok, comment_tok):
+                # If we have non-consecutive tokens quit right away.
+                break
+            elif (
+                not docstring and comment_tok.token == "comment.block.percentage.matlab"
+            ):
+                # If we have no previous docstring lines and a comment block we take
+                # the comment block as the docstring and exit.
+                docstring = comment_tok.content.strip()[
+                    2:-2
+                ].strip()  # [2,-2] strips out block comment delimiters
+                break
+            elif comment_tok.token == "comment.line.percentage.matlab":
+                # keep parsing comments
+                docstring += comment_tok.content[1:] + "\n"
+            else:
+                # we are done.
+                break
+            last_tok = comment_tok
+
+        self.methods[fun_name]["docstring"] = docstring if docstring else None
 
     def _parse_argument_section(self, fun_name, section):
         modifiers = [
