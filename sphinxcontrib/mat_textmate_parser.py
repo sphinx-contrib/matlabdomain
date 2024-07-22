@@ -1,6 +1,4 @@
-from textmate_grammar.parsers.matlab import MatlabParser
-
-rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+rpath = "../../../syscop/software/nosnoc/src/NosnocIpoptCallback.m"
 
 
 def find_first_child(curr, tok):
@@ -110,12 +108,12 @@ class MatFunctionParser:
             arg_name = arg_def.begin[
                 0
             ].content  # Get argument name that is being defined
-            self._parse_argument_validation(fun_name, arg_name, arg_def, modifiers)
+            self._parse_argument_validation(arg_name, arg_def, modifiers)
 
     def _parse_argument_validation(self, arg_name, arg, modifiers):
         # TODO This should be identical to propery validation I think. Refactor
         # First get the size if found
-        section = "output" if "Output" in modifiers else "params"
+        section = self.output if "Output" in modifiers else self.params
         size_gen = arg.find(tokens="meta.parens.size.matlab", depth=1)
         try:  # We have a size, therefore parse the comma separated list into tuple
             size_tok, _ = next(size_gen)
@@ -127,7 +125,7 @@ class MatFunctionParser:
                 depth=1,
             )
             size = tuple([elem[0].content for elem in size_elem_gen])
-            self.methods[fun_name][section][arg_name]["size"] = size
+            section[arg_name]["size"] = size
         except StopIteration:
             pass
 
@@ -135,9 +133,7 @@ class MatFunctionParser:
         # TODO this should be mapped to known types (though perhaps as a postprocess)
         type_gen = arg.find(tokens="storage.type.matlab", depth=1)
         try:
-            self.methods[fun_name][section][arg_name]["type"] = next(type_gen)[
-                0
-            ].content
+            section[arg_name]["type"] = next(type_gen)[0].content
         except StopIteration:
             pass
 
@@ -148,15 +144,13 @@ class MatFunctionParser:
             validator_toks = validator_tok.findall(
                 tokens="variable.other.readwrite.matlab", depth=1
             )  # TODO Probably bug here in MATLAB-Language-grammar
-            self.methods[fun_name][section][arg_name]["validators"] = [
-                tok[0].content for tok in validator_toks
-            ]
+            section[arg_name]["validators"] = [tok[0].content for tok in validator_toks]
         except StopIteration:
             pass
 
 
 class MatClassParser:
-    def __init__(self, path):
+    def __init__(self, tokens):
         # DATA
         self.name = ""
         self.supers = []
@@ -168,8 +162,7 @@ class MatClassParser:
 
         # Maybe remove continuations as a crutch? currently parser is broken for continuations in attributes
         # self.parser = MatlabParser(remove_line_continuations=True)
-        self.parser = MatlabParser()
-        self.parsed = self.parser.parse_file(path)
+        self.parsed = tokens
         self.cls, _ = find_first_child(self.parsed, "meta.class.matlab")
         if not self.cls:
             raise Exception()  # TODO better exception
@@ -189,9 +182,6 @@ class MatClassParser:
 
         for section, _ in enumeration_sections:
             self._parse_enum_section(section)
-        import pdb
-
-        pdb.set_trace()
 
     def _find_class_docstring(self):
         try:
@@ -474,7 +464,8 @@ class MatClassParser:
             enum_name = enum_tok.children[0].content
             self.enumerations[enum_name] = {}
             if (
-                section.children[idx + 1].token == "meta.parens.matlab"
+                idx + 1 < len(section.children)
+                and section.children[idx + 1].token == "meta.parens.matlab"
             ):  # Parse out args TODO this should be part of enummember assignment definition
                 args = tuple(
                     [
