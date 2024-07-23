@@ -21,6 +21,8 @@ from sphinxcontrib.mat_textmate_parser import MatClassParser, MatFunctionParser
 from textmate_grammar.parsers.matlab import MatlabParser
 import logging
 from pathlib import Path
+import cProfile
+import pstats
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
@@ -433,9 +435,12 @@ class MatObject(object):
 
             # make a full path out of basedir and objname
             fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
-        import pdb
 
-        pdb.set_trace()
+        # Check if path should be ignored
+        for ignore in MatObject.sphinx_env.config.matlab_ignore_dirs:
+            if Path(fullpath).is_relative_to(MatObject.basedir, ignore):
+                return None
+
         logger.debug(
             f"[sphinxcontrib-matlabdomain] matlabify {package=}, {objname=}, {fullpath=}"
         )
@@ -500,14 +505,7 @@ class MatObject(object):
 
         full_code = code
 
-        print(mfile)
-
-        # remove the top comment header (if there is one) from the code string
-        # code = mat_parser.remove_comment_header(code)
-        # code = mat_parser.remove_line_continuations(code)
-        # code = mat_parser.fix_function_signatures(code)
-        # TODO: This might not be necessary
-
+        # quiet the textmate grammar logger and parse the file
         logging.getLogger("textmate_grammar").setLevel(logging.ERROR)
         parser = MatlabParser()
         toks = parser.parse_file(mfile)
@@ -1081,7 +1079,9 @@ class MatClass(MatMixin, MatObject):
 
     @property
     def __bases__(self):
-        bases_ = dict.fromkeys(self.bases)  # make copy of bases
+        bases_ = dict.fromkeys(
+            [".".join(base) for base in self.bases]
+        )  # make copy of bases
         class_entity_table = {}
         for name, entity in entities_table.items():
             if isinstance(entity, MatClass) or "@" in name:
