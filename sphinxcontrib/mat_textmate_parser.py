@@ -1,17 +1,163 @@
 from textmate_grammar.parsers.matlab import MatlabParser
+import re
 
-rpath = "../tests/test_data/ClassWithPropertyValidators.m"
+# rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+
+rpath = "/home/anton/tools/matlabdomain/tests/roots/test_autodoc/target/ClassExample.m"
 
 
-def find_first_child(curr, tok):
-    ind = [i for i in range(len(curr.children)) if curr.children[i].token == tok]
+def find_first_child(curr, tok, attr="children"):
+    tok_lst = getattr(curr, attr)
+    ind = [i for i in range(len(tok_lst)) if tok_lst[i].token == tok]
     if not ind:
-        return None
-    return (curr.children[ind[0]], ind[0])
+        return (None, None)
+    return (tok_lst[ind[0]], ind[0])
+
+
+def _toks_on_same_line(tok1, tok2):
+    """Note: pass the tokens in order they appear in case of multiline tokens, otherwise this may return incorrect results"""
+    line1 = _get_last_line_of_tok(tok1)
+    line2 = _get_first_line_of_tok(tok2)
+    return line1 == line2
+
+
+def _is_empty_line_between_tok(tok1, tok2):
+    """Note: pass tokens in order they appear"""
+    line1 = _get_last_line_of_tok(tok1)
+    line2 = _get_first_line_of_tok(tok2)
+    return line2 - line1 > 1
+
+
+def _get_first_line_of_tok(tok):
+    return min([loc[0] for loc in tok.characters.keys()])
+
+
+def _get_last_line_of_tok(tok):
+    return max([loc[0] for loc in tok.characters.keys()])
+
+
+class MatFunctionParser:
+    def __init__(self, fun_tok):
+        """Parse Function definition"""
+        # First find the function name
+        name_gen = fun_tok.find(tokens="entity.name.function.matlab")
+        try:
+            name_tok, _ = next(name_gen)
+            self.name = name_tok.content
+        except StopIteration:
+            # TODO correct error here
+            raise Exception("Couldn't find function name")
+
+        # Find outputs and parameters
+        output_gen = fun_tok.find(tokens="variable.parameter.output.matlab")
+        param_gen = fun_tok.find(tokens="variable.parameter.input.matlab")
+
+        self.outputs = {}
+        self.params = {}
+        self.attrs = {}
+
+        for out, _ in output_gen:
+            self.outputs[out.content] = {}
+
+        for param, _ in param_gen:
+            self.params[param.content] = {}
+
+        # find arguments blocks
+        arg_section = None
+        for arg_section, _ in fun_tok.find(tokens="meta.arguments.matlab"):
+            self._parse_argument_section(arg_section)
+
+        fun_decl_gen = fun_tok.find(tokens="meta.function.declaration.matlab")
+        try:
+            fun_decl_tok, _ = next(fun_decl_gen)
+        except StopIteration:
+            raise Exception(
+                "missing function declaration"
+            )  # This cant happen as we'd be missing a function name
+
+        # Now parse for docstring
+        docstring = ""
+        comment_toks = fun_tok.findall(
+            tokens=["comment.line.percentage.matlab", "comment.block.percentage.matlab"]
+        )
+        last_tok = arg_section if arg_section is not None else fun_decl_tok
+
+        for comment_tok, _ in comment_toks:
+            if _is_empty_line_between_tok(last_tok, comment_tok):
+                # If we have non-consecutive tokens quit right away.
+                break
+            elif (
+                not docstring and comment_tok.token == "comment.block.percentage.matlab"
+            ):
+                # If we have no previous docstring lines and a comment block we take
+                # the comment block as the docstring and exit.
+                docstring = comment_tok.content.strip()[
+                    2:-2
+                ].strip()  # [2,-2] strips out block comment delimiters
+                break
+            elif comment_tok.token == "comment.line.percentage.matlab":
+                # keep parsing comments
+                docstring += comment_tok.content[1:] + "\n"
+            else:
+                # we are done.
+                break
+            last_tok = comment_tok
+
+        self.docstring = docstring if docstring else None
+
+    def _parse_argument_section(self, section):
+        modifiers = [
+            mod.content
+            for mod, _ in section.find(tokens="storage.modifier.arguments.matlab")
+        ]
+        arg_def_gen = section.find(tokens="meta.assignment.definition.property.matlab")
+        for arg_def, _ in arg_def_gen:
+            arg_name = arg_def.begin[
+                0
+            ].content  # Get argument name that is being defined
+            self._parse_argument_validation(arg_name, arg_def, modifiers)
+
+    def _parse_argument_validation(self, arg_name, arg, modifiers):
+        # TODO This should be identical to propery validation I think. Refactor
+        # First get the size if found
+        section = self.output if "Output" in modifiers else self.params
+        size_gen = arg.find(tokens="meta.parens.size.matlab", depth=1)
+        try:  # We have a size, therefore parse the comma separated list into tuple
+            size_tok, _ = next(size_gen)
+            size_elem_gen = size_tok.find(
+                tokens=[
+                    "constant.numeric.decimal.matlab",
+                    "keyword.operator.vector.colon.matlab",
+                ],
+                depth=1,
+            )
+            size = tuple([elem[0].content for elem in size_elem_gen])
+            section[arg_name]["size"] = size
+        except StopIteration:
+            pass
+
+        # Now find the type if it exists
+        # TODO this should be mapped to known types (though perhaps as a postprocess)
+        type_gen = arg.find(tokens="storage.type.matlab", depth=1)
+        try:
+            section[arg_name]["type"] = next(type_gen)[0].content
+        except StopIteration:
+            pass
+
+        # Now find list of validators
+        validator_gen = arg.find(tokens="meta.block.validation.matlab", depth=1)
+        try:
+            validator_tok, _ = next(validator_gen)
+            validator_toks = validator_tok.findall(
+                tokens="variable.other.readwrite.matlab", depth=1
+            )  # TODO Probably bug here in MATLAB-Language-grammar
+            section[arg_name]["validators"] = [tok[0].content for tok in validator_toks]
+        except StopIteration:
+            pass
 
 
 class MatClassParser:
-    def __init__(self, path):
+    def __init__(self, tokens):
         # DATA
         self.name = ""
         self.supers = []
@@ -21,10 +167,7 @@ class MatClassParser:
         self.methods = {}
         self.enumerations = {}
 
-        # Maybe remove continuations as a crutch? currently parser is broken for continuations in attributes
-        # self.parser = MatlabParser(remove_line_continuations=True)
-        self.parser = MatlabParser()
-        self.parsed = self.parser.parse_file(path)
+        self.parsed = tokens
         self.cls, _ = find_first_child(self.parsed, "meta.class.matlab")
         if not self.cls:
             raise Exception()  # TODO better exception
@@ -36,87 +179,140 @@ class MatClassParser:
         method_sections = self.cls.findall(tokens="meta.methods.matlab", depth=1)
         enumeration_sections = self.cls.findall(tokens="meta.enum.matlab", depth=1)
 
-        for section in property_sections:
-            self._parse_property_section(section[0])
+        for section, _ in property_sections:
+            self._parse_property_section(section)
 
-        for section in method_sections:
-            self._parse_method_section(section[0])
+        for section, _ in method_sections:
+            self._parse_method_section(section)
 
-        for section in enumeration_sections:
-            self._parse_enum_section(section[0])
+        for section, _ in enumeration_sections:
+            self._parse_enum_section(section)
+
         import pdb
 
         pdb.set_trace()
 
     def _find_class_docstring(self):
-        if self.cls.children[1].token == "comment.line.percentage.matlab":
+        try:
+            possible_comment_tok = self.cls.children[1]
+        except IndexError:
+            return
+
+        if possible_comment_tok.token == "comment.line.percentage.matlab":
             self._docstring_lines()
-        elif self.cls.children[1].token == "comment.block.percentage.matlab":
-            self.docstring = (
-                self.cls.children[1].content.strip()[2:-2].strip()
-            )  # [2,-2] strips out block comment delimiters
+        elif possible_comment_tok.token == "comment.block.percentage.matlab":
+            self.docstring = possible_comment_tok.content.strip()[
+                2:-2
+            ].strip()  # [2,-2] strips out block comment delimiters
         else:
-            print("found no docstring")
+            pass
 
     def _docstring_lines(self):
         idx = 1
-        while self.cls.children[idx].token == "comment.line.percentage.matlab":
+        cls_children = self.cls.children
+
+        while (
+            idx < len(cls_children)
+            and cls_children[idx].token == "comment.line.percentage.matlab"
+        ):
             self.docstring += (
-                self.cls.children[idx].content[1:] + "\n"
+                cls_children[idx].content[1:] + "\n"
             )  # [1:] strips out percent sign
             idx += 1
         self.docstring = self.docstring.strip()
 
     def _parse_clsdef(self):
-        for child in self.clsdef.children:
-            child.print()
+        # Try parsing attrs
+        attrs_tok_gen = self.clsdef.find(tokens="storage.modifier.section.class.matlab")
+        try:
+            attrs_tok, _ = next(attrs_tok_gen)
+            self._parse_class_attributes(attrs_tok)
+        except StopIteration:
+            pass
 
+        # Parse classname
+        classname_tok_gen = self.clsdef.find(tokens="entity.name.type.class.matlab")
+        try:
+            classname_tok, _ = next(classname_tok_gen)
+            self.name = classname_tok.content
+        except StopIteration:
+            print("ClassName not found")  # TODO this is probably fatal
+
+        # Parse interited classes
+        parent_class_toks = self.clsdef.findall(tokens="meta.inherited-class.matlab")
+
+        for parent_class_tok, _ in parent_class_toks:
+            sections = parent_class_tok.findall(
+                tokens=[
+                    "entity.name.namespace.matlab",
+                    "entity.other.inherited-class.matlab",
+                ]
+            )
+            super_cls = tuple([sec.content for sec, _ in sections])
+            self.supers.append(super_cls)
         # Parse Attributes TODO maybe there is a smarter way to do this?
         idx = 0
         while self.clsdef.children[idx].token == "storage.modifier.class.matlab":
-            attr = self.clsdef.children[idx].content
+            attr_tok = self.clsdef.children[idx]
+            attr = attr_tok.content
             val = None  # TODO maybe do some typechecking here or we can assume that you give us valid Matlab
             idx += 1
-            if (
-                self.clsdef.children[idx].token == "keyword.operator.assignment.matlab"
-            ):  # pull out r.h.s
+            if attr_tok.token == "keyword.operator.assignment.matlab":  # pull out r.h.s
                 idx += 1
                 val = self.clsdef.children[idx].content
                 idx += 1
             if (
-                self.clsdef.children[idx].token
-                == "punctuation.separator.modifier.comma.matlab"
+                attr_tok.token == "punctuation.separator.modifier.comma.matlab"
             ):  # skip commas
                 idx += 1
             self.attrs[attr] = val
 
-        if (
-            self.clsdef.children[idx].token == "punctuation.section.parens.end.matlab"
-        ):  # Skip end of attrs
-            idx += 1
-
-        # name must be next
-        self.name = self.clsdef.children[idx].content
-        idx += 1
-
-        while idx < len(
-            self.clsdef.children
-        ):  # No children we care about after this except inherited classes
-            if self.clsdef.children[idx].token == "meta.inherited-class.matlab":
-                super_cls_tok = self.clsdef.children[idx]
-                # collect superclass as a tuple
-                super_cls = tuple(
-                    [
-                        child.content
-                        for child in super_cls_tok.children
-                        if not child.token.startswith("punctuation")
-                    ]
-                )
-                self.supers.append(super_cls)
-            idx += 1
+    def _parse_class_attributes(self, attrs_tok):
+        # walk down child list and parse manually
+        # TODO perhaps contribute a delimited list find to textmate-grammar-python
+        children = attrs_tok.children
+        idx = 0
+        while idx < len(children):
+            child_tok = children[idx]
+            if child_tok.token == "storage.modifier.class.matlab":
+                attr = child_tok.content
+                val = None
+                idx += 1  # walk to next token
+                try:  # however we may have walked off the end of the list in which case we exit
+                    maybe_assign_tok = children[idx]
+                except:
+                    self.attrs[attr] = val
+                    break
+                if maybe_assign_tok.token == "keyword.operator.assignment.matlab":
+                    idx += 1
+                    rhs_tok = children[idx]  # parse right hand side
+                    if rhs_tok.token == "meta.cell.literal.matlab":
+                        # A cell. For now just take the whole cell as value.
+                        # TODO parse out the cell array of metaclass literals.
+                        val = "{" + rhs_tok.content + "}"
+                        idx += 1
+                    elif rhs_tok.token == "constant.language.boolean.matlab":
+                        val = rhs_tok.content
+                        idx += 1
+                    elif rhs_tok.token == "keyword.operator.other.question.matlab":
+                        idx += 1
+                        metaclass_tok = children[idx]
+                        metaclass_components = metaclass_tok.findall(
+                            tokens=[
+                                "entity.name.namespace.matlab",
+                                "entity.other.class.matlab",
+                            ]
+                        )
+                        val = tuple([comp.content for comp, _ in metaclass_components])
+                    else:
+                        pass
+                self.attrs[attr] = val
+            else:  # Comma or continuation therefore skip
+                idx += 1
 
     def _parse_property_section(self, section):
         # TODO parse property section attrs
+        attrs = self._parse_attributes(section)
         idxs = [
             i
             for i in range(len(section.children))
@@ -125,10 +321,29 @@ class MatClassParser:
         for idx in idxs:
             prop_tok = section.children[idx]
             prop_name = prop_tok.begin[0].content
-            self.properties[prop_name] = {}  # Create entry for property
+            self.properties[prop_name] = {"attrs": attrs}  # Create entry for property
             self._parse_property_validation(
                 prop_name, prop_tok
             )  # Parse property validation.
+
+            # Try to find a default assignment:
+            default = None
+            _, assgn_idx = find_first_child(
+                prop_tok, "keyword.operator.assignment.matlab", attr="end"
+            )
+            if assgn_idx is not None:
+                default = ""
+                assgn_idx += 1  # skip assignment
+                while assgn_idx < len(prop_tok.end):
+                    tok = prop_tok.end[assgn_idx]
+                    assgn_idx += 1
+                    if tok.token in [
+                        "comment.line.percentage.matlab",
+                        "punctuation.terminator.semicolon.matlab",
+                    ]:
+                        break
+                    default += tok.content
+            self.properties[prop_name]["default"] = default
 
             # Get inline docstring
             inline_docstring_gen = prop_tok.find(
@@ -148,7 +363,7 @@ class MatClassParser:
             next_tok = prop_tok
             while walk_back_idx >= 0:
                 walk_tok = section.children[walk_back_idx]
-                if self._is_empty_line_between_tok(walk_tok, next_tok):
+                if _is_empty_line_between_tok(walk_tok, next_tok):
                     # Once there is an empty line between consecutive tokens we are done.
                     break
 
@@ -179,7 +394,7 @@ class MatClassParser:
             while walk_fwd_idx < len(section.children):
                 walk_tok = section.children[walk_fwd_idx]
 
-                if self._is_empty_line_between_tok(prev_tok, walk_tok):
+                if _is_empty_line_between_tok(prev_tok, walk_tok):
                     # Once there is an empty line between consecutive tokens we are done.
                     break
 
@@ -241,12 +456,13 @@ class MatClassParser:
         # Now find list of validators
         validator_gen = prop.find(tokens="meta.block.validation.matlab", depth=1)
         try:
-            import pdb
-
-            pdb.set_trace()
             validator_tok, _ = next(validator_gen)
             validator_toks = validator_tok.findall(
-                tokens="variable.other.readwrite.matlab", depth=1
+                tokens=[
+                    "variable.other.readwrite.matlab",
+                    "meta.function-call.parens.matlab",
+                ],
+                depth=1,
             )  # TODO Probably bug here in MATLAB-Language-grammar
             self.properties[prop_name]["validators"] = [
                 tok[0].content for tok in validator_toks
@@ -255,7 +471,7 @@ class MatClassParser:
             pass
 
     def _parse_method_section(self, section):
-        # TODO parse property section attrs
+        attrs = self._parse_attributes(section)
         idxs = [
             i
             for i in range(len(section.children))
@@ -263,96 +479,11 @@ class MatClassParser:
         ]
         for idx in idxs:
             meth_tok = section.children[idx]
-            self._parse_function(meth_tok)
-            # TODO walk forward and backward to get property docstring.
-            # TODO if we have mutliple possible docstrings what is given priority?
-            # TODO parse out property validations syntax
-
-    def _parse_function(self, fun_tok):
-        """Parse Function definition"""
-        # First find the function name
-        name_gen = fun_tok.find(tokens="entity.name.function.matlab")
-        try:
-            name_tok, _ = next(name_gen)
-            fun_name = name_tok.content
-        except StopIteration:
-            # TODO correct error here
-            raise Exception("Couldn't find function name")
-
-        # Find outputs and parameters
-        output_gen = fun_tok.find(tokens="variable.parameter.output.matlab")
-        param_gen = fun_tok.find(tokens="variable.parameter.input.matlab")
-
-        self.methods[fun_name] = {}
-        self.methods[fun_name]["outputs"] = {}
-        self.methods[fun_name]["params"] = {}
-
-        for out, _ in output_gen:
-            self.methods[fun_name]["outputs"][out.content] = {}
-
-        for param, _ in param_gen:
-            self.methods[fun_name]["params"][param.content] = {}
-
-        # find arguments blocks
-        for arg_section, _ in fun_tok.find(tokens="meta.arguments.matlab"):
-            self._parse_argument_section(fun_name, arg_section)
-
-    def _parse_argument_section(self, fun_name, section):
-        modifiers = [
-            mod.content
-            for mod, _ in section.find(tokens="storage.modifier.arguments.matlab")
-        ]
-        arg_def_gen = section.find(tokens="meta.assignment.definition.property.matlab")
-        for arg_def, _ in arg_def_gen:
-            arg_name = arg_def.begin[
-                0
-            ].content  # Get argument name that is being defined
-            self._parse_argument_validation(fun_name, arg_name, arg_def, modifiers)
-
-    def _parse_argument_validation(self, fun_name, arg_name, arg, modifiers):
-        # TODO This should be identical to propery validation I think. Refactor
-        # First get the size if found
-        section = "output" if "Output" in modifiers else "params"
-        size_gen = arg.find(tokens="meta.parens.size.matlab", depth=1)
-        try:  # We have a size, therefore parse the comma separated list into tuple
-            size_tok, _ = next(size_gen)
-            size_elem_gen = size_tok.find(
-                tokens=[
-                    "constant.numeric.decimal.matlab",
-                    "keyword.operator.vector.colon.matlab",
-                ],
-                depth=1,
-            )
-            size = tuple([elem[0].content for elem in size_elem_gen])
-            self.methods[fun_name][section][arg_name]["size"] = size
-        except StopIteration:
-            pass
-
-        # Now find the type if it exists
-        # TODO this should be mapped to known types (though perhaps as a postprocess)
-        type_gen = arg.find(tokens="storage.type.matlab", depth=1)
-        try:
-            self.methods[fun_name][section][arg_name]["type"] = next(type_gen)[
-                0
-            ].content
-        except StopIteration:
-            pass
-
-        # Now find list of validators
-        validator_gen = arg.find(tokens="meta.block.validation.matlab", depth=1)
-        try:
-            validator_tok, _ = next(validator_gen)
-            validator_toks = validator_tok.findall(
-                tokens="variable.other.readwrite.matlab", depth=1
-            )  # TODO Probably bug here in MATLAB-Language-grammar
-            self.methods[fun_name][section][arg_name]["validators"] = [
-                tok[0].content for tok in validator_toks
-            ]
-        except StopIteration:
-            pass
+            parsed_function = MatFunctionParser(meth_tok)
+            self.methods[parsed_function.name] = parsed_function
+            self.methods[parsed_function.name].attrs = attrs
 
     def _parse_enum_section(self, section):
-        # TODO parse property section attrs
         idxs = [
             i
             for i in range(len(section.children))
@@ -365,7 +496,8 @@ class MatClassParser:
             enum_name = enum_tok.children[0].content
             self.enumerations[enum_name] = {}
             if (
-                section.children[idx + 1].token == "meta.parens.matlab"
+                idx + 1 < len(section.children)
+                and section.children[idx + 1].token == "meta.parens.matlab"
             ):  # Parse out args TODO this should be part of enummember assignment definition
                 args = tuple(
                     [
@@ -383,7 +515,7 @@ class MatClassParser:
             next_tok = enum_tok
             while walk_back_idx >= 0:
                 walk_tok = section.children[walk_back_idx]
-                if self._is_empty_line_between_tok(walk_tok, next_tok):
+                if _is_empty_line_between_tok(walk_tok, next_tok):
                     # Once there is an empty line between consecutive tokens we are done.
                     break
 
@@ -415,7 +547,7 @@ class MatClassParser:
             while walk_fwd_idx < len(section.children):
                 walk_tok = section.children[walk_fwd_idx]
 
-                if self._is_empty_line_between_tok(prev_tok, walk_tok):
+                if _is_empty_line_between_tok(prev_tok, walk_tok):
                     # Once there is an empty line between consecutive tokens we are done.
                     break
 
@@ -429,7 +561,7 @@ class MatClassParser:
                     break
                 elif walk_tok.token == "comment.line.percentage.matlab":
                     # In the case the comment is on the same line as the end of the enum declaration, take it as inline comment and exit.
-                    if self._toks_on_same_line(section.children[idx], walk_tok):
+                    if _toks_on_same_line(section.children[idx], walk_tok):
                         inline_docstring = walk_tok.content[1:]
                         break
 
@@ -453,24 +585,58 @@ class MatClassParser:
             else:
                 self.enumerations[enum_name]["docstring"] = None
 
-    def _toks_on_same_line(self, tok1, tok2):
-        """Note: pass the tokens in order they appear in case of multiline tokens, otherwise this may return incorrect results"""
-        line1 = self._get_last_line_of_tok(tok1)
-        line2 = self._get_first_line_of_tok(tok2)
-        return line1 == line2
+    def _parse_attributes(self, section):
+        # walk down child list and parse manually
+        children = section.begin
+        idx = 1
+        attrs = {}
+        while idx < len(children):
+            child_tok = children[idx]
+            if re.match(
+                "storage.modifier.(properties|methods|events).matlab", child_tok.token
+            ):
+                attr = child_tok.content
+                val = None
+                idx += 1  # walk to next token
+                try:  # however we may have walked off the end of the list in which case we exit
+                    maybe_assign_tok = children[idx]
+                except:
+                    attrs[attr] = val
+                    return attrs
+                if maybe_assign_tok.token == "keyword.operator.assignment.matlab":
+                    idx += 1
+                    rhs_tok = children[idx]  # parse right hand side
+                    if rhs_tok.token == "meta.cell.literal.matlab":
+                        # A cell. For now just take the whole cell as value.
+                        # TODO parse out the cell array of metaclass literals.
+                        val = "{" + rhs_tok.content + "}"
+                        idx += 1
+                    elif rhs_tok.token == "constant.language.boolean.matlab":
+                        val = rhs_tok.content
+                        idx += 1
+                    elif rhs_tok.token == "storage.modifier.access.matlab":
+                        val = rhs_tok.content
+                        idx += 1
+                    elif rhs_tok.token == "keyword.operator.other.question.matlab":
+                        idx += 1
+                        metaclass_tok = children[idx]
+                        metaclass_components = metaclass_tok.findall(
+                            tokens=[
+                                "entity.name.namespace.matlab",
+                                "entity.other.class.matlab",
+                            ]
+                        )
+                        val = tuple([comp.content for comp, _ in metaclass_components])
+                    else:
+                        pass
+                attrs[attr] = val
+            else:  # Comma or continuation therefore skip
+                idx += 1
 
-    def _is_empty_line_between_tok(self, tok1, tok2):
-        """Note: pass tokens in order they appear"""
-        line1 = self._get_last_line_of_tok(tok1)
-        line2 = self._get_first_line_of_tok(tok2)
-        return line2 - line1 > 1
-
-    def _get_first_line_of_tok(self, tok):
-        return min([loc[0] for loc in tok.characters.keys()])
-
-    def _get_last_line_of_tok(self, tok):
-        return max([loc[0] for loc in tok.characters.keys()])
+        return attrs
 
 
 if __name__ == "__main__":
-    cls_parse = MatClassParser(rpath)
+    parser = MatlabParser()
+    toks = parser.parse_file(rpath)
+    cls_parse = MatClassParser(toks)
