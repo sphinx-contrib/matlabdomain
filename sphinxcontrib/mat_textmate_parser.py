@@ -1,7 +1,9 @@
 from textmate_grammar.parsers.matlab import MatlabParser
 import re
 
-rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+# rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+
+rpath = "/home/anton/tools/matlabdomain/tests/roots/test_autodoc/target/ClassExample.m"
 
 
 def find_first_child(curr, tok, attr="children"):
@@ -186,6 +188,10 @@ class MatClassParser:
         for section, _ in enumeration_sections:
             self._parse_enum_section(section)
 
+        import pdb
+
+        pdb.set_trace()
+
     def _find_class_docstring(self):
         try:
             possible_comment_tok = self.cls.children[1]
@@ -272,7 +278,11 @@ class MatClassParser:
                 attr = child_tok.content
                 val = None
                 idx += 1  # walk to next token
-                maybe_assign_tok = children[idx]
+                try:  # however we may have walked off the end of the list in which case we exit
+                    maybe_assign_tok = children[idx]
+                except:
+                    self.attrs[attr] = val
+                    break
                 if maybe_assign_tok.token == "keyword.operator.assignment.matlab":
                     idx += 1
                     rhs_tok = children[idx]  # parse right hand side
