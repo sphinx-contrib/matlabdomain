@@ -11,41 +11,52 @@ rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassTesting.m"
 # QUERIES
 q_classdef = ML_LANG.query(
     """(class_definition
+    .
     "classdef"
+    .
     (attributes
-    [(attribute) @attrs _]+
+        [(attribute) @attrs _]+
     )?
+    .
     (identifier) @name
+    .
     (superclasses
         [(property_name) @supers _]+
     )?
+    .
+    (comment)? @docstring
     ) @class
 """
 )
 
-q_attributes = ML_LANG.query("""(identifier) @name (_)? @value""")
+q_attributes = ML_LANG.query("""(attribute (identifier) @name (_)? @value)""")
 
 q_supers = ML_LANG.query("""[(identifier) @secs "."]+ """)
 
 q_properties = ML_LANG.query(
     """(properties
-    (attributes)? @attrs
-    (property)* @properties
+    .
+    (attributes
+        [(attribute) @attrs _]+
+    )?
+    [(property) @properties _]*
     ) @prop_block
 """
 )
 
 q_methods = ML_LANG.query(
     """(methods
-    (attributes)? @attrs
-    (function_definition)* @methods
+    (attributes
+        [(attribute) @attrs _]+
+    )?
+    [(function_definition) @methods _]*
     ) @meth_block
 """
 )
 
 q_enumerations = ML_LANG.query(
     """(enumeration
-    (enum)* @enums
+    [(enum) @enums _]*
     ) @enum_block
 """
 )
@@ -58,155 +69,274 @@ q_events = ML_LANG.query(
 """
 )
 
+q_property = ML_LANG.query(
+    """
+    (property name: (identifier) @name
+     (dimensions
+         [[(spread_operator) (number)] @dims _]+
+     )?
+     (identifier)? @type
+     (validation_functions
+         [[(identifier) (function_call)] @validation_functions _]+
+     )?
+     (default_value (number))? @default
+     (comment)? @docstring
+    )
+"""
+)
 
-def find_first_child(curr, tok, attr="children"):
-    tok_lst = getattr(curr, attr)
-    ind = [i for i in range(len(tok_lst)) if tok_lst[i].token == tok]
-    if not ind:
-        return (None, None)
-    return (tok_lst[ind[0]], ind[0])
+q_enum = ML_LANG.query(
+    """(enum
+    .
+    (identifier) @name
+    [(_) @args _]*
+    )
+"""
+)
+
+q_fun = ML_LANG.query(
+    """(function_definition
+    .
+    (function_output
+        [
+            (identifier) @outputs
+            (multioutput_variable
+                [(identifier) @outputs _]+
+            )
+        ]
+    )?
+    .
+    name: (identifier) @name
+    .
+    (function_arguments
+        [(identifier) @params _]*
+    )?
+    .
+    [(arguments_statement) @argblocks _]*
+    .
+    (comment)? @docstring
+    )
+"""
+)
+
+q_argblock = ML_LANG.query(
+    """
+    (arguments_statement
+    .
+    (attributes
+        [(attribute) @attrs _]+
+    )?
+    .
+    [(property) @args _]*
+    )
+"""
+)
+
+q_arg = ML_LANG.query(
+    """
+    (property name:
+        [
+            (identifier) @name
+            (property_name
+                [(identifier) @name _]+
+            )
+        ]
+     (dimensions
+         [[(spread_operator) (number)] @dims _]+
+     )?
+     (identifier)? @type
+     (validation_functions
+         [[(identifier) (function_call)] @validation_functions _]+
+     )?
+     (default_value (number))? @default
+     (comment)? @docstring
+    )
+"""
+)
 
 
-def _toks_on_same_line(tok1, tok2):
-    """Note: pass the tokens in order they appear in case of multiline tokens, otherwise this may return incorrect results"""
-    line1 = _get_last_line_of_tok(tok1)
-    line2 = _get_first_line_of_tok(tok2)
-    return line1 == line2
+re_percent_remove = re.compile(r"^[ \t]*%", flags=re.M)
 
 
-def _is_empty_line_between_tok(tok1, tok2):
-    """Note: pass tokens in order they appear"""
-    line1 = _get_last_line_of_tok(tok1)
-    line2 = _get_first_line_of_tok(tok2)
-    return line2 - line1 > 1
-
-
-def _get_first_line_of_tok(tok):
-    return min([loc[0] for loc in tok.characters.keys()])
-
-
-def _get_last_line_of_tok(tok):
-    return max([loc[0] for loc in tok.characters.keys()])
+def process_text_into_docstring(text):
+    docstring = text.decode("utf-8")
+    return re.sub(re_percent_remove, "", docstring)
 
 
 class MatFunctionParser:
-    def __init__(self, fun_tok):
+    def __init__(self, fun_node):
         """Parse Function definition"""
-        # First find the function name
-        name_gen = fun_tok.find(tokens="entity.name.function.matlab")
-        try:
-            name_tok, _ = next(name_gen)
-            self.name = name_tok.content
-        except StopIteration:
-            # TODO correct error here
-            raise Exception("Couldn't find function name")
+        _, fun_match = q_fun.matches(fun_node)[0]
+        self.name = fun_match.get("name").text.decode("utf-8")
 
-        # Find outputs and parameters
-        output_gen = fun_tok.find(tokens="variable.parameter.output.matlab")
-        param_gen = fun_tok.find(tokens="variable.parameter.input.matlab")
-
+        # Get outputs (possibly more than one)
         self.outputs = {}
+        output_nodes = fun_match.get("outputs")
+        if output_nodes is not None:
+            outputs = [output.text.decode("utf-8") for output in output_nodes]
+            for output in outputs:
+                self.outputs[output] = {}
+
+        # Get parameters
         self.params = {}
-        self.attrs = {}
+        param_nodes = fun_match.get("params")
+        if output_nodes is not None:
+            params = [param.text.decode("utf-8") for param in param_nodes]
+            for param in params:
+                self.params[param] = {}
 
-        for out, _ in output_gen:
-            self.outputs[out.content] = {}
+        # parse out info from argument blocks
+        argblock_nodes = fun_match.get("argblocks")
+        for argblock_node in argblock_nodes:
+            self._parse_argument_section(argblock_node)
 
-        for param, _ in param_gen:
-            self.params[param.content] = {}
+        #
+        import pdb
 
-        # find arguments blocks
-        arg_section = None
-        for arg_section, _ in fun_tok.find(tokens="meta.arguments.matlab"):
-            self._parse_argument_section(arg_section)
+        pdb.set_trace()
 
-        fun_decl_gen = fun_tok.find(tokens="meta.function.declaration.matlab")
-        try:
-            fun_decl_tok, _ = next(fun_decl_gen)
-        except StopIteration:
-            raise Exception(
-                "missing function declaration"
-            )  # This cant happen as we'd be missing a function name
+    def _parse_argument_section(self, argblock_node):
+        _, argblock_match = q_argblock.matches(argblock_node)[0]
+        attrs_nodes = argblock_match.get("attrs")
+        attrs = self._parse_attributes(attrs_nodes)
 
-        # Now parse for docstring
-        docstring = ""
-        comment_toks = fun_tok.findall(
-            tokens=["comment.line.percentage.matlab", "comment.block.percentage.matlab"]
-        )
-        last_tok = arg_section if arg_section is not None else fun_decl_tok
+        arguments = argblock_match.get("args")
 
-        for comment_tok, _ in comment_toks:
-            if _is_empty_line_between_tok(last_tok, comment_tok):
-                # If we have non-consecutive tokens quit right away.
-                break
-            elif (
-                not docstring and comment_tok.token == "comment.block.percentage.matlab"
-            ):
-                # If we have no previous docstring lines and a comment block we take
-                # the comment block as the docstring and exit.
-                docstring = comment_tok.content.strip()[
-                    2:-2
-                ].strip()  # [2,-2] strips out block comment delimiters
-                break
-            elif comment_tok.token == "comment.line.percentage.matlab":
-                # keep parsing comments
-                docstring += comment_tok.content[1:] + "\n"
-            else:
-                # we are done.
-                break
-            last_tok = comment_tok
+        # TODO this is almost identical to property parsing.
+        #      might be a good idea to extract common code here.
+        for arg in arguments:
+            # match property to extract details
+            _, arg_match = q_arg.matches(arg)[0]
 
-        self.docstring = docstring if docstring else None
+            # extract name (this is always available so no need for None check)
+            name = [name.text.decode("utf-8") for name in arg_match.get("name")]
 
-    def _parse_argument_section(self, section):
-        modifiers = [
-            mod.content
-            for mod, _ in section.find(tokens="storage.modifier.arguments.matlab")
-        ]
-        arg_def_gen = section.find(tokens="meta.assignment.definition.property.matlab")
-        for arg_def, _ in arg_def_gen:
-            arg_name = arg_def.begin[
-                0
-            ].content  # Get argument name that is being defined
-            self._parse_argument_validation(arg_name, arg_def, modifiers)
+            # extract dims list
+            dims_list = arg_match.get("dims")
+            dims = None
+            if dims_list is not None:
+                dims = tuple([dim.text.decode("utf-8") for dim in dims_list])
 
-    def _parse_argument_validation(self, arg_name, arg, modifiers):
-        # TODO This should be identical to propery validation I think. Refactor
-        # First get the size if found
-        section = self.output if "Output" in modifiers else self.params
-        size_gen = arg.find(tokens="meta.parens.size.matlab", depth=1)
-        try:  # We have a size, therefore parse the comma separated list into tuple
-            size_tok, _ = next(size_gen)
-            size_elem_gen = size_tok.find(
-                tokens=[
-                    "constant.numeric.decimal.matlab",
-                    "keyword.operator.vector.colon.matlab",
-                ],
-                depth=1,
+            # extract type
+            type_node = arg_match.get("type")
+            typename = type_node.text.decode("utf-8") if type_node is not None else None
+
+            # extract validator functions
+            vf_list = arg_match.get("validator_functions")
+            vfs = None
+            if vf_list is not None:
+                vfs = [vf.text.decode("utf-8") for vf in vf_list]
+
+            # extract default
+            default_node = arg_match.get("default")
+            default = (
+                default_node.text.decode("utf-8") if default_node is not None else None
             )
-            size = tuple([elem[0].content for elem in size_elem_gen])
-            section[arg_name]["size"] = size
-        except StopIteration:
-            pass
 
-        # Now find the type if it exists
-        # TODO this should be mapped to known types (though perhaps as a postprocess)
-        type_gen = arg.find(tokens="storage.type.matlab", depth=1)
-        try:
-            section[arg_name]["type"] = next(type_gen)[0].content
-        except StopIteration:
-            pass
+            # extract inline or following docstring if there is no semicolon
+            docstring_node = arg_match.get("docstring")
+            docstring = ""
+            if docstring_node is not None:
+                # tree-sitter-matlab combines inline comments with following
+                # comments which means this requires some relatively ugly
+                # processing, but worth it for the ease of the rest of it.
+                prev_sib = docstring_node.prev_named_sibling
+                if docstring_node.start_point.row == prev_sib.end_point.row:
+                    # if the docstring is on the same line as the end of the definition only take the inline part
+                    docstring = process_text_into_docstring(docstring_node.text)
+                    docstring = docstring.split("\n")[0]
+                elif docstring_node.start_point.row - prev_sib.end_point.row <= 1:
+                    # Otherwise take the whole docstring
+                    docstring = process_text_into_docstring(docstring_node.text)
 
-        # Now find list of validators
-        validator_gen = arg.find(tokens="meta.block.validation.matlab", depth=1)
-        try:
-            validator_tok, _ = next(validator_gen)
-            validator_toks = validator_tok.findall(
-                tokens="variable.other.readwrite.matlab", depth=1
-            )  # TODO Probably bug here in MATLAB-Language-grammar
-            section[arg_name]["validators"] = [tok[0].content for tok in validator_toks]
-        except StopIteration:
-            pass
+            # extract inline or following docstring if there _is_ a semicolon.
+            # this is only done if we didn't already find a docstring with the previous approach
+            next_node = arg.next_named_sibling
+            if next_node is None or docstring is not None:
+                # Nothing to be done.
+                pass
+            elif next_node.type == "comment":
+                if next_node.start_point.row == arg.end_point.row:
+                    # if the docstring is on the same line as the end of the definition only take the inline part
+                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = docstring.split("\n")[0]
+                elif next_node.start_point.row - arg.end_point.row <= 1:
+                    # Otherwise take the whole docstring
+                    docstring = process_text_into_docstring(next_node.text)
+
+            # override docstring with prior if exists
+            prev_node = arg.prev_named_sibling
+            if prev_node is None:
+                # Nothing we can do, no previous comment
+                pass
+            elif prev_node.type == "comment":
+                # We have a previous comment if it ends on the previous
+                # line then we set the docstring. We also need to check
+                # if the first line of the comment is the same as a
+                # previous argument.
+                if arg.start_point.row - prev_node.end_point.row <= 1:
+                    ds = process_text_into_docstring(prev_node.text)
+                    prev_arg = prev_node.prev_named_sibling
+                    if prev_arg is not None and prev_arg.type == "property":
+                        if prev_node.start_point.row == prev_arg.end_point.row:
+                            ds = "\n".join(ds.split("\n")[1:])
+                    if ds:
+                        docstring = ds
+                else:
+                    if arg.start_point.row - prev_node.end_point.row <= 1:
+                        docstring = process_text_into_docstring(prev_node.text)
+            elif prev_node.type == "property":
+                # The previous argumentnode may have eaten our comment
+                # check for it a trailing comment. If it is not there
+                # then we stop looking.
+                prev_comment = prev_node.named_children[-1]
+                if prev_comment.type == "comment":
+                    # we now need to check if prev_comment ends on the line
+                    # before ours and trim the first line if it on the same
+                    # line as prev property.
+                    if arg.start_point.row - prev_comment.end_point.row <= 1:
+                        ds = process_text_into_docstring(prev_comment.text)
+                        if (
+                            prev_comment.start_point.row
+                            == prev_comment.prev_named_sibling.end_point.row
+                        ):
+                            ds = "\n".join(ds.split("\n")[1:])
+                        if ds:
+                            docstring = ds
+            # After all that if our docstring is empty then we have none
+            if docstring.strip() == "":
+                docstring == None
+
+            # Here we trust that the person is giving us valid matlab.
+            if "Output" in attrs.keys():
+                arg_loc = self.outputs
+            else:
+                arg_loc = self.params
+            if len(name) == 1:
+                arg_loc[name[0]] = {
+                    "attrs": attrs,
+                    "size": dims,
+                    "type": typename,
+                    "validators": vfs,
+                    "default": default,
+                    "docstring": docstring,
+                }
+            else:
+                # how to handle dotted args
+                pass
+
+    def _parse_attributes(self, attrs_nodes):
+        # TOOD deduplicated this
+        attrs = {}
+        if attrs_nodes is not None:
+            for attr_node in attrs_nodes:
+                _, attr_match = q_attributes.matches(attr_node)[0]
+                name = attr_match.get("name").text.decode("utf-8")
+                value_node = attr_match.get("value")
+                attrs[name] = (
+                    value_node.text.decode("utf-8") if value_node is not None else None
+                )
+        return attrs
 
 
 class MatClassParser:
@@ -228,491 +358,229 @@ class MatClassParser:
         self.cls = class_match.get("class")
         self.name = class_match.get("name")
 
-        import pdb
-
-        pdb.set_trace()
         # Parse class attrs and supers
-        attrs_node = class_match.get("attrs")
-        if attrs_node is not None:
-            attrs_matches = q_attributes.matches(attrs_node)
-            for _, match in attrs_matches:
-                name = match.get("name").text.decode("utf-8")
-                value_node = match.get("value")
-                self.attrs[name] = (
-                    value_node.text.decode("utf-8") if value_node is not None else None
-                )
+        attrs_nodes = class_match.get("attrs")
+        self.attrs = self._parse_attributes(attrs_nodes)
 
-        supers_node = class_match.get("supers")
-        if supers_node is not None:
-            supers_matches = q_supers.matches(supers_node)
-            for _, match in supers_matches:
+        supers_nodes = class_match.get("supers")
+        if supers_nodes is not None:
+            for super_node in supers_nodes:
+                _, super_match = q_supers.matches(super_node)[0]
                 super_cls = tuple(
-                    [sec.text.decode("utf-8") for sec in match.get("secs")]
+                    [sec.text.decode("utf-8") for sec in super_match.get("secs")]
                 )
                 self.supers.append(super_cls)
 
+        # get docstring and check that it consecutive
+        docstring_node = class_match.get("docstring")
+        if docstring_node is not None:
+            prev_node = docstring_node.prev_sibling
+            if docstring_node.start_point.row - prev_node.end_point.row <= 1:
+                self.docstring = process_text_into_docstring(docstring_node.text)
+
         prop_matches = q_properties.matches(self.cls)
         method_matches = q_methods.matches(self.cls)
-        enumeration_matches = q_enumerations.matches(self.cls)
+        enum_matches = q_enumerations.matches(self.cls)
         events_matches = q_events.matches(self.cls)
 
-        self._parse_clsdef()
-        self._find_class_docstring()
+        for _, prop_match in prop_matches:
+            self._parse_property_section(prop_match)
+        for _, enum_match in enum_matches:
+            self._parse_enum_section(enum_match)
+        for _, method_match in method_matches:
+            self._parse_method_section(method_match)
+        import pdb
 
-        property_sections = self.cls.findall(tokens="meta.properties.matlab", depth=1)
-        method_sections = self.cls.findall(tokens="meta.methods.matlab", depth=1)
-        enumeration_sections = self.cls.findall(tokens="meta.enum.matlab", depth=1)
+        pdb.set_trace()
 
-        for section, _ in property_sections:
-            self._parse_property_section(section)
+    def _parse_property_section(self, props_match):
+        # extract property section attributes
+        attrs_nodes = props_match.get("attrs")
+        attrs = self._parse_attributes(attrs_nodes)
 
-        for section, _ in method_sections:
-            self._parse_method_section(section)
+        properties = props_match.get("properties")
 
-        for section, _ in enumeration_sections:
-            self._parse_enum_section(section)
+        for prop in properties:
+            # match property to extract details
+            _, prop_match = q_property.matches(prop)[0]
 
-    def _find_class_docstring(self):
-        try:
-            possible_comment_tok = self.cls.children[1]
-        except IndexError:
-            return
+            # extract name (this is always available so no need for None check)
+            name = prop_match.get("name").text.decode("utf-8")
 
-        if possible_comment_tok.token == "comment.line.percentage.matlab":
-            self._docstring_lines()
-        elif possible_comment_tok.token == "comment.block.percentage.matlab":
-            self.docstring = possible_comment_tok.content.strip()[
-                2:-2
-            ].strip()  # [2,-2] strips out block comment delimiters
-        else:
-            pass
+            # extract dims list
+            dims_list = prop_match.get("dims")
+            dims = None
+            if dims_list is not None:
+                dims = tuple([dim.text.decode("utf-8") for dim in dims_list])
 
-    def _docstring_lines(self):
-        idx = 1
-        cls_children = self.cls.children
+            # extract type
+            type_node = prop_match.get("type")
+            typename = type_node.text.decode("utf-8") if type_node is not None else None
 
-        while (
-            idx < len(cls_children)
-            and cls_children[idx].token == "comment.line.percentage.matlab"
-        ):
-            self.docstring += (
-                cls_children[idx].content[1:] + "\n"
-            )  # [1:] strips out percent sign
-            idx += 1
-        self.docstring = self.docstring.strip()
+            # extract validator functions
+            vf_list = prop_match.get("validator_functions")
+            vfs = None
+            if vf_list is not None:
+                vfs = [vf.text.decode("utf-8") for vf in vf_list]
 
-    def _parse_clsdef(self):
-        # Try parsing attrs
-        attrs_tok_gen = self.clsdef.find(tokens="storage.modifier.section.class.matlab")
-        try:
-            attrs_tok, _ = next(attrs_tok_gen)
-            self._parse_class_attributes(attrs_tok)
-        except StopIteration:
-            pass
-
-        # Parse classname
-        classname_tok_gen = self.clsdef.find(tokens="entity.name.type.class.matlab")
-        try:
-            classname_tok, _ = next(classname_tok_gen)
-            self.name = classname_tok.content
-        except StopIteration:
-            print("ClassName not found")  # TODO this is probably fatal
-
-        # Parse interited classes
-        parent_class_toks = self.clsdef.findall(tokens="meta.inherited-class.matlab")
-
-        for parent_class_tok, _ in parent_class_toks:
-            sections = parent_class_tok.findall(
-                tokens=[
-                    "entity.name.namespace.matlab",
-                    "entity.other.inherited-class.matlab",
-                ]
+            # extract default
+            default_node = prop_match.get("default")
+            default = (
+                default_node.text.decode("utf-8") if default_node is not None else None
             )
-            super_cls = tuple([sec.content for sec, _ in sections])
-            self.supers.append(super_cls)
-        # Parse Attributes TODO maybe there is a smarter way to do this?
-        idx = 0
-        while self.clsdef.children[idx].token == "storage.modifier.class.matlab":
-            attr_tok = self.clsdef.children[idx]
-            attr = attr_tok.content
-            val = None  # TODO maybe do some typechecking here or we can assume that you give us valid Matlab
-            idx += 1
-            if attr_tok.token == "keyword.operator.assignment.matlab":  # pull out r.h.s
-                idx += 1
-                val = self.clsdef.children[idx].content
-                idx += 1
-            if (
-                attr_tok.token == "punctuation.separator.modifier.comma.matlab"
-            ):  # skip commas
-                idx += 1
-            self.attrs[attr] = val
 
-    def _parse_class_attributes(self, attrs_tok):
-        # walk down child list and parse manually
-        # TODO perhaps contribute a delimited list find to textmate-grammar-python
-        children = attrs_tok.children
-        idx = 0
-        while idx < len(children):
-            child_tok = children[idx]
-            if child_tok.token == "storage.modifier.class.matlab":
-                attr = child_tok.content
-                val = None
-                idx += 1  # walk to next token
-                try:  # however we may have walked off the end of the list in which case we exit
-                    maybe_assign_tok = children[idx]
-                except:
-                    self.attrs[attr] = val
-                    break
-                if maybe_assign_tok.token == "keyword.operator.assignment.matlab":
-                    idx += 1
-                    rhs_tok = children[idx]  # parse right hand side
-                    if rhs_tok.token == "meta.cell.literal.matlab":
-                        # A cell. For now just take the whole cell as value.
-                        # TODO parse out the cell array of metaclass literals.
-                        val = "{" + rhs_tok.content + "}"
-                        idx += 1
-                    elif rhs_tok.token == "constant.language.boolean.matlab":
-                        val = rhs_tok.content
-                        idx += 1
-                    elif rhs_tok.token == "keyword.operator.other.question.matlab":
-                        idx += 1
-                        metaclass_tok = children[idx]
-                        metaclass_components = metaclass_tok.findall(
-                            tokens=[
-                                "entity.name.namespace.matlab",
-                                "entity.other.class.matlab",
-                            ]
-                        )
-                        val = tuple([comp.content for comp, _ in metaclass_components])
-                    else:
-                        pass
-                self.attrs[attr] = val
-            else:  # Comma or continuation therefore skip
-                idx += 1
+            # extract inline or following docstring if there is no semicolon
+            docstring_node = prop_match.get("docstring")
+            docstring = ""
+            if docstring_node is not None:
+                # tree-sitter-matlab combines inline comments with following
+                # comments which means this requires some relatively ugly
+                # processing, but worth it for the ease of the rest of it.
+                prev_sib = docstring_node.prev_named_sibling
+                if docstring_node.start_point.row == prev_sib.end_point.row:
+                    # if the docstring is on the same line as the end of the definition only take the inline part
+                    docstring = process_text_into_docstring(docstring_node.text)
+                    docstring = docstring.split("\n")[0]
+                elif docstring_node.start_point.row - prev_sib.end_point.row <= 1:
+                    # Otherwise take the whole docstring
+                    docstring = process_text_into_docstring(docstring_node.text)
 
-    def _parse_property_section(self, section):
-        # TODO parse property section attrs
-        attrs = self._parse_attributes(section)
-        idxs = [
-            i
-            for i in range(len(section.children))
-            if section.children[i].token == "meta.assignment.definition.property.matlab"
-        ]
-        for idx in idxs:
-            prop_tok = section.children[idx]
-            prop_name = prop_tok.begin[0].content
-            self.properties[prop_name] = {"attrs": attrs}  # Create entry for property
-            self._parse_property_validation(
-                prop_name, prop_tok
-            )  # Parse property validation.
+            # extract inline or following docstring if there _is_ a semicolon.
+            # this is only done if we didn't already find a docstring with the previous approach
+            next_node = prop.next_named_sibling
+            if next_node is None or docstring is not None:
+                # Nothing to be done.
+                pass
+            elif next_node.type == "comment":
+                if next_node.start_point.row == prop.end_point.row:
+                    # if the docstring is on the same line as the end of the definition only take the inline part
+                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = docstring.split("\n")[0]
+                elif next_node.start_point.row - prop.end_point.row <= 1:
+                    # Otherwise take the whole docstring
+                    docstring = process_text_into_docstring(next_node.text)
 
-            # Try to find a default assignment:
-            default = None
-            _, assgn_idx = find_first_child(
-                prop_tok, "keyword.operator.assignment.matlab", attr="end"
-            )
-            if assgn_idx is not None:
-                default = ""
-                assgn_idx += 1  # skip assignment
-                while assgn_idx < len(prop_tok.end):
-                    tok = prop_tok.end[assgn_idx]
-                    assgn_idx += 1
-                    if tok.token in [
-                        "comment.line.percentage.matlab",
-                        "punctuation.terminator.semicolon.matlab",
-                    ]:
-                        break
-                    default += tok.content
-            self.properties[prop_name]["default"] = default
-
-            # Get inline docstring
-            inline_docstring_gen = prop_tok.find(
-                tokens="comment.line.percentage.matlab", attribute="end"
-            )
-            try:
-                inline_docstring_tok, _ = next(inline_docstring_gen)
-                inline_docstring = inline_docstring_tok.content[
-                    1:
-                ]  # strip leading % sign
-            except StopIteration:
-                inline_docstring = None
-
-            # Walk backwards to get preceding docstring.
-            preceding_docstring = ""
-            walk_back_idx = idx - 1
-            next_tok = prop_tok
-            while walk_back_idx >= 0:
-                walk_tok = section.children[walk_back_idx]
-                if _is_empty_line_between_tok(walk_tok, next_tok):
-                    # Once there is an empty line between consecutive tokens we are done.
-                    break
-
-                if (
-                    not preceding_docstring
-                    and walk_tok.token == "comment.block.percentage.matlab"
-                ):
-                    # block comment immediately preceding enum so we are done.
-                    # TODO we might need to do some postprocessing here to handle indents gracefully
-                    preceding_docstring = walk_tok.content.strip()[2:-2]
-                    break
-                elif walk_tok.token == "comment.line.percentage.matlab":
-                    preceding_docstring = (
-                        walk_tok.content[1:] + "\n" + preceding_docstring
-                    )  # [1:] strips %
-                    walk_back_idx -= 1
-                    next_tok = walk_tok
-                elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
-                    walk_back_idx -= 1
-                    # Dont update next_tok for whitespace
+            # override docstring with prior if exists
+            prev_node = prop.prev_named_sibling
+            if prev_node is None:
+                # Nothing we can do, no previous comment
+                pass
+            elif prev_node.type == "comment":
+                # We have a previous comment if it ends on the previous
+                # line then we set the docstring. We also need to check
+                # if the first line of the comment is the same as a
+                # previous property.
+                if prop.start_point.row - prev_node.end_point.row <= 1:
+                    ds = process_text_into_docstring(prev_node.text)
+                    prev_prop = prev_node.prev_named_sibling
+                    if prev_prop is not None and prev_prop.type == "property":
+                        if prev_node.start_point.row == prev_prop.end_point.row:
+                            ds = "\n".join(ds.split("\n")[1:])
+                    if ds:
+                        docstring = ds
                 else:
-                    break
+                    if prop.start_point.row - prev_node.end_point.row <= 1:
+                        docstring = process_text_into_docstring(prev_node.text)
+            elif prev_node.type == "property":
+                # The previous property node may have eaten our comment
+                # check for it a trailing comment. If it is not there
+                # then we stop looking.
+                prev_comment = prev_node.named_children[-1]
+                if prev_comment.type == "comment":
+                    # we now need to check if prev_comment ends on the line
+                    # before ours and trim the first line if it on the same
+                    # line as prev property.
+                    if prop.start_point.row - prev_comment.end_point.row <= 1:
+                        ds = process_text_into_docstring(prev_comment.text)
+                        if (
+                            prev_comment.start_point.row
+                            == prev_comment.prev_named_sibling.end_point.row
+                        ):
+                            ds = "\n".join(ds.split("\n")[1:])
+                        if ds:
+                            docstring = ds
+            # After all that if our docstring is empty then we have none
+            if docstring.strip() == "":
+                docstring == None
 
-            # Walk forwards to get following docstring or inline one.
-            following_docstring = ""
-            walk_fwd_idx = idx + 1
-            prev_tok = prop_tok
-            while walk_fwd_idx < len(section.children):
-                walk_tok = section.children[walk_fwd_idx]
+            self.properties[name] = {
+                "attrs": attrs,
+                "size": dims,
+                "type": typename,
+                "validators": vfs,
+                "default": default,
+                "docstring": docstring,
+            }
 
-                if _is_empty_line_between_tok(prev_tok, walk_tok):
-                    # Once there is an empty line between consecutive tokens we are done.
-                    break
-
-                if (
-                    not following_docstring
-                    and walk_tok.token == "comment.block.percentage.matlab"
-                ):
-                    # block comment immediately following enum so we are done.
-                    # TODO we might need to do some postprocessing here to handle indents gracefully
-                    following_docstring = walk_tok.content.strip()[2:-2]
-                    break
-                elif walk_tok.token == "comment.line.percentage.matlab":
-                    following_docstring = (
-                        following_docstring + "\n" + walk_tok.content[1:]
-                    )  # [1:] strips %
-                    walk_fwd_idx += 1
-                    prev_tok = walk_tok
-                elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
-                    walk_fwd_idx += 1
-                    # Dont update prev_tok for whitespace
-                else:
-                    break
-
-            if preceding_docstring:
-                self.properties[prop_name]["docstring"] = preceding_docstring.strip()
-            elif inline_docstring:
-                self.properties[prop_name]["docstring"] = inline_docstring.strip()
-            elif following_docstring:
-                self.properties[prop_name]["docstring"] = following_docstring.strip()
-            else:
-                self.properties[prop_name]["docstring"] = None
-
-    def _parse_property_validation(self, prop_name, prop):
-        """Parses property validation syntax"""
-        # First get the szize if found
-        size_gen = prop.find(tokens="meta.parens.size.matlab", depth=1)
-        try:  # We have a size, therefore parse the comma separated list into tuple
-            size_tok, _ = next(size_gen)
-            size_elem_gen = size_tok.find(
-                tokens=[
-                    "constant.numeric.decimal.matlab",
-                    "keyword.operator.vector.colon.matlab",
-                ],
-                depth=1,
-            )
-            size = tuple([elem[0].content for elem in size_elem_gen])
-            self.properties[prop_name]["size"] = size
-        except StopIteration:
-            pass
-
-        # Now find the type if it exists
-        # TODO this should be mapped to known types (though perhaps as a postprocess)
-        type_gen = prop.find(tokens="storage.type.matlab", depth=1)
-        try:
-            self.properties[prop_name]["type"] = next(type_gen)[0].content
-        except StopIteration:
-            pass
-
-        # Now find list of validators
-        validator_gen = prop.find(tokens="meta.block.validation.matlab", depth=1)
-        try:
-            validator_tok, _ = next(validator_gen)
-            validator_toks = validator_tok.findall(
-                tokens=[
-                    "variable.other.readwrite.matlab",
-                    "meta.function-call.parens.matlab",
-                ],
-                depth=1,
-            )  # TODO Probably bug here in MATLAB-Language-grammar
-            self.properties[prop_name]["validators"] = [
-                tok[0].content for tok in validator_toks
-            ]
-        except StopIteration:
-            pass
-
-    def _parse_method_section(self, section):
-        attrs = self._parse_attributes(section)
-        idxs = [
-            i
-            for i in range(len(section.children))
-            if section.children[i].token == "meta.function.matlab"
-        ]
-        for idx in idxs:
-            meth_tok = section.children[idx]
-            parsed_function = MatFunctionParser(meth_tok)
+    def _parse_method_section(self, methods_match):
+        attrs_nodes = methods_match.get("attrs")
+        attrs = self._parse_attributes(attrs_nodes)
+        methods = methods_match.get("methods")
+        for method in methods:
+            parsed_function = MatFunctionParser(method)
             self.methods[parsed_function.name] = parsed_function
             self.methods[parsed_function.name].attrs = attrs
 
-    def _parse_enum_section(self, section):
-        idxs = [
-            i
-            for i in range(len(section.children))
-            if section.children[i].token
-            == "meta.assignment.definition.enummember.matlab"
-        ]
-        for idx in idxs:
-            enum_tok = section.children[idx]
-            next_idx = idx
-            enum_name = enum_tok.children[0].content
-            self.enumerations[enum_name] = {}
-            if (
-                idx + 1 < len(section.children)
-                and section.children[idx + 1].token == "meta.parens.matlab"
-            ):  # Parse out args TODO this should be part of enummember assignment definition
-                args = tuple(
-                    [
-                        arg.content
-                        for arg in section.children[idx + 1].children
-                        if arg.token != "punctuation.separator.comma.matlab"
-                    ]
-                )
-                self.enumerations[enum_name]["args"] = args
-                next_idx += 1
-
-            # Walk backwards to get preceding docstring.
-            preceding_docstring = ""
-            walk_back_idx = idx - 1
-            next_tok = enum_tok
-            while walk_back_idx >= 0:
-                walk_tok = section.children[walk_back_idx]
-                if _is_empty_line_between_tok(walk_tok, next_tok):
-                    # Once there is an empty line between consecutive tokens we are done.
-                    break
-
-                if (
-                    not preceding_docstring
-                    and walk_tok.token == "comment.block.percentage.matlab"
-                ):
-                    # block comment immediately preceding enum so we are done.
-                    # TODO we might need to do some postprocessing here to handle indents gracefully
-                    preceding_docstring = walk_tok.content.strip()[2:-2]
-                    break
-                elif walk_tok.token == "comment.line.percentage.matlab":
-                    preceding_docstring = (
-                        walk_tok.content[1:] + "\n" + preceding_docstring
-                    )  # [1:] strips %
-                    walk_back_idx -= 1
-                    next_tok = walk_tok
-                elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
-                    walk_back_idx -= 1
-                    # Dont update next_tok for whitespace
-                else:
-                    break
-
-            # Walk forwards to get following docstring or inline one.
-            inline_docstring = ""
-            following_docstring = ""
-            walk_fwd_idx = next_idx + 1
-            prev_tok = section.children[next_idx]
-            while walk_fwd_idx < len(section.children):
-                walk_tok = section.children[walk_fwd_idx]
-
-                if _is_empty_line_between_tok(prev_tok, walk_tok):
-                    # Once there is an empty line between consecutive tokens we are done.
-                    break
-
-                if (
-                    not following_docstring
-                    and walk_tok.token == "comment.block.percentage.matlab"
-                ):
-                    # block comment immediately following enum so we are done.
-                    # TODO we might need to do some postprocessing here to handle indents gracefully
-                    following_docstring = walk_tok.content.strip()[2:-2]
-                    break
-                elif walk_tok.token == "comment.line.percentage.matlab":
-                    # In the case the comment is on the same line as the end of the enum declaration, take it as inline comment and exit.
-                    if _toks_on_same_line(section.children[idx], walk_tok):
-                        inline_docstring = walk_tok.content[1:]
-                        break
-
-                    following_docstring = (
-                        following_docstring + "\n" + walk_tok.content[1:]
-                    )  # [1:] strips %
-                    walk_fwd_idx += 1
-                    prev_tok = walk_tok
-                elif walk_tok.token == "punctuation.whitespace.comment.leading.matlab":
-                    walk_fwd_idx += 1
-                    # Dont update prev_tok for whitespace
-                else:
-                    break
-
-            if preceding_docstring:
-                self.enumerations[enum_name]["docstring"] = preceding_docstring.strip()
-            elif inline_docstring:
-                self.enumerations[enum_name]["docstring"] = inline_docstring.strip()
-            elif following_docstring:
-                self.enumerations[enum_name]["docstring"] = following_docstring.strip()
+    def _parse_enum_section(self, enums_match):
+        enums = enums_match.get("enums")
+        for enum in enums:
+            _, enum_match = q_enum.matches(enum)[0]
+            name = enum_match.get("name").text.decode("utf-8")
+            arg_nodes = enum_match.get("args")
+            if arg_nodes is not None:
+                args = [arg.text.decode("utf-8") for arg in arg_nodes]
             else:
-                self.enumerations[enum_name]["docstring"] = None
+                args = None
 
-    def _parse_attributes(self, section):
-        # walk down child list and parse manually
-        children = section.begin
-        idx = 1
+            docstring = ""
+            # look forward for docstring
+            next_node = enum.next_named_sibling
+            if next_node is not None and next_node.type == "comment":
+                if next_node.start_point.row == enum.end_point.row:
+                    # if the docstring is on the same line as the end of the definition only take the inline part
+                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = docstring.split("\n")[0]
+                elif next_node.start_point.row - enum.end_point.row <= 1:
+                    # Otherwise take the whole docstring
+                    docstring = process_text_into_docstring(next_node.text)
+
+            # override docstring with prior if exists
+            prev_node = enum.prev_named_sibling
+            if prev_node is None:
+                # Nothing we can do, no previous comment
+                pass
+            elif prev_node.type == "comment":
+                # We have a previous comment if it ends on the previous
+                # line then we set the docstring. We also need to check
+                # if the first line of the comment is the same as a
+                # previous enum.
+                if enum.start_point.row - prev_node.end_point.row <= 1:
+                    ds = process_text_into_docstring(prev_node.text)
+                    prev_enum = prev_node.prev_named_sibling
+                    if prev_enum is not None and prev_enum.type == "enum":
+                        if prev_node.start_point.row == prev_enum.end_point.row:
+                            ds = "\n".join(ds.split("\n")[1:])
+                    if ds:
+                        docstring = ds
+                else:
+                    if enum.start_point.row - prev_node.end_point.row <= 1:
+                        docstring = process_text_into_docstring(prev_node.text)
+            # After all that if our docstring is empty then we have none
+            if docstring.strip() == "":
+                docstring == None
+
+            self.enumerations[name] = {"args": args, "docstring": docstring}
+
+    def _parse_attributes(self, attrs_nodes):
         attrs = {}
-        while idx < len(children):
-            child_tok = children[idx]
-            if re.match(
-                "storage.modifier.(properties|methods|events).matlab", child_tok.token
-            ):
-                attr = child_tok.content
-                val = None
-                idx += 1  # walk to next token
-                try:  # however we may have walked off the end of the list in which case we exit
-                    maybe_assign_tok = children[idx]
-                except:
-                    attrs[attr] = val
-                    return attrs
-                if maybe_assign_tok.token == "keyword.operator.assignment.matlab":
-                    idx += 1
-                    rhs_tok = children[idx]  # parse right hand side
-                    if rhs_tok.token == "meta.cell.literal.matlab":
-                        # A cell. For now just take the whole cell as value.
-                        # TODO parse out the cell array of metaclass literals.
-                        val = "{" + rhs_tok.content + "}"
-                        idx += 1
-                    elif rhs_tok.token == "constant.language.boolean.matlab":
-                        val = rhs_tok.content
-                        idx += 1
-                    elif rhs_tok.token == "storage.modifier.access.matlab":
-                        val = rhs_tok.content
-                        idx += 1
-                    elif rhs_tok.token == "keyword.operator.other.question.matlab":
-                        idx += 1
-                        metaclass_tok = children[idx]
-                        metaclass_components = metaclass_tok.findall(
-                            tokens=[
-                                "entity.name.namespace.matlab",
-                                "entity.other.class.matlab",
-                            ]
-                        )
-                        val = tuple([comp.content for comp, _ in metaclass_components])
-                    else:
-                        pass
-                attrs[attr] = val
-            else:  # Comma or continuation therefore skip
-                idx += 1
-
+        if attrs_nodes is not None:
+            for attr_node in attrs_nodes:
+                _, attr_match = q_attributes.matches(attr_node)[0]
+                name = attr_match.get("name").text.decode("utf-8")
+                value_node = attr_match.get("value")
+                attrs[name] = (
+                    value_node.text.decode("utf-8") if value_node is not None else None
+                )
         return attrs
 
 
