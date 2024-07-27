@@ -410,12 +410,12 @@ class MatClassParser:
         pdb.set_trace()
 
     def _parse_property_section(self, props_match):
+        properties = props_match.get("properties")
+        if properties is None:
+            return
         # extract property section attributes
         attrs_nodes = props_match.get("attrs")
         attrs = self._parse_attributes(attrs_nodes)
-
-        properties = props_match.get("properties")
-
         for prop in properties:
             # match property to extract details
             _, prop_match = q_property.matches(prop)[0]
@@ -529,9 +529,11 @@ class MatClassParser:
             }
 
     def _parse_method_section(self, methods_match):
+        methods = methods_match.get("methods")
+        if methods is None:
+            return
         attrs_nodes = methods_match.get("attrs")
         attrs = self._parse_attributes(attrs_nodes)
-        methods = methods_match.get("methods")
         for method in methods:
             parsed_function = MatFunctionParser(method)
             self.methods[parsed_function.name] = parsed_function
@@ -539,6 +541,8 @@ class MatClassParser:
 
     def _parse_enum_section(self, enums_match):
         enums = enums_match.get("enums")
+        if enums is None:
+            return
         for enum in enums:
             _, enum_match = q_enum.matches(enum)[0]
             name = enum_match.get("name").text.decode("utf-8")
@@ -591,6 +595,8 @@ class MatClassParser:
         attrs_nodes = events_match.get("attrs")
         attrs = self._parse_attributes(attrs_nodes)
         events = events_match.get("events")
+        if events is None:
+            return
         for event in events:
             name = event.text.decode("utf-8")
             
