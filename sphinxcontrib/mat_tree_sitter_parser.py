@@ -2,8 +2,8 @@ import tree_sitter_matlab as tsml
 from tree_sitter import Language, Parser
 import re
 
-rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
-# rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassTesting.m"
+#rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassTesting.m"
 
 ML_LANG = Language(tsml.language())
 
@@ -38,7 +38,7 @@ q_properties = ML_LANG.query(
     (attributes
         [(attribute) @attrs _]+
     )?
-    [(property) @properties _]*
+    [(property) @properties _]+
     ) @prop_block
 """
 )
@@ -48,22 +48,24 @@ q_methods = ML_LANG.query(
     (attributes
         [(attribute) @attrs _]+
     )?
-    [(function_definition) @methods _]*
+    [(function_definition) @methods _]+
     ) @meth_block
 """
 )
 
 q_enumerations = ML_LANG.query(
     """(enumeration
-    [(enum) @enums _]*
+    [(enum) @enums _]+
     ) @enum_block
 """
 )
 
 q_events = ML_LANG.query(
     """(events
-    (attributes)? @attrs
-    (identifier)* @events
+    (attributes
+        [(attribute) @attrs _]+
+    )?
+    (identifier)+ @events
     ) @event_block
 """
 )
@@ -360,6 +362,7 @@ class MatClassParser:
         self.properties = {}
         self.methods = {}
         self.enumerations = {}
+        self.events = {}
 
         self.tree = tree
 
@@ -392,7 +395,7 @@ class MatClassParser:
         prop_matches = q_properties.matches(self.cls)
         method_matches = q_methods.matches(self.cls)
         enum_matches = q_enumerations.matches(self.cls)
-        events_matches = q_events.matches(self.cls)
+        event_matches = q_events.matches(self.cls)
 
         for _, prop_match in prop_matches:
             self._parse_property_section(prop_match)
@@ -400,6 +403,8 @@ class MatClassParser:
             self._parse_enum_section(enum_match)
         for _, method_match in method_matches:
             self._parse_method_section(method_match)
+        for _, event_match in event_matches:
+            self._parse_event_section(event_match)
         import pdb
 
         pdb.set_trace()
@@ -582,6 +587,54 @@ class MatClassParser:
 
             self.enumerations[name] = {"args": args, "docstring": docstring}
 
+    def _parse_event_section(self, events_match):
+        attrs_nodes = events_match.get("attrs")
+        attrs = self._parse_attributes(attrs_nodes)
+        events = events_match.get("events")
+        for event in events:
+            name = event.text.decode("utf-8")
+            
+            docstring = ""
+            # look forward for docstring
+            next_node = event.next_named_sibling
+            if next_node is not None and next_node.type == "comment":
+                if next_node.start_point.row == event.end_point.row:
+                    # if the docstring is on the same line as the end of the definition only take the inline part
+                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = docstring.split("\n")[0]
+                elif next_node.start_point.row - event.end_point.row <= 1:
+                    # Otherwise take the whole docstring
+                    docstring = process_text_into_docstring(next_node.text)
+
+            # override docstring with prior if exists
+            prev_node = event.prev_named_sibling
+            if prev_node is None:
+                # Nothing we can do, no previous comment
+                pass
+            elif prev_node.type == "comment":
+                # We have a previous comment if it ends on the previous
+                # line then we set the docstring. We also need to check
+                # if the first line of the comment is the same as a
+                # previous event.
+                if event.start_point.row - prev_node.end_point.row <= 1:
+                    ds = process_text_into_docstring(prev_node.text)
+                    prev_event = prev_node.prev_named_sibling
+                    if prev_event is not None and prev_event.type == "identifier":
+                        if prev_node.start_point.row == prev_event.end_point.row:
+                            ds = "\n".join(ds.split("\n")[1:])
+                    if ds:
+                        docstring = ds
+                else:
+                    if event.start_point.row - prev_node.end_point.row <= 1:
+                        docstring = process_text_into_docstring(prev_node.text)
+            # After all that if our docstring is empty then we have none
+            if docstring.strip() == "":
+                docstring == None
+
+            self.events[name] = {"attrs": attrs, "docstring": docstring}
+        
+        import pdb; pdb.set_trace()
+        
     def _parse_attributes(self, attrs_nodes):
         attrs = {}
         if attrs_nodes is not None:
