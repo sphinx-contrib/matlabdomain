@@ -168,9 +168,9 @@ def process_default(text):
     return re.sub(re_assign_remove, "", default)
 
 class MatFunctionParser:
-    def __init__(self, fun_node):
+    def __init__(self, root_node):
         """Parse Function definition"""
-        _, fun_match = q_fun.matches(fun_node)[0]
+        _, fun_match = q_fun.matches(root_node)[0]
         self.name = fun_match.get("name").text.decode("utf-8")
 
         # Get outputs (possibly more than one)
@@ -353,7 +353,7 @@ class MatFunctionParser:
 
 
 class MatClassParser:
-    def __init__(self, tree):
+    def __init__(self, root_node):
         # DATA
         self.name = ""
         self.supers = []
@@ -364,10 +364,10 @@ class MatClassParser:
         self.enumerations = {}
         self.events = {}
 
-        self.tree = tree
+        self.root_node = root_node
 
         # Parse class basics
-        class_matches = q_classdef.matches(tree.root_node)
+        class_matches = q_classdef.matches(root_node)
         _, class_match = class_matches[0]
         self.cls = class_match.get("class")
         self.name = class_match.get("name")
@@ -405,9 +405,6 @@ class MatClassParser:
             self._parse_method_section(method_match)
         for _, event_match in event_matches:
             self._parse_event_section(event_match)
-        import pdb
-
-        pdb.set_trace()
 
     def _parse_property_section(self, props_match):
         properties = props_match.get("properties")
@@ -661,4 +658,4 @@ if __name__ == "__main__":
         data = f.read()
 
     tree = parser.parse(data)
-    class_parser = MatClassParser(tree)
+    class_parser = MatClassParser(tree.root_node)

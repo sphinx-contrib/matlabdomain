@@ -17,8 +17,9 @@ from pygments.token import Token
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 import sphinxcontrib.mat_parser as mat_parser
-from sphinxcontrib.mat_textmate_parser import MatClassParser, MatFunctionParser
-from textmate_grammar.parsers.matlab import MatlabParser
+from sphinxcontrib.mat_tree_sitter_parser import MatClassParser, MatFunctionParser, ML_LANG
+import tree_sitter_matlab as tsml
+from tree_sitter import Language, Parser
 import logging
 from pathlib import Path
 import cProfile
@@ -501,62 +502,48 @@ class MatObject(object):
         # read mfile code
         if encoding is None:
             encoding = "utf-8"
-        with open(mfile, "r", encoding=encoding, errors="replace") as code_f:
-            code = code_f.read().replace("\r\n", "\n")
+        with open(mfile, "rb") as code_f:
+            code = code_f.read()
 
         full_code = code
 
-        # quiet the textmate grammar logger and parse the file
-        logging.getLogger("textmate_grammar").setLevel(logging.ERROR)
-        parser = MatlabParser()
-        toks = parser.parse_file(mfile)
+        # parse the file
+        parser = Parser(ML_LANG)
+        tree = parser.parse(code)
 
         modname = path.replace(os.sep, ".")  # module name
 
         # assume that functions and classes always start with a keyword
-        def isFunction(token):
-            comments_and_functions = [
-                "comment.block.percentage.matlab",
-                "comment.line.percentage.matlab",
-                "meta.function.matlab",
-            ]
-            return all(
-                [(child.token in comments_and_functions) for child in token.children]
-            )
-
-        def isClass(token):
-            tok_gen = token.find(tokens="meta.class.matlab", depth=1)
-            try:
-                tok, _ = next(tok_gen)
+        def isFunction(tree):
+            q_is_function = ML_LANG.query(r"""(source_file [(comment) "\n"]* (function_definition))""")
+            matches = q_is_function.matches(tree.root_node)
+            if matches:
                 return True
-            except StopIteration:
+            else:
                 return False
 
-        if isClass(toks):
+        def isClass(tree):
+            q_is_class = ML_LANG.query("(class_definition)")
+            matches = q_is_class.matches(tree.root_node)
+            if matches:
+                return True
+            else:
+                return False
+
+        if isClass(tree):
             logger.debug(
                 "[sphinxcontrib-matlabdomain] parsing classdef %s from %s.",
                 name,
                 modname,
             )
-            return MatClass(name, modname, toks)
-        elif isFunction(toks):
+            return MatClass(name, modname, tree.root_node)
+        elif isFunction(tree):
             logger.debug(
                 "[sphinxcontrib-matlabdomain] parsing function %s from %s.",
                 name,
                 modname,
             )
-            fun_tok_gen = toks.find(tokens="meta.function.matlab")
-            parsed_function = None
-            try:
-                fun_tok, _ = next(fun_tok_gen)
-                parsed_function = MatFunctionParser(fun_tok)
-            except StopIteration:
-                logger.warning(
-                    "[sphinxcontrib-matlabdomain] Parsing failed in %s.%s. No function found.",
-                    modname,
-                    name,
-                )
-            return MatFunction(name, modname, toks)
+            return MatFunction(name, modname, tree.root_node)
         else:
             pass
             # it's a script file retoken with header comment
