@@ -2,8 +2,8 @@ import tree_sitter_matlab as tsml
 from tree_sitter import Language, Parser
 import re
 
-#rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
-rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassTesting.m"
+rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+# rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassTesting.m"
 
 ML_LANG = Language(tsml.language())
 
@@ -80,7 +80,7 @@ q_property = ML_LANG.query(
      (validation_functions
          [[(identifier) (function_call)] @validation_functions _]+
      )?
-     (default_value (number))? @default
+     (default_value)? @default
      (comment)? @docstring
     )
 """
@@ -159,13 +159,16 @@ q_arg = ML_LANG.query(
 re_percent_remove = re.compile(r"^[ \t]*% ?", flags=re.M)
 re_assign_remove = re.compile(r"^=[ \t]*")
 
+
 def process_text_into_docstring(text):
     docstring = text.decode("utf-8")
     return re.sub(re_percent_remove, "", docstring)
 
+
 def process_default(text):
     default = text.decode("utf-8")
     return re.sub(re_assign_remove, "", default)
+
 
 class MatFunctionParser:
     def __init__(self, root_node):
@@ -206,7 +209,6 @@ class MatFunctionParser:
         if not docstring:
             docstring = None
         self.docstring = docstring
-        
 
     def _parse_argument_section(self, argblock_node):
         _, argblock_match = q_argblock.matches(argblock_node)[0]
@@ -596,7 +598,7 @@ class MatClassParser:
             return
         for event in events:
             name = event.text.decode("utf-8")
-            
+
             docstring = ""
             # look forward for docstring
             next_node = event.next_named_sibling
@@ -635,9 +637,11 @@ class MatClassParser:
                 docstring == None
 
             self.events[name] = {"attrs": attrs, "docstring": docstring}
-        
-        import pdb; pdb.set_trace()
-        
+
+        import pdb
+
+        pdb.set_trace()
+
     def _parse_attributes(self, attrs_nodes):
         attrs = {}
         if attrs_nodes is not None:
