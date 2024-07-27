@@ -2,11 +2,10 @@ import tree_sitter_matlab as tsml
 from tree_sitter import Language, Parser
 import re
 
-# rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+# rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassTesting.m"
 
 ML_LANG = Language(tsml.language())
-
-rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassTesting.m"
 
 # QUERIES
 q_classdef = ML_LANG.query(
@@ -155,13 +154,16 @@ q_arg = ML_LANG.query(
 )
 
 
-re_percent_remove = re.compile(r"^[ \t]*%", flags=re.M)
-
+re_percent_remove = re.compile(r"^[ \t]*% ?", flags=re.M)
+re_assign_remove = re.compile(r"^=[ \t]*")
 
 def process_text_into_docstring(text):
     docstring = text.decode("utf-8")
     return re.sub(re_percent_remove, "", docstring)
 
+def process_default(text):
+    default = text.decode("utf-8")
+    return re.sub(re_assign_remove, "", default)
 
 class MatFunctionParser:
     def __init__(self, fun_node):
@@ -180,20 +182,29 @@ class MatFunctionParser:
         # Get parameters
         self.params = {}
         param_nodes = fun_match.get("params")
-        if output_nodes is not None:
+        if param_nodes is not None:
             params = [param.text.decode("utf-8") for param in param_nodes]
             for param in params:
                 self.params[param] = {}
 
         # parse out info from argument blocks
         argblock_nodes = fun_match.get("argblocks")
-        for argblock_node in argblock_nodes:
-            self._parse_argument_section(argblock_node)
+        if argblock_nodes is not None:
+            for argblock_node in argblock_nodes:
+                self._parse_argument_section(argblock_node)
 
-        #
-        import pdb
+        # get docstring
+        docstring_node = fun_match.get("docstring")
+        docstring = None
+        if docstring_node is not None:
+            prev_sib = docstring_node.prev_named_sibling
+            if docstring_node.start_point.row - prev_sib.end_point.row <= 1:
+                docstring = process_text_into_docstring(docstring_node.text)
 
-        pdb.set_trace()
+        if not docstring:
+            docstring = None
+        self.docstring = docstring
+        
 
     def _parse_argument_section(self, argblock_node):
         _, argblock_match = q_argblock.matches(argblock_node)[0]
@@ -230,7 +241,7 @@ class MatFunctionParser:
             # extract default
             default_node = arg_match.get("default")
             default = (
-                default_node.text.decode("utf-8") if default_node is not None else None
+                process_default(default_node.text) if default_node is not None else None
             )
 
             # extract inline or following docstring if there is no semicolon
@@ -304,8 +315,8 @@ class MatFunctionParser:
                         if ds:
                             docstring = ds
             # After all that if our docstring is empty then we have none
-            if docstring.strip() == "":
-                docstring == None
+            if not docstring.strip():
+                docstring = None
 
             # Here we trust that the person is giving us valid matlab.
             if "Output" in attrs.keys():
@@ -426,7 +437,7 @@ class MatClassParser:
             # extract default
             default_node = prop_match.get("default")
             default = (
-                default_node.text.decode("utf-8") if default_node is not None else None
+                process_default(default_node.text) if default_node is not None else None
             )
 
             # extract inline or following docstring if there is no semicolon
@@ -500,8 +511,8 @@ class MatClassParser:
                         if ds:
                             docstring = ds
             # After all that if our docstring is empty then we have none
-            if docstring.strip() == "":
-                docstring == None
+            if not docstring.strip():
+                docstring = None
 
             self.properties[name] = {
                 "attrs": attrs,
@@ -592,6 +603,3 @@ if __name__ == "__main__":
 
     tree = parser.parse(data)
     class_parser = MatClassParser(tree)
-    import pdb
-
-    pdb.set_trace()
