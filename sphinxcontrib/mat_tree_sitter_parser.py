@@ -9,7 +9,11 @@ rpath = (
 )
 # rpath = "/home/anton/tools/matlabdomain/tests/test_data/submodule/f_empty_output.m"
 
-ML_LANG = Language(tsml.language(), "matlab")
+tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
+if tree_sitter_ver[1] == 21:
+    ML_LANG = Language(tsml.language(), "matlab")
+else:
+    ML_LANG = Language(tsml.language())
 
 # QUERIES
 q_classdef = ML_LANG.query(
