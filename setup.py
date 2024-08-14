@@ -9,8 +9,7 @@ requires = [
     "Sphinx>=4.0.0",
     "Pygments>=2.0.1",
     "tree-sitter-matlab>=1.0.1",
-    "tree-sitter-python>=0.21.0",
-    "tree-sitter>=0.21.0",
+    "tree-sitter>=0.22.3",
 ]
 
 setup(
