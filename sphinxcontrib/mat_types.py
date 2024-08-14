@@ -17,7 +17,11 @@ from pygments.token import Token
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 import sphinxcontrib.mat_parser as mat_parser
-from sphinxcontrib.mat_tree_sitter_parser import MatClassParser, MatFunctionParser, ML_LANG
+from sphinxcontrib.mat_tree_sitter_parser import (
+    MatClassParser,
+    MatFunctionParser,
+    ML_LANG,
+)
 import tree_sitter_matlab as tsml
 from tree_sitter import Language, Parser
 import logging
@@ -515,7 +519,9 @@ class MatObject(object):
 
         # assume that functions and classes always start with a keyword
         def isFunction(tree):
-            q_is_function = ML_LANG.query(r"""(source_file [(comment) "\n"]* (function_definition))""")
+            q_is_function = ML_LANG.query(
+                r"""(source_file [(comment) "\n"]* (function_definition))"""
+            )
             matches = q_is_function.matches(tree.root_node)
             if matches:
                 return True
@@ -874,7 +880,7 @@ class MatFunction(MatObject):
         #: output args
         self.retv = parsed_function.outputs
         #: input args
-        self.args = parsed_function.params
+        self.args = parsed_function.args
         #: remaining tokens after main function is parsed
         self.rem_tks = None
 

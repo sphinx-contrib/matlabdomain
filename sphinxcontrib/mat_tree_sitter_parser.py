@@ -2,8 +2,11 @@ import tree_sitter_matlab as tsml
 from tree_sitter import Language, Parser
 import re
 
-rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
-# rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassTesting.m"
+# rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
+rpath = (
+    "/home/anton/tools/matlabdomain/tests/test_data/submodule/f_ellipsis_empty_output.m"
+)
+# rpath = "/home/anton/tools/matlabdomain/tests/test_data/submodule/f_empty_output.m"
 
 ML_LANG = Language(tsml.language())
 
@@ -97,7 +100,7 @@ q_enum = ML_LANG.query(
 
 q_fun = ML_LANG.query(
     """(function_definition
-    .
+    _*
     (function_output
         [
             (identifier) @outputs
@@ -106,13 +109,13 @@ q_fun = ML_LANG.query(
             )
         ]
     )?
-    .
+    _*
     name: (identifier) @name
-    .
+    _*
     (function_arguments
         [(identifier) @params _]*
     )?
-    .
+    _*
     [(arguments_statement) @argblocks _]*
     .
     (comment)? @docstring
@@ -185,12 +188,12 @@ class MatFunctionParser:
                 self.outputs[output] = {}
 
         # Get parameters
-        self.params = {}
-        param_nodes = fun_match.get("params")
-        if param_nodes is not None:
-            params = [param.text.decode("utf-8") for param in param_nodes]
-            for param in params:
-                self.params[param] = {}
+        self.args = {}
+        arg_nodes = fun_match.get("params")
+        if arg_nodes is not None:
+            args = [arg.text.decode("utf-8") for arg in arg_nodes]
+            for arg in args:
+                self.args[arg] = {}
 
         # parse out info from argument blocks
         argblock_nodes = fun_match.get("argblocks")
@@ -321,12 +324,14 @@ class MatFunctionParser:
             # After all that if our docstring is empty then we have none
             if not docstring.strip():
                 docstring = None
+            else:
+                pass  # docstring = docstring.rstrip()
 
             # Here we trust that the person is giving us valid matlab.
             if "Output" in attrs.keys():
                 arg_loc = self.outputs
             else:
-                arg_loc = self.params
+                arg_loc = self.args
             if len(name) == 1:
                 arg_loc[name[0]] = {
                     "attrs": attrs,
@@ -517,6 +522,8 @@ class MatClassParser:
             # After all that if our docstring is empty then we have none
             if not docstring.strip():
                 docstring = None
+            else:
+                pass  # docstring = docstring.rstrip()
 
             self.properties[name] = {
                 "attrs": attrs,
@@ -587,6 +594,8 @@ class MatClassParser:
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
                 docstring == None
+            else:
+                pass  # docstring = docstring.rstrip()
 
             self.enumerations[name] = {"args": args, "docstring": docstring}
 
@@ -635,12 +644,10 @@ class MatClassParser:
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
                 docstring == None
+            else:
+                pass  # docstring = docstring.rstrip()
 
             self.events[name] = {"attrs": attrs, "docstring": docstring}
-
-        import pdb
-
-        pdb.set_trace()
 
     def _parse_attributes(self, attrs_nodes):
         attrs = {}
@@ -662,4 +669,5 @@ if __name__ == "__main__":
         data = f.read()
 
     tree = parser.parse(data)
-    class_parser = MatClassParser(tree.root_node)
+    # class_parser = MatClassParser(tree.root_node)
+    fun_parser = MatFunctionParser(tree.root_node)
