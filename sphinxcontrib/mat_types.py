@@ -28,6 +28,7 @@ import logging
 from pathlib import Path
 import cProfile
 import pstats
+from importlib.metadata import version
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
@@ -512,7 +513,12 @@ class MatObject(object):
         full_code = code
 
         # parse the file
-        parser = Parser(ML_LANG)
+        tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
+        if tree_sitter_ver[1] == 21:
+            parser = Parser()
+            parser.set_language(ML_LANG)
+        else:
+            parser = Parser(ML_LANG)
         tree = parser.parse(code)
 
         modname = path.replace(os.sep, ".")  # module name
