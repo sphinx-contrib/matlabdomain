@@ -1380,10 +1380,11 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         is_ctor = self.object.cls.name == self.object.name
 
         if self.object.args:
-            if self.object.args[0] in ("obj", "self") and not is_ctor:
-                return "(" + ", ".join(self.object.args[1:]) + ")"
+            arglist = list(self.object.args.keys())
+            if arglist[0] in ("obj", "self") and not is_ctor:
+                return "(" + ", ".join(arglist[1:]) + ")"
             else:
-                return "(" + ", ".join(self.object.args) + ")"
+                return "(" + ", ".join(arglist) + ")"
 
     def document_members(self, all_members=False):
         pass

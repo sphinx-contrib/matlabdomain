@@ -938,7 +938,10 @@ class MatClass(MatMixin, MatObject):
         #: dictionary of class properties
         self.properties = parsed_class.properties
         #: dictionary of class methods
-        self.methods = parsed_class.methods
+        self.methods = {
+            name: MatMethod(name, parsed_fun, modname, self)
+            for (name, parsed_fun) in parsed_class.methods.items()
+        }
         #:
         self.enumerations = parsed_class.enumerations
         #: remaining tokens after main class definition is parsed
@@ -1066,23 +1069,22 @@ class MatEnumeration(MatObject):
         return self.docstring
 
 class MatMethod(MatFunction):
-    def __init__(self, modname, tks, cls, attrs):
-        # set name to None
-        super(MatMethod, self).__init__(None, modname, tks)
+    def __init__(self, name, parsed_function, modname, cls):
+        self.name = name
+        #: Path of folder containing :class:`MatObject`.
+        self.module = modname
+        #: docstring
+        self.docstring = parsed_function.docstring
+        #: output args
+        self.retv = parsed_function.retv
+        #: input args
+        self.args = parsed_function.args
         self.cls = cls
-        self.attrs = attrs
+        self.attrs = parsed_function.attrs
 
     def ref_role(self):
         """Returns role to use for references to this object (e.g. when generating auto-links)"""
         return "meth"
-
-    def skip_tokens(self):
-        # Number of tokens to skip in `MatClass`
-        num_rem_tks = len(self.rem_tks)
-        len_meth = len(self.tokens) - num_rem_tks
-        self.tokens = self.tokens[:-num_rem_tks]
-        self.rem_tks = None
-        return len_meth
 
     @property
     def __module__(self):
