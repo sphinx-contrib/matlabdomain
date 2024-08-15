@@ -4,7 +4,7 @@ from tree_sitter import Language, Parser
 import re
 
 # rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
-rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassWithMethodAttributes.m"
+rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassWithGetterSetter.m"
 # rpath = "/home/anton/tools/matlabdomain/tests/test_data/f_with_dummy_argument.m"
 
 tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
@@ -41,8 +41,10 @@ q_attributes = ML_LANG.query(
         (identifier) @value
         (string) @value
         (metaclass_operator) @value
-        (cell) @value
-    ]?)
+        (cell (row [(metaclass_operator) @value _]*))
+        (cell (row [(string) @value _]*))
+    ]? @rhs
+    )
     """
 )
 
@@ -171,6 +173,16 @@ q_arg = ML_LANG.query(
 """
 )
 
+q_script = ML_LANG.query(
+    """
+    (source_file
+        (comment) @docstring
+    )
+    """
+)
+
+q_get_set = ML_LANG.query("""["get." "set."]""")
+
 
 re_percent_remove = re.compile(r"^[ \t]*% ?", flags=re.M)
 re_assign_remove = re.compile(r"^=[ \t]*")
@@ -191,35 +203,51 @@ def get_row(point):
         return point.row
 
 
-def process_text_into_docstring(text):
-    docstring = text.decode("utf-8")
+def process_text_into_docstring(text, encoding):
+    docstring = text.decode(encoding)
     return re.sub(re_percent_remove, "", docstring)
 
 
-def process_default(text):
-    default = text.decode("utf-8")
+def process_default(text, encoding):
+    default = text.decode(encoding)
     return re.sub(re_assign_remove, "", default)
 
 
+class MatScriptParser:
+    def __init__(self, root_node, encoding):
+        """Parse m script"""
+        self.encoding = encoding
+        _, script_match = q_script.matches(root_node)[0]
+        docstring_node = script_match.get("docstring")
+        if docstring_node is not None:
+            self.docstring = process_text_into_docstring(
+                docstring_node.text, self.encoding
+            )
+        else:
+            self.docstring = None
+        print(self.docstring)
+
+
 class MatFunctionParser:
-    def __init__(self, root_node):
+    def __init__(self, root_node, encoding):
         """Parse Function definition"""
+        self.encoding = encoding
         _, fun_match = q_fun.matches(root_node)[0]
-        self.name = fun_match.get("name").text.decode("utf-8")
+        self.name = fun_match.get("name").text.decode(self.encoding)
 
         # Get outputs (possibly more than one)
-        self.outputs = {}
+        self.retv = {}
         output_nodes = fun_match.get("outputs")
         if output_nodes is not None:
-            outputs = [output.text.decode("utf-8") for output in output_nodes]
-            for output in outputs:
-                self.outputs[output] = {}
+            retv = [output.text.decode(self.encoding) for output in output_nodes]
+            for output in retv:
+                self.retv[output] = {}
 
         # Get parameters
         self.args = {}
         arg_nodes = fun_match.get("params")
         if arg_nodes is not None:
-            args = [arg.text.decode("utf-8") for arg in arg_nodes]
+            args = [arg.text.decode(self.encoding) for arg in arg_nodes]
             for arg in args:
                 self.args[arg] = {}
 
@@ -235,7 +263,9 @@ class MatFunctionParser:
         if docstring_node is not None:
             prev_sib = docstring_node.prev_named_sibling
             if get_row(docstring_node.start_point) - get_row(prev_sib.end_point) <= 1:
-                docstring = process_text_into_docstring(docstring_node.text)
+                docstring = process_text_into_docstring(
+                    docstring_node.text, self.encoding
+                )
 
         if not docstring:
             docstring = None
@@ -255,28 +285,32 @@ class MatFunctionParser:
             _, arg_match = q_arg.matches(arg)[0]
 
             # extract name (this is always available so no need for None check)
-            name = [name.text.decode("utf-8") for name in arg_match.get("name")]
+            name = [name.text.decode(self.encoding) for name in arg_match.get("name")]
 
             # extract dims list
             dims_list = arg_match.get("dims")
             dims = None
             if dims_list is not None:
-                dims = tuple([dim.text.decode("utf-8") for dim in dims_list])
+                dims = tuple([dim.text.decode(self.encoding) for dim in dims_list])
 
             # extract type
             type_node = arg_match.get("type")
-            typename = type_node.text.decode("utf-8") if type_node is not None else None
+            typename = (
+                type_node.text.decode(self.encoding) if type_node is not None else None
+            )
 
             # extract validator functions
             vf_list = arg_match.get("validator_functions")
             vfs = None
             if vf_list is not None:
-                vfs = [vf.text.decode("utf-8") for vf in vf_list]
+                vfs = [vf.text.decode(self.encoding) for vf in vf_list]
 
             # extract default
             default_node = arg_match.get("default")
             default = (
-                process_default(default_node.text) if default_node is not None else None
+                process_default(default_node.text, self.encoding)
+                if default_node is not None
+                else None
             )
 
             # extract inline or following docstring if there is no semicolon
@@ -289,14 +323,18 @@ class MatFunctionParser:
                 prev_sib = docstring_node.prev_named_sibling
                 if get_row(docstring_node.start_point) == get_row(prev_sib.end_point):
                     # if the docstring is on the same line as the end of the definition only take the inline part
-                    docstring = process_text_into_docstring(docstring_node.text)
+                    docstring = process_text_into_docstring(
+                        docstring_node.text, self.encoding
+                    )
                     docstring = docstring.split("\n")[0]
                 elif (
                     get_row(docstring_node.start_point) - get_row(prev_sib.end_point)
                     <= 1
                 ):
                     # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(docstring_node.text)
+                    docstring = process_text_into_docstring(
+                        docstring_node.text, self.encoding
+                    )
 
             # extract inline or following docstring if there _is_ a semicolon.
             # this is only done if we didn't already find a docstring with the previous approach
@@ -307,11 +345,15 @@ class MatFunctionParser:
             elif next_node.type == "comment":
                 if get_row(next_node.start_point) == get_row(arg.end_point):
                     # if the docstring is on the same line as the end of the definition only take the inline part
-                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = process_text_into_docstring(
+                        next_node.text, self.encoding
+                    )
                     docstring = docstring.split("\n")[0]
                 elif get_row(next_node.start_point) - get_row(arg.end_point) <= 1:
                     # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = process_text_into_docstring(
+                        next_node.text, self.encoding
+                    )
 
             # override docstring with prior if exists
             prev_node = arg.prev_named_sibling
@@ -324,7 +366,7 @@ class MatFunctionParser:
                 # if the first line of the comment is the same as a
                 # previous argument.
                 if get_row(arg.start_point) - get_row(prev_node.end_point) <= 1:
-                    ds = process_text_into_docstring(prev_node.text)
+                    ds = process_text_into_docstring(prev_node.text, self.encoding)
                     prev_arg = prev_node.prev_named_sibling
                     if prev_arg is not None and prev_arg.type == "property":
                         if get_row(prev_node.start_point) == get_row(
@@ -335,7 +377,9 @@ class MatFunctionParser:
                         docstring = ds
                 else:
                     if get_row(arg.start_point) - get_row(prev_node.end_point) <= 1:
-                        docstring = process_text_into_docstring(prev_node.text)
+                        docstring = process_text_into_docstring(
+                            prev_node.text, self.encoding
+                        )
             elif prev_node.type == "property":
                 # The previous argumentnode may have eaten our comment
                 # check for it a trailing comment. If it is not there
@@ -346,7 +390,9 @@ class MatFunctionParser:
                     # before ours and trim the first line if it on the same
                     # line as prev property.
                     if get_row(arg.start_point) - get_row(prev_comment.end_point) <= 1:
-                        ds = process_text_into_docstring(prev_comment.text)
+                        ds = process_text_into_docstring(
+                            prev_comment.text, self.encoding
+                        )
                         if get_row(prev_comment.start_point) == get_row(
                             prev_comment.prev_named_sibling.end_point
                         ):
@@ -361,7 +407,7 @@ class MatFunctionParser:
 
             # Here we trust that the person is giving us valid matlab.
             if "Output" in attrs.keys():
-                arg_loc = self.outputs
+                arg_loc = self.retv
             else:
                 arg_loc = self.args
             if len(name) == 1:
@@ -383,17 +429,20 @@ class MatFunctionParser:
         if attrs_nodes is not None:
             for attr_node in attrs_nodes:
                 _, attr_match = q_attributes.matches(attr_node)[0]
-                name = attr_match.get("name").text.decode("utf-8")
+                name = attr_match.get("name").text.decode(self.encoding)
                 value_node = attr_match.get("value")
                 attrs[name] = (
-                    value_node.text.decode("utf-8") if value_node is not None else None
+                    value_node.text.decode(self.encoding)
+                    if value_node is not None
+                    else None
                 )
         return attrs
 
 
 class MatClassParser:
-    def __init__(self, root_node):
+    def __init__(self, root_node, encoding):
         # DATA
+        self.encoding = encoding
         self.name = ""
         self.supers = []
         self.attrs = {}
@@ -420,7 +469,7 @@ class MatClassParser:
             for super_node in supers_nodes:
                 _, super_match = q_supers.matches(super_node)[0]
                 super_cls = tuple(
-                    [sec.text.decode("utf-8") for sec in super_match.get("secs")]
+                    [sec.text.decode(self.encoding) for sec in super_match.get("secs")]
                 )
                 self.supers.append(super_cls)
 
@@ -429,7 +478,9 @@ class MatClassParser:
         if docstring_node is not None:
             prev_node = docstring_node.prev_sibling
             if get_row(docstring_node.start_point) - get_row(prev_node.end_point) <= 1:
-                self.docstring = process_text_into_docstring(docstring_node.text)
+                self.docstring = process_text_into_docstring(
+                    docstring_node.text, self.encoding
+                )
 
         prop_matches = q_properties.matches(self.cls)
         method_matches = q_methods.matches(self.cls)
@@ -457,28 +508,32 @@ class MatClassParser:
             _, prop_match = q_property.matches(prop)[0]
 
             # extract name (this is always available so no need for None check)
-            name = prop_match.get("name").text.decode("utf-8")
+            name = prop_match.get("name").text.decode(self.encoding)
 
             # extract dims list
             dims_list = prop_match.get("dims")
             dims = None
             if dims_list is not None:
-                dims = tuple([dim.text.decode("utf-8") for dim in dims_list])
+                dims = tuple([dim.text.decode(self.encoding) for dim in dims_list])
 
             # extract type
             type_node = prop_match.get("type")
-            typename = type_node.text.decode("utf-8") if type_node is not None else None
+            typename = (
+                type_node.text.decode(self.encoding) if type_node is not None else None
+            )
 
             # extract validator functions
             vf_list = prop_match.get("validator_functions")
             vfs = None
             if vf_list is not None:
-                vfs = [vf.text.decode("utf-8") for vf in vf_list]
+                vfs = [vf.text.decode(self.encoding) for vf in vf_list]
 
             # extract default
             default_node = prop_match.get("default")
             default = (
-                process_default(default_node.text) if default_node is not None else None
+                process_default(default_node.text, self.encoding)
+                if default_node is not None
+                else None
             )
 
             # extract inline or following docstring if there is no semicolon
@@ -491,29 +546,37 @@ class MatClassParser:
                 prev_sib = docstring_node.prev_named_sibling
                 if get_row(docstring_node.start_point) == get_row(prev_sib.end_point):
                     # if the docstring is on the same line as the end of the definition only take the inline part
-                    docstring = process_text_into_docstring(docstring_node.text)
+                    docstring = process_text_into_docstring(
+                        docstring_node.text, self.encoding
+                    )
                     docstring = docstring.split("\n")[0]
                 elif (
                     get_row(docstring_node.start_point) - get_row(prev_sib.end_point)
                     <= 1
                 ):
                     # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(docstring_node.text)
+                    docstring = process_text_into_docstring(
+                        docstring_node.text, self.encoding
+                    )
 
             # extract inline or following docstring if there _is_ a semicolon.
             # this is only done if we didn't already find a docstring with the previous approach
             next_node = prop.next_named_sibling
-            if next_node is None or docstring is not None:
+            if next_node is None or docstring != "":
                 # Nothing to be done.
                 pass
             elif next_node.type == "comment":
                 if get_row(next_node.start_point) == get_row(prop.end_point):
                     # if the docstring is on the same line as the end of the definition only take the inline part
-                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = process_text_into_docstring(
+                        next_node.text, self.encoding
+                    )
                     docstring = docstring.split("\n")[0]
                 elif get_row(next_node.start_point) - get_row(prop.end_point) <= 1:
                     # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = process_text_into_docstring(
+                        next_node.text, self.encoding
+                    )
 
             # override docstring with prior if exists
             prev_node = prop.prev_named_sibling
@@ -526,18 +589,21 @@ class MatClassParser:
                 # if the first line of the comment is the same as a
                 # previous property.
                 if get_row(prop.start_point) - get_row(prev_node.end_point) <= 1:
-                    ds = process_text_into_docstring(prev_node.text)
+                    ds = process_text_into_docstring(prev_node.text, self.encoding)
                     prev_prop = prev_node.prev_named_sibling
                     if prev_prop is not None and prev_prop.type == "property":
                         if get_row(prev_node.start_point) == get_row(
                             prev_prop.end_point
                         ):
                             ds = "\n".join(ds.split("\n")[1:])
+
                     if ds:
                         docstring = ds
                 else:
                     if get_row(prop.start_point) - get_row(prev_node.end_point) <= 1:
-                        docstring = process_text_into_docstring(prev_node.text)
+                        docstring = process_text_into_docstring(
+                            prev_node.text, self.encoding
+                        )
             elif prev_node.type == "property":
                 # The previous property node may have eaten our comment
                 # check for it a trailing comment. If it is not there
@@ -548,7 +614,9 @@ class MatClassParser:
                     # before ours and trim the first line if it on the same
                     # line as prev property.
                     if get_row(prop.start_point) - get_row(prev_comment.end_point) <= 1:
-                        ds = process_text_into_docstring(prev_comment.text)
+                        ds = process_text_into_docstring(
+                            prev_comment.text, self.encoding
+                        )
                         if get_row(prev_comment.start_point) == get_row(
                             prev_comment.prev_named_sibling.end_point
                         ):
@@ -577,7 +645,11 @@ class MatClassParser:
         attrs_nodes = methods_match.get("attrs")
         attrs = self._parse_attributes(attrs_nodes)
         for method in methods:
-            parsed_function = MatFunctionParser(method)
+            is_set_get = q_get_set.matches(method)
+            # Skip getter and setter
+            if len(is_set_get) > 0:
+                continue
+            parsed_function = MatFunctionParser(method, self.encoding)
             self.methods[parsed_function.name] = parsed_function
             self.methods[parsed_function.name].attrs = attrs
 
@@ -587,10 +659,10 @@ class MatClassParser:
             return
         for enum in enums:
             _, enum_match = q_enum.matches(enum)[0]
-            name = enum_match.get("name").text.decode("utf-8")
+            name = enum_match.get("name").text.decode(self.encoding)
             arg_nodes = enum_match.get("args")
             if arg_nodes is not None:
-                args = [arg.text.decode("utf-8") for arg in arg_nodes]
+                args = [arg.text.decode(self.encoding) for arg in arg_nodes]
             else:
                 args = None
 
@@ -600,11 +672,15 @@ class MatClassParser:
             if next_node is not None and next_node.type == "comment":
                 if get_row(next_node.start_point) == get_row(enum.end_point):
                     # if the docstring is on the same line as the end of the definition only take the inline part
-                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = process_text_into_docstring(
+                        next_node.text, self.encoding
+                    )
                     docstring = docstring.split("\n")[0]
                 elif get_row(next_node.start_point) - get_row(enum.end_point) <= 1:
                     # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = process_text_into_docstring(
+                        next_node.text, self.encoding
+                    )
 
             # override docstring with prior if exists
             prev_node = enum.prev_named_sibling
@@ -617,7 +693,7 @@ class MatClassParser:
                 # if the first line of the comment is the same as a
                 # previous enum.
                 if get_row(enum.start_point) - get_row(prev_node.end_point) <= 1:
-                    ds = process_text_into_docstring(prev_node.text)
+                    ds = process_text_into_docstring(prev_node.text, self.encoding)
                     prev_enum = prev_node.prev_named_sibling
                     if prev_enum is not None and prev_enum.type == "enum":
                         if get_row(prev_node.start_point) == get_row(
@@ -628,7 +704,9 @@ class MatClassParser:
                         docstring = ds
                 else:
                     if get_row(enum.start_point) - get_row(prev_node.end_point) <= 1:
-                        docstring = process_text_into_docstring(prev_node.text)
+                        docstring = process_text_into_docstring(
+                            prev_node.text, self.encoding
+                        )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
                 docstring == None
@@ -644,7 +722,7 @@ class MatClassParser:
         if events is None:
             return
         for event in events:
-            name = event.text.decode("utf-8")
+            name = event.text.decode(self.encoding)
 
             docstring = ""
             # look forward for docstring
@@ -652,11 +730,15 @@ class MatClassParser:
             if next_node is not None and next_node.type == "comment":
                 if get_row(next_node.start_point) == get_row(event.end_point):
                     # if the docstring is on the same line as the end of the definition only take the inline part
-                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = process_text_into_docstring(
+                        next_node.text, self.encoding
+                    )
                     docstring = docstring.split("\n")[0]
                 elif get_row(next_node.start_point) - get_row(event.end_point) <= 1:
                     # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(next_node.text)
+                    docstring = process_text_into_docstring(
+                        next_node.text, self.encoding
+                    )
 
             # override docstring with prior if exists
             prev_node = event.prev_named_sibling
@@ -669,7 +751,7 @@ class MatClassParser:
                 # if the first line of the comment is the same as a
                 # previous event.
                 if get_row(event.start_point) - get_row(prev_node.end_point) <= 1:
-                    ds = process_text_into_docstring(prev_node.text)
+                    ds = process_text_into_docstring(prev_node.text, self.encoding)
                     prev_event = prev_node.prev_named_sibling
                     if prev_event is not None and prev_event.type == "identifier":
                         if get_row(prev_node.start_point) == get_row(
@@ -680,7 +762,9 @@ class MatClassParser:
                         docstring = ds
                 else:
                     if get_row(event.start_point) - get_row(prev_node.end_point) <= 1:
-                        docstring = process_text_into_docstring(prev_node.text)
+                        docstring = process_text_into_docstring(
+                            prev_node.text, self.encoding
+                        )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
                 docstring == None
@@ -693,13 +777,20 @@ class MatClassParser:
         attrs = {}
         if attrs_nodes is not None:
             for attr_node in attrs_nodes:
-                print(attr_node.sexp())
                 _, attr_match = q_attributes.matches(attr_node)[0]
-                name = attr_match.get("name").text.decode("utf-8")
+                name = attr_match.get("name").text.decode(self.encoding)
                 value_node = attr_match.get("value")
-                attrs[name] = (
-                    value_node.text.decode("utf-8") if value_node is not None else None
-                )
+                rhs_node = attr_match.get("rhs")
+                if rhs_node is not None:
+                    if rhs_node.type == "cell":
+                        attrs[name] = [
+                            vn.text.decode(self.encoding) for vn in value_node
+                        ]
+                    else:
+                        attrs[name] = value_node[0].text.decode(self.encoding)
+                else:
+                    attrs[name] = None
+
         return attrs
 
 
@@ -715,7 +806,7 @@ if __name__ == "__main__":
         data = f.read()
 
     tree = parser.parse(data)
-    class_parser = MatClassParser(tree.root_node)
+    class_parser = MatClassParser(tree.root_node, self.encoding)
     # fun_parser = MatFunctionParser(tree.root_node)
     import pdb
 

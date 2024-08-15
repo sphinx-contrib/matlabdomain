@@ -20,6 +20,7 @@ import sphinxcontrib.mat_parser as mat_parser
 from sphinxcontrib.mat_tree_sitter_parser import (
     MatClassParser,
     MatFunctionParser,
+    MatScriptParser,
     ML_LANG,
 )
 import tree_sitter_matlab as tsml
@@ -548,19 +549,17 @@ class MatObject(object):
                 name,
                 modname,
             )
-            return MatClass(name, modname, tree.root_node)
+            return MatClass(name, modname, tree.root_node, encoding)
         elif isFunction(tree):
             logger.debug(
                 "[sphinxcontrib-matlabdomain] parsing function %s from %s.",
                 name,
                 modname,
             )
-            return MatFunction(name, modname, tree.root_node)
+            return MatFunction(name, modname, tree.root_node, encoding)
         else:
-            pass
-            # it's a script file retoken with header comment
-            # tks = list(MatlabLexer().get_tokens(full_code))
-            # return MatScript(name, modname, toks)
+            return MatScript(name, modname, tree.root_node, encoding)
+
         return None
 
     @staticmethod
@@ -876,15 +875,15 @@ class MatFunction(MatObject):
     :type tokens: list
     """
 
-    def __init__(self, name, modname, tokens):
+    def __init__(self, name, modname, tokens, encoding):
         super(MatFunction, self).__init__(name)
-        parsed_function = MatFunctionParser(tokens)
+        parsed_function = MatFunctionParser(tokens, encoding)
         #: Path of folder containing :class:`MatObject`.
         self.module = modname
         #: docstring
         self.docstring = parsed_function.docstring
         #: output args
-        self.retv = parsed_function.outputs
+        self.retv = parsed_function.retv
         #: input args
         self.args = parsed_function.args
         #: remaining tokens after main function is parsed
@@ -925,9 +924,9 @@ class MatClass(MatMixin, MatObject):
     :type tokens: list
     """
 
-    def __init__(self, name, modname, tokens):
+    def __init__(self, name, modname, tokens, encoding):
         super(MatClass, self).__init__(name)
-        parsed_class = MatClassParser(tokens)
+        parsed_class = MatClassParser(tokens, encoding)
         #: Path of folder containing :class:`MatObject`.
         self.module = modname
         #: dictionary of class attributes
@@ -973,105 +972,6 @@ class MatClass(MatMixin, MatObject):
             return f":class:`{name} <{target}>`"
         else:
             return f":class:`{target}`"
-
-    def attributes(self, idx, attr_types):
-        """
-        Retrieve MATLAB class, property and method attributes.
-        """
-        attr_dict = {}
-        idx += self._blanks(idx)  # skip blanks
-        # class, property & method "attributes" start with parenthesis
-        if self._tk_eq(idx, (Token.Punctuation, "(")):
-            idx += 1
-            # closing parenthesis terminates attributes
-            while self._tk_ne(idx, (Token.Punctuation, ")")):
-                idx += self._blanks(idx)  # skip blanks
-
-                k, attr_name = self.tokens[idx]  # split token key, value
-                if k is Token.Name and attr_name in attr_types:
-                    attr_dict[attr_name] = True  # add attibute to dictionary
-                    idx += 1
-                elif k is Token.Name:
-                    logger.warning(
-                        "[sphinxcontrib-matlabdomain] Unexpected class attribute: '%s'. "
-                        " In '%s.%s'.",
-                        str(self.tokens[idx][1]),
-                        self.module,
-                        self.name,
-                    )
-                    idx += 1
-
-                idx += self._blanks(idx)  # skip blanks
-
-                # Continue if attribute is assigned a boolean value
-                if self.tokens[idx][0] == Token.Name.Builtin:
-                    idx += 1
-                    continue
-
-                # continue to next attribute separated by commas
-                if self._tk_eq(idx, (Token.Punctuation, ",")):
-                    idx += 1
-                    continue
-                # attribute values
-                elif self._tk_eq(idx, (Token.Punctuation, "=")):
-                    idx += 1
-                    idx += self._blanks(idx)  # skip blanks
-                    k, attr_val = self.tokens[idx]  # split token key, value
-                    if k is Token.Name and attr_val in ["true", "false"]:
-                        # logical value
-                        if attr_val == "false":
-                            attr_dict[attr_name] = False
-                        idx += 1
-                    elif k is Token.Name or self._tk_eq(idx, (Token.Text, "?")):
-                        # concatenate enumeration or meta class
-                        enum_or_meta = self.tokens[idx][1]
-                        idx += 1
-                        while (
-                            self._tk_ne(idx, (Token.Text, " "))
-                            and self._tk_ne(idx, (Token.Text, "\t"))
-                            and self._tk_ne(idx, (Token.Punctuation, ","))
-                            and self._tk_ne(idx, (Token.Punctuation, ")"))
-                        ):
-                            enum_or_meta += self.tokens[idx][1]
-                            idx += 1
-                        if self._tk_ne(idx, (Token.Punctuation, ")")):
-                            idx += 1
-                        attr_dict[attr_name] = enum_or_meta
-                    # cell array of values
-                    elif self._tk_eq(idx, (Token.Punctuation, "{")):
-                        idx += 1
-                        # closing curly braces terminate cell array
-                        attr_dict[attr_name] = []
-                        while self._tk_ne(idx, (Token.Punctuation, "}")):
-                            idx += self._blanks(idx)  # skip blanks
-                            # concatenate attr value string
-                            attr_val = ""
-                            # TODO: use _blanks or _indent instead
-                            while self._tk_ne(
-                                idx, (Token.Punctuation, ",")
-                            ) and self._tk_ne(idx, (Token.Punctuation, "}")):
-                                attr_val += self.tokens[idx][1]
-                                idx += 1
-                            if self._tk_eq(idx, (Token.Punctuation, ",")):
-                                idx += 1
-                            if attr_val:
-                                attr_dict[attr_name].append(attr_val)
-                        idx += 1
-                    elif (
-                        self.tokens[idx][0] == Token.Literal.String
-                        and self.tokens[idx + 1][0] == Token.Literal.String
-                    ):
-                        # String
-                        attr_val += self.tokens[idx][1] + self.tokens[idx + 1][1]
-                        idx += 2
-                        attr_dict[attr_name] = attr_val.strip("'")
-
-                    idx += self._blanks(idx)  # skip blanks
-                    # continue to next attribute separated by commas
-                    if self._tk_eq(idx, (Token.Punctuation, ",")):
-                        idx += 1
-            idx += 1  # end of class attributes
-        return attr_dict, idx
 
     @property
     def __module__(self):
@@ -1194,49 +1094,15 @@ class MatMethod(MatFunction):
 
 
 class MatScript(MatObject):
-    def __init__(self, name, modname, tks):
+    def __init__(self, name, modname, tks, encoding):
         super(MatScript, self).__init__(name)
+        parsed_script = MatScriptParser(tks, encoding)
         #: Path of folder containing :class:`MatScript`.
         self.module = modname
         #: List of tokens parsed from mfile by Pygments.
         self.tokens = tks
         #: docstring
-        self.docstring = ""
-        #: remaining tokens after main function is parsed
-        self.rem_tks = None
-
-        tks = copy(self.tokens)  # make a copy of tokens
-        tks.reverse()  # reverse in place for faster popping, stacks are LiLo
-        skip_whitespace(tks)
-        # =====================================================================
-        # docstring
-        try:
-            docstring = tks.pop()
-            # Skip any statements before first documentation header
-            while docstring and docstring[0] is not Token.Comment:
-                docstring = tks.pop()
-        except IndexError:
-            docstring = None
-        while docstring and docstring[0] is Token.Comment:
-            self.docstring += docstring[1].lstrip("%")
-            # Get newline if it exists and append to docstring
-            try:
-                wht = tks.pop()  # We expect a newline
-            except IndexError:
-                break
-            if wht[0] in (Token.Text, Token.Text.Whitespace) and wht[1] == "\n":
-                self.docstring += "\n"
-            # Skip whitespace
-            try:
-                wht = tks.pop()  # We expect a newline
-            except IndexError:
-                break
-            while wht in list(zip((Token.Text,) * 3, (" ", "\t"))):
-                try:
-                    wht = tks.pop()
-                except IndexError:
-                    break
-            docstring = wht  # check if Token is Comment
+        self.docstring = parsed_script.docstring
 
     @property
     def __doc__(self):

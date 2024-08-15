@@ -24,7 +24,7 @@ def test_ClassExample():
     assert obj.name == "ClassExample"
     assert (
         obj.docstring
-        == " test class methods\n\n:param a: the input to :class:`ClassExample`"
+        == "test class methods\n\n:param a: the input to :class:`ClassExample`"
     )
     mymethod = obj.methods["mymethod"]
     assert mymethod.name == "mymethod"
@@ -105,7 +105,7 @@ def test_no_docstring():
     assert obj.name == "f_no_docstring"
     assert list(obj.retv.keys()) == ["y"]
     assert list(obj.args.keys()) == []
-    assert obj.docstring == ""
+    assert obj.docstring is None
 
 
 def test_no_output():
@@ -183,7 +183,7 @@ def test_ClassWithFunctionArguments():
     mymethod = obj.methods["mymethod"]
     assert mymethod.name == "mymethod"
     assert list(mymethod.retv.keys()) == ["c"]
-    assert mymethod.args.keys() == ["obj", "b"]
+    assert list(mymethod.args.keys()) == ["obj", "b"]
     assert (
         mymethod.docstring
         == "a method in :class:`ClassWithFunctionArguments`\n\n:param b: an input to :meth:`mymethod`"
@@ -248,15 +248,14 @@ def test_script_with_comment_header():
     assert (
         obj.docstring
         == """This is a Comment Header
- Copyright (C) <year>, by <full_name>
+Copyright (C) <year>, by <full_name>
 
- Some descriptions ...
+Some descriptions ...
 
- This header and all further comments above the first command line
- of the script will be ignored by the documentation system.
+This header and all further comments above the first command line
+of the script will be ignored by the documentation system.
 
- Lisence (GPL, BSD, etc.)
-
+Lisence (GPL, BSD, etc.)
 """
     )
 
@@ -269,15 +268,14 @@ def test_script_with_comment_header_2():
     assert (
         obj.docstring
         == """This is a Comment Header
- Copyright (C) <year>, by <full_name>
+Copyright (C) <year>, by <full_name>
 
- Some descriptions ...
+Some descriptions ...
 
- This header and all further comments above the first command line
- of the script will be ignored by the documentation system.
+This header and all further comments above the first command line
+of the script will be ignored by the documentation system.
 
- Lisence (GPL, BSD, etc.)
-
+Lisence (GPL, BSD, etc.)
 """
     )
 
@@ -290,8 +288,7 @@ def test_script_with_comment_header_3():
     assert (
         obj.docstring
         == """This is a Comment Header with empty lines above
- and many line comments.
-
+and many line comments.
 """
     )
 
@@ -304,8 +301,7 @@ def test_script_with_comment_header_4():
     assert (
         obj.docstring
         == """This is a Comment Header with a single instruction above
- and many line comments.
-
+and many line comments.
 """
     )
 
@@ -320,26 +316,34 @@ def test_PropTypeOld():
             "docstring": None,
             "attrs": {},
             "default": "'none'",
-            "specs": "@char",
-        },
+            "size": None,
+            "type": "char",
+            "validators": None,
+        },  # 'type': ['char']
         "pos": {
             "docstring": None,
             "attrs": {},
             "default": "zeros(3,1)",
-            "specs": "@double vector",
-        },
+            "size": None,
+            "type": "vector",
+            "validators": None,
+        },  # 'type': ['double', 'vector'],
         "rotm": {
             "docstring": None,
             "attrs": {},
             "default": "zeros(3,3)",
-            "specs": "@double matrix",
-        },
+            "size": None,
+            "type": "matrix",
+            "validators": None,
+        },  # 'type': ['double', 'matrix'],
         "idx": {
             "docstring": None,
             "attrs": {},
             "default": "0",
-            "specs": "@uint8 scalar",
-        },
+            "size": None,
+            "type": "scalar",
+            "validators": None,
+        },  # 'type': ['uint8', 'scalar'],
     }
 
 
@@ -361,7 +365,7 @@ def test_ClassWithMethodAttributes():
     assert obj.methods["testPublic"].attrs == {"Access": "public"}
     assert obj.methods["testProtected"].attrs == {"Access": "protected"}
     assert obj.methods["testPrivate1"].attrs == {"Access": "private"}
-    assert obj.methods["testPrivate2"].attrs == {"Access": "private"}
+    assert obj.methods["testPrivate2"].attrs == {"Access": "'private'"}
     assert obj.methods["testHidden"].attrs == {"Hidden": None}
     assert obj.methods["testStatic"].attrs == {"Static": None}
     assert obj.methods["testFriend1"].attrs == {"Access": "?OtherClass"}
@@ -618,7 +622,14 @@ def test_ClassWithGetterSetter():
     assert obj.name == "ClassWithGetterSetter"
     assert list(obj.methods.keys()) == ["ClassWithGetterSetter"]
     assert obj.properties == {
-        "a": {"docstring": "A nice property", "attrs": {}, "default": None}
+        "a": {
+            "docstring": "A nice property",
+            "attrs": {},
+            "default": None,
+            "size": None,
+            "type": None,
+            "validators": None,
+        }
     }
 
 
@@ -631,7 +642,14 @@ def test_ClassWithDoubleQuotedString():
     assert obj.name == "ClassWithDoubleQuotedString"
     assert set(obj.methods.keys()) == set(["ClassWithDoubleQuotedString", "method1"])
     assert obj.properties == {
-        "Property1": {"docstring": None, "attrs": {}, "default": None, "specs": ""}
+        "Property1": {
+            "docstring": None,
+            "attrs": {},
+            "default": None,
+            "size": None,
+            "type": None,
+            "validators": None,
+        }
     }
 
 
@@ -903,7 +921,7 @@ def test_ClassWithTests():
     assert obj.bases == [("matlab", "unittest", "TestCase")]
     assert "testRunning" in obj.methods
     testRunning = obj.methods["testRunning"]
-    assert testRunning.attrs["TestTags"] == ["{'Unit'}"]
+    assert testRunning.attrs["TestTags"] == ["'Unit'"]
 
 
 if __name__ == "__main__":
