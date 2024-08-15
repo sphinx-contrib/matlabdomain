@@ -4,10 +4,8 @@ from tree_sitter import Language, Parser
 import re
 
 # rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
-rpath = (
-    "/home/anton/tools/matlabdomain/tests/test_data/submodule/f_ellipsis_empty_output.m"
-)
-# rpath = "/home/anton/tools/matlabdomain/tests/test_data/submodule/f_empty_output.m"
+rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassWithMethodAttributes.m"
+# rpath = "/home/anton/tools/matlabdomain/tests/test_data/f_with_dummy_argument.m"
 
 tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
 if tree_sitter_ver[1] == 21:
@@ -36,7 +34,17 @@ q_classdef = ML_LANG.query(
 """
 )
 
-q_attributes = ML_LANG.query("""(attribute (identifier) @name (_)? @value)""")
+q_attributes = ML_LANG.query(
+    """(attribute
+    (identifier) @name
+    [
+        (identifier) @value
+        (string) @value
+        (metaclass_operator) @value
+        (cell) @value
+    ]?)
+    """
+)
 
 q_supers = ML_LANG.query("""[(identifier) @secs "."]+ """)
 
@@ -110,7 +118,7 @@ q_fun = ML_LANG.query(
         [
             (identifier) @outputs
             (multioutput_variable
-                [(identifier) @outputs _]+
+                [[(identifier) (ignored_argument)] @outputs _]+
             )
         ]
     )?
@@ -118,7 +126,7 @@ q_fun = ML_LANG.query(
     name: (identifier) @name
     _*
     (function_arguments
-        [(identifier) @params _]*
+        [(identifier) @params (ignored_argument) @params _]*
     )?
     _*
     [(arguments_statement) @argblocks _]*
@@ -685,6 +693,7 @@ class MatClassParser:
         attrs = {}
         if attrs_nodes is not None:
             for attr_node in attrs_nodes:
+                print(attr_node.sexp())
                 _, attr_match = q_attributes.matches(attr_node)[0]
                 name = attr_match.get("name").text.decode("utf-8")
                 value_node = attr_match.get("value")
@@ -695,11 +704,19 @@ class MatClassParser:
 
 
 if __name__ == "__main__":
-    parser = Parser(ML_LANG)
+    tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
+    if tree_sitter_ver[1] == 21:
+        parser = Parser()
+        parser.set_language(ML_LANG)
+    else:
+        parser = Parser(ML_LANG)
 
     with open(rpath, "rb") as f:
         data = f.read()
 
     tree = parser.parse(data)
-    # class_parser = MatClassParser(tree.root_node)
-    fun_parser = MatFunctionParser(tree.root_node)
+    class_parser = MatClassParser(tree.root_node)
+    # fun_parser = MatFunctionParser(tree.root_node)
+    import pdb
+
+    pdb.set_trace()
