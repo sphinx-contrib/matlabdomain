@@ -187,7 +187,7 @@ q_arg = ML_LANG.query(
 q_script = ML_LANG.query(
     """
     (source_file
-        (comment) @docstring
+        (comment)? @docstring
     )
     """
 )
@@ -215,12 +215,12 @@ def get_row(point):
 
 
 def process_text_into_docstring(text, encoding):
-    docstring = text.decode(encoding)
+    docstring = text.decode(encoding, errors="backslashreplace")
     return re.sub(re_percent_remove, "", docstring)
 
 
 def process_default(text, encoding):
-    default = text.decode(encoding)
+    default = text.decode(encoding, errors="backslashreplace")
     return re.sub(re_assign_remove, "", default)
 
 
@@ -228,15 +228,18 @@ class MatScriptParser:
     def __init__(self, root_node, encoding):
         """Parse m script"""
         self.encoding = encoding
-        _, script_match = q_script.matches(root_node)[0]
-        docstring_node = script_match.get("docstring")
-        if docstring_node is not None:
-            self.docstring = process_text_into_docstring(
-                docstring_node.text, self.encoding
-            )
+        script_matches = q_script.matches(root_node)
+        if script_matches:
+            _, script_match = q_script.matches(root_node)[0]
+            docstring_node = script_match.get("docstring")
+            if docstring_node is not None:
+                self.docstring = process_text_into_docstring(
+                    docstring_node.text, self.encoding
+                )
+            else:
+                self.docstring = None
         else:
             self.docstring = None
-        print(self.docstring)
 
 
 class MatFunctionParser:
@@ -244,13 +247,18 @@ class MatFunctionParser:
         """Parse Function definition"""
         self.encoding = encoding
         _, fun_match = q_fun.matches(root_node)[0]
-        self.name = fun_match.get("name").text.decode(self.encoding)
+        self.name = fun_match.get("name").text.decode(
+            self.encoding, errors="backslashreplace"
+        )
 
         # Get outputs (possibly more than one)
         self.retv = {}
         output_nodes = fun_match.get("outputs")
         if output_nodes is not None:
-            retv = [output.text.decode(self.encoding) for output in output_nodes]
+            retv = [
+                output.text.decode(self.encoding, errors="backslashreplace")
+                for output in output_nodes
+            ]
             for output in retv:
                 self.retv[output] = {}
 
@@ -258,7 +266,10 @@ class MatFunctionParser:
         self.args = {}
         arg_nodes = fun_match.get("params")
         if arg_nodes is not None:
-            args = [arg.text.decode(self.encoding) for arg in arg_nodes]
+            args = [
+                arg.text.decode(self.encoding, errors="backslashreplace")
+                for arg in arg_nodes
+            ]
             for arg in args:
                 self.args[arg] = {}
 
@@ -296,25 +307,38 @@ class MatFunctionParser:
             _, arg_match = q_arg.matches(arg)[0]
 
             # extract name (this is always available so no need for None check)
-            name = [name.text.decode(self.encoding) for name in arg_match.get("name")]
+            name = [
+                name.text.decode(self.encoding, errors="backslashreplace")
+                for name in arg_match.get("name")
+            ]
 
             # extract dims list
             dims_list = arg_match.get("dims")
             dims = None
             if dims_list is not None:
-                dims = tuple([dim.text.decode(self.encoding) for dim in dims_list])
+                dims = tuple(
+                    [
+                        dim.text.decode(self.encoding, errors="backslashreplace")
+                        for dim in dims_list
+                    ]
+                )
 
             # extract type
             type_node = arg_match.get("type")
             typename = (
-                type_node.text.decode(self.encoding) if type_node is not None else None
+                type_node.text.decode(self.encoding, errors="backslashreplace")
+                if type_node is not None
+                else None
             )
 
             # extract validator functions
             vf_list = arg_match.get("validator_functions")
             vfs = None
             if vf_list is not None:
-                vfs = [vf.text.decode(self.encoding) for vf in vf_list]
+                vfs = [
+                    vf.text.decode(self.encoding, errors="backslashreplace")
+                    for vf in vf_list
+                ]
 
             # extract default
             default_node = arg_match.get("default")
@@ -440,10 +464,12 @@ class MatFunctionParser:
         if attrs_nodes is not None:
             for attr_node in attrs_nodes:
                 _, attr_match = q_attributes.matches(attr_node)[0]
-                name = attr_match.get("name").text.decode(self.encoding)
+                name = attr_match.get("name").text.decode(
+                    self.encoding, errors="backslashreplace"
+                )
                 value_node = attr_match.get("value")
                 attrs[name] = (
-                    value_node.text.decode(self.encoding)
+                    value_node.text.decode(self.encoding, errors="backslashreplace")
                     if value_node is not None
                     else None
                 )
@@ -480,7 +506,10 @@ class MatClassParser:
             for super_node in supers_nodes:
                 _, super_match = q_supers.matches(super_node)[0]
                 super_cls = tuple(
-                    [sec.text.decode(self.encoding) for sec in super_match.get("secs")]
+                    [
+                        sec.text.decode(self.encoding, errors="backslashreplace")
+                        for sec in super_match.get("secs")
+                    ]
                 )
                 self.supers.append(super_cls)
 
@@ -520,31 +549,40 @@ class MatClassParser:
                 _, prop_match = q_property.matches(prop)[0]
 
                 # extract name (this is always available so no need for None check)
-                name = prop_match.get("name").text.decode(self.encoding)
+                name = prop_match.get("name").text.decode(
+                    self.encoding, errors="backslashreplace"
+                )
 
                 # extract dims list
                 dims_list = prop_match.get("dims")
                 dims = None
                 if dims_list is not None:
-                    dims = tuple([dim.text.decode(self.encoding) for dim in dims_list])
+                    dims = tuple(
+                        [
+                            dim.text.decode(self.encoding, errors="backslashreplace")
+                            for dim in dims_list
+                        ]
+                    )
 
                 # extract validator functions
                 vf_list = prop_match.get("validator_functions")
                 vfs = None
                 if vf_list is not None:
-                    vfs = [vf.text.decode(self.encoding) for vf in vf_list]
+                    vfs = [
+                        vf.text.decode(self.encoding, errors="backslashreplace")
+                        for vf in vf_list
+                    ]
             else:
                 # match property to extract details
                 _, prop_match = q_old_property.matches(prop)[0]
 
                 # extract name (this is always available so no need for None check)
-                name = prop_match.get("name").text.decode(self.encoding)
+                name = prop_match.get("name").text.decode(
+                    self.encoding, errors="backslashreplace"
+                )
 
                 # extract size type
                 size_type = prop_match.get("size_type")
-                import pdb
-
-                pdb.set_trace()
                 if size_type is None:
                     dims = None
                 elif size_type.text == b"scalar":
@@ -560,7 +598,9 @@ class MatClassParser:
             # extract type
             type_node = prop_match.get("type")
             typename = (
-                type_node.text.decode(self.encoding) if type_node is not None else None
+                type_node.text.decode(self.encoding, errors="backslashreplace")
+                if type_node is not None
+                else None
             )
 
             # extract default
@@ -694,10 +734,15 @@ class MatClassParser:
             return
         for enum in enums:
             _, enum_match = q_enum.matches(enum)[0]
-            name = enum_match.get("name").text.decode(self.encoding)
+            name = enum_match.get("name").text.decode(
+                self.encoding, errors="backslashreplace"
+            )
             arg_nodes = enum_match.get("args")
             if arg_nodes is not None:
-                args = [arg.text.decode(self.encoding) for arg in arg_nodes]
+                args = [
+                    arg.text.decode(self.encoding, errors="backslashreplace")
+                    for arg in arg_nodes
+                ]
             else:
                 args = None
 
@@ -757,7 +802,7 @@ class MatClassParser:
         if events is None:
             return
         for event in events:
-            name = event.text.decode(self.encoding)
+            name = event.text.decode(self.encoding, errors="backslashreplace")
 
             docstring = ""
             # look forward for docstring
@@ -813,16 +858,21 @@ class MatClassParser:
         if attrs_nodes is not None:
             for attr_node in attrs_nodes:
                 _, attr_match = q_attributes.matches(attr_node)[0]
-                name = attr_match.get("name").text.decode(self.encoding)
+                name = attr_match.get("name").text.decode(
+                    self.encoding, errors="backslashreplace"
+                )
                 value_node = attr_match.get("value")
                 rhs_node = attr_match.get("rhs")
                 if rhs_node is not None:
                     if rhs_node.type == "cell":
                         attrs[name] = [
-                            vn.text.decode(self.encoding) for vn in value_node
+                            vn.text.decode(self.encoding, errors="backslashreplace")
+                            for vn in value_node
                         ]
                     else:
-                        attrs[name] = value_node[0].text.decode(self.encoding)
+                        attrs[name] = value_node[0].text.decode(
+                            self.encoding, errors="backslashreplace"
+                        )
                 else:
                     attrs[name] = None
 

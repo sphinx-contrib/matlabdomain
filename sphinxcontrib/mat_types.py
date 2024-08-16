@@ -444,11 +444,6 @@ class MatObject(object):
             # make a full path out of basedir and objname
             fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
 
-        # Check if path should be ignored
-        for ignore in MatObject.sphinx_env.config.matlab_ignore_dirs:
-            if Path(fullpath).is_relative_to(MatObject.basedir, ignore):
-                return None
-
         logger.debug(
             f"[sphinxcontrib-matlabdomain] matlabify {package=}, {objname=}, {fullpath=}"
         )
@@ -994,7 +989,7 @@ class MatClass(MatMixin, MatObject):
             if isinstance(entity, MatClass) or "@" in name:
                 class_entity_table[name] = entity
 
-        for base in self.bases:
+        for base in bases_.keys():
             if base in class_entity_table.keys():
                 bases_[base] = class_entity_table[base]
 
