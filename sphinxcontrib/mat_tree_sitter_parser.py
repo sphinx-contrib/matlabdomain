@@ -4,7 +4,7 @@ from tree_sitter import Language, Parser
 import re
 
 # rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
-rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassWithGetterSetter.m"
+rpath = "/home/anton/tools/matlabdomain/tests/test_data/PropTypeOld.m"
 # rpath = "/home/anton/tools/matlabdomain/tests/test_data/f_with_dummy_argument.m"
 
 tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
@@ -56,7 +56,7 @@ q_properties = ML_LANG.query(
     (attributes
         [(attribute) @attrs _]+
     )?
-    [(property) @properties _]+
+    [(property) @properties (old_property) @properties _]+
     ) @prop_block
 """
 )
@@ -98,6 +98,17 @@ q_property = ML_LANG.query(
      (validation_functions
          [[(identifier) (function_call)] @validation_functions _]+
      )?
+     (default_value)? @default
+     (comment)? @docstring
+    )
+"""
+)
+
+q_old_property = ML_LANG.query(
+    """
+    (old_property name: (identifier) @name
+     (identifier) @type
+     (old_property_type)? @size_type
      (default_value)? @default
      (comment)? @docstring
     )
@@ -504,29 +515,53 @@ class MatClassParser:
         attrs_nodes = props_match.get("attrs")
         attrs = self._parse_attributes(attrs_nodes)
         for prop in properties:
-            # match property to extract details
-            _, prop_match = q_property.matches(prop)[0]
+            if prop.type == "property":
+                # match property to extract details
+                _, prop_match = q_property.matches(prop)[0]
 
-            # extract name (this is always available so no need for None check)
-            name = prop_match.get("name").text.decode(self.encoding)
+                # extract name (this is always available so no need for None check)
+                name = prop_match.get("name").text.decode(self.encoding)
 
-            # extract dims list
-            dims_list = prop_match.get("dims")
-            dims = None
-            if dims_list is not None:
-                dims = tuple([dim.text.decode(self.encoding) for dim in dims_list])
+                # extract dims list
+                dims_list = prop_match.get("dims")
+                dims = None
+                if dims_list is not None:
+                    dims = tuple([dim.text.decode(self.encoding) for dim in dims_list])
+
+                # extract validator functions
+                vf_list = prop_match.get("validator_functions")
+                vfs = None
+                if vf_list is not None:
+                    vfs = [vf.text.decode(self.encoding) for vf in vf_list]
+            else:
+                # match property to extract details
+                _, prop_match = q_old_property.matches(prop)[0]
+
+                # extract name (this is always available so no need for None check)
+                name = prop_match.get("name").text.decode(self.encoding)
+
+                # extract size type
+                size_type = prop_match.get("size_type")
+                import pdb
+
+                pdb.set_trace()
+                if size_type is None:
+                    dims = None
+                elif size_type.text == b"scalar":
+                    dims = ("1", "1")
+                elif size_type.text == b"vector":
+                    dims = (":", "1")
+                elif size_type.text == b"matrix":
+                    dims = (":", ":")
+
+                # No validator functions
+                vfs = None
 
             # extract type
             type_node = prop_match.get("type")
             typename = (
                 type_node.text.decode(self.encoding) if type_node is not None else None
             )
-
-            # extract validator functions
-            vf_list = prop_match.get("validator_functions")
-            vfs = None
-            if vf_list is not None:
-                vfs = [vf.text.decode(self.encoding) for vf in vf_list]
 
             # extract default
             default_node = prop_match.get("default")
@@ -806,7 +841,7 @@ if __name__ == "__main__":
         data = f.read()
 
     tree = parser.parse(data)
-    class_parser = MatClassParser(tree.root_node, self.encoding)
+    class_parser = MatClassParser(tree.root_node, "utf-8")
     # fun_parser = MatFunctionParser(tree.root_node)
     import pdb
 
