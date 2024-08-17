@@ -1,3 +1,13 @@
+sphinxcontrib-matlabdomain-0.22.1 (2024-08-17)
+==============================================
+
+* Fixed `Isssue 262`_. The API for
+  ``sphinx.environment.BuildEnvironment.doc2path`` was changed to return a
+  path-like object in Sphinx 8.0.2.
+
+.. _Issue 262: https://github.com/sphinx-contrib/matlabdomain/issues/243
+
+
 sphinxcontrib-matlabdomain-0.22.0 (2024-07-17)
 ==============================================
 
@@ -16,7 +26,7 @@ sphinxcontrib-matlabdomain-0.22.0 (2024-07-17)
     .. image:: docs/render_property_specs_0.22.0.png
       :alt: Rendering property specs in 0.22.0
 
-.. _Issue 243: https://github.com/sphinx-contrib/matlabdomain/issues/249
+.. _Issue 243: https://github.com/sphinx-contrib/matlabdomain/issues/243
 .. _Issue 249: https://github.com/sphinx-contrib/matlabdomain/issues/249
 .. _Issue 250: https://github.com/sphinx-contrib/matlabdomain/issues/250
 .. _Issue 252: https://github.com/sphinx-contrib/matlabdomain/issues/252

@@ -286,7 +286,7 @@ class MatObject(ObjectDescription):
                 self.state_machine.reporter.warning(
                     "duplicate object description of %s, " % fullname_out
                     + "other instance in "
-                    + self.env.doc2path(objects[fullname_out][0])
+                    + str(self.env.doc2path(objects[fullname_out][0]))
                     + ", use :noindex: for one of them",
                     line=self.lineno,
                 )
