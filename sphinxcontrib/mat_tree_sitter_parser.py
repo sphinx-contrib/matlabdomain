@@ -4,7 +4,7 @@ from tree_sitter import Language, Parser
 import re
 
 # rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
-rpath = "/home/anton/tools/matlabdomain/tests/test_data/PropTypeOld.m"
+rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassWithTrailingCommentAfterBases.m"
 # rpath = "/home/anton/tools/matlabdomain/tests/test_data/f_with_dummy_argument.m"
 
 tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
@@ -194,12 +194,16 @@ q_script = ML_LANG.query(
 
 q_get_set = ML_LANG.query("""["get." "set."]""")
 
+q_line_continuation = ML_LANG.query("(line_continuation) @lc")
+
 
 re_percent_remove = re.compile(r"^[ \t]*% ?", flags=re.M)
+re_trim_line = re.compile(r"^[ \t]*", flags=re.M)
 re_assign_remove = re.compile(r"^=[ \t]*")
 
 
 def tree_sitter_is_0_21():
+    """Check if tree-sitter is v0.21.* in order to use the correct language initialization and syntax."""
     if not hasattr(tree_sitter_is_0_21, "is_21"):
         tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
         tree_sitter_is_0_21.is_21 = tree_sitter_ver[1] == 21  # memoize
@@ -215,13 +219,33 @@ def get_row(point):
 
 
 def process_text_into_docstring(text, encoding):
+    """Take a text bytestring and decode it into a docstring."""
     docstring = text.decode(encoding, errors="backslashreplace")
     return re.sub(re_percent_remove, "", docstring)
 
 
-def process_default(text, encoding):
-    default = text.decode(encoding, errors="backslashreplace")
-    return re.sub(re_assign_remove, "", default)
+def process_default(node, encoding):
+    """Take the node defining a default and remove any line continuations before generating the default."""
+    text = node.text
+    to_keep = set(range(node.end_byte - node.start_byte))
+    lc_matches = q_line_continuation.matches(node)
+    for _, match in lc_matches:
+        # TODO this copies a lot perhaps there is a better option.
+        lc = match["lc"]
+        cut_start = lc.start_byte - node.start_byte
+        cut_end = lc.end_byte - node.start_byte
+        to_keep -= set(range(cut_start, cut_end))
+    # NOTE: hardcoded endianess is fine because for one byte this does not matter.
+    #       See python bikeshed on possible defaults for this here:
+    #       https://discuss.python.org/t/what-should-be-the-default-value-for-int-to-bytes-byteorder/10616
+    new_text = b"".join(
+        [byte.to_bytes(1, "big") for idx, byte in enumerate(text) if idx in to_keep]
+    )
+    # TODO We may want to do an in-order traversal of the parse here to generate a "nice" reformatted single line
+    #      however doing so sufficiently generically is likely a major undertaking.
+    default = new_text.decode(encoding, errors="backslashreplace")
+    default = re.sub(re_assign_remove, "", default)
+    return re.sub(re_trim_line, "", default)
 
 
 class MatScriptParser:
@@ -281,13 +305,21 @@ class MatFunctionParser:
 
         # get docstring
         docstring_node = fun_match.get("docstring")
-        docstring = None
+        docstring = ""
         if docstring_node is not None:
             prev_sib = docstring_node.prev_named_sibling
             if get_row(docstring_node.start_point) - get_row(prev_sib.end_point) <= 1:
-                docstring = process_text_into_docstring(
-                    docstring_node.text, self.encoding
-                )
+                if get_row(docstring_node.start_point) == get_row(prev_sib.end_point):
+                    # if the docstring is on the same line as the end of the function drop it
+                    docstring = process_text_into_docstring(
+                        docstring_node.text, self.encoding
+                    )
+                    split_ds = docstring.split("\n")
+                    docstring = "\n".join(split_ds[1:]) if len(split_ds) > 1 else ""
+                else:
+                    docstring = process_text_into_docstring(
+                        docstring_node.text, self.encoding
+                    )
 
         if not docstring:
             docstring = None
@@ -343,7 +375,7 @@ class MatFunctionParser:
             # extract default
             default_node = arg_match.get("default")
             default = (
-                process_default(default_node.text, self.encoding)
+                process_default(default_node, self.encoding)
                 if default_node is not None
                 else None
             )
@@ -515,12 +547,22 @@ class MatClassParser:
 
         # get docstring and check that it consecutive
         docstring_node = class_match.get("docstring")
+        docstring = ""
         if docstring_node is not None:
             prev_node = docstring_node.prev_sibling
             if get_row(docstring_node.start_point) - get_row(prev_node.end_point) <= 1:
-                self.docstring = process_text_into_docstring(
-                    docstring_node.text, self.encoding
-                )
+                if get_row(docstring_node.start_point) == get_row(prev_node.end_point):
+                    # if the docstring is on the same line as the end of the classdef drop it
+                    docstring = process_text_into_docstring(
+                        docstring_node.text, self.encoding
+                    )
+                    split_ds = docstring.split("\n")
+                    docstring = "\n".join(split_ds[1:]) if len(split_ds) > 1 else ""
+                else:
+                    docstring = process_text_into_docstring(
+                        docstring_node.text, self.encoding
+                    )
+        self.docstring = docstring
 
         prop_matches = q_properties.matches(self.cls)
         method_matches = q_methods.matches(self.cls)
@@ -606,7 +648,7 @@ class MatClassParser:
             # extract default
             default_node = prop_match.get("default")
             default = (
-                process_default(default_node.text, self.encoding)
+                process_default(default_node, self.encoding)
                 if default_node is not None
                 else None
             )

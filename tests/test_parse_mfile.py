@@ -433,7 +433,7 @@ def test_file_parsing_with_no_encoding_specified():
     mfile = os.path.join(DIRNAME, "test_data", "f_with_latin_1.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_with_latin_1", "test_data")
     assert obj.name == "f_with_latin_1"
-    assert obj.docstring == r"Analyse de la r\xe9dponse \xe0 un cr\xe9dneau"
+    assert obj.docstring == r"Analyse de la r\xe9ponse \xe0 un cr\xe9neau"
 
 
 def test_ClassWithBuiltinOverload():
@@ -740,7 +740,7 @@ def test_ClassWithLongPropertyDocstrings():
     )
     assert obj.name == "ClassWithLongPropertyDocstrings"
     assert (
-        obj.properties["a"]["docstring"] == "This line is deleted"
+        obj.properties["a"]["docstring"] == "This line is deleted\n"
         "This line documents another property"
     )
     assert obj.properties["b"]["docstring"] == "Document this property"
@@ -755,7 +755,7 @@ def test_ClassWithLongPropertyTrailingEmptyDocstrings():
     )
     assert obj.name == "ClassWithLongPropertyTrailingEmptyDocstrings"
     assert (
-        obj.properties["a"]["docstring"] == "This line is deleted"
+        obj.properties["a"]["docstring"] == "This line is deleted\n"
         "This line documents another property"
     )
     assert obj.properties["b"]["docstring"] == "Document this property"
@@ -795,6 +795,7 @@ def test_ClassWithTrailingCommentAfterBases():
 
 
 def test_ClassWithEllipsisProperties():
+    # TODO change this when the functionality to "nicely" generate one line defaults exists
     mfile = os.path.join(TESTDATA_ROOT, "ClassWithEllipsisProperties.m")
     obj = mat_types.MatObject.parse_mfile(
         mfile, "ClassWithEllipsisProperties", "test_data"
@@ -805,15 +806,15 @@ def test_ClassWithEllipsisProperties():
     assert len(obj.methods) == 0
 
     assert obj.properties["A"]["docstring"] == "an expression with ellipsis"
-    assert obj.properties["A"]["default"] == "1+2+3+4+5"
+    assert obj.properties["A"]["default"] == "1 + 2 + 3 +             4 + 5"
     assert (
         obj.properties["B"]["docstring"]
         == "a cell array with ellipsis and other array notation"
     )
-    assert obj.properties["B"]["default"].startswith("{'hello','bye';")
+    assert obj.properties["B"]["default"].startswith("{'hello', 'bye';")
     assert obj.properties["B"]["default"].endswith("}")
     assert obj.properties["C"]["docstring"] == "using end inside array"
-    assert obj.properties["C"]["default"] == "ClassWithEllipsisProperties.B(2:end,1)"
+    assert obj.properties["C"]["default"] == "ClassWithEllipsisProperties.B(2:end, 1)"
     assert obj.properties["D"]["docstring"] == "String with line continuation"
     assert obj.properties["D"]["default"] == "'...'"
     assert obj.properties["E"]["docstring"] == "The string with spaces"
