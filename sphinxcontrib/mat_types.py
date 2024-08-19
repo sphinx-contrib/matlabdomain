@@ -16,7 +16,6 @@ from sphinxcontrib.mat_lexer import MatlabLexer
 from pygments.token import Token
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
-import sphinxcontrib.mat_parser as mat_parser
 from sphinxcontrib.mat_tree_sitter_parser import (
     MatClassParser,
     MatFunctionParser,
@@ -46,14 +45,6 @@ __all__ = [
     "MatModuleAnalyzer",
     "MatApplication",
 ]
-
-# MATLAB keywords that increment keyword-end pair count
-MATLAB_KEYWORD_REQUIRES_END = list(
-    zip(
-        (Token.Keyword,) * 7,
-        ("arguments", "for", "if", "switch", "try", "while", "parfor"),
-    )
-)
 
 
 # MATLAB attribute type dictionaries.
@@ -114,12 +105,6 @@ MATLAB_METHOD_ATTRIBUTE_TYPES = {
     "TestMethodTeardown": bool,
     "TestTags": list,
 }
-
-
-MATLAB_FUNC_BRACES_BEGIN = tuple(zip((Token.Punctuation,) * 2, ("(", "{")))
-MATLAB_FUNC_BRACES_END = tuple(zip((Token.Punctuation,) * 2, (")", "}")))
-MATLAB_PROP_BRACES_BEGIN = tuple(zip((Token.Punctuation,) * 3, ("(", "{", "[")))
-MATLAB_PROP_BRACES_END = tuple(zip((Token.Punctuation,) * 3, (")", "}", "]")))
 
 # Dictionary containing all MATLAB entities that are found in `matlab_src_dir`.
 # The dictionary keys are both the full dotted path, relative to the root.
@@ -734,130 +719,6 @@ class MatModule(MatObject):
                 return entity
 
 
-class MatMixin(object):
-    """
-    Methods to comparing and manipulating tokens in :class:`MatFunction` and
-    :class:`MatClass`.
-    """
-
-    def _tk_eq(self, idx, token):
-        """
-        Returns ``True`` if token keys are the same and values are equal.
-
-        :param idx: Index of token in :class:`MatObject`.
-        :type idx: int
-        :param token: Comparison token.
-        :type token: tuple
-        """
-        return self.tokens[idx][0] is token[0] and self.tokens[idx][1] == token[1]
-
-    def _tk_ne(self, idx, token):
-        """
-        Returns ``True`` if token keys are not the same or values are not
-        equal.
-
-        :param idx: Index of token in :class:`MatObject`.
-        :type idx: int
-        :param token: Comparison token.
-        :type token: tuple
-        """
-        return self.tokens[idx][0] is not token[0] or self.tokens[idx][1] != token[1]
-
-    def _eotk(self, idx):
-        """
-        Returns ``True`` if end of tokens is reached.
-        """
-        return idx >= len(self.tokens)
-
-    def _blanks(self, idx):
-        """
-        Returns number of blank text tokens.
-
-        :param idx: Token index.
-        :type idx: int
-        """
-        # idx0 = idx  # original index
-        # while self._tk_eq(idx, (Token.Text, ' ')): idx += 1
-        # return idx - idx0  # blanks
-        return self._indent(idx)
-
-    def _whitespace(self, idx):
-        """
-        Returns number of whitespaces text tokens, including blanks, newline
-        and tabs.
-
-        :param idx: Token index.
-        :type idx: int
-        """
-        idx0 = idx  # original index
-        while (
-            self.tokens[idx][0] is Token.Text
-            or self.tokens[idx][0] is Token.Text.Whitespace
-        ) and self.tokens[idx][1] in [" ", "\n", "\t"]:
-            idx += 1
-        return idx - idx0  # whitespace
-
-    def _indent(self, idx):
-        """
-        Returns indentation tabs or spaces. No indentation is zero.
-
-        :param idx: Token index.
-        :type idx: int
-        """
-        idx0 = idx  # original index
-        while self.tokens[idx][0] is Token.Text and self.tokens[idx][1] in [" ", "\t"]:
-            idx += 1
-        return idx - idx0  # indentation
-
-    def _propspec(self, idx):
-        """
-        Returns number of "property" specification tokens
-
-        :param idx: Token index.
-        :type idx: int
-        """
-        idx0 = idx  # original index
-        while (
-            self._tk_eq(idx, (Token.Punctuation, "@"))
-            or self._tk_eq(idx, (Token.Punctuation, "("))
-            or self._tk_eq(idx, (Token.Punctuation, ")"))
-            or self._tk_eq(idx, (Token.Punctuation, ","))
-            or self._tk_eq(idx, (Token.Punctuation, ":"))
-            or self.tokens[idx][0] == Token.Literal.Number.Integer
-            or self._tk_eq(idx, (Token.Punctuation, "{"))
-            or self._tk_eq(idx, (Token.Punctuation, "}"))
-            or self._tk_eq(idx, (Token.Punctuation, "["))
-            or self._tk_eq(idx, (Token.Punctuation, "]"))
-            or self._tk_eq(idx, (Token.Punctuation, "."))
-            or self.tokens[idx][0] == Token.Literal.String
-            or self.tokens[idx][0] == Token.Name
-            or (self.tokens[idx][0] == Token.Text and self.tokens[idx][1] != "\n")
-        ):
-            idx += 1
-
-        count = idx - idx0  # property spec count.
-        propspec = "".join([content for _, content in self.tokens[idx0 : idx0 + count]])
-        propspec = propspec.strip()
-        return count, propspec
-
-    def _is_newline(self, idx):
-        """Returns true if the token at index is a newline"""
-        return (
-            self.tokens[idx][0] in (Token.Text, Token.Text.Whitespace)
-            and self.tokens[idx][1] == "\n"
-        )
-
-
-def skip_whitespace(tks):
-    """Eats whitespace from list of tokens"""
-    while tks and (
-        tks[-1][0] == Token.Text.Whitespace
-        or tks[-1][0] == Token.Text
-        and tks[-1][1] in [" ", "\t"]
-    ):
-        tks.pop()
-
-
 class MatFunction(MatObject):
     """
     A MATLAB function.
@@ -907,7 +768,7 @@ class MatFunction(MatObject):
             super(MatFunction, self).getter(name, *defargs)
 
 
-class MatClass(MatMixin, MatObject):
+class MatClass(MatObject):
     """
     A MATLAB class definition.
 
