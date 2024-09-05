@@ -88,7 +88,7 @@ q_properties = ML_LANG.query(
     (attributes
         [(attribute) @attrs _]+
     )?
-    [(property) @properties (old_property) @properties _]+
+    [(property) @properties  _]+
     ) @prop_block
 """
 )
@@ -127,6 +127,8 @@ q_property = ML_LANG.query(
          [[(spread_operator) (number)] @dims _]+
      )?
      (identifier)? @type
+     .
+     (identifier)? @size_type
      (validation_functions
          [[(identifier) (function_call)] @validation_functions _]+
      )?
@@ -138,9 +140,9 @@ q_property = ML_LANG.query(
 
 q_old_property = ML_LANG.query(
     """
-    (old_property name: (identifier) @name
+    (property name: (identifier) @name
      (identifier) @type
-     (old_property_type)? @size_type
+     (identifier)? @size_type
      (default_value)? @default
      (comment)? @docstring
     )
@@ -625,56 +627,42 @@ class MatClassParser:
         attrs_nodes = props_match.get("attrs")
         attrs = self._parse_attributes(attrs_nodes)
         for prop in properties:
-            if prop.type == "property":
-                # match property to extract details
-                _, prop_match = q_property.matches(prop)[0]
+            # match property to extract details
+            _, prop_match = q_property.matches(prop)[0]
 
-                # extract name (this is always available so no need for None check)
-                name = prop_match.get("name").text.decode(
-                    self.encoding, errors="backslashreplace"
-                )
+            # extract name (this is always available so no need for None check)
+            name = prop_match.get("name").text.decode(
+                self.encoding, errors="backslashreplace"
+            )
 
-                # extract dims list
-                dims_list = prop_match.get("dims")
-                dims = None
-                if dims_list is not None:
-                    dims = tuple(
-                        [
-                            dim.text.decode(self.encoding, errors="backslashreplace")
-                            for dim in dims_list
-                        ]
-                    )
-
-                # extract validator functions
-                vf_list = prop_match.get("validator_functions")
-                vfs = None
-                if vf_list is not None:
-                    vfs = [
-                        vf.text.decode(self.encoding, errors="backslashreplace")
-                        for vf in vf_list
+            # extract dims list
+            size_type = prop_match.get("size_type")
+            dims_list = prop_match.get("dims")
+            dims = None
+            if dims_list is not None:
+                dims = tuple(
+                    [
+                        dim.text.decode(self.encoding, errors="backslashreplace")
+                        for dim in dims_list
                     ]
-            else:
-                # match property to extract details
-                _, prop_match = q_old_property.matches(prop)[0]
-
-                # extract name (this is always available so no need for None check)
-                name = prop_match.get("name").text.decode(
-                    self.encoding, errors="backslashreplace"
                 )
+            elif size_type is None:
+                dims = None
+            elif size_type.text == b"scalar":
+                dims = ("1", "1")
+            elif size_type.text == b"vector":
+                dims = (":", "1")
+            elif size_type.text == b"matrix":
+                dims = (":", ":")
 
-                # extract size type
-                size_type = prop_match.get("size_type")
-                if size_type is None:
-                    dims = None
-                elif size_type.text == b"scalar":
-                    dims = ("1", "1")
-                elif size_type.text == b"vector":
-                    dims = (":", "1")
-                elif size_type.text == b"matrix":
-                    dims = (":", ":")
-
-                # No validator functions
-                vfs = None
+            # extract validator functions
+            vf_list = prop_match.get("validator_functions")
+            vfs = None
+            if vf_list is not None:
+                vfs = [
+                    vf.text.decode(self.encoding, errors="backslashreplace")
+                    for vf in vf_list
+                ]
 
             # extract type
             type_node = prop_match.get("type")
