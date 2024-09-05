@@ -346,14 +346,13 @@ class MatClasslike(MatObject):
 
         This method must not be used outwith table of contents generation.
         """
-        parts = sig.attributes.get('module').split('.')
-        parts.append(sig.attributes.get('fullname'))
-        #import pdb;pdb.set_trace()
+        parts = sig.attributes.get("module").split(".")
+        parts.append(sig.attributes.get("fullname"))
         return tuple(parts)
 
     def _toc_entry_name(self, sig):
         # TODO respecting the configuration setting ``toc_object_entries_show_parents``
-        return sig.attributes.get('fullname')
+        return sig.attributes.get("fullname")
 
     def get_signature_prefix(self, sig):
         return self.objtype + " "

@@ -877,7 +877,9 @@ class MatClass(MatObject):
         elif name == "__dict__":
             objdict = dict([(pn, self.getter(pn)) for pn in self.properties.keys()])
             objdict.update(self.methods)
-            objdict.update(dict([(en, self.getter(en)) for en in self.enumerations.keys()]))
+            objdict.update(
+                dict([(en, self.getter(en)) for en in self.enumerations.keys()])
+            )
             return objdict
         else:
             super(MatClass, self).getter(name, *defargs)
@@ -904,12 +906,13 @@ class MatProperty(MatObject):
     def __doc__(self):
         return self.docstring
 
+
 class MatEnumeration(MatObject):
     def __init__(self, name, cls, attrs):
         super(MatEnumeration, self).__init__(name)
         self.cls = cls
         self.docstring = attrs["docstring"]
-        
+
     def ref_role(self):
         """Returns role to use for references to this object (e.g. when generating auto-links)"""
         return "enum"
@@ -921,6 +924,7 @@ class MatEnumeration(MatObject):
     @property
     def __doc__(self):
         return self.docstring
+
 
 class MatMethod(MatFunction):
     def __init__(self, name, parsed_function, modname, cls):

@@ -221,7 +221,6 @@ q_script = ML_LANG.query(
     (source_file
         (comment)? @docstring
     )
-
     """
 )
 

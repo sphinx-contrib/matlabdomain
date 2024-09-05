@@ -558,9 +558,9 @@ class MatlabDocumenter(PyDocumenter):
 
         def member_is_enum(member):
             return isinstance(member, MatEnumeration)
-        
+
         ret = []
-        
+
         # search for members in source code too
         namespace = ".".join(self.objpath)  # will be empty for modules
 
@@ -1242,7 +1242,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         other_names = [
             membername
             for (membername, member) in filtered_members
-            if not isinstance(member, MatMethod) and not isinstance(member, MatProperty) and not isinstance(member, MatEnumeration)
+            if not isinstance(member, MatMethod)
+            and not isinstance(member, MatProperty)
+            and not isinstance(member, MatEnumeration)
             # exclude parent modules with names matching members (as in Myclass.Myclass)
             and not (hasattr(member, "module") and member.name == member.module)
         ]
@@ -1295,12 +1297,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             self.document_member_section(
                 "Property Summary", non_properties, all_members
             )
-            
+
         # enumss
         if enum_names:
-            self.document_member_section(
-                "Enumeration Values", non_enums, all_members
-            )
+            self.document_member_section("Enumeration Values", non_enums, all_members)
 
         # methods
         if meth_names:
