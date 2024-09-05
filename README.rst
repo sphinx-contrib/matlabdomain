@@ -10,7 +10,7 @@
 +----------------------+-----------------------+
 + Github Actions       | |github-action-badge| |
 +----------------------+-----------------------+
-+ Documentation Status | |github-action-badge| |
++ Documentation Status | |rtd-badge|           |
 +----------------------+-----------------------+
 
 sphinxcontrib-matlabdomain -- Sphinx domain for auto-documenting MATLAB
