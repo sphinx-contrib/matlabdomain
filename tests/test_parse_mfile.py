@@ -366,8 +366,8 @@ def test_ClassWithMethodAttributes():
     assert obj.methods["testProtected"].attrs == {"Access": "protected"}
     assert obj.methods["testPrivate1"].attrs == {"Access": "private"}
     assert obj.methods["testPrivate2"].attrs == {"Access": "'private'"}
-    assert obj.methods["testHidden"].attrs == {"Hidden": None}
-    assert obj.methods["testStatic"].attrs == {"Static": None}
+    assert obj.methods["testHidden"].attrs == {"Hidden": True}
+    assert obj.methods["testStatic"].attrs == {"Static": True}
     assert obj.methods["testFriend1"].attrs == {"Access": "?OtherClass"}
     assert obj.methods["testFriend2"].attrs == {
         "Access": ["?OtherClass", "?pack.OtherClass2"]
@@ -397,13 +397,13 @@ def test_ClassWithPropertyAttributes():
         "GetAccess": "private",
         "SetAccess": "private",
     }
-    assert obj.properties["TEST_CONSTANT"]["attrs"] == {"Constant": None}
+    assert obj.properties["TEST_CONSTANT"]["attrs"] == {"Constant": True}
     assert obj.properties["TEST_CONSTANT_PROTECTED"]["attrs"] == {
         "Access": "protected",
-        "Constant": None,
+        "Constant": True,
     }
-    assert obj.properties["testDependent"]["attrs"] == {"Dependent": None}
-    assert obj.properties["testHidden"]["attrs"] == {"Hidden": None}
+    assert obj.properties["testDependent"]["attrs"] == {"Dependent": True}
+    assert obj.properties["testHidden"]["attrs"] == {"Hidden": True}
 
 
 def test_ClassWithoutIndent():
@@ -564,7 +564,7 @@ def test_ClassWithAttributes():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithAttributes", "test_data")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithAttributes"
-    assert obj.attrs == {"Sealed": None}
+    assert obj.attrs == {"Sealed": True}
 
 
 # Fails when running with other test files. Warnings are already logged.
@@ -696,7 +696,7 @@ def test_ClassWithMethodsWithSpaces():
     assert (
         obj.docstring == "Class with methods that have space after the function name."
     )
-    assert obj.methods["static_method"].attrs == {"Static": None}
+    assert obj.methods["static_method"].attrs == {"Static": True}
 
 
 def test_ClassContainingParfor():
@@ -779,7 +779,7 @@ def test_ClassWithTrailingCommentAfterBases():
         mfile, "ClassWithTrailingCommentAfterBases", "test_data"
     )
     assert obj.name == "ClassWithTrailingCommentAfterBases"
-    assert obj.bases == [("handle",), ("my", "super", "Class")]
+    assert obj.bases == ["handle", "my.super.Class"]
     assert (
         obj.docstring
         == "test class methods\n\n:param a: the input to :class:`ClassWithTrailingCommentAfterBases`"
@@ -801,7 +801,7 @@ def test_ClassWithEllipsisProperties():
         mfile, "ClassWithEllipsisProperties", "test_data"
     )
     assert obj.name == "ClassWithEllipsisProperties"
-    assert obj.bases == [("handle",)]
+    assert obj.bases == ["handle"]
     assert obj.docstring == "stuff"
     assert len(obj.methods) == 0
 
@@ -846,7 +846,7 @@ def test_ClassWithTrailingSemicolons():
         obj.docstring
         == "Smoothing like it is performed withing Cxx >v7.0 (until v8.2 at least).\nUses constant 228p_12k frequency vector:"
     )
-    assert obj.bases == [("hgsetget",)]
+    assert obj.bases == ["hgsetget"]
     assert list(obj.methods.keys()) == [
         "ClassWithTrailingSemicolons",
         "CxxSmoothing",
@@ -896,7 +896,7 @@ def test_ClassWithNamedAsArguments():
     mfile = os.path.join(TESTDATA_ROOT, "arguments.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "arguments", "test_data")
     assert obj.name == "arguments"
-    assert obj.bases == [("handle",), ("matlab", "mixin", "Copyable")]
+    assert obj.bases == ["handle", "matlab.mixin.Copyable"]
     assert "value" in obj.properties
     meth = obj.methods["arguments"]
     assert meth.docstring == "Constructor for arguments"
@@ -919,7 +919,7 @@ def test_ClassWithTests():
     mfile = os.path.join(TESTDATA_ROOT, "ClassWithTests.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithTests", "test_data")
     assert obj.name == "ClassWithTests"
-    assert obj.bases == [("matlab", "unittest", "TestCase")]
+    assert obj.bases == ["matlab.unittest.TestCase"]
     assert "testRunning" in obj.methods
     testRunning = obj.methods["testRunning"]
     assert testRunning.attrs["TestTags"] == ["'Unit'"]

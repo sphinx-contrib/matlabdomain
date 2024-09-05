@@ -842,9 +842,7 @@ class MatClass(MatObject):
 
     @property
     def __bases__(self):
-        bases_ = dict.fromkeys(
-            [".".join(base) for base in self.bases]
-        )  # make copy of bases
+        bases_ = dict.fromkeys([base for base in self.bases])  # make copy of bases
         class_entity_table = {}
         for name, entity in entities_table.items():
             if isinstance(entity, MatClass) or "@" in name:

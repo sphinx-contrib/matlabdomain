@@ -3,9 +3,41 @@ import tree_sitter_matlab as tsml
 from tree_sitter import Language, Parser
 import re
 
-# rpath = "../../../syscop/software/nosnoc/+nosnoc/Options.m"
-rpath = "/home/anton/tools/matlabdomain/tests/test_data/ClassWithTrailingCommentAfterBases.m"
-# rpath = "/home/anton/tools/matlabdomain/tests/test_data/f_with_dummy_argument.m"
+# Attribute default dictionary used to give default values for e.g. `Abstract` or `Static` when used without
+# a right hand side i.e. `classdef (Abstract)` vs `classdef (Abstract=true)`
+# From:
+#  - http://www.mathworks.com/help/matlab/matlab_oop/class-attributes.html
+#  - https://mathworks.com/help/matlab/matlab_oop/property-attributes.html
+#  - https://mathworks.com/help/matlab/matlab_prog/define-property-attributes-1.htm
+#  - https://mathworks.com/help/matlab/matlab_oop/method-attributes.html
+#  - https://mathworks.com/help/matlab/ref/matlab.unittest.testcase-class.html
+MATLAB_ATTRIBUTE_DEFAULTS = {
+    "AbortSet": True,
+    "Abstract": True,
+    "ClassSetupParameter": True,
+    "Constant": True,
+    "ConstructOnLoad": True,
+    "Dependent": True,
+    "DiscreteState": True,
+    "GetObservable": True,
+    "HandleCompatible": True,
+    "Hidden": True,
+    "MethodSetupParameter": True,
+    "NonCopyable": True,
+    "Nontunable": True,
+    "PartialMatchPriority": True,
+    "Sealed": True,
+    "SetObservable": True,
+    "Static": True,
+    "Test": None,
+    "TestClassSetup": None,
+    "TestClassTeardown": None,
+    "TestMethodSetup": None,
+    "TestMethodTeardown": None,
+    "TestParameter": None,
+    "Transient": True,
+}
+
 
 tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
 if tree_sitter_ver[1] == 21:
@@ -499,12 +531,21 @@ class MatFunctionParser:
                 name = attr_match.get("name").text.decode(
                     self.encoding, errors="backslashreplace"
                 )
+
                 value_node = attr_match.get("value")
-                attrs[name] = (
-                    value_node.text.decode(self.encoding, errors="backslashreplace")
-                    if value_node is not None
-                    else None
-                )
+                rhs_node = attr_match.get("rhs")
+                if rhs_node is not None:
+                    if rhs_node.type == "cell":
+                        attrs[name] = [
+                            vn.text.decode(self.encoding, errors="backslashreplace")
+                            for vn in value_node
+                        ]
+                    else:
+                        attrs[name] = value_node[0].text.decode(
+                            self.encoding, errors="backslashreplace"
+                        )
+                else:
+                    attrs[name] = MATLAB_ATTRIBUTE_DEFAULTS.get(name)
         return attrs
 
 
@@ -537,13 +578,11 @@ class MatClassParser:
         if supers_nodes is not None:
             for super_node in supers_nodes:
                 _, super_match = q_supers.matches(super_node)[0]
-                super_cls = tuple(
-                    [
-                        sec.text.decode(self.encoding, errors="backslashreplace")
-                        for sec in super_match.get("secs")
-                    ]
-                )
-                self.supers.append(super_cls)
+                super_cls = [
+                    sec.text.decode(self.encoding, errors="backslashreplace")
+                    for sec in super_match.get("secs")
+                ]
+                self.supers.append(".".join(super_cls))
 
         # get docstring and check that it consecutive
         docstring_node = class_match.get("docstring")
@@ -916,25 +955,6 @@ class MatClassParser:
                             self.encoding, errors="backslashreplace"
                         )
                 else:
-                    attrs[name] = None
+                    attrs[name] = MATLAB_ATTRIBUTE_DEFAULTS.get(name)
 
         return attrs
-
-
-if __name__ == "__main__":
-    tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
-    if tree_sitter_ver[1] == 21:
-        parser = Parser()
-        parser.set_language(ML_LANG)
-    else:
-        parser = Parser(ML_LANG)
-
-    with open(rpath, "rb") as f:
-        data = f.read()
-
-    tree = parser.parse(data)
-    class_parser = MatClassParser(tree.root_node, "utf-8")
-    # fun_parser = MatFunctionParser(tree.root_node)
-    import pdb
-
-    pdb.set_trace()

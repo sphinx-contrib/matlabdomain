@@ -138,7 +138,7 @@ def test_classes(mod):
     assert isinstance(cls, doc.MatClass)
     assert cls.getter("__name__") == "ClassInheritHandle"
     assert cls.getter("__module__") == "test_data"
-    assert cls.bases == [("handle",), ("my", "super", "Class")]
+    assert cls.bases == ["handle", "my.super.Class"]
     assert cls.attrs == {}
     assert cls.properties == {
         "x": {
@@ -161,8 +161,8 @@ def test_abstract_class(mod):
     assert abc.getter("__module__") == "test_data"
     assert "ClassInheritHandle" in abc.getter("__bases__")
     assert "ClassExample" in abc.getter("__bases__")
-    assert abc.bases == [("ClassInheritHandle",), ("ClassExample",)]
-    assert abc.attrs == {"Abstract": None, "Sealed": None}
+    assert abc.bases == ["ClassInheritHandle", "ClassExample"]
+    assert abc.attrs == {"Abstract": True, "Sealed": True}
     assert abc.properties == {
         "y": {
             "default": None,
@@ -175,7 +175,7 @@ def test_abstract_class(mod):
         "version": {
             "default": "'0.1.1-beta'",
             "docstring": "version",
-            "attrs": {"Constant": None},
+            "attrs": {"Constant": True},
             "size": None,
             "type": None,
             "validators": None,
@@ -197,7 +197,7 @@ def test_abstract_class(mod):
     assert isinstance(abc_version, doc.MatProperty)
     assert abc_version.default == "'0.1.1-beta'"
     assert abc_version.docstring == "version"
-    assert abc_version.attrs == {"Constant": None}
+    assert abc_version.attrs == {"Constant": True}
 
 
 def test_class_method(mod):
@@ -230,7 +230,7 @@ def test_submodule_class(mod):
     assert isinstance(cls, doc.MatClass)
     assert cls.docstring == "Test of MATLAB unittest method attributes"
     assert cls.attrs == {}
-    assert cls.bases == [("matlab", "unittest", "TestCase")]
+    assert cls.bases == ["matlab.unittest.TestCase"]
     assert "compareFirstThreeElementsToExpected" in cls.methods
     assert cls.module == "test_data.submodule"
     assert cls.properties == {}
