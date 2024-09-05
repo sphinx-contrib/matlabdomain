@@ -8,7 +8,7 @@ with open("README.rst", "r") as f_readme:
 requires = [
     "Sphinx>=4.0.0",
     "tree-sitter-matlab>=1.0.2",
-    "tree-sitter>=0.21.3",
+    "tree-sitter>=0.21.3,<0.23.0",
 ]
 
 setup(
