@@ -5,7 +5,7 @@
 .. |rtd-badge| image:: https://readthedocs.org/projects/sphinxcontrib-matlabdomain/badge/?version=latest
    :target: https://sphinxcontrib-matlabdomain.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
-   :align: middle   
+   :align: middle
 
 +----------------------+-----------------------+
 + Github Actions       | |github-action-badge| |
