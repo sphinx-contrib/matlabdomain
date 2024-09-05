@@ -38,7 +38,7 @@ __all__ = [
     "MatFunction",
     "MatClass",
     "MatProperty",
-    "MatEnumerations",
+    "MatEnumeration",
     "MatMethod",
     "MatScript",
     "MatException",
