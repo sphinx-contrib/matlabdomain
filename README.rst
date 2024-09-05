@@ -2,9 +2,16 @@
 .. |github-action-badge| image:: https://github.com/sphinx-contrib/matlabdomain/actions/workflows/python-package.yml/badge.svg
    :align: middle
 
-+----------------+-----------------------+
-+ Github Actions | |github-action-badge| |
-+----------------+-----------------------+
+.. |rtd-badge| image:: https://readthedocs.org/projects/sphinxcontrib-matlabdomain/badge/?version=latest
+   :target: https://sphinxcontrib-matlabdomain.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+   :align: middle
+
++----------------------+-----------------------+
++ Github Actions       | |github-action-badge| |
++----------------------+-----------------------+
++ Documentation Status | |rtd-badge|           |
++----------------------+-----------------------+
 
 sphinxcontrib-matlabdomain -- Sphinx domain for auto-documenting MATLAB
 =======================================================================
