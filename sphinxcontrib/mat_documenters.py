@@ -1475,7 +1475,16 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                     obj_default = " = " + obj_default
 
                 if self.env.config.matlab_show_property_specs:
-                    obj_default = self.object.specs + obj_default
+                    prop_spec = ""
+                    if self.object.size is not None:
+                        prop_spec = prop_spec + "(" + ",".join(self.object.size) + ")"
+                    if self.object.type is not None:
+                        prop_spec = prop_spec + " " + self.object.type
+                    if self.object.validators is not None:
+                        prop_spec = (
+                            prop_spec + " {" + ",".join(self.object.validators) + "}"
+                        )
+                    obj_default = prop_spec + obj_default
 
                 self.add_line("   :annotation: " + obj_default, "<autodoc>")
         elif self.options.annotation is SUPPRESS:

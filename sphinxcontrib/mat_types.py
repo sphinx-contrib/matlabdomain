@@ -892,7 +892,9 @@ class MatProperty(MatObject):
         self.attrs = attrs["attrs"]
         self.default = attrs["default"]
         self.docstring = attrs["docstring"]
-        self.specs = attrs["specs"]
+        self.size = attrs["size"]
+        self.type = attrs["type"]
+        self.validators = attrs["validators"]
 
     def ref_role(self):
         """Returns role to use for references to this object (e.g. when generating auto-links)"""

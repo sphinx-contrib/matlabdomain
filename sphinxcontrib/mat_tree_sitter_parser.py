@@ -124,13 +124,13 @@ q_property = ML_LANG.query(
     """
     (property name: (identifier) @name
      (dimensions
-         [[(spread_operator) (number)] @dims _]+
+         [(spread_operator) @dims (number) @dims _]+
      )?
      (identifier)? @type
      .
      (identifier)? @size_type
      (validation_functions
-         [[(identifier) (function_call)] @validation_functions _]+
+         [(identifier) @validation_functions (function_call) @validation_functions _]+
      )?
      (default_value)? @default
      (comment)? @docstring
@@ -398,7 +398,7 @@ class MatFunctionParser:
             )
 
             # extract validator functions
-            vf_list = arg_match.get("validator_functions")
+            vf_list = arg_match.get("validation_functions")
             vfs = None
             if vf_list is not None:
                 vfs = [
@@ -629,7 +629,7 @@ class MatClassParser:
         for prop in properties:
             # match property to extract details
             _, prop_match = q_property.matches(prop)[0]
-
+            print(prop.sexp())
             # extract name (this is always available so no need for None check)
             name = prop_match.get("name").text.decode(
                 self.encoding, errors="backslashreplace"
@@ -656,7 +656,7 @@ class MatClassParser:
                 dims = (":", ":")
 
             # extract validator functions
-            vf_list = prop_match.get("validator_functions")
+            vf_list = prop_match.get("validation_functions")
             vfs = None
             if vf_list is not None:
                 vfs = [
