@@ -611,7 +611,6 @@ class MatClassParser:
         for prop in properties:
             # match property to extract details
             _, prop_match = q_property.matches(prop)[0]
-            print(prop.sexp())
             # extract name (this is always available so no need for None check)
             name = prop_match.get("name").text.decode(
                 self.encoding, errors="backslashreplace"

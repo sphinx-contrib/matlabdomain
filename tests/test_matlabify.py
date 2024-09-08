@@ -99,6 +99,8 @@ def test_module(mod):
         "ClassWithEnumMethod",
         "ClassWithEventMethod",
         "f_with_function_variable",
+        "f_with_input_argument_block",
+        "f_with_output_argument_block",
         "ClassWithUndocumentedMembers",
         "ClassWithGetterSetter",
         "ClassWithDoubleQuotedString",
