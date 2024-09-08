@@ -206,13 +206,13 @@ q_arg = ML_LANG.query(
             )
         ]
      (dimensions
-         [[(spread_operator) (number)] @dims _]+
+         [(spread_operator) @dims (number) @dims _]+
      )?
      (identifier)? @type
      (validation_functions
          [[(identifier) (function_call)] @validation_functions _]+
      )?
-     (default_value (number))? @default
+     (default_value [(number) (identifier)])? @default
      (comment)? @docstring
     )
 """

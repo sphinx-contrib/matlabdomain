@@ -612,7 +612,6 @@ def test_f_with_function_variable():
     assert obj.name == "f_with_function_variable"
     assert list(obj.retv.keys()) == ["obj"]
     assert list(obj.args.keys()) == ["the_functions", "~"]
-    print(obj.docstring)
 
 
 def test_ClassWithGetterSetter():
@@ -923,6 +922,24 @@ def test_ClassWithTests():
     assert "testRunning" in obj.methods
     testRunning = obj.methods["testRunning"]
     assert testRunning.attrs["TestTags"] == ["'Unit'"]
+
+
+def test_f_with_input_argument_block():
+    mfile = os.path.join(DIRNAME, "test_data", "f_with_input_argument_block.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "f_with_input_argument_block", "test_data"
+    )
+    assert obj.name == "f_with_input_argument_block"
+    assert list(obj.retv.keys()) == ["o1", "o2", "o3"]
+    assert list(obj.args.keys()) == ["a1", "a2"]
+
+    assert obj.args["a1"]["size"] == ("1", "1")
+    assert obj.args["a1"]["default"] == "0"
+    assert obj.args["a1"]["docstring"] == "the first input"
+
+    assert obj.args["a2"]["size"] == ("1", "1")
+    assert obj.args["a2"]["default"] == "a1"
+    assert obj.args["a2"]["docstring"] == "another input"
 
 
 if __name__ == "__main__":
