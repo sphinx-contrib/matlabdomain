@@ -935,11 +935,36 @@ def test_f_with_input_argument_block():
 
     assert obj.args["a1"]["size"] == ("1", "1")
     assert obj.args["a1"]["default"] == "0"
+    assert obj.args["a1"]["type"] == "double"
     assert obj.args["a1"]["docstring"] == "the first input"
 
     assert obj.args["a2"]["size"] == ("1", "1")
     assert obj.args["a2"]["default"] == "a1"
+    assert obj.args["a1"]["type"] == "double"
     assert obj.args["a2"]["docstring"] == "another input"
+
+
+def test_f_with_output_argument_block():
+    mfile = os.path.join(DIRNAME, "test_data", "f_with_output_argument_block.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "f_with_output_argument_block", "test_data"
+    )
+    assert obj.name == "f_with_output_argument_block"
+    assert list(obj.retv.keys()) == ["o1", "o2", "o3"]
+    assert list(obj.args.keys()) == ["a1", "a2"]
+
+    assert obj.retv["o1"]["size"] == ("1", "1")
+    assert obj.retv["o1"]["type"] == "double"
+    assert obj.retv["o1"]["docstring"] == "Output one"
+
+    assert obj.retv["o2"]["size"] == ("1", ":")
+    assert obj.retv["o2"]["type"] == "double"
+    assert obj.retv["o2"]["docstring"] == "Another output"
+
+    assert obj.retv["o3"]["size"] == ("1", "1")
+    assert obj.retv["o3"]["type"] == "double"
+    assert obj.retv["o3"]["docstring"] == "A third output"
+    assert obj.retv["o3"]["validators"] == ["mustBePositive"]
 
 
 if __name__ == "__main__":

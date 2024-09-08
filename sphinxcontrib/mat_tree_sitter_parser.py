@@ -188,7 +188,7 @@ q_argblock = ML_LANG.query(
     (arguments_statement
     .
     (attributes
-        [(attribute) @attrs _]+
+        [(identifier) @attrs _]*
     )?
     .
     [(property) @args _]*
@@ -525,29 +525,11 @@ class MatFunctionParser:
                 pass
 
     def _parse_attributes(self, attrs_nodes):
-        # TOOD deduplicated this
         attrs = {}
         if attrs_nodes is not None:
             for attr_node in attrs_nodes:
-                _, attr_match = q_attributes.matches(attr_node)[0]
-                name = attr_match.get("name").text.decode(
-                    self.encoding, errors="backslashreplace"
-                )
-
-                value_node = attr_match.get("value")
-                rhs_node = attr_match.get("rhs")
-                if rhs_node is not None:
-                    if rhs_node.type == "cell":
-                        attrs[name] = [
-                            vn.text.decode(self.encoding, errors="backslashreplace")
-                            for vn in value_node
-                        ]
-                    else:
-                        attrs[name] = value_node[0].text.decode(
-                            self.encoding, errors="backslashreplace"
-                        )
-                else:
-                    attrs[name] = MATLAB_ATTRIBUTE_DEFAULTS.get(name)
+                name = attr_node.text.decode(self.encoding, errors="backslashreplace")
+                attrs[name] = None
         return attrs
 
 
