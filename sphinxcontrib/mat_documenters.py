@@ -14,6 +14,7 @@ from .mat_types import (  # noqa: E401
     MatFunction,
     MatClass,
     MatProperty,
+    MatEnumeration,
     MatMethod,
     MatScript,
     MatException,
@@ -555,6 +556,9 @@ class MatlabDocumenter(PyDocumenter):
             else:
                 return False
 
+        def member_is_enum(member):
+            return isinstance(member, MatEnumeration)
+
         ret = []
 
         # search for members in source code too
@@ -637,7 +641,7 @@ class MatlabDocumenter(PyDocumenter):
                 isattr = True
             else:
                 # ignore undocumented members if :undoc-members: is not given
-                keep = has_doc or self.options.undoc_members
+                keep = has_doc or self.options.undoc_members or member_is_enum(member)
 
             # give the user a chance to decide whether this member
             # should be skipped
@@ -656,7 +660,6 @@ class MatlabDocumenter(PyDocumenter):
 
             if keep:
                 ret.append((membername, member, isattr))
-
         return ret
 
     def document_members(self, all_members=False):
@@ -1229,11 +1232,19 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             for (membername, member) in filtered_members
             if isinstance(member, MatMethod) and member.name != member.cls.name
         ]
+        # create list of enums
+        enum_names = [
+            membername
+            for (membername, member) in filtered_members
+            if isinstance(member, MatEnumeration)
+        ]
         # create list of other members
         other_names = [
             membername
             for (membername, member) in filtered_members
-            if not isinstance(member, MatMethod) and not isinstance(member, MatProperty)
+            if not isinstance(member, MatMethod)
+            and not isinstance(member, MatProperty)
+            and not isinstance(member, MatEnumeration)
             # exclude parent modules with names matching members (as in Myclass.Myclass)
             and not (hasattr(member, "module") and member.name == member.module)
         ]
@@ -1254,6 +1265,12 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             membername
             for (membername, member) in members
             if not isinstance(member, MatMethod) or member.name == member.cls.name
+        ]
+        # create list of members that are not properties
+        non_enums = [
+            membername
+            for (membername, member) in members
+            if not isinstance(member, MatEnumeration)
         ]
         # create list of members that are not non-constructor methods
         non_other = [
@@ -1280,6 +1297,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             self.document_member_section(
                 "Property Summary", non_properties, all_members
             )
+
+        # enumss
+        if enum_names:
+            self.document_member_section("Enumeration Values", non_enums, all_members)
 
         # methods
         if meth_names:
@@ -1359,10 +1380,11 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         is_ctor = self.object.cls.name == self.object.name
 
         if self.object.args:
-            if self.object.args[0] in ("obj", "self") and not is_ctor:
-                return "(" + ", ".join(self.object.args[1:]) + ")"
+            arglist = list(self.object.args.keys())
+            if arglist[0] in ("obj", "self") and not is_ctor:
+                return "(" + ", ".join(arglist[1:]) + ")"
             else:
-                return "(" + ", ".join(self.object.args) + ")"
+                return "(" + ", ".join(arglist) + ")"
 
     def document_members(self, all_members=False):
         pass
@@ -1453,7 +1475,16 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                     obj_default = " = " + obj_default
 
                 if self.env.config.matlab_show_property_specs:
-                    obj_default = self.object.specs + obj_default
+                    prop_spec = ""
+                    if self.object.size is not None:
+                        prop_spec = prop_spec + "(" + ",".join(self.object.size) + ")"
+                    if self.object.type is not None:
+                        prop_spec = prop_spec + " " + self.object.type
+                    if self.object.validators is not None:
+                        prop_spec = (
+                            prop_spec + " {" + ",".join(self.object.validators) + "}"
+                        )
+                    obj_default = prop_spec + obj_default
 
                 self.add_line("   :annotation: " + obj_default, "<autodoc>")
         elif self.options.annotation is SUPPRESS:
