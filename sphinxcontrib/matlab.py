@@ -344,7 +344,7 @@ class MatClasslike(MatObject):
         table of contents, and can also be used within the
         :py:meth:`_toc_entry_name` method.
 
-        This method must not be used outwith table of contents generation.
+        This method must not be used without table of contents generation.
         """
         parts = sig.attributes.get("module").split(".")
         parts.append(sig.attributes.get("fullname"))
