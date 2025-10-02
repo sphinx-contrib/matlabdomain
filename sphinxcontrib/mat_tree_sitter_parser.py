@@ -839,7 +839,7 @@ class MatClassParser:
                         )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
-                docstring == None
+                docstring = None
             else:
                 pass  # docstring = docstring.rstrip()
 
@@ -897,7 +897,7 @@ class MatClassParser:
                         )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
-                docstring == None
+                docstring = None
             else:
                 pass  # docstring = docstring.rstrip()
 
