@@ -9,14 +9,11 @@
     :license: BSD, see LICENSE for details.
 """
 import pickle
-import os
 import sys
 import helper
 
 import pytest
 
-from sphinx import addnodes
-from sphinx import version_info
 from sphinx.testing.fixtures import test_params, make_app
 
 

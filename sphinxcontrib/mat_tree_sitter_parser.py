@@ -1,6 +1,6 @@
 from importlib.metadata import version
 import tree_sitter_matlab as tsml
-from tree_sitter import Language, Parser
+from tree_sitter import Language
 import re
 
 # Attribute default dictionary used to give default values for e.g. `Abstract` or `Static` when used without
