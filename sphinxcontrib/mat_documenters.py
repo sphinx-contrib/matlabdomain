@@ -9,8 +9,6 @@
 """
 
 from .mat_types import (  # noqa: E401
-    MatModule,
-    MatObject,
     MatFunction,
     MatClass,
     MatProperty,

@@ -936,7 +936,7 @@ def setup(app):
         "mat", "autoapplication", mat_directives.MatlabAutodocDirective
     )
 
-    app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
+    app.add_autodoc_attrgetter(mat_types.MatModule, mat_types.MatModule.getter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
 
     return {"parallel_read_safe": False}
