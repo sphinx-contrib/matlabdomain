@@ -483,8 +483,6 @@ class MatObject(object):
         with open(mfile, "rb") as code_f:
             code = code_f.read()
 
-        full_code = code
-
         # parse the file
         tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
         if tree_sitter_ver[1] == 21:
