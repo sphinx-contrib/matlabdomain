@@ -19,7 +19,7 @@ from docutils.parsers.rst import directives, Directive
 
 from sphinx import addnodes
 from sphinx.roles import XRefRole
-from sphinx.locale import _
+from sphinx.locale import _ as translation
 from sphinx.domains import Domain, ObjType, Index
 from sphinx.directives import ObjectDescription
 from sphinx.util.nodes import make_refnode
@@ -102,7 +102,7 @@ class MatObject(ObjectDescription):
     doc_field_types = [
         TypedField(
             "parameter",
-            label=_("Parameters"),
+            label=translation("Parameters"),
             names=(
                 "param",
                 "parameter",
@@ -118,7 +118,7 @@ class MatObject(ObjectDescription):
         ),
         TypedField(
             "variable",
-            label=_("Variables"),
+            label=translation("Variables"),
             rolename="obj",
             names=("var", "ivar", "cvar"),
             typerolename="obj",
@@ -127,18 +127,23 @@ class MatObject(ObjectDescription):
         ),
         GroupedField(
             "exceptions",
-            label=_("Raises"),
+            label=translation("Raises"),
             rolename="exc",
             names=("raises", "raise", "exception", "except"),
             can_collapse=True,
         ),
         Field(
             "returnvalue",
-            label=_("Returns"),
+            label=translation("Returns"),
             has_arg=False,
             names=("returns", "return"),
         ),
-        Field("returntype", label=_("Return type"), has_arg=False, names=("rtype",)),
+        Field(
+            "returntype",
+            label=translation("Return type"),
+            has_arg=False,
+            names=("rtype",),
+        ),
     ]
 
     def get_signature_prefix(self, sig):
@@ -317,16 +322,16 @@ class MatModulelevel(MatObject):
     def get_index_text(self, modname, name_cls):
         if self.objtype == "function":
             if not modname:
-                return _("%s() (built-in function)") % name_cls[0]
-            return _("%s() (in module %s)") % (name_cls[0], modname)
+                return translation("%s() (built-in function)") % name_cls[0]
+            return translation("%s() (in module %s)") % (name_cls[0], modname)
         elif self.objtype == "data":
             if not modname:
-                return _("%s (built-in variable)") % name_cls[0]
-            return _("%s (in module %s)") % (name_cls[0], modname)
+                return translation("%s (built-in variable)") % name_cls[0]
+            return translation("%s (in module %s)") % (name_cls[0], modname)
         elif self.objtype == "application":
             if not modname:
-                return _("%s (built-in application)") % name_cls[0]
-            return _("%s (in module %s)") % (name_cls[0], modname)
+                return translation("%s (built-in application)") % name_cls[0]
+            return translation("%s (in module %s)") % (name_cls[0], modname)
         else:
             return ""
 
@@ -360,8 +365,8 @@ class MatClasslike(MatObject):
     def get_index_text(self, modname, name_cls):
         if self.objtype == "class":
             if not modname:
-                return _("%s (built-in class)") % name_cls[0]
-            return _("%s (class in %s)") % (name_cls[0], modname)
+                return translation("%s (built-in class)") % name_cls[0]
+            return translation("%s (class in %s)") % (name_cls[0], modname)
         elif self.objtype == "exception":
             return name_cls[0]
         else:
@@ -397,49 +402,61 @@ class MatClassmember(MatObject):
                 clsname, methname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _("%s() (in module %s)") % (name, modname)
+                    return translation("%s() (in module %s)") % (name, modname)
                 else:
                     return "%s()" % name
             if modname and add_modules:
-                return _("%s() (%s.%s method)") % (methname, modname, clsname)
+                return translation("%s() (%s.%s method)") % (methname, modname, clsname)
             else:
-                return _("%s() (%s method)") % (methname, clsname)
+                return translation("%s() (%s method)") % (methname, clsname)
         elif self.objtype == "staticmethod":
             try:
                 clsname, methname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _("%s() (in module %s)") % (name, modname)
+                    return translation("%s() (in module %s)") % (name, modname)
                 else:
                     return "%s()" % name
             if modname and add_modules:
-                return _("%s() (%s.%s static method)") % (methname, modname, clsname)
+                return translation("%s() (%s.%s static method)") % (
+                    methname,
+                    modname,
+                    clsname,
+                )
             else:
-                return _("%s() (%s static method)") % (methname, clsname)
+                return translation("%s() (%s static method)") % (methname, clsname)
         elif self.objtype == "classmethod":
             try:
                 clsname, methname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _("%s() (in module %s)") % (name, modname)
+                    return translation("%s() (in module %s)") % (name, modname)
                 else:
                     return "%s()" % name
             if modname:
-                return _("%s() (%s.%s class method)") % (methname, modname, clsname)
+                return translation("%s() (%s.%s class method)") % (
+                    methname,
+                    modname,
+                    clsname,
+                )
             else:
-                return _("%s() (%s class method)") % (methname, clsname)
+                return translation("%s() (%s class method)") % (methname, clsname)
         elif self.objtype == "attribute":
             try:
                 clsname, attrname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _("%s (in module %s)") % (name, modname)
+                    return translation("%s (in module %s)") % (name, modname)
                 else:
                     return name
             if modname and add_modules:
-                return _("%s (%s.%s attribute)") % (attrname, modname, clsname)
+                return translation("%s (%s.%s attribute)") % (
+                    attrname,
+                    modname,
+                    clsname,
+                )
             else:
-                return _("%s (%s attribute)") % (attrname, clsname)
+                return translation("%s (%s attribute)") % (attrname, clsname)
         else:
             return ""
 
@@ -529,7 +546,7 @@ class MatModule(Directive):
             # the platform and synopsis aren't printed; in fact, they are only
             # used in the modindex currently
             ret.append(targetnode)
-            indextext = _("%s (module)") % modname_out
+            indextext = translation("%s (module)") % modname_out
             entry = ("single", indextext, "module-" + modname, "", None)
             inode = addnodes.index(entries=[entry])
             ret.append(inode)
@@ -590,8 +607,8 @@ class MATLABModuleIndex(Index):
     """
 
     name = "modindex"
-    localname = _("MATLAB Module Index")
-    shortname = _("matlab index")
+    localname = translation("MATLAB Module Index")
+    shortname = translation("matlab index")
 
     def generate(self, docnames=None):
         content = {}
@@ -644,7 +661,7 @@ class MATLABModuleIndex(Index):
                 num_toplevels += 1
                 subtype = 0
 
-            qualifier = deprecated and _("Deprecated") or ""
+            qualifier = deprecated and translation("Deprecated") or ""
             entries.append(
                 [
                     stripped + modname_out,
@@ -675,17 +692,17 @@ class MATLABDomain(Domain):
     name = "mat"
     label = "MATLAB"
     object_types = {
-        "function": ObjType(_("function"), "func", "obj"),
-        "data": ObjType(_("data"), "data", "obj"),
-        "class": ObjType(_("class"), "class", "obj"),
-        "exception": ObjType(_("exception"), "exc", "obj"),
-        "method": ObjType(_("method"), "meth", "obj"),
-        "classmethod": ObjType(_("class method"), "meth", "obj"),
-        "staticmethod": ObjType(_("static method"), "meth", "obj"),
-        "attribute": ObjType(_("attribute"), "attr", "obj"),
-        "module": ObjType(_("module"), "mod", "obj"),
-        "script": ObjType(_("script"), "scpt", "obj"),
-        "application": ObjType(_("application"), "app", "obj"),
+        "function": ObjType(translation("function"), "func", "obj"),
+        "data": ObjType(translation("data"), "data", "obj"),
+        "class": ObjType(translation("class"), "class", "obj"),
+        "exception": ObjType(translation("exception"), "exc", "obj"),
+        "method": ObjType(translation("method"), "meth", "obj"),
+        "classmethod": ObjType(translation("class method"), "meth", "obj"),
+        "staticmethod": ObjType(translation("static method"), "meth", "obj"),
+        "attribute": ObjType(translation("attribute"), "attr", "obj"),
+        "module": ObjType(translation("module"), "mod", "obj"),
+        "script": ObjType(translation("script"), "scpt", "obj"),
+        "application": ObjType(translation("application"), "app", "obj"),
     }
 
     directives = {
@@ -832,7 +849,7 @@ class MATLABDomain(Domain):
             if synopsis:
                 title += ": " + synopsis
             if deprecated:
-                title += _(" (deprecated)")
+                title += translation(" (deprecated)")
             if platform:
                 title += " (" + platform + ")"
             return make_refnode(
