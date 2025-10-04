@@ -1,5 +1,5 @@
 classdef ClassWithKeywordsAsFieldnames
-   % Class that uses keywords as fieldnames, i.e preceeded by a dot and not
+   % Class that uses keywords as fieldnames, i.e preceded by a dot and not
    % followed by a word break.
    properties
       a
