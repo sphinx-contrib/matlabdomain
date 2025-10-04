@@ -1,5 +1,5 @@
 classdef ClassWithTrailingSemicolons < hgsetget
-    % Smoothing like it is performed withing Cxx >v7.0 (until v8.2 at least).
+    % Smoothing like it is performed within Cxx >v7.0 (until v8.2 at least).
     % Uses constant 228p_12k frequency vector:
 
     properties

@@ -1,5 +1,5 @@
 classdef ClassWithErrors
-    % Class defintion with missing end
+    % Class definition with missing end
 
     methods
         function obj = ClassWithoutIndent()
