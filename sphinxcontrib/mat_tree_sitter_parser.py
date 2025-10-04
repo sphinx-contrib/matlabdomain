@@ -269,7 +269,7 @@ def process_default(node, encoding):
         cut_start = lc.start_byte - node.start_byte
         cut_end = lc.end_byte - node.start_byte
         to_keep -= set(range(cut_start, cut_end))
-    # NOTE: hardcoded endianess is fine because for one byte this does not matter.
+    # NOTE: hardcoded endianness is fine because for one byte this does not matter.
     #       See python bikeshed on possible defaults for this here:
     #       https://discuss.python.org/t/what-should-be-the-default-value-for-int-to-bytes-byteorder/10616
     new_text = b"".join(

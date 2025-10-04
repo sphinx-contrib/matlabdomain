@@ -1,0 +1,4 @@
+[tool.codespell]
+builtin = "clear,rare"
+ignore-words = ".github/codespell_ignore_words.txt"
+skip = "./.git"
