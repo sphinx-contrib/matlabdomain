@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-    test_autodoc
-    ~~~~~~~~~~~~
+test_autodoc
+~~~~~~~~~~~~
 
-    Test the autodoc extension.
+Test the autodoc extension.
 
-    :copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
+
 import pickle
 import os
 import sys

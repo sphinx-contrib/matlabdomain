@@ -1,11 +1,11 @@
 """
-    sphinxcontrib.mat_documenters
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sphinxcontrib.mat_documenters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Extend autodoc directives to matlabdomain.
+Extend autodoc directives to matlabdomain.
 
-    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
 
 from .mat_types import (  # noqa: E401
@@ -250,14 +250,14 @@ class MatlabDocumenter(PyDocumenter):
                         if cls:
                             name = entries[k].rstrip("()")
                             if name in cls.methods:
-                                entries[
-                                    k
-                                ] = f":meth:`{name}() <{cls.fullname(self.env)}.{name}>`"
+                                entries[k] = (
+                                    f":meth:`{name}() <{cls.fullname(self.env)}.{name}>`"
+                                )
                                 continue
                             elif name in cls.properties:
-                                entries[
-                                    k
-                                ] = f":attr:`{name} <{cls.fullname(self.env)}.{name}>`"
+                                entries[k] = (
+                                    f":attr:`{name} <{cls.fullname(self.env)}.{name}>`"
+                                )
                                 continue
 
                         # see if it is a fully qualified property or method name we recognize

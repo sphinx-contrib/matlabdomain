@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-    test_package_function
-    ~~~~~~~~~~~~~~~~~~~~~
+test_package_function
+~~~~~~~~~~~~~~~~~~~~~
 
-    Test the autodoc extension with the matlab_keep_package_prefix option.
+Test the autodoc extension with the matlab_keep_package_prefix option.
 
-    :copyright: Copyright 2019 by the Isaac Lenton.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2019 by the Isaac Lenton.
+:license: BSD, see LICENSE for details.
 """
+
 import pickle
 import os
 import sys

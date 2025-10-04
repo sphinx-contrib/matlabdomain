@@ -1,11 +1,11 @@
 """
-    sphinxcontrib.mat_types
-    ~~~~~~~~~~~~~~~~~~~~~~~
+sphinxcontrib.mat_types
+~~~~~~~~~~~~~~~~~~~~~~~
 
-    Types for MATLAB.
+Types for MATLAB.
 
-    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
 
 from io import open  # for opening files with encoding in Python 2

@@ -1,11 +1,11 @@
 """
-    sphinxcontrib.matlab
-    ~~~~~~~~~~~~~~~~~~~~
+sphinxcontrib.matlab
+~~~~~~~~~~~~~~~~~~~~
 
-    The MATLAB domain.
+The MATLAB domain.
 
-    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
 
 from . import mat_documenters as doc

@@ -1,0 +1,37 @@
+[tool.ruff]
+include = [
+    "tests/**/*.py",
+    "sphinxcontrib/**/*.py",
+    "doc/**/*.py"
+]
+indent-width = 4
+line-length = 88
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+indent-style = "space"
+line-ending = "auto"
+quote-style = "double"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+ignore = [
+# "D203",
+# "E711",
+# "E203",
+# "F401",
+# "F811",
+# "F841",
+]
+# List of all the ruff rules (includes why the rule matters)
+# https://docs.astral.sh/ruff/rules/
+select = [
+    # "E",
+    # "F",
+]
+unfixable = []
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10

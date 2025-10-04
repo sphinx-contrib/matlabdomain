@@ -1,11 +1,11 @@
 """
-    sphinxcontrib.mat_directives
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sphinxcontrib.mat_directives
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Extend autodoc directives to matlabdomain.
+Extend autodoc directives to matlabdomain.
 
-    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
 
 from sphinx.ext.autodoc.directive import (
