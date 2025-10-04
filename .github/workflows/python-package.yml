@@ -11,14 +11,28 @@ on:
     - cron:  '* 6 * * *'
 
 jobs:
-  test-sphinx-45:
-    name: Run tests for Python ${{ matrix.python-version }}, Sphinx 4.5, Pygments ${{ matrix.pygments-version }}
+
+  test-sphinx:
+
+    name: Run tests for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }}
+
     timeout-minutes: 5
+
     runs-on: ubuntu-latest
+
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9"]
-        pygments-version: ["213", "latest"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        sphinx-version: ["53", "60", "70", "latest"]
+        include:
+        -   python-version: '3.8'
+            sphinx-version: "45"
+        -   python-version: '3.9'
+            sphinx-version: "45"
+        -   python-version: '3.13'
+            sphinx-version: "dev"
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -29,51 +43,7 @@ jobs:
     - name: Run with Tox
       run: |
         pip install tox==4.8.0
-        tox -e "${{matrix.python-version}}-sphinx45-pygments${{matrix.pygments-version}}"
-
-
-  test-sphinx-5-7:
-    name: Run tests for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }},  Pygments ${{ matrix.pygments-version }}
-    timeout-minutes: 5
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-        sphinx-version: ["53", "60", "70"]
-        pygments-version: ["213", "latest"]
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        architecture: x64
-    - name: Run with Tox
-      run: |
-        pip install tox==4.8.0
-        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}-pygments${{matrix.pygments-version}}"
-
-
-  test-sphinx-latest:
-    name: Run tests for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }},  Pygments ${{ matrix.pygments-version }}
-    timeout-minutes: 5
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12"]
-        sphinx-version: ["dev"]
-        pygments-version: ["latest"]
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        architecture: x64
-    - name: Run with Tox
-      run: |
-        pip install tox==4.8.0
-        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}-pygments${{matrix.pygments-version}}"
+        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}
 
   check:
     name: Run static analysis
