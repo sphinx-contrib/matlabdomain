@@ -12,11 +12,11 @@ from io import open  # for opening files with encoding in Python 2
 import os
 from copy import copy
 import sphinx.util
-from sphinxcontrib.mat_lexer import MatlabLexer
+from sphinxcontrib.matlab.mat_lexer import MatlabLexer
 from pygments.token import Token
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
-from sphinxcontrib.mat_tree_sitter_parser import (
+from sphinxcontrib.matlab.mat_tree_sitter_parser import (
     MatClassParser,
     MatFunctionParser,
     MatScriptParser,

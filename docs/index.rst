@@ -59,11 +59,13 @@ The ``docs/conf.py`` would look like this:
 Example
 -------
 
-.. automodule:: src
+.. code-block:: rst
 
-.. autofunction:: times_two
+   .. automodule:: src
 
-.. autofunction:: times_two_napoleon
+   .. autofunction:: times_two
+
+   .. autofunction:: times_two_napoleon
 
 Using auto-directives
 ---------------------

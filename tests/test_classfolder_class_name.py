@@ -1,4 +1,4 @@
-from sphinxcontrib.mat_types import classfolder_class_name
+from sphinxcontrib.matlab.mat_types import classfolder_class_name
 
 
 def test_classfolders():

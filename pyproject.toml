@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling", "hatch-vcs", "setuptools_scm<6.0.0"]
+requires = ["hatchling", "hatch-vcs"]
 
 [project]
 classifiers = [
@@ -8,7 +8,6 @@ classifiers = [
         "Environment :: Console",
         "Environment :: Web Environment",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Topic :: Documentation",
@@ -18,18 +17,19 @@ classifiers = [
 ]
 dependencies = [
     "Sphinx>=4.0.0",
-    "tree-sitter-matlab>=1.0.2",
+    "tree-sitter-matlab>=1.0.2,<1.0.5",
     "tree-sitter>=0.21.3,<0.23.0",
+    "setuptools"
 ]
 description = 'Sphinx "matlabdomain" extension'
 # Version from setuptools_scm
 dynamic = ["version"]
-license = "BSD"
+license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 maintainers = [{name = "Jørgen Cederberg", email = "jorgen@cederberg.be"}]
 name = "sphinxcontrib-matlabdomain"
 readme = "README.rst"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 
 [project.optional-dependencies]
 dev = [
@@ -44,16 +44,16 @@ doc = [
     "sphinxcontrib-napoleon",
 ]
 
+[project.entry-points."sphinx.builders"]
+matlab = "sphinxcontrib.matlab"
+
 [project.urls]
 Homepage = "https://github.com/sphinx-contrib/matlabdomain"
 Documentation = "https://sphinxcontrib-matlabdomain.readthedocs.io"
 Download = "http://pypi.python.org/pypi/sphinxcontrib-matlabdomain"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "sphinxcontrib/_version.py"
-
-[tool.hatch.build.targets.wheel]
-packages = ["sphinxcontrib"]
+version-file = "sphinxcontrib/matlab/_version.py"
 
 [tool.hatch.version]
 source = "vcs"

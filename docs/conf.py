@@ -24,11 +24,15 @@ project = "sphinxcontrib-matlabdomain"
 copyright = "2018, Jørgen Cederberg"
 author = "Jørgen Cederberg"
 
-# The short X.Y version
-version = ""
-# The full version, including alpha/beta/rc tags
-release = ""
+from importlib.metadata import version, PackageNotFoundError
 
+project = "sphinxcontrib-matlabdomain"
+try:
+    release = version(project)
+except PackageNotFoundError:
+    release = "0.0.0"  # fallback for docs builds without install
+
+version = release
 
 # -- General configuration ---------------------------------------------------
 
