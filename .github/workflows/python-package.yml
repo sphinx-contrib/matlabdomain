@@ -43,7 +43,7 @@ jobs:
     - name: Run with Tox
       run: |
         pip install tox==4.8.0
-        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}
+        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}"
 
   check:
     name: Run static analysis
