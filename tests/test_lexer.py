@@ -1,4 +1,4 @@
-from sphinxcontrib.mat_lexer import MatlabLexer, Token
+from sphinxcontrib.matlab.mat_lexer import MatlabLexer, Token
 
 
 def test_strings():

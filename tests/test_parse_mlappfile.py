@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from sphinxcontrib import mat_types
+from sphinxcontrib.matlab import mat_types
 import os
 import pytest
 

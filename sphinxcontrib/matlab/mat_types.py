@@ -1,5 +1,5 @@
 """
-    sphinxcontrib.mat_types
+    sphinxcontrib.matlab.mat_types
     ~~~~~~~~~~~~~~~~~~~~~~~
 
     Types for MATLAB.

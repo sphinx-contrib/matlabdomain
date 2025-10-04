@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from sphinxcontrib import mat_documenters as doc
-from sphinxcontrib.mat_types import entities_table
+from sphinxcontrib.matlab import mat_documenters as doc
+from sphinxcontrib.matlab.mat_types import entities_table
 import helper
 import pytest
 
