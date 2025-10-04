@@ -255,7 +255,7 @@ Some descriptions ...
 This header and all further comments above the first command line
 of the script will be ignored by the documentation system.
 
-Lisence (GPL, BSD, etc.)
+Licence (GPL, BSD, etc.)
 """
     )
 
@@ -275,7 +275,7 @@ Some descriptions ...
 This header and all further comments above the first command line
 of the script will be ignored by the documentation system.
 
-Lisence (GPL, BSD, etc.)
+Licence (GPL, BSD, etc.)
 """
     )
 
@@ -843,7 +843,7 @@ def test_ClassWithTrailingSemicolons():
     )
     assert (
         obj.docstring
-        == "Smoothing like it is performed withing Cxx >v7.0 (until v8.2 at least).\nUses constant 228p_12k frequency vector:"
+        == "Smoothing like it is performed within Cxx >v7.0 (until v8.2 at least).\nUses constant 228p_12k frequency vector:"
     )
     assert obj.bases == ["hgsetget"]
     assert list(obj.methods.keys()) == [

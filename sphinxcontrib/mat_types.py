@@ -282,7 +282,7 @@ def analyze(app):
         for func_name, func in func_entities:
             func.__class__ = MatMethod
             func.cls = cls
-            # TODO: Find the method attributes defined in classfolder class defintion.
+            # TODO: Find the method attributes defined in classfolder class definition.
             func.attrs = {}
             cls.methods[func.name] = func
 
@@ -344,7 +344,7 @@ class MatObject(object):
 
     MATLAB objects can be :class:`MatModule`, :class:`MatFunction`,
     :class:`MatApplication` or :class:`MatClass`.
-    :class:`MatModule` are just folders that define a psuedo
+    :class:`MatModule` are just folders that define a pseudo
     namespace for :class:`MatFunction`, :class:`MatApplication`
     and :class:`MatClass` in that folder.
     :class:`MatFunction` and :class:`MatClass` must begin with either
