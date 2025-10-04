@@ -6,7 +6,7 @@
 % This header and all further comments above the function
 % will be ignored by the documentation system.
 %
-% Lisence (GPL, BSD, etc.)
+% Licence (GPL, BSD, etc.)
 %
 
   % a comment with space indentation ...
