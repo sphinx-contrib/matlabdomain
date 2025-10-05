@@ -2,3 +2,17 @@
 builtin = "clear,rare"
 ignore-words = ".github/codespell_ignore_words.txt"
 skip = "./.git"
+
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers --show-capture=all --showlocals -s -vv"
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
+junit_family = "xunit2"
+log_cli_level = "INFO"
+xfail_strict = true
+
+[tool.coverage.run]
+branch = true
+omit =    [
+        '*/_build/*',
+    ]

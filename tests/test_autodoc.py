@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for details.
 """
 import pickle
-import sys
 import pytest
 import helper
 from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;
@@ -20,7 +19,6 @@ def rootdir():
     return helper.rootdir(__file__)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     app = make_app(srcdir=srcdir)
@@ -44,7 +42,6 @@ def test_target(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_show_property_default_value": True}
@@ -69,7 +66,6 @@ def test_target_show_default_value(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_auto_link_basic(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_auto_link": "basic"}
@@ -95,7 +91,6 @@ def test_target_auto_link_basic(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_auto_link_all(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_auto_link": "all"}
@@ -126,7 +121,6 @@ def test_target_auto_link_all(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_classfolder(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     app = make_app(srcdir=srcdir)
@@ -140,7 +134,6 @@ def test_classfolder(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     app = make_app(srcdir=srcdir)
@@ -163,7 +156,6 @@ def test_package(make_app, rootdir):
     assert docstring3.rawsource == "Implement **doBar** stage, not called by ClassBar()"
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_show_property_default_value": True}
@@ -178,7 +170,6 @@ def test_package_show_default_value(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package_auto_link_all(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_auto_link": "all"}
@@ -212,7 +203,6 @@ def test_package_auto_link_all(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_submodule(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     app = make_app(srcdir=srcdir)
@@ -228,7 +218,6 @@ def test_submodule(make_app, rootdir):
     assert bases_line.rawsource == "Bases: :class:`target.package.ClassBar`"
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_submodule_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_show_property_default_value": True}
@@ -243,7 +232,6 @@ def test_submodule_show_default_value(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     app = make_app(srcdir=srcdir)
@@ -257,7 +245,6 @@ def test_root(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_relative_matlab_src_dir(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_src_dir": "."}
@@ -272,7 +259,6 @@ def test_root_relative_matlab_src_dir(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_show_property_default_value": True}
@@ -287,7 +273,6 @@ def test_root_show_default_value(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_auto_link_basic(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_auto_link": "basic"}
@@ -313,7 +298,6 @@ def test_root_auto_link_basic(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_class_signature(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_class_signature": True}

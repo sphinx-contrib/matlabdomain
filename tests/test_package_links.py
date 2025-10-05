@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for details.
 """
 import pickle
-import sys
 import helper
 
 import pytest
@@ -22,7 +21,6 @@ def rootdir():
     return helper.rootdir(__file__)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_with_prefix(make_app, rootdir):
     # TODO: bases are shown without prefix
     srcdir = rootdir / "roots" / "test_package_links"
@@ -38,7 +36,6 @@ def test_with_prefix(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_without_prefix(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_package_links"
     confdict = {"matlab_keep_package_prefix": False}

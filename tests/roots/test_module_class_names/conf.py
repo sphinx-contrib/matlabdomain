@@ -1,4 +1,3 @@
-import sys
 import os
 
 # General information about the project.
