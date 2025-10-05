@@ -23,7 +23,6 @@ def rootdir():
     return helper.rootdir(__file__)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_setup(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_pymat_common_root"
     app = make_app(srcdir=srcdir)

@@ -22,7 +22,6 @@ def rootdir():
     return helper.rootdir(__file__)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True}
@@ -47,7 +46,6 @@ def test_target(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
@@ -72,7 +70,6 @@ def test_target_show_default_value(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_auto_link_basic(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True, "matlab_auto_link": "basic"}
@@ -98,7 +95,6 @@ def test_target_auto_link_basic(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_target_auto_link_all(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True, "matlab_auto_link": "all"}
@@ -129,7 +125,6 @@ def test_target_auto_link_all(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_classfolder(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True}
@@ -144,7 +139,6 @@ def test_classfolder(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True}
@@ -168,7 +162,6 @@ def test_package(make_app, rootdir):
     assert docstring3.rawsource == "Implement **doBar** stage, not called by ClassBar()"
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
@@ -183,7 +176,6 @@ def test_package_show_default_value(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_package_auto_link_all(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True, "matlab_auto_link": "all"}
@@ -217,7 +209,6 @@ def test_package_auto_link_all(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_submodule(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True}
@@ -234,7 +225,6 @@ def test_submodule(make_app, rootdir):
     assert bases_line.rawsource == "Bases: :class:`package.ClassBar`"
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_submodule_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
@@ -249,7 +239,6 @@ def test_submodule_show_default_value(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True}
@@ -264,7 +253,6 @@ def test_root(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_show_default_value(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
@@ -279,7 +267,6 @@ def test_root_show_default_value(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_root_auto_link_basic(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_autodoc"
     confdict = {"matlab_short_links": True, "matlab_auto_link": "basic"}

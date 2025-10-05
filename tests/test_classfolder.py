@@ -20,7 +20,6 @@ def rootdir():
     return helper.rootdir(__file__)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_first(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_classfolder"
     app = make_app(srcdir=srcdir)
@@ -33,7 +32,6 @@ def test_first(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_second(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_classfolder"
     app = make_app(srcdir=srcdir)
@@ -46,7 +44,6 @@ def test_second(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_third(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_classfolder"
     app = make_app(srcdir=srcdir)
