@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for details.
 """
 import pickle
-import sys
 import pytest
 import helper
 from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;

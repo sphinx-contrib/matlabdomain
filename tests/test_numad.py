@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for details.
 """
 import pickle
-import sys
 import helper
 
 import pytest
