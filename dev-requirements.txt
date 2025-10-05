@@ -1,5 +1,6 @@
 -e .
 pytest
+pytest-cov
 pre-commit
 defusedxml>=0.7.1
 sphinxcontrib-napoleon
