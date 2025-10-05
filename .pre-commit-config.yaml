@@ -1,4 +1,15 @@
 repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: check-ast
+    -   id: check-case-conflict
+    -   id: check-merge-conflict
+    -   id: check-toml
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: mixed-line-ending
+    -   id: trailing-whitespace
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.13.2
@@ -10,3 +21,11 @@ repos:
     # Run the formatter.
     -   id: ruff-format
         # args: [--diff]
+
+    # Checks for spelling errors
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+    -   id: codespell
+        args: [--toml, pyproject.toml]
+        additional_dependencies: [tomli]

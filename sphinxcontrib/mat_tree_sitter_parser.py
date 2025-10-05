@@ -1,6 +1,6 @@
 from importlib.metadata import version
 import tree_sitter_matlab as tsml
-from tree_sitter import Language, Parser
+from tree_sitter import Language
 import re
 
 # Attribute default dictionary used to give default values for e.g. `Abstract` or `Static` when used without
@@ -269,7 +269,7 @@ def process_default(node, encoding):
         cut_start = lc.start_byte - node.start_byte
         cut_end = lc.end_byte - node.start_byte
         to_keep -= set(range(cut_start, cut_end))
-    # NOTE: hardcoded endianess is fine because for one byte this does not matter.
+    # NOTE: hardcoded endianness is fine because for one byte this does not matter.
     #       See python bikeshed on possible defaults for this here:
     #       https://discuss.python.org/t/what-should-be-the-default-value-for-int-to-bytes-byteorder/10616
     new_text = b"".join(
@@ -839,7 +839,7 @@ class MatClassParser:
                         )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
-                docstring == None
+                docstring = None
             else:
                 pass  # docstring = docstring.rstrip()
 
@@ -897,7 +897,7 @@ class MatClassParser:
                         )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
-                docstring == None
+                docstring = None
             else:
                 pass  # docstring = docstring.rstrip()
 

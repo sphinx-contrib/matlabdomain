@@ -47,3 +47,8 @@ unfixable = []
 
 [tool.ruff.lint.mccabe]
 max-complexity = 51
+
+[tool.codespell]
+builtin = "clear,rare"
+ignore-words = ".github/codespell_ignore_words.txt"
+skip = "./.git"

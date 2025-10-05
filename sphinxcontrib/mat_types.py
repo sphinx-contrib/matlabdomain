@@ -8,42 +8,36 @@ Types for MATLAB.
 :license: BSD, see LICENSE for details.
 """
 
-from io import open  # for opening files with encoding in Python 2
 import os
-from copy import copy
-import sphinx.util
-from sphinxcontrib.mat_lexer import MatlabLexer
-from pygments.token import Token
-from zipfile import ZipFile
 import xml.etree.ElementTree as ET
+from importlib.metadata import version
+from io import open  # for opening files with encoding in Python 2
+from zipfile import ZipFile
+
+import sphinx.util
+from tree_sitter import Parser
+
 from sphinxcontrib.mat_tree_sitter_parser import (
+    ML_LANG,
     MatClassParser,
     MatFunctionParser,
     MatScriptParser,
-    ML_LANG,
 )
-import tree_sitter_matlab as tsml
-from tree_sitter import Language, Parser
-import logging
-from pathlib import Path
-import cProfile
-import pstats
-from importlib.metadata import version
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
 __all__ = [
-    "MatObject",
-    "MatModule",
-    "MatFunction",
-    "MatClass",
-    "MatProperty",
-    "MatEnumeration",
-    "MatMethod",
-    "MatScript",
-    "MatException",
-    "MatModuleAnalyzer",
     "MatApplication",
+    "MatClass",
+    "MatEnumeration",
+    "MatException",
+    "MatFunction",
+    "MatMethod",
+    "MatModule",
+    "MatModuleAnalyzer",
+    "MatObject",
+    "MatProperty",
+    "MatScript",
 ]
 
 
@@ -152,7 +146,7 @@ def classfolder_class_name(dotted_path):
     stripped_parts = [part.lstrip("@") for part in parts]
 
     if stripped_parts[-1] == stripped_parts[-2]:
-        return ".".join(parts[0:-2] + [stripped_parts[-1]])
+        return ".".join([*parts[0:-2], stripped_parts[-1]])
     else:
         return dotted_path
 
@@ -268,7 +262,7 @@ def analyze(app):
         k: v for k, v in entities_table.items() if isClassFolderModule(k, v)
     }
     # For each Class Folder module
-    for cf_name, cf_entity in class_folder_modules.items():
+    for cf_entity in class_folder_modules.values():
         # Find the class entity class.
         class_entities = [e for e in cf_entity.entities if isinstance(e[1], MatClass)]
         func_entities = [e for e in cf_entity.entities if isinstance(e[1], MatFunction)]
@@ -282,7 +276,7 @@ def analyze(app):
         for func_name, func in func_entities:
             func.__class__ = MatMethod
             func.cls = cls
-            # TODO: Find the method attributes defined in classfolder class defintion.
+            # TODO: Find the method attributes defined in classfolder class definition.
             func.attrs = {}
             cls.methods[func.name] = func
 
@@ -304,9 +298,9 @@ def analyze(app):
     for name, entity in entities_table.items():
         short_name = shortest_name(name)
         if (
-            short_name != name
-            and not (short_name in long_names and name in long_names)
-            or short_name in long_names
+            short_name != name and not (short_name in long_names and name in long_names)
+        ) or (
+            short_name in long_names
             and (entity.ref_role() == "func" or entity.ref_role() == "class")
             and entities_table[short_name].ref_role() == "mod"
         ):
@@ -344,7 +338,7 @@ class MatObject(object):
 
     MATLAB objects can be :class:`MatModule`, :class:`MatFunction`,
     :class:`MatApplication` or :class:`MatClass`.
-    :class:`MatModule` are just folders that define a psuedo
+    :class:`MatModule` are just folders that define a pseudo
     namespace for :class:`MatFunction`, :class:`MatApplication`
     and :class:`MatClass` in that folder.
     :class:`MatFunction` and :class:`MatClass` must begin with either
@@ -491,8 +485,6 @@ class MatObject(object):
         with open(mfile, "rb") as code_f:
             code = code_f.read()
 
-        full_code = code
-
         # parse the file
         tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
         if tree_sitter_ver[1] == 21:
@@ -510,18 +502,12 @@ class MatObject(object):
                 r"""(source_file [(comment) "\n"]* (function_definition))"""
             )
             matches = q_is_function.matches(tree.root_node)
-            if matches:
-                return True
-            else:
-                return False
+            return bool(matches)
 
         def isClass(tree):
             q_is_class = ML_LANG.query("(class_definition)")
             matches = q_is_class.matches(tree.root_node)
-            if matches:
-                return True
-            else:
-                return False
+            return bool(matches)
 
         if isClass(tree):
             logger.debug(
@@ -645,7 +631,7 @@ class MatModule(MatObject):
             # trim file extension
             if os.path.isfile(path):
                 key, _ = os.path.splitext(key)
-            if not results or key not in list(zip(*results))[0]:
+            if not results or key not in next(zip(*results)):
                 value = self.getter(key, None)
                 if value:
                     results.append((key, value))
@@ -710,7 +696,7 @@ class MatModule(MatObject):
                     )
                     return entity_content
             # If not - try to MATLABIFY it.
-            entity = MatObject.matlabify(".".join([self.package, name]))
+            entity = MatObject.matlabify(f"{self.package}.{name}")
             if entity:
                 self.entities.append((name, entity))
                 logger.debug(
@@ -842,14 +828,14 @@ class MatClass(MatObject):
 
     @property
     def __bases__(self):
-        bases_ = dict.fromkeys([base for base in self.bases])  # make copy of bases
+        bases_ = dict.fromkeys(list(self.bases))  # make copy of bases
         class_entity_table = {}
         for name, entity in entities_table.items():
             if isinstance(entity, MatClass) or "@" in name:
                 class_entity_table[name] = entity
 
-        for base in bases_.keys():
-            if base in class_entity_table.keys():
+        for base in bases_:
+            if base in class_entity_table:
                 bases_[base] = class_entity_table[base]
 
         return bases_
@@ -875,11 +861,9 @@ class MatClass(MatObject):
         elif name in self.enumerations:
             return
         elif name == "__dict__":
-            objdict = dict([(pn, self.getter(pn)) for pn in self.properties.keys()])
+            objdict = {pn: self.getter(pn) for pn in self.properties}
             objdict.update(self.methods)
-            objdict.update(
-                dict([(en, self.getter(en)) for en in self.enumerations.keys()])
-            )
+            objdict.update({en: self.getter(en) for en in self.enumerations})
             return objdict
         else:
             super(MatClass, self).getter(name, *defargs)
@@ -1091,7 +1075,7 @@ class MatModuleAnalyzer(object):
                 tagnumber += 1
             if isinstance(v, MatClass):
                 for mk, mv in v.getter("__dict__").items():
-                    namespace = ".".join([mod.package, k])
+                    namespace = f"{mod.package}.{k}"
                     namespace = namespace.lstrip(".")
                     tagname = "%s.%s" % (k, mk)
                     tagname = tagname.lstrip(".")

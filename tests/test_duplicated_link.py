@@ -11,14 +11,11 @@ Test the autodoc extension.
 
 import pickle
 import sys
+
 import docutils
 import helper
-
 import pytest
-
-from sphinx import addnodes
-from sphinx import version_info
-from sphinx.testing.fixtures import test_params, make_app
+from sphinx.testing.fixtures import make_app, test_params
 
 
 @pytest.fixture(scope="module")

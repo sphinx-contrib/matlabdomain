@@ -7,24 +7,24 @@ Lexers for Matlab and related languages.
 :copyright: Copyright 2006-2017 by the Pygments team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 
-Modified by Jørgen Cederberg from orignial Pygments MATLAB lexer, copied
-from https://bitbucket.org/birkenfeld/pygments-main/src/f6637a95d0d8534abb2c1e128e3d5c88d09e96e3/pygments/lexers/matlab.py
-- Added handling of double quoted strings.
-- Fixed issues with function keyword matched incorrectly.
-- Removed unused lexers (MatlabSessionLexer, OctaveLexer, ScilabLexer)
+    Modified by Jørgen Cederberg from original Pygments MATLAB lexer, copied
+    from https://bitbucket.org/birkenfeld/pygments-main/src/f6637a95d0d8534abb2c1e128e3d5c88d09e96e3/pygments/lexers/matlab.py
+    - Added handling of double quoted strings.
+    - Fixed issues with function keyword matched incorrectly.
+    - Removed unused lexers (MatlabSessionLexer, OctaveLexer, ScilabLexer)
 """
 
 from pygments.lexer import RegexLexer, bygroups, words
-from pygments.token import (  # noqa: F401
-    Token,
-    Text,
+from pygments.token import (
     Comment,
-    Operator,
     Keyword,
     Name,
-    String,
     Number,
+    Operator,
     Punctuation,
+    String,
+    Text,
+    Token,
     Whitespace,
 )
 

@@ -11,11 +11,9 @@ Test the autodoc extension.
 
 import pickle
 import sys
+
 import helper
-
 import pytest
-
-from sphinx import addnodes
 from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;
 
 
