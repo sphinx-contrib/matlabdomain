@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from sphinxcontrib import mat_types
 import os
+
 import pytest
 
+from sphinxcontrib import mat_types
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
 TESTDATA_ROOT = os.path.join(DIRNAME, "test_data")

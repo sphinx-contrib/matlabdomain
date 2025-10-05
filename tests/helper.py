@@ -7,8 +7,9 @@ sphinxcontrib.test.helper
 :license: BSD, see LICENSE for details.
 """
 
-from sphinx import version_info as sphinx_version_info
 import os.path
+
+from sphinx import version_info as sphinx_version_info
 
 isVersion72OrNewer = (
     sphinx_version_info[0] >= 7 and sphinx_version_info[1] >= 2
