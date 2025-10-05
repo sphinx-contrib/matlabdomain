@@ -9,8 +9,6 @@
 """
 
 from .mat_types import (  # noqa: E401
-    MatModule,
-    MatObject,
     MatFunction,
     MatClass,
     MatProperty,
@@ -22,7 +20,6 @@ from .mat_types import (  # noqa: E401
     MatApplication,
     entities_table,
     entities_name_map,
-    strip_package_prefix,
     try_get_module_entity_or_default,
 )
 
@@ -36,9 +33,7 @@ import sphinx.util
 from sphinx.locale import _
 from sphinx.pycode import PycodeError
 from sphinx.ext.autodoc import (
-    py_ext_sig_re as mat_ext_sig_re,
     identity,
-    Options,
     ALL,
     INSTANCEATTR,
     members_option,
@@ -49,11 +44,8 @@ from sphinx.ext.autodoc import (
     bool_option,
     Documenter as PyDocumenter,
     ModuleDocumenter as PyModuleDocumenter,
-    FunctionDocumenter as PyFunctionDocumenter,
-    ClassDocumenter as PyClassDocumenter,
     ExceptionDocumenter as PyExceptionDocumenter,
     DataDocumenter as PyDataDocumenter,
-    MethodDocumenter as PyMethodDocumenter,
 )
 
 mat_ext_sig_re = re.compile(
@@ -1515,7 +1507,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                     docstrings[i][j], no_link_state
                 )
                 if not_in_literal_block and docstrings[i][j]:  # also not blank line
-                    if match := p.search(docstrings[i][j]):
+                    if p.search(docstrings[i][j]):
                         docstrings[i][j] = p.sub(
                             f":attr:`{name} <{self.class_object().fullname(self.env)}.{name}>`",
                             docstrings[i][j],

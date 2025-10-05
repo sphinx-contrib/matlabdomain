@@ -1,6 +1,6 @@
 from importlib.metadata import version
 import tree_sitter_matlab as tsml
-from tree_sitter import Language, Parser
+from tree_sitter import Language
 import re
 
 # Attribute default dictionary used to give default values for e.g. `Abstract` or `Static` when used without
@@ -839,7 +839,7 @@ class MatClassParser:
                         )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
-                docstring == None
+                docstring = None
             else:
                 pass  # docstring = docstring.rstrip()
 
@@ -897,7 +897,7 @@ class MatClassParser:
                         )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
-                docstring == None
+                docstring = None
             else:
                 pass  # docstring = docstring.rstrip()
 

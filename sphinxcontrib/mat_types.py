@@ -10,10 +10,7 @@
 
 from io import open  # for opening files with encoding in Python 2
 import os
-from copy import copy
 import sphinx.util
-from sphinxcontrib.mat_lexer import MatlabLexer
-from pygments.token import Token
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 from sphinxcontrib.mat_tree_sitter_parser import (
@@ -22,12 +19,7 @@ from sphinxcontrib.mat_tree_sitter_parser import (
     MatScriptParser,
     ML_LANG,
 )
-import tree_sitter_matlab as tsml
-from tree_sitter import Language, Parser
-import logging
-from pathlib import Path
-import cProfile
-import pstats
+from tree_sitter import Parser
 from importlib.metadata import version
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
@@ -490,8 +482,6 @@ class MatObject(object):
             encoding = "utf-8"
         with open(mfile, "rb") as code_f:
             code = code_f.read()
-
-        full_code = code
 
         # parse the file
         tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
