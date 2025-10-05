@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-    test_class_subfolder
-    ~~~~~~~~~~~~
+test_class_subfolder
+~~~~~~~~~~~~
 
-    Test the autodoc extension.
+Test the autodoc extension.
 
-    :copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
+
 import pickle
 import sys
-import pytest
+
 import helper
+import pytest
 from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;
 
 

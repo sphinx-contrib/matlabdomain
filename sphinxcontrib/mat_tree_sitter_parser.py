@@ -1,7 +1,8 @@
+import re
 from importlib.metadata import version
+
 import tree_sitter_matlab as tsml
 from tree_sitter import Language
-import re
 
 # Attribute default dictionary used to give default values for e.g. `Abstract` or `Static` when used without
 # a right hand side i.e. `classdef (Abstract)` vs `classdef (Abstract=true)`
@@ -507,10 +508,7 @@ class MatFunctionParser:
                 pass  # docstring = docstring.rstrip()
 
             # Here we trust that the person is giving us valid matlab.
-            if "Output" in attrs.keys():
-                arg_loc = self.retv
-            else:
-                arg_loc = self.args
+            arg_loc = self.retv if "Output" in attrs else self.args
             if len(name) == 1:
                 arg_loc[name[0]] = {
                     "attrs": attrs,

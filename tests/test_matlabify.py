@@ -1,12 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from sphinxcontrib import mat_documenters as doc
-from sphinxcontrib.mat_types import entities_table, MatModule, MatObject
 import helper
 import pytest
+from sphinx.testing.fixtures import make_app, test_params
 
-from sphinx.testing.fixtures import test_params, make_app
-
+from sphinxcontrib import mat_documenters as doc
+from sphinxcontrib.mat_types import MatModule, MatObject, entities_table
 
 rootdir = helper.rootdir(__file__)
 matlab_src_dir = str(rootdir / "test_data")
@@ -48,7 +47,7 @@ def test_module(mod):
     assert not mod.getter("__module__")
     assert not mod.getter("__doc__")
     all_entities = mod.getter("__all__")
-    all_items = set(name for name, entity in all_entities)
+    all_items = {name for name, entity in all_entities}
     expected_items = {
         "+package",
         "@ClassFolder",
