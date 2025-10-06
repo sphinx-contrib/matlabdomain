@@ -370,7 +370,10 @@ class MatFunctionParser:
         #      might be a good idea to extract common code here.
         for arg in arguments:
             # match property to extract details
-            _, arg_match = q_arg.matches(arg)[0]
+            q_arg_matches = q_arg.matches(arg)
+            if not q_arg_matches:
+                continue
+            _, arg_match = q_arg_matches[0]
 
             # extract name (this is always available so no need for None check)
             name = [
