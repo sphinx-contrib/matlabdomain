@@ -1083,7 +1083,11 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         MatlabDocumenter.add_directive_header(self, sig)
 
         # add inheritance info, if wanted
-        if not self.doc_as_attr and self.options.show_inheritance:
+        if (
+            isinstance(self.object, MatClass)
+            and not self.doc_as_attr
+            and self.options.show_inheritance
+        ):
             self.add_line("", "<autodoc>")
             base_class_links = make_baseclass_links(self.env, self.object)
             if base_class_links:
