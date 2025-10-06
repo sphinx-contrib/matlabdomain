@@ -1,5 +1,0 @@
-[flake8]
-ignore = D203,E203,W503
-exclude = .git,*migrations*,.venv*
-max-line-length = 127
-max-complexity = 10

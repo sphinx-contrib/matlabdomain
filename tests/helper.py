@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-    sphinxcontrib.test.helper
-    ~~~~~~~~~~~~~~~~~~~~~~~~~
+sphinxcontrib.test.helper
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    :copyright: Copyright 2023 Joergen Cederberg
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2023 Joergen Cederberg
+:license: BSD, see LICENSE for details.
 """
 
+import os.path
 
 from sphinx import version_info as sphinx_version_info
-import os.path
 
 isVersion72OrNewer = (
     sphinx_version_info[0] >= 7 and sphinx_version_info[1] >= 2

@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from sphinxcontrib import mat_types
 import os
+
 import pytest
 
+from sphinxcontrib import mat_types
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
 TESTDATA_ROOT = os.path.join(DIRNAME, "test_data")
@@ -255,7 +256,7 @@ Some descriptions ...
 This header and all further comments above the first command line
 of the script will be ignored by the documentation system.
 
-Lisence (GPL, BSD, etc.)
+Licence (GPL, BSD, etc.)
 """
     )
 
@@ -275,7 +276,7 @@ Some descriptions ...
 This header and all further comments above the first command line
 of the script will be ignored by the documentation system.
 
-Lisence (GPL, BSD, etc.)
+Licence (GPL, BSD, etc.)
 """
     )
 
@@ -452,7 +453,7 @@ def test_ClassWithBuiltinProperties():
     )
     assert obj.name == "ClassWithBuiltinProperties"
     assert obj.docstring == "Class with properties that overload a builtin"
-    assert set(obj.properties) == set(["omega", "alpha", "gamma", "beta"])
+    assert set(obj.properties) == {"omega", "alpha", "gamma", "beta"}
     assert obj.properties["omega"]["docstring"] == "a property"
     assert obj.properties["alpha"]["docstring"] == ("a property overloading a builtin")
     assert obj.properties["gamma"]["docstring"] == (
@@ -639,7 +640,7 @@ def test_ClassWithDoubleQuotedString():
     )
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithDoubleQuotedString"
-    assert set(obj.methods.keys()) == set(["ClassWithDoubleQuotedString", "method1"])
+    assert set(obj.methods.keys()) == {"ClassWithDoubleQuotedString", "method1"}
     assert obj.properties == {
         "Property1": {
             "docstring": None,
@@ -657,7 +658,7 @@ def test_ClassWithStrings():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithStrings", "test_data")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithStrings"
-    assert set(obj.methods.keys()) == set(["raiseError"])
+    assert set(obj.methods.keys()) == {"raiseError"}
 
 
 def test_ClassWithDummyArguments():
@@ -665,7 +666,7 @@ def test_ClassWithDummyArguments():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithDummyArguments", "test_data")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithDummyArguments"
-    assert set(obj.methods.keys()) == set(["someMethod1", "someMethod2"])
+    assert set(obj.methods.keys()) == {"someMethod1", "someMethod2"}
     m1 = obj.methods["someMethod1"]
     assert list(m1.args.keys()) == ["obj", "argument"]
     m2 = obj.methods["someMethod2"]
@@ -677,7 +678,7 @@ def test_ClassFolderClassdef():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassFolder", "@ClassFolder")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassFolder"
-    assert set(obj.methods.keys()) == set(["ClassFolder", "method_inside_classdef"])
+    assert set(obj.methods.keys()) == {"ClassFolder", "method_inside_classdef"}
     m1 = obj.methods["ClassFolder"]
     assert list(m1.args.keys()) == ["p"]
     m2 = obj.methods["method_inside_classdef"]
@@ -691,7 +692,7 @@ def test_ClassWithMethodsWithSpaces():
     )
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithMethodsWithSpaces"
-    assert set(obj.methods.keys()) == set(["static_method"])
+    assert set(obj.methods.keys()) == {"static_method"}
     assert (
         obj.docstring == "Class with methods that have space after the function name."
     )
@@ -703,7 +704,7 @@ def test_ClassContainingParfor():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassContainingParfor", "test_data")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassContainingParfor"
-    assert set(obj.methods.keys()) == set(["test"])
+    assert set(obj.methods.keys()) == {"test"}
     assert obj.docstring == "Parfor is a keyword"
 
 
@@ -712,7 +713,7 @@ def test_ClassWithStringEllipsis():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithStringEllipsis", "test_data")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithStringEllipsis"
-    assert set(obj.methods.keys()) == set(["test"])
+    assert set(obj.methods.keys()) == {"test"}
     assert obj.docstring == "Contains ellipsis in string"
 
 
@@ -843,7 +844,7 @@ def test_ClassWithTrailingSemicolons():
     )
     assert (
         obj.docstring
-        == "Smoothing like it is performed withing Cxx >v7.0 (until v8.2 at least).\nUses constant 228p_12k frequency vector:"
+        == "Smoothing like it is performed within Cxx >v7.0 (until v8.2 at least).\nUses constant 228p_12k frequency vector:"
     )
     assert obj.bases == ["hgsetget"]
     assert list(obj.methods.keys()) == [

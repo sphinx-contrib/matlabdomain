@@ -1,16 +1,15 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from sphinxcontrib import mat_documenters as doc
-from sphinxcontrib.mat_types import entities_table
 import helper
 import pytest
+from sphinx.testing.fixtures import make_app, test_params
 
-from sphinx.testing.fixtures import test_params, make_app
-
+from sphinxcontrib import mat_documenters as doc
+from sphinxcontrib.mat_types import MatModule, MatObject, entities_table
 
 rootdir = helper.rootdir(__file__)
 matlab_src_dir = str(rootdir / "test_data")
-doc.MatObject.basedir = matlab_src_dir
+MatObject.basedir = matlab_src_dir
 
 
 @pytest.fixture
@@ -18,21 +17,21 @@ def app(make_app):
     # Create app to setup build environment
     srcdir = rootdir / "test_docs"
     app = make_app(srcdir=srcdir)
-    doc.MatObject.basedir = app.config.matlab_src_dir
+    MatObject.basedir = app.config.matlab_src_dir
     return app
 
 
 @pytest.fixture
 def mod(app):
-    return doc.MatObject.matlabify("test_data")
+    return MatObject.matlabify("test_data")
 
 
 # def test_empty():
-#     assert doc.MatObject.matlabify("") is None
+#     assert MatObject.matlabify("") is None
 
 
 def test_unknown():
-    assert doc.MatObject.matlabify("not_test_data") is None
+    assert MatObject.matlabify("not_test_data") is None
 
 
 def test_script(mod, caplog):
@@ -48,7 +47,7 @@ def test_module(mod):
     assert not mod.getter("__module__")
     assert not mod.getter("__doc__")
     all_entities = mod.getter("__all__")
-    all_items = set(name for name, entity in all_entities)
+    all_items = {name for name, entity in all_entities}
     expected_items = {
         "+package",
         "@ClassFolder",
@@ -128,12 +127,12 @@ def test_module(mod):
 
 
 def test_parse_twice(mod):
-    mod2 = doc.MatObject.matlabify("test_data")
+    mod2 = MatObject.matlabify("test_data")
     assert mod == mod2
 
 
 def test_classes(mod):
-    assert isinstance(mod, doc.MatModule)
+    assert isinstance(mod, MatModule)
 
     # test superclass
     cls = mod.getter("ClassInheritHandle")
@@ -247,7 +246,7 @@ def test_submodule_class(mod):
 
 def test_folder_class(mod):
     cls_mod = mod.getter("@ClassFolder")
-    assert isinstance(cls_mod, doc.MatModule)
+    assert isinstance(cls_mod, MatModule)
     cls = cls_mod.getter("ClassFolder")
     assert cls.docstring == "A class in a folder"
     assert cls.attrs == {}
@@ -285,7 +284,7 @@ def test_folder_class(mod):
 
 
 def test_function(mod):
-    assert isinstance(mod, doc.MatModule)
+    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
@@ -298,7 +297,7 @@ def test_function(mod):
 
 
 def test_function_getter(mod):
-    assert isinstance(mod, doc.MatModule)
+    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
@@ -310,7 +309,7 @@ def test_function_getter(mod):
 
 
 def test_package_function(mod):
-    assert isinstance(mod, doc.MatModule)
+    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"

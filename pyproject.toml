@@ -1,0 +1,54 @@
+[tool.ruff]
+include = [
+    "tests/**/*.py",
+    "sphinxcontrib/**/*.py",
+    "doc/**/*.py"
+]
+indent-width = 4
+line-length = 88
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+indent-style = "space"
+line-ending = "auto"
+quote-style = "double"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+ignore = [
+"D203",
+"E203",
+"PERF203",
+"PERF401",
+"PERF403",
+"RUF001",
+"RUF012",
+"SIM102",
+]
+# List of all the ruff rules (includes why the rule matters)
+# https://docs.astral.sh/ruff/rules/
+select = [
+    "C",
+    "C4",
+    "E9",
+    "F63",
+    "F7",
+    "F82",
+    "FLY",
+    "I",
+    "PERF",
+    "RUF",
+    "SIM",
+    "W"
+]
+unfixable = []
+
+[tool.ruff.lint.mccabe]
+max-complexity = 51
+
+[tool.codespell]
+builtin = "clear,rare"
+ignore-words = ".github/codespell_ignore_words.txt"
+skip = "./.git"
