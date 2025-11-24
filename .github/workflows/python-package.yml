@@ -35,7 +35,7 @@ jobs:
         sphinx-version: ["45", "53", "60", "70", "latest", "dev"]
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
       with:
@@ -52,7 +52,7 @@ jobs:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up Python 3.11
       uses: actions/setup-python@v6
       with:
