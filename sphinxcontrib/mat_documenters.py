@@ -12,7 +12,6 @@ import inspect
 import re
 import traceback
 
-import sphinx.util
 from docutils.statemachine import ViewList
 from sphinx.ext.autodoc import (
     ALL,
@@ -39,6 +38,9 @@ from sphinx.ext.autodoc import (
 )
 from sphinx.locale import _
 from sphinx.pycode import PycodeError
+from sphinx.util.docstrings import prepare_docstring
+from sphinx.util.inspect import safe_getattr
+from sphinx.util.logging import getLogger
 
 from .mat_types import (
     MatApplication,
@@ -70,7 +72,7 @@ mat_ext_sig_re = re.compile(
 # TODO: check MRO's for all classes, attributes and methods!!!
 
 
-logger = sphinx.util.logging.getLogger("matlab-domain")
+logger = getLogger("matlab-domain")
 
 
 class MatlabDocumenter(PyDocumenter):
@@ -835,7 +837,7 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                 logger.warning(
                     "[sphinxcontrib-matlabdomain] missing attribute mentioned"
                     " in :members: or __all__: module %s, attribute %s",
-                    sphinx.util.inspect.safe_getattr(self.object, "__name__", "???"),
+                    safe_getattr(self.object, "__name__", "???"),
                     mname,
                 )
         return False, ret
@@ -1106,12 +1108,12 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                     docstrings.append(initdocstring)
         doc = []
         for docstring in docstrings:
-            doc.append(sphinx.util.docstrings.prepare_docstring(docstring))
+            doc.append(prepare_docstring(docstring))
         return doc
 
     def add_content(self, more_content, no_docstring=False):
         if self.doc_as_attr:
-            classname = sphinx.util.inspect.safe_getattr(self.object, "__name__", None)
+            classname = safe_getattr(self.object, "__name__", None)
             if classname:
                 content = ViewList([_("alias of :class:`%s`") % classname], source="")
                 MatModuleLevelDocumenter.add_content(self, content, no_docstring=True)
