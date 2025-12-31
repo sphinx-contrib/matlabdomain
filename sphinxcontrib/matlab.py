@@ -1,31 +1,28 @@
 """
-    sphinxcontrib.matlab
-    ~~~~~~~~~~~~~~~~~~~~
+sphinxcontrib.matlab
+~~~~~~~~~~~~~~~~~~~~
 
-    The MATLAB domain.
+The MATLAB domain.
 
-    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
-
-
-from . import mat_documenters as doc
-from . import mat_directives
-from . import mat_types
 
 import re
 
-from docutils import nodes
-from docutils.parsers.rst import directives, Directive
-
-from sphinx import addnodes
-from sphinx.roles import XRefRole
-from sphinx.locale import _
-from sphinx.domains import Domain, ObjType, Index
-from sphinx.directives import ObjectDescription
-from sphinx.util.nodes import make_refnode
-from sphinx.util.docfields import Field, GroupedField, TypedField
 import sphinx.util
+from docutils import nodes
+from docutils.parsers.rst import Directive, directives
+from sphinx import addnodes
+from sphinx.directives import ObjectDescription
+from sphinx.domains import Domain, Index, ObjType
+from sphinx.locale import _ as translation
+from sphinx.roles import XRefRole
+from sphinx.util.docfields import Field, GroupedField, TypedField
+from sphinx.util.nodes import make_refnode
+
+from . import mat_directives, mat_types
+from . import mat_documenters as doc
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
@@ -103,7 +100,7 @@ class MatObject(ObjectDescription):
     doc_field_types = [
         TypedField(
             "parameter",
-            label=_("Parameters"),
+            label=translation("Parameters"),
             names=(
                 "param",
                 "parameter",
@@ -119,7 +116,7 @@ class MatObject(ObjectDescription):
         ),
         TypedField(
             "variable",
-            label=_("Variables"),
+            label=translation("Variables"),
             rolename="obj",
             names=("var", "ivar", "cvar"),
             typerolename="obj",
@@ -128,18 +125,23 @@ class MatObject(ObjectDescription):
         ),
         GroupedField(
             "exceptions",
-            label=_("Raises"),
+            label=translation("Raises"),
             rolename="exc",
             names=("raises", "raise", "exception", "except"),
             can_collapse=True,
         ),
         Field(
             "returnvalue",
-            label=_("Returns"),
+            label=translation("Returns"),
             has_arg=False,
             names=("returns", "return"),
         ),
-        Field("returntype", label=_("Return type"), has_arg=False, names=("rtype",)),
+        Field(
+            "returntype",
+            label=translation("Return type"),
+            has_arg=False,
+            names=("rtype",),
+        ),
     ]
 
     def get_signature_prefix(self, sig):
@@ -258,7 +260,7 @@ class MatObject(ObjectDescription):
     def add_target_and_index(self, name_cls, sig, signode):
         modname = self.options.get("module", self.env.temp_data.get("mat:module"))
 
-        if self.env.config.matlab_short_links:
+        if self.env.config.matlab_short_links and name_cls[0] != modname:
             # modname is only used for package names
             # - "target.+package" => "package"
             # - "target" => ""
@@ -266,12 +268,12 @@ class MatObject(ObjectDescription):
             parts = [part for part in parts if part.startswith("+")]
             modname = ".".join(parts)
 
-        fullname = (modname and modname + "." or "") + name_cls[0]
+        fullname = ((modname and modname + ".") or "") + name_cls[0]
         fullname = fullname.lstrip(".")
 
         if not self.env.config.matlab_keep_package_prefix:
             modname_out = mat_types.strip_package_prefix(modname)
-            fullname_out = (modname_out and modname_out + "." or "") + name_cls[0]
+            fullname_out = ((modname_out and modname_out + ".") or "") + name_cls[0]
             fullname_out = fullname_out.lstrip(".")
         else:
             modname_out, fullname_out = modname, fullname
@@ -287,7 +289,7 @@ class MatObject(ObjectDescription):
                 self.state_machine.reporter.warning(
                     "duplicate object description of %s, " % fullname_out
                     + "other instance in "
-                    + self.env.doc2path(objects[fullname_out][0])
+                    + str(self.env.doc2path(objects[fullname_out][0]))
                     + ", use :noindex: for one of them",
                     line=self.lineno,
                 )
@@ -318,16 +320,16 @@ class MatModulelevel(MatObject):
     def get_index_text(self, modname, name_cls):
         if self.objtype == "function":
             if not modname:
-                return _("%s() (built-in function)") % name_cls[0]
-            return _("%s() (in module %s)") % (name_cls[0], modname)
+                return translation("%s() (built-in function)") % name_cls[0]
+            return translation("%s() (in module %s)") % (name_cls[0], modname)
         elif self.objtype == "data":
             if not modname:
-                return _("%s (built-in variable)") % name_cls[0]
-            return _("%s (in module %s)") % (name_cls[0], modname)
+                return translation("%s (built-in variable)") % name_cls[0]
+            return translation("%s (in module %s)") % (name_cls[0], modname)
         elif self.objtype == "application":
             if not modname:
-                return _("%s (built-in application)") % name_cls[0]
-            return _("%s (in module %s)") % (name_cls[0], modname)
+                return translation("%s (built-in application)") % name_cls[0]
+            return translation("%s (in module %s)") % (name_cls[0], modname)
         else:
             return ""
 
@@ -337,14 +339,32 @@ class MatClasslike(MatObject):
     Description of a class-like object (classes, interfaces, exceptions).
     """
 
+    def _object_hierarchy_parts(self, sig):
+        """
+        Returns a tuple of strings, one entry for each part of the object's
+        hierarchy (e.g. ``('module', 'submodule', 'Class', 'method')``). The
+        returned tuple is used to properly nest children within parents in the
+        table of contents, and can also be used within the
+        :py:meth:`_toc_entry_name` method.
+
+        This method must not be used without table of contents generation.
+        """
+        parts = sig.attributes.get("module").split(".")
+        parts.append(sig.attributes.get("fullname"))
+        return tuple(parts)
+
+    def _toc_entry_name(self, sig):
+        # TODO respecting the configuration setting ``toc_object_entries_show_parents``
+        return sig.attributes.get("fullname")
+
     def get_signature_prefix(self, sig):
         return self.objtype + " "
 
     def get_index_text(self, modname, name_cls):
         if self.objtype == "class":
             if not modname:
-                return _("%s (built-in class)") % name_cls[0]
-            return _("%s (class in %s)") % (name_cls[0], modname)
+                return translation("%s (built-in class)") % name_cls[0]
+            return translation("%s (class in %s)") % (name_cls[0], modname)
         elif self.objtype == "exception":
             return name_cls[0]
         else:
@@ -373,56 +393,68 @@ class MatClassmember(MatObject):
         return ""
 
     def get_index_text(self, modname, name_cls):
-        name, cls = name_cls
+        name, _cls = name_cls
         add_modules = self.env.config.add_module_names
         if self.objtype == "method":
             try:
                 clsname, methname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _("%s() (in module %s)") % (name, modname)
+                    return translation("%s() (in module %s)") % (name, modname)
                 else:
                     return "%s()" % name
             if modname and add_modules:
-                return _("%s() (%s.%s method)") % (methname, modname, clsname)
+                return translation("%s() (%s.%s method)") % (methname, modname, clsname)
             else:
-                return _("%s() (%s method)") % (methname, clsname)
+                return translation("%s() (%s method)") % (methname, clsname)
         elif self.objtype == "staticmethod":
             try:
                 clsname, methname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _("%s() (in module %s)") % (name, modname)
+                    return translation("%s() (in module %s)") % (name, modname)
                 else:
                     return "%s()" % name
             if modname and add_modules:
-                return _("%s() (%s.%s static method)") % (methname, modname, clsname)
+                return translation("%s() (%s.%s static method)") % (
+                    methname,
+                    modname,
+                    clsname,
+                )
             else:
-                return _("%s() (%s static method)") % (methname, clsname)
+                return translation("%s() (%s static method)") % (methname, clsname)
         elif self.objtype == "classmethod":
             try:
                 clsname, methname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _("%s() (in module %s)") % (name, modname)
+                    return translation("%s() (in module %s)") % (name, modname)
                 else:
                     return "%s()" % name
             if modname:
-                return _("%s() (%s.%s class method)") % (methname, modname, clsname)
+                return translation("%s() (%s.%s class method)") % (
+                    methname,
+                    modname,
+                    clsname,
+                )
             else:
-                return _("%s() (%s class method)") % (methname, clsname)
+                return translation("%s() (%s class method)") % (methname, clsname)
         elif self.objtype == "attribute":
             try:
                 clsname, attrname = name.rsplit(".", 1)
             except ValueError:
                 if modname:
-                    return _("%s (in module %s)") % (name, modname)
+                    return translation("%s (in module %s)") % (name, modname)
                 else:
                     return name
             if modname and add_modules:
-                return _("%s (%s.%s attribute)") % (attrname, modname, clsname)
+                return translation("%s (%s.%s attribute)") % (
+                    attrname,
+                    modname,
+                    clsname,
+                )
             else:
-                return _("%s (%s attribute)") % (attrname, clsname)
+                return translation("%s (%s attribute)") % (attrname, clsname)
         else:
             return ""
 
@@ -512,7 +544,7 @@ class MatModule(Directive):
             # the platform and synopsis aren't printed; in fact, they are only
             # used in the modindex currently
             ret.append(targetnode)
-            indextext = _("%s (module)") % modname_out
+            indextext = translation("%s (module)") % modname_out
             entry = ("single", indextext, "module-" + modname, "", None)
             inode = addnodes.index(entries=[entry])
             ret.append(inode)
@@ -573,8 +605,8 @@ class MATLABModuleIndex(Index):
     """
 
     name = "modindex"
-    localname = _("MATLAB Module Index")
-    shortname = _("matlab index")
+    localname = translation("MATLAB Module Index")
+    shortname = translation("matlab index")
 
     def generate(self, docnames=None):
         content = {}
@@ -585,7 +617,7 @@ class MATLABModuleIndex(Index):
         modules = sorted(
             iter(self.domain.data["modules"].items()), key=lambda x: x[0].lower()
         )
-        # sort out collapsable modules
+        # sort out collapsible modules
         prev_modname = ""
         num_toplevels = 0
         for modname, (docname, synopsis, platforms, deprecated) in modules:
@@ -627,7 +659,7 @@ class MATLABModuleIndex(Index):
                 num_toplevels += 1
                 subtype = 0
 
-            qualifier = deprecated and _("Deprecated") or ""
+            qualifier = (deprecated and translation("Deprecated")) or ""
             entries.append(
                 [
                     stripped + modname_out,
@@ -658,17 +690,17 @@ class MATLABDomain(Domain):
     name = "mat"
     label = "MATLAB"
     object_types = {
-        "function": ObjType(_("function"), "func", "obj"),
-        "data": ObjType(_("data"), "data", "obj"),
-        "class": ObjType(_("class"), "class", "obj"),
-        "exception": ObjType(_("exception"), "exc", "obj"),
-        "method": ObjType(_("method"), "meth", "obj"),
-        "classmethod": ObjType(_("class method"), "meth", "obj"),
-        "staticmethod": ObjType(_("static method"), "meth", "obj"),
-        "attribute": ObjType(_("attribute"), "attr", "obj"),
-        "module": ObjType(_("module"), "mod", "obj"),
-        "script": ObjType(_("script"), "scpt", "obj"),
-        "application": ObjType(_("application"), "app", "obj"),
+        "function": ObjType(translation("function"), "func", "obj"),
+        "data": ObjType(translation("data"), "data", "obj"),
+        "class": ObjType(translation("class"), "class", "obj"),
+        "exception": ObjType(translation("exception"), "exc", "obj"),
+        "method": ObjType(translation("method"), "meth", "obj"),
+        "classmethod": ObjType(translation("class method"), "meth", "obj"),
+        "staticmethod": ObjType(translation("static method"), "meth", "obj"),
+        "attribute": ObjType(translation("attribute"), "attr", "obj"),
+        "module": ObjType(translation("module"), "mod", "obj"),
+        "script": ObjType(translation("script"), "scpt", "obj"),
+        "application": ObjType(translation("application"), "app", "obj"),
     }
 
     directives = {
@@ -694,6 +726,7 @@ class MATLABDomain(Domain):
         "class": MatXRefRole(),
         "const": MatXRefRole(),
         "attr": MatXRefRole(),
+        "enum": MatXRefRole(),
         "meth": MatXRefRole(fix_parens=True),
         "mod": MatXRefRole(),
         "obj": MatXRefRole(),
@@ -790,7 +823,7 @@ class MATLABDomain(Domain):
     def resolve_xref(self, env, fromdocname, builder, type, target, node, contnode):
         modname = node.get("mat:module")
         clsname = node.get("mat:class")
-        searchmode = node.hasattr("refspecific") and 1 or 0
+        searchmode = (node.hasattr("refspecific") and 1) or 0
         matches = self.find_obj(env, modname, clsname, target, type, searchmode)
         if not matches:
             return None
@@ -814,7 +847,7 @@ class MATLABDomain(Domain):
             if synopsis:
                 title += ": " + synopsis
             if deprecated:
-                title += _(" (deprecated)")
+                title += translation(" (deprecated)")
             if platform:
                 title += " (" + platform + ")"
             return make_refnode(
@@ -863,6 +896,7 @@ def setup(app):
     app.add_config_value("matlab_src_encoding", None, "env")
     app.add_config_value("matlab_keep_package_prefix", False, "env")
     app.add_config_value("matlab_show_property_default_value", False, "env")
+    app.add_config_value("matlab_show_property_specs", False, "env")
     app.add_config_value("matlab_short_links", False, "env")
     app.add_config_value("matlab_auto_link", None, "env")
     app.add_config_value("matlab_class_signature", False, "env")
@@ -902,16 +936,14 @@ def setup(app):
         "mat", "autoattribute", mat_directives.MatlabAutodocDirective
     )
 
+    app.registry.add_documenter("mat:enum", doc.MatAttributeDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autoenum", mat_directives.MatlabAutodocDirective
+    )
+
     app.registry.add_documenter("mat:data", doc.MatDataDocumenter)
     app.add_directive_to_domain(
         "mat", "autodata", mat_directives.MatlabAutodocDirective
-    )
-
-    app.registry.add_documenter(
-        "mat:instanceattribute", doc.MatInstanceAttributeDocumenter
-    )
-    app.add_directive_to_domain(
-        "mat", "autoinstanceattribute", mat_directives.MatlabAutodocDirective
     )
 
     app.registry.add_documenter("mat:application", doc.MatApplicationDocumenter)
@@ -919,7 +951,7 @@ def setup(app):
         "mat", "autoapplication", mat_directives.MatlabAutodocDirective
     )
 
-    app.add_autodoc_attrgetter(doc.MatModule, doc.MatModule.getter)
+    app.add_autodoc_attrgetter(mat_types.MatModule, mat_types.MatModule.getter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
 
     return {"parallel_read_safe": False}

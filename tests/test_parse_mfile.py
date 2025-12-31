@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from sphinxcontrib import mat_types
 import os
+
 import pytest
 
+from sphinxcontrib import mat_types
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
 TESTDATA_ROOT = os.path.join(DIRNAME, "test_data")
@@ -24,15 +25,15 @@ def test_ClassExample():
     assert obj.name == "ClassExample"
     assert (
         obj.docstring
-        == " test class methods\n\n :param a: the input to :class:`ClassExample`\n"
+        == "test class methods\n\n:param a: the input to :class:`ClassExample`"
     )
     mymethod = obj.methods["mymethod"]
     assert mymethod.name == "mymethod"
-    assert mymethod.retv == ["c"]
-    assert mymethod.args == ["obj", "b"]
+    assert list(mymethod.retv.keys()) == ["c"]
+    assert list(mymethod.args.keys()) == ["obj", "b"]
     assert (
         mymethod.docstring
-        == " a method in :class:`ClassExample`\n\n :param b: an input to :meth:`mymethod`\n"
+        == "a method in :class:`ClassExample`\n\n:param b: an input to :meth:`mymethod`"
     )
 
 
@@ -40,108 +41,108 @@ def test_comment_after_docstring():
     mfile = os.path.join(TESTDATA_SUB, "f_comment_after_docstring.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_comment_after_docstring", "")
     assert obj.name == "f_comment_after_docstring"
-    assert obj.retv == ["output"]
-    assert obj.args == ["input"]
-    assert obj.docstring == " Tests a function with comments after docstring\n"
+    assert list(obj.retv.keys()) == ["output"]
+    assert list(obj.args.keys()) == ["input"]
+    assert obj.docstring == "Tests a function with comments after docstring"
 
 
 def test_docstring_no_newline():
     mfile = os.path.join(TESTDATA_SUB, "f_docstring_no_newline.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_docstring_no_newline", "")
     assert obj.name == "f_docstring_no_newline"
-    assert obj.retv == ["y"]
-    assert obj.args is None
-    assert obj.docstring == " Test a function without a newline after docstring\n"
+    assert list(obj.retv.keys()) == ["y"]
+    assert list(obj.args.keys()) == []
+    assert obj.docstring == "Test a function without a newline after docstring"
 
 
 def test_ellipsis_after_equals():
     mfile = os.path.join(TESTDATA_SUB, "f_ellipsis_after_equals.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_ellipsis_after_equals", "")
     assert obj.name == "f_ellipsis_after_equals"
-    assert obj.retv == ["output"]
-    assert obj.args == ["arg"]
-    assert obj.docstring == " Tests a function with ellipsis after equals\n"
+    assert list(obj.retv.keys()) == ["output"]
+    assert list(obj.args.keys()) == ["arg"]
+    assert obj.docstring == "Tests a function with ellipsis after equals"
 
 
 def test_ellipsis_empty_output():
     mfile = os.path.join(TESTDATA_SUB, "f_ellipsis_empty_output.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_ellipsis_empty_output", "")
     assert obj.name == "f_ellipsis_empty_output"
-    assert obj.retv is None
-    assert obj.args == ["arg"]
-    assert obj.docstring == " Tests a function with ellipsis in the output\n"
+    assert list(obj.retv.keys()) == []
+    assert list(obj.args.keys()) == ["arg"]
+    assert obj.docstring == "Tests a function with ellipsis in the output"
 
 
 def test_ellipsis_in_comment():
     mfile = os.path.join(TESTDATA_SUB, "f_ellipsis_in_comment.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_ellipsis_in_comment", "")
     assert obj.name == "f_ellipsis_in_comment"
-    assert obj.retv == ["y"]
-    assert obj.args == ["x"]
-    assert obj.docstring == " Tests a function with ellipsis in the comment ...\n"
+    assert list(obj.retv.keys()) == ["y"]
+    assert list(obj.args.keys()) == ["x"]
+    assert obj.docstring == "Tests a function with ellipsis in the comment ..."
 
 
 def test_ellipsis_in_output():
     mfile = os.path.join(TESTDATA_SUB, "f_ellipsis_in_output.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_ellipsis_in_output", "")
     assert obj.name == "f_ellipsis_in_output"
-    assert obj.retv == ["output", "with", "ellipsis"]
-    assert obj.args == ["arg"]
-    assert obj.docstring == " Tests a function with ellipsis in the output\n"
+    assert list(obj.retv.keys()) == ["output", "with", "ellipsis"]
+    assert list(obj.args.keys()) == ["arg"]
+    assert obj.docstring == "Tests a function with ellipsis in the output"
 
 
 def test_ellipsis_in_output_multiple():
     mfile = os.path.join(TESTDATA_SUB, "f_ellipsis_in_output_multiple.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_ellipsis_in_output_multiple", "")
     assert obj.name == "f_ellipsis_in_output_multiple"
-    assert obj.retv == ["output", "with", "ellipsis"]
-    assert obj.args == ["arg"]
-    assert obj.docstring == " Tests a function with multiple ellipsis in the output\n"
+    assert list(obj.retv.keys()) == ["output", "with", "ellipsis"]
+    assert list(obj.args.keys()) == ["arg"]
+    assert obj.docstring == "Tests a function with multiple ellipsis in the output"
 
 
 def test_no_docstring():
     mfile = os.path.join(TESTDATA_SUB, "f_no_docstring.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_no_docstring", "")
     assert obj.name == "f_no_docstring"
-    assert obj.retv == ["y"]
-    assert obj.args is None
-    assert obj.docstring == ""
+    assert list(obj.retv.keys()) == ["y"]
+    assert list(obj.args.keys()) == []
+    assert obj.docstring is None
 
 
 def test_no_output():
     mfile = os.path.join(TESTDATA_SUB, "f_no_output.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_no_output", "")
     assert obj.name == "f_no_output"
-    assert obj.retv is None
-    assert obj.args == ["arg"]
-    assert obj.docstring == " A function with no outputs\n"
+    assert list(obj.retv.keys()) == []
+    assert list(obj.args.keys()) == ["arg"]
+    assert obj.docstring == "A function with no outputs"
 
 
 def test_no_input_parentheses():
     mfile = os.path.join(TESTDATA_SUB, "f_no_input_parentheses.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_no_input_parentheses", "")
     assert obj.name == "f_no_input_parentheses"
-    assert obj.retv == ["y"]
-    assert obj.args is None
-    assert obj.docstring == " Tests a function without parentheses in input\n"
+    assert list(obj.retv.keys()) == ["y"]
+    assert list(obj.args.keys()) == []
+    assert obj.docstring == "Tests a function without parentheses in input"
 
 
 def test_no_spaces():
     mfile = os.path.join(TESTDATA_SUB, "f_no_spaces.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_no_spaces", "")
     assert obj.name == "f_no_spaces"
-    assert obj.retv == ["a", "b", "c"]
-    assert obj.args == ["x", "y", "z"]
-    assert obj.docstring == " Tests a function with no spaces in function signature\n"
+    assert list(obj.retv.keys()) == ["a", "b", "c"]
+    assert list(obj.args.keys()) == ["x", "y", "z"]
+    assert obj.docstring == "Tests a function with no spaces in function signature"
 
 
 def test_with_tabs():
     mfile = os.path.join(TESTDATA_SUB, "f_with_tabs.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_with_tabs", "")
     assert obj.name == "f_with_tabs"
-    assert obj.retv == ["y"]
-    assert obj.args == ["x"]
-    assert obj.docstring == " A function with tabs\n"
+    assert list(obj.retv.keys()) == ["y"]
+    assert list(obj.args.keys()) == ["x"]
+    assert obj.docstring == "A function with tabs"
 
 
 def test_ClassWithEndOfLineComment():
@@ -178,15 +179,15 @@ def test_ClassWithFunctionArguments():
     assert obj.name == "ClassWithFunctionArguments"
     assert (
         obj.docstring
-        == " test class methods with function arguments\n\n :param a: the input to :class:`ClassWithFunctionArguments`\n"
+        == "test class methods with function arguments\n\n:param a: the input to :class:`ClassWithFunctionArguments`"
     )
     mymethod = obj.methods["mymethod"]
     assert mymethod.name == "mymethod"
-    assert mymethod.retv == ["c"]
-    assert mymethod.args == ["obj", "b"]
+    assert list(mymethod.retv.keys()) == ["c"]
+    assert list(mymethod.args.keys()) == ["obj", "b"]
     assert (
         mymethod.docstring
-        == " a method in :class:`ClassWithFunctionArguments`\n\n :param b: an input to :meth:`mymethod`\n"
+        == "a method in :class:`ClassWithFunctionArguments`\n\n:param b: an input to :meth:`mymethod`"
     )
 
 
@@ -206,7 +207,7 @@ def test_no_input_no_output_no_parentheses():
     assert obj.name == "f_no_input_no_output_no_parentheses"
     assert (
         obj.docstring
-        == " Tests a function without parentheses in input and no return value\n"
+        == "Tests a function without parentheses in input and no return value"
     )
 
 
@@ -218,26 +219,26 @@ def test_no_input_no_parentheses_no_docstring():
         mfile, "f_no_input_no_parentheses_no_docstring", "test_data"
     )
     assert obj.name == "f_no_input_no_parentheses_no_docstring"
-    assert obj.retv == ["result"]
-    assert obj.args is None
+    assert list(obj.retv.keys()) == ["result"]
+    assert list(obj.args.keys()) == []
 
 
 def test_ClassWithCommentHeader():
     mfile = os.path.join(DIRNAME, "test_data", "ClassWithCommentHeader.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithCommentHeader", "test_data")
     assert obj.name == "ClassWithCommentHeader"
-    assert obj.docstring == " A class with a comment header on the top.\n"
+    assert obj.docstring == "A class with a comment header on the top."
     method_get_tform = obj.methods["getTransformation"]
     assert method_get_tform.name == "getTransformation"
-    assert method_get_tform.retv == ["tform"]
-    assert method_get_tform.args == ["obj"]
+    assert list(method_get_tform.retv.keys()) == ["tform"]
+    assert list(method_get_tform.args.keys()) == ["obj"]
 
 
 def test_with_comment_header():
     mfile = os.path.join(DIRNAME, "test_data", "f_with_comment_header.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_with_comment_header", "test_data")
     assert obj.name == "f_with_comment_header"
-    assert obj.docstring == " A simple function with a comment header on the top.\n"
+    assert obj.docstring == "A simple function with a comment header on the top."
 
 
 def test_script_with_comment_header():
@@ -247,16 +248,15 @@ def test_script_with_comment_header():
     )
     assert (
         obj.docstring
-        == """ This is a Comment Header
- Copyright (C) <year>, by <full_name>
+        == """This is a Comment Header
+Copyright (C) <year>, by <full_name>
 
- Some descriptions ...
+Some descriptions ...
 
- This header and all further comments above the first command line
- of the script will be ignored by the documentation system.
+This header and all further comments above the first command line
+of the script will be ignored by the documentation system.
 
- Lisence (GPL, BSD, etc.)
-
+Licence (GPL, BSD, etc.)
 """
     )
 
@@ -268,16 +268,15 @@ def test_script_with_comment_header_2():
     )
     assert (
         obj.docstring
-        == """ This is a Comment Header
- Copyright (C) <year>, by <full_name>
+        == """This is a Comment Header
+Copyright (C) <year>, by <full_name>
 
- Some descriptions ...
+Some descriptions ...
 
- This header and all further comments above the first command line
- of the script will be ignored by the documentation system.
+This header and all further comments above the first command line
+of the script will be ignored by the documentation system.
 
- Lisence (GPL, BSD, etc.)
-
+Licence (GPL, BSD, etc.)
 """
     )
 
@@ -289,9 +288,8 @@ def test_script_with_comment_header_3():
     )
     assert (
         obj.docstring
-        == """ This is a Comment Header with empty lines above
- and many line comments.
-
+        == """This is a Comment Header with empty lines above
+and many line comments.
 """
     )
 
@@ -303,9 +301,8 @@ def test_script_with_comment_header_4():
     )
     assert (
         obj.docstring
-        == """ This is a Comment Header with a single instruction above
- and many line comments.
-
+        == """This is a Comment Header with a single instruction above
+and many line comments.
 """
     )
 
@@ -320,21 +317,33 @@ def test_PropTypeOld():
             "docstring": None,
             "attrs": {},
             "default": "'none'",
+            "size": None,
+            "type": "char",
+            "validators": None,
         },  # 'type': ['char']
         "pos": {
             "docstring": None,
             "attrs": {},
             "default": "zeros(3,1)",
+            "size": (":", "1"),
+            "type": "double",
+            "validators": None,
         },  # 'type': ['double', 'vector'],
         "rotm": {
             "docstring": None,
             "attrs": {},
             "default": "zeros(3,3)",
+            "size": (":", ":"),
+            "type": "double",
+            "validators": None,
         },  # 'type': ['double', 'matrix'],
         "idx": {
             "docstring": None,
             "attrs": {},
             "default": "0",
+            "size": ("1", "1"),
+            "type": "uint8",
+            "validators": None,
         },  # 'type': ['uint8', 'scalar'],
     }
 
@@ -352,12 +361,12 @@ def test_ClassWithMethodAttributes():
         mfile, "ClassWithMethodAttributes", "test_data"
     )
     assert obj.name == "ClassWithMethodAttributes"
-    assert obj.docstring == " Class with different method attributes\n"
+    assert obj.docstring == "Class with different method attributes"
     assert obj.methods["testNormal"].attrs == {}
     assert obj.methods["testPublic"].attrs == {"Access": "public"}
     assert obj.methods["testProtected"].attrs == {"Access": "protected"}
     assert obj.methods["testPrivate1"].attrs == {"Access": "private"}
-    assert obj.methods["testPrivate2"].attrs == {"Access": "private"}
+    assert obj.methods["testPrivate2"].attrs == {"Access": "'private'"}
     assert obj.methods["testHidden"].attrs == {"Hidden": True}
     assert obj.methods["testStatic"].attrs == {"Static": True}
     assert obj.methods["testFriend1"].attrs == {"Access": "?OtherClass"}
@@ -372,7 +381,7 @@ def test_ClassWithPropertyAttributes():
         mfile, "ClassWithPropertyAttributes", "test_data"
     )
     assert obj.name == "ClassWithPropertyAttributes"
-    assert obj.docstring == " Class with different property attributes\n"
+    assert obj.docstring == "Class with different property attributes"
     assert obj.properties["testNormal"]["attrs"] == {}
     assert obj.properties["testPublic"]["attrs"] == {"Access": "public"}
     assert obj.properties["testProtected"]["attrs"] == {"Access": "protected"}
@@ -402,16 +411,14 @@ def test_ClassWithoutIndent():
     mfile = os.path.join(DIRNAME, "test_data", "ClassWithoutIndent.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithoutIndent", "test_data")
     assert obj.name == "ClassWithoutIndent"
-    assert (
-        obj.docstring == " First line is not indented\n Second line line is indented\n"
-    )
+    assert obj.docstring == "First line is not indented\nSecond line line is indented"
 
 
 def test_f_with_utf8():
     mfile = os.path.join(DIRNAME, "test_data", "f_with_utf8.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_with_utf8", "test_data")
     assert obj.name == "f_with_utf8"
-    assert obj.docstring == " Cambia ubicación de partículas.\n"
+    assert obj.docstring == "Cambia ubicación de partículas."
 
 
 def test_file_parsing_encoding_can_be_specified():
@@ -420,14 +427,14 @@ def test_file_parsing_encoding_can_be_specified():
         mfile, "f_with_latin_1", "test_data", encoding="latin-1"
     )
     assert obj.name == "f_with_latin_1"
-    assert obj.docstring == " Analyse de la réponse à un créneau\n"
+    assert obj.docstring == "Analyse de la réponse à un créneau"
 
 
 def test_file_parsing_with_no_encoding_specified():
     mfile = os.path.join(DIRNAME, "test_data", "f_with_latin_1.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_with_latin_1", "test_data")
     assert obj.name == "f_with_latin_1"
-    assert obj.docstring == " Analyse de la r\ufffdponse \ufffd un cr\ufffdneau\n"
+    assert obj.docstring == r"Analyse de la r\xe9ponse \xe0 un cr\xe9neau"
 
 
 def test_ClassWithBuiltinOverload():
@@ -436,7 +443,7 @@ def test_ClassWithBuiltinOverload():
         mfile, "ClassWithBuiltinOverload", "test_data"
     )
     assert obj.name == "ClassWithBuiltinOverload"
-    assert obj.docstring == " Class that overloads a builtin\n"
+    assert obj.docstring == "Class that overloads a builtin"
 
 
 def test_ClassWithBuiltinProperties():
@@ -445,14 +452,14 @@ def test_ClassWithBuiltinProperties():
         mfile, "ClassWithBuiltinProperties", "test_data"
     )
     assert obj.name == "ClassWithBuiltinProperties"
-    assert obj.docstring == " Class with properties that overload a builtin\n"
-    assert set(obj.properties) == set(["omega", "alpha", "gamma", "beta"])
-    assert obj.properties["omega"]["docstring"] == " a property"
-    assert obj.properties["alpha"]["docstring"] == (" a property overloading a builtin")
+    assert obj.docstring == "Class with properties that overload a builtin"
+    assert set(obj.properties) == {"omega", "alpha", "gamma", "beta"}
+    assert obj.properties["omega"]["docstring"] == "a property"
+    assert obj.properties["alpha"]["docstring"] == ("a property overloading a builtin")
     assert obj.properties["gamma"]["docstring"] == (
-        " a property overloading a builtin with validation"
+        "a property overloading a builtin with validation"
     )
-    assert obj.properties["beta"]["docstring"] == (" another overloaded property")
+    assert obj.properties["beta"]["docstring"] == ("another overloaded property")
 
 
 # Fails when running with other test files. Warnings are already logged.
@@ -469,7 +476,7 @@ def test_f_with_name_mismatch(caplog):
             "sphinx.matlab-domain",
             WARNING,
             '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch".'
-            ' Expected "f_with_name_mismatch" in module "test_data".',
+            ' Expected "f_with_name_mismatch"in module "test_data".',
         ),
     ]
 
@@ -478,16 +485,16 @@ def test_f_with_dummy_argument():
     mfile = os.path.join(DIRNAME, "test_data", "f_with_dummy_argument.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_with_dummy_argument", "")
     assert obj.name == "f_with_dummy_argument"
-    assert obj.retv == ["obj"]
-    assert obj.args == ["~", "name"]
-    assert obj.docstring == " Could be a callback, where first argument is ignored.\n"
+    assert list(obj.retv.keys()) == ["obj"]
+    assert list(obj.args.keys()) == ["~", "name"]
+    assert obj.docstring == "Could be a callback, where first argument is ignored."
 
 
 def test_f_with_string_ellipsis():
     mfile = os.path.join(DIRNAME, "test_data", "f_with_string_ellipsis.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_with_string_ellipsis", "test_data")
     assert obj.name == "f_with_string_ellipsis"
-    assert obj.docstring == " A function with a string with ellipsis\n"
+    assert obj.docstring == "A function with a string with ellipsis"
 
 
 def test_ClassWithFunctionVariable():
@@ -496,7 +503,7 @@ def test_ClassWithFunctionVariable():
         mfile, "ClassWithFunctionVariable", "test_data"
     )
     assert obj.name == "ClassWithFunctionVariable"
-    assert obj.docstring == " This line contains functions!\n"
+    assert obj.docstring == "This line contains functions!"
     methods = set(obj.methods.keys())
     assert methods == {"ClassWithFunctionVariable", "anotherMethodWithFunctions"}
 
@@ -604,9 +611,8 @@ def test_f_with_function_variable():
         mfile, "f_with_function_variable", "test_data"
     )
     assert obj.name == "f_with_function_variable"
-    assert obj.retv == ["obj"]
-    assert obj.args == ["the_functions", "~"]
-    print(obj.docstring)
+    assert list(obj.retv.keys()) == ["obj"]
+    assert list(obj.args.keys()) == ["the_functions", "~"]
 
 
 def test_ClassWithGetterSetter():
@@ -616,7 +622,14 @@ def test_ClassWithGetterSetter():
     assert obj.name == "ClassWithGetterSetter"
     assert list(obj.methods.keys()) == ["ClassWithGetterSetter"]
     assert obj.properties == {
-        "a": {"docstring": " A nice property", "attrs": {}, "default": None}
+        "a": {
+            "docstring": "A nice property",
+            "attrs": {},
+            "default": None,
+            "size": None,
+            "type": None,
+            "validators": None,
+        }
     }
 
 
@@ -627,9 +640,16 @@ def test_ClassWithDoubleQuotedString():
     )
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithDoubleQuotedString"
-    assert set(obj.methods.keys()) == set(["ClassWithDoubleQuotedString", "method1"])
+    assert set(obj.methods.keys()) == {"ClassWithDoubleQuotedString", "method1"}
     assert obj.properties == {
-        "Property1": {"docstring": None, "attrs": {}, "default": None}
+        "Property1": {
+            "docstring": None,
+            "attrs": {},
+            "default": None,
+            "size": None,
+            "type": None,
+            "validators": None,
+        }
     }
 
 
@@ -638,7 +658,7 @@ def test_ClassWithStrings():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithStrings", "test_data")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithStrings"
-    assert set(obj.methods.keys()) == set(["raiseError"])
+    assert set(obj.methods.keys()) == {"raiseError"}
 
 
 def test_ClassWithDummyArguments():
@@ -646,11 +666,11 @@ def test_ClassWithDummyArguments():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithDummyArguments", "test_data")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithDummyArguments"
-    assert set(obj.methods.keys()) == set(["someMethod1", "someMethod2"])
+    assert set(obj.methods.keys()) == {"someMethod1", "someMethod2"}
     m1 = obj.methods["someMethod1"]
-    assert m1.args == ["obj", "argument"]
+    assert list(m1.args.keys()) == ["obj", "argument"]
     m2 = obj.methods["someMethod2"]
-    assert m2.args == ["~", "argument"]
+    assert list(m2.args.keys()) == ["~", "argument"]
 
 
 def test_ClassFolderClassdef():
@@ -658,11 +678,11 @@ def test_ClassFolderClassdef():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassFolder", "@ClassFolder")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassFolder"
-    assert set(obj.methods.keys()) == set(["ClassFolder", "method_inside_classdef"])
+    assert set(obj.methods.keys()) == {"ClassFolder", "method_inside_classdef"}
     m1 = obj.methods["ClassFolder"]
-    assert m1.args == ["p"]
+    assert list(m1.args.keys()) == ["p"]
     m2 = obj.methods["method_inside_classdef"]
-    assert m2.args == ["obj", "a", "b"]
+    assert list(m2.args.keys()) == ["obj", "a", "b"]
 
 
 def test_ClassWithMethodsWithSpaces():
@@ -672,10 +692,9 @@ def test_ClassWithMethodsWithSpaces():
     )
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithMethodsWithSpaces"
-    assert set(obj.methods.keys()) == set(["static_method"])
+    assert set(obj.methods.keys()) == {"static_method"}
     assert (
-        obj.docstring
-        == " Class with methods that have space after the function name.\n"
+        obj.docstring == "Class with methods that have space after the function name."
     )
     assert obj.methods["static_method"].attrs == {"Static": True}
 
@@ -685,8 +704,8 @@ def test_ClassContainingParfor():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassContainingParfor", "test_data")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassContainingParfor"
-    assert set(obj.methods.keys()) == set(["test"])
-    assert obj.docstring == " Parfor is a keyword\n"
+    assert set(obj.methods.keys()) == {"test"}
+    assert obj.docstring == "Parfor is a keyword"
 
 
 def test_ClassWithStringEllipsis():
@@ -694,8 +713,8 @@ def test_ClassWithStringEllipsis():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithStringEllipsis", "test_data")
     assert isinstance(obj, mat_types.MatClass)
     assert obj.name == "ClassWithStringEllipsis"
-    assert set(obj.methods.keys()) == set(["test"])
-    assert obj.docstring == " Contains ellipsis in string\n"
+    assert set(obj.methods.keys()) == {"test"}
+    assert obj.docstring == "Contains ellipsis in string"
 
 
 def test_ClassLongProperty():
@@ -703,13 +722,13 @@ def test_ClassLongProperty():
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassLongProperty", "test_data")
     assert obj.name == "ClassLongProperty"
     assert (
-        obj.docstring == " test class property with long docstring\n\n "
-        ":param a: the input to :class:`ClassExample`\n"
+        obj.docstring == "test class property with long docstring\n\n"
+        ":param a: the input to :class:`ClassExample`"
     )
-    assert obj.properties["a"]["docstring"] == " short description"
+    assert obj.properties["a"]["docstring"] == "short description"
     assert (
-        obj.properties["b"]["docstring"] == " A property with a long "
-        "documentation\n This is the second line\n And a third\n"
+        obj.properties["b"]["docstring"] == "A property with a long "
+        "documentation\nThis is the second line\nAnd a third"
     )
     assert obj.properties["c"]["docstring"] is None
 
@@ -721,10 +740,10 @@ def test_ClassWithLongPropertyDocstrings():
     )
     assert obj.name == "ClassWithLongPropertyDocstrings"
     assert (
-        obj.properties["a"]["docstring"] == " This line is deleted\n"
-        " This line documents another property\n"
+        obj.properties["a"]["docstring"] == "This line is deleted\n"
+        "This line documents another property"
     )
-    assert obj.properties["b"]["docstring"] == " Document this property\n"
+    assert obj.properties["b"]["docstring"] == "Document this property"
 
 
 def test_ClassWithLongPropertyTrailingEmptyDocstrings():
@@ -736,10 +755,10 @@ def test_ClassWithLongPropertyTrailingEmptyDocstrings():
     )
     assert obj.name == "ClassWithLongPropertyTrailingEmptyDocstrings"
     assert (
-        obj.properties["a"]["docstring"] == " This line is deleted\n"
-        " This line documents another property\n"
+        obj.properties["a"]["docstring"] == "This line is deleted\n"
+        "This line documents another property"
     )
-    assert obj.properties["b"]["docstring"] == " Document this property\n"
+    assert obj.properties["b"]["docstring"] == "Document this property"
 
 
 def test_ClassWithPropertyValidators():
@@ -748,10 +767,10 @@ def test_ClassWithPropertyValidators():
         mfile, "ClassWithPropertyValidators", "test_data"
     )
     assert obj.name == "ClassWithPropertyValidators"
-    assert obj.properties["Location"]["docstring"] == " The location\n"
-    assert obj.properties["Label"]["docstring"] == " The label\n"
-    assert obj.properties["State"]["docstring"] == " The state\n"
-    assert obj.properties["ReportLevel"]["docstring"] == " The report level\n"
+    assert obj.properties["Location"]["docstring"] == "The location"
+    assert obj.properties["Label"]["docstring"] == "The label"
+    assert obj.properties["State"]["docstring"] == "The state"
+    assert obj.properties["ReportLevel"]["docstring"] == "The report level"
 
 
 def test_ClassWithTrailingCommentAfterBases():
@@ -763,46 +782,47 @@ def test_ClassWithTrailingCommentAfterBases():
     assert obj.bases == ["handle", "my.super.Class"]
     assert (
         obj.docstring
-        == " test class methods\n\n :param a: the input to :class:`ClassWithTrailingCommentAfterBases`\n"
+        == "test class methods\n\n:param a: the input to :class:`ClassWithTrailingCommentAfterBases`"
     )
     mymethod = obj.methods["mymethod"]
     assert mymethod.name == "mymethod"
-    assert mymethod.retv == ["c"]
-    assert mymethod.args == ["obj", "b"]
+    assert list(mymethod.retv.keys()) == ["c"]
+    assert list(mymethod.args.keys()) == ["obj", "b"]
     assert (
         mymethod.docstring
-        == " a method in :class:`ClassWithTrailingCommentAfterBases`\n\n :param b: an input to :meth:`mymethod`\n"
+        == "a method in :class:`ClassWithTrailingCommentAfterBases`\n\n:param b: an input to :meth:`mymethod`"
     )
 
 
 def test_ClassWithEllipsisProperties():
+    # TODO change this when the functionality to "nicely" generate one line defaults exists
     mfile = os.path.join(TESTDATA_ROOT, "ClassWithEllipsisProperties.m")
     obj = mat_types.MatObject.parse_mfile(
         mfile, "ClassWithEllipsisProperties", "test_data"
     )
     assert obj.name == "ClassWithEllipsisProperties"
     assert obj.bases == ["handle"]
-    assert obj.docstring == " stuff\n"
+    assert obj.docstring == "stuff"
     assert len(obj.methods) == 0
 
-    assert obj.properties["A"]["docstring"] == " an expression with ellipsis"
-    assert obj.properties["A"]["default"] == "1+2+3+4+5"
+    assert obj.properties["A"]["docstring"] == "an expression with ellipsis"
+    assert obj.properties["A"]["default"] == "1 + 2 + 3 +             4 + 5"
     assert (
         obj.properties["B"]["docstring"]
-        == " a cell array with ellipsis and other array notation"
+        == "a cell array with ellipsis and other array notation"
     )
-    assert obj.properties["B"]["default"].startswith("{'hello','bye';")
+    assert obj.properties["B"]["default"].startswith("{'hello', 'bye';")
     assert obj.properties["B"]["default"].endswith("}")
-    assert obj.properties["C"]["docstring"] == " using end inside array"
-    assert obj.properties["C"]["default"] == "ClassWithEllipsisProperties.B(2:end,1)"
-    assert obj.properties["D"]["docstring"] == " String with line continuation"
+    assert obj.properties["C"]["docstring"] == "using end inside array"
+    assert obj.properties["C"]["default"] == "ClassWithEllipsisProperties.B(2:end, 1)"
+    assert obj.properties["D"]["docstring"] == "String with line continuation"
     assert obj.properties["D"]["default"] == "'...'"
-    assert obj.properties["E"]["docstring"] == " The string with spaces"
+    assert obj.properties["E"]["docstring"] == "The string with spaces"
     assert obj.properties["E"]["default"] == "'some string with spaces'"
 
 
 #         mymethod.docstring
-#         == " a method in :class:`ClassWithTrailingCommentAfterBases`\n\n :param b: an input to :meth:`mymethod`\n"
+#         == " a method in :class:`ClassWithTrailingCommentAfterBases`\n\n :param b: an input to :meth:`mymethod`"
 #     )
 
 
@@ -824,7 +844,7 @@ def test_ClassWithTrailingSemicolons():
     )
     assert (
         obj.docstring
-        == " Smoothing like it is performed withing Cxx >v7.0 (until v8.2 at least).\n Uses constant 228p_12k frequency vector:\n"
+        == "Smoothing like it is performed within Cxx >v7.0 (until v8.2 at least).\nUses constant 228p_12k frequency vector:"
     )
     assert obj.bases == ["hgsetget"]
     assert list(obj.methods.keys()) == [
@@ -854,7 +874,7 @@ def test_ClassWithSeperatedComments():
     assert obj.bases == []
     assert "prop" in obj.properties
     prop = obj.properties["prop"]
-    assert prop["docstring"] == " Another comment\n"
+    assert prop["docstring"] == "Another comment"
 
 
 def test_ClassWithKeywordsAsFieldnames():
@@ -869,7 +889,7 @@ def test_ClassWithKeywordsAsFieldnames():
     assert "c" in obj.properties
     assert "calculate" in obj.methods
     meth = obj.methods["calculate"]
-    assert meth.docstring == " Returns the value of `d`\n"
+    assert meth.docstring == "Returns the value of `d`"
 
 
 def test_ClassWithNamedAsArguments():
@@ -879,9 +899,73 @@ def test_ClassWithNamedAsArguments():
     assert obj.bases == ["handle", "matlab.mixin.Copyable"]
     assert "value" in obj.properties
     meth = obj.methods["arguments"]
-    assert meth.docstring == " Constructor for arguments\n"
+    assert meth.docstring == "Constructor for arguments"
     meth = obj.methods["add"]
-    assert meth.docstring == " Add new argument\n"
+    assert meth.docstring == "Add new argument"
+
+
+def test_ClassWithPropertyCellValues():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithPropertyCellValues.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "ClassWithPropertyCellValues", "test_data"
+    )
+    assert obj.name == "ClassWithPropertyCellValues"
+    assert obj.bases == []
+    assert "fields" in obj.properties
+    assert "getLevel" in obj.methods
+
+
+def test_ClassWithTests():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithTests.m")
+    obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithTests", "test_data")
+    assert obj.name == "ClassWithTests"
+    assert obj.bases == ["matlab.unittest.TestCase"]
+    assert "testRunning" in obj.methods
+    testRunning = obj.methods["testRunning"]
+    assert testRunning.attrs["TestTags"] == ["'Unit'"]
+
+
+def test_f_with_input_argument_block():
+    mfile = os.path.join(DIRNAME, "test_data", "f_with_input_argument_block.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "f_with_input_argument_block", "test_data"
+    )
+    assert obj.name == "f_with_input_argument_block"
+    assert list(obj.retv.keys()) == ["o1", "o2", "o3"]
+    assert list(obj.args.keys()) == ["a1", "a2"]
+
+    assert obj.args["a1"]["size"] == ("1", "1")
+    assert obj.args["a1"]["default"] == "0"
+    assert obj.args["a1"]["type"] == "double"
+    assert obj.args["a1"]["docstring"] == "the first input"
+
+    assert obj.args["a2"]["size"] == ("1", "1")
+    assert obj.args["a2"]["default"] == "a1"
+    assert obj.args["a1"]["type"] == "double"
+    assert obj.args["a2"]["docstring"] == "another input"
+
+
+def test_f_with_output_argument_block():
+    mfile = os.path.join(DIRNAME, "test_data", "f_with_output_argument_block.m")
+    obj = mat_types.MatObject.parse_mfile(
+        mfile, "f_with_output_argument_block", "test_data"
+    )
+    assert obj.name == "f_with_output_argument_block"
+    assert list(obj.retv.keys()) == ["o1", "o2", "o3"]
+    assert list(obj.args.keys()) == ["a1", "a2"]
+
+    assert obj.retv["o1"]["size"] == ("1", "1")
+    assert obj.retv["o1"]["type"] == "double"
+    assert obj.retv["o1"]["docstring"] == "Output one"
+
+    assert obj.retv["o2"]["size"] == ("1", ":")
+    assert obj.retv["o2"]["type"] == "double"
+    assert obj.retv["o2"]["docstring"] == "Another output"
+
+    assert obj.retv["o3"]["size"] == ("1", "1")
+    assert obj.retv["o3"]["type"] == "double"
+    assert obj.retv["o3"]["docstring"] == "A third output"
+    assert obj.retv["o3"]["validators"] == ["mustBePositive"]
 
 
 if __name__ == "__main__":

@@ -1,16 +1,15 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-from sphinxcontrib import mat_documenters as doc
-from sphinxcontrib.mat_types import entities_table
 import helper
 import pytest
+from sphinx.testing.fixtures import make_app, test_params
 
-from sphinx.testing.fixtures import test_params, make_app
-
+from sphinxcontrib import mat_documenters as doc
+from sphinxcontrib.mat_types import MatModule, MatObject, entities_table
 
 rootdir = helper.rootdir(__file__)
 matlab_src_dir = str(rootdir / "test_data")
-doc.MatObject.basedir = matlab_src_dir
+MatObject.basedir = matlab_src_dir
 
 
 @pytest.fixture
@@ -18,21 +17,21 @@ def app(make_app):
     # Create app to setup build environment
     srcdir = rootdir / "test_docs"
     app = make_app(srcdir=srcdir)
-    doc.MatObject.basedir = app.config.matlab_src_dir
+    MatObject.basedir = app.config.matlab_src_dir
     return app
 
 
 @pytest.fixture
 def mod(app):
-    return doc.MatObject.matlabify("test_data")
+    return MatObject.matlabify("test_data")
 
 
 # def test_empty():
-#     assert doc.MatObject.matlabify("") is None
+#     assert MatObject.matlabify("") is None
 
 
 def test_unknown():
-    assert doc.MatObject.matlabify("not_test_data") is None
+    assert MatObject.matlabify("not_test_data") is None
 
 
 def test_script(mod, caplog):
@@ -48,7 +47,7 @@ def test_module(mod):
     assert not mod.getter("__module__")
     assert not mod.getter("__doc__")
     all_entities = mod.getter("__all__")
-    all_items = set(name for name, entity in all_entities)
+    all_items = {name for name, entity in all_entities}
     expected_items = {
         "+package",
         "@ClassFolder",
@@ -99,6 +98,8 @@ def test_module(mod):
         "ClassWithEnumMethod",
         "ClassWithEventMethod",
         "f_with_function_variable",
+        "f_with_input_argument_block",
+        "f_with_output_argument_block",
         "ClassWithUndocumentedMembers",
         "ClassWithGetterSetter",
         "ClassWithDoubleQuotedString",
@@ -117,6 +118,8 @@ def test_module(mod):
         "ClassWithTrailingSemicolons",
         "ClassWithSeperatedComments",
         "ClassWithKeywordsAsFieldnames",
+        "ClassWithPropertyCellValues",
+        "ClassWithTests",
         "arguments",
     }
     assert all_items == expected_items
@@ -124,12 +127,12 @@ def test_module(mod):
 
 
 def test_parse_twice(mod):
-    mod2 = doc.MatObject.matlabify("test_data")
+    mod2 = MatObject.matlabify("test_data")
     assert mod == mod2
 
 
 def test_classes(mod):
-    assert isinstance(mod, doc.MatModule)
+    assert isinstance(mod, MatModule)
 
     # test superclass
     cls = mod.getter("ClassInheritHandle")
@@ -139,9 +142,16 @@ def test_classes(mod):
     assert cls.bases == ["handle", "my.super.Class"]
     assert cls.attrs == {}
     assert cls.properties == {
-        "x": {"attrs": {}, "default": None, "docstring": " a property"}
+        "x": {
+            "attrs": {},
+            "default": None,
+            "docstring": "a property",
+            "size": None,
+            "type": None,
+            "validators": None,
+        }
     }
-    assert cls.getter("__doc__") == " a handle class\n\n :param x: a variable\n"
+    assert cls.getter("__doc__") == "a handle class\n\n:param x: a variable"
 
 
 def test_abstract_class(mod):
@@ -157,31 +167,37 @@ def test_abstract_class(mod):
     assert abc.properties == {
         "y": {
             "default": None,
-            "docstring": " y variable",
+            "docstring": "y variable",
             "attrs": {"GetAccess": "private", "SetAccess": "private"},
+            "size": None,
+            "type": None,
+            "validators": None,
         },
         "version": {
             "default": "'0.1.1-beta'",
-            "docstring": " version",
+            "docstring": "version",
             "attrs": {"Constant": True},
+            "size": None,
+            "type": None,
+            "validators": None,
         },
     }
     assert (
         abc.getter("__doc__")
-        == " an abstract class\n\n :param y: a variable\n :type y: double\n"
+        == "an abstract class\n\n:param y: a variable\n:type y: double"
     )
     assert abc.getter("__doc__") == abc.docstring
 
     abc_y = abc.getter("y")
     assert isinstance(abc_y, doc.MatProperty)
     assert abc_y.default is None
-    assert abc_y.docstring == " y variable"
+    assert abc_y.docstring == "y variable"
     assert abc_y.attrs == {"SetAccess": "private", "GetAccess": "private"}
 
     abc_version = abc.getter("version")
     assert isinstance(abc_version, doc.MatProperty)
     assert abc_version.default == "'0.1.1-beta'"
-    assert abc_version.docstring == " version"
+    assert abc_version.docstring == "version"
     assert abc_version.attrs == {"Constant": True}
 
 
@@ -191,7 +207,7 @@ def test_class_method(mod):
     assert cls_meth.getter("__name__") == "ClassExample"
     assert (
         cls_meth.docstring
-        == " test class methods\n\n :param a: the input to :class:`ClassExample`\n"
+        == "test class methods\n\n:param a: the input to :class:`ClassExample`"
     )
     constructor = cls_meth.getter("ClassExample")
     assert isinstance(constructor, doc.MatMethod)
@@ -202,18 +218,18 @@ def test_class_method(mod):
     # TODO: mymethod.args will contain ['obj', 'b'] if run standalone
     #       but if test_autodoc.py is run, the 'obj' is removed
     assert mymethod.args
-    assert mymethod.args[-1] == "b"
-    assert mymethod.retv == ["c"]
+    assert "b" in list(mymethod.args.keys())
+    assert list(mymethod.retv.keys()) == ["c"]
     assert (
         mymethod.docstring
-        == " a method in :class:`ClassExample`\n\n :param b: an input to :meth:`mymethod`\n"
+        == "a method in :class:`ClassExample`\n\n:param b: an input to :meth:`mymethod`"
     )
 
 
 def test_submodule_class(mod):
     cls = mod.getter("submodule.TestFibonacci")
     assert isinstance(cls, doc.MatClass)
-    assert cls.docstring == " Test of MATLAB unittest method attributes\n"
+    assert cls.docstring == "Test of MATLAB unittest method attributes"
     assert cls.attrs == {}
     assert cls.bases == ["matlab.unittest.TestCase"]
     assert "compareFirstThreeElementsToExpected" in cls.methods
@@ -222,17 +238,17 @@ def test_submodule_class(mod):
     method = cls.getter("compareFirstThreeElementsToExpected")
     assert isinstance(method, doc.MatMethod)
     assert method.name == "compareFirstThreeElementsToExpected"
-    assert method.retv is None
-    assert method.args == ["tc"]
-    assert method.docstring == " Test case that compares first three elements\n"
-    assert method.attrs == {"Test": True}
+    assert method.retv == {}
+    assert list(method.args.keys()) == ["tc"]
+    assert method.docstring == "Test case that compares first three elements"
+    assert method.attrs == {"Test": None}
 
 
 def test_folder_class(mod):
     cls_mod = mod.getter("@ClassFolder")
-    assert isinstance(cls_mod, doc.MatModule)
+    assert isinstance(cls_mod, MatModule)
     cls = cls_mod.getter("ClassFolder")
-    assert cls.docstring == " A class in a folder\n"
+    assert cls.docstring == "A class in a folder"
     assert cls.attrs == {}
     assert cls.bases == []
     assert cls.module == "test_data.@ClassFolder"
@@ -240,7 +256,10 @@ def test_folder_class(mod):
         "p": {
             "attrs": {},
             "default": None,
-            "docstring": " a property of a class folder",
+            "docstring": "a property of a class folder",
+            "size": None,
+            "type": None,
+            "validators": None,
         }
     }
 
@@ -249,56 +268,56 @@ def test_folder_class(mod):
     func = cls_mod.getter("a_static_func")
     assert isinstance(func, doc.MatFunction)
     assert func.name == "a_static_func"
-    assert func.args == ["args"]
-    assert func.retv == ["retv"]
-    assert func.docstring == " method in :class:`~test_data.@ClassFolder`\n"
+    assert list(func.args.keys()) == ["args"]
+    assert list(func.retv.keys()) == ["retv"]
+    assert func.docstring == "method in :class:`~test_data.@ClassFolder`"
     func = cls_mod.getter("classMethod")
     assert isinstance(func, doc.MatFunction)
     assert func.name == "classMethod"
-    assert func.args == ["obj", "varargin"]
-    assert func.retv == ["varargout"]
+    assert list(func.args.keys()) == ["obj", "varargin"]
+    assert list(func.retv.keys()) == ["varargout"]
     assert (
         func.docstring
-        == " CLASSMETHOD A function within a package\n\n :param obj: An instance of this class.\n"
-        " :param varargin: Variable input arguments.\n :returns: varargout\n"
+        == "CLASSMETHOD A function within a package\n\n:param obj: An instance of this class.\n"
+        ":param varargin: Variable input arguments.\n:returns: varargout"
     )
 
 
 def test_function(mod):
-    assert isinstance(mod, doc.MatModule)
+    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
-    assert func.retv == ["o1", "o2", "o3"]
-    assert func.args == ["a1", "a2"]
+    assert list(func.retv.keys()) == ["o1", "o2", "o3"]
+    assert list(func.args.keys()) == ["a1", "a2"]
     assert (
         func.docstring
-        == " a fun function\n\n :param a1: the first input\n :param a2: another input\n :returns: ``[o1, o2, o3]`` some outputs\n"
+        == "a fun function\n\n:param a1: the first input\n:param a2: another input\n:returns: ``[o1, o2, o3]`` some outputs"
     )
 
 
 def test_function_getter(mod):
-    assert isinstance(mod, doc.MatModule)
+    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
     assert (
         func.getter("__doc__")
-        == " a fun function\n\n :param a1: the first input\n :param a2: another input\n :returns: ``[o1, o2, o3]`` some outputs\n"
+        == "a fun function\n\n:param a1: the first input\n:param a2: another input\n:returns: ``[o1, o2, o3]`` some outputs"
     )
     assert func.getter("__module__") == "test_data"
 
 
 def test_package_function(mod):
-    assert isinstance(mod, doc.MatModule)
+    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
-    assert func.retv == ["o1", "o2", "o3"]
-    assert func.args == ["a1", "a2"]
+    assert list(func.retv.keys()) == ["o1", "o2", "o3"]
+    assert list(func.args.keys()) == ["a1", "a2"]
     assert (
         func.docstring
-        == " a fun function\n\n :param a1: the first input\n :param a2: another input\n :returns: ``[o1, o2, o3]`` some outputs\n"
+        == "a fun function\n\n:param a1: the first input\n:param a2: another input\n:returns: ``[o1, o2, o3]`` some outputs"
     )
 
 
@@ -306,13 +325,13 @@ def test_class_with_get_method(mod):
     the_class = mod.getter("ClassWithGetMethod")
     assert isinstance(the_class, doc.MatClass)
     assert the_class.getter("__name__") == "ClassWithGetMethod"
-    assert the_class.docstring == " Class with a method named get\n"
+    assert the_class.docstring == "Class with a method named get"
     the_method = the_class.getter("get")
     assert isinstance(the_method, doc.MatMethod)
     assert the_method.getter("__name__") == "get"
-    assert the_method.retv == ["varargout"]
+    assert list(the_method.retv.keys()) == ["varargout"]
     assert the_method.docstring.startswith(
-        " Gets the numbers 1-n and fills in the outputs with them"
+        "Gets the numbers 1-n and fills in the outputs with them"
     )
 
 

@@ -1,23 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-    test_package_links.py
-    ~~~~~~~~~~~~
+test_package_links.py
+~~~~~~~~~~~~
 
-    Test the autodoc extension.
+Test the autodoc extension.
 
-    :copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
+
 import pickle
-import os
 import sys
+
 import helper
-
 import pytest
-
-from sphinx import addnodes
-from sphinx import version_info
-from sphinx.testing.fixtures import test_params, make_app
+from sphinx.testing.fixtures import make_app, test_params
 
 
 @pytest.fixture(scope="module")
@@ -25,7 +22,6 @@ def rootdir():
     return helper.rootdir(__file__)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_with_prefix(make_app, rootdir):
     # TODO: bases are shown without prefix
     srcdir = rootdir / "roots" / "test_package_links"
@@ -41,7 +37,6 @@ def test_with_prefix(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_without_prefix(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_package_links"
     confdict = {"matlab_keep_package_prefix": False}

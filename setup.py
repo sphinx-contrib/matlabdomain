@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("README.rst", "r") as f_readme:
     long_desc = f_readme.read()
 
-requires = ["Sphinx>=4.0.0", "Pygments>=2.0.1"]
+requires = [
+    "Sphinx>=4.0.0",
+    "tree-sitter-matlab>=1.0.2,<1.0.5",
+    "tree-sitter>=0.21.3,<0.23.0",
+]
 
 setup(
     name="sphinxcontrib-matlabdomain",
@@ -38,4 +42,5 @@ setup(
     include_package_data=True,
     install_requires=requires,
     namespace_packages=["sphinxcontrib"],
+    python_requires=">=3.10.0",
 )

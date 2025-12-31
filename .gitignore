@@ -12,4 +12,5 @@ tests/test_docs/_build/
 _build
 htmlcov
 .coverage
+coverage.xml
 build/
