@@ -1334,7 +1334,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def import_object(self):
         ret = MatClassLevelDocumenter.import_object(self)
-        if self.object.attrs.get("Static"):
+        if self.object is not None and self.object.attrs.get("Static"):
             self.directivetype = "staticmethod"
             # document class and static members before ordinary ones
             self.member_order = self.member_order - 1
