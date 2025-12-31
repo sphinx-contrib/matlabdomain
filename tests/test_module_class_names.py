@@ -22,7 +22,6 @@ def rootdir():
     return helper.rootdir(__file__)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_index(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_module_class_names"
     app = make_app(srcdir=srcdir)
@@ -36,7 +35,6 @@ def test_index(make_app, rootdir):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_index_auto_link_all(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_module_class_names"
     confdict = {"matlab_auto_link": "all"}
