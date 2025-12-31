@@ -22,7 +22,6 @@ def rootdir():
     return helper.rootdir(__file__)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason="requires python3.6 or higher")
 def test_make(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_no_matlab_src_dir"
     app = make_app(srcdir=srcdir)
