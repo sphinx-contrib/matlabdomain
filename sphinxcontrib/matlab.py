@@ -1,30 +1,28 @@
 """
-    sphinxcontrib.matlab
-    ~~~~~~~~~~~~~~~~~~~~
+sphinxcontrib.matlab
+~~~~~~~~~~~~~~~~~~~~
 
-    The MATLAB domain.
+The MATLAB domain.
 
-    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
-
-from . import mat_documenters as doc
-from . import mat_directives
-from . import mat_types
 
 import re
 
-from docutils import nodes
-from docutils.parsers.rst import directives, Directive
-
-from sphinx import addnodes
-from sphinx.roles import XRefRole
-from sphinx.locale import _ as translation
-from sphinx.domains import Domain, ObjType, Index
-from sphinx.directives import ObjectDescription
-from sphinx.util.nodes import make_refnode
-from sphinx.util.docfields import Field, GroupedField, TypedField
 import sphinx.util
+from docutils import nodes
+from docutils.parsers.rst import Directive, directives
+from sphinx import addnodes
+from sphinx.directives import ObjectDescription
+from sphinx.domains import Domain, Index, ObjType
+from sphinx.locale import _ as translation
+from sphinx.roles import XRefRole
+from sphinx.util.docfields import Field, GroupedField, TypedField
+from sphinx.util.nodes import make_refnode
+
+from . import mat_directives, mat_types
+from . import mat_documenters as doc
 
 logger = sphinx.util.logging.getLogger("matlab-domain")
 
@@ -262,7 +260,7 @@ class MatObject(ObjectDescription):
     def add_target_and_index(self, name_cls, sig, signode):
         modname = self.options.get("module", self.env.temp_data.get("mat:module"))
 
-        if self.env.config.matlab_short_links and not name_cls[0] == modname:
+        if self.env.config.matlab_short_links and name_cls[0] != modname:
             # modname is only used for package names
             # - "target.+package" => "package"
             # - "target" => ""
@@ -270,12 +268,12 @@ class MatObject(ObjectDescription):
             parts = [part for part in parts if part.startswith("+")]
             modname = ".".join(parts)
 
-        fullname = (modname and modname + "." or "") + name_cls[0]
+        fullname = ((modname and modname + ".") or "") + name_cls[0]
         fullname = fullname.lstrip(".")
 
         if not self.env.config.matlab_keep_package_prefix:
             modname_out = mat_types.strip_package_prefix(modname)
-            fullname_out = (modname_out and modname_out + "." or "") + name_cls[0]
+            fullname_out = ((modname_out and modname_out + ".") or "") + name_cls[0]
             fullname_out = fullname_out.lstrip(".")
         else:
             modname_out, fullname_out = modname, fullname
@@ -395,7 +393,7 @@ class MatClassmember(MatObject):
         return ""
 
     def get_index_text(self, modname, name_cls):
-        name, cls = name_cls
+        name, _cls = name_cls
         add_modules = self.env.config.add_module_names
         if self.objtype == "method":
             try:
@@ -661,7 +659,7 @@ class MATLABModuleIndex(Index):
                 num_toplevels += 1
                 subtype = 0
 
-            qualifier = deprecated and translation("Deprecated") or ""
+            qualifier = (deprecated and translation("Deprecated")) or ""
             entries.append(
                 [
                     stripped + modname_out,
@@ -825,7 +823,7 @@ class MATLABDomain(Domain):
     def resolve_xref(self, env, fromdocname, builder, type, target, node, contnode):
         modname = node.get("mat:module")
         clsname = node.get("mat:class")
-        searchmode = node.hasattr("refspecific") and 1 or 0
+        searchmode = (node.hasattr("refspecific") and 1) or 0
         matches = self.find_obj(env, modname, clsname, target, type, searchmode)
         if not matches:
             return None

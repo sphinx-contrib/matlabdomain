@@ -22,20 +22,40 @@ jobs:
 
   test-sphinx:
 
-    name: Run tests for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }}
+    name: Run tests on ${{ matrix.os }} for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }}
 
     timeout-minutes: 5
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-        sphinx-version: ["45", "53", "60", "70", "latest", "dev"]
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        # test all python versions but the oldest one supported
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        sphinx-version: ["70", "latest"]
+        include:
+        -   description: sphinx dev with latest python
+            # dev does not work with python <= 3.11 so only test with latest python
+            os: ubuntu-latest
+            python-version: '3.14'
+            sphinx-version: dev
+
+            # Older sphinx fail with later python versions,
+            # so test them only with the oldest supported python
+        -   os: ubuntu-latest
+            python-version: '3.10'
+            sphinx-version: '60'
+        -   os: ubuntu-latest
+            python-version: '3.10'
+            sphinx-version: '53'
+        -   os: ubuntu-latest
+            python-version: '3.10'
+            sphinx-version: '45'
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
       with:
@@ -46,34 +66,13 @@ jobs:
         pip install tox==4.8.0
         tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}"
 
-  check:
-    name: Run static analysis
-    timeout-minutes: 5
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v5
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v6
-      with:
-        python-version: 3.11
-        architecture: x64
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 sphinxcontrib --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 tests --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 sphinxcontrib --count --exit-zero --exclude .git,__pycache__,.eggs --max-complexity=10 --max-line-length=127 --statistics
-        flake8 tests --count --exit-zero --exclude .git,__pycache__,.eggs --max-complexity=10 --max-line-length=127 --statistics
-
 
   build-n-publish:
     if: startsWith(github.ref, 'refs/tags') && github.repository == 'sphinx-contrib/matlabdomain'
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up Python 3.11
       uses: actions/setup-python@v6
       with:
@@ -89,7 +88,7 @@ jobs:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
     - name: Release to GitHub
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
           sdist

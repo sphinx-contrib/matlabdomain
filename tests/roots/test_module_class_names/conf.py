@@ -1,4 +1,5 @@
 import os
+import sys
 
 # General information about the project.
 project = "test_docs_automodule"
