@@ -32,7 +32,24 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-        sphinx-version: ["45", "53", "60", "70", "latest", "dev"]
+        sphinx-version: ["70", "latest"]
+        include:
+        -   description: sphinx dev with latest python
+            # dev does not work with python <= 3.11 so only test with latest python
+            python-version: '3.14'
+            sphinx-version: dev
+
+            # Older sphinx fail with later python versions,
+            # so test them only with the oldest supported python
+        -   description: sphinx 53 with oldest supported python
+            python-version: '3.10'
+            sphinx-version: '60'
+        -   description: sphinx 53 with oldest supported python
+            python-version: '3.10'
+            sphinx-version: '53'
+        -   description: oldest sphinx with oldest supported python
+            python-version: '3.10'
+            sphinx-version: '45'
 
     steps:
     - uses: actions/checkout@v6
