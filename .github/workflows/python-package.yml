@@ -22,32 +22,37 @@ jobs:
 
   test-sphinx:
 
-    name: Run tests for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }}
+    name: Run tests on ${{ matrix.os }} for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }}
 
     timeout-minutes: 5
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         sphinx-version: ["70", "latest"]
         include:
         -   description: sphinx dev with latest python
             # dev does not work with python <= 3.11 so only test with latest python
+            os: ubuntu-latest
             python-version: '3.14'
             sphinx-version: dev
 
             # Older sphinx fail with later python versions,
             # so test them only with the oldest supported python
-        -   description: sphinx 53 with oldest supported python
+        -   description: sphinx 60 with oldest supported python
+            os: ubuntu-latest
             python-version: '3.10'
             sphinx-version: '60'
         -   description: sphinx 53 with oldest supported python
+            os: ubuntu-latest
             python-version: '3.10'
             sphinx-version: '53'
         -   description: oldest sphinx with oldest supported python
+            os: ubuntu-latest
             python-version: '3.10'
             sphinx-version: '45'
 
