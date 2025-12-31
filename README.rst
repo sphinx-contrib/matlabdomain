@@ -180,6 +180,7 @@ Directive                             MATLAB object
 ``.. application:: appname``          **application definition**
 ``.. autoapplication:: appname``      * auto-document
 ``:app:`appname```                    * reference
+``.. autosummary``                    **Generate autodoc summaries**
 ====================================  ===========================================
 
 Several options are available for auto-directives.
@@ -292,6 +293,37 @@ Instead use the ``mat:`` prefix before the desired directives::
    .. mat:automodule:: matsrc
    .. mat:autofunction:: matsrc.func
 
+Autosummary
+===========
+
+Mailly base on `sphinx.ext.autosummary <https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html>`_. The
+``.. autosummary::`` directive can be used to generate a summary table of the MATLAB modules or MATLAB functions and classes in a module.
+
+Example::
+
+   .. autosummary for modules
+   .. autosummary::
+      :toctree: generated/
+
+      folder1
+      folder2
+
+   .. autosummary for functions and classes
+   .. currentmodule:: <module_name>
+   .. autosummary::
+      :toctree: generated/
+
+      func1
+      func2
+      class1
+      class2
+
+More details can be found in the `sphinx.ext.autosummary <https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html>`_.
+And test examples can be found in the ``test_doc_autosummary``.
+
+.. note::
+
+    May not be compatible with ``sphinx.ext.autosummary``.
 
 Online Demo
 ===========

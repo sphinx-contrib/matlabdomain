@@ -14,3 +14,5 @@ htmlcov
 .coverage
 coverage.xml
 build/
+
+generated
