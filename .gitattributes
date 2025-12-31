@@ -24,9 +24,9 @@
 # Shell scripts
 *.sh text eol=lf
 
-# Batch files (Windows) - use CRLF
-*.bat text eol=crlf
-*.cmd text eol=crlf
+# Batch files
+*.bat text eol=lf
+*.cmd text eol=lf
 
 # Binary files (no line ending conversion)
 *.mlapp binary
