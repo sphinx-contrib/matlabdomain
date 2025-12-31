@@ -32,7 +32,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        # test all python versions but the oldest one supported
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
         sphinx-version: ["70", "latest"]
         include:
         -   description: sphinx dev with latest python
