@@ -1,4 +1,120 @@
-sphinxcontrib-matlabdomain-0.20.0 (2023-MM-DD)
+sphinxcontrib-matlabdomain-0.22.1 (2024-08-17)
+==============================================
+
+* Fixed `Issue 262`_. The API for
+  ``sphinx.environment.BuildEnvironment.doc2path`` was changed to return a
+  path-like object in Sphinx 8.0.2.
+
+.. _Issue 262: https://github.com/sphinx-contrib/matlabdomain/issues/243
+
+
+sphinxcontrib-matlabdomain-0.22.0 (2024-07-17)
+==============================================
+
+* Fixed `Issue 249`_. Parsing of multiline property default values.
+* Fixed `Issue 252`_. Added missing class and method attributes.
+* Fixed `Issue 243`_. Fixed issue with autolinking when the *short name* matches
+  a module name.
+* Fixed `Issue 250`_. Removed unused and undocumented
+  ``MatInstanceAttributeDocumentor``, which hindered *Napoleon* to apply styling
+  to inline on property comments.
+* Added new configuration: ``matlab_show_property_specs``. When set to ``True``
+  it will print the property specification for class properties.
+
+  * Example
+
+    .. image:: docs/render_property_specs_0.22.0.png
+      :alt: Rendering property specs in 0.22.0
+
+.. _Issue 243: https://github.com/sphinx-contrib/matlabdomain/issues/243
+.. _Issue 249: https://github.com/sphinx-contrib/matlabdomain/issues/249
+.. _Issue 250: https://github.com/sphinx-contrib/matlabdomain/issues/250
+.. _Issue 252: https://github.com/sphinx-contrib/matlabdomain/issues/252
+
+
+sphinxcontrib-matlabdomain-0.21.5 (2024-02-10)
+==============================================
+
+* Fixed `Issue 240`_, where links in literal blocks where not detected
+  correctly.
+
+.. _Issue 240: https://github.com/sphinx-contrib/matlabdomain/issues/240
+
+
+sphinxcontrib-matlabdomain-0.21.4 (2024-01-04)
+==============================================
+
+* Fixed issue with warning if there is a mismatch between filename and
+  classname, if the classname is a reserved word (like arguments).
+* Fixed a problem with `PR 230`_ introduced in solving `Issue 204`_: when more
+  than one (sub)directory in the project had the same name, a dict was added to
+  ``entities_table`` that broke autolinking (see also `Issue 235`_).
+
+.. _PR 230: https://github.com/sphinx-contrib/matlabdomain/pull/230
+.. _Issue 235: https://github.com/sphinx-contrib/matlabdomain/issues/235
+
+
+sphinxcontrib-matlabdomain-0.21.3 (2024-01-02)
+==============================================
+
+* Fix issue with parsing of MATLAB files, where keywords were used in ``struct``
+  fieldnames. E.g. ``a = pkg.arguments``. These were mistaken as ``keyword``
+  tokens and could result in warnings with ``Check if valid MATLAB code.``.
+* Bump copyright to 2024.
+
+
+sphinxcontrib-matlabdomain-0.21.2 (2023-12-17)
+==============================================
+
+* Interpret ``matlab_src_dir`` relative to the Sphinx source directory to be
+  compatible with `sphinx-multiversion`_.
+
+.. _sphinx-multiversion: https://pypi.org/project/sphinx-multiversion/
+
+
+sphinxcontrib-matlabdomain-0.21.1 (2023-12-16)
+==============================================
+
+* Fixed `Issue 204`_, that caused an ``AttributeError`` to be thrown if a module
+  was named the same as the short name for a class.
+
+.. _Issue 204: https://github.com/sphinx-contrib/matlabdomain/issues/204
+
+
+sphinxcontrib-matlabdomain-0.21.0 (2023-12-16)
+==============================================
+
+* Allow ``matlab_src_dir`` to be a relative path of the ``conf.py`` file. See
+  `PR 224`_ and `PR 225`_.
+* Fixed `Issue 220`_. Parsing of property docstring could throw warning if there
+  were blank lines between comments.
+* Fixed `Issue 221`_. Using builtin's in class folder definition for methods
+  defined in other files, threw a parsing warning.
+* Fixed `Issue 225`_. Empty ``@classfolder`` would throw an assertion error.
+
+.. _Issue 220: https://github.com/sphinx-contrib/matlabdomain/issues/220
+.. _Issue 221: https://github.com/sphinx-contrib/matlabdomain/issues/221
+.. _Issue 225: https://github.com/sphinx-contrib/matlabdomain/issues/225
+.. _PR 224: https://github.com/sphinx-contrib/matlabdomain/pull/224
+.. _PR 225: https://github.com/sphinx-contrib/matlabdomain/pull/225
+
+
+sphinxcontrib-matlabdomain-0.20.2 (2023-09-15)
+==============================================
+
+* Fixed `Issue 214`_ again. Any folder below a ``@classfolder`` must be ignored.
+
+
+sphinxcontrib-matlabdomain-0.20.1 (2023-09-14)
+==============================================
+
+* Fixed `Issue 214`_. After fixing `Issue 56`_, we introduced a bug parsing
+  ``private`` folders incorrectly.
+
+.. _Issue 214: https://github.com/sphinx-contrib/matlabdomain/issues/214
+
+
+sphinxcontrib-matlabdomain-0.20.0 (2023-09-13)
 ==============================================
 
 * Fixed `Issue 188`_ and `Issue 189`_, which caused the extension to crash if
@@ -8,10 +124,19 @@ sphinxcontrib-matlabdomain-0.20.0 (2023-MM-DD)
   methods) to links! This means that we can write class documentation as `MATLAB
   Class Help`_ suggests. Including property and methods lists in the class
   docstring.
+* Fixed `Issue 56`_. `MATLAB Folder Class definitions`_, i.e. prefixed with
+  ``@``, are now treated as normal classes. All methods defined in the class
+  definition and in files in the ``@``-folder are available. Further, it can
+  referenced by a shortened name. Before you had to explicitly write out the
+  "module", class and methods. Now you can just write the class name. Only
+  caveat is that `Issue 44`_ still applies.
 
+.. _Issue 44: https://github.com/sphinx-contrib/matlabdomain/issues/44
+.. _Issue 56: https://github.com/sphinx-contrib/matlabdomain/issues/56
 .. _Issue 188: https://github.com/sphinx-contrib/matlabdomain/issues/188
 .. _Issue 189: https://github.com/sphinx-contrib/matlabdomain/issues/189
 .. _MATLAB Class Help:  https://mathworks.com/help/matlab/matlab_prog/create-help-for-classes.html
+.. _MATLAB Folder Class definitions: https://mathworks.com/help/matlab/matlab_oop/organizing-classes-in-folders.html
 
 
 sphinxcontrib-matlabdomain-0.19.1 (2023-05-17)
@@ -149,10 +274,10 @@ sphinxcontrib-matlabdomain-0.12.0 (2021-06-12)
 * Only Python >= 3.6 is supported.
 * Fixed numerous warnings due to `deprecated Sphinx API`_.
   * Use ``sphinx.ext.autodoc.directive.DocumenterBridge.record_dependencies``
-    insted of ``sphinx.ext.autodoc.directive.DocumenterBridge.filename_set``.
-  * Use ``str.rpartition()`` insted of ``sphinx.util.rpartition()``
+    instead of ``sphinx.ext.autodoc.directive.DocumenterBridge.filename_set``.
+  * Use ``str.rpartition()`` instead of ``sphinx.util.rpartition()``
   * Remove use of ``sphinx.util.force_decode()``.
-  * Use ``inspect.getmembers()`` insted of
+  * Use ``inspect.getmembers()`` instead of
     ``sphinx.util.inspect.safe_getmembers()``.
   * Remove use of encoding argument in ``autodoc.Documenter.get_doc()``.
 * Fixed `Issue 101 <https://github.com/sphinx-contrib/matlabdomain/issues/101>`_.
@@ -214,7 +339,7 @@ sphinxcontrib-matlabdomain-0.11.2 (2020-05-18)
 ==============================================
 
 * Fixed `Issue 103 <https://github.com/sphinx-contrib/matlabdomain/issues/103>`_.
-  If a double quoted string was followed by a single qouted string, the lexer
+  If a double quoted string was followed by a single quoted string, the lexer
   would produce incorrect token, causing the a parser warning. Fixed by merging
   parts from pygments.
 
@@ -269,7 +394,7 @@ sphinxcontrib-matlabdomain-0.8.0 (2019-05-11)
 * Fixed `Issue 91 <https://github.com/sphinx-contrib/matlabdomain/issues/91>`_.
   Static methods in folder based classes.
 * Replaced Pygments MATLAB lexer with own. Removes issues with functions being
-  incorrectly parsed, handles double qouted string correctly.
+  incorrectly parsed, handles double quoted string correctly.
 
 
 sphinxcontrib-matlabdomain-0.7.1 (2019-04-03)
@@ -473,7 +598,7 @@ sphinxcontrib-matlabdomain-0.2.4 (2014-02-21)
 * fix issues #17, #18
 * vastly simplify regex used to remove ellipsis from function signatures
 * save parsed mat_types in modules that are saved in sys.modules, and
-  retrieve them instead of re-parsing mfiles everytime!
+  retrieve them instead of re-parsing mfiles every time!
 
 
 sphinxcontrib-matlabdomain-0.2.3 (2014-02-20)

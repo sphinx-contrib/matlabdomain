@@ -1,17 +1,23 @@
 
 .. |github-action-badge| image:: https://github.com/sphinx-contrib/matlabdomain/actions/workflows/python-package.yml/badge.svg
-   :scale: 100%
    :align: middle
 
-+----------------+-----------------------+
-+ Github Actions | |github-action-badge| |
-+----------------+-----------------------+
+.. |rtd-badge| image:: https://readthedocs.org/projects/sphinxcontrib-matlabdomain/badge/?version=latest
+   :target: https://sphinxcontrib-matlabdomain.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+   :align: middle
+
++----------------------+-----------------------+
++ Github Actions       | |github-action-badge| |
++----------------------+-----------------------+
++ Documentation Status | |rtd-badge|           |
++----------------------+-----------------------+
 
 sphinxcontrib-matlabdomain -- Sphinx domain for auto-documenting MATLAB
 =======================================================================
 
 This extension provides a `Sphinx <http://www.sphinx-doc.org/en/master/index.html>`_
-*domain* for automatically generating doumentation from MATLAB source files.
+*domain* for automatically generating documentation from MATLAB source files.
 It is modelled after the `Python autodoc <http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_.
 
 The extension allows you to have your documentation and source files together
@@ -30,10 +36,10 @@ Usage
 
 The Python package must be installed with::
 
-   pip install -U sphinxcontrib-matlabdomain
+   pip install sphinxcontrib-matlabdomain
 
 In general, the usage is the same as for documenting Python code. The package
-is tested with Python >= 3.8 and Sphinx >=4.0.0.
+is tested with Python >= 3.8 and Sphinx >= 4.5.0.
 
 For a Python 2 compatible version the package must be installed with::
 
@@ -58,25 +64,30 @@ Additional Configuration
 
 ``matlab_src_dir``
    In order for the Sphinx MATLAB domain to auto-document MATLAB source code,
-   set the config value of ``matlab_src_dir`` to an absolute path. Currently
-   only one MATLAB path can be specified, but that folder and all the subfolders
-   in that tree will be searched.
+   set the config value of ``matlab_src_dir`` to an absolute path or a path
+   relative to the source directory. Currently only one MATLAB path can be
+   specified, but that folder and all the subfolders in that tree will be
+   searched.
 
 ``matlab_short_links``
    Shorten all class, package and functions to the minimum length. This assumes
    that everything is in the path as we would expect it in MATLAB. This will
    resemble a more MATLAB-like presentation. If it is ``True`` is forces
    ``matlab_keep_package_prefix = False``. Further, it allows for much shorter
-   and cleaner references. Example, given a path to a class like
-   ``target.subfolder.ClassFoo``.
+   and cleaner references. Example, given a path to classes like
+   ``target.subfolder.ClassFoo`` and ``target.@ClassFolder.Classfolder``
 
    * With ``False``::
 
       :class:`target.subfolder.ClassFoo`
 
+      :class:`target.@ClassFolder.Classfolder`
+
    * With ``True``::
 
       :class:`ClassFoo`
+
+      :class:`ClassFolder`
 
    Default is ``False``. *Added in Version 0.19.0*.
 
@@ -107,6 +118,11 @@ Additional Configuration
    which is what MathWorks does in their documentation. *Added in Version
    0.16.0*.
 
+``matlab_show_property_specs``
+   Show property *specifiers*, the size, class and validators, in the rendered
+   document. Default is ``False``, which is what MathWorks does in their
+   documentation. *Added in Version 0.22.0*.
+
 ``matlab_class_signature``
    Shows the constructor argument list in the class signature if ``True``.
    Default is ``False``. *Added in Version 0.20.0*.
@@ -114,8 +130,8 @@ Additional Configuration
 ``matlab_keep_package_prefix``
    Determines if the MATLAB package prefix ``+`` is displayed in the generated
    documentation.  Default is ``False``.  When ``False``, packages are still
-   referred to in ReST using ``+pakage.+subpkg.func`` but the output will be
-   ``pakage.subpkg.func()``. Forced to ``False`` if  ``matlab_short_links`` is
+   referred to in ReST using ``+package.+subpkg.func`` but the output will be
+   ``package.subpkg.func()``. Forced to ``False`` if  ``matlab_short_links`` is
    ``True``. *Added in Version 0.11.0*.
 
 ``matlab_src_encoding``
@@ -187,7 +203,7 @@ affect auto-docementation.
 
 .. note::
 
-    The module roles and directives create a psuedo namespace for MATLAB
+    The module roles and directives create a pseudo namespace for MATLAB
     objects, similar to a package. They represent the path to the folder
     containing the MATLAB object. If no module is specified then Sphinx will
     assume that the object is a built-in.

@@ -38,7 +38,22 @@ def test_weird():
 
 def test_classfolders():
     name = shortest_name("target.@ClassFolder")
-    assert name == "ClassFolder"
+    assert name == "target.@ClassFolder"
 
     name = shortest_name("target.@ClassFolder.Func")
-    assert name == "ClassFolder.Func"
+    assert name == "target.@ClassFolder.Func"
+
+    name = shortest_name("target.@ClassFolder.ClassFolder")
+    assert name == "target.@ClassFolder.ClassFolder"
+
+    name = shortest_name("target.+pkg.@ClassFolder.ClassFolder")
+    assert name == "target.+pkg.@ClassFolder.ClassFolder"
+
+    name = shortest_name("@ClassFolder")
+    assert name == "@ClassFolder"
+
+    name = shortest_name("@ClassFolder.Func")
+    assert name == "@ClassFolder.Func"
+
+    name = shortest_name("@ClassFolder.ClassFolder")
+    assert name == "@ClassFolder.ClassFolder"
