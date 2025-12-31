@@ -10,7 +10,6 @@ Test the autodoc extension with the matlab_keep_package_prefix option.
 """
 
 import pickle
-import helper
 import sys
 
 import helper

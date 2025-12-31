@@ -10,7 +10,6 @@ Test the autodoc extension.
 """
 
 import pickle
-import pytest
 import sys
 
 import helper
