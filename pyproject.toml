@@ -37,7 +37,6 @@ skip-magic-trailing-comma = false
 fixable = ["ALL"]
 ignore = [
     "ARG",
-    "B",
     "D",
     "D102",
     "D103",

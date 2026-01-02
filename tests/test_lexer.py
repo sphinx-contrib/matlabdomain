@@ -20,5 +20,7 @@ def test_strings():
 
 
 def test_function_names():
-    tk_name, _ = zip(*MatlabLexer().get_tokens("function_name;functions;function;"))
+    tk_name, _ = zip(
+        *MatlabLexer().get_tokens("function_name;functions;function;"), strict=False
+    )
     assert Token.Name.Function not in tk_name

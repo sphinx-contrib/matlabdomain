@@ -608,7 +608,7 @@ class MatModule(MatObject):
             # trim file extension
             if os.path.isfile(path):
                 key, _ = os.path.splitext(key)
-            if not results or key not in next(zip(*results)):
+            if not results or key not in next(zip(*results, strict=False)):
                 value = self.getter(key, None)
                 if value:
                     results.append((key, value))
