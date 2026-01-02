@@ -42,18 +42,6 @@ jobs:
             python-version: '3.14'
             sphinx-version: dev
 
-            # Older sphinx fail with later python versions,
-            # so test them only with the oldest supported python
-        -   os: ubuntu-latest
-            python-version: '3.10'
-            sphinx-version: '60'
-        -   os: ubuntu-latest
-            python-version: '3.10'
-            sphinx-version: '53'
-        -   os: ubuntu-latest
-            python-version: '3.10'
-            sphinx-version: '45'
-
     steps:
     - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
