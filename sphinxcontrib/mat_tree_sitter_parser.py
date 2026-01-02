@@ -232,8 +232,8 @@ q_get_set = ML_LANG.query("""["get." "set."]""")
 q_line_continuation = ML_LANG.query("(line_continuation) @lc")
 
 
-re_percent_remove = re.compile(r"^[ \t]*% ?", flags=re.M)
-re_trim_line = re.compile(r"^[ \t]*", flags=re.M)
+re_percent_remove = re.compile(r"^[ \t]*% ?", flags=re.MULTILINE)
+re_trim_line = re.compile(r"^[ \t]*", flags=re.MULTILINE)
 re_assign_remove = re.compile(r"^=[ \t]*")
 
 
@@ -246,7 +246,7 @@ def tree_sitter_is_0_21():
 
 
 def get_row(point):
-    """Get row from point. This api changed from v0.21.3 to v0.22.0"""
+    """Get row from point. This api changed from v0.21.3 to v0.22.0."""
     if tree_sitter_is_0_21():
         return point[0]
     else:
@@ -285,7 +285,7 @@ def process_default(node, encoding):
 
 class MatScriptParser:
     def __init__(self, root_node, encoding):
-        """Parse m script"""
+        """Parse m script."""
         self.encoding = encoding
         script_matches = q_script.matches(root_node)
         if script_matches:
@@ -303,7 +303,7 @@ class MatScriptParser:
 
 class MatFunctionParser:
     def __init__(self, root_node, encoding):
-        """Parse Function definition"""
+        """Parse Function definition."""
         self.encoding = encoding
         _, fun_match = q_fun.matches(root_node)[0]
         self.name = fun_match.get("name").text.decode(
@@ -477,11 +477,10 @@ class MatFunctionParser:
                             ds = "\n".join(ds.split("\n")[1:])
                     if ds:
                         docstring = ds
-                else:
-                    if get_row(arg.start_point) - get_row(prev_node.end_point) <= 1:
-                        docstring = process_text_into_docstring(
-                            prev_node.text, self.encoding
-                        )
+                elif get_row(arg.start_point) - get_row(prev_node.end_point) <= 1:
+                    docstring = process_text_into_docstring(
+                        prev_node.text, self.encoding
+                    )
             elif prev_node.type == "property":
                 # The previous argumentnode may have eaten our comment
                 # check for it a trailing comment. If it is not there
@@ -722,11 +721,10 @@ class MatClassParser:
 
                     if ds:
                         docstring = ds
-                else:
-                    if get_row(prop.start_point) - get_row(prev_node.end_point) <= 1:
-                        docstring = process_text_into_docstring(
-                            prev_node.text, self.encoding
-                        )
+                elif get_row(prop.start_point) - get_row(prev_node.end_point) <= 1:
+                    docstring = process_text_into_docstring(
+                        prev_node.text, self.encoding
+                    )
             elif prev_node.type == "property":
                 # The previous property node may have eaten our comment
                 # check for it a trailing comment. If it is not there
@@ -830,11 +828,10 @@ class MatClassParser:
                             ds = "\n".join(ds.split("\n")[1:])
                     if ds:
                         docstring = ds
-                else:
-                    if get_row(enum.start_point) - get_row(prev_node.end_point) <= 1:
-                        docstring = process_text_into_docstring(
-                            prev_node.text, self.encoding
-                        )
+                elif get_row(enum.start_point) - get_row(prev_node.end_point) <= 1:
+                    docstring = process_text_into_docstring(
+                        prev_node.text, self.encoding
+                    )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
                 docstring = None
@@ -888,11 +885,10 @@ class MatClassParser:
                             ds = "\n".join(ds.split("\n")[1:])
                     if ds:
                         docstring = ds
-                else:
-                    if get_row(event.start_point) - get_row(prev_node.end_point) <= 1:
-                        docstring = process_text_into_docstring(
-                            prev_node.text, self.encoding
-                        )
+                elif get_row(event.start_point) - get_row(prev_node.end_point) <= 1:
+                    docstring = process_text_into_docstring(
+                        prev_node.text, self.encoding
+                    )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
                 docstring = None

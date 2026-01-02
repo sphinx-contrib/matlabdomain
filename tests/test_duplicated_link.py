@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-test_package_links.py
+"""test_package_links.py.
 ~~~~~~~~~~~~
 
 Test the autodoc extension.
@@ -10,12 +8,10 @@ Test the autodoc extension.
 """
 
 import pickle
-import sys
 
 import docutils
 import helper
 import pytest
-from sphinx.testing.fixtures import make_app, test_params
 
 
 @pytest.fixture(scope="module")

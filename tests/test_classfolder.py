@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-test_autodoc
+"""test_autodoc.
 ~~~~~~~~~~~~
 
 Test the autodoc extension.
@@ -10,11 +8,9 @@ Test the autodoc extension.
 """
 
 import pickle
-import sys
 
 import helper
 import pytest
-from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;
 
 
 @pytest.fixture(scope="module")
@@ -37,7 +33,7 @@ def test_first(make_app, rootdir):
 def test_second(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_classfolder"
     app = make_app(srcdir=srcdir)
-    app.builder.build_all
+    app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_second.doctree").read_bytes())
     assert (
@@ -49,7 +45,7 @@ def test_second(make_app, rootdir):
 def test_third(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_classfolder"
     app = make_app(srcdir=srcdir)
-    app.builder.build_all
+    app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_third.doctree").read_bytes())
     assert (
