@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 from setuptools import find_packages, setup
 
-with open("README.rst", "r") as f_readme:
+with open("README.rst") as f_readme:
     long_desc = f_readme.read()
 
 requires = [

@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 import os
 
 import pytest
@@ -9,14 +8,6 @@ from sphinxcontrib import mat_types
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
 TESTDATA_ROOT = os.path.join(DIRNAME, "test_data")
 TESTDATA_SUB = os.path.join(TESTDATA_ROOT, "submodule")
-
-
-# @pytest.fixture(autouse=True)
-# def setup():
-#     try:
-#         sys.modules.pop('test_data')
-#     except KeyError:
-#         pass
 
 
 def test_ClassExample():
@@ -510,7 +501,7 @@ def test_ClassWithFunctionVariable():
 
 def test_f_inputargs_error():
     mfile = os.path.join(DIRNAME, "test_data", "f_inputargs_error.m")
-    obj = mat_types.MatObject.parse_mfile(mfile, "f_inputargs_error", "test_data")
+    mat_types.MatObject.parse_mfile(mfile, "f_inputargs_error", "test_data")
 
 
 # Fails when running with other test files. Warnings are already logged.
@@ -520,7 +511,7 @@ def test_ClassWithErrors(caplog):
 
     caplog.clear()
     mfile = os.path.join(DIRNAME, "test_data", "ClassWithErrors.m")
-    obj = mat_types.MatObject.parse_mfile(mfile, "ClassWithErrors", "test_data")
+    mat_types.MatObject.parse_mfile(mfile, "ClassWithErrors", "test_data")
     records = caplog.record_tuples
     assert records == [
         (
@@ -819,22 +810,6 @@ def test_ClassWithEllipsisProperties():
     assert obj.properties["D"]["default"] == "'...'"
     assert obj.properties["E"]["docstring"] == "The string with spaces"
     assert obj.properties["E"]["default"] == "'some string with spaces'"
-
-
-#         mymethod.docstring
-#         == " a method in :class:`ClassWithTrailingCommentAfterBases`\n\n :param b: an input to :meth:`mymethod`"
-#     )
-
-
-#  A = 1 + 2 + 3 + ... my butt
-#             4 + 5; % an expression with ellipsis
-#         B = {'hello', 'bye'; ...
-#             'foo', 'bar';
-#             'this', 'that'
-#             'also' 'too'
-#             } % a cell array with ellipsis and other array notation
-#         C = ClassWithEllipsisProperties.B(2:end, 1) % using end inside array
-#         D = '...'; % String with line continuation
 
 
 def test_ClassWithTrailingSemicolons():

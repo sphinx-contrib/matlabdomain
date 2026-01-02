@@ -1,4 +1,6 @@
-from sphinxcontrib.mat_lexer import MatlabLexer, Token
+from pygments.token import Token
+
+from sphinxcontrib.mat_lexer import MatlabLexer
 
 
 def test_strings():

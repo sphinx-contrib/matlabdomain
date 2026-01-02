@@ -1,5 +1,4 @@
-"""
-sphinxcontrib.mat_directives
+"""sphinxcontrib.mat_directives.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Extend autodoc directives to matlabdomain.
