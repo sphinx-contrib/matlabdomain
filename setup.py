@@ -2,6 +2,9 @@
 
 from setuptools import find_packages, setup
 
+with open("README.rst", "r") as f_readme:
+    long_desc = f_readme.read()
+
 setup(
     name="sphinxcontrib-matlabdomain",
     use_scm_version=True,

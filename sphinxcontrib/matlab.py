@@ -10,7 +10,6 @@ The MATLAB domain.
 
 import re
 
-import sphinx.util
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from sphinx import addnodes
@@ -19,12 +18,13 @@ from sphinx.domains import Domain, Index, ObjType
 from sphinx.locale import _ as translation
 from sphinx.roles import XRefRole
 from sphinx.util.docfields import Field, GroupedField, TypedField
+from sphinx.util.logging import getLogger
 from sphinx.util.nodes import make_refnode
 
 from . import mat_directives, mat_types
 from . import mat_documenters as doc
 
-logger = sphinx.util.logging.getLogger("matlab-domain")
+logger = getLogger("matlab-domain")
 
 
 # REs for MATLAB signatures

@@ -8,7 +8,6 @@ Extend autodoc directives to matlabdomain.
 :license: BSD, see LICENSE for details.
 """
 
-import sphinx.util
 from sphinx.ext.autodoc.directive import (
     AutodocDirective,
     DocumenterBridge,
@@ -16,8 +15,9 @@ from sphinx.ext.autodoc.directive import (
     parse_generated_content,
     process_documenter_options,
 )
+from sphinx.util.logging import getLogger
 
-logger = sphinx.util.logging.getLogger("matlab-domain")
+logger = getLogger("matlab-domain")
 
 
 class MatlabAutodocDirective(AutodocDirective):
