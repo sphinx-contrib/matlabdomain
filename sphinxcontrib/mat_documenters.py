@@ -59,7 +59,7 @@ from .mat_types import (
 mat_ext_sig_re = re.compile(
     r"""^ ([+@]?[+@\w.]+::)?            # explicit module name
           ([+@]?[+@\w.]+\.)?            # module and/or class name(s)
-          ([+@]?\w+)  \s*               # thing name
+          (\.|[+@]?\w+)  \s*            # thing name or dot for global namespace
           (?: \((.*)\)                  # optional: arguments
            (?:\s* -> \s* (.*))?         #           return annotation
           )? $                          # and nothing more
@@ -101,15 +101,25 @@ class MatlabDocumenter(PyDocumenter):
             )
             return False
 
-        # support explicit module and class name separation via ::
-        if explicit_modname is not None:
-            modname = explicit_modname[:-2]
-            parents = (path and path.rstrip(".").split(".")) or []
+        # Handle special case where base is "." (global namespace)
+        # This only applies when there's no explicit module name and no path
+        if base == "." and explicit_modname is None and path is None:
+            logger.info(
+                "[sphinxcontrib-matlabdomain] parse_name: Special case for root module detected"
+            )
+            # "." means document the global namespace (root module)
+            self.modname = ""
+            self.objpath = []
         else:
-            modname = None
-            parents = []
+            # support explicit module and class name separation via ::
+            if explicit_modname is not None:
+                modname = explicit_modname[:-2]
+                parents = (path and path.rstrip(".").split(".")) or []
+            else:
+                modname = None
+                parents = []
 
-        self.modname, self.objpath = self.resolve_name(modname, parents, path, base)
+            self.modname, self.objpath = self.resolve_name(modname, parents, path, base)
 
         if self.modname is None:
             return False
@@ -132,6 +142,19 @@ class MatlabDocumenter(PyDocumenter):
         try:
             msg = f"[sphinxcontrib-matlabdomain] MatlabDocumenter.import_object {self.modname=}, {self.objpath=}, {self.fullname=}."
             logger.debug(msg)
+
+            # Handle special case: documenting the root/global namespace
+            if self.modname == "" and len(self.objpath) == 0:
+                # Look up the root module in entities_table
+                root_obj = entities_table.get(".")
+                logger.info(
+                    f"[sphinxcontrib-matlabdomain] import_object: Found root module: {root_obj is not None}, type: {type(root_obj).__name__ if root_obj else 'None'}"
+                )
+                self.object = root_obj
+                if self.object is None:
+                    raise KeyError("Root module '.' not found in entities_table")
+                return True
+
             if len(self.objpath) > 1:
                 lookup_name = ".".join([self.modname, self.objpath[0]])
                 lookup_name = lookup_name.lstrip(".")
@@ -674,7 +697,12 @@ class MatlabDocumenter(PyDocumenter):
             classes.sort(key=lambda cls: cls.priority)
             # give explicitly separated module name, so that members
             # of inner classes can be documented
-            full_mname = self.modname + "::" + ".".join([*self.objpath, mname])
+            # Special handling for root module (empty modname)
+            if self.modname == "" and len(self.objpath) == 0:
+                # For root module members, just use the member name
+                full_mname = mname
+            else:
+                full_mname = self.modname + "::" + ".".join([*self.objpath, mname])
             documenter = classes[-1](self.directive, full_mname, self.indent)
             memberdocumenters.append((documenter, isattr))
         member_order = self.options.member_order or self.env.config.autodoc_member_order
@@ -740,22 +768,29 @@ class MatlabDocumenter(PyDocumenter):
         self.real_modname = real_modname or self.get_real_modname()
 
         # try to also get a source code analyzer for attribute docs
-        try:
-            self.analyzer = MatModuleAnalyzer.for_module(self.real_modname)
-            # parse right now, to get PycodeErrors on parsing (results will
-            # be cached anyway)
-            self.analyzer.find_attr_docs()
-        except PycodeError as err:
-            self.env.app.debug(
-                "[sphinxcontrib-matlabdomain] module analyzer failed: %s", err
-            )
-            # no source file -- e.g. for builtin and C modules
+        # For the root module (empty modname), skip the analyzer
+        if self.real_modname:
+            try:
+                self.analyzer = MatModuleAnalyzer.for_module(self.real_modname)
+                # parse right now, to get PycodeErrors on parsing (results will
+                # be cached anyway)
+                self.analyzer.find_attr_docs()
+            except PycodeError as err:
+                self.env.app.debug(
+                    "[sphinxcontrib-matlabdomain] module analyzer failed: %s", err
+                )
+                # no source file -- e.g. for builtin and C modules
+                self.analyzer = None
+                # at least add the module.__file__ as a dependency
+                if hasattr(self.module, "__file__") and self.module.__file__:
+                    self.directive.record_dependencies.add(self.module.__file__)
+            else:
+                self.directive.record_dependencies.add(self.analyzer.srcname)
+        else:
+            # Root module has no real module name, so no analyzer needed
             self.analyzer = None
-            # at least add the module.__file__ as a dependency
             if hasattr(self.module, "__file__") and self.module.__file__:
                 self.directive.record_dependencies.add(self.module.__file__)
-        else:
-            self.directive.record_dependencies.add(self.analyzer.srcname)
 
         # check __module__ of object (for members not given explicitly)
         if check_module:
@@ -795,7 +830,14 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
         return ret
 
     def add_directive_header(self, sig):
-        MatlabDocumenter.add_directive_header(self, sig)
+        # Special case for root module (empty modname and objpath)
+        if self.modname == "" and len(self.objpath) == 0:
+            # Don't add the directive header for root module
+            # Just add the signature if there is one
+            if sig:
+                self.add_line(sig, self.get_sourcename())
+        else:
+            MatlabDocumenter.add_directive_header(self, sig)
 
         # add some module-specific options
         if self.options.synopsis:
@@ -810,7 +852,8 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
             if not hasattr(self.object, "__all__"):
                 # for implicit module members, check __module__ to avoid
                 # documenting imported objects
-                return True, self.object.safe_getmembers()
+                members = self.object.safe_getmembers()
+                return True, members
             else:
                 memberlist = [name for name, obj in self.object.__all__]
         else:
