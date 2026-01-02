@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-    sphinxcontrib
-    ~~~~~~~~~~~~~
+sphinxcontrib
+~~~~~~~~~~~~~
 
-    This package is a namespace package that contains all extensions
-    distributed in the ``sphinx-contrib`` distribution.
+This package is a namespace package that contains all extensions
+distributed in the ``sphinx-contrib`` distribution.
 
-    :copyright: Copyright 2007-2009 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2007-2009 by the Sphinx team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
 
-from .matlab import ensure_configuration, analyze, MATLABDomain
-from . import mat_documenters as doc
 from . import mat_directives
+from . import mat_documenters as doc
+from .matlab import MATLABDomain, analyze, ensure_configuration
 
 
 def setup(app):

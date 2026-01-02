@@ -23,6 +23,13 @@ repos:
     -   id: ruff-format
         # args: [--diff]
 
+# Format TOML files
+-   repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: v2.15.0
+    hooks:
+    -   id: pretty-format-toml
+        args: [--autofix, --indent, '4']
+
     # Checks for spelling errors
 -   repo: https://github.com/codespell-project/codespell
     rev: v2.4.1

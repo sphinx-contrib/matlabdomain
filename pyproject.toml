@@ -4,19 +4,19 @@ requires = ["hatchling", "hatch-vcs"]
 
 [project]
 classifiers = [
-        "Development Status :: 4 - Beta",
-        "Environment :: Console",
-        "Environment :: Web Environment",
-        "Intended Audience :: Developers",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python",
-        "Topic :: Documentation",
-        "Topic :: Utilities",
-        "Framework :: Sphinx :: Extension",
-        "Framework :: Sphinx :: Domain",
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Documentation",
+    "Topic :: Utilities",
+    "Framework :: Sphinx :: Extension",
+    "Framework :: Sphinx :: Domain"
 ]
 dependencies = [
-    "Sphinx>=4.0.0",
+    "Sphinx>=7.0.0",
     "tree-sitter-matlab>=1.0.2,<1.0.5",
     "tree-sitter>=0.21.3,<0.23.0",
     "setuptools"
@@ -29,7 +29,10 @@ license-files = ["LICENSE"]
 maintainers = [{name = "Jørgen Cederberg", email = "jorgen@cederberg.be"}]
 name = "sphinxcontrib-matlabdomain"
 readme = "README.rst"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
+
+[project.entry-points."sphinx.builders"]
+matlab = "sphinxcontrib.matlab"
 
 [project.optional-dependencies]
 dev = [
@@ -37,20 +40,28 @@ dev = [
     "pytest-cov",
     "pre-commit",
     "defusedxml>=0.7.1",
-    "sphinxcontrib-napoleon",
-    ]
+    "sphinxcontrib-napoleon"
+]
 doc = [
     "sphinx_rtd_theme",
-    "sphinxcontrib-napoleon",
+    "sphinxcontrib-napoleon"
 ]
 
-[project.entry-points."sphinx.builders"]
-matlab = "sphinxcontrib.matlab"
-
 [project.urls]
-Homepage = "https://github.com/sphinx-contrib/matlabdomain"
 Documentation = "https://sphinxcontrib-matlabdomain.readthedocs.io"
 Download = "http://pypi.python.org/pypi/sphinxcontrib-matlabdomain"
+Homepage = "https://github.com/sphinx-contrib/matlabdomain"
+
+[tool.codespell]
+builtin = "clear,rare"
+ignore-words = ".github/codespell_ignore_words.txt"
+skip = "./.git"
+
+[tool.coverage.run]
+branch = true
+omit = [
+    '*/_build/*'
+]
 
 [tool.hatch.build.hooks.vcs]
 version-file = "sphinxcontrib/matlab/_version.py"
@@ -58,7 +69,12 @@ version-file = "sphinxcontrib/matlab/_version.py"
 [tool.hatch.version]
 source = "vcs"
 
-
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers --show-capture=all --showlocals -s -vv"
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
+junit_family = "xunit2"
+log_cli_level = "INFO"
+xfail_strict = true
 
 [tool.ruff]
 include = [
@@ -80,14 +96,14 @@ skip-magic-trailing-comma = false
 [tool.ruff.lint]
 fixable = ["ALL"]
 ignore = [
-"D203",
-"E203",
-"PERF203",
-"PERF401",
-"PERF403",
-"RUF001",
-"RUF012",
-"SIM102",
+    "D203",
+    "E203",
+    "PERF203",
+    "PERF401",
+    "PERF403",
+    "RUF001",
+    "RUF012",
+    "SIM102"
 ]
 # List of all the ruff rules (includes why the rule matters)
 # https://docs.astral.sh/ruff/rules/
@@ -109,22 +125,3 @@ unfixable = []
 
 [tool.ruff.lint.mccabe]
 max-complexity = 51
-
-[tool.codespell]
-builtin = "clear,rare"
-ignore-words = ".github/codespell_ignore_words.txt"
-skip = "./.git"
-
-
-[tool.pytest.ini_options]
-addopts = "-ra --strict-config --strict-markers --show-capture=all --showlocals -s -vv"
-doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
-junit_family = "xunit2"
-log_cli_level = "INFO"
-xfail_strict = true
-
-[tool.coverage.run]
-branch = true
-omit =    [
-        '*/_build/*',
-    ]

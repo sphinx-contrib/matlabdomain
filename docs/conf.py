@@ -24,7 +24,7 @@ project = "sphinxcontrib-matlabdomain"
 copyright = "2018, Jørgen Cederberg"
 author = "Jørgen Cederberg"
 
-from importlib.metadata import version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError, version
 
 project = "sphinxcontrib-matlabdomain"
 try:
