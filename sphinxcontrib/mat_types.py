@@ -14,7 +14,7 @@ from importlib.metadata import version
 from io import open  # for opening files with encoding in Python 2
 from zipfile import ZipFile
 
-import sphinx.util
+from sphinx.util.logging import getLogger
 from tree_sitter import Parser
 
 from sphinxcontrib.mat_tree_sitter_parser import (
@@ -24,7 +24,7 @@ from sphinxcontrib.mat_tree_sitter_parser import (
     MatScriptParser,
 )
 
-logger = sphinx.util.logging.getLogger("matlab-domain")
+logger = getLogger("matlab-domain")
 
 __all__ = [
     "MatApplication",
