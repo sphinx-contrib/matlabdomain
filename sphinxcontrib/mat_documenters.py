@@ -1,5 +1,4 @@
-"""
-sphinxcontrib.mat_documenters
+"""sphinxcontrib.mat_documenters.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Extend autodoc directives to matlabdomain.
@@ -76,15 +75,12 @@ logger = getLogger("matlab-domain")
 
 
 class MatlabDocumenter(PyDocumenter):
-    """
-    Base class for documenters of MATLAB objects.
-    """
+    """Base class for documenters of MATLAB objects."""
 
     domain = "mat"
 
     def parse_name(self):
-        """
-        From: sphinx/ext/autodoc/__init__.py
+        """From: sphinx/ext/autodoc/__init__.py
         Determine what module to import and what attribute to document.
 
         Returns True and sets *self.modname*, *self.objpath*, *self.fullname*,
@@ -149,25 +145,19 @@ class MatlabDocumenter(PyDocumenter):
         # but importing modules with side effects can raise all kinds of errors
         except Exception:
             if self.objpath:
-                errmsg = (
-                    "[sphinxcontrib-matlabdomain] Failed to import %s %r from module %r"
-                    % (self.objtype, ".".join(self.objpath), self.modname)
+                errmsg = "[sphinxcontrib-matlabdomain] Failed to import {} {!r} from module {!r}".format(
+                    self.objtype, ".".join(self.objpath), self.modname
                 )
             else:
-                errmsg = "[sphinxcontrib-matlabdomain] Failed to import %s %r" % (
-                    self.objtype,
-                    self.fullname,
-                )
-            errmsg += (
-                "; the following exception was raised:\n%s" % traceback.format_exc()
-            )
+                errmsg = f"[sphinxcontrib-matlabdomain] Failed to import {self.objtype} {self.fullname!r}"
+            errmsg += f"; the following exception was raised:\n{traceback.format_exc()}"
             logger.warning(errmsg)
             self.env.note_reread()
             return False
 
     def add_content(self, more_content, no_docstring=False):
         """Add content from docstrings, attribute documentation and user."""
-        sourcename = "docstring of %s" % self.fullname
+        sourcename = f"docstring of {self.fullname}"
 
         # add content from docstrings
         if not no_docstring:
@@ -844,8 +834,7 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
 
 
 class MatModuleLevelDocumenter(MatlabDocumenter):
-    """
-    Specialized Documenter subclass for objects on module level (functions,
+    """Specialized Documenter subclass for objects on module level (functions,
     classes, data/constants).
 
     From: sphinx/ext/autodoc/__init__.py
@@ -873,8 +862,7 @@ class MatModuleLevelDocumenter(MatlabDocumenter):
 
 
 class MatClassLevelDocumenter(MatlabDocumenter):
-    """
-    Specialized Documenter subclass for objects on class level (methods,
+    """Specialized Documenter subclass for objects on class level (methods,
     attributes).
     """
 
@@ -905,9 +893,8 @@ class MatClassLevelDocumenter(MatlabDocumenter):
         return modname, [*parents, base]
 
 
-class MatDocstringSignatureMixin(object):
-    """
-    Mixin for FunctionDocumenter and MethodDocumenter to provide the
+class MatDocstringSignatureMixin:
+    """Mixin for FunctionDocumenter and MethodDocumenter to provide the
     feature of reading the signature from the docstring.
     """
 
@@ -955,9 +942,7 @@ class MatDocstringSignatureMixin(object):
 
 
 class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter):
-    """
-    Specialized Documenter subclass for functions.
-    """
+    """Specialized Documenter subclass for functions."""
 
     objtype = "function"
     member_order = 30
@@ -975,14 +960,14 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
 
 
 def make_baseclass_links(env, obj):
-    """Returns list of base class links"""
+    """Returns list of base class links."""
     obj_bases = obj.__bases__
     links = []
     if len(obj_bases):
         base_classes = obj_bases.items()
         for base_class_name, entity in base_classes:
             if not entity:
-                links.append(":class:`%s`" % base_class_name)
+                links.append(f":class:`{base_class_name}`")
             else:
                 links.append(entity.link(env))
 
@@ -990,9 +975,7 @@ def make_baseclass_links(env, obj):
 
 
 class MatClassDocumenter(MatModuleLevelDocumenter):
-    """
-    Specialized Documenter subclass for classes.
-    """
+    """Specialized Documenter subclass for classes."""
 
     objtype = "class"
     member_order = 20
@@ -1027,7 +1010,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         return ret
 
     def format_args(self):
-        """Format arguments
+        """Format arguments.
 
         We use the method named the same as the class for arguments, but we only
         renders the arguments if `matlab_class_signature` is True and the method
@@ -1055,7 +1038,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             result = init_doc._find_signature()
             if result is not None:
                 # use args only for Class signature
-                return "(%s)" % result[0]
+                return f"({result[0]})"
 
         return MatModuleLevelDocumenter.format_signature(self)
 
@@ -1322,9 +1305,7 @@ class MatDataDocumenter(MatModuleLevelDocumenter, PyDataDocumenter):
 
 
 class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
-    """
-    Specialized Documenter subclass for methods (normal, static and class).
-    """
+    """Specialized Documenter subclass for methods (normal, static and class)."""
 
     objtype = "method"
     member_order = 50
@@ -1345,7 +1326,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         return ret
 
     def format_args(self):
-        """Format argument
+        """Format argument.
 
         We omit `obj` and `self` from the output if they are the first argument
         unless it's a class constructor.
@@ -1381,7 +1362,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
                     docstrings[i][j], no_link_state
                 )
                 if not_in_literal_block and docstrings[i][j]:  # also not blank line
-                    if match := p.search(docstrings[i][j]):
+                    if _ := p.search(docstrings[i][j]):
                         docstrings[i][j] = p.sub(
                             f":meth:`{name}() <{self.class_object().fullname(self.env)}.{name}>`",
                             docstrings[i][j],
@@ -1395,9 +1376,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
 
 class MatAttributeDocumenter(MatClassLevelDocumenter):
-    """
-    Specialized Documenter subclass for attributes.
-    """
+    """Specialized Documenter subclass for attributes."""
 
     objtype = "attribute"
     member_order = 60
@@ -1505,9 +1484,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
 
 class MatScriptDocumenter(MatModuleLevelDocumenter):
-    """
-    Specialized Documenter subclass for scripts.
-    """
+    """Specialized Documenter subclass for scripts."""
 
     objtype = "script"
 
@@ -1520,9 +1497,7 @@ class MatScriptDocumenter(MatModuleLevelDocumenter):
 
 
 class MatApplicationDocumenter(MatModuleLevelDocumenter):
-    """
-    Specialized Documenter subclass for Matlab Applications (.mlapp)
-    """
+    """Specialized Documenter subclass for Matlab Applications (.mlapp)."""
 
     objtype = "application"
 

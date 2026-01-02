@@ -1,8 +1,6 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 import helper
 import pytest
-from sphinx.testing.fixtures import make_app, test_params
 
 from sphinxcontrib import mat_documenters as doc
 from sphinxcontrib.mat_types import MatModule, MatObject, entities_table
@@ -34,7 +32,7 @@ def test_unknown():
     assert MatObject.matlabify("not_test_data") is None
 
 
-def test_script(mod, caplog):
+def test_script(mod):
     script = mod.getter("script")
     assert isinstance(script, doc.MatScript)
 

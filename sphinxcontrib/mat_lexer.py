@@ -1,5 +1,4 @@
-"""
-pygments.lexers.matlab
+"""pygments.lexers.matlab.
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Lexers for Matlab and related languages.
@@ -24,7 +23,6 @@ from pygments.token import (
     Punctuation,
     String,
     Text,
-    Token,
     Whitespace,
 )
 
@@ -32,8 +30,7 @@ __all__ = ["MatlabLexer"]
 
 
 class MatlabLexer(RegexLexer):
-    """
-    For Matlab source code.
+    """For Matlab source code.
 
     .. versionadded:: 0.10
     """
