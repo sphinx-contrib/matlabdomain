@@ -341,7 +341,7 @@ class MatObject:
         self.name = name
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object (e.g. when generating auto-links)."""
         return "ref"
 
     @property
@@ -369,7 +369,7 @@ class MatObject:
 
     @staticmethod
     def matlabify(objname):
-        """Makes a MatObject.
+        """Make a MatObject.
 
         :param objname: Name of object to matlabify without file extension.
         :type objname: str
@@ -513,7 +513,7 @@ class MatObject:
 
     @staticmethod
     def parse_mlappfile(mlappfile, name, path):
-        """Uses ZipFile to read the metadata/appMetadata.xml file and
+        """Use ZipFile to read the metadata/appMetadata.xml file and
         the metadata/coreProperties.xml file description tags.
         Parses XML content using ElementTree.
 
@@ -581,7 +581,7 @@ class MatModule(MatObject):
         self.entities = []
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object (e.g. when generating auto-links)."""
         return "mod"
 
     def safe_getmembers(self):
@@ -702,7 +702,7 @@ class MatFunction(MatObject):
         self.rem_tks = None
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object (e.g. when generating auto-links)."""
         return "func"
 
     @property
@@ -759,11 +759,11 @@ class MatClass(MatObject):
         self.rem_tks = None
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object (e.g. when generating auto-links)."""
         return "class"
 
     def fullname(self, env):
-        """Returns full name for class object, for use as link target."""
+        """Return full name for class object, for use as link target."""
         modname = self.__module__
         classname = self.name
         if env.config.matlab_short_links:
@@ -780,7 +780,7 @@ class MatClass(MatObject):
         return f"{modname}.{classname}".lstrip(".")
 
     def link(self, env, name=None):
-        """Returns link for class object."""
+        """Return link for class object."""
         target = self.fullname(env)
         if name:
             return f":class:`{name} <{target}>`"
@@ -848,7 +848,7 @@ class MatProperty(MatObject):
         self.validators = attrs["validators"]
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object (e.g. when generating auto-links)."""
         return "attr"
 
     @property
@@ -867,7 +867,7 @@ class MatEnumeration(MatObject):
         self.docstring = attrs["docstring"]
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object (e.g. when generating auto-links)."""
         return "enum"
 
     @property
@@ -894,7 +894,7 @@ class MatMethod(MatFunction):
         self.attrs = parsed_function.attrs
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object (e.g. when generating auto-links)."""
         return "meth"
 
     @property

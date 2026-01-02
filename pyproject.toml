@@ -37,10 +37,14 @@ skip-magic-trailing-comma = false
 fixable = ["ALL"]
 ignore = [
     "ARG",
-    "D",
+    "D100",
+    "D101",
     "D102",
     "D103",
+    "D105",
+    "D107",
     "D203",
+    "D205",
     "E203",
     "E501",
     "PERF203",
@@ -81,7 +85,7 @@ unfixable = []
 max-complexity = 51
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/test_*" = []
+"tests/**/*" = ["D"]
 
 [tool.ruff.lint.pylint]
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-args

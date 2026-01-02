@@ -960,7 +960,7 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
 
 
 def make_baseclass_links(env, obj):
-    """Returns list of base class links."""
+    """Return list of base class links."""
     obj_bases = obj.__bases__
     links = []
     if len(obj_bases):
