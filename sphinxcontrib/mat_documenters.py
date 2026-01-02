@@ -111,7 +111,7 @@ class MatlabDocumenter(PyDocumenter):
 
         self.modname, self.objpath = self.resolve_name(modname, parents, path, base)
 
-        if not self.modname:
+        if self.modname is None:
             return False
 
         self.args = args
@@ -857,7 +857,9 @@ class MatModuleLevelDocumenter(MatlabDocumenter):
                 # ... or in the scope of a module directive
                 if not modname:
                     modname = self.env.temp_data.get("mat:module")
-                # ... else, it stays None, which means invalid
+                # ... else, default to root module (empty string)
+                if not modname:
+                    modname = ""
         return modname, [*parents, base]
 
 
@@ -889,7 +891,9 @@ class MatClassLevelDocumenter(MatlabDocumenter):
                 modname = self.env.temp_data.get("autodoc:module")
             if not modname:
                 modname = self.env.temp_data.get("mat:module")
-            # ... else, it stays None, which means invalid
+            # ... else, default to root module (empty string)
+            if not modname:
+                modname = ""
         return modname, [*parents, base]
 
 
