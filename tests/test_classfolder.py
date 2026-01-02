@@ -33,7 +33,7 @@ def test_first(make_app, rootdir):
 def test_second(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_classfolder"
     app = make_app(srcdir=srcdir)
-    app.builder.build_all
+    app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_second.doctree").read_bytes())
     assert (
@@ -45,7 +45,7 @@ def test_second(make_app, rootdir):
 def test_third(make_app, rootdir):
     srcdir = rootdir / "roots" / "test_classfolder"
     app = make_app(srcdir=srcdir)
-    app.builder.build_all
+    app.builder.build_all()
 
     content = pickle.loads((app.doctreedir / "index_third.doctree").read_bytes())
     assert (

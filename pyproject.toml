@@ -37,21 +37,24 @@ skip-magic-trailing-comma = false
 fixable = ["ALL"]
 ignore = [
     "ARG",
-    "B",
-    "D",
+    "D100",
+    "D101",
     "D102",
     "D103",
+    "D105",
+    "D107",
     "D203",
+    "D205",
     "E203",
     "E501",
     "PERF203",
     "PERF401",
     "PERF403",
+    "PLR2004",
     "RUF001",
     "RUF012",
     "SIM102",
-    "PTH",
-    "PLR"
+    "PTH"
 ]
 # List of all the ruff rules (includes why the rule matters)
 # https://docs.astral.sh/ruff/rules/
@@ -82,5 +85,14 @@ unfixable = []
 max-complexity = 51
 
 [tool.ruff.lint.per-file-ignores]
-"sphinxcontrib/mat_lexer.py" = ["ERA"]
-"tests/**/test_*" = []
+"tests/**/*" = ["D104"]
+
+[tool.ruff.lint.pylint]
+# https://docs.astral.sh/ruff/settings/#lint_pylint_max-args
+max-args = 7
+# https://docs.astral.sh/ruff/settings/#lint_pylint_max-branches
+max-branches = 30
+# https://docs.astral.sh/ruff/settings/#lint_pylint_max-returns
+max-returns = 20
+# https://docs.astral.sh/ruff/settings/#lint_pylint_max-statements
+max-statements = 100

@@ -39,7 +39,7 @@ mat_sig_re = re.compile(
 
 
 def _pseudo_parse_arglist(signode, arglist):
-    """ "Parse" a list of arguments separated by commas.
+    """Parse a list of arguments separated by commas.
 
     Arguments can have "optional" annotations given by enclosing them in
     brackets.  Currently, this will split at any comma, even if it's inside a
@@ -333,9 +333,10 @@ class MatClasslike(MatObject):
     """Description of a class-like object (classes, interfaces, exceptions)."""
 
     def _object_hierarchy_parts(self, sig):
-        """Return a tuple of strings, one entry for each part of the object's
-        hierarchy (e.g. ``('module', 'submodule', 'Class', 'method')``). The
-        returned tuple is used to properly nest children within parents in the
+        """Return a tuple of strings, one entry for each part of the object's \
+           hierarchy (e.g. ``('module', 'submodule', 'Class', 'method')``).
+
+        The returned tuple is used to properly nest children within parents in the
         table of contents, and can also be used within the
         :py:meth:`_toc_entry_name` method.
 
@@ -534,8 +535,9 @@ class MatModule(Directive):
 
 
 class MatCurrentModule(Directive):
-    """Tell Sphinx that we're documenting
-    stuff in module foo, but links to module foo won't lead here.
+    """Tell Sphinx that we're documenting \
+       stuff in module foo, but links to module foo won't lead here.
+
     """
 
     has_content = False
@@ -729,12 +731,14 @@ class MATLABDomain(Domain):
                 del self.data["modules"][modname]
 
     def find_obj(self, env, modname, classname, name, type, searchmode=0):
-        """Find a MATLAB object for "name", perhaps using the given module
-        and/or classname.  Returns a list of (name, object entry) tuples.
-        """
+        """Find a MATLAB object for "name", perhaps using the given module \
+           and/or classname.
 
-        # skip parens
-        if name[-2:] == "()":
+
+        Return a list of (name, object entry) tuples.
+
+        """
+        if name[-2:] == "()":  # skip parens
             name = name[:-2]
 
         if not name:

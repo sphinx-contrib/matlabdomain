@@ -174,7 +174,7 @@ class MatlabDocumenter(PyDocumenter):
 
         # add additional content (e.g. from document), if present
         if more_content:
-            for line, src in zip(more_content.data, more_content.items):
+            for line, src in zip(more_content.data, more_content.items, strict=False):
                 self.add_line(line, src[0], src[1])
 
     def class_object(self):
@@ -960,7 +960,7 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
 
 
 def make_baseclass_links(env, obj):
-    """Returns list of base class links."""
+    """Return list of base class links."""
     obj_bases = obj.__bases__
     links = []
     if len(obj_bases):

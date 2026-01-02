@@ -46,7 +46,7 @@ class MatlabLexer(RegexLexer):
     # for f in elfun specfun elmat; do
     #   echo -n "$f = "
     #   matlab -nojvm -r "help $f;exit;" | perl -ne \
-    #   'push(@c,$1) if /^    (\w+)\s+-/; END {print q{["}.join(q{","},@c).qq{"]\n};}'
+    #   'push(@c,$1) if /^    (\w+)\s+-/; END {print q{["}.join(q{","},@c).qq{"]\n};}' # noqa : ERA001
     # done
     #
     # elfun: Elementary math functions
