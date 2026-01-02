@@ -2,7 +2,10 @@ import re
 from importlib.metadata import version
 
 import tree_sitter_matlab as tsml
+from sphinx.util.logging import getLogger
 from tree_sitter import Language
+
+logger = getLogger("matlab-domain")
 
 # Attribute default dictionary used to give default values for e.g. `Abstract` or `Static` when used without
 # a right hand side i.e. `classdef (Abstract)` vs `classdef (Abstract=true)`
@@ -367,6 +370,10 @@ class MatFunctionParser:
 
         arguments = argblock_match.get("args")
 
+        # Bug fix: Check if arguments is None before iterating
+        if arguments is None:
+            return
+
         # TODO this is almost identical to property parsing.
         #      might be a good idea to extract common code here.
         for arg in arguments:
@@ -547,6 +554,23 @@ class MatClassParser:
 
         # Parse class basics
         class_matches = q_classdef.matches(root_node)
+
+        # Bug fix: Handle empty matches gracefully
+        if not class_matches:
+            logger.warning(
+                "[sphinxcontrib-matlabdomain] No class definition found in file, skipping"
+            )
+            # Set minimal attributes to avoid crashes
+            self.cls = None
+            self.name = None
+            self.attrs = {}
+            self.supers = []
+            self.docstring = ""
+            self.properties = {}
+            self.methods = {}
+            self.enumerations = {}
+            return
+
         _, class_match = class_matches[0]
         self.cls = class_match.get("class")
         self.name = class_match.get("name")

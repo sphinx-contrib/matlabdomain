@@ -152,6 +152,10 @@ def classfolder_class_name(dotted_path):
 
 def recursive_find_all(obj):
     # Recursively finds all entities in all "modules" aka directories.
+    # Bug fix: Check if obj.entities exists and is not None
+    if not hasattr(obj, "entities") or obj.entities is None:
+        return
+
     for _, o in obj.entities:
         if isinstance(o, MatModule):
             o.safe_getmembers()
@@ -161,6 +165,10 @@ def recursive_find_all(obj):
 
 def recursive_log_debug(obj, indent=""):
     # Traverse the object hierarchy and log to debug
+    # Bug fix: Check if obj.entities exists and is not None
+    if not hasattr(obj, "entities") or obj.entities is None:
+        return
+
     for n, o in obj.entities:
         logger.debug(
             "[sphinxcontrib-matlabdomain] %s Name=%s, Entity=%s", indent, n, str(o)
@@ -185,6 +193,10 @@ def recursive_log_debug(obj, indent=""):
 
 def populate_entities_table(obj, path=""):
     # Recursively scan the hiearachy of entities and populate the entities_table.
+    # Bug fix: Check if obj.entities exists and is not None
+    if not hasattr(obj, "entities") or obj.entities is None:
+        return
+
     for _n, o in obj.entities:
         fullpath = path + "." + o.name
         fullpath = fullpath.lstrip(".")
@@ -207,37 +219,70 @@ def analyze(app):
     # `matlab_src_dir` is recursively scanned for MATLAB objects only once.
     # All entities found are stored in globally available `entities_table`
 
-    if app.env.config.matlab_src_dir is None:
-        logger.debug(
-            "[sphinxcontrib-matlabdomain] matlab_src_dir is None, skipping parsing."
+    try:
+        if app.env.config.matlab_src_dir is None:
+            logger.debug(
+                "[sphinxcontrib-matlabdomain] matlab_src_dir is None, skipping parsing."
+            )
+            return
+
+        # Interpret `matlab_src_dir` relative to the sphinx source directory.
+        basedir = os.path.normpath(
+            os.path.join(app.env.srcdir, app.env.config.matlab_src_dir)
         )
-        return
+        MatObject.basedir = basedir  # set MatObject base directory
+        MatObject.sphinx_env = app.env  # pass env to MatObject cls
+        MatObject.sphinx_app = app  # pass app to MatObject cls
 
-    # Interpret `matlab_src_dir` relative to the sphinx source directory.
-    basedir = os.path.normpath(
-        os.path.join(app.env.srcdir, app.env.config.matlab_src_dir)
-    )
-    MatObject.basedir = basedir  # set MatObject base directory
-    MatObject.sphinx_env = app.env  # pass env to MatObject cls
-    MatObject.sphinx_app = app  # pass app to MatObject cls
+        entities_table.clear()
+        entities_name_map.clear()
 
-    entities_table.clear()
-    entities_name_map.clear()
+        # Set the root object and get root members.
+        logger.debug("[sphinxcontrib-matlabdomain] Starting matlabify")
+        root = MatObject.matlabify("")
+        if not root:
+            logger.debug("[sphinxcontrib-matlabdomain] root is None, returning")
+            return
 
-    # Set the root object and get root members.
-    root = MatObject.matlabify("")
-    if not root:
-        return
-    root.safe_getmembers()
-    recursive_find_all(root)
+        logger.debug(
+            f"[sphinxcontrib-matlabdomain] root={root}, root.entities={getattr(root, 'entities', 'NO ENTITIES ATTR')}"
+        )
+        root.safe_getmembers()
+        logger.debug(
+            f"[sphinxcontrib-matlabdomain] After safe_getmembers, root.entities={getattr(root, 'entities', 'NO ENTITIES ATTR')}"
+        )
 
-    # Print the hierarchy of entities to the log.
-    logger.debug("[sphinxcontrib-matlabdomain] Found the following entities:")
-    recursive_log_debug(root)
+        logger.debug("[sphinxcontrib-matlabdomain] Starting recursive_find_all")
+        recursive_find_all(root)
+        logger.debug("[sphinxcontrib-matlabdomain] Finished recursive_find_all")
 
-    populate_entities_table(root)
-    entities_table["."] = root
+        # Print the hierarchy of entities to the log.
+        logger.debug("[sphinxcontrib-matlabdomain] Found the following entities:")
+        recursive_log_debug(root)
 
+        logger.debug("[sphinxcontrib-matlabdomain] Starting populate_entities_table")
+        populate_entities_table(root)
+        logger.debug("[sphinxcontrib-matlabdomain] Finished populate_entities_table")
+        entities_table["."] = root
+    except Exception as e:
+        import traceback
+
+        logger.error(f"[sphinxcontrib-matlabdomain] ERROR in analyze: {e}")
+        logger.error(
+            f"[sphinxcontrib-matlabdomain] Traceback: {traceback.format_exc()}"
+        )
+        raise
+
+    # Transform Class Folders classes from
+    #
+    # @ClassFolder (Module)
+    #     ClassFolder (Class)  # noqa: ERA001
+    #     method1 (Function)  # noqa: ERA001
+    #     method2 (Function)  # noqa: ERA001
+    #
+    # To
+    #
+    # ClassFolder (Class) with the method1 and method2 add to the ClassFolder Class.
     def isClassFolderModule(name, entity):
         if not isinstance(entity, MatModule):
             return False
@@ -250,6 +295,10 @@ def analyze(app):
     }
     # For each Class Folder module
     for cf_entity in class_folder_modules.values():
+        # Bug fix: Check if cf_entity has entities and they're not None
+        if not hasattr(cf_entity, "entities") or cf_entity.entities is None:
+            continue
+
         # Find the class entity class.
         class_entities = [e for e in cf_entity.entities if isinstance(e[1], MatClass)]
         func_entities = [e for e in cf_entity.entities if isinstance(e[1], MatFunction)]
