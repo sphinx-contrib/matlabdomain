@@ -112,7 +112,7 @@ def test_module(mod):
         "ClassWithPropertyValidators",
         "ClassWithTrailingCommentAfterBases",
         "ClassWithTrailingSemicolons",
-        "ClassWithSeperatedComments",
+        "ClassWithSeparatedComments",
         "ClassWithKeywordsAsFieldnames",
         "ClassWithPropertyCellValues",
         "ClassWithTests",

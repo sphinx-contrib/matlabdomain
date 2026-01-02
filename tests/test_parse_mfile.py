@@ -839,12 +839,12 @@ def test_ClassWithTrailingSemicolons():
     ]
 
 
-def test_ClassWithSeperatedComments():
-    mfile = os.path.join(TESTDATA_ROOT, "ClassWithSeperatedComments.m")
+def test_ClassWithSeparatedComments():
+    mfile = os.path.join(TESTDATA_ROOT, "ClassWithSeparatedComments.m")
     obj = mat_types.MatObject.parse_mfile(
-        mfile, "ClassWithSeperatedComments", "test_data"
+        mfile, "ClassWithSeparatedComments", "test_data"
     )
-    assert obj.name == "ClassWithSeperatedComments"
+    assert obj.name == "ClassWithSeparatedComments"
     assert obj.bases == []
     assert "prop" in obj.properties
     prop = obj.properties["prop"]
