@@ -6,5 +6,5 @@ extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 primary_domain = "mat"
 project = "test_classfolder"
 master_doc = "index"
-source_suffix = ".rst"
+source_suffix = {".rst": "restructuredtext"}
 nitpicky = True

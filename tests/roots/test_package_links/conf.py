@@ -9,6 +9,6 @@ master_doc = "contents"
 
 
 # The suffix of source filenames.
-source_suffix = ".rst"
+source_suffix = {".rst": "restructuredtext"}
 
 nitpicky = True
