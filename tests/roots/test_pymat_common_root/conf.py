@@ -11,5 +11,5 @@ extensions = [
 
 # The master toctree document.
 master_doc = "index"
-source_suffix = ".rst"
+source_suffix = {".rst": "restructuredtext"}
 nitpicky = True

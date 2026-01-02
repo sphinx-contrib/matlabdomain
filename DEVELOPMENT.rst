@@ -8,7 +8,7 @@ Start by running:
 
     python -m venv .venv
     .venv\Scripts\activate
-    pip install -r dev-requirements.txt
+    pip install -e '.[dev]'
     pre-commit install
 
 
