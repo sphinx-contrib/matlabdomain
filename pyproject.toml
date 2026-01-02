@@ -36,7 +36,7 @@ dev = [
     "sphinxcontrib-napoleon"
 ]
 doc = [
-    "sphinx_rtd_theme",
+    "sphinx-rtd-theme",
     "sphinxcontrib-napoleon"
 ]
 
