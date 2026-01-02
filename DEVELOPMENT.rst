@@ -31,4 +31,6 @@ Other tags can describe the PR content :
 - [FIX] for a bugfix,
 - [DOC] for a change in documentation or examples,
 - [ENH] or [FEAT] for a new feature
+- [STY] for code style changes
+- [REF] for refactoring 
 - [MAINT] for maintenance changes.
