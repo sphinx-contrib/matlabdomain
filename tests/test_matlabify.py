@@ -24,10 +24,6 @@ def mod(app):
     return MatObject.matlabify("test_data")
 
 
-# def test_empty():
-#     assert MatObject.matlabify("") is None
-
-
 def test_unknown():
     assert MatObject.matlabify("not_test_data") is None
 
