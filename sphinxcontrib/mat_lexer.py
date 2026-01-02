@@ -40,7 +40,6 @@ class MatlabLexer(RegexLexer):
     filenames = ["*.m"]
     mimetypes = ["text/matlab"]
 
-    #
     # These lists are generated automatically.
     # Run the following in bash shell:
     #
@@ -55,7 +54,7 @@ class MatlabLexer(RegexLexer):
     # elmat: Elementary matrices and matrix manipulation
     #
     # taken from MATLAB version'9.6.0.1092380 (R2019a) Update 1'
-    #
+
     elfun = (
         "sin",
         "sind",
