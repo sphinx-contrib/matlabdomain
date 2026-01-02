@@ -94,6 +94,8 @@ def test_module(mod):
         "f_with_function_variable",
         "f_with_input_argument_block",
         "f_with_output_argument_block",
+        "f_with_repeating_argument_block",
+        "f_with_output_repeating_argument_block",
         "ClassWithUndocumentedMembers",
         "ClassWithGetterSetter",
         "ClassWithDoubleQuotedString",
