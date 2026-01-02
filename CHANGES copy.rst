@@ -2,7 +2,6 @@ sphinxcontrib-matlabdomain-0.23.0 (Unreleased)
 ==============================================
 
 * Drop support for Python <=3.9.
-* Drop support for Sphinx <=6.x.
 * Use treesitter for parsing.
 
 .. _PR 232: https://github.com/sphinx-contrib/matlabdomain/pull/253

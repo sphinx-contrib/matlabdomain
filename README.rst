@@ -38,12 +38,16 @@ The Python package must be installed with::
 
    pip install sphinxcontrib-matlabdomain
 
-In general, the usage is the same as for documenting Python code. The package
-is tested with Python >= 3.8 and Sphinx >= 4.5.0.
+In general, the usage is the same as for documenting Python code.
+The package is tested with Python >= 3.10 and Sphinx >= 7.0.0.
 
-For a Python 2 compatible version the package must be installed with::
+.. note::
 
-   pip install sphinxcontrib-matlabdomain==0.11.8
+   The last version to support Sphinx 4.5.x to 6.x is ``0.22.1``
+
+.. note::
+
+   The last version to support Python 2 is ``0.11.8``
 
 
 Configuration

@@ -6,7 +6,7 @@ with open("README.rst", "r") as f_readme:
     long_desc = f_readme.read()
 
 requires = [
-    "Sphinx>=4.0.0",
+    "Sphinx>=7.0.0",
     "tree-sitter-matlab>=1.0.2,<1.0.5",
     "tree-sitter>=0.21.3,<0.23.0",
 ]

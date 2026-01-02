@@ -1,0 +1,38 @@
+# Normalize line endings to LF for all text files
+# This ensures consistent behavior across Windows, macOS, and Linux
+
+# Source code
+*.py text eol=lf
+*.m text eol=lf
+
+# Documentation
+*.rst text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+
+# Configuration files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+
+# Data files
+*.json text eol=lf
+*.xml text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# Batch files
+*.bat text eol=lf
+*.cmd text eol=lf
+
+# Binary files (no line ending conversion)
+*.mlapp binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
