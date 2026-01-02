@@ -3,9 +3,11 @@
 import helper
 import pytest
 from sphinx.testing.fixtures import make_app, test_params
+from sphinxcontrib.mat_types import MatModule, MatObject, entities_table
 
 from sphinxcontrib import mat_documenters as doc
-from sphinxcontrib.mat_types import MatModule, MatObject, entities_table
+from sphinxcontrib.matlab import mat_documenters as doc
+from sphinxcontrib.matlab.mat_types import entities_table
 
 rootdir = helper.rootdir(__file__)
 matlab_src_dir = str(rootdir / "test_data")

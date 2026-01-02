@@ -1,6 +1,8 @@
 """
 sphinxcontrib.mat_types
 ~~~~~~~~~~~~~~~~~~~~~~~
+    sphinxcontrib.matlab.mat_types
+    ~~~~~~~~~~~~~~~~~~~~~~~
 
 Types for MATLAB.
 
@@ -10,19 +12,23 @@ Types for MATLAB.
 
 import os
 import xml.etree.ElementTree as ET
+from copy import copy
 from importlib.metadata import version
 from io import open  # for opening files with encoding in Python 2
 from zipfile import ZipFile
 
+import sphinx.util
+from pygments.token import Token
 from sphinx.util.logging import getLogger
-from tree_sitter import Parser
-
 from sphinxcontrib.mat_tree_sitter_parser import (
     ML_LANG,
     MatClassParser,
     MatFunctionParser,
     MatScriptParser,
 )
+from tree_sitter import Parser
+
+from sphinxcontrib.matlab.mat_lexer import MatlabLexer
 
 logger = getLogger("matlab-domain")
 

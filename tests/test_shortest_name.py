@@ -1,4 +1,4 @@
-from sphinxcontrib.mat_types import shortest_name
+from sphinxcontrib.matlab.mat_types import shortest_name
 
 
 def test_no_alternative():

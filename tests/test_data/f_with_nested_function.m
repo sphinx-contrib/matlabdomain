@@ -11,6 +11,6 @@ end
 %% inner function doesn't get documented
 function y = inner_fun(x)
 % to document the inner function call
-% ``sphinxcontrib.mat_types.MatFunction()`` recursively
+% ``sphinxcontrib.matlab.mat_types.MatFunction()`` recursively
 y = 2*x;
 end
