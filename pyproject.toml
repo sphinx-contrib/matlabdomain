@@ -85,7 +85,7 @@ unfixable = []
 max-complexity = 51
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["D"]
+"tests/**/*" = ["D104"]
 
 [tool.ruff.lint.pylint]
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-args
