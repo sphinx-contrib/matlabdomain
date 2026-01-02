@@ -49,24 +49,29 @@ ignore = [
     "PERF403",
     "RUF001",
     "RUF012",
-    "SIM102"
+    "SIM102",
+    "PTH",
+    "PLR",
+    "ERA"
 ]
 # List of all the ruff rules (includes why the rule matters)
 # https://docs.astral.sh/ruff/rules/
 select = [
     "ARG",
     "B",
+    "C",
     "C4",
     "C90",
     "D",
     "E",
-    # "ERA",
+    "ERA",
     "F",
     "FLY",
     "FURB",
     "I",
-    # "PTH",
-    # "PLR",
+    "PERF",
+    "PTH",
+    "PLR",
     "RUF",
     "SIM",
     "UP",
