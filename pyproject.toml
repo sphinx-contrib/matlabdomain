@@ -51,8 +51,7 @@ ignore = [
     "RUF012",
     "SIM102",
     "PTH",
-    "PLR",
-    "ERA"
+    "PLR"
 ]
 # List of all the ruff rules (includes why the rule matters)
 # https://docs.astral.sh/ruff/rules/
@@ -83,4 +82,5 @@ unfixable = []
 max-complexity = 51
 
 [tool.ruff.lint.per-file-ignores]
+"sphinxcontrib/mat_lexer.py" = ["ERA"]
 "tests/**/test_*" = []

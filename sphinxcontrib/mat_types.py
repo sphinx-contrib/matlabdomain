@@ -172,7 +172,6 @@ def recursive_log_debug(obj, indent=""):
                 logger.debug(
                     "[sphinxcontrib-matlabdomain] %s Names=%s", indent, str(names)
                 )
-                # print(indent + f"{names=}")
                 recursive_log_debug(o, indent)
                 indent = indent[:-1]
         if isinstance(o, MatClass):
@@ -238,17 +237,6 @@ def analyze(app):
 
     populate_entities_table(root)
     entities_table["."] = root
-
-    # Transform Class Folders classes from
-    #
-    # @ClassFolder (Module)
-    #     ClassFolder (Class)
-    #     method1 (Function)
-    #     method2 (Function)
-    #
-    # To
-    #
-    # ClassFolder (Class) with the method1 and method2 add to the ClassFolder Class.
 
     def isClassFolderModule(name, entity):
         if not isinstance(entity, MatModule):
@@ -544,7 +532,6 @@ class MatObject:
         with ZipFile(mlappfile, "r") as mlapp:
             meta = ET.fromstring(mlapp.read("metadata/appMetadata.xml"))
             core = ET.fromstring(mlapp.read("metadata/coreProperties.xml"))
-            # code = ET.fromstring(mlapp.read("matlab/document.xml"))
 
         metaNs = {"ns": "http://schemas.mathworks.com/appDesigner/app/2017/appMetadata"}
         coreNs = {
@@ -554,12 +541,9 @@ class MatObject:
             "dcterms": "http://purl.org/dc/terms/",
             "xsi": "http://www.w3.org/2001/XMLSchema-instance",
         }
-        # codeNs = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 
         coreDesc = core.find("dc:description", coreNs)
         metaDesc = meta.find("ns:description", metaNs)
-        # codeDesc = code.find(".//w:t", codeNs)
-        # codeText = codeDesc.text
 
         doc = []
         if coreDesc is not None and coreDesc.text is not None:
@@ -612,8 +596,8 @@ class MatModule(MatObject):
             # make full path
             path = os.path.join(self.path, key)
             # Do not visit directories starting with:
-            # - "." (VCS and Editors)
-            # - "_" (build/temp folders in Sphinx)
+            # 1) "." (VCS and Editors)
+            # 2) "_" (build/temp folders in Sphinx)
             if os.path.isdir(path) and (key.startswith(".") or key.startswith("_")):
                 continue
             # Only visit MATLAB files
@@ -629,7 +613,7 @@ class MatModule(MatObject):
                 if value:
                     results.append((key, value))
         self.entities = results
-        # results.sort()
+
         return results
 
     @property
@@ -639,10 +623,6 @@ class MatModule(MatObject):
     @property
     def __all__(self):
         return self.entities
-        # results = self.safe_getmembers()
-        # if results:
-        #     results = list(zip(*self.safe_getmembers()))[0]
-        # return results
 
     @property
     def __path__(self):

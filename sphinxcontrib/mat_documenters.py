@@ -1396,7 +1396,6 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     def import_object(self):
         ret = MatClassLevelDocumenter.import_object(self)
-        # getset = self.object.name.split('_')
 
         if isinstance(self.object, MatMethod):
             self._datadescriptor = True
@@ -1451,7 +1450,6 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         # if not self._datadescriptor:
         #     # if it's not a data descriptor, its docstring is very probably the
         #     # wrong thing to display
-        #     no_docstring = True
         MatClassLevelDocumenter.add_content(self, more_content, no_docstring)
 
     def class_object(self):
