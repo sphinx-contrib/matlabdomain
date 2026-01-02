@@ -15,5 +15,8 @@ sphinx:
     fail_on_warning: false
 
 python:
-    install:
-    -   requirements: rtd-requirements.txt
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
