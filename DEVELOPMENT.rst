@@ -30,5 +30,5 @@ Other tags can describe the PR content :
 
 - [FIX] for a bugfix,
 - [DOC] for a change in documentation or examples,
-- [ENH] for a new feature
+- [ENH] or [FEAT] for a new feature
 - [MAINT] for maintenance changes.
