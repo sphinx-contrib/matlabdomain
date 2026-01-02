@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 # General information about the project.
 project = "MATLAB Sphinx Documentation Test"

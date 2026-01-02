@@ -1,59 +1,60 @@
 """
-    sphinxcontrib.mat_documenters
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sphinxcontrib.mat_documenters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Extend autodoc directives to matlabdomain.
+Extend autodoc directives to matlabdomain.
 
-    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
 
-from .mat_types import (  # noqa: E401
-    MatModule,
-    MatObject,
-    MatFunction,
-    MatClass,
-    MatProperty,
-    MatEnumeration,
-    MatMethod,
-    MatScript,
-    MatException,
-    MatModuleAnalyzer,
-    MatApplication,
-    entities_table,
-    entities_name_map,
-    strip_package_prefix,
-    try_get_module_entity_or_default,
-)
-
+import inspect
 import re
 import traceback
-import inspect
 
 from docutils.statemachine import ViewList
-
-import sphinx.util
-from sphinx.locale import _
-from sphinx.pycode import PycodeError
 from sphinx.ext.autodoc import (
-    py_ext_sig_re as mat_ext_sig_re,
-    identity,
-    Options,
     ALL,
-    INSTANCEATTR,
-    members_option,
-    exclude_members_option,
     EMPTY,
+    INSTANCEATTR,
     SUPPRESS,
     annotation_option,
     bool_option,
-    Documenter as PyDocumenter,
-    ModuleDocumenter as PyModuleDocumenter,
-    FunctionDocumenter as PyFunctionDocumenter,
-    ClassDocumenter as PyClassDocumenter,
-    ExceptionDocumenter as PyExceptionDocumenter,
+    exclude_members_option,
+    identity,
+    members_option,
+)
+from sphinx.ext.autodoc import (
     DataDocumenter as PyDataDocumenter,
-    MethodDocumenter as PyMethodDocumenter,
+)
+from sphinx.ext.autodoc import (
+    Documenter as PyDocumenter,
+)
+from sphinx.ext.autodoc import (
+    ExceptionDocumenter as PyExceptionDocumenter,
+)
+from sphinx.ext.autodoc import (
+    ModuleDocumenter as PyModuleDocumenter,
+)
+from sphinx.locale import _
+from sphinx.pycode import PycodeError
+from sphinx.util.docstrings import prepare_docstring
+from sphinx.util.inspect import safe_getattr
+from sphinx.util.logging import getLogger
+
+from .mat_types import (
+    MatApplication,
+    MatClass,
+    MatEnumeration,
+    MatException,
+    MatFunction,
+    MatMethod,
+    MatModuleAnalyzer,
+    MatProperty,
+    MatScript,
+    entities_name_map,
+    entities_table,
+    try_get_module_entity_or_default,
 )
 
 mat_ext_sig_re = re.compile(
@@ -71,7 +72,7 @@ mat_ext_sig_re = re.compile(
 # TODO: check MRO's for all classes, attributes and methods!!!
 
 
-logger = sphinx.util.logging.getLogger("matlab-domain")
+logger = getLogger("matlab-domain")
 
 
 class MatlabDocumenter(PyDocumenter):
@@ -107,7 +108,7 @@ class MatlabDocumenter(PyDocumenter):
         # support explicit module and class name separation via ::
         if explicit_modname is not None:
             modname = explicit_modname[:-2]
-            parents = path and path.rstrip(".").split(".") or []
+            parents = (path and path.rstrip(".").split(".")) or []
         else:
             modname = None
             parents = []
@@ -120,7 +121,7 @@ class MatlabDocumenter(PyDocumenter):
         self.args = args
         self.retann = retann
         self.fullname = (self.modname or "") + (
-            self.objpath and "." + ".".join(self.objpath) or ""
+            (self.objpath and "." + ".".join(self.objpath)) or ""
         )
         self.fullname = self.fullname.lstrip(".")
 
@@ -250,14 +251,14 @@ class MatlabDocumenter(PyDocumenter):
                         if cls:
                             name = entries[k].rstrip("()")
                             if name in cls.methods:
-                                entries[
-                                    k
-                                ] = f":meth:`{name}() <{cls.fullname(self.env)}.{name}>`"
+                                entries[k] = (
+                                    f":meth:`{name}() <{cls.fullname(self.env)}.{name}>`"
+                                )
                                 continue
                             elif name in cls.properties:
-                                entries[
-                                    k
-                                ] = f":attr:`{name} <{cls.fullname(self.env)}.{name}>`"
+                                entries[k] = (
+                                    f":attr:`{name} <{cls.fullname(self.env)}.{name}>`"
+                                )
                                 continue
 
                         # see if it is a fully qualified property or method name we recognize
@@ -358,7 +359,7 @@ class MatlabDocumenter(PyDocumenter):
                                 if match := p2.search(docstrings[i][j]):
                                     # if match.group(1) is a property
                                     #   -> :attr:`{nn}.{match.group(1)}`
-                                    for nnn, ooo in o.properties.items():
+                                    for nnn in o.properties:
                                         if match.group(2) == nnn:
                                             docstrings[i][j] = p2.sub(
                                                 f":attr:`{nn}.{nnn}`", docstrings[i][j]
@@ -366,7 +367,7 @@ class MatlabDocumenter(PyDocumenter):
                                             break
                                     # if match.group(1) is a method
                                     #   -> :meth:`{nn}.{match.group(1)}`
-                                    for nnn, ooo in o.methods.items():
+                                    for nnn in o.methods:
                                         if match.group(2) == nnn:
                                             docstrings[i][j] = p2.sub(
                                                 f":meth:`{nn}.{nnn}`", docstrings[i][j]
@@ -387,7 +388,7 @@ class MatlabDocumenter(PyDocumenter):
         return docstrings
 
     def auto_link_methods(self, class_obj, docstrings):
-        for n, o in class_obj.methods.items():
+        for n in class_obj.methods:
             # negative look-behind for ` . < @ * <non-breaking space>, then <name>()
             pat = r"(?<!(`|\.|<|@|\*| ))\b" + n + r"\(\)(?! )"
             p = re.compile(pat)
@@ -453,7 +454,7 @@ class MatlabDocumenter(PyDocumenter):
                     (mname, self.get_attr(self.object, mname, None))
                     for mname in list(obj_dict.keys())
                 ]
-        membernames = set(m[0] for m in members)
+        membernames = {m[0] for m in members}
         # add instance attributes from the analyzer
         for aname in analyzed_member_names:
             if aname not in membernames and (want_all or aname in self.options.members):
@@ -521,9 +522,7 @@ class MatlabDocumenter(PyDocumenter):
             if attrs:
                 hidden = attrs.get("Hidden", None)
                 # It is either None or True
-                if hidden:
-                    return True
-                return False
+                return bool(hidden)
             else:
                 return False
 
@@ -548,11 +547,7 @@ class MatlabDocumenter(PyDocumenter):
                 access = attrs.get("Access", None)
                 if not isinstance(access, list):
                     access = [access]
-                for has_access in access:
-                    if has_access in friends:
-                        return True
-                else:
-                    return False
+                return any(has_access in friends for has_access in access)
             else:
                 return False
 
@@ -564,10 +559,7 @@ class MatlabDocumenter(PyDocumenter):
         # search for members in source code too
         namespace = ".".join(self.objpath)  # will be empty for modules
 
-        if self.analyzer:
-            attr_docs = self.analyzer.find_attr_docs()
-        else:
-            attr_docs = {}
+        attr_docs = self.analyzer.find_attr_docs() if self.analyzer else {}
 
         # process members and determine which to skip
         for membername, member in members:
@@ -587,9 +579,7 @@ class MatlabDocumenter(PyDocumenter):
             keep = False
             if want_all and member_is_special(member):
                 # special methods
-                if self.options.special_members is ALL:
-                    keep = has_doc or self.options.undoc_members
-                elif (
+                if self.options.special_members is ALL or (
                     self.options.special_members
                     and self.options.special_members is not ALL
                     and membername in self.options.special_members
@@ -597,9 +587,7 @@ class MatlabDocumenter(PyDocumenter):
                     keep = has_doc or self.options.undoc_members
             elif want_all and member_is_private(member):
                 # ignore private members
-                if self.options.private_members is ALL:
-                    keep = has_doc or self.options.undoc_members
-                elif (
+                if self.options.private_members is ALL or (
                     self.options.private_members
                     and self.options.private_members is not ALL
                     and membername in self.options.private_members
@@ -607,9 +595,7 @@ class MatlabDocumenter(PyDocumenter):
                     keep = has_doc or self.options.undoc_members
             elif want_all and member_is_protected(member):
                 # ignore protected members
-                if self.options.protected_members is ALL:
-                    keep = has_doc or self.options.undoc_members
-                elif (
+                if self.options.protected_members is ALL or (
                     self.options.protected_members
                     and self.options.protected_members is not ALL
                     and membername in self.options.protected_members
@@ -617,9 +603,7 @@ class MatlabDocumenter(PyDocumenter):
                     keep = has_doc or self.options.undoc_members
             elif want_all and member_is_hidden(member):
                 # ignore hidden members
-                if self.options.hidden_members is ALL:
-                    keep = has_doc or self.options.undoc_members
-                elif (
+                if self.options.hidden_members is ALL or (
                     self.options.hidden_members
                     and self.options.hidden_members is not ALL
                     and membername in self.options.hidden_members
@@ -627,9 +611,7 @@ class MatlabDocumenter(PyDocumenter):
                     keep = has_doc or self.options.undoc_members
             elif want_all and member_is_friend(member):
                 # ignore friend members
-                if self.options.friend_members is ALL:
-                    keep = has_doc or self.options.undoc_members
-                elif (
+                if self.options.friend_members is ALL or (
                     self.options.friend_members
                     and self.options.friend_members is not ALL
                     and member_is_friend_of(member, self.options.friend_members)
@@ -702,7 +684,7 @@ class MatlabDocumenter(PyDocumenter):
             classes.sort(key=lambda cls: cls.priority)
             # give explicitly separated module name, so that members
             # of inner classes can be documented
-            full_mname = self.modname + "::" + ".".join(self.objpath + [mname])
+            full_mname = self.modname + "::" + ".".join([*self.objpath, mname])
             documenter = classes[-1](self.directive, full_mname, self.indent)
             memberdocumenters.append((documenter, isattr))
         member_order = self.options.member_order or self.env.config.autodoc_member_order
@@ -855,7 +837,7 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                 logger.warning(
                     "[sphinxcontrib-matlabdomain] missing attribute mentioned"
                     " in :members: or __all__: module %s, attribute %s",
-                    sphinx.util.inspect.safe_getattr(self.object, "__name__", "???"),
+                    safe_getattr(self.object, "__name__", "???"),
                     mname,
                 )
         return False, ret
@@ -887,7 +869,7 @@ class MatModuleLevelDocumenter(MatlabDocumenter):
                 if not modname:
                     modname = self.env.temp_data.get("mat:module")
                 # ... else, it stays None, which means invalid
-        return modname, parents + [base]
+        return modname, [*parents, base]
 
 
 class MatClassLevelDocumenter(MatlabDocumenter):
@@ -920,7 +902,7 @@ class MatClassLevelDocumenter(MatlabDocumenter):
             if not modname:
                 modname = self.env.temp_data.get("mat:module")
             # ... else, it stays None, which means invalid
-        return modname, parents + [base]
+        return modname, [*parents, base]
 
 
 class MatDocstringSignatureMixin(object):
@@ -941,7 +923,7 @@ class MatDocstringSignatureMixin(object):
         match = mat_ext_sig_re.match(doclines[0])
         if not match:
             return
-        exmod, path, base, args, retann = match.groups()
+        _exmod, _path, base, args, retann = match.groups()
         # the base name must match ours
         if not self.objpath or base != self.objpath[-1]:
             return
@@ -1126,12 +1108,12 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                     docstrings.append(initdocstring)
         doc = []
         for docstring in docstrings:
-            doc.append(sphinx.util.docstrings.prepare_docstring(docstring))
+            doc.append(prepare_docstring(docstring))
         return doc
 
     def add_content(self, more_content, no_docstring=False):
         if self.doc_as_attr:
-            classname = sphinx.util.inspect.safe_getattr(self.object, "__name__", None)
+            classname = safe_getattr(self.object, "__name__", None)
             if classname:
                 content = ViewList([_("alias of :class:`%s`") % classname], source="")
                 MatModuleLevelDocumenter.add_content(self, content, no_docstring=True)
@@ -1176,10 +1158,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         return docstrings
 
     def link_member(self, type, line):
-        if type == "meth":
-            parens = "()"
-        else:
-            parens = ""
+        parens = "()" if type == "meth" else ""
         p = re.compile(r"((\*\s*)?(\b\w*\b))(?=\s*-)")
         if match := p.search(line):
             name = match.group(3)
@@ -1202,7 +1181,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             all_members or self.options.inherited_members or self.options.members is ALL
         )
         # find out which members are documentable
-        members_check_module, members = self.get_object_members(want_all)
+        _members_check_module, members = self.get_object_members(want_all)
 
         # use filtered members to check for empty sections
         filtered_members = [
@@ -1276,7 +1255,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         non_other = [
             membername
             for (membername, member) in members
-            if isinstance(member, MatMethod) or isinstance(member, MatProperty)
+            if isinstance(member, (MatMethod, MatProperty))
         ]
 
         # container
@@ -1313,10 +1292,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
     def document_member_section(self, heading, new_excludes, all_members):
         # save up original indent and exclude_members
         indent = self.indent
-        if self.options.exclude_members:
-            exclude_members = self.options.exclude_members
-        else:
-            exclude_members = []
+        exclude_members = self.options.exclude_members or []
 
         # output heading and section content
         self.add_line(heading, "<autodoc>")
@@ -1515,7 +1491,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                     docstrings[i][j], no_link_state
                 )
                 if not_in_literal_block and docstrings[i][j]:  # also not blank line
-                    if match := p.search(docstrings[i][j]):
+                    if p.search(docstrings[i][j]):
                         docstrings[i][j] = p.sub(
                             f":attr:`{name} <{self.class_object().fullname(self.env)}.{name}>`",
                             docstrings[i][j],

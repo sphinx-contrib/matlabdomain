@@ -17,7 +17,7 @@ sphinxcontrib-matlabdomain -- Sphinx domain for auto-documenting MATLAB
 =======================================================================
 
 This extension provides a `Sphinx <http://www.sphinx-doc.org/en/master/index.html>`_
-*domain* for automatically generating doumentation from MATLAB source files.
+*domain* for automatically generating documentation from MATLAB source files.
 It is modelled after the `Python autodoc <http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_.
 
 The extension allows you to have your documentation and source files together
@@ -38,12 +38,16 @@ The Python package must be installed with::
 
    pip install sphinxcontrib-matlabdomain
 
-In general, the usage is the same as for documenting Python code. The package
-is tested with Python >= 3.8 and Sphinx >= 4.5.0.
+In general, the usage is the same as for documenting Python code.
+The package is tested with Python >= 3.10 and Sphinx >= 7.0.0.
 
-For a Python 2 compatible version the package must be installed with::
+.. note::
 
-   pip install sphinxcontrib-matlabdomain==0.11.8
+   The last version to support Sphinx 4.5.x to 6.x is ``0.22.1``
+
+.. note::
+
+   The last version to support Python 2 is ``0.11.8``
 
 
 Configuration
@@ -130,8 +134,8 @@ Additional Configuration
 ``matlab_keep_package_prefix``
    Determines if the MATLAB package prefix ``+`` is displayed in the generated
    documentation.  Default is ``False``.  When ``False``, packages are still
-   referred to in ReST using ``+pakage.+subpkg.func`` but the output will be
-   ``pakage.subpkg.func()``. Forced to ``False`` if  ``matlab_short_links`` is
+   referred to in ReST using ``+package.+subpkg.func`` but the output will be
+   ``package.subpkg.func()``. Forced to ``False`` if  ``matlab_short_links`` is
    ``True``. *Added in Version 0.11.0*.
 
 ``matlab_src_encoding``
@@ -202,7 +206,7 @@ affect auto-docementation.
 
 .. note::
 
-    The module roles and directives create a psuedo namespace for MATLAB
+    The module roles and directives create a pseudo namespace for MATLAB
     objects, similar to a package. They represent the path to the folder
     containing the MATLAB object. If no module is specified then Sphinx will
     assume that the object is a built-in.

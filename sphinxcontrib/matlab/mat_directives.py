@@ -1,25 +1,23 @@
 """
-    sphinxcontrib.mat_directives
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sphinxcontrib.mat_directives
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Extend autodoc directives to matlabdomain.
+Extend autodoc directives to matlabdomain.
 
-    :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:license: BSD, see LICENSE for details.
 """
 
 from sphinx.ext.autodoc.directive import (
     AutodocDirective,
-    DummyOptionSpec,
     DocumenterBridge,
-)
-from sphinx.ext.autodoc.directive import (
-    process_documenter_options,
+    DummyOptionSpec,
     parse_generated_content,
+    process_documenter_options,
 )
-import sphinx.util
+from sphinx.util.logging import getLogger
 
-logger = sphinx.util.logging.getLogger("matlab-domain")
+logger = getLogger("matlab-domain")
 
 
 class MatlabAutodocDirective(AutodocDirective):

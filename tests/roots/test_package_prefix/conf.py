@@ -1,5 +1,4 @@
 import os
-import sys
 
 matlab_src_dir = os.path.abspath(".")
 matlab_keep_package_prefix = True

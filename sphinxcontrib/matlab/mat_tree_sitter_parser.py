@@ -1,7 +1,8 @@
-from importlib.metadata import version
-import tree_sitter_matlab as tsml
-from tree_sitter import Language, Parser
 import re
+from importlib.metadata import version
+
+import tree_sitter_matlab as tsml
+from tree_sitter import Language
 
 # Attribute default dictionary used to give default values for e.g. `Abstract` or `Static` when used without
 # a right hand side i.e. `classdef (Abstract)` vs `classdef (Abstract=true)`
@@ -269,7 +270,7 @@ def process_default(node, encoding):
         cut_start = lc.start_byte - node.start_byte
         cut_end = lc.end_byte - node.start_byte
         to_keep -= set(range(cut_start, cut_end))
-    # NOTE: hardcoded endianess is fine because for one byte this does not matter.
+    # NOTE: hardcoded endianness is fine because for one byte this does not matter.
     #       See python bikeshed on possible defaults for this here:
     #       https://discuss.python.org/t/what-should-be-the-default-value-for-int-to-bytes-byteorder/10616
     new_text = b"".join(
@@ -507,10 +508,7 @@ class MatFunctionParser:
                 pass  # docstring = docstring.rstrip()
 
             # Here we trust that the person is giving us valid matlab.
-            if "Output" in attrs.keys():
-                arg_loc = self.retv
-            else:
-                arg_loc = self.args
+            arg_loc = self.retv if "Output" in attrs else self.args
             if len(name) == 1:
                 arg_loc[name[0]] = {
                     "attrs": attrs,
@@ -839,7 +837,7 @@ class MatClassParser:
                         )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
-                docstring == None
+                docstring = None
             else:
                 pass  # docstring = docstring.rstrip()
 
@@ -897,7 +895,7 @@ class MatClassParser:
                         )
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
-                docstring == None
+                docstring = None
             else:
                 pass  # docstring = docstring.rstrip()
 

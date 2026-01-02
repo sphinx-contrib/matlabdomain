@@ -14,6 +14,9 @@ _build
 
 build/
 htmlcov
+.coverage
+coverage.xml
+build/
 sphinxcontrib/matlab/_version.py
 sphinxcontrib_matlabdomain.egg-info/
 tests/test_docs/_build/
