@@ -18,11 +18,11 @@ if isVersion72OrNewer:
     # https://www.sphinx-doc.org/en/master/extdev/deprecated.html
     from pathlib import Path
 
-    def rootdir():
+    def rootdir(file):
         return Path(os.path.dirname(__file__)).resolve().absolute()
 
 else:
     from sphinx.testing.path import path as sphinx_path
 
-    def rootdir():
+    def rootdir(file):
         return sphinx_path(os.path.dirname(__file__)).abspath()

@@ -10,14 +10,6 @@ TESTDATA_ROOT = os.path.join(DIRNAME, "test_data")
 TESTDATA_SUB = os.path.join(TESTDATA_ROOT, "submodule")
 
 
-# @pytest.fixture(autouse=True)
-# def setup():
-#     try:
-#         sys.modules.pop('test_data')
-#     except KeyError:
-#         pass
-
-
 def test_ClassExample():
     mfile = os.path.join(TESTDATA_ROOT, "ClassExample.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "ClassExample", "test_data")
