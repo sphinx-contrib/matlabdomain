@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-test_package_function
+"""test_package_function.
 ~~~~~~~~~~~~~~~~~~~~~
 
 Test the autodoc extension with the matlab_keep_package_prefix option.
@@ -10,12 +8,10 @@ Test the autodoc extension with the matlab_keep_package_prefix option.
 """
 
 import pickle
-import sys
 
 import helper
 import pytest
 from sphinx import addnodes
-from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;
 
 
 @pytest.fixture(scope="module")

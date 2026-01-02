@@ -12,7 +12,7 @@ repos:
         args: [--fix=lf]
     -   id: trailing-whitespace
 
-# Format TOML files
+    # Format TOML files
 -   repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
     rev: v2.15.0
     hooks:
@@ -20,7 +20,7 @@ repos:
         args: [--autofix, --indent, '4']
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.2
+    rev: v0.14.10
     hooks:
     # Run the linter.
     -   id: ruff-check
