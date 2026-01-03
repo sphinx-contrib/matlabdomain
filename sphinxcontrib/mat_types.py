@@ -133,8 +133,10 @@ def shortest_name(dotted_path):
 
 
 def classfolder_class_name(dotted_path):
-    # Returns a @ClassFolder classname if applicable, otherwise the dotted_path is returned
-    #
+    """Return a @ClassFolder classname.
+
+    if applicable, otherwise the dotted_path is returned
+    """
     if "@" not in dotted_path:
         return dotted_path
 
@@ -291,7 +293,8 @@ def analyze(app):
             and (entity.ref_role() == "func" or entity.ref_role() == "class")
             and entities_table[short_name].ref_role() == "mod"
         ):
-            # Only handle the below special case when overwriting entries in entities_table will not
+            # Only handle the below special case
+            # when overwriting entries in entities_table will not
             # introduce conflicts
             if short_name in entities_table:
                 # Special Case - ClassName/ClassName.m
@@ -341,7 +344,10 @@ class MatObject:
         self.name = name
 
     def ref_role(self):
-        """Return role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object.
+
+        e.g. when generating auto-links
+        """
         return "ref"
 
     @property
@@ -357,7 +363,10 @@ class MatObject:
             return self.__name__
         elif len(defargs) == 0:
             logger.debug(
-                '[sphinxcontrib-matlabdomain] Warning attribute "%s" was not found in %s.',
+                (
+                    "[sphinxcontrib-matlabdomain] "
+                    'Warning attribute "%s" was not found in %s.'
+                ),
                 name,
                 self,
             )
@@ -408,7 +417,8 @@ class MatObject:
             fullpath = os.path.join(MatObject.basedir, objname)  # objname fullpath
 
         logger.debug(
-            f"[sphinxcontrib-matlabdomain] matlabify {package=}, {objname=}, {fullpath=}"
+            f"[sphinxcontrib-matlabdomain] "
+            f"matlabify {package=}, {objname=}, {fullpath=}"
         )
         # package folders imported over mfile with same name
         if os.path.isdir(fullpath):
@@ -422,13 +432,15 @@ class MatObject:
                 return mod
             else:
                 logger.debug(
-                    f"[sphinxcontrib-matlabdomain] matlabify MatModule {package=}, {fullpath=}"
+                    f"[sphinxcontrib-matlabdomain] "
+                    f"matlabify MatModule {package=}, {fullpath=}"
                 )
                 return MatModule(name, fullpath, package)  # import package
         elif os.path.isfile(fullpath + ".m"):
             mfile = fullpath + ".m"
             logger.debug(
-                f"[sphinxcontrib-matlabdomain] matlabify parse_mfile {package=}, {mfile=}"
+                "[sphinxcontrib-matlabdomain] "
+                "matlabify parse_mfile {package=}, {mfile=}"
             )
             return MatObject.parse_mfile(
                 mfile, name, path, MatObject.encoding
@@ -436,7 +448,8 @@ class MatObject:
         elif os.path.isfile(fullpath + ".mlapp"):
             mlappfile = fullpath + ".mlapp"
             logger.debug(
-                f"[sphinxcontrib-matlabdomain] matlabify parse_mlappfile {package=}, {mlappfile=}"
+                "[sphinxcontrib-matlabdomain] "
+                "matlabify parse_mlappfile {package=}, {mlappfile=}"
             )
             return MatObject.parse_mlappfile(mlappfile, name, path)
         return None
@@ -509,8 +522,6 @@ class MatObject:
         else:
             return MatScript(name, modname, tree.root_node, encoding)
 
-        return None
-
     @staticmethod
     def parse_mlappfile(mlappfile, name, path):
         """Use ZipFile to read the metadata/appMetadata.xml file and
@@ -581,12 +592,16 @@ class MatModule(MatObject):
         self.entities = []
 
     def ref_role(self):
-        """Return role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object.
+
+        e.g. when generating auto-links)
+        """
         return "mod"
 
     def safe_getmembers(self):
         logger.debug(
-            f"[sphinxcontrib-matlabdomain] MatModule.safe_getmembers {self.name=}, {self.path=}, {self.package=}"
+            "[sphinxcontrib-matlabdomain] "
+            "MatModule.safe_getmembers {self.name=}, {self.path=}, {self.package=}"
         )
         if self.entities:
             return self.entities
@@ -636,7 +651,7 @@ class MatModule(MatObject):
     def __package__(self):
         return self.package
 
-    def getter(self, name, *defargs):
+    def getter(self, name, *defargs):  # noqa: ARG002
         """:class:`MatModule` ``getter`` method to get attributes."""
         if name == "__name__":
             return self.__name__
@@ -652,7 +667,10 @@ class MatModule(MatObject):
             return self.__package__
         elif name == "__module__":
             logger.debug(
-                "[sphinxcontrib-matlabdomain] mod %s is a package does not have __module__.",
+                (
+                    "[sphinxcontrib-matlabdomain] "
+                    "mod %s is a package does not have __module__."
+                ),
                 self,
             )
             return None
@@ -702,7 +720,10 @@ class MatFunction(MatObject):
         self.rem_tks = None
 
     def ref_role(self):
-        """Return role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object.
+
+        e.g. when generating auto-links
+        """
         return "func"
 
     @property
@@ -759,7 +780,10 @@ class MatClass(MatObject):
         self.rem_tks = None
 
     def ref_role(self):
-        """Return role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object.
+
+        e.g. when generating auto-links
+        """
         return "class"
 
     def fullname(self, env):
@@ -798,10 +822,12 @@ class MatClass(MatObject):
     @property
     def __bases__(self):
         bases_ = dict.fromkeys(list(self.bases))  # make copy of bases
-        class_entity_table = {}
-        for name, entity in entities_table.items():
-            if isinstance(entity, MatClass) or "@" in name:
-                class_entity_table[name] = entity
+
+        class_entity_table = {
+            name: entity
+            for name, entity in entities_table.items()
+            if isinstance(entity, MatClass) or "@" in name
+        }
 
         for base in bases_:
             if base in class_entity_table:
@@ -848,7 +874,10 @@ class MatProperty(MatObject):
         self.validators = attrs["validators"]
 
     def ref_role(self):
-        """Return role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object.
+
+        e.g. when generating auto-links
+        """
         return "attr"
 
     @property
@@ -867,7 +896,10 @@ class MatEnumeration(MatObject):
         self.docstring = attrs["docstring"]
 
     def ref_role(self):
-        """Return role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object.
+
+        e.g. when generating auto-links
+        """
         return "enum"
 
     @property
@@ -894,7 +926,11 @@ class MatMethod(MatFunction):
         self.attrs = parsed_function.attrs
 
     def ref_role(self):
-        """Return role to use for references to this object (e.g. when generating auto-links)."""
+        """Return role to use for references to this object.
+
+        e.g. when generating auto-links
+
+        """
         return "meth"
 
     @property
@@ -981,7 +1017,7 @@ class MatModuleAnalyzer:
     def for_folder(cls, dirname, modname):
         if ("folder", dirname) in cls.cache:
             return cls.cache["folder", dirname]
-        obj = cls(None, modname, dirname, True)
+        obj = cls(None, modname, dirname)
         cls.cache["folder", dirname] = obj
         return obj
 
@@ -1004,7 +1040,7 @@ class MatModuleAnalyzer:
         cls.cache["module", modname] = obj
         return obj
 
-    def __init__(self, source, modname, srcname, decoded=False):
+    def __init__(self, source, modname, srcname):
         # name of the module
         self.modname = modname
         # name of the source file
@@ -1024,7 +1060,7 @@ class MatModuleAnalyzer:
         # will be filled by find_tags()
         self.tags = None
 
-    def find_attr_docs(self, scope=""):
+    def find_attr_docs(self):
         """Find class and module-level attributes and their documentation."""
         if self.attr_docs is not None:
             return self.attr_docs

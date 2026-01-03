@@ -61,7 +61,11 @@ class MatlabAutodocDirective(AutodocDirective):
         except (KeyError, ValueError, TypeError) as exc:
             # an option is either unknown or has a wrong type
             logger.error(
-                "[sphinxcontrib-matlabdomain] An option to %s is either unknown or has an invalid value: %s",
+                (
+                    "[sphinxcontrib-matlabdomain] "
+                    "An option to %s is either unknown "
+                    "or has an invalid value: %s"
+                ),
                 self.name,
                 exc,
                 location=(source, lineno),
