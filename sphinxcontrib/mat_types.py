@@ -651,7 +651,7 @@ class MatModule(MatObject):
     def __package__(self):
         return self.package
 
-    def getter(self, name):
+    def getter(self, name, *defargs):  # noqa: ARG002
         """:class:`MatModule` ``getter`` method to get attributes."""
         if name == "__name__":
             return self.__name__
