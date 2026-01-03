@@ -858,7 +858,7 @@ def analyze(app):
     mat_types.analyze(app)
 
 
-def ensure_configuration(env):
+def ensure_configuration(app, env):  # noqa: ARG001
     if env.matlab_short_links:
         logger.info(
             "[sphinxcontrib-matlabdomain] matlab_short_links=True, "
