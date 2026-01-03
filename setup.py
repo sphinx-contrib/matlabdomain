@@ -41,4 +41,9 @@ setup(
     install_requires=requires,
     namespace_packages=["sphinxcontrib"],
     python_requires=">=3.10.0",
+    entry_points={
+        "console_scripts": [
+            "sphinx-matlab-apidoc=sphinxcontrib.sphinx_matlab_apidoc:main",
+        ],
+    },
 )
