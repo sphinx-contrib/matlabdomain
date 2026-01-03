@@ -1072,7 +1072,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                     _("   Bases: %s") % ", ".join(base_class_links), "<autodoc>"
                 )
 
-    def get_doc(self, encoding=None):
+    def get_doc(self):
         content = self.env.config.autoclass_content
 
         docstrings = []
@@ -1110,7 +1110,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
         return doc
 
-    def add_content(self, more_content, no_docstring=False):
+    def add_content(self, more_content):
         if self.doc_as_attr:
             classname = safe_getattr(self.object, "__name__", None)
             if classname:
