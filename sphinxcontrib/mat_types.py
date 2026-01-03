@@ -798,10 +798,12 @@ class MatClass(MatObject):
     @property
     def __bases__(self):
         bases_ = dict.fromkeys(list(self.bases))  # make copy of bases
-        class_entity_table = {}
-        for name, entity in entities_table.items():
-            if isinstance(entity, MatClass) or "@" in name:
-                class_entity_table[name] = entity
+
+        class_entity_table = {
+            name: entity
+            for name, entity in entities_table.items()
+            if isinstance(entity, MatClass) or "@" in name
+        }
 
         for base in bases_:
             if base in class_entity_table:

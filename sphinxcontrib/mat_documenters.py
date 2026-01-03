@@ -410,21 +410,22 @@ class MatlabDocumenter(PyDocumenter):
             for item in attr_docs.items():
                 if item[0][0] == namespace:
                     analyzed_member_names.add(item[0][1])
+
         if not want_all:
             if not self.options.members:
                 return False, []
+
             # specific members given
             members = []
             for mname in self.options.members:
-                try:
+                if hasattr(self.object, mname):
                     members.append((mname, self.get_attr(self.object, mname)))
-                except AttributeError:
-                    if mname not in analyzed_member_names:
-                        logger.warning(
-                            "[sphinxcontrib-matlabdomain] missing attribute %s in object %s",
-                            mname,
-                            self.fullname,
-                        )
+                elif mname not in analyzed_member_names:
+                    logger.warning(
+                        "[sphinxcontrib-matlabdomain] missing attribute %s in object %s",
+                        mname,
+                        self.fullname,
+                    )
         elif self.options.inherited_members:
             # safe_getmembers() uses dir() which pulls in members from all
             # base classes
@@ -815,21 +816,19 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                 memberlist = [name for name, obj in self.object.__all__]
         else:
             memberlist = self.options.members or []
+
         ret = []
         for mname in memberlist:
-            try:
-                attr = self.get_attr(self.object, mname, None)
-                if attr:
-                    ret.append((mname, attr))
-                else:
-                    raise AttributeError
-            except AttributeError:
+            if attr := getattr(self.object, mname, None):
+                ret.append((mname, attr))
+            else:
                 logger.warning(
                     "[sphinxcontrib-matlabdomain] missing attribute mentioned"
                     " in :members: or __all__: module %s, attribute %s",
                     safe_getattr(self.object, "__name__", "???"),
                     mname,
                 )
+
         return False, ret
 
 
@@ -1089,9 +1088,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                     docstrings = [initdocstring]
                 else:
                     docstrings.append(initdocstring)
-        doc = []
-        for docstring in docstrings:
-            doc.append(prepare_docstring(docstring))
+
+        doc = [prepare_docstring(x) for x in docstrings]
+
         return doc
 
     def add_content(self, more_content, no_docstring=False):
