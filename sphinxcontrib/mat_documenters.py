@@ -909,7 +909,7 @@ class MatDocstringSignatureMixin:
         match = mat_ext_sig_re.match(doclines[0])
         if not match:
             return
-        _exmod, _path, base, args, retann = match.groups()
+        _, _, base, args, retann = match.groups()
         # the base name must match ours
         if not self.objpath or base != self.objpath[-1]:
             return

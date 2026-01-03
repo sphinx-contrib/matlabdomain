@@ -509,8 +509,6 @@ class MatObject:
         else:
             return MatScript(name, modname, tree.root_node, encoding)
 
-        return None
-
     @staticmethod
     def parse_mlappfile(mlappfile, name, path):
         """Use ZipFile to read the metadata/appMetadata.xml file and
@@ -1026,7 +1024,7 @@ class MatModuleAnalyzer:
         # will be filled by find_tags()
         self.tags = None
 
-    def find_attr_docs(self, scope=""):
+    def find_attr_docs(self):
         """Find class and module-level attributes and their documentation."""
         if self.attr_docs is not None:
             return self.attr_docs
