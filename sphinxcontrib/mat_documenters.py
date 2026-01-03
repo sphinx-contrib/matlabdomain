@@ -485,7 +485,7 @@ class MatlabDocumenter(PyDocumenter):
         ``autodoc-skip-member`` event.
         """
 
-        def member_is_special(member):
+        def member_is_special():
             # TODO implement special matlab methods: disp, subsref, etc.
             return False
 
@@ -579,7 +579,7 @@ class MatlabDocumenter(PyDocumenter):
             has_doc = bool(doc)
 
             keep = False
-            if want_all and member_is_special(member):
+            if want_all and member_is_special():
                 # special methods
                 if self.options.special_members is ALL or (
                     self.options.special_members
@@ -1105,9 +1105,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                     docstrings = [initdocstring]
                 else:
                     docstrings.append(initdocstring)
-        doc = []
-        for docstring in docstrings:
-            doc.append(prepare_docstring(docstring))
+
+        doc = [prepare_docstring(x) for x in docstrings]
+
         return doc
 
     def add_content(self, more_content, no_docstring=False):
@@ -1180,7 +1180,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             all_members or self.options.inherited_members or self.options.members is ALL
         )
         # find out which members are documentable
-        _members_check_module, members = self.get_object_members(want_all)
+        _, members = self.get_object_members(want_all)
 
         # use filtered members to check for empty sections
         filtered_members = [
