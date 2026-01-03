@@ -634,7 +634,7 @@ class MatModule(MatObject):
     def __package__(self):
         return self.package
 
-    def getter(self, name, *defargs):
+    def getter(self, name):
         """:class:`MatModule` ``getter`` method to get attributes."""
         if name == "__name__":
             return self.__name__
@@ -1004,7 +1004,7 @@ class MatModuleAnalyzer:
         cls.cache["module", modname] = obj
         return obj
 
-    def __init__(self, source, modname, srcname, decoded=False):
+    def __init__(self, source, modname, srcname):
         # name of the module
         self.modname = modname
         # name of the source file

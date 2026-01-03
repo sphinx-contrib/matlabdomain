@@ -474,7 +474,7 @@ class MatlabDocumenter(PyDocumenter):
         ``autodoc-skip-member`` event.
         """
 
-        def member_is_special(member):
+        def member_is_special():
             # TODO implement special matlab methods: disp, subsref, etc.
             return False
 
@@ -897,7 +897,7 @@ class MatDocstringSignatureMixin:
     feature of reading the signature from the docstring.
     """
 
-    def _find_signature(self, encoding=None):
+    def _find_signature(self):
         docstrings = MatlabDocumenter.get_doc(self)
         if len(docstrings) != 1:
             return
@@ -924,7 +924,7 @@ class MatDocstringSignatureMixin:
         setattr(self, "__new_doclines", doclines[i:])
         return args, retann
 
-    def get_doc(self, encoding=None):
+    def get_doc(self):
         lines = getattr(self, "__new_doclines", None)
         if lines is not None:
             return [lines]
@@ -947,14 +947,14 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
     member_order = 30
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):
+    def can_document_member(cls, member):
         return isinstance(member, MatFunction)
 
     def format_args(self):
         if self.object.args:
             return "(" + ", ".join(self.object.args) + ")"
 
-    def document_members(self, all_members=False):
+    def document_members(self):
         pass
 
 
@@ -994,7 +994,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
     }
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):
+    def can_document_member(cls, member):
         return isinstance(member, MatClass)
 
     def import_object(self):
@@ -1055,7 +1055,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                     _("   Bases: %s") % ", ".join(base_class_links), "<autodoc>"
                 )
 
-    def get_doc(self, encoding=None):
+    def get_doc(self):
         content = self.env.config.autoclass_content
 
         docstrings = []
@@ -1093,7 +1093,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
         return doc
 
-    def add_content(self, more_content, no_docstring=False):
+    def add_content(self, more_content):
         if self.doc_as_attr:
             classname = safe_getattr(self.object, "__name__", None)
             if classname:
@@ -1293,13 +1293,13 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
 class MatExceptionDocumenter(MatlabDocumenter, PyExceptionDocumenter):
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):
+    def can_document_member(cls, member):
         return isinstance(member, MatException)
 
 
 class MatDataDocumenter(MatModuleLevelDocumenter, PyDataDocumenter):
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):
+    def can_document_member(cls, member):
         return isinstance(member, MatScript)
 
 
@@ -1311,7 +1311,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
     priority = 1  # must be more than FunctionDocumenter
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):
+    def can_document_member(cls, member):
         return isinstance(member, MatMethod)
 
     def import_object(self):
@@ -1387,10 +1387,10 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
     priority = 10
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):
+    def can_document_member(cls, member):
         return isinstance(member, MatProperty)
 
-    def document_members(self, all_members=False):
+    def document_members(self):
         pass
 
     def import_object(self):
@@ -1486,10 +1486,10 @@ class MatScriptDocumenter(MatModuleLevelDocumenter):
     objtype = "script"
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):
+    def can_document_member(cls, member):
         return isinstance(member, MatScript)
 
-    def document_members(self, all_members=False):
+    def document_members(self):
         pass
 
 
@@ -1499,8 +1499,8 @@ class MatApplicationDocumenter(MatModuleLevelDocumenter):
     objtype = "application"
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):
+    def can_document_member(cls, member):
         return isinstance(member, MatApplication)
 
-    def document_members(self, all_members=False):
+    def document_members(self):
         pass
