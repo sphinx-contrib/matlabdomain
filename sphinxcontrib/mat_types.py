@@ -1017,7 +1017,7 @@ class MatModuleAnalyzer:
     def for_folder(cls, dirname, modname):
         if ("folder", dirname) in cls.cache:
             return cls.cache["folder", dirname]
-        obj = cls(None, modname, dirname, True)
+        obj = cls(None, modname, dirname)
         cls.cache["folder", dirname] = obj
         return obj
 

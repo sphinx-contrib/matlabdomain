@@ -581,7 +581,7 @@ class MatlabDocumenter(PyDocumenter):
             has_doc = bool(doc)
 
             keep = False
-            if want_all and member_is_special(member):
+            if want_all and member_is_special():
                 # special methods
                 if self.options.special_members is ALL or (
                     self.options.special_members
@@ -964,14 +964,14 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
     member_order = 30
 
     @classmethod
-    def can_document_member(cls, member):
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
         return isinstance(member, MatFunction)
 
     def format_args(self):
         if self.object.args:
             return "(" + ", ".join(self.object.args) + ")"
 
-    def document_members(self):
+    def document_members(self, all_members=False):
         pass
 
 
@@ -1011,7 +1011,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
     }
 
     @classmethod
-    def can_document_member(cls, member):
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
         return isinstance(member, MatClass)
 
     def import_object(self):
@@ -1180,12 +1180,14 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             all_members or self.options.inherited_members or self.options.members is ALL
         )
         # find out which members are documentable
-        _members_check_module, members = self.get_object_members(want_all)
+        _, members = self.get_object_members(want_all)
 
         # use filtered members to check for empty sections
         filtered_members = [
             (membername, member)
-            for (membername, member, isattr) in self.filter_members(members, want_all)
+            for (membername, member, __annotations__) in self.filter_members(
+                members, want_all
+            )
         ]
 
         # create list of properties
@@ -1311,13 +1313,13 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
 class MatExceptionDocumenter(MatlabDocumenter, PyExceptionDocumenter):
     @classmethod
-    def can_document_member(cls, member):
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
         return isinstance(member, MatException)
 
 
 class MatDataDocumenter(MatModuleLevelDocumenter, PyDataDocumenter):
     @classmethod
-    def can_document_member(cls, member):
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
         return isinstance(member, MatScript)
 
 
@@ -1329,7 +1331,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
     priority = 1  # must be more than FunctionDocumenter
 
     @classmethod
-    def can_document_member(cls, member):
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
         return isinstance(member, MatMethod)
 
     def import_object(self):
@@ -1409,10 +1411,10 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
     priority = 10
 
     @classmethod
-    def can_document_member(cls, member):
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
         return isinstance(member, MatProperty)
 
-    def document_members(self):
+    def document_members(self, all_members=False):
         pass
 
     def import_object(self):
@@ -1512,10 +1514,10 @@ class MatScriptDocumenter(MatModuleLevelDocumenter):
     objtype = "script"
 
     @classmethod
-    def can_document_member(cls, member):
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
         return isinstance(member, MatScript)
 
-    def document_members(self):
+    def document_members(self, all_members=False):
         pass
 
 
@@ -1525,8 +1527,8 @@ class MatApplicationDocumenter(MatModuleLevelDocumenter):
     objtype = "application"
 
     @classmethod
-    def can_document_member(cls, member):
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
         return isinstance(member, MatApplication)
 
-    def document_members(self):
+    def document_members(self, all_members=False):
         pass

@@ -200,7 +200,7 @@ class MatObject(ObjectDescription):
         signode["class"] = classname
         signode["fullname"] = fullname
 
-        sig_prefix = self.get_signature_prefix(sig)
+        sig_prefix = self.get_signature_prefix()
         if sig_prefix:
             signode += addnodes.desc_annotation(sig_prefix, sig_prefix)
 
@@ -252,7 +252,7 @@ class MatObject(ObjectDescription):
         """Return the text for the index entry of the object."""
         raise NotImplementedError("must be implemented in subclasses")
 
-    def add_target_and_index(self, name_cls, signode):
+    def add_target_and_index(self, name_cls, sig, signode):  # noqa: ARG002 - required by Sphinx API
         modname = self.options.get("module", self.env.temp_data.get("mat:module"))
 
         if self.env.config.matlab_short_links and name_cls[0] != modname:
@@ -797,7 +797,7 @@ class MATLABDomain(Domain):
             matches.append((newname, objects[newname]))
         return matches
 
-    def resolve_xref(self, fromdocname, builder, type, target, node, contnode):
+    def resolve_xref(self, env, fromdocname, builder, type, target, node, contnode):  # noqa: ARG002 - required by Sphinx API
         modname = node.get("mat:module")
         clsname = node.get("mat:class")
         searchmode = (node.hasattr("refspecific") and 1) or 0
