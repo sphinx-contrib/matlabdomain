@@ -914,7 +914,7 @@ class MatDocstringSignatureMixin:
     feature of reading the signature from the docstring.
     """
 
-    def _find_signature(self, encoding=None):
+    def _find_signature(self):
         docstrings = MatlabDocumenter.get_doc(self)
         if len(docstrings) != 1:
             return
@@ -926,7 +926,7 @@ class MatDocstringSignatureMixin:
         match = mat_ext_sig_re.match(doclines[0])
         if not match:
             return
-        _exmod, _path, base, args, retann = match.groups()
+        _, _, base, args, retann = match.groups()
         # the base name must match ours
         if not self.objpath or base != self.objpath[-1]:
             return
@@ -941,7 +941,7 @@ class MatDocstringSignatureMixin:
         setattr(self, "__new_doclines", doclines[i:])
         return args, retann
 
-    def get_doc(self, encoding=None):
+    def get_doc(self):
         lines = getattr(self, "__new_doclines", None)
         if lines is not None:
             return [lines]
