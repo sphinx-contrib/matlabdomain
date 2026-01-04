@@ -428,15 +428,17 @@ class MatlabDocumenter(PyDocumenter):
             # specific members given
             members = []
             for mname in self.options.members:
-                try:
+                if hasattr(self.object, mname):
                     members.append((mname, self.get_attr(self.object, mname)))
-                except AttributeError:
-                    if mname not in analyzed_member_names:
-                        logger.warning(
-                            "[sphinxcontrib-matlabdomain] missing attribute %s in object %s",
-                            mname,
-                            self.fullname,
-                        )
+                elif mname not in analyzed_member_names:
+                    logger.warning(
+                        (
+                            "[sphinxcontrib-matlabdomain] "
+                            "missing attribute %s in object %s"
+                        ),
+                        mname,
+                        self.fullname,
+                    )
         elif self.options.inherited_members:
             # safe_getmembers() uses dir() which pulls in members from all
             # base classes
