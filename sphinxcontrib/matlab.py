@@ -200,8 +200,7 @@ class MatObject(ObjectDescription):
         signode["class"] = classname
         signode["fullname"] = fullname
 
-        sig_prefix = self.get_signature_prefix()
-        if sig_prefix:
+        if sig_prefix := self.get_signature_prefix():
             signode += addnodes.desc_annotation(sig_prefix, sig_prefix)
 
         if name_prefix:
@@ -288,8 +287,7 @@ class MatObject(ObjectDescription):
                 )
             objects[fullname_out] = (self.env.docname, self.objtype)
 
-        indextext = self.get_index_text(modname_out, name_cls)
-        if indextext:
+        if indextext := self.get_index_text(modname_out, name_cls):
             entry = ("single", indextext, fullname_out, "", None)
             self.indexnode["entries"].append(entry)
 
@@ -545,10 +543,7 @@ class MatCurrentModule(Directive):
     def run(self):
         env = self.state.document.settings.env
         modname = self.arguments[0].strip()
-        if modname == "None":
-            env.temp_data["mat:module"] = None
-        else:
-            env.temp_data["mat:module"] = modname
+        env.temp_data["mat:module"] = None if modname == "None" else modname
         return []
 
 
@@ -561,7 +556,7 @@ class MatXRefRole(XRefRole):
             target = target.lstrip("~")  # only has a meaning for the title
             # if the first character is a tilde, don't display the module/class
             # parts of the contents
-            if title[0:1] == "~":
+            if title[:1] == "~":
                 title = title[1:]
                 dot = title.rfind(".")
                 if dot != -1:
@@ -572,7 +567,7 @@ class MatXRefRole(XRefRole):
 
         # if the first character is a dot, search more specific namespaces first
         # else search builtins first
-        if target[0:1] == ".":
+        if target[:1] == ".":
             target = target[1:]
             refnode["refspecific"] = True
         return title, target
@@ -839,10 +834,9 @@ class MATLABDomain(Domain):
         ret = []
         for role in self.roles:
             matrole = f"mat:{role}"
-            element = self.resolve_xref(
+            if element := self.resolve_xref(
                 env, fromdocname, builder, matrole, target, node, contnode
-            )
-            if element:
+            ):
                 ret.append((matrole, element))
         return ret
 
