@@ -14,19 +14,18 @@ import pytest
 
 
 @pytest.fixture
-def app(make_app, matlab_auto_link):
-    srcdir = helper.rootdir(__file__) / "roots" / "test_module_class_names"
-    confdict = {"matlab_auto_link": matlab_auto_link}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-    return app
+def srcdir():
+    return helper.rootdir(__file__) / "roots" / "test_module_class_names"
 
 
-@pytest.mark.parametrize("matlab_auto_link", ["basic", "all"])
-def test_index_matlab_auto_link(app, matlab_auto_link):
+@pytest.mark.parametrize(
+    "confdict",
+    [{"matlab_auto_link": "basic"}, {"matlab_auto_link": "all"}],
+)
+def test_module_class_names(app, confdict):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
-    if matlab_auto_link == "basic":
+    if confdict["matlab_auto_link"] == "basic":
         assert content.astext() == (
             "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\n"
             "See Also: YourClass\n\nConstructor Summary\n\n\n\n\n\n"
@@ -44,7 +43,7 @@ def test_index_matlab_auto_link(app, matlab_auto_link):
             "otherf()\n\nfunction"
         )
 
-    elif matlab_auto_link == "all":
+    elif confdict["matlab_auto_link"] == "all":
         assert content.astext() == (
             "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\n"
             "See Also: YourClass\n\nConstructor Summary\n\n\n\n\n\n"

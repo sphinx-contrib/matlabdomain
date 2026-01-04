@@ -5,7 +5,6 @@ from sphinxcontrib import mat_types
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
 TESTDATA_ROOT = os.path.join(DIRNAME, "test_data")
-TESTDATA_SUB = os.path.join(TESTDATA_ROOT, "submodule")
 
 
 def test_Application():

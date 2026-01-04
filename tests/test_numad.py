@@ -14,11 +14,8 @@ import pytest
 
 
 @pytest.fixture
-def app(make_app):
-    srcdir = helper.rootdir(__file__) / "roots" / "test_numad"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-    return app
+def srcdir():
+    return helper.rootdir(__file__) / "roots" / "test_numad"
 
 
 def test_first(app):

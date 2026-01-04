@@ -15,20 +15,19 @@ from sphinx import addnodes
 
 
 @pytest.fixture
-def app(make_app, matlab_keep_package_prefix):
-    srcdir = helper.rootdir(__file__) / "roots" / "test_package_prefix"
-    confdict = {"matlab_keep_package_prefix": matlab_keep_package_prefix}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-    return app
+def srcdir():
+    return helper.rootdir(__file__) / "roots" / "test_package_prefix"
 
 
-@pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
-def test_prefix(app, matlab_keep_package_prefix):
+@pytest.mark.parametrize(
+    "confdict",
+    [{"matlab_keep_package_prefix": True}, {"matlab_keep_package_prefix": False}],
+)
+def test_package_prefix(app, confdict):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     assert isinstance(content[4], addnodes.desc)
-    if matlab_keep_package_prefix:
+    if confdict["matlab_keep_package_prefix"]:
         assert content[4].astext() == "+package.func(x)\n\nReturns x"
     else:
         assert content[4].astext() == "package.func(x)\n\nReturns x"

@@ -13,16 +13,12 @@ import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def srcdir():
+    return helper.rootdir(__file__) / "roots" / "test_classfolder"
 
 
-def test_first(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_classfolder"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_first(app):
     content = pickle.loads((app.doctreedir / "index_first.doctree").read_bytes())
     assert (
         content[0].astext()
@@ -30,11 +26,7 @@ def test_first(make_app, rootdir):
     )
 
 
-def test_second(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_classfolder"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_second(app):
     content = pickle.loads((app.doctreedir / "index_second.doctree").read_bytes())
     assert (
         content[0].astext()
@@ -42,11 +34,7 @@ def test_second(make_app, rootdir):
     )
 
 
-def test_third(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_classfolder"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_third(app):
     content = pickle.loads((app.doctreedir / "index_third.doctree").read_bytes())
     assert (
         content[0].astext()
