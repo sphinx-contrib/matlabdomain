@@ -29,15 +29,17 @@ def test_duplicate_link(app, confdict):
 
     elems = len(content[0])
     section = content[0][elems - 1]
+
+    expected_content = (
+        "NiceFiniteGroup\n\n\n\n"
+        "class {}replab.NiceFiniteGroup\n\n"
+        "Bases: {}replab.FiniteGroup\n\n"
+        "A nice finite group is a finite group equipped "
+        "with an injective homomorphism into a permutation group\n\n"
+        "Reference that triggers the error: eqv"
+    )
+
     if confdict["matlab_keep_package_prefix"]:
-        assert (
-            section.astext()
-            == "NiceFiniteGroup\n\n\n\nclass +replab.NiceFiniteGroup\n\nBases: "
-            "+replab.FiniteGroup\n\nA nice finite group is a finite group equipped "
-            "with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv"
-        )
+        assert section.astext() == expected_content.format("+", "+")
     else:
-        assert (
-            section.astext()
-            == "NiceFiniteGroup\n\n\n\nclass replab.NiceFiniteGroup\n\nBases: replab.FiniteGroup\n\nA nice finite group is a finite group equipped with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv"
-        )
+        assert section.astext() == expected_content.format("", "")
