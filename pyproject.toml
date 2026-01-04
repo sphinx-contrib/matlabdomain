@@ -1,3 +1,50 @@
+[project]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Documentation",
+    "Topic :: Utilities",
+    "Framework :: Sphinx :: Extension",
+    "Framework :: Sphinx :: Domain"
+]
+dependencies = [
+    "Sphinx>=7.0.0",
+    "tree-sitter-matlab>=1.0.2,<1.0.5",
+    "tree-sitter>=0.21.3,<0.23.0",
+    "setuptools"
+]
+description = 'Sphinx "matlabdomain" extension'
+# Version from setuptools_scm
+dynamic = ["version"]
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+maintainers = [{name = "Jørgen Cederberg", email = "jorgen@cederberg.be"}]
+name = "sphinxcontrib-matlabdomain"
+readme = "README.rst"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pre-commit",
+    "defusedxml>=0.7.1",
+    "sphinxcontrib-napoleon"
+]
+doc = [
+    "sphinx-rtd-theme",
+    "sphinxcontrib-napoleon"
+]
+
+[project.urls]
+Documentation = "https://sphinxcontrib-matlabdomain.readthedocs.io"
+Download = "http://pypi.python.org/pypi/sphinxcontrib-matlabdomain"
+Homepage = "https://github.com/sphinx-contrib/matlabdomain"
+
 [tool.codespell]
 builtin = "clear,rare"
 ignore-words = ".github/codespell_ignore_words.txt"
