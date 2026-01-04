@@ -24,38 +24,29 @@ def srcdir(rootdir):
 def test_module_class_names(app, confdict):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
+    expected_content = (
+        "Myclass\n\n\n\n"
+        "class Myclass\n\nMyclass\n\n"
+        "See Also: YourClass\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "Myclass()\n\nThe Myclass{} constructor\n\n"
+        "Property Summary\n\n\n\n\n\nprop\n\nThe property\n\n"
+        "Method Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\n"
+        "YourClass\n\n\n\n"
+        "class YourClass\n\nYourClass\n\n"
+        "See Also: Myclass\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "YourClass()\n\nThe YourClass{} constructor\n\n"
+        "Property Summary\n\n\n\n\n\nprop\n\nThe property\n\n"
+        "Method Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\n\n\n\n\n\n\n"
+        "class MyOtherClass\n\n"
+        "myothertest\n\n"
+        "Property Summary\n\n\n\n\n\notherprop\n\nprop\n\n"
+        "Method Summary\n\n\n\n\n\notherf()\n\nfunction"
+    )
+
     if confdict["matlab_auto_link"] == "basic":
-        assert content.astext() == (
-            "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\n"
-            "See Also: YourClass\n\nConstructor Summary\n\n\n\n\n\n"
-            "Myclass()\n\nThe Myclass constructor\n\n"
-            "Property Summary\n\n\n\n\n\nprop\n\nThe property\n\n"
-            "Method Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\n"
-            "YourClass\n\n\n\nclass YourClass\n\nYourClass\n\n"
-            "See Also: Myclass\n\nConstructor Summary\n\n\n\n\n\n"
-            "YourClass()\n\nThe YourClass constructor\n\n"
-            "Property Summary\n\n\n\n\n\nprop\n\nThe property\n\n"
-            "Method Summary\n\n\n\n\n\nadd(value)\n\n"
-            "Add the value\n\n\n\n\n\n\n\nclass MyOtherClass\n\n"
-            "myothertest\n\nProperty Summary\n\n\n\n\n\n"
-            "otherprop\n\nprop\n\nMethod Summary\n\n\n\n\n\n"
-            "otherf()\n\nfunction"
-        )
+        assert content.astext() == expected_content.format("", "")
 
     elif confdict["matlab_auto_link"] == "all":
-        assert content.astext() == (
-            "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\n"
-            "See Also: YourClass\n\nConstructor Summary\n\n\n\n\n\n"
-            "Myclass()\n\nThe Myclass() constructor\n\n"
-            "Property Summary\n\n\n\n\n\nprop\n\nThe property\n\n"
-            "Method Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\n"
-            "YourClass\n\n\n\nclass YourClass\n\nYourClass\n\n"
-            "See Also: Myclass\n\nConstructor Summary\n\n\n\n\n\n"
-            "YourClass()\n\nThe YourClass() constructor\n\n"
-            "Property Summary\n\n\n\n\n\nprop\n\nThe property\n\n"
-            "Method Summary\n\n\n\n\n\nadd(value)\n\n"
-            "Add the value\n\n\n\n\n\n\n\nclass MyOtherClass"
-            "\n\nmyothertest\n\nProperty Summary\n\n\n\n\n\n"
-            "otherprop\n\nprop\n\nMethod Summary\n\n\n\n\n\n"
-            "otherf()\n\nfunction"
-        )
+        assert content.astext() == expected_content.format("()", "()")

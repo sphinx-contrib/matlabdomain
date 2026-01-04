@@ -9,18 +9,12 @@ Test the autodoc extension.
 
 import pickle
 
-import helper
 import pytest
 
 
 @pytest.fixture
 def srcdir(rootdir):
     return rootdir / "roots" / "test_autodoc"
-
-
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
 
 
 @pytest.mark.parametrize("confdict", [{"matlab_short_links": True}])
