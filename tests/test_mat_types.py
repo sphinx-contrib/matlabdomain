@@ -1126,7 +1126,9 @@ def app(make_app):
 
 @pytest.fixture
 def mod(app):
-    return MatObject.matlabify("test_data")
+    module = MatObject.matlabify("test_data")
+    assert isinstance(module, MatModule)
+    return module
 
 
 def test_unknown(dir_test_data):
@@ -1232,8 +1234,6 @@ def test_parse_twice(mod):
 
 
 def test_classes(mod):
-    assert isinstance(mod, MatModule)
-
     # test superclass
     cls = mod.getter("ClassInheritHandle")
     assert isinstance(cls, doc.MatClass)
@@ -1384,7 +1384,6 @@ def test_folder_class(mod):
 
 
 def test_function(mod):
-    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
@@ -1397,7 +1396,6 @@ def test_function(mod):
 
 
 def test_function_getter(mod):
-    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
@@ -1409,7 +1407,6 @@ def test_function_getter(mod):
 
 
 def test_package_function(mod):
-    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
