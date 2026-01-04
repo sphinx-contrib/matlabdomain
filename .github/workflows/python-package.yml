@@ -34,8 +34,12 @@ jobs:
         os: [windows-latest, macos-latest, ubuntu-latest]
         # test all python versions but the oldest one supported
         python-version: ["3.11", "3.12", "3.13", "3.14"]
-        sphinx-version: ["70", "latest"]
+        sphinx-version: ["latest"]
         include:
+        -   description: oldest supported dependencies on oldest supported python
+            os: ubuntu-latest
+            python-version: '3.10'
+            sphinx-version: min
         -   description: sphinx dev with latest python
             # dev does not work with python <= 3.11 so only test with latest python
             os: ubuntu-latest
