@@ -132,12 +132,17 @@ def test_classfolder(app, confdict):
     [
         {"matlab_short_links": True},
         {"matlab_short_links": True, "matlab_show_property_default_value": True},
+        {"matlab_short_links": True, "matlab_auto_link": "all"},
     ],
 )
 def test_package(app, confdict):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
 
     assert len(content) == 1
+
+    to_add = ""
+    if confdict.get("matlab_auto_link", "basic") == "all":
+        to_add = "()"
 
     expected_content = (
         "package\n\n\n\n"
@@ -156,13 +161,14 @@ def test_package(app, confdict):
         "doBar()\n\n"
         "Implement doBar stage, not called by ClassBar()\n\n\n\n"
         "doFoo()\n\n"
-        "doFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\n"
+        f"doFoo{to_add} - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\n"
         "package.funcFoo(u, t)\n\n"
         "Function that does Foo\n\n"
         "x = package.funcFoo(u)\n\n"
         "[x, y] = package.funcFoo(u, t)\n\n"
-        "Test for auto-linking with baseFunction and BaseClass, etc."
+        f"Test for auto-linking with baseFunction{to_add} and BaseClass, etc."
     )
+
     if not confdict.get("matlab_show_property_default_value", False):
         assert content[0].astext() == expected_content.format("", "")
     else:
@@ -170,67 +176,36 @@ def test_package(app, confdict):
 
     docstring1 = content[0][2][1][1]  # a bit fragile, I know
     docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
-    docstring3 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
-    assert (
-        docstring1.rawsource
-        == "The Bar and Foo handler, with doFoo() and doBar() methods."
-    )
-    assert docstring2.rawsource == "Number of foos, used by doBar() method"
-    assert docstring3.rawsource == "Implement **doBar** stage, not called by ClassBar()"
+    if confdict.get("matlab_auto_link", "basic") == "all":
+        docstring3 = content[0][2][1][2][0][2][1][4][1][0][0]  # a bit fragile, I know
+        docstring4 = content[0][2][1][2][0][2][1][4][1][0][2]  # a bit fragile, I know
+        docstring5 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
+        assert (
+            docstring1.rawsource
+            == "The Bar and Foo handler, with :meth:`doFoo() <package.ClassBar.doFoo>` and doBar() methods."
+        )
+        assert (
+            docstring2.rawsource
+            == "Number of :attr:`foos <package.ClassBar.foos>`, used by :meth:`doBar() <package.ClassBar.doBar>` method"
+        )
+        assert docstring3.rawsource == ":meth:`doFoo() <package.ClassBar.doFoo>`"
+        assert docstring4.rawsource == "``@ClassExample``"
+        assert (
+            docstring5.rawsource
+            == "Implement **doBar** stage, not called by :meth:`ClassBar() <package.ClassBar.ClassBar>`"
+        )
 
-
-@pytest.mark.parametrize(
-    "confdict", [{"matlab_short_links": True, "matlab_auto_link": "all"}]
-)
-def test_package_auto_link_all(app, confdict):
-    content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
-
-    assert len(content) == 1
-
-    assert content[0].astext() == (
-        "package\n\n\n\n"
-        "class package.ClassBar\n\n"
-        "Bases: handle\n\n"
-        "The Bar and Foo handler, with doFoo() and doBar() methods.\n\n"
-        "Constructor Summary\n\n\n\n\n\n"
-        "ClassBar()\n\n"
-        "Initialize the bars and foos\n\n"
-        "Property Summary\n\n\n\n\n\n"
-        "bars\n\n"
-        "Number of bars\n\n\n\n"
-        "foos\n\n"
-        "Number of foos, used by doBar() method\n\n"
-        "Method Summary\n\n\n\n\n\n"
-        "doBar()\n\n"
-        "Implement doBar stage, not called by ClassBar()\n\n\n\n"
-        "doFoo()\n\n"
-        "doFoo() - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\n"
-        "package.funcFoo(u, t)\n\n"
-        "Function that does Foo\n\n"
-        "x = package.funcFoo(u)\n\n"
-        "[x, y] = package.funcFoo(u, t)\n\n"
-        "Test for auto-linking with baseFunction() and BaseClass, etc."
-    )
-
-    docstring1 = content[0][2][1][1]  # a bit fragile, I know
-    docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
-    docstring3 = content[0][2][1][2][0][2][1][4][1][0][0]  # a bit fragile, I know
-    docstring4 = content[0][2][1][2][0][2][1][4][1][0][2]  # a bit fragile, I know
-    docstring5 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
-    assert (
-        docstring1.rawsource
-        == "The Bar and Foo handler, with :meth:`doFoo() <package.ClassBar.doFoo>` and doBar() methods."
-    )
-    assert (
-        docstring2.rawsource
-        == "Number of :attr:`foos <package.ClassBar.foos>`, used by :meth:`doBar() <package.ClassBar.doBar>` method"
-    )
-    assert docstring3.rawsource == ":meth:`doFoo() <package.ClassBar.doFoo>`"
-    assert docstring4.rawsource == "``@ClassExample``"
-    assert (
-        docstring5.rawsource
-        == "Implement **doBar** stage, not called by :meth:`ClassBar() <package.ClassBar.ClassBar>`"
-    )
+    else:
+        docstring3 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
+        assert (
+            docstring1.rawsource
+            == "The Bar and Foo handler, with doFoo() and doBar() methods."
+        )
+        assert docstring2.rawsource == "Number of foos, used by doBar() method"
+        assert (
+            docstring3.rawsource
+            == "Implement **doBar** stage, not called by ClassBar()"
+        )
 
 
 @pytest.mark.parametrize(
