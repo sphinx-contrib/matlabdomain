@@ -45,7 +45,3 @@ def test_without_prefix(make_app, rootdir):
         content[5].astext()
         == "class replab.Action\n\nBases: replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(g, p)\n\nReturns the left action"
     )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

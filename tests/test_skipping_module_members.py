@@ -27,7 +27,3 @@ def test_setup(make_app, rootdir):
     content_text = content.astext()
     assert "The first function" in content_text
     assert "The second function" not in content_text
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -286,7 +286,3 @@ def test_root_auto_link_basic(make_app, rootdir):
         see_also_line_2.rawsource
         == "See Also:\n:class:`target.submodule.ClassMeow`\n:class:`target.package.ClassBar`\n:class:`ClassMeow`\n:class:`package.ClassBar`"
     )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
