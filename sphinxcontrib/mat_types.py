@@ -147,7 +147,7 @@ def classfolder_class_name(dotted_path):
     stripped_parts = [part.lstrip("@") for part in parts]
 
     if stripped_parts[-1] == stripped_parts[-2]:
-        return ".".join([*parts[0:-2], stripped_parts[-1]])
+        return ".".join([*parts[:-2], stripped_parts[-1]])
     else:
         return dotted_path
 

@@ -561,7 +561,7 @@ class MatXRefRole(XRefRole):
             target = target.lstrip("~")  # only has a meaning for the title
             # if the first character is a tilde, don't display the module/class
             # parts of the contents
-            if title[0:1] == "~":
+            if title[:1] == "~":
                 title = title[1:]
                 dot = title.rfind(".")
                 if dot != -1:
@@ -572,7 +572,7 @@ class MatXRefRole(XRefRole):
 
         # if the first character is a dot, search more specific namespaces first
         # else search builtins first
-        if target[0:1] == ".":
+        if target[:1] == ".":
             target = target[1:]
             refnode["refspecific"] = True
         return title, target
