@@ -34,8 +34,12 @@ jobs:
         os: [windows-latest, macos-latest, ubuntu-latest]
         # test all python versions but the oldest one supported
         python-version: ["3.11", "3.12", "3.13", "3.14"]
-        sphinx-version: ["70", "latest"]
+        sphinx-version: ["latest"]
         include:
+        -   description: oldest supported dependencies on oldest supported python
+            os: ubuntu-latest
+            python-version: '3.10'
+            sphinx-version: min
         -   description: sphinx dev with latest python
             # dev does not work with python <= 3.11 so only test with latest python
             os: ubuntu-latest
@@ -44,16 +48,28 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
         architecture: x64
-    - name: Run with Tox
-      run: |
-        pip install tox==4.8.0
-        tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}"
 
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v7
+
+    - name: Install tox
+      run: uv tool install tox --with=tox-uv --with=tox-gh-actions
+
+    - name: Run with Tox
+      run: tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}"
+
+    - name: Upload html coverage
+      if: success() || failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: ${{ matrix.os }}_${{ matrix.python-version }}_${{matrix.sphinx-version}}_htmlcov
+        path: htmlcov
 
   build-n-publish:
     if: startsWith(github.ref, 'refs/tags') && github.repository == 'sphinx-contrib/matlabdomain'
