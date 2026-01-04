@@ -16,7 +16,7 @@ import os
 # -- Project information -----------------------------------------------------
 
 project = "RepLAB"
-copyright = "2018-2019, Denis Rosset, Jean-Daniel Bancal and collaborators"
+copyright = "Denis Rosset, Jean-Daniel Bancal and collaborators"
 author = "Denis Rosset, Jean-Daniel Bancal and collaborators"
 
 # The short X.Y version

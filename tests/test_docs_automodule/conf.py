@@ -3,7 +3,7 @@ import sys
 
 # General information about the project.
 project = "test_docs_automodule"
-copyright = "2023, Jørgen Cederberg"
+copyright = "Jørgen Cederberg"
 author = "Jørgen Cederberg"
 
 # Setup extension
