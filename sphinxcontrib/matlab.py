@@ -779,11 +779,11 @@ class MATLABDomain(Domain):
         elif modname and f"{modname}.{name}" in objects:
             newname = f"{modname}.{name}"
         elif modname and classname and f"{modname}.{classname}.{name}" in objects:
-            newname = f"{modname}.{classname}" + "." + name
-        elif type == "exc" and "." not in name and "exceptions." + name in objects:
-            newname = "exceptions." + name
+            newname = f"{modname}.{classname}.{name}"
+        elif type == "exc" and "." not in name and f"exceptions.{name}" in objects:
+            newname = f"exceptions.{name}"
         elif (
-            type in ("func", "meth") and "." not in name and "object." + name in objects
+            type in ("func", "meth") and "." not in name and f"object.{name}" in objects
         ):
             newname = "object." + name
         if newname is not None:
