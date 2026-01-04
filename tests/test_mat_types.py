@@ -1429,3 +1429,10 @@ def test_class_with_get_method(mod):
     assert the_method.docstring.startswith(
         "Gets the numbers 1-n and fills in the outputs with them"
     )
+
+
+def test_parse_mlappfile(dir_test_data):
+    mfile = dir_test_data / "Application.mlapp"
+    obj = MatObject.parse_mlappfile(mfile, "Application", "test_data")
+    assert obj.name == "Application"
+    assert obj.docstring == "Summary of app\n\nDescription of app"
