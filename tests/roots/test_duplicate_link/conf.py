@@ -42,7 +42,7 @@ autosummary_generate = True
 
 matlab_keep_package_prefix = True
 
-matlab_src_dir = os.path.dirname(os.path.abspath(__file__ + "/")) + "/_src"
+matlab_src_dir = f"{os.path.dirname(os.path.abspath(f'{__file__}/'))}/_src"
 primary_domain = "mat"
 default_role = "obj"
 

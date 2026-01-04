@@ -169,7 +169,7 @@ def recursive_log_debug(obj, indent=""):
         )
         if isinstance(o, MatModule):
             if o.entities:
-                indent = indent + " "
+                indent = f"{indent} "
                 names = [n_ for n_, o_ in o.entities]
                 logger.debug(
                     "[sphinxcontrib-matlabdomain] %s Names=%s", indent, str(names)
@@ -188,7 +188,7 @@ def recursive_log_debug(obj, indent=""):
 def populate_entities_table(obj, path=""):
     # Recursively scan the hiearachy of entities and populate the entities_table.
     for _n, o in obj.entities:
-        fullpath = path + "." + o.name
+        fullpath = f"{path}.{o.name}"
         fullpath = fullpath.lstrip(".")
         entities_table[fullpath] = o
         entities_name_map[strip_package_prefix(fullpath)] = fullpath
@@ -436,8 +436,8 @@ class MatObject:
                     f"matlabify MatModule {package=}, {fullpath=}"
                 )
                 return MatModule(name, fullpath, package)  # import package
-        elif os.path.isfile(fullpath + ".m"):
-            mfile = fullpath + ".m"
+        elif os.path.isfile(f"{fullpath}.m"):
+            mfile = f"{fullpath}.m"
             logger.debug(
                 "[sphinxcontrib-matlabdomain] "
                 "matlabify parse_mfile {package=}, {mfile=}"
@@ -445,8 +445,8 @@ class MatObject:
             return MatObject.parse_mfile(
                 mfile, name, path, MatObject.encoding
             )  # parse mfile
-        elif os.path.isfile(fullpath + ".mlapp"):
-            mlappfile = fullpath + ".mlapp"
+        elif os.path.isfile(f"{fullpath}.mlapp"):
+            mlappfile = f"{fullpath}.mlapp"
             logger.debug(
                 "[sphinxcontrib-matlabdomain] "
                 "matlabify parse_mlappfile {package=}, {mlappfile=}"

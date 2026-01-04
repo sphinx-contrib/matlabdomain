@@ -688,7 +688,7 @@ class MatlabDocumenter(PyDocumenter):
             classes.sort(key=lambda cls: cls.priority)
             # give explicitly separated module name, so that members
             # of inner classes can be documented
-            full_mname = self.modname + "::" + ".".join([*self.objpath, mname])
+            full_mname = f"{self.modname}::" + ".".join([*self.objpath, mname])
             documenter = classes[-1](self.directive, full_mname, self.indent)
             memberdocumenters.append((documenter, isattr))
         member_order = self.options.member_order or self.env.config.autodoc_member_order
@@ -817,9 +817,9 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
 
         # add some module-specific options
         if self.options.synopsis:
-            self.add_line("   :synopsis: " + self.options.synopsis, "<autodoc>")
+            self.add_line(f"   :synopsis: {self.options.synopsis}", "<autodoc>")
         if self.options.platform:
-            self.add_line("   :platform: " + self.options.platform, "<autodoc>")
+            self.add_line(f"   :platform: {self.options.platform}", "<autodoc>")
         if self.options.deprecated:
             self.add_line("   :deprecated:", "<autodoc>")
 
@@ -1443,28 +1443,28 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 # and postfixed with an ellipsis.
                 if "\n" in obj_default:
                     obj_default_parts = obj_default.split("\n")
-                    obj_default = obj_default_parts[0] + " ... " + obj_default_parts[-1]
+                    obj_default = f"{obj_default_parts[0]} ... {obj_default_parts[-1]}"
 
                 if obj_default:
-                    obj_default = " = " + obj_default
+                    obj_default = f" = {obj_default}"
 
                 if self.env.config.matlab_show_property_specs:
                     prop_spec = ""
                     if self.object.size is not None:
-                        prop_spec = prop_spec + "(" + ",".join(self.object.size) + ")"
+                        prop_spec = f"{prop_spec}(" + ",".join(self.object.size) + ")"
                     if self.object.type is not None:
-                        prop_spec = prop_spec + " " + self.object.type
+                        prop_spec = f"{prop_spec} {self.object.type}"
                     if self.object.validators is not None:
                         prop_spec = (
                             prop_spec + " {" + ",".join(self.object.validators) + "}"
                         )
                     obj_default = prop_spec + obj_default
 
-                self.add_line("   :annotation: " + obj_default, "<autodoc>")
+                self.add_line(f"   :annotation: {obj_default}", "<autodoc>")
         elif self.options.annotation is SUPPRESS:
             pass
         else:
-            self.add_line("   :annotation: = " + self.options.annotation, "<autodoc>")
+            self.add_line(f"   :annotation: = {self.options.annotation}", "<autodoc>")
 
     def add_content(self, more_content, no_docstring=False):
         # if not self._datadescriptor:
