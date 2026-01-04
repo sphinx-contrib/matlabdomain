@@ -26,9 +26,12 @@ def test_package_links(app, confdict):
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 
     expected_content = (
-        "class {}replab.Action\n\nBases: {}replab.Str\n\n"
-        "An action group …\n\nMethod Summary\n\n\n\n\n\n"
-        "leftAction(g, p)\n\nReturns the left action"
+        "class {}replab.Action\n\n"
+        "Bases: {}replab.Str\n\n"
+        "An action group …\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "leftAction(g, p)\n\n"
+        "Returns the left action"
     )
 
     if confdict["matlab_keep_package_prefix"]:
