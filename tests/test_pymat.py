@@ -9,14 +9,13 @@ Test the autodoc extension.
 
 import pickle
 
-import helper
 import pytest
 from sphinx import addnodes
 
 
 @pytest.fixture
-def srcdir():
-    return helper.rootdir(__file__) / "roots" / "test_pymat"
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_pymat"
 
 
 def test_pymat(app):

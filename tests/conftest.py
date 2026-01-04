@@ -9,12 +9,17 @@ from sphinx.testing.fixtures import make_app, test_params  # noqa: F401
 
 
 @pytest.fixture()
-def dir_test_data() -> Path:
-    return Path(__file__).parent / "test_data"
+def rootdir() -> Path:
+    return Path(__file__).parent
+
+
+@pytest.fixture()
+def dir_test_data(rootdir) -> Path:
+    return rootdir / "test_data"
 
 
 @pytest.fixture
-def confdict():
+def confdict() -> dict:
     return {}
 
 

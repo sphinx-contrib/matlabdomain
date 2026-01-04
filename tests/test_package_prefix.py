@@ -9,14 +9,13 @@ Test the autodoc extension with the matlab_keep_package_prefix option.
 
 import pickle
 
-import helper
 import pytest
 from sphinx import addnodes
 
 
 @pytest.fixture
-def srcdir():
-    return helper.rootdir(__file__) / "roots" / "test_package_prefix"
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_package_prefix"
 
 
 @pytest.mark.parametrize(

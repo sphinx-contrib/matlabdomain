@@ -10,13 +10,12 @@ Test the autodoc extension.
 import pickle
 
 import docutils
-import helper
 import pytest
 
 
 @pytest.fixture
-def srcdir():
-    return helper.rootdir(__file__) / "roots" / "test_duplicate_link"
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_duplicate_link"
 
 
 @pytest.mark.parametrize(

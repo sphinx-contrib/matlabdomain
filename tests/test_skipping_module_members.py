@@ -9,13 +9,12 @@ Test the autodoc extension.
 
 import pickle
 
-import helper
 import pytest
 
 
 @pytest.fixture
-def srcdir():
-    return helper.rootdir(__file__) / "roots" / "test_skipping_module_members"
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_skipping_module_members"
 
 
 def test_skipping_module_members(app, srcdir):
