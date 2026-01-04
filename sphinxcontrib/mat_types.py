@@ -167,15 +167,12 @@ def recursive_log_debug(obj, indent=""):
         logger.debug(
             "[sphinxcontrib-matlabdomain] %s Name=%s, Entity=%s", indent, n, str(o)
         )
-        if isinstance(o, MatModule):
-            if o.entities:
-                indent = f"{indent} "
-                names = [n_ for n_, o_ in o.entities]
-                logger.debug(
-                    "[sphinxcontrib-matlabdomain] %s Names=%s", indent, str(names)
-                )
-                recursive_log_debug(o, indent)
-                indent = indent[:-1]
+        if isinstance(o, MatModule) and o.entities:
+            indent = f"{indent} "
+            names = [n_ for n_, o_ in o.entities]
+            logger.debug("[sphinxcontrib-matlabdomain] %s Names=%s", indent, str(names))
+            recursive_log_debug(o, indent)
+            indent = indent[:-1]
         if isinstance(o, MatClass):
             logger.debug(
                 "[sphinxcontrib-matlabdomain] %s -> name=%s, methods=%s",
@@ -192,9 +189,8 @@ def populate_entities_table(obj, path=""):
         fullpath = fullpath.lstrip(".")
         entities_table[fullpath] = o
         entities_name_map[strip_package_prefix(fullpath)] = fullpath
-        if isinstance(o, MatModule):
-            if o.entities:
-                populate_entities_table(o, fullpath)
+        if isinstance(o, MatModule) and o.entities:
+            populate_entities_table(o, fullpath)
 
 
 def try_get_module_entity_or_default(entity_name):

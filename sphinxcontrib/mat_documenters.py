@@ -678,9 +678,10 @@ class MatlabDocumenter(PyDocumenter):
         for mname, member, isattr in self.filter_members(members, want_all):
             classes = []
             for name, cls in self.documenters.items():
-                if name.startswith("mat:"):
-                    if cls.can_document_member(member, mname, isattr, self):
-                        classes.append(cls)
+                if name.startswith("mat:") and cls.can_document_member(
+                    member, mname, isattr, self
+                ):
+                    classes.append(cls)
             if not classes:
                 # don't know how to document this member
                 continue
@@ -773,9 +774,8 @@ class MatlabDocumenter(PyDocumenter):
             self.directive.record_dependencies.add(self.analyzer.srcname)
 
         # check __module__ of object (for members not given explicitly)
-        if check_module:
-            if not self.check_module():
-                return
+        if check_module and not self.check_module():
+            return
 
         # make sure that the result starts with an empty line.  This is
         # necessary for some situations where another directive preprocesses
@@ -1487,16 +1487,19 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 not_in_literal_block, no_link_state = self.detect_literal_block(
                     docstrings[i][j], no_link_state
                 )
-                if not_in_literal_block and docstrings[i][j]:  # also not blank line
-                    if p.search(docstrings[i][j]):
-                        docstrings[i][j] = p.sub(
-                            (
-                                f":attr:`{name} "
-                                f"<{self.class_object().fullname(self.env)}"
-                                f".{name}>`"
-                            ),
-                            docstrings[i][j],
-                        )
+                if (
+                    not_in_literal_block
+                    and docstrings[i][j]
+                    and p.search(docstrings[i][j])
+                ):
+                    docstrings[i][j] = p.sub(
+                        (
+                            f":attr:`{name} "
+                            f"<{self.class_object().fullname(self.env)}"
+                            f".{name}>`"
+                        ),
+                        docstrings[i][j],
+                    )
         return docstrings
 
     def auto_link_all(self, docstrings):
