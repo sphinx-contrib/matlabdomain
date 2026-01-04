@@ -243,6 +243,7 @@ class MatlabDocumenter(PyDocumenter):
                                 entries[k] = f":{role}:`{entries[k]}`"
                                 continue
 
+                        # if we have an associated class, search properties and methods
                         if cls := self.class_object():
                             name = entries[k].rstrip("()")
                             if name in cls.methods:

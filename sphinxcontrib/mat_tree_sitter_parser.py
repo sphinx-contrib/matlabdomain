@@ -492,6 +492,9 @@ class MatFunctionParser:
                 # check for it a trailing comment. If it is not there
                 # then we stop looking.
                 prev_comment = prev_node.named_children[-1]
+                # we now need to check if prev_comment ends on the line
+                # before ours and trim the first line if it on the same
+                # line as prev property.
                 if (
                     prev_comment.type == "comment"
                     and get_row(arg.start_point) - get_row(prev_comment.end_point) <= 1
@@ -731,6 +734,9 @@ class MatClassParser:
                 # check for it a trailing comment. If it is not there
                 # then we stop looking.
                 prev_comment = prev_node.named_children[-1]
+                # we now need to check if prev_comment ends on the line
+                # before ours and trim the first line if it on the same
+                # line as prev property.
                 if (
                     prev_comment.type == "comment"
                     and get_row(prop.start_point) - get_row(prev_comment.end_point) <= 1
