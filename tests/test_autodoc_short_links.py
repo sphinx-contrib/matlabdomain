@@ -17,50 +17,70 @@ def srcdir(rootdir):
     return rootdir / "roots" / "test_autodoc"
 
 
-@pytest.mark.parametrize("confdict", [{"matlab_short_links": True}])
-def test_target(app, confdict):
-    content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
-    property_section = content[0][2][1][2][0]  # a bit fragile, I know
-    method_section = content[0][2][1][2][1]  # a bit fragile, I know
-    assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "target\n\n\n\nclass ClassExample\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod,\npackage.ClassBar.bars, package.ClassBar.doFoo.\n\nConstructor Summary\n\n\n\n\n\nClassExample(a)\n\nLinks to fully qualified names package.ClassBar.foos,\npackage.ClassBar.doBar, and ClassExample.mymethod.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
-    )
-    assert (
-        property_section.rawsource
-        == "ClassExample Properties:\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample"
-    )
-    assert (
-        method_section.rawsource
-        == "ClassExample Methods:\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n"
-    )
-
-
 @pytest.mark.parametrize(
     "confdict",
-    [{"matlab_short_links": True, "matlab_show_property_default_value": True}],
+    [
+        {"matlab_short_links": True},
+        {"matlab_short_links": True, "matlab_show_property_default_value": True},
+    ],
 )
-def test_target_show_default_value(app, confdict):
+def test_target(app, confdict):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
 
     assert len(content) == 1
 
-    assert (
-        content[0].astext()
-        == "target\n\n\n\nclass ClassExample\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod,\npackage.ClassBar.bars, package.ClassBar.doFoo.\n\nConstructor Summary\n\n\n\n\n\nClassExample(a)\n\nLinks to fully qualified names package.ClassBar.foos,\npackage.ClassBar.doBar, and ClassExample.mymethod.\n\nProperty Summary\n\n\n\n\n\na = 42\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
+    expected_content = (
+        "target\n\n\n\n"
+        "class ClassExample\n\n"
+        "Bases: handle\n\n"
+        "Example class\n\n"
+        "ClassExample Properties:\n\n"
+        "a - first property of ClassExample\n"
+        "b - second property of ClassExample\n"
+        "c - third property of ClassExample\n\n"
+        "ClassExample Methods:\n\n"
+        "ClassExample - the constructor and a reference to mymethod()\n"
+        "mymethod - a method in ClassExample\n\n"
+        "See also BaseClass, baseFunction, b, unknownEntity, mymethod,\n"
+        "package.ClassBar.bars, package.ClassBar.doFoo.\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "ClassExample(a)\n\n"
+        "Links to fully qualified names package.ClassBar.foos,\n"
+        "package.ClassBar.doBar, and ClassExample.mymethod.\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "a{}\n\n"
+        "a property\n\n\n\n"
+        "b{}\n\n"
+        "a property with default value\n\n\n\n"
+        "c{}\n\n"
+        "a property with multiline default value\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "mymethod(b)\n\n"
+        "A method in ClassExample\n\n"
+        "Parameters\n\n"
+        "b – an input to mymethod()"
     )
 
+    if not confdict.get("matlab_show_property_default_value", False):
+        assert content[0].astext() == expected_content.format("", "", "")
+    else:
+        assert content[0].astext() == expected_content.format(
+            " = 42", " = 10", " = [10; ... 30]"
+        )
+
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
-    assert (
-        property_section.rawsource
-        == "ClassExample Properties:\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample"
+    assert property_section.rawsource == (
+        "ClassExample Properties:\n"
+        "a - first property of ClassExample\n"
+        "b - second property of ClassExample\n"
+        "c - third property of ClassExample"
     )
 
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
-    assert (
-        method_section.rawsource
-        == "ClassExample Methods:\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n"
+    assert method_section.rawsource == (
+        "ClassExample Methods:\n"
+        "ClassExample - the constructor and a reference to mymethod()\n"
+        "mymethod - a method in ClassExample\n"
     )
 
 
