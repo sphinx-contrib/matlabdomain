@@ -5,7 +5,6 @@ import tree_sitter_matlab as tsml
 from sphinx.util.logging import getLogger
 from tree_sitter import Language
 
-
 logger = getLogger("matlab-domain")
 
 # Attribute default dictionary used to give default values
