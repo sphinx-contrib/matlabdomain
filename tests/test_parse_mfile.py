@@ -146,10 +146,12 @@ def test_ClassWithEndOfLineComment():
     method_test1 = obj.methods["test1"]
     assert method_test1.name == "test1"
     # TODO: Trailing comment get passed as docstring
+    # assert method_test.docstring == '' # noqa : ERA001
 
     method_test2 = obj.methods["test2"]
     assert method_test2.name == "test2"
     # TODO: Trailing comment get passed as docstring
+    # assert method_test.docstring == '' # noqa : ERA001
 
 
 def test_ClassWithEvent():

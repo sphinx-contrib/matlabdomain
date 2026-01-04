@@ -236,6 +236,19 @@ def analyze(app):
     populate_entities_table(root)
     entities_table["."] = root
 
+    """
+    Transform Class Folders classes from
+
+    @ClassFolder (Module)
+        ClassFolder (Class)
+        method1 (Function)
+        method2 (Function)
+
+    to
+
+    ClassFolder (Class) with the method1 and method2 add to the ClassFolder Class.
+    """
+
     def isClassFolderModule(name, entity):
         if not isinstance(entity, MatModule):
             return False
@@ -678,6 +691,8 @@ class MatModule(MatObject):
                         name,
                     )
                     return entity_content
+
+            # If not - try to MATLABIFY it.
             if entity := MatObject.matlabify(f"{self.package}.{name}"):
                 self.entities.append((name, entity))
                 logger.debug(
