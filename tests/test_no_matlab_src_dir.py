@@ -12,5 +12,6 @@ def srcdir(rootdir):
 
 def test_no_matlab_src_dir(app):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
+
     assert len(content) == 1
     assert content[0].astext() == "Description\n\nEmpty."

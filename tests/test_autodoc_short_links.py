@@ -124,14 +124,17 @@ def test_classfolder(app, confdict):
 @pytest.mark.parametrize("confdict", [{"matlab_short_links": True}])
 def test_package(app, confdict):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
+
+    assert len(content) == 1
+
+    assert content[0].astext() == (
+        "package\n\n\n\n"
+        "class package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
+    )
+
     docstring1 = content[0][2][1][1]  # a bit fragile, I know
     docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
     docstring3 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
-    assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
-    )
     assert (
         docstring1.rawsource
         == "The Bar and Foo handler, with doFoo() and doBar() methods."
@@ -146,10 +149,32 @@ def test_package(app, confdict):
 )
 def test_package_show_default_value(app, confdict):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
+
     assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars = 'bars'\n\nNumber of bars\n\n\n\nfoos = 10\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
+
+    assert content[0].astext() == (
+        "package\n\n\n\n"
+        "class package.ClassBar\n\n"
+        "Bases: handle\n\n"
+        "The Bar and Foo handler, with doFoo() and doBar() methods.\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "ClassBar()\n\n"
+        "Initialize the bars and foos\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "bars = 'bars'\n\n"
+        "Number of bars\n\n\n\n"
+        "foos = 10\n\n"
+        "Number of foos, used by doBar() method\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "doBar()\n\n"
+        "Implement doBar stage, not called by ClassBar()\n\n\n\n"
+        "doFoo()\n\n"
+        "doFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\n"
+        "package.funcFoo(u, t)\n\n"
+        "Function that does Foo\n\n"
+        "x = package.funcFoo(u)\n\n"
+        "[x, y] = package.funcFoo(u, t)\n\n"
+        "Test for auto-linking with baseFunction and BaseClass, etc."
     )
 
 
@@ -158,16 +183,39 @@ def test_package_show_default_value(app, confdict):
 )
 def test_package_auto_link_all(app, confdict):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
+
+    assert len(content) == 1
+
+    assert content[0].astext() == (
+        "package\n\n\n\n"
+        "class package.ClassBar\n\n"
+        "Bases: handle\n\n"
+        "The Bar and Foo handler, with doFoo() and doBar() methods.\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "ClassBar()\n\n"
+        "Initialize the bars and foos\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "bars\n\n"
+        "Number of bars\n\n\n\n"
+        "foos\n\n"
+        "Number of foos, used by doBar() method\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "doBar()\n\n"
+        "Implement doBar stage, not called by ClassBar()\n\n\n\n"
+        "doFoo()\n\n"
+        "doFoo() - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\n"
+        "package.funcFoo(u, t)\n\n"
+        "Function that does Foo\n\n"
+        "x = package.funcFoo(u)\n\n"
+        "[x, y] = package.funcFoo(u, t)\n\n"
+        "Test for auto-linking with baseFunction() and BaseClass, etc."
+    )
+
     docstring1 = content[0][2][1][1]  # a bit fragile, I know
     docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
     docstring3 = content[0][2][1][2][0][2][1][4][1][0][0]  # a bit fragile, I know
     docstring4 = content[0][2][1][2][0][2][1][4][1][0][2]  # a bit fragile, I know
     docstring5 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
-    assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo() - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction() and BaseClass, etc."
-    )
     assert (
         docstring1.rawsource
         == "The Bar and Foo handler, with :meth:`doFoo() <package.ClassBar.doFoo>` and doBar() methods."
@@ -184,29 +232,32 @@ def test_package_auto_link_all(app, confdict):
     )
 
 
-@pytest.mark.parametrize("confdict", [{"matlab_short_links": True}])
-def test_submodule(app, confdict):
-    content = pickle.loads((app.doctreedir / "index_submodule.doctree").read_bytes())
-    bases_line = content[0][2][1][0]
-    assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "submodule\n\n\n\nclass ClassMeow\n\nBases: package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\nfuncMeow(input)\n\nTests a function with comments after docstring"
-    )
-    assert bases_line.rawsource == "Bases: :class:`package.ClassBar`"
-
-
 @pytest.mark.parametrize(
     "confdict",
-    [{"matlab_short_links": True, "matlab_show_property_default_value": True}],
+    [
+        {"matlab_short_links": True},
+        {"matlab_short_links": True, "matlab_show_property_default_value": True},
+    ],
 )
-def test_submodule_show_default_value(app, confdict):
+def test_submodule(app, confdict):
     content = pickle.loads((app.doctreedir / "index_submodule.doctree").read_bytes())
+
     assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "submodule\n\n\n\nclass ClassMeow\n\nBases: package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\nfuncMeow(input)\n\nTests a function with comments after docstring"
+
+    assert content[0].astext() == (
+        "submodule\n\n\n\n"
+        "class ClassMeow\n\n"
+        "Bases: package.ClassBar\n\n"
+        "Class which inherits from a package\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "say()\n\n"
+        "Say Meow\n\n\n\n"
+        "funcMeow(input)\n\n"
+        "Tests a function with comments after docstring"
     )
+
+    bases_line = content[0][2][1][0]
+    assert bases_line.rawsource == "Bases: :class:`package.ClassBar`"
 
 
 @pytest.mark.parametrize(
@@ -218,7 +269,9 @@ def test_submodule_show_default_value(app, confdict):
 )
 def test_root(app, confdict):
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
+
     assert len(content) == 1
+
     assert content[0].astext() == (
         "root\n\n\n\n"
         "class BaseClass\n\n"
@@ -250,19 +303,27 @@ def test_root(app, confdict):
 )
 def test_root_auto_link_basic(app, confdict):
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
+
+    assert len(content) == 1
+
     method_section = content[0][2][1][1][0]  # a bit fragile, I know
     see_also_line_1 = content[0][2][1][1][1]  # a bit fragile, I know
     see_also_line_2 = content[0][4][1][1][0]  # a bit fragile, I know
-    assert len(content) == 1
-    assert (
-        method_section.rawsource
-        == "BaseClass Methods:\n* :meth:`BaseClass() <BaseClass.BaseClass>` - the constructor, whose description extends\n    to the next line\n* :meth:`DoBase() <BaseClass.DoBase>` - another BaseClass method\n"
+
+    assert method_section.rawsource == (
+        "BaseClass Methods:\n"
+        "* :meth:`BaseClass() <BaseClass.BaseClass>` - the constructor, whose description extends\n"
+        "    to the next line\n"
+        "* :meth:`DoBase() <BaseClass.DoBase>` - another BaseClass method\n"
     )
     assert (
         see_also_line_1.rawsource
         == "See Also\n:class:`target.ClassExample`, :func:`baseFunction`, :class:`ClassExample`\n\n"
     )
-    assert (
-        see_also_line_2.rawsource
-        == "See Also:\n:class:`target.submodule.ClassMeow`\n:class:`target.package.ClassBar`\n:class:`ClassMeow`\n:class:`package.ClassBar`"
+    assert see_also_line_2.rawsource == (
+        "See Also:\n"
+        ":class:`target.submodule.ClassMeow`\n"
+        ":class:`target.package.ClassBar`\n"
+        ":class:`ClassMeow`\n"
+        ":class:`package.ClassBar`"
     )

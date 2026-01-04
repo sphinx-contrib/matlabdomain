@@ -32,9 +32,10 @@ def confdict(show_default, show_specs):
 @pytest.mark.parametrize("show_specs", [True, False])
 def test_target(app, show_default, show_specs):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
-    summaries = content[0][2][1][4].rawsource
 
     assert len(content) == 1
+
+    summaries = content[0][2][1][4].rawsource
 
     if show_default:
         assert "= 42\n\n" in summaries
