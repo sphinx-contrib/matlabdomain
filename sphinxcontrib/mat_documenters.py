@@ -204,7 +204,7 @@ class MatlabDocumenter(PyDocumenter):
                         # find name
                         match = see_also_cond_re.search(line)
                         if match is not None:
-                            entries_str = match[2]
+                            entries_str = match.group(2)  # the entries
                     elif match := see_also_re.search(line):
                         is_see_also_line = True  # line begins with "See also"
                         entries_str = match.group(2)  # the entries
