@@ -1,21 +1,13 @@
 import os
 import sys
 
-# General information about the project.
-project = "MATLAB Sphinx Documentation Test"
-copyright = "Mark Mikofski"
-author = "Mark Mikofski, Jørgen Cederberg"
-
-
 sys.path.insert(0, os.path.abspath(os.path.join("..", "..")))
-matlab_src_dir = os.path.abspath("..")
+
+author = "Mark Mikofski, Jørgen Cederberg"
+copyright = "Mark Mikofski"
+extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 matlab_show_property_default_value = True
 matlab_show_property_specs = True
-
-extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
+matlab_src_dir = os.path.abspath("..")
 primary_domain = "mat"
-
-templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-
-html_theme = "default"
+project = "MATLAB Sphinx Documentation Test"
