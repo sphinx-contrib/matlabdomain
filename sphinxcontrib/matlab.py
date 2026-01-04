@@ -141,10 +141,8 @@ class MatObject(ObjectDescription):
         ),
     ]
 
-    def get_signature_prefix(self, sig):
-        """May return a prefix to put before the object name in the
-        signature.
-        """
+    def get_signature_prefix(self):
+        """May return a prefix to put before the object name in the signature."""
         return ""
 
     def needs_arglist(self):
@@ -202,7 +200,7 @@ class MatObject(ObjectDescription):
         signode["class"] = classname
         signode["fullname"] = fullname
 
-        sig_prefix = self.get_signature_prefix(sig)
+        sig_prefix = self.get_signature_prefix()
         if sig_prefix:
             signode += addnodes.desc_annotation(sig_prefix, sig_prefix)
 
@@ -254,7 +252,7 @@ class MatObject(ObjectDescription):
         """Return the text for the index entry of the object."""
         raise NotImplementedError("must be implemented in subclasses")
 
-    def add_target_and_index(self, name_cls, sig, signode):
+    def add_target_and_index(self, name_cls, sig, signode):  # noqa: ARG002 - required by Sphinx API
         modname = self.options.get("module", self.env.temp_data.get("mat:module"))
 
         if self.env.config.matlab_short_links and name_cls[0] != modname:
@@ -350,7 +348,7 @@ class MatClasslike(MatObject):
         # TODO respecting the configuration setting ``toc_object_entries_show_parents``
         return sig.attributes.get("fullname")
 
-    def get_signature_prefix(self, sig):
+    def get_signature_prefix(self):
         return self.objtype + " "
 
     def get_index_text(self, modname, name_cls):
@@ -376,7 +374,7 @@ class MatClassmember(MatObject):
     def needs_arglist(self):
         return self.objtype.endswith("method")
 
-    def get_signature_prefix(self, sig):
+    def get_signature_prefix(self):
         if self.objtype == "staticmethod":
             return "static "
         elif self.objtype == "classmethod":
@@ -730,7 +728,7 @@ class MATLABDomain(Domain):
             if fn == docname:
                 del self.data["modules"][modname]
 
-    def find_obj(self, env, modname, classname, name, type, searchmode=0):
+    def find_obj(self, modname, classname, name, type, searchmode=0):
         """Find a MATLAB object for "name", perhaps using the given module \
            and/or classname.
 
@@ -799,11 +797,11 @@ class MATLABDomain(Domain):
             matches.append((newname, objects[newname]))
         return matches
 
-    def resolve_xref(self, env, fromdocname, builder, type, target, node, contnode):
+    def resolve_xref(self, env, fromdocname, builder, type, target, node, contnode):  # noqa: ARG002 - required by Sphinx API
         modname = node.get("mat:module")
         clsname = node.get("mat:class")
         searchmode = (node.hasattr("refspecific") and 1) or 0
-        matches = self.find_obj(env, modname, clsname, target, type, searchmode)
+        matches = self.find_obj(modname, clsname, target, type, searchmode)
         if not matches:
             return None
         elif len(matches) > 1:
@@ -860,7 +858,7 @@ def analyze(app):
     mat_types.analyze(app)
 
 
-def ensure_configuration(app, env):
+def ensure_configuration(app, env):  # noqa: ARG001
     if env.matlab_short_links:
         logger.info(
             "[sphinxcontrib-matlabdomain] matlab_short_links=True, "
