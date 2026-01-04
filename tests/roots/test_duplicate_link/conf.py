@@ -6,11 +6,7 @@ autosummary_generate = True
 default_role = "obj"
 project = "RepLAB"
 copyright = "Denis Rosset, Jean-Daniel Bancal and collaborators"
-extensions = [
-    "sphinx.ext.autodoc",  # for enumeration of objects stuff
-    "sphinx.ext.autosummary",
-    "sphinxcontrib.matlab",  # support for Matlab
-]
+extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 matlab_keep_package_prefix = True
 matlab_src_dir = f"{os.path.dirname(os.path.abspath(f'{__file__}/'))}/_src"
 nitpicky = True
