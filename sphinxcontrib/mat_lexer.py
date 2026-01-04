@@ -3,7 +3,7 @@
 
 Lexers for Matlab and related languages.
 
-:copyright: Copyright 2006-2017 by the Pygments team, see AUTHORS.
+:copyright: Copyright by the Pygments team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 
     Modified by Jørgen Cederberg from original Pygments MATLAB lexer, copied

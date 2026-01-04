@@ -1,7 +1,7 @@
 """sphinxcontrib.test.helper.
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:copyright: Copyright 2023 Joergen Cederberg
+:copyright: Copyright Joergen Cederberg
 :license: BSD, see LICENSE for details.
 """
 
