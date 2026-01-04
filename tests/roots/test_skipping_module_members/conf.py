@@ -1,7 +1,7 @@
 import os
 
 project = "Skipping Members"
-copyright = "2023, Jørgen Cederberg"
+copyright = "Jørgen Cederberg"
 author = "Jørgen Cederberg"
 
 # -- General configuration ---------------------------------------------------

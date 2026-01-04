@@ -3,7 +3,7 @@ import sys
 
 # General information about the project.
 project = "MATLAB Sphinx Documentation Test"
-copyright = "2014, Mark Mikofski"
+copyright = "Mark Mikofski"
 author = "Mark Mikofski, Jørgen Cederberg"
 
 

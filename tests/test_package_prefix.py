@@ -3,7 +3,7 @@
 
 Test the autodoc extension with the matlab_keep_package_prefix option.
 
-:copyright: Copyright 2019 by the Isaac Lenton.
+:copyright: Copyright by the Isaac Lenton.
 :license: BSD, see LICENSE for details.
 """
 
