@@ -13,8 +13,6 @@ from sphinxcontrib.mat_types import (
     shortest_name,
 )
 
-rootdir = helper.rootdir(__file__)
-
 
 def test_classfolder_class_name():
     name = classfolder_class_name("target.@ClassFolder")
@@ -1118,6 +1116,7 @@ def test_f_with_output_argument_block(dir_test_data):
 @pytest.fixture
 def app(make_app):
     # Create app to setup build environment
+    rootdir = helper.rootdir(__file__)
     srcdir = rootdir / "test_docs"
     app = make_app(srcdir=srcdir)
     MatObject.basedir = app.config.matlab_src_dir
