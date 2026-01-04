@@ -830,18 +830,15 @@ class MatModuleDocumenter(MatlabDocumenter, PyModuleDocumenter):
                 # documenting imported objects
                 return True, self.object.safe_getmembers()
             else:
-                memberlist = [name for name, obj in self.object.__all__]
+                memberlist = [name for name, _ in self.object.__all__]
         else:
             memberlist = self.options.members or []
+
         ret = []
         for mname in memberlist:
-            try:
-                attr = self.get_attr(self.object, mname, None)
-                if attr:
-                    ret.append((mname, attr))
-                else:
-                    raise AttributeError
-            except AttributeError:
+            if attr := self.get_attr(self.object, mname, None):
+                ret.append((mname, attr))
+            else:
                 logger.warning(
                     "[sphinxcontrib-matlabdomain] missing attribute mentioned"
                     " in :members: or __all__: module %s, attribute %s",
