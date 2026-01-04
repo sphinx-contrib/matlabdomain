@@ -1453,18 +1453,18 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                     if self.object.size is not None:
                         prop_spec = f"{prop_spec}(" + ",".join(self.object.size) + ")"
                     if self.object.type is not None:
-                        prop_spec = f"{prop_spec} " + self.object.type
+                        prop_spec = f"{prop_spec} {self.object.type}"
                     if self.object.validators is not None:
                         prop_spec = (
                             prop_spec + " {" + ",".join(self.object.validators) + "}"
                         )
                     obj_default = prop_spec + obj_default
 
-                self.add_line("   :annotation: " + obj_default, "<autodoc>")
+                self.add_line(f"   :annotation: {obj_default}", "<autodoc>")
         elif self.options.annotation is SUPPRESS:
             pass
         else:
-            self.add_line("   :annotation: = " + self.options.annotation, "<autodoc>")
+            self.add_line(f"   :annotation: = {self.options.annotation}", "<autodoc>")
 
     def add_content(self, more_content, no_docstring=False):
         # if not self._datadescriptor:

@@ -206,8 +206,6 @@ class MatObject(ObjectDescription):
 
         if name_prefix:
             signode += addnodes.desc_addname(name_prefix, name_prefix)
-        # exceptions are a special case, since they are documented in the
-        # 'exceptions' module.
         elif add_module and self.env.config.add_module_names:
             modname = self.options.get("module", self.env.temp_data.get("mat:module"))
 
@@ -225,7 +223,7 @@ class MatObject(ObjectDescription):
                 if not self.env.config.matlab_keep_package_prefix:
                     modname = mat_types.strip_package_prefix(modname)
 
-                nodetext = modname + "."
+                nodetext = f"{modname}."
                 signode += addnodes.desc_addname(nodetext, nodetext)
 
         anno = self.options.get("annotation")
@@ -238,14 +236,14 @@ class MatObject(ObjectDescription):
             if retann:
                 signode += addnodes.desc_returns(retann, retann)
             if anno:
-                signode += addnodes.desc_annotation(" " + anno, " " + anno)
+                signode += addnodes.desc_annotation(f" {anno}", f" {anno}")
             return fullname, name_prefix
 
         _pseudo_parse_arglist(signode, arglist)
         if retann:
             signode += addnodes.desc_returns(retann, retann)
         if anno:
-            signode += addnodes.desc_annotation(" " + anno, " " + anno)
+            signode += addnodes.desc_annotation(f" {anno}", f" {anno}")
         return fullname, name_prefix
 
     def get_index_text(self, modname, name):
@@ -756,15 +754,15 @@ class MATLABDomain(Domain):
                 if not newname:
                     if (
                         modname
-                        and f"{modname}." + name in objects
-                        and objects[modname + "." + name][1] in objtypes
+                        and f"{modname}.{name}" in objects
+                        and objects[f"{modname}.{name}"][1] in objtypes
                     ):
-                        newname = modname + "." + name
+                        newname = f"{modname}.{name}"
                     elif name in objects and objects[name][1] in objtypes:
                         newname = name
                     else:
                         # "fuzzy" searching mode
-                        searchname = "." + name
+                        searchname = f".{name}"
                         matches = [
                             (oname, objects[oname])
                             for oname in objects
@@ -776,12 +774,12 @@ class MATLABDomain(Domain):
         elif type == "mod":
             # only exact matches allowed for modules
             return []
-        elif classname and classname + "." + name in objects:
-            newname = classname + "." + name
-        elif modname and modname + "." + name in objects:
-            newname = modname + "." + name
+        elif classname and f"{classname}.{name}" in objects:
+            newname = f"{classname}.{name}"
+        elif modname and f"{modname}.{name}" in objects:
+            newname = f"{modname}.{name}"
         elif (
-            modname and classname and modname + "." + classname + "." + name in objects
+            modname and classname and f"{modname}." + classname + "." + name in objects
         ):
             newname = modname + "." + classname + "." + name
         elif type == "exc" and "." not in name and "exceptions." + name in objects:
