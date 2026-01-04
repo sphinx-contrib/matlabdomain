@@ -17,11 +17,15 @@ def srcdir(rootdir):
     return rootdir / "roots" / "test_module_class_names"
 
 
-@pytest.mark.parametrize(
-    "confdict",
-    [{"matlab_auto_link": "basic"}, {"matlab_auto_link": "all"}],
-)
-def test_module_class_names(app, confdict):
+@pytest.fixture
+def confdict(matlab_auto_link):
+    return {
+        "matlab_auto_link": matlab_auto_link,
+    }
+
+
+@pytest.mark.parametrize("matlab_auto_link", ["basic", "all"])
+def test_module_class_names(app, confdict, matlab_auto_link):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     expected_content = (

@@ -17,11 +17,15 @@ def srcdir(rootdir):
     return rootdir / "roots" / "test_package_links"
 
 
-@pytest.mark.parametrize(
-    "confdict",
-    [{"matlab_keep_package_prefix": True}, {"matlab_keep_package_prefix": False}],
-)
-def test_package_links(app, confdict):
+@pytest.fixture
+def confdict(matlab_keep_package_prefix):
+    return {
+        "matlab_keep_package_prefix": matlab_keep_package_prefix,
+    }
+
+
+@pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
+def test_package_links(app, confdict, matlab_keep_package_prefix):
     # TODO: bases are shown without prefix
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 

@@ -15,11 +15,15 @@ def srcdir(rootdir):
     return rootdir / "roots" / "test_package_prefix"
 
 
-@pytest.mark.parametrize(
-    "confdict",
-    [{"matlab_keep_package_prefix": True}, {"matlab_keep_package_prefix": False}],
-)
-def test_package_prefix(app, confdict):
+@pytest.fixture
+def confdict(matlab_keep_package_prefix):
+    return {
+        "matlab_keep_package_prefix": matlab_keep_package_prefix,
+    }
+
+
+@pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
+def test_package_prefix(app, confdict, matlab_keep_package_prefix):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     assert isinstance(content[4], addnodes.desc)
