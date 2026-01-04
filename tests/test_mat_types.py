@@ -1,6 +1,5 @@
 """Test mat_types module functions and methods."""
 
-import helper
 import pytest
 
 from sphinxcontrib import mat_documenters as doc
@@ -1114,9 +1113,8 @@ def test_f_with_output_argument_block(dir_test_data):
 
 
 @pytest.fixture
-def app(make_app):
+def app(make_app, rootdir):
     # Create app to setup build environment
-    rootdir = helper.rootdir(__file__)
     srcdir = rootdir / "test_docs"
     app = make_app(srcdir=srcdir)
     MatObject.basedir = app.config.matlab_src_dir
