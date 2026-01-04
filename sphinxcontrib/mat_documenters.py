@@ -1417,11 +1417,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
     def import_object(self):
         ret = MatClassLevelDocumenter.import_object(self)
 
-        if isinstance(self.object, MatMethod):
-            self._datadescriptor = True
-        else:
-            # if it's not a data descriptor
-            self._datadescriptor = False
+        self._datadescriptor = bool(isinstance(self.object, MatMethod))
         return ret
 
     def get_real_modname(self):

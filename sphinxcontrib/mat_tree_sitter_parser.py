@@ -250,10 +250,7 @@ def tree_sitter_is_0_21():
 
 def get_row(point):
     """Get row from point. This api changed from v0.21.3 to v0.22.0."""
-    if tree_sitter_is_0_21():
-        return point[0]
-    else:
-        return point.row
+    return point[0] if tree_sitter_is_0_21() else point.row
 
 
 def process_text_into_docstring(text, encoding):

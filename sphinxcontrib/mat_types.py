@@ -802,10 +802,7 @@ class MatClass(MatObject):
     def link(self, env, name=None):
         """Return link for class object."""
         target = self.fullname(env)
-        if name:
-            return f":class:`{name} <{target}>`"
-        else:
-            return f":class:`{target}`"
+        return f":class:`{name} <{target}>`" if name else f":class:`{target}`"
 
     @property
     def __module__(self):

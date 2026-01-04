@@ -545,10 +545,7 @@ class MatCurrentModule(Directive):
     def run(self):
         env = self.state.document.settings.env
         modname = self.arguments[0].strip()
-        if modname == "None":
-            env.temp_data["mat:module"] = None
-        else:
-            env.temp_data["mat:module"] = modname
+        env.temp_data["mat:module"] = None if modname == "None" else modname
         return []
 
 
