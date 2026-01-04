@@ -785,7 +785,7 @@ class MATLABDomain(Domain):
         elif (
             type in ("func", "meth") and "." not in name and f"object.{name}" in objects
         ):
-            newname = "object." + name
+            newname = f"object.{name}"
         if newname is not None:
             matches.append((newname, objects[newname]))
         return matches
