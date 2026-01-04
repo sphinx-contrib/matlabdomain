@@ -205,7 +205,7 @@ class MatlabDocumenter(PyDocumenter):
                         # find name
                         match = see_also_cond_re.search(line)
                         if match is not None:
-                            entries_str = match.group(2)  # the entries
+                            entries_str = match[2]
                     elif match := see_also_re.search(line):
                         is_see_also_line = True  # line begins with "See also"
                         entries_str = match.group(2)  # the entries
@@ -264,8 +264,8 @@ class MatlabDocumenter(PyDocumenter):
                         # or method name we recognize
                         match2 = class_re.search(entries[k])
                         if match2:
-                            m1 = match2.group(1)
-                            m2 = match2.group(2)
+                            m1 = match2[1]
+                            m2 = match2[2]
                             if (
                                 self.env.config.matlab_keep_package_prefix
                                 and m1 in entities_table
@@ -1159,7 +1159,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         parens = "()" if type == "meth" else ""
         p = re.compile(r"((\*\s*)?(\b\w*\b))(?=\s*-)")
         if match := p.search(line):
-            name = match.group(3)
+            name = match[3]
             line = p.sub(
                 f"* :{type}:`{name}{parens} <{self.object.fullname(self.env)}.{name}>`",
                 line,
