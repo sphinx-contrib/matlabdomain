@@ -209,26 +209,39 @@ def test_submodule_show_default_value(app, confdict):
     )
 
 
-@pytest.mark.parametrize("confdict", [{"matlab_short_links": True}])
+@pytest.mark.parametrize(
+    "confdict",
+    [
+        {"matlab_short_links": True},
+        {"matlab_short_links": True, "matlab_show_property_default_value": True},
+    ],
+)
 def test_root(app, confdict):
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
     assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "root\n\n\n\nclass BaseClass\n\nA class in the very root of the directory\n\nBaseClass Methods:\n\nBaseClass - the constructor, whose description extends\n\nto the next line\n\nDoBase - another BaseClass method\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(obj, args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
-    )
-
-
-@pytest.mark.parametrize(
-    "confdict",
-    [{"matlab_short_links": True, "matlab_show_property_default_value": True}],
-)
-def test_root_show_default_value(app, confdict):
-    content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
-    assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "root\n\n\n\nclass BaseClass\n\nA class in the very root of the directory\n\nBaseClass Methods:\n\nBaseClass - the constructor, whose description extends\n\nto the next line\n\nDoBase - another BaseClass method\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(obj, args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
+    assert content[0].astext() == (
+        "root\n\n\n\n"
+        "class BaseClass\n\n"
+        "A class in the very root of the directory\n\n"
+        "BaseClass Methods:\n\n"
+        "BaseClass - the constructor, whose description extends\n\n"
+        "to the next line\n\n"
+        "DoBase - another BaseClass method\n\n"
+        "See Also\n\n"
+        "target.ClassExample, baseFunction, ClassExample\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "BaseClass(obj, args)\n\n"
+        "The constructor\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "DoBase()\n\n"
+        "Do the Base thing\n\n\n\n"
+        "baseFunction(x)\n\n"
+        "Return the base of x\n\n"
+        "See Also:\n\n"
+        "target.submodule.ClassMeow\n"
+        "target.package.ClassBar\n"
+        "ClassMeow\n"
+        "package.ClassBar"
     )
 
 

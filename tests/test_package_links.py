@@ -19,9 +19,7 @@ def srcdir(rootdir):
 
 @pytest.fixture
 def confdict(matlab_keep_package_prefix):
-    return {
-        "matlab_keep_package_prefix": matlab_keep_package_prefix,
-    }
+    return {"matlab_keep_package_prefix": matlab_keep_package_prefix}
 
 
 @pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])

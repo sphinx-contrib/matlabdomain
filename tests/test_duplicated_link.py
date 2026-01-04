@@ -18,11 +18,13 @@ def srcdir(rootdir):
     return rootdir / "roots" / "test_duplicate_link"
 
 
-@pytest.mark.parametrize(
-    "confdict",
-    [{"matlab_keep_package_prefix": True}, {"matlab_keep_package_prefix": False}],
-)
-def test_duplicate_link(app, confdict):
+@pytest.fixture
+def confdict(matlab_keep_package_prefix):
+    return {"matlab_keep_package_prefix": matlab_keep_package_prefix}
+
+
+@pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
+def test_duplicate_link(app, confdict, matlab_keep_package_prefix):
     content = pickle.loads((app.doctreedir / "groups.doctree").read_bytes())
 
     assert isinstance(content[0], docutils.nodes.section)

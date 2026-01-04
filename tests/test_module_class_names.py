@@ -19,9 +19,7 @@ def srcdir(rootdir):
 
 @pytest.fixture
 def confdict(matlab_auto_link):
-    return {
-        "matlab_auto_link": matlab_auto_link,
-    }
+    return {"matlab_auto_link": matlab_auto_link}
 
 
 @pytest.mark.parametrize("matlab_auto_link", ["basic", "all"])
