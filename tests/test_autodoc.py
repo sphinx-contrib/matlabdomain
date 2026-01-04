@@ -12,11 +12,6 @@ import pickle
 import pytest
 
 
-@pytest.fixture
-def srcdir(rootdir):
-    return rootdir / "roots" / "test_autodoc"
-
-
 def test_target(app):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
     property_section = content[0][2][1][2][0]  # a bit fragile, I know

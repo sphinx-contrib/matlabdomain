@@ -12,11 +12,6 @@ import pickle
 import pytest
 
 
-@pytest.fixture
-def srcdir(rootdir):
-    return rootdir / "roots" / "test_autodoc"
-
-
 @pytest.mark.parametrize(
     "confdict",
     [

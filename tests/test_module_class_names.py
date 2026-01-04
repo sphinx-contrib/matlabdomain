@@ -23,7 +23,7 @@ def confdict(matlab_auto_link):
 
 
 @pytest.mark.parametrize("matlab_auto_link", ["basic", "all"])
-def test_module_class_names(app, confdict, matlab_auto_link):
+def test_module_class_names(app, confdict):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     expected_content = (

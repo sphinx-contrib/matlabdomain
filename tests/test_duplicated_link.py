@@ -24,7 +24,7 @@ def confdict(matlab_keep_package_prefix):
 
 
 @pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
-def test_duplicate_link(app, confdict, matlab_keep_package_prefix):
+def test_duplicate_link(app, confdict):
     content = pickle.loads((app.doctreedir / "groups.doctree").read_bytes())
 
     assert isinstance(content[0], docutils.nodes.section)

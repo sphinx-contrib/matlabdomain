@@ -23,7 +23,7 @@ def confdict(matlab_keep_package_prefix):
 
 
 @pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
-def test_package_links(app, confdict, matlab_keep_package_prefix):
+def test_package_links(app, confdict):
     # TODO: bases are shown without prefix
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 

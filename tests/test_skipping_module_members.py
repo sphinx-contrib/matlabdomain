@@ -10,7 +10,7 @@ def srcdir(rootdir):
     return rootdir / "roots" / "test_skipping_module_members"
 
 
-def test_skipping_module_members(app, srcdir):
+def test_skipping_module_members(app):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
     content_text = content.astext()
     assert "The first function" in content_text

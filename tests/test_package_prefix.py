@@ -21,7 +21,7 @@ def confdict(matlab_keep_package_prefix):
 
 
 @pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
-def test_package_prefix(app, confdict, matlab_keep_package_prefix):
+def test_package_prefix(app, confdict):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     assert isinstance(content[4], addnodes.desc)
