@@ -31,7 +31,3 @@ def test_setup(make_app, rootdir):
 
     assert isinstance(content[8], addnodes.desc)
     assert content[8].astext().startswith("class base.MatlabClass")
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

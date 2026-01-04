@@ -31,7 +31,3 @@ def test_setup(make_app, rootdir):
 
     assert isinstance(content[7], addnodes.desc)
     assert content[7].astext() == "matsrc.func(x)\n\nReturns x"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

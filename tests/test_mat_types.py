@@ -22,7 +22,7 @@ TESTDATA_ROOT = os.path.join(DIRNAME, "test_data")
 TESTDATA_SUB = os.path.join(TESTDATA_ROOT, "submodule")
 
 
-def test_classfolders():
+def test_classfolder_class_name():
     name = classfolder_class_name("target.@ClassFolder")
     assert name == "target.@ClassFolder"
 

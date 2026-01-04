@@ -40,7 +40,3 @@ def test_without_prefix(make_app, rootdir):
 
     assert isinstance(content[4], addnodes.desc)
     assert content[4].astext() == "package.func(x)\n\nReturns x"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -52,7 +52,3 @@ def test_without_prefix(make_app, rootdir):
         section.astext()
         == "NiceFiniteGroup\n\n\n\nclass replab.NiceFiniteGroup\n\nBases: replab.FiniteGroup\n\nA nice finite group is a finite group equipped with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv"
     )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
