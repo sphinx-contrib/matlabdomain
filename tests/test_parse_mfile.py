@@ -42,7 +42,7 @@ def test_docstring_no_newline():
     obj = mat_types.MatObject.parse_mfile(mfile, "f_docstring_no_newline", "")
     assert obj.name == "f_docstring_no_newline"
     assert list(obj.retv.keys()) == ["y"]
-    assert list(obj.args.keys()) == []
+    assert not list(obj.args.keys())
     assert obj.docstring == "Test a function without a newline after docstring"
 
 
@@ -59,7 +59,7 @@ def test_ellipsis_empty_output():
     mfile = os.path.join(TESTDATA_SUB, "f_ellipsis_empty_output.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_ellipsis_empty_output", "")
     assert obj.name == "f_ellipsis_empty_output"
-    assert list(obj.retv.keys()) == []
+    assert not list(obj.retv.keys())
     assert list(obj.args.keys()) == ["arg"]
     assert obj.docstring == "Tests a function with ellipsis in the output"
 
@@ -96,7 +96,7 @@ def test_no_docstring():
     obj = mat_types.MatObject.parse_mfile(mfile, "f_no_docstring", "")
     assert obj.name == "f_no_docstring"
     assert list(obj.retv.keys()) == ["y"]
-    assert list(obj.args.keys()) == []
+    assert not list(obj.args.keys())
     assert obj.docstring is None
 
 
@@ -104,7 +104,7 @@ def test_no_output():
     mfile = os.path.join(TESTDATA_SUB, "f_no_output.m")
     obj = mat_types.MatObject.parse_mfile(mfile, "f_no_output", "")
     assert obj.name == "f_no_output"
-    assert list(obj.retv.keys()) == []
+    assert not list(obj.retv.keys())
     assert list(obj.args.keys()) == ["arg"]
     assert obj.docstring == "A function with no outputs"
 
@@ -114,7 +114,7 @@ def test_no_input_parentheses():
     obj = mat_types.MatObject.parse_mfile(mfile, "f_no_input_parentheses", "")
     assert obj.name == "f_no_input_parentheses"
     assert list(obj.retv.keys()) == ["y"]
-    assert list(obj.args.keys()) == []
+    assert not list(obj.args.keys())
     assert obj.docstring == "Tests a function without parentheses in input"
 
 
@@ -210,7 +210,7 @@ def test_no_input_no_parentheses_no_docstring():
     )
     assert obj.name == "f_no_input_no_parentheses_no_docstring"
     assert list(obj.retv.keys()) == ["result"]
-    assert list(obj.args.keys()) == []
+    assert not list(obj.args.keys())
 
 
 def test_ClassWithCommentHeader():

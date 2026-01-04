@@ -222,13 +222,12 @@ class MatlabDocumenter(PyDocumenter):
         is_see_also_line = False
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
-                line = docstrings[i][j]
-                if line:  # non-blank line
+                if line := docstrings[i][j]:
                     if is_see_also_line:
                         # find name
                         match = see_also_cond_re.search(line)
                         if match is not None:
-                            entries_str = match.group(2)  # the entries
+                            entries_str = match[2]
                     elif match := see_also_re.search(line):
                         is_see_also_line = True  # line begins with "See also"
                         entries_str = match.group(2)  # the entries
@@ -268,8 +267,7 @@ class MatlabDocumenter(PyDocumenter):
                                 continue
 
                         # if we have an associated class, search properties and methods
-                        cls = self.class_object()
-                        if cls:
+                        if cls := self.class_object():
                             name = entries[k].rstrip("()")
                             if name in cls.methods:
                                 entries[k] = (
@@ -283,12 +281,9 @@ class MatlabDocumenter(PyDocumenter):
                                 )
                                 continue
 
-                        # see if it is a fully qualified property
-                        # or method name we recognize
-                        match2 = class_re.search(entries[k])
-                        if match2:
-                            m1 = match2.group(1)
-                            m2 = match2.group(2)
+                        if match2 := class_re.search(entries[k]):
+                            m1 = match2[1]
+                            m2 = match2[2]
                             if (
                                 self.env.config.matlab_keep_package_prefix
                                 and m1 in entities_table
@@ -701,9 +696,10 @@ class MatlabDocumenter(PyDocumenter):
         for mname, member, isattr in self.filter_members(members, want_all):
             classes = []
             for name, cls in self.documenters.items():
-                if name.startswith("mat:"):
-                    if cls.can_document_member(member, mname, isattr, self):
-                        classes.append(cls)
+                if name.startswith("mat:") and cls.can_document_member(
+                    member, mname, isattr, self
+                ):
+                    classes.append(cls)
             if not classes:
                 # don't know how to document this member
                 continue
@@ -808,9 +804,8 @@ class MatlabDocumenter(PyDocumenter):
                 self.directive.record_dependencies.add(self.module.__file__)
 
         # check __module__ of object (for members not given explicitly)
-        if check_module:
-            if not self.check_module():
-                return
+        if check_module and not self.check_module():
+            return
 
         # make sure that the result starts with an empty line.  This is
         # necessary for some situations where another directive preprocesses
@@ -1112,8 +1107,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         # add inheritance info, if wanted
         if not self.doc_as_attr and self.options.show_inheritance:
             self.add_line("", "<autodoc>")
-            base_class_links = make_baseclass_links(self.env, self.object)
-            if base_class_links:
+            if base_class_links := make_baseclass_links(self.env, self.object):
                 self.add_line(
                     _("   Bases: %s") % ", ".join(base_class_links), "<autodoc>"
                 )
@@ -1122,8 +1116,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         content = self.env.config.autoclass_content
 
         docstrings = []
-        attrdocstring = self.get_attr(self.object, "__doc__", None)
-        if attrdocstring:
+        if attrdocstring := self.get_attr(self.object, "__doc__", None):
             docstrings.append(attrdocstring)
 
         # for classes, what the "docstring" is can be controlled via a
@@ -1158,8 +1151,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
     def add_content(self, more_content):
         if self.doc_as_attr:
-            classname = safe_getattr(self.object, "__name__", None)
-            if classname:
+            if classname := safe_getattr(self.object, "__name__", None):
                 content = ViewList([_("alias of :class:`%s`") % classname], source="")
                 MatModuleLevelDocumenter.add_content(self, content, no_docstring=True)
         else:
@@ -1181,8 +1173,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         is_meth_line = False
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
-                line = docstrings[i][j]
-                if line:  # non-blank line
+                if line := docstrings[i][j]:
                     if prop_re.search(line):  # line ends with "Properties:"
                         is_prop_line = True
                         is_meth_line = False
@@ -1206,7 +1197,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         parens = "()" if type == "meth" else ""
         p = re.compile(r"((\*\s*)?(\b\w*\b))(?=\s*-)")
         if match := p.search(line):
-            name = match.group(3)
+            name = match[3]
             line = p.sub(
                 f"* :{type}:`{name}{parens} <{self.object.fullname(self.env)}.{name}>`",
                 line,
@@ -1464,11 +1455,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
     def import_object(self):
         ret = MatClassLevelDocumenter.import_object(self)
 
-        if isinstance(self.object, MatMethod):
-            self._datadescriptor = True
-        else:
-            # if it's not a data descriptor
-            self._datadescriptor = False
+        self._datadescriptor = bool(isinstance(self.object, MatMethod))
         return ret
 
     def get_real_modname(self):
@@ -1534,16 +1521,19 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 not_in_literal_block, no_link_state = self.detect_literal_block(
                     docstrings[i][j], no_link_state
                 )
-                if not_in_literal_block and docstrings[i][j]:  # also not blank line
-                    if p.search(docstrings[i][j]):
-                        docstrings[i][j] = p.sub(
-                            (
-                                f":attr:`{name} "
-                                f"<{self.class_object().fullname(self.env)}"
-                                f".{name}>`"
-                            ),
-                            docstrings[i][j],
-                        )
+                if (
+                    not_in_literal_block
+                    and docstrings[i][j]
+                    and p.search(docstrings[i][j])
+                ):
+                    docstrings[i][j] = p.sub(
+                        (
+                            f":attr:`{name} "
+                            f"<{self.class_object().fullname(self.env)}"
+                            f".{name}>`"
+                        ),
+                        docstrings[i][j],
+                    )
         return docstrings
 
     def auto_link_all(self, docstrings):
