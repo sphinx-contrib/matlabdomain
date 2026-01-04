@@ -290,8 +290,7 @@ class MatScriptParser:
     def __init__(self, root_node, encoding):
         """Parse m script."""
         self.encoding = encoding
-        script_matches = q_script.matches(root_node)
-        if script_matches:
+        if _ := q_script.matches(root_node):
             _, script_match = q_script.matches(root_node)[0]
             docstring_node = script_match.get("docstring")
             if docstring_node is not None:

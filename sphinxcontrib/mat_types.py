@@ -420,8 +420,7 @@ class MatObject:
         if os.path.isdir(fullpath):
             if package.startswith("_") or package.startswith("."):
                 return None
-            mod = try_get_module_entity_or_default(package)
-            if mod:
+            if mod := try_get_module_entity_or_default(package):
                 logger.debug(
                     "[sphinxcontrib-matlabdomain] Module %s already loaded.", package
                 )
@@ -620,8 +619,7 @@ class MatModule(MatObject):
             if os.path.isfile(path):
                 key, _ = os.path.splitext(key)
             if not results or key not in next(zip(*results, strict=False)):
-                value = self.getter(key, None)
-                if value:
+                if value := self.getter(key, None):
                     results.append((key, value))
         self.entities = results
 
@@ -680,9 +678,7 @@ class MatModule(MatObject):
                         name,
                     )
                     return entity_content
-            # If not - try to MATLABIFY it.
-            entity = MatObject.matlabify(f"{self.package}.{name}")
-            if entity:
+            if entity := MatObject.matlabify(f"{self.package}.{name}"):
                 self.entities.append((name, entity))
                 logger.debug(
                     f"[sphinxcontrib-matlabdomain] entity {name=} imported from {self=}"

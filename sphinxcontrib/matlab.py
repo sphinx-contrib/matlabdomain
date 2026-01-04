@@ -200,8 +200,7 @@ class MatObject(ObjectDescription):
         signode["class"] = classname
         signode["fullname"] = fullname
 
-        sig_prefix = self.get_signature_prefix()
-        if sig_prefix:
+        if sig_prefix := self.get_signature_prefix():
             signode += addnodes.desc_annotation(sig_prefix, sig_prefix)
 
         if name_prefix:
@@ -288,8 +287,7 @@ class MatObject(ObjectDescription):
                 )
             objects[fullname_out] = (self.env.docname, self.objtype)
 
-        indextext = self.get_index_text(modname_out, name_cls)
-        if indextext:
+        if indextext := self.get_index_text(modname_out, name_cls):
             entry = ("single", indextext, fullname_out, "", None)
             self.indexnode["entries"].append(entry)
 
@@ -836,10 +834,9 @@ class MATLABDomain(Domain):
         ret = []
         for role in self.roles:
             matrole = f"mat:{role}"
-            element = self.resolve_xref(
+            if element := self.resolve_xref(
                 env, fromdocname, builder, matrole, target, node, contnode
-            )
-            if element:
+            ):
                 ret.append((matrole, element))
         return ret
 
