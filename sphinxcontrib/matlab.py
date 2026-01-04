@@ -778,10 +778,8 @@ class MATLABDomain(Domain):
             newname = f"{classname}.{name}"
         elif modname and f"{modname}.{name}" in objects:
             newname = f"{modname}.{name}"
-        elif (
-            modname and classname and f"{modname}." + classname + "." + name in objects
-        ):
-            newname = modname + "." + classname + "." + name
+        elif modname and classname and f"{modname}.{classname}.{name}" in objects:
+            newname = f"{modname}.{classname}" + "." + name
         elif type == "exc" and "." not in name and "exceptions." + name in objects:
             newname = "exceptions." + name
         elif (
