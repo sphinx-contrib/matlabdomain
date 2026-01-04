@@ -122,7 +122,8 @@ def test_target_auto_link_basic(app, confdict):
         assert method_section.rawsource == (
             "ClassExample Methods:\n"
             "* :meth:`ClassExample() <ClassExample.ClassExample>` "
-            "- the constructor and a reference to :meth:`mymethod() <ClassExample.mymethod>`\n"
+            "- the constructor and a reference to "
+            ":meth:`mymethod() <ClassExample.mymethod>`\n"
             "* :meth:`mymethod() <ClassExample.mymethod>` "
             "- a method in :class:`ClassExample`\n"
         )
@@ -334,15 +335,17 @@ def test_root_auto_link_basic(app, confdict):
     method_section = content[0][2][1][1][0]  # a bit fragile, I know
     assert method_section.rawsource == (
         "BaseClass Methods:\n"
-        "* :meth:`BaseClass() <BaseClass.BaseClass>` - the constructor, whose description extends\n"
+        "* :meth:`BaseClass() <BaseClass.BaseClass>` "
+        "- the constructor, whose description extends\n"
         "    to the next line\n"
-        "* :meth:`DoBase() <BaseClass.DoBase>` - another BaseClass method\n"
+        "* :meth:`DoBase() <BaseClass.DoBase>` "
+        "- another BaseClass method\n"
     )
 
     see_also_line_1 = content[0][2][1][1][1]  # a bit fragile, I know
-    assert (
-        see_also_line_1.rawsource
-        == "See Also\n:class:`target.ClassExample`, :func:`baseFunction`, :class:`ClassExample`\n\n"
+    assert see_also_line_1.rawsource == (
+        "See Also\n"
+        ":class:`target.ClassExample`, :func:`baseFunction`, :class:`ClassExample`\n\n"
     )
 
     see_also_line_2 = content[0][4][1][1][0]  # a bit fragile, I know

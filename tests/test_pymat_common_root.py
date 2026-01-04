@@ -1,4 +1,6 @@
-"""Test autodoc when code base contains both matlab and python codein the same folder."""
+"""Test autodoc when code base contains both matlab and python
+code in the same folder.
+"""
 
 import pickle
 
