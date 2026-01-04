@@ -13,8 +13,6 @@ from sphinxcontrib.mat_types import (
     shortest_name,
 )
 
-rootdir = helper.rootdir(__file__)
-
 
 def test_classfolder_class_name():
     name = classfolder_class_name("target.@ClassFolder")
@@ -260,10 +258,12 @@ def test_ClassWithEndOfLineComment(dir_test_data):
     method_test1 = obj.methods["test1"]
     assert method_test1.name == "test1"
     # TODO: Trailing comment get passed as docstring
+    # assert method_test.docstring == '' # noqa : ERA001
 
     method_test2 = obj.methods["test2"]
     assert method_test2.name == "test2"
     # TODO: Trailing comment get passed as docstring
+    # assert method_test.docstring == '' # noqa : ERA001
 
 
 def test_ClassWithEvent(dir_test_data):
@@ -1116,6 +1116,7 @@ def test_f_with_output_argument_block(dir_test_data):
 @pytest.fixture
 def app(make_app):
     # Create app to setup build environment
+    rootdir = helper.rootdir(__file__)
     srcdir = rootdir / "test_docs"
     app = make_app(srcdir=srcdir)
     MatObject.basedir = app.config.matlab_src_dir
@@ -1124,7 +1125,9 @@ def app(make_app):
 
 @pytest.fixture
 def mod(app):
-    return MatObject.matlabify("test_data")
+    module = MatObject.matlabify("test_data")
+    assert isinstance(module, MatModule)
+    return module
 
 
 def test_unknown(dir_test_data):
@@ -1230,8 +1233,6 @@ def test_parse_twice(mod):
 
 
 def test_classes(mod):
-    assert isinstance(mod, MatModule)
-
     # test superclass
     cls = mod.getter("ClassInheritHandle")
     assert isinstance(cls, doc.MatClass)
@@ -1382,7 +1383,6 @@ def test_folder_class(mod):
 
 
 def test_function(mod):
-    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
@@ -1395,7 +1395,6 @@ def test_function(mod):
 
 
 def test_function_getter(mod):
-    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
@@ -1407,7 +1406,6 @@ def test_function_getter(mod):
 
 
 def test_package_function(mod):
-    assert isinstance(mod, MatModule)
     func = mod.getter("f_example")
     assert isinstance(func, doc.MatFunction)
     assert func.getter("__name__") == "f_example"
