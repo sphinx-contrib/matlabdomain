@@ -1,3 +1,5 @@
+"""Test mat_lexer module functions and methods."""
+
 from pygments.token import Token
 
 from sphinxcontrib.mat_lexer import MatlabLexer

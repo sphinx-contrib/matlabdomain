@@ -1,4 +1,4 @@
-"""Test matlab types parsing."""
+"""Test mat_types module functions and methods."""
 
 import helper
 import pytest

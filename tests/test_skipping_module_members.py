@@ -13,16 +13,15 @@ import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
-
-
-def test_setup(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_skipping_module_members"
+@pytest.fixture
+def app(make_app):
+    srcdir = helper.rootdir(__file__) / "roots" / "test_skipping_module_members"
     app = make_app(srcdir=srcdir)
     app.builder.build_all()
+    return app
 
+
+def test_setup(app):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
     content_text = content.astext()
     assert "The first function" in content_text

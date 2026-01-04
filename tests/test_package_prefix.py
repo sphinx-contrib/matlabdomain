@@ -14,29 +14,21 @@ import pytest
 from sphinx import addnodes
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
-
-
-def test_with_prefix(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_package_prefix"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
-
-    assert isinstance(content[4], addnodes.desc)
-    assert content[4].astext() == "+package.func(x)\n\nReturns x"
-
-
-def test_without_prefix(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_package_prefix"
-    confdict = {"matlab_keep_package_prefix": False}
+@pytest.fixture
+def app(make_app, matlab_keep_package_prefix):
+    srcdir = helper.rootdir(__file__) / "roots" / "test_package_prefix"
+    confdict = {"matlab_keep_package_prefix": matlab_keep_package_prefix}
     app = make_app(srcdir=srcdir, confoverrides=confdict)
     app.builder.build_all()
+    return app
 
+
+@pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
+def test_prefix(app, matlab_keep_package_prefix):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     assert isinstance(content[4], addnodes.desc)
-    assert content[4].astext() == "package.func(x)\n\nReturns x"
+    if matlab_keep_package_prefix:
+        assert content[4].astext() == "+package.func(x)\n\nReturns x"
+    else:
+        assert content[4].astext() == "package.func(x)\n\nReturns x"

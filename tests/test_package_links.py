@@ -13,35 +13,27 @@ import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def app(make_app, matlab_keep_package_prefix):
+    srcdir = helper.rootdir(__file__) / "roots" / "test_package_links"
+    confdict = {"matlab_keep_package_prefix": matlab_keep_package_prefix}
+    app = make_app(srcdir=srcdir, confoverrides=confdict)
+    app.builder.build_all()
+    return app
 
 
-def test_with_prefix(make_app, rootdir):
+@pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
+def test_with_prefix(app, matlab_keep_package_prefix):
     # TODO: bases are shown without prefix
-    srcdir = rootdir / "roots" / "test_package_links"
-    confdict = {"matlab_keep_package_prefix": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 
-    assert (
-        content[5].astext()
-        == "class +replab.Action\n\nBases: +replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(g, p)\n\nReturns the left action"
-    )
-
-
-def test_without_prefix(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_package_links"
-    confdict = {"matlab_keep_package_prefix": False}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
-
-    assert (
-        content[5].astext()
-        == "class replab.Action\n\nBases: replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(g, p)\n\nReturns the left action"
-    )
+    if matlab_keep_package_prefix is True:
+        assert (
+            content[5].astext()
+            == "class +replab.Action\n\nBases: +replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(g, p)\n\nReturns the left action"
+        )
+    else:
+        assert (
+            content[5].astext()
+            == "class replab.Action\n\nBases: replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(g, p)\n\nReturns the left action"
+        )
