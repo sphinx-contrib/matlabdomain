@@ -26,7 +26,3 @@ def test_make(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
     assert len(content) == 1
     assert content[0].astext() == "Description\n\nEmpty."
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

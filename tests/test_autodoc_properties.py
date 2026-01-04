@@ -44,7 +44,3 @@ def test_target(make_app, rootdir, show_default, show_specs):
 
     if show_specs:
         assert "(1,:) {mustBeScalarOrEmpty}" in summaries
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

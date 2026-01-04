@@ -54,7 +54,3 @@ def test_index_auto_link_all(make_app, rootdir):
         "otherprop\n\nprop\n\nMethod Summary\n\n\n\n\n\n"
         "otherf()\n\nfunction"
     )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -327,7 +327,3 @@ def test_class_with_get_method(mod):
     assert the_method.docstring.startswith(
         "Gets the numbers 1-n and fills in the outputs with them"
     )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
