@@ -87,6 +87,8 @@ Using auto-directives
    :maxdepth: 2
    :caption: Contents:
 
+   CHANGES.rst
+
 
 Directives
 ----------
