@@ -9,280 +9,345 @@ Test the autodoc extension.
 
 import pickle
 
-import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
-
-
-def test_target(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize(
+    "confdict",
+    [
+        {"matlab_short_links": True},
+        {"matlab_short_links": True, "matlab_show_property_default_value": True},
+    ],
+)
+def test_target(app, confdict):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
-    property_section = content[0][2][1][2][0]  # a bit fragile, I know
-    method_section = content[0][2][1][2][1]  # a bit fragile, I know
+
     assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "target\n\n\n\nclass ClassExample\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod,\npackage.ClassBar.bars, package.ClassBar.doFoo.\n\nConstructor Summary\n\n\n\n\n\nClassExample(a)\n\nLinks to fully qualified names package.ClassBar.foos,\npackage.ClassBar.doBar, and ClassExample.mymethod.\n\nProperty Summary\n\n\n\n\n\na\n\na property\n\n\n\nb\n\na property with default value\n\n\n\nc\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
-    )
-    assert (
-        property_section.rawsource
-        == "ClassExample Properties:\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample"
-    )
-    assert (
-        method_section.rawsource
-        == "ClassExample Methods:\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n"
+
+    expected_content = (
+        "target\n\n\n\n"
+        "class ClassExample\n\n"
+        "Bases: handle\n\n"
+        "Example class\n\n"
+        "ClassExample Properties:\n\n"
+        "a - first property of ClassExample\n"
+        "b - second property of ClassExample\n"
+        "c - third property of ClassExample\n\n"
+        "ClassExample Methods:\n\n"
+        "ClassExample - the constructor and a reference to mymethod()\n"
+        "mymethod - a method in ClassExample\n\n"
+        "See also BaseClass, baseFunction, b, unknownEntity, mymethod,\n"
+        "package.ClassBar.bars, package.ClassBar.doFoo.\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "ClassExample(a)\n\n"
+        "Links to fully qualified names package.ClassBar.foos,\n"
+        "package.ClassBar.doBar, and ClassExample.mymethod.\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "a{}\n\n"
+        "a property\n\n\n\n"
+        "b{}\n\n"
+        "a property with default value\n\n\n\n"
+        "c{}\n\n"
+        "a property with multiline default value\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "mymethod(b)\n\n"
+        "A method in ClassExample\n\n"
+        "Parameters\n\n"
+        "b – an input to mymethod()"
     )
 
+    if not confdict.get("matlab_show_property_default_value", False):
+        assert content[0].astext() == expected_content.format("", "", "")
+    else:
+        assert content[0].astext() == expected_content.format(
+            " = 42", " = 10", " = [10; ... 30]"
+        )
 
-def test_target_show_default_value(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
+    assert property_section.rawsource == (
+        "ClassExample Properties:\n"
+        "a - first property of ClassExample\n"
+        "b - second property of ClassExample\n"
+        "c - third property of ClassExample"
+    )
+
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
+    assert method_section.rawsource == (
+        "ClassExample Methods:\n"
+        "ClassExample - the constructor and a reference to mymethod()\n"
+        "mymethod - a method in ClassExample\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "confdict",
+    [
+        {"matlab_short_links": True, "matlab_auto_link": "basic"},
+        {"matlab_short_links": True, "matlab_auto_link": "all"},
+    ],
+)
+def test_target_auto_link_basic(app, confdict):
+    content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
+
     assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "target\n\n\n\nclass ClassExample\n\nBases: handle\n\nExample class\n\nClassExample Properties:\n\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample\n\nClassExample Methods:\n\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n\nSee also BaseClass, baseFunction, b, unknownEntity, mymethod,\npackage.ClassBar.bars, package.ClassBar.doFoo.\n\nConstructor Summary\n\n\n\n\n\nClassExample(a)\n\nLinks to fully qualified names package.ClassBar.foos,\npackage.ClassBar.doBar, and ClassExample.mymethod.\n\nProperty Summary\n\n\n\n\n\na = 42\n\na property\n\n\n\nb = 10\n\na property with default value\n\n\n\nc = [10; ... 30]\n\na property with multiline default value\n\nMethod Summary\n\n\n\n\n\nmymethod(b)\n\nA method in ClassExample\n\nParameters\n\nb – an input to mymethod()"
-    )
-    assert (
-        property_section.rawsource
-        == "ClassExample Properties:\na - first property of ClassExample\nb - second property of ClassExample\nc - third property of ClassExample"
-    )
-    assert (
-        method_section.rawsource
-        == "ClassExample Methods:\nClassExample - the constructor and a reference to mymethod()\nmymethod - a method in ClassExample\n"
-    )
 
-
-def test_target_auto_link_basic(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True, "matlab_auto_link": "basic"}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
-    property_section = content[0][2][1][2][0]  # a bit fragile, I know
-    method_section = content[0][2][1][2][1]  # a bit fragile, I know
     see_also_line = content[0][2][1][3]  # a bit fragile, I know
-    assert len(content) == 1
-    assert (
-        property_section.rawsource
-        == "ClassExample Properties:\n* :attr:`a <ClassExample.a>` - first property of ClassExample\n* :attr:`b <ClassExample.b>` - second property of ClassExample\n* :attr:`c <ClassExample.c>` - third property of ClassExample"
-    )
-    assert (
-        method_section.rawsource
-        == "ClassExample Methods:\n* :meth:`ClassExample() <ClassExample.ClassExample>` - the constructor and a reference to mymethod()\n* :meth:`mymethod() <ClassExample.mymethod>` - a method in ClassExample\n"
-    )
-    assert (
-        see_also_line.rawsource
-        == "See also :class:`BaseClass`, :func:`baseFunction`, :attr:`b <ClassExample.b>`, ``unknownEntity``, :meth:`mymethod() <ClassExample.mymethod>`,\n:attr:`package.ClassBar.bars`, :meth:`package.ClassBar.doFoo`."
+    assert see_also_line.rawsource == (
+        "See also :class:`BaseClass`, :func:`baseFunction`, "
+        ":attr:`b <ClassExample.b>`, ``unknownEntity``, "
+        ":meth:`mymethod() <ClassExample.mymethod>`,\n"
+        ":attr:`package.ClassBar.bars`, :meth:`package.ClassBar.doFoo`."
     )
 
-
-def test_target_auto_link_all(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True, "matlab_auto_link": "all"}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
+    class_example_pattern = "ClassExample"
+    if confdict.get("matlab_auto_link") == "all":
+        class_example_pattern = ":class:`ClassExample`"
+    expected_property_section = (
+        "ClassExample Properties:\n"
+        f"* :attr:`a <ClassExample.a>` - first property of {class_example_pattern}\n"
+        f"* :attr:`b <ClassExample.b>` - second property of {class_example_pattern}\n"
+        f"* :attr:`c <ClassExample.c>` - third property of {class_example_pattern}"
+    )
+    assert property_section.rawsource == expected_property_section
+
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
-    see_also_line = content[0][2][1][3]  # a bit fragile, I know
     constructor_desc = content[0][2][1][4][0][0][1][2][1][0]  # a bit fragile, I know
-    assert len(content) == 1
-    assert (
-        property_section.rawsource
-        == "ClassExample Properties:\n* :attr:`a <ClassExample.a>` - first property of :class:`ClassExample`\n* :attr:`b <ClassExample.b>` - second property of :class:`ClassExample`\n* :attr:`c <ClassExample.c>` - third property of :class:`ClassExample`"
-    )
-    assert (
-        method_section.rawsource
-        == "ClassExample Methods:\n* :meth:`ClassExample() <ClassExample.ClassExample>` - the constructor and a reference to :meth:`mymethod() <ClassExample.mymethod>`\n* :meth:`mymethod() <ClassExample.mymethod>` - a method in :class:`ClassExample`\n"
-    )
-    assert (
-        see_also_line.rawsource
-        == "See also :class:`BaseClass`, :func:`baseFunction`, :attr:`b <ClassExample.b>`, ``unknownEntity``, :meth:`mymethod() <ClassExample.mymethod>`,\n:attr:`package.ClassBar.bars`, :meth:`package.ClassBar.doFoo`."
-    )
-    assert (
-        constructor_desc.rawsource
-        == "Links to fully qualified names :attr:`package.ClassBar.foos`,\n:meth:`package.ClassBar.doBar`, and :meth:`ClassExample.mymethod`."
-    )
+    if confdict.get("matlab_auto_link") == "all":
+        assert method_section.rawsource == (
+            "ClassExample Methods:\n"
+            "* :meth:`ClassExample() <ClassExample.ClassExample>` "
+            "- the constructor and a reference to "
+            ":meth:`mymethod() <ClassExample.mymethod>`\n"
+            "* :meth:`mymethod() <ClassExample.mymethod>` "
+            "- a method in :class:`ClassExample`\n"
+        )
+        assert constructor_desc.rawsource == (
+            "Links to fully qualified names :attr:`package.ClassBar.foos`,\n"
+            ":meth:`package.ClassBar.doBar`, and :meth:`ClassExample.mymethod`."
+        )
+    else:
+        assert method_section.rawsource == (
+            "ClassExample Methods:\n"
+            "* :meth:`ClassExample() <ClassExample.ClassExample>` "
+            "- the constructor and a reference to mymethod()\n"
+            "* :meth:`mymethod() <ClassExample.mymethod>` "
+            "- a method in ClassExample\n"
+        )
+        assert constructor_desc.rawsource == (
+            "Links to fully qualified names package.ClassBar.foos,\n"
+            "package.ClassBar.doBar, and ClassExample.mymethod."
+        )
 
 
-def test_classfolder(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_short_links": True}])
+def test_classfolder(app, confdict):
     content = pickle.loads((app.doctreedir / "index_classfolder.doctree").read_bytes())
+
     assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "classfolder\n\n\n\nclass ClassFolder\n\nA class in a folder\n\nProperty Summary\n\n\n\n\n\np\n\na property of a class folder\n\nMethod Summary\n\n\n\n\n\na_static_func(args)\n\nA static method in @ClassFolder\n\n\n\nclassMethod(varargin)\n\nCLASSMETHOD A function within a package\n\nParameters\n\nobj – An instance of this class.\n\nvarargin – Variable input arguments.\n\nReturns\n\nvarargout\n\n\n\nmethod_inside_classdef(a, b)\n\nMethod inside class definition"
+
+    assert content[0].astext() == (
+        "classfolder\n\n\n\n"
+        "class ClassFolder\n\n"
+        "A class in a folder\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "p\n\n"
+        "a property of a class folder\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "a_static_func(args)\n\n"
+        "A static method in @ClassFolder\n\n\n\n"
+        "classMethod(varargin)\n\n"
+        "CLASSMETHOD A function within a package\n\n"
+        "Parameters\n\n"
+        "obj – An instance of this class.\n\n"
+        "varargin – Variable input arguments.\n\n"
+        "Returns\n\n"
+        "varargout\n\n\n\n"
+        "method_inside_classdef(a, b)\n\n"
+        "Method inside class definition"
     )
 
 
-def test_package(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize(
+    "confdict",
+    [
+        {"matlab_short_links": True},
+        {"matlab_short_links": True, "matlab_show_property_default_value": True},
+        {"matlab_short_links": True, "matlab_auto_link": "all"},
+    ],
+)
+def test_package(app, confdict):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
+
+    assert len(content) == 1
+
+    to_add = ""
+    if confdict.get("matlab_auto_link", "basic") == "all":
+        to_add = "()"
+
+    expected_content = (
+        "package\n\n\n\n"
+        "class package.ClassBar\n\n"
+        "Bases: handle\n\n"
+        "The Bar and Foo handler, with doFoo() and doBar() methods.\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "ClassBar()\n\n"
+        "Initialize the bars and foos\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "bars{}\n\n"
+        "Number of bars\n\n\n\n"
+        "foos{}\n\n"
+        "Number of foos, used by doBar() method\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "doBar()\n\n"
+        "Implement doBar stage, not called by ClassBar()\n\n\n\n"
+        "doFoo()\n\n"
+        f"doFoo{to_add} - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\n"
+        "package.funcFoo(u, t)\n\n"
+        "Function that does Foo\n\n"
+        "x = package.funcFoo(u)\n\n"
+        "[x, y] = package.funcFoo(u, t)\n\n"
+        f"Test for auto-linking with baseFunction{to_add} and BaseClass, etc."
+    )
+
+    if not confdict.get("matlab_show_property_default_value", False):
+        assert content[0].astext() == expected_content.format("", "")
+    else:
+        assert content[0].astext() == expected_content.format(" = 'bars'", " = 10")
+
     docstring1 = content[0][2][1][1]  # a bit fragile, I know
     docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
-    docstring3 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
-    assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
-    )
-    assert (
-        docstring1.rawsource
-        == "The Bar and Foo handler, with doFoo() and doBar() methods."
-    )
-    assert docstring2.rawsource == "Number of foos, used by doBar() method"
-    assert docstring3.rawsource == "Implement **doBar** stage, not called by ClassBar()"
+    if confdict.get("matlab_auto_link", "basic") == "all":
+        assert docstring1.rawsource == (
+            "The Bar and Foo handler, "
+            "with :meth:`doFoo() <package.ClassBar.doFoo>` and doBar() methods."
+        )
+        assert docstring2.rawsource == (
+            "Number of :attr:`foos <package.ClassBar.foos>`, "
+            "used by :meth:`doBar() <package.ClassBar.doBar>` method"
+        )
+
+        docstring3 = content[0][2][1][2][0][2][1][4][1][0][0]  # a bit fragile, I know
+        assert docstring3.rawsource == ":meth:`doFoo() <package.ClassBar.doFoo>`"
+
+        docstring4 = content[0][2][1][2][0][2][1][4][1][0][2]  # a bit fragile, I know
+        assert docstring4.rawsource == "``@ClassExample``"
+
+        docstring5 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
+        assert docstring5.rawsource == (
+            "Implement **doBar** stage, "
+            "not called by :meth:`ClassBar() <package.ClassBar.ClassBar>`"
+        )
+
+    else:
+        assert (
+            docstring1.rawsource
+            == "The Bar and Foo handler, with doFoo() and doBar() methods."
+        )
+        assert docstring2.rawsource == "Number of foos, used by doBar() method"
+
+        docstring3 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
+        assert (
+            docstring3.rawsource
+            == "Implement **doBar** stage, not called by ClassBar()"
+        )
 
 
-def test_package_show_default_value(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
-    assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars = 'bars'\n\nNumber of bars\n\n\n\nfoos = 10\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
-    )
-
-
-def test_package_auto_link_all(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True, "matlab_auto_link": "all"}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
-    docstring1 = content[0][2][1][1]  # a bit fragile, I know
-    docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
-    docstring3 = content[0][2][1][2][0][2][1][4][1][0][0]  # a bit fragile, I know
-    docstring4 = content[0][2][1][2][0][2][1][4][1][0][2]  # a bit fragile, I know
-    docstring5 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
-    assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "package\n\n\n\nclass package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo() - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction() and BaseClass, etc."
-    )
-    assert (
-        docstring1.rawsource
-        == "The Bar and Foo handler, with :meth:`doFoo() <package.ClassBar.doFoo>` and doBar() methods."
-    )
-    assert (
-        docstring2.rawsource
-        == "Number of :attr:`foos <package.ClassBar.foos>`, used by :meth:`doBar() <package.ClassBar.doBar>` method"
-    )
-    assert docstring3.rawsource == ":meth:`doFoo() <package.ClassBar.doFoo>`"
-    assert docstring4.rawsource == "``@ClassExample``"
-    assert (
-        docstring5.rawsource
-        == "Implement **doBar** stage, not called by :meth:`ClassBar() <package.ClassBar.ClassBar>`"
-    )
-
-
-def test_submodule(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize(
+    "confdict",
+    [
+        {"matlab_short_links": True},
+        {"matlab_short_links": True, "matlab_show_property_default_value": True},
+    ],
+)
+def test_submodule(app, confdict):
     content = pickle.loads((app.doctreedir / "index_submodule.doctree").read_bytes())
-    bases_line = content[0][2][1][0]
+
     assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "submodule\n\n\n\nclass ClassMeow\n\nBases: package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\nfuncMeow(input)\n\nTests a function with comments after docstring"
+
+    assert content[0].astext() == (
+        "submodule\n\n\n\n"
+        "class ClassMeow\n\n"
+        "Bases: package.ClassBar\n\n"
+        "Class which inherits from a package\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "say()\n\n"
+        "Say Meow\n\n\n\n"
+        "funcMeow(input)\n\n"
+        "Tests a function with comments after docstring"
     )
+
+    bases_line = content[0][2][1][0]
     assert bases_line.rawsource == "Bases: :class:`package.ClassBar`"
 
 
-def test_submodule_show_default_value(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
+@pytest.mark.parametrize(
+    "confdict",
+    [
+        {"matlab_short_links": True},
+        {"matlab_short_links": True, "matlab_show_property_default_value": True},
+    ],
+)
+def test_root(app, confdict):
+    content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
 
-    content = pickle.loads((app.doctreedir / "index_submodule.doctree").read_bytes())
     assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "submodule\n\n\n\nclass ClassMeow\n\nBases: package.ClassBar\n\nClass which inherits from a package\n\nMethod Summary\n\n\n\n\n\nsay()\n\nSay Meow\n\n\n\nfuncMeow(input)\n\nTests a function with comments after docstring"
+
+    assert content[0].astext() == (
+        "root\n\n\n\n"
+        "class BaseClass\n\n"
+        "A class in the very root of the directory\n\n"
+        "BaseClass Methods:\n\n"
+        "BaseClass - the constructor, whose description extends\n\n"
+        "to the next line\n\n"
+        "DoBase - another BaseClass method\n\n"
+        "See Also\n\n"
+        "target.ClassExample, baseFunction, ClassExample\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "BaseClass(obj, args)\n\n"
+        "The constructor\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "DoBase()\n\n"
+        "Do the Base thing\n\n\n\n"
+        "baseFunction(x)\n\n"
+        "Return the base of x\n\n"
+        "See Also:\n\n"
+        "target.submodule.ClassMeow\n"
+        "target.package.ClassBar\n"
+        "ClassMeow\n"
+        "package.ClassBar"
     )
 
 
-def test_root(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize(
+    "confdict", [{"matlab_short_links": True, "matlab_auto_link": "basic"}]
+)
+def test_root_auto_link_basic(app, confdict):
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
+
     assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "root\n\n\n\nclass BaseClass\n\nA class in the very root of the directory\n\nBaseClass Methods:\n\nBaseClass - the constructor, whose description extends\n\nto the next line\n\nDoBase - another BaseClass method\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(obj, args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
-    )
 
-
-def test_root_show_default_value(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True, "matlab_show_property_default_value": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
-    assert len(content) == 1
-    assert (
-        content[0].astext()
-        == "root\n\n\n\nclass BaseClass\n\nA class in the very root of the directory\n\nBaseClass Methods:\n\nBaseClass - the constructor, whose description extends\n\nto the next line\n\nDoBase - another BaseClass method\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(obj, args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
-    )
-
-
-def test_root_auto_link_basic(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_short_links": True, "matlab_auto_link": "basic"}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
     method_section = content[0][2][1][1][0]  # a bit fragile, I know
+    assert method_section.rawsource == (
+        "BaseClass Methods:\n"
+        "* :meth:`BaseClass() <BaseClass.BaseClass>` "
+        "- the constructor, whose description extends\n"
+        "    to the next line\n"
+        "* :meth:`DoBase() <BaseClass.DoBase>` "
+        "- another BaseClass method\n"
+    )
+
     see_also_line_1 = content[0][2][1][1][1]  # a bit fragile, I know
+    assert see_also_line_1.rawsource == (
+        "See Also\n"
+        ":class:`target.ClassExample`, :func:`baseFunction`, :class:`ClassExample`\n\n"
+    )
+
     see_also_line_2 = content[0][4][1][1][0]  # a bit fragile, I know
-    assert len(content) == 1
-    assert (
-        method_section.rawsource
-        == "BaseClass Methods:\n* :meth:`BaseClass() <BaseClass.BaseClass>` - the constructor, whose description extends\n    to the next line\n* :meth:`DoBase() <BaseClass.DoBase>` - another BaseClass method\n"
-    )
-    assert (
-        see_also_line_1.rawsource
-        == "See Also\n:class:`target.ClassExample`, :func:`baseFunction`, :class:`ClassExample`\n\n"
-    )
-    assert (
-        see_also_line_2.rawsource
-        == "See Also:\n:class:`target.submodule.ClassMeow`\n:class:`target.package.ClassBar`\n:class:`ClassMeow`\n:class:`package.ClassBar`"
+    assert see_also_line_2.rawsource == (
+        "See Also:\n"
+        ":class:`target.submodule.ClassMeow`\n"
+        ":class:`target.package.ClassBar`\n"
+        ":class:`ClassMeow`\n"
+        ":class:`package.ClassBar`"
     )
