@@ -1,5 +1,4 @@
-"""
-sphinxcontrib.matlab
+"""sphinxcontrib.matlab.
 ~~~~~~~~~~~~~~~~~~~~
 
 The MATLAB domain.
@@ -40,7 +39,7 @@ mat_sig_re = re.compile(
 
 
 def _pseudo_parse_arglist(signode, arglist):
-    """ "Parse" a list of arguments separated by commas.
+    """Parse a list of arguments separated by commas.
 
     Arguments can have "optional" annotations given by enclosing them in
     brackets.  Currently, this will split at any comma, even if it's inside a
@@ -87,9 +86,7 @@ def _pseudo_parse_arglist(signode, arglist):
 
 
 class MatObject(ObjectDescription):
-    """
-    Description of a general MATLAB object.
-    """
+    """Description of a general MATLAB object."""
 
     option_spec = {
         "noindex": directives.flag,
@@ -287,7 +284,7 @@ class MatObject(ObjectDescription):
             objects = self.env.domaindata["mat"]["objects"]
             if fullname_out in objects:
                 self.state_machine.reporter.warning(
-                    "duplicate object description of %s, " % fullname_out
+                    f"duplicate object description of {fullname_out}, "
                     + "other instance in "
                     + str(self.env.doc2path(objects[fullname_out][0]))
                     + ", use :noindex: for one of them",
@@ -310,9 +307,7 @@ class MatObject(ObjectDescription):
 
 
 class MatModulelevel(MatObject):
-    """
-    Description of an object on module level (functions, data, application).
-    """
+    """Description of an object on module level (functions, data, application)."""
 
     def needs_arglist(self):
         return self.objtype == "function"
@@ -335,15 +330,13 @@ class MatModulelevel(MatObject):
 
 
 class MatClasslike(MatObject):
-    """
-    Description of a class-like object (classes, interfaces, exceptions).
-    """
+    """Description of a class-like object (classes, interfaces, exceptions)."""
 
     def _object_hierarchy_parts(self, sig):
-        """
-        Returns a tuple of strings, one entry for each part of the object's
-        hierarchy (e.g. ``('module', 'submodule', 'Class', 'method')``). The
-        returned tuple is used to properly nest children within parents in the
+        """Return a tuple of strings, one entry for each part of the object's \
+           hierarchy (e.g. ``('module', 'submodule', 'Class', 'method')``).
+
+        The returned tuple is used to properly nest children within parents in the
         table of contents, and can also be used within the
         :py:meth:`_toc_entry_name` method.
 
@@ -378,9 +371,7 @@ class MatClasslike(MatObject):
 
 
 class MatClassmember(MatObject):
-    """
-    Description of a class member (methods, attributes).
-    """
+    """Description of a class member (methods, attributes)."""
 
     def needs_arglist(self):
         return self.objtype.endswith("method")
@@ -402,7 +393,7 @@ class MatClassmember(MatObject):
                 if modname:
                     return translation("%s() (in module %s)") % (name, modname)
                 else:
-                    return "%s()" % name
+                    return f"{name}()"
             if modname and add_modules:
                 return translation("%s() (%s.%s method)") % (methname, modname, clsname)
             else:
@@ -414,7 +405,7 @@ class MatClassmember(MatObject):
                 if modname:
                     return translation("%s() (in module %s)") % (name, modname)
                 else:
-                    return "%s()" % name
+                    return f"{name}()"
             if modname and add_modules:
                 return translation("%s() (%s.%s static method)") % (
                     methname,
@@ -430,7 +421,7 @@ class MatClassmember(MatObject):
                 if modname:
                     return translation("%s() (in module %s)") % (name, modname)
                 else:
-                    return "%s()" % name
+                    return f"{name}()"
             if modname:
                 return translation("%s() (%s.%s class method)") % (
                     methname,
@@ -466,13 +457,11 @@ class MatClassmember(MatObject):
             self.clsname_set = True
 
 
-class MatDecoratorMixin(object):
-    """
-    Mixin for decorator directives.
-    """
+class MatDecoratorMixin:
+    """Mixin for decorator directives."""
 
     def handle_signature(self, sig, signode):
-        ret = super(MatDecoratorMixin, self).handle_signature(sig, signode)
+        ret = super().handle_signature(sig, signode)
         signode.insert(0, addnodes.desc_addname("@", "@"))
         return ret
 
@@ -481,9 +470,7 @@ class MatDecoratorMixin(object):
 
 
 class MatDecoratorFunction(MatDecoratorMixin, MatModulelevel):
-    """
-    Directive to mark functions meant to be used as decorators.
-    """
+    """Directive to mark functions meant to be used as decorators."""
 
     def run(self):
         # a decorator function is a function after all
@@ -492,9 +479,7 @@ class MatDecoratorFunction(MatDecoratorMixin, MatModulelevel):
 
 
 class MatDecoratorMethod(MatDecoratorMixin, MatClassmember):
-    """
-    Directive to mark methods meant to be used as decorators.
-    """
+    """Directive to mark methods meant to be used as decorators."""
 
     def run(self):
         self.name = "mat:method"
@@ -502,9 +487,7 @@ class MatDecoratorMethod(MatDecoratorMixin, MatClassmember):
 
 
 class MatModule(Directive):
-    """
-    Directive to mark description of a new module.
-    """
+    """Directive to mark description of a new module."""
 
     has_content = False
     required_arguments = 1
@@ -552,9 +535,9 @@ class MatModule(Directive):
 
 
 class MatCurrentModule(Directive):
-    """
-    This directive is just to tell Sphinx that we're documenting
-    stuff in module foo, but links to module foo won't lead here.
+    """Tell Sphinx that we're documenting \
+       stuff in module foo, but links to module foo won't lead here.
+
     """
 
     has_content = False
@@ -600,9 +583,7 @@ class MatXRefRole(XRefRole):
 
 
 class MATLABModuleIndex(Index):
-    """
-    Index subclass to provide the MATLAB module index.
-    """
+    """Index subclass to provide the MATLAB module index."""
 
     name = "modindex"
     localname = translation("MATLAB Module Index")
@@ -750,11 +731,14 @@ class MATLABDomain(Domain):
                 del self.data["modules"][modname]
 
     def find_obj(self, env, modname, classname, name, type, searchmode=0):
-        """Find a MATLAB object for "name", perhaps using the given module
-        and/or classname.  Returns a list of (name, object entry) tuples.
+        """Find a MATLAB object for "name", perhaps using the given module \
+           and/or classname.
+
+
+        Return a list of (name, object entry) tuples.
+
         """
-        # skip parens
-        if name[-2:] == "()":
+        if name[-2:] == "()":  # skip parens
             name = name[:-2]
 
         if not name:
@@ -789,33 +773,28 @@ class MATLABDomain(Domain):
                             if oname.endswith(searchname)
                             and objects[oname][1] in objtypes
                         ]
-        else:
-            # NOTE: searching for exact match, object type is not considered
-            if name in objects:
-                newname = name
-            elif type == "mod":
-                # only exact matches allowed for modules
-                return []
-            elif classname and classname + "." + name in objects:
-                newname = classname + "." + name
-            elif modname and modname + "." + name in objects:
-                newname = modname + "." + name
-            elif (
-                modname
-                and classname
-                and modname + "." + classname + "." + name in objects
-            ):
-                newname = modname + "." + classname + "." + name
-            # special case: builtin exceptions have module "exceptions" set
-            elif type == "exc" and "." not in name and "exceptions." + name in objects:
-                newname = "exceptions." + name
-            # special case: object methods
-            elif (
-                type in ("func", "meth")
-                and "." not in name
-                and "object." + name in objects
-            ):
-                newname = "object." + name
+        # NOTE: searching for exact match, object type is not considered
+        elif name in objects:
+            newname = name
+        elif type == "mod":
+            # only exact matches allowed for modules
+            return []
+        elif classname and classname + "." + name in objects:
+            newname = classname + "." + name
+        elif modname and modname + "." + name in objects:
+            newname = modname + "." + name
+        elif (
+            modname and classname and modname + "." + classname + "." + name in objects
+        ):
+            newname = modname + "." + classname + "." + name
+        # special case: builtin exceptions have module "exceptions" set
+        elif type == "exc" and "." not in name and "exceptions." + name in objects:
+            newname = "exceptions." + name
+        # special case: object methods
+        elif (
+            type in ("func", "meth") and "." not in name and "object." + name in objects
+        ):
+            newname = "object." + name
         if newname is not None:
             matches.append((newname, objects[newname]))
         return matches
@@ -829,7 +808,10 @@ class MATLABDomain(Domain):
             return None
         elif len(matches) > 1:
             logger.warning(
-                "[sphinxcontrib-matlabdomain] more than one target found for cross-reference %r: %s",
+                (
+                    "[sphinxcontrib-matlabdomain] more than "
+                    "one target found for cross-reference %r: %s"
+                ),
                 target,
                 ", ".join(match[0] for match in matches),
                 type="ref",
@@ -881,7 +863,8 @@ def analyze(app):
 def ensure_configuration(app, env):
     if env.matlab_short_links:
         logger.info(
-            "[sphinxcontrib-matlabdomain] matlab_short_links=True, forcing matlab_keep_package_prefix=False."
+            "[sphinxcontrib-matlabdomain] matlab_short_links=True, "
+            "forcing matlab_keep_package_prefix=False."
         )
         env.matlab_keep_package_prefix = False
 

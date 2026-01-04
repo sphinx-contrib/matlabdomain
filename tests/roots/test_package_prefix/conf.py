@@ -1,12 +1,11 @@
 import os
 
 matlab_src_dir = os.path.abspath(".")
+# This option is set in the test script: test_package_prefix.py
 matlab_keep_package_prefix = True
 
 primary_domain = "mat"
 
-# This option is set in the test script: test_package_prefix.py
-# matlab_keep_package_prefix = False
 
 extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 

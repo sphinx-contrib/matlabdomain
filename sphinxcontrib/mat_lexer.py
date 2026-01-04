@@ -1,5 +1,4 @@
-"""
-pygments.lexers.matlab
+"""pygments.lexers.matlab.
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Lexers for Matlab and related languages.
@@ -24,7 +23,6 @@ from pygments.token import (
     Punctuation,
     String,
     Text,
-    Token,
     Whitespace,
 )
 
@@ -32,8 +30,7 @@ __all__ = ["MatlabLexer"]
 
 
 class MatlabLexer(RegexLexer):
-    """
-    For Matlab source code.
+    """For Matlab source code.
 
     .. versionadded:: 0.10
     """
@@ -43,14 +40,13 @@ class MatlabLexer(RegexLexer):
     filenames = ["*.m"]
     mimetypes = ["text/matlab"]
 
-    #
     # These lists are generated automatically.
     # Run the following in bash shell:
     #
     # for f in elfun specfun elmat; do
     #   echo -n "$f = "
     #   matlab -nojvm -r "help $f;exit;" | perl -ne \
-    #   'push(@c,$1) if /^    (\w+)\s+-/; END {print q{["}.join(q{","},@c).qq{"]\n};}'
+    #   'push(@c,$1) if /^    (\w+)\s+-/; END {print q{["}.join(q{","},@c).qq{"]\n};}' # noqa : ERA001
     # done
     #
     # elfun: Elementary math functions
@@ -58,7 +54,7 @@ class MatlabLexer(RegexLexer):
     # elmat: Elementary matrices and matrix manipulation
     #
     # taken from MATLAB version'9.6.0.1092380 (R2019a) Update 1'
-    #
+
     elfun = (
         "sin",
         "sind",

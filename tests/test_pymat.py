@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-test_autodoc
+"""test_autodoc.
 ~~~~~~~~~~~~
 
 Test the autodoc extension.
@@ -10,12 +8,10 @@ Test the autodoc extension.
 """
 
 import pickle
-import sys
 
 import helper
 import pytest
 from sphinx import addnodes
-from sphinx.testing.fixtures import make_app, test_params  # noqa: F811;
 
 
 @pytest.fixture(scope="module")
@@ -31,7 +27,7 @@ def test_setup(make_app, rootdir):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     assert isinstance(content[3], addnodes.desc)
-    assert content[3].astext() == "func.main()\n\nReturns the answer."
+    assert content[3].astext() == "func.main()\n\nReturn the answer."
 
     assert isinstance(content[7], addnodes.desc)
     assert content[7].astext() == "matsrc.func(x)\n\nReturns x"
