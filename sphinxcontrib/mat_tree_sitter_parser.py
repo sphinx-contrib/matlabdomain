@@ -507,9 +507,6 @@ class MatFunctionParser:
             # After all that if our docstring is empty then we have none
             if not docstring.strip():
                 docstring = None
-            else:
-                pass  # docstring = docstring.rstrip()
-
             # Here we trust that the person is giving us valid matlab.
             arg_loc = self.retv if "Output" in attrs else self.args
             if len(name) == 1:
@@ -521,9 +518,6 @@ class MatFunctionParser:
                     "default": default,
                     "docstring": docstring,
                 }
-            else:
-                # how to handle dotted args
-                pass
 
     def _parse_attributes(self, attrs_nodes):
         attrs = {}
@@ -752,9 +746,6 @@ class MatClassParser:
             # After all that if our docstring is empty then we have none
             if not docstring.strip():
                 docstring = None
-            else:
-                pass  # docstring = docstring.rstrip()
-
             self.properties[name] = {
                 "attrs": attrs,
                 "size": dims,
@@ -843,9 +834,6 @@ class MatClassParser:
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
                 docstring = None
-            else:
-                pass  # docstring = docstring.rstrip()
-
             self.enumerations[name] = {"args": args, "docstring": docstring}
 
     def _parse_event_section(self, events_match):
@@ -903,9 +891,6 @@ class MatClassParser:
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
                 docstring = None
-            else:
-                pass  # docstring = docstring.rstrip()
-
             self.events[name] = {"attrs": attrs, "docstring": docstring}
 
     def _parse_attributes(self, attrs_nodes):
