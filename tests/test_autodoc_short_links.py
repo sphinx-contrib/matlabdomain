@@ -65,10 +65,13 @@ def test_target_show_default_value(app, confdict):
 )
 def test_target_auto_link_basic(app, confdict):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
+
+    assert len(content) == 1
+
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
     see_also_line = content[0][2][1][3]  # a bit fragile, I know
-    assert len(content) == 1
+
     assert (
         property_section.rawsource
         == "ClassExample Properties:\n* :attr:`a <ClassExample.a>` - first property of ClassExample\n* :attr:`b <ClassExample.b>` - second property of ClassExample\n* :attr:`c <ClassExample.c>` - third property of ClassExample"
@@ -88,11 +91,14 @@ def test_target_auto_link_basic(app, confdict):
 )
 def test_target_auto_link_all(app, confdict):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
+
+    assert len(content) == 1
+
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
     see_also_line = content[0][2][1][3]  # a bit fragile, I know
     constructor_desc = content[0][2][1][4][0][0][1][2][1][0]  # a bit fragile, I know
-    assert len(content) == 1
+
     assert (
         property_section.rawsource
         == "ClassExample Properties:\n* :attr:`a <ClassExample.a>` - first property of :class:`ClassExample`\n* :attr:`b <ClassExample.b>` - second property of :class:`ClassExample`\n* :attr:`c <ClassExample.c>` - third property of :class:`ClassExample`"
@@ -121,38 +127,19 @@ def test_classfolder(app, confdict):
     )
 
 
-@pytest.mark.parametrize("confdict", [{"matlab_short_links": True}])
+@pytest.mark.parametrize(
+    "confdict",
+    [
+        {"matlab_short_links": True},
+        {"matlab_short_links": True, "matlab_show_property_default_value": True},
+    ],
+)
 def test_package(app, confdict):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
 
     assert len(content) == 1
 
-    assert content[0].astext() == (
-        "package\n\n\n\n"
-        "class package.ClassBar\n\nBases: handle\n\nThe Bar and Foo handler, with doFoo() and doBar() methods.\n\nConstructor Summary\n\n\n\n\n\nClassBar()\n\nInitialize the bars and foos\n\nProperty Summary\n\n\n\n\n\nbars\n\nNumber of bars\n\n\n\nfoos\n\nNumber of foos, used by doBar() method\n\nMethod Summary\n\n\n\n\n\ndoBar()\n\nImplement doBar stage, not called by ClassBar()\n\n\n\ndoFoo()\n\ndoFoo - Doing foo, without passing in @ClassExample\n\n\n\n\n\n\n\npackage.funcFoo(u, t)\n\nFunction that does Foo\n\nx = package.funcFoo(u)\n\n[x, y] = package.funcFoo(u, t)\n\nTest for auto-linking with baseFunction and BaseClass, etc."
-    )
-
-    docstring1 = content[0][2][1][1]  # a bit fragile, I know
-    docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
-    docstring3 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
-    assert (
-        docstring1.rawsource
-        == "The Bar and Foo handler, with doFoo() and doBar() methods."
-    )
-    assert docstring2.rawsource == "Number of foos, used by doBar() method"
-    assert docstring3.rawsource == "Implement **doBar** stage, not called by ClassBar()"
-
-
-@pytest.mark.parametrize(
-    "confdict",
-    [{"matlab_short_links": True, "matlab_show_property_default_value": True}],
-)
-def test_package_show_default_value(app, confdict):
-    content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
-
-    assert len(content) == 1
-
-    assert content[0].astext() == (
+    expected_content = (
         "package\n\n\n\n"
         "class package.ClassBar\n\n"
         "Bases: handle\n\n"
@@ -161,9 +148,9 @@ def test_package_show_default_value(app, confdict):
         "ClassBar()\n\n"
         "Initialize the bars and foos\n\n"
         "Property Summary\n\n\n\n\n\n"
-        "bars = 'bars'\n\n"
+        "bars{}\n\n"
         "Number of bars\n\n\n\n"
-        "foos = 10\n\n"
+        "foos{}\n\n"
         "Number of foos, used by doBar() method\n\n"
         "Method Summary\n\n\n\n\n\n"
         "doBar()\n\n"
@@ -176,6 +163,20 @@ def test_package_show_default_value(app, confdict):
         "[x, y] = package.funcFoo(u, t)\n\n"
         "Test for auto-linking with baseFunction and BaseClass, etc."
     )
+    if not confdict.get("matlab_show_property_default_value", False):
+        assert content[0].astext() == expected_content.format("", "")
+    else:
+        assert content[0].astext() == expected_content.format(" = 'bars'", " = 10")
+
+    docstring1 = content[0][2][1][1]  # a bit fragile, I know
+    docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
+    docstring3 = content[0][2][1][2][0][2][1][2][1][0]  # a bit fragile, I know
+    assert (
+        docstring1.rawsource
+        == "The Bar and Foo handler, with doFoo() and doBar() methods."
+    )
+    assert docstring2.rawsource == "Number of foos, used by doBar() method"
+    assert docstring3.rawsource == "Implement **doBar** stage, not called by ClassBar()"
 
 
 @pytest.mark.parametrize(
