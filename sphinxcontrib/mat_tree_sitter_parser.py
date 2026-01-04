@@ -41,7 +41,7 @@ MATLAB_ATTRIBUTE_DEFAULTS = {
 }
 
 
-tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
+tree_sitter_ver = tuple(int(sec) for sec in version("tree_sitter").split("."))
 if tree_sitter_ver[1] == 21:
     ML_LANG = Language(tsml.language(), "matlab")
 else:
@@ -243,7 +243,7 @@ def tree_sitter_is_0_21():
         in order to use the correct language initialization and syntax.
     """
     if not hasattr(tree_sitter_is_0_21, "is_21"):
-        tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
+        tree_sitter_ver = tuple(int(sec) for sec in version("tree_sitter").split("."))
         tree_sitter_is_0_21.is_21 = tree_sitter_ver[1] == 21  # memoize
     return tree_sitter_is_0_21.is_21
 
@@ -391,10 +391,8 @@ class MatFunctionParser:
             dims = None
             if dims_list is not None:
                 dims = tuple(
-                    [
-                        dim.text.decode(self.encoding, errors="backslashreplace")
-                        for dim in dims_list
-                    ]
+                    dim.text.decode(self.encoding, errors="backslashreplace")
+                    for dim in dims_list
                 )
 
             # extract type
@@ -629,10 +627,8 @@ class MatClassParser:
             dims = None
             if dims_list is not None:
                 dims = tuple(
-                    [
-                        dim.text.decode(self.encoding, errors="backslashreplace")
-                        for dim in dims_list
-                    ]
+                    dim.text.decode(self.encoding, errors="backslashreplace")
+                    for dim in dims_list
                 )
             elif size_type is None:
                 dims = None

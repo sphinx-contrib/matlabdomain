@@ -478,7 +478,7 @@ class MatObject:
             code = code_f.read()
 
         # parse the file
-        tree_sitter_ver = tuple([int(sec) for sec in version("tree_sitter").split(".")])
+        tree_sitter_ver = tuple(int(sec) for sec in version("tree_sitter").split("."))
         if tree_sitter_ver[1] == 21:
             parser = Parser()
             parser.set_language(ML_LANG)
