@@ -942,7 +942,3 @@ def test_f_with_output_argument_block():
     assert obj.retv["o3"]["type"] == "double"
     assert obj.retv["o3"]["docstring"] == "A third output"
     assert obj.retv["o3"]["validators"] == ["mustBePositive"]
-
-
-if __name__ == "__main__":
-    pytest.main([os.path.abspath(__file__)])
