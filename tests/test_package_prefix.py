@@ -1,7 +1,4 @@
-"""test_package_function.
-~~~~~~~~~~~~~~~~~~~~~
-
-Test the autodoc extension with the matlab_keep_package_prefix option.
+"""Test the autodoc extension with the matlab_keep_package_prefix option.
 
 :copyright: Copyright by the Isaac Lenton.
 :license: BSD, see LICENSE for details.

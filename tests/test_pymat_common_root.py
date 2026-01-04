@@ -1,11 +1,4 @@
-"""test_autodoc.
-~~~~~~~~~~~~
-
-Test the autodoc extension.
-
-:copyright: Copyright by the Sphinx team, see AUTHORS.
-:license: BSD, see LICENSE for details.
-"""
+"""Test autodoc when code base contains both matlab and python code in the same folder."""
 
 import pickle
 

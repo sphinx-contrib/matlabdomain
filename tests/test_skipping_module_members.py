@@ -1,11 +1,4 @@
-"""test_autodoc.
-~~~~~~~~~~~~
-
-Test the autodoc extension.
-
-:copyright: Copyright by the Sphinx team, see AUTHORS.
-:license: BSD, see LICENSE for details.
-"""
+"""test that some module members can be skipped."""
 
 import pickle
 
