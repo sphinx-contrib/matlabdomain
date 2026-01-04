@@ -84,10 +84,11 @@ Using auto-directives
 * Known limitations
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    CHANGES.rst
+   DEVELOPMENT.rst
 
 
 Directives
