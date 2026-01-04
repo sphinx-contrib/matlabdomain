@@ -155,7 +155,7 @@ def classfolder_class_name(dotted_path):
 def recursive_find_all(obj):
     # Recursively finds all entities in all "modules" aka directories.
     # Bug fix: Check if obj.entities exists and is not None
-    if not hasattr(obj, "entities") or obj.entities is None:
+    if getattr(obj, "entities", None) is None:
         return
 
     for _, o in obj.entities:
@@ -168,7 +168,7 @@ def recursive_find_all(obj):
 def recursive_log_debug(obj, indent=""):
     # Traverse the object hierarchy and log to debug
     # Bug fix: Check if obj.entities exists and is not None
-    if not hasattr(obj, "entities") or obj.entities is None:
+    if getattr(obj, "entities", None) is None:
         return
 
     for n, o in obj.entities:
@@ -192,8 +192,7 @@ def recursive_log_debug(obj, indent=""):
 
 def populate_entities_table(obj, path=""):
     # Recursively scan the hiearachy of entities and populate the entities_table.
-    # Bug fix: Check if obj.entities exists and is not None
-    if not hasattr(obj, "entities") or obj.entities is None:
+    if getattr(obj, "entities", None) is None:
         return
 
     for _n, o in obj.entities:
