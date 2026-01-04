@@ -12,7 +12,7 @@ requires = [
 setup(
     name="sphinxcontrib-matlabdomain",
     use_scm_version=True,
-    setup_requires=["setuptools_scm<6.0.0"],
+    setup_requires=["setuptools_scm"],
     url="https://github.com/sphinx-contrib/matlabdomain",
     download_url="http://pypi.python.org/pypi/sphinxcontrib-matlabdomain",
     license="BSD",
