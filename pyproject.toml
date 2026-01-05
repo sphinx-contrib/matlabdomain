@@ -6,7 +6,8 @@ skip = "./.git"
 [tool.coverage.run]
 branch = true
 omit = [
-    '*/_build/*'
+    '*/_build/*',
+    'sphinxcontrib\__init__.py'
 ]
 
 [tool.pytest.ini_options]
