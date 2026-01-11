@@ -5,6 +5,4 @@ matlab_keep_package_prefix = False
 extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 primary_domain = "mat"
 project = "test_class_options"
-master_doc = "index"
-source_suffix = ".rst"
 nitpicky = True
