@@ -1,4 +1,4 @@
-classdef ClassWithSeperatedComments
+classdef ClassWithSeparatedComments
     properties
         % some comment
 
