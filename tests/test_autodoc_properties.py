@@ -9,35 +9,28 @@ Test the autodoc extension.
 
 import pickle
 
-import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def confdict(show_default, show_specs):
+    return {
+        "matlab_show_property_default_value": show_default,
+        "matlab_show_property_specs": show_specs,
+    }
 
 
 # We test the combination of
 # - matlab_show_property_default_value
 # - matlab_show_property_specs
-testdata = [(False, False), (False, True), (True, False), (True, True)]
-
-
-@pytest.mark.parametrize("show_default,show_specs", testdata)
-def test_target(make_app, rootdir, show_default, show_specs):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {
-        "matlab_show_property_default_value": show_default,
-        "matlab_show_property_specs": show_specs,
-    }
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("show_default", [True, False])
+@pytest.mark.parametrize("show_specs", [True, False])
+def test_target(app, confdict, show_default, show_specs):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
-    summaries = content[0][2][1][4].rawsource
 
     assert len(content) == 1
+
+    summaries = content[0][2][1][4].rawsource
 
     if show_default:
         assert "= 42\n\n" in summaries
