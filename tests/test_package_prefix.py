@@ -1,46 +1,31 @@
-"""test_package_function.
-~~~~~~~~~~~~~~~~~~~~~
+"""Test the autodoc extension with the matlab_keep_package_prefix option.
 
-Test the autodoc extension with the matlab_keep_package_prefix option.
-
-:copyright: Copyright 2019 by the Isaac Lenton.
+:copyright: Copyright by the Isaac Lenton.
 :license: BSD, see LICENSE for details.
 """
 
 import pickle
 
-import helper
 import pytest
 from sphinx import addnodes
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_package_prefix"
 
 
-def test_with_prefix(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_package_prefix"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
+@pytest.fixture
+def confdict(matlab_keep_package_prefix):
+    return {"matlab_keep_package_prefix": matlab_keep_package_prefix}
 
+
+@pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
+def test_package_prefix(app, confdict):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     assert isinstance(content[4], addnodes.desc)
-    assert content[4].astext() == "+package.func(x)\n\nReturns x"
-
-
-def test_without_prefix(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_package_prefix"
-    confdict = {"matlab_keep_package_prefix": False}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
-
-    assert isinstance(content[4], addnodes.desc)
-    assert content[4].astext() == "package.func(x)\n\nReturns x"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    if confdict["matlab_keep_package_prefix"]:
+        assert content[4].astext() == "+package.func(x)\n\nReturns x"
+    else:
+        assert content[4].astext() == "package.func(x)\n\nReturns x"

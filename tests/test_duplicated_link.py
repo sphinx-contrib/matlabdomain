@@ -3,56 +3,45 @@
 
 Test the autodoc extension.
 
-:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
+:copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
 import pickle
 
 import docutils
-import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_duplicate_link"
 
 
-def test_with_prefix(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_duplicate_link"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
+@pytest.fixture
+def confdict(matlab_keep_package_prefix):
+    return {"matlab_keep_package_prefix": matlab_keep_package_prefix}
 
+
+@pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
+def test_duplicate_link(app, confdict):
     content = pickle.loads((app.doctreedir / "groups.doctree").read_bytes())
 
     assert isinstance(content[0], docutils.nodes.section)
+
     elems = len(content[0])
     section = content[0][elems - 1]
-    assert (
-        section.astext()
-        == "NiceFiniteGroup\n\n\n\nclass +replab.NiceFiniteGroup\n\nBases: "
-        "+replab.FiniteGroup\n\nA nice finite group is a finite group equipped "
-        "with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv"
+
+    expected_content = (
+        "NiceFiniteGroup\n\n\n\n"
+        "class {}replab.NiceFiniteGroup\n\n"
+        "Bases: {}replab.FiniteGroup\n\n"
+        "A nice finite group is a finite group equipped "
+        "with an injective homomorphism into a permutation group\n\n"
+        "Reference that triggers the error: eqv"
     )
 
-
-def test_without_prefix(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_duplicate_link"
-    confdict = {"matlab_keep_package_prefix": False}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "groups.doctree").read_bytes())
-
-    assert isinstance(content[0], docutils.nodes.section)
-    elems = len(content[0])
-    section = content[0][elems - 1]
-    assert (
-        section.astext()
-        == "NiceFiniteGroup\n\n\n\nclass replab.NiceFiniteGroup\n\nBases: replab.FiniteGroup\n\nA nice finite group is a finite group equipped with an injective homomorphism into a permutation group\n\nReference that triggers the error: eqv"
-    )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    if confdict["matlab_keep_package_prefix"]:
+        assert section.astext() == expected_content.format("+", "+")
+    else:
+        assert section.astext() == expected_content.format("", "")

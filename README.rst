@@ -41,14 +41,6 @@ The Python package must be installed with::
 In general, the usage is the same as for documenting Python code.
 The package is tested with Python >= 3.10 and Sphinx >= 7.0.0.
 
-.. note::
-
-   The last version to support Sphinx 4.5.x to 6.x is ``0.22.1``
-
-.. note::
-
-   The last version to support Python 2 is ``0.11.8``
-
 
 Configuration
 -------------

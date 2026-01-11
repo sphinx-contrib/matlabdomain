@@ -16,7 +16,7 @@ import os
 # -- Project information -----------------------------------------------------
 
 project = "sphinxcontrib-matlabdomain"
-copyright = "2018, Jørgen Cederberg"
+copyright = "Jørgen Cederberg"
 author = "Jørgen Cederberg"
 
 # The short X.Y version

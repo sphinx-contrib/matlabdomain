@@ -3,7 +3,7 @@
 
 Types for MATLAB.
 
-:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:copyright: Copyright by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
@@ -242,11 +242,13 @@ def analyze(app):
             return
 
         logger.debug(
-            f"[sphinxcontrib-matlabdomain] root={root}, root.entities={getattr(root, 'entities', 'NO ENTITIES ATTR')}"
+            f"[sphinxcontrib-matlabdomain] root={root}, "
+            f"root.entities={getattr(root, 'entities', 'NO ENTITIES ATTR')}"
         )
         root.safe_getmembers()
         logger.debug(
-            f"[sphinxcontrib-matlabdomain] After safe_getmembers, root.entities={getattr(root, 'entities', 'NO ENTITIES ATTR')}"
+            "[sphinxcontrib-matlabdomain] After safe_getmembers, "
+            f"root.entities={getattr(root, 'entities', 'NO ENTITIES ATTR')}"
         )
 
         logger.debug("[sphinxcontrib-matlabdomain] Starting recursive_find_all")
@@ -261,6 +263,7 @@ def analyze(app):
         populate_entities_table(root)
         logger.debug("[sphinxcontrib-matlabdomain] Finished populate_entities_table")
         entities_table["."] = root
+
     except Exception as e:
         import traceback
 
@@ -270,16 +273,19 @@ def analyze(app):
         )
         raise
 
-    # Transform Class Folders classes from
-    #
-    # @ClassFolder (Module)
-    #     ClassFolder (Class)  # noqa: ERA001
-    #     method1 (Function)  # noqa: ERA001
-    #     method2 (Function)  # noqa: ERA001
-    #
-    # To
-    #
-    # ClassFolder (Class) with the method1 and method2 add to the ClassFolder Class.
+    """
+    Transform Class Folders classes from
+
+    @ClassFolder (Module)
+        ClassFolder (Class)
+        method1 (Function)
+        method2 (Function)
+
+    to
+
+    ClassFolder (Class) with the method1 and method2 add to the ClassFolder Class.
+    """
+
     def isClassFolderModule(name, entity):
         if not isinstance(entity, MatModule):
             return False
@@ -726,6 +732,8 @@ class MatModule(MatObject):
                         name,
                     )
                     return entity_content
+
+            # If not - try to MATLABIFY it.
             if entity := MatObject.matlabify(f"{self.package}.{name}"):
                 self.entities.append((name, entity))
                 logger.debug(

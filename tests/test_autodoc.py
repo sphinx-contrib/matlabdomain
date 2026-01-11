@@ -3,26 +3,16 @@
 
 Test the autodoc extension.
 
-:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
+:copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
 import pickle
 
-import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
-
-
-def test_target(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_target(app):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
@@ -41,12 +31,8 @@ def test_target(make_app, rootdir):
     )
 
 
-def test_target_show_default_value(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_show_property_default_value": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_show_property_default_value": True}])
+def test_target_show_default_value(app, confdict):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
@@ -65,12 +51,8 @@ def test_target_show_default_value(make_app, rootdir):
     )
 
 
-def test_target_auto_link_basic(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "basic"}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_auto_link": "basic"}])
+def test_target_auto_link_basic(app, confdict):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
@@ -90,12 +72,8 @@ def test_target_auto_link_basic(make_app, rootdir):
     )
 
 
-def test_target_auto_link_all(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "all"}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_auto_link": "all"}])
+def test_target_auto_link_all(app, confdict):
     content = pickle.loads((app.doctreedir / "index_target.doctree").read_bytes())
     property_section = content[0][2][1][2][0]  # a bit fragile, I know
     method_section = content[0][2][1][2][1]  # a bit fragile, I know
@@ -120,11 +98,7 @@ def test_target_auto_link_all(make_app, rootdir):
     )
 
 
-def test_classfolder(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_classfolder(app):
     content = pickle.loads((app.doctreedir / "index_classfolder.doctree").read_bytes())
     assert len(content) == 1
     assert (
@@ -133,11 +107,7 @@ def test_classfolder(make_app, rootdir):
     )
 
 
-def test_package(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_package(app):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
     docstring1 = content[0][2][1][1]  # a bit fragile, I know
     docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
@@ -155,12 +125,8 @@ def test_package(make_app, rootdir):
     assert docstring3.rawsource == "Implement **doBar** stage, not called by ClassBar()"
 
 
-def test_package_show_default_value(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_show_property_default_value": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_show_property_default_value": True}])
+def test_package_show_default_value(app, confdict):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
     assert len(content) == 1
     assert (
@@ -169,12 +135,8 @@ def test_package_show_default_value(make_app, rootdir):
     )
 
 
-def test_package_auto_link_all(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "all"}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_auto_link": "all"}])
+def test_package_auto_link_all(app, confdict):
     content = pickle.loads((app.doctreedir / "index_package.doctree").read_bytes())
     docstring1 = content[0][2][1][1]  # a bit fragile, I know
     docstring2 = content[0][2][1][2][0][1][1][4][1][0]  # a bit fragile, I know
@@ -202,11 +164,7 @@ def test_package_auto_link_all(make_app, rootdir):
     )
 
 
-def test_submodule(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_submodule(app):
     content = pickle.loads((app.doctreedir / "index_submodule.doctree").read_bytes())
     bases_line = content[0][2][1][0]
     assert len(content) == 1
@@ -217,12 +175,8 @@ def test_submodule(make_app, rootdir):
     assert bases_line.rawsource == "Bases: :class:`target.package.ClassBar`"
 
 
-def test_submodule_show_default_value(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_show_property_default_value": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_show_property_default_value": True}])
+def test_submodule_show_default_value(app, confdict):
     content = pickle.loads((app.doctreedir / "index_submodule.doctree").read_bytes())
     assert len(content) == 1
     assert (
@@ -231,11 +185,7 @@ def test_submodule_show_default_value(make_app, rootdir):
     )
 
 
-def test_root(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_root(app):
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
     assert len(content) == 1
     assert (
@@ -244,12 +194,8 @@ def test_root(make_app, rootdir):
     )
 
 
-def test_root_relative_matlab_src_dir(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_src_dir": "."}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_src_dir": "."}])
+def test_root_relative_matlab_src_dir(app, confdict):
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
     assert len(content) == 1
     assert (
@@ -258,12 +204,8 @@ def test_root_relative_matlab_src_dir(make_app, rootdir):
     )
 
 
-def test_root_show_default_value(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_show_property_default_value": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_show_property_default_value": True}])
+def test_root_show_default_value(app, confdict):
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
     assert len(content) == 1
     assert (
@@ -272,12 +214,8 @@ def test_root_show_default_value(make_app, rootdir):
     )
 
 
-def test_root_auto_link_basic(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_auto_link": "basic"}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_auto_link": "basic"}])
+def test_root_auto_link_basic(app, confdict):
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
     method_section = content[0][2][1][1][0]  # a bit fragile, I know
     see_also_line_1 = content[0][2][1][1][1]  # a bit fragile, I know
@@ -297,19 +235,11 @@ def test_root_auto_link_basic(make_app, rootdir):
     )
 
 
-def test_root_class_signature(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_autodoc"
-    confdict = {"matlab_class_signature": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
+@pytest.mark.parametrize("confdict", [{"matlab_class_signature": True}])
+def test_root_class_signature(app, confdict):
     content = pickle.loads((app.doctreedir / "index_root.doctree").read_bytes())
     assert len(content) == 1
     assert (
         content[0].astext()
         == "root\n\n\n\nclass BaseClass(obj, args)\n\nA class in the very root of the directory\n\nBaseClass Methods:\n\nBaseClass - the constructor, whose description extends\n\nto the next line\n\nDoBase - another BaseClass method\n\nSee Also\n\ntarget.ClassExample, baseFunction, ClassExample\n\nConstructor Summary\n\n\n\n\n\nBaseClass(obj, args)\n\nThe constructor\n\nMethod Summary\n\n\n\n\n\nDoBase()\n\nDo the Base thing\n\n\n\nbaseFunction(x)\n\nReturn the base of x\n\nSee Also:\n\ntarget.submodule.ClassMeow\ntarget.package.ClassBar\nClassMeow\npackage.ClassBar"
     )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

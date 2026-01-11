@@ -513,9 +513,15 @@ class MatFunctionParser:
                         ds = "\n".join(ds.split("\n")[1:])
                     if ds:
                         docstring = ds
+
             # After all that if our docstring is empty then we have none
             if not docstring.strip():
                 docstring = None
+            else:
+                # TODO
+                # docstring = docstring.rstrip() # noqa : ERA001
+                pass
+
             # Here we trust that the person is giving us valid matlab.
             arg_loc = self.retv if "Output" in attrs else self.args
             if len(name) == 1:
@@ -527,6 +533,10 @@ class MatFunctionParser:
                     "default": default,
                     "docstring": docstring,
                 }
+            else:
+                pass
+                # TODO
+                # how to handle dotted args
 
     def _parse_attributes(self, attrs_nodes):
         attrs = {}
@@ -558,7 +568,8 @@ class MatClassParser:
         # Bug fix: Handle empty matches gracefully
         if not class_matches:
             logger.warning(
-                "[sphinxcontrib-matlabdomain] No class definition found in file, skipping"
+                "[sphinxcontrib-matlabdomain] "
+                "No class definition found in file, skipping"
             )
             # Set minimal attributes to avoid crashes
             self.cls = None

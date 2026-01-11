@@ -1,5 +1,8 @@
-sphinxcontrib-matlabdomain-0.23.0 (Unreleased)
-==============================================
+Release notes
+=============
+
+0.23.0 (Unreleased)
+-------------------
 
 * Drop support for Python <=3.9.
 * Drop support for Sphinx <=6.x.
@@ -7,8 +10,8 @@ sphinxcontrib-matlabdomain-0.23.0 (Unreleased)
 
 .. _PR 232: https://github.com/sphinx-contrib/matlabdomain/pull/253
 
-sphinxcontrib-matlabdomain-0.22.1 (2024-08-17)
-==============================================
+0.22.1 (2024-08-17)
+-------------------
 
 * Fixed `Issue 262`_. The API for
   ``sphinx.environment.BuildEnvironment.doc2path`` was changed to return a
@@ -17,8 +20,8 @@ sphinxcontrib-matlabdomain-0.22.1 (2024-08-17)
 .. _Issue 262: https://github.com/sphinx-contrib/matlabdomain/issues/243
 
 
-sphinxcontrib-matlabdomain-0.22.0 (2024-07-17)
-==============================================
+0.22.0 (2024-07-17)
+-------------------
 
 * Fixed `Issue 249`_. Parsing of multiline property default values.
 * Fixed `Issue 252`_. Added missing class and method attributes.
@@ -32,7 +35,7 @@ sphinxcontrib-matlabdomain-0.22.0 (2024-07-17)
 
   * Example
 
-    .. image:: docs/render_property_specs_0.22.0.png
+    .. image:: ./render_property_specs_0.22.0.png
       :alt: Rendering property specs in 0.22.0
 
 .. _Issue 243: https://github.com/sphinx-contrib/matlabdomain/issues/243
@@ -41,8 +44,8 @@ sphinxcontrib-matlabdomain-0.22.0 (2024-07-17)
 .. _Issue 252: https://github.com/sphinx-contrib/matlabdomain/issues/252
 
 
-sphinxcontrib-matlabdomain-0.21.5 (2024-02-10)
-==============================================
+0.21.5 (2024-02-10)
+-------------------
 
 * Fixed `Issue 240`_, where links in literal blocks where not detected
   correctly.
@@ -50,8 +53,8 @@ sphinxcontrib-matlabdomain-0.21.5 (2024-02-10)
 .. _Issue 240: https://github.com/sphinx-contrib/matlabdomain/issues/240
 
 
-sphinxcontrib-matlabdomain-0.21.4 (2024-01-04)
-==============================================
+0.21.4 (2024-01-04)
+-------------------
 
 * Fixed issue with warning if there is a mismatch between filename and
   classname, if the classname is a reserved word (like arguments).
@@ -63,8 +66,8 @@ sphinxcontrib-matlabdomain-0.21.4 (2024-01-04)
 .. _Issue 235: https://github.com/sphinx-contrib/matlabdomain/issues/235
 
 
-sphinxcontrib-matlabdomain-0.21.3 (2024-01-02)
-==============================================
+0.21.3 (2024-01-02)
+-------------------
 
 * Fix issue with parsing of MATLAB files, where keywords were used in ``struct``
   fieldnames. E.g. ``a = pkg.arguments``. These were mistaken as ``keyword``
@@ -72,8 +75,8 @@ sphinxcontrib-matlabdomain-0.21.3 (2024-01-02)
 * Bump copyright to 2024.
 
 
-sphinxcontrib-matlabdomain-0.21.2 (2023-12-17)
-==============================================
+0.21.2 (2023-12-17)
+-------------------
 
 * Interpret ``matlab_src_dir`` relative to the Sphinx source directory to be
   compatible with `sphinx-multiversion`_.
@@ -81,8 +84,8 @@ sphinxcontrib-matlabdomain-0.21.2 (2023-12-17)
 .. _sphinx-multiversion: https://pypi.org/project/sphinx-multiversion/
 
 
-sphinxcontrib-matlabdomain-0.21.1 (2023-12-16)
-==============================================
+0.21.1 (2023-12-16)
+-------------------
 
 * Fixed `Issue 204`_, that caused an ``AttributeError`` to be thrown if a module
   was named the same as the short name for a class.
@@ -90,8 +93,8 @@ sphinxcontrib-matlabdomain-0.21.1 (2023-12-16)
 .. _Issue 204: https://github.com/sphinx-contrib/matlabdomain/issues/204
 
 
-sphinxcontrib-matlabdomain-0.21.0 (2023-12-16)
-==============================================
+0.21.0 (2023-12-16)
+-------------------
 
 * Allow ``matlab_src_dir`` to be a relative path of the ``conf.py`` file. See
   `PR 224`_ and `PR 225`_.
@@ -108,14 +111,14 @@ sphinxcontrib-matlabdomain-0.21.0 (2023-12-16)
 .. _PR 225: https://github.com/sphinx-contrib/matlabdomain/pull/225
 
 
-sphinxcontrib-matlabdomain-0.20.2 (2023-09-15)
-==============================================
+0.20.2 (2023-09-15)
+-------------------
 
 * Fixed `Issue 214`_ again. Any folder below a ``@classfolder`` must be ignored.
 
 
-sphinxcontrib-matlabdomain-0.20.1 (2023-09-14)
-==============================================
+0.20.1 (2023-09-14)
+-------------------
 
 * Fixed `Issue 214`_. After fixing `Issue 56`_, we introduced a bug parsing
   ``private`` folders incorrectly.
@@ -123,8 +126,8 @@ sphinxcontrib-matlabdomain-0.20.1 (2023-09-14)
 .. _Issue 214: https://github.com/sphinx-contrib/matlabdomain/issues/214
 
 
-sphinxcontrib-matlabdomain-0.20.0 (2023-09-13)
-==============================================
+0.20.0 (2023-09-13)
+-------------------
 
 * Fixed `Issue 188`_ and `Issue 189`_, which caused the extension to crash if
   the documentation contained ``:exclude-members:``.
@@ -148,15 +151,15 @@ sphinxcontrib-matlabdomain-0.20.0 (2023-09-13)
 .. _MATLAB Folder Class definitions: https://mathworks.com/help/matlab/matlab_oop/organizing-classes-in-folders.html
 
 
-sphinxcontrib-matlabdomain-0.19.1 (2023-05-17)
-==============================================
+0.19.1 (2023-05-17)
+-------------------
 
 * Fix parsing of classes with trailing ``;`` after ``end``
 * Fix bug if extension is included, but ``matlab_src_dir`` is not set.
 
 
-sphinxcontrib-matlabdomain-0.19.0 (2023-05-16)
-==============================================
+0.19.0 (2023-05-16)
+-------------------
 
 * Added new configuration: ``matlab_short_links``. Finally, we are getting
   closer to render documentation closer to how MathWorks does it. The parsing of
@@ -172,17 +175,17 @@ sphinxcontrib-matlabdomain-0.19.0 (2023-05-16)
 
   Before
 
-    .. image:: docs/render_classes_0.18.0.png
+    .. image:: ./render_classes_0.18.0.png
       :alt: Rendering of default ``ClassBar.m`` in 0.18.0
 
   After
 
-    .. image:: docs/render_classes_0.19.0.png
+    .. image:: ./render_classes_0.19.0.png
       :alt: Rendering of default ``ClassBar.m`` in 0.19.0
 
 
-sphinxcontrib-matlabdomain-0.18.0 (2023-04-14)
-==============================================
+0.18.0 (2023-04-14)
+-------------------
 
 * Improved rendering of class property default values when
   ``matlab_show_property_default_value = True``. Multiline default values are
@@ -191,24 +194,24 @@ sphinxcontrib-matlabdomain-0.18.0 (2023-04-14)
 
   * Before
 
-    .. image:: docs/render_default_values_0.17.1.png
+    .. image:: ./render_default_values_0.17.1.png
       :alt: Rendering default property values in 0.17.1
 
   * After
 
-    .. image:: docs/render_default_values_0.18.0.png
+    .. image:: ./render_default_values_0.18.0.png
       :alt: Rendering default property values in 0.18.0
 
 
-sphinxcontrib-matlabdomain-0.17.1 (2023-04-12)
-==============================================
+0.17.1 (2023-04-12)
+-------------------
 
 * Fix issue with incorrect parsing of baseclasses with trailing comments.
   Reported in `Issue 172 <https://github.com/sphinx-contrib/matlabdomain/issues/172>`_.
 
 
-sphinxcontrib-matlabdomain-0.17.0 (2023-03-24)
-==============================================
+0.17.0 (2023-03-24)
+-------------------
 
 * Replace ``directive.warn`` (deprecated) with ``logger.warning``. Reported in
   `Issue 166 <https://github.com/sphinx-contrib/matlabdomain/issues/166>`_.
@@ -218,55 +221,55 @@ sphinxcontrib-matlabdomain-0.17.0 (2023-03-24)
   `Issue 164 <https://github.com/sphinx-contrib/matlabdomain/issues/164>`_.
 
 
-sphinxcontrib-matlabdomain-0.16.0 (2023-03-15)
-==============================================
+0.16.0 (2023-03-15)
+-------------------
 
 * Add new option, ``matlab_show_property_default_value``. Default is now to not
   show property values. If a property value is ``None``, is not shown anymore.
 
 
-sphinxcontrib-matlabdomain-0.15.2 (2023-03-14)
-==============================================
+0.15.2 (2023-03-14)
+-------------------
 
 * Fix issue with not parsing property docstrings correctly with Pygments 2.13.
   `Issue 152 <https://github.com/sphinx-contrib/matlabdomain/issues/152>`_.
 
 
-sphinxcontrib-matlabdomain-0.15.1 (2023-02-06)
-==============================================
+0.15.1 (2023-02-06)
+-------------------
 
 * Fix being unable to document methods with name ``get``.
   `Issue 151 <https://github.com/sphinx-contrib/matlabdomain/issues/151>`_.
 
 
-sphinxcontrib-matlabdomain-0.15.0 (2023-01-02)
-==============================================
+0.15.0 (2023-01-02)
+-------------------
 
 * Pygments >= 2.14.0 is now supported. Pygments tokenization changed to return
   ``Token.Text.WhiteSpace`` for newline characters. This resulted in a infinite
   loop when parsing MATLAB files.
 
 
-sphinxcontrib-matlabdomain-0.14.1 (2022-09-02)
-==============================================
+0.14.1 (2022-09-02)
+-------------------
 
 * Fix parsing of overloaded class parameters with validation functions.
   `Issue 145 <https://github.com/sphinx-contrib/matlabdomain/issues/145>`_.
 * Fix link in readme file.
 
 
-sphinxcontrib-matlabdomain-0.14.0 (2022-06-01)
-==============================================
+0.14.0 (2022-06-01)
+-------------------
 
 * Sphinx >= 5.0.0 is now supported. Fixed errors due to `deprecated Sphinx API`_.
-* Fixed `https://github.com/sphinx-contrib/matlabdomain/issues/134`_.
+* Fixed `<https://github.com/sphinx-contrib/matlabdomain/issues/134>`_.
   JupyterBook complains if a domain doesn't support resolve_any_ref_.
 
 .. _`resolve_any_ref`: https://www.sphinx-doc.org/en/master/extdev/domainapi.html?highlight=resolve_any_xref#sphinx.domains.Domain.resolve_any_xref
 
 
-sphinxcontrib-matlabdomain-0.13.0 (2022-02-13)
-==============================================
+0.13.0 (2022-02-13)
+-------------------
 
 * Explicit set ``parallel_read_safe`` to ``False`` to avoid error in parallel
   builds.
@@ -276,67 +279,65 @@ sphinxcontrib-matlabdomain-0.13.0 (2022-02-13)
   docstrings.
 
 
-sphinxcontrib-matlabdomain-0.12.0 (2021-06-12)
-==============================================
+0.12.0 (2021-06-12)
+-------------------
 
 * Only Sphinx >= 4.0.0 is now supported.
 * Only Python >= 3.6 is supported.
 * Fixed numerous warnings due to `deprecated Sphinx API`_.
-  * Use ``sphinx.ext.autodoc.directive.DocumenterBridge.record_dependencies``
-    instead of ``sphinx.ext.autodoc.directive.DocumenterBridge.filename_set``.
+  * Use ``sphinx.ext.autodoc.directive.DocumenterBridge.record_dependencies`` instead of ``sphinx.ext.autodoc.directive.DocumenterBridge.filename_set``.
   * Use ``str.rpartition()`` instead of ``sphinx.util.rpartition()``
   * Remove use of ``sphinx.util.force_decode()``.
-  * Use ``inspect.getmembers()`` instead of
-    ``sphinx.util.inspect.safe_getmembers()``.
+  * Use ``inspect.getmembers()`` instead of ``sphinx.util.inspect.safe_getmembers()``.
   * Remove use of encoding argument in ``autodoc.Documenter.get_doc()``.
 * Fixed `Issue 101 <https://github.com/sphinx-contrib/matlabdomain/issues/101>`_.
 * CI now tests on Python 3.6, 3.7, 3.8 and 3.9.
 
 
-sphinxcontrib-matlabdomain-0.11.8 (2021-05-12)
-==============================================
+0.11.8 (2021-05-12)
+-------------------
 
 *  Limit to Sphinx < 4.0.0, due to too many breaking changes.
 *  Last version to support Python 2.7
 
 
-sphinxcontrib-matlabdomain-0.11.7 (2021-02-24)
-==============================================
+0.11.7 (2021-02-24)
+-------------------
 
 * Fixed `Issue 117 <https://github.com/sphinx-contrib/matlabdomain/issues/117>`_.
   Parsing errors due to `"..."`.  Fix `MatObject::_remove_line_continuations`
   to take MATLAB strings into account.
 
 
-sphinxcontrib-matlabdomain-0.11.6 (2021-02-23)
-==============================================
+0.11.6 (2021-02-23)
+-------------------
 
 * Fixed `Issue 116 <https://github.com/sphinx-contrib/matlabdomain/issues/116>`_.
   Failure on parfor statements in class methods. Fix `MatFunction` class to
   also take `parfor` into account when counting `end`.
 
 
-sphinxcontrib-matlabdomain-0.11.5 (2021-01-05)
-==============================================
+0.11.5 (2021-01-05)
+-------------------
 
 * Fixed `Issue 114 <https://github.com/sphinx-contrib/matlabdomain/issues/114>`_.
   NoneType AttributeError in import_object. It was caused by a bug when parsing
   method names with trailing spaces.
 
 
-sphinxcontrib-matlabdomain-0.11.4 (2020-11-30)
-==============================================
+0.11.4 (2020-11-30)
+-------------------
 
 * Remove import of ``six``.
 
 
-sphinxcontrib-matlabdomain-0.11.3 (2020-10-10)
-==============================================
+0.11.3 (2020-10-10)
+-------------------
 
 * Fixed `Issue 108 <https://github.com/sphinx-contrib/matlabdomain/issues/108>`_.
   Quote is not recognized as transpose after a closing curly brace.
 
-* Fixed `Issue 109 <https://github.com/sphinx-contrib/matlabdomain/issues/109`_.
+* Fixed `Issue 109 <https://github.com/sphinx-contrib/matlabdomain/issues/109>`_.
   Sphinx 3.1.1 changed API causing tests to fail.
 
 * Fixed `Issue 111 <https://github.com/sphinx-contrib/matlabdomain/issues/111>`_.
@@ -344,8 +345,8 @@ sphinxcontrib-matlabdomain-0.11.3 (2020-10-10)
 
 
 
-sphinxcontrib-matlabdomain-0.11.2 (2020-05-18)
-==============================================
+0.11.2 (2020-05-18)
+-------------------
 
 * Fixed `Issue 103 <https://github.com/sphinx-contrib/matlabdomain/issues/103>`_.
   If a double quoted string was followed by a single quoted string, the lexer
@@ -353,16 +354,16 @@ sphinxcontrib-matlabdomain-0.11.2 (2020-05-18)
   parts from pygments.
 
 
-sphinxcontrib-matlabdomain-0.11.1 (2020-01-07)
-==============================================
+0.11.1 (2020-01-07)
+-------------------
 
 * Fixed bug when Python and MATLAB sources are in the same base folder. Reported
   by Alec Weiss. Historically we stored parsed MATLAB objects in
   ``sys.modules``. However, this conflicts with Python modules.
 
 
-sphinxcontrib-matlabdomain-0.11.0 (2019-10-29)
-==============================================
+0.11.0 (2019-10-29)
+-------------------
 
 * Fixed `Issue 93 <https://github.com/sphinx-contrib/matlabdomain/issues/93>`_.
   If a package class inherited from another package class, the link to the base
@@ -376,8 +377,8 @@ sphinxcontrib-matlabdomain-0.11.0 (2019-10-29)
   directive ``application``. They are referenced with ``app``
 
 
-sphinxcontrib-matlabdomain-0.10.0 (2019-10-23)
-==============================================
+0.10.0 (2019-10-23)
+-------------------
 
 * Fixed `Issue 63 <https://github.com/sphinx-contrib/matlabdomain/issues/63>`_.
   Finally, documents can have Python and MATLAB sources auto-documented
@@ -386,8 +387,8 @@ sphinxcontrib-matlabdomain-0.10.0 (2019-10-23)
   have their own module index generated.
 
 
-sphinxcontrib-matlabdomain-0.9.0 (2019-05-29)
-=============================================
+0.9.0 (2019-05-29)
+------------------
 
 * Merge `PR #92 <https://github.com/sphinx-contrib/matlabdomain/pull/92>`_
   Fix autodoc parsing error when source matlab file is not encoded as UTF-8.
@@ -397,8 +398,8 @@ sphinxcontrib-matlabdomain-0.9.0 (2019-05-29)
   non utf-8 files.
 
 
-sphinxcontrib-matlabdomain-0.8.0 (2019-05-11)
-=============================================
+0.8.0 (2019-05-11)
+------------------
 
 * Fixed `Issue 91 <https://github.com/sphinx-contrib/matlabdomain/issues/91>`_.
   Static methods in folder based classes.
@@ -406,27 +407,26 @@ sphinxcontrib-matlabdomain-0.8.0 (2019-05-11)
   incorrectly parsed, handles double quoted string correctly.
 
 
-sphinxcontrib-matlabdomain-0.7.1 (2019-04-03)
-=============================================
+0.7.1 (2019-04-03)
+------------------
 
 * Fixed `Issue 90 <https://github.com/sphinx-contrib/matlabdomain/issues/90>`_.
   Wrong function name parsed when method escapes first argument with ~.
 
 
-sphinxcontrib-matlabdomain-0.7.0 (2019-03-29)
-=============================================
+0.7.0 (2019-03-29)
+------------------
 * Support for Sphinx >=2.0.0. Fixes
   `Issue 89 <https://github.com/sphinx-contrib/matlabdomain/issues/84>`_.
 
 
-sphinxcontrib-matlabdomain-0.6.0 (2019-03-29)
-=============================================
-* Limit to Sphinx <2.0.0 as a temporary fix, until support for Sphinx 2.0.0 is
-  fixed.
+0.6.0 (2019-03-29)
+------------------
+* Limit to Sphinx <2.0.0 as a temporary fix, until support for Sphinx 2.0.0 is fixed.
 
 
-sphinxcontrib-matlabdomain-0.5.0 (2019-02-02)
-=============================================
+0.5.0 (2019-02-02)
+------------------
 
 * Fixed `Issue 84 <https://github.com/sphinx-contrib/matlabdomain/issues/84>`_.
   Undocumented members are always included regardless of :undoc-members:.
@@ -435,7 +435,7 @@ sphinxcontrib-matlabdomain-0.5.0 (2019-02-02)
   Thanks to GulyasGergelyR for reporting and providing a much better solution.
 * Fixed `Issue 86 <https://github.com/sphinx-contrib/matlabdomain/issues/86>`_.
   Handles the ``DeprecationWarning: `formatargspec` is deprecated since Python
-  3.5. Use `signature` and the `Signature` object directly.
+  3.5. Use `signature` and the `Signature` object directly.``
 * Fixed `Issue 87 <https://github.com/sphinx-contrib/matlabdomain/issues/87>`_.
   Strings in double quotes are not parsed correctly by pygments.
 * Closed `Issue 82 <https://github.com/sphinx-contrib/matlabdomain/issues/82>`_.
@@ -445,28 +445,28 @@ sphinxcontrib-matlabdomain-0.5.0 (2019-02-02)
   as these functions cannot be called directly.
 
 
-sphinxcontrib-matlabdomain-0.4.0 (2018-10-05)
-=============================================
+0.4.0 (2018-10-05)
+------------------
 
 * Fixed `Issue 69 <https://github.com/sphinx-contrib/matlabdomain/issues/69>`_.
   Autodoc for script header. Thanks to Hugo Leblanc for this contribution.
 
 
-sphinxcontrib-matlabdomain-0.3.5 (2018-09-28)
-=============================================
+0.3.5 (2018-09-28)
+------------------
 
 * Fixed `Issue 79 <https://github.com/sphinx-contrib/matlabdomain/issues/79>`_.
   Enumerations and events cause premature end of m-file parsing.
 
 
-sphinxcontrib-matlabdomain-0.3.4 (2018-09-13)
-=============================================
+0.3.4 (2018-09-13)
+------------------
 
 * Adapt to Sphinx 1.8.
 
 
-sphinxcontrib-matlabdomain-0.3.3 (2018-07-13)
-=============================================
+0.3.3 (2018-07-13)
+------------------
 
 * Fixed bug where a line continuation (...) in a string could cause the parser
   to fail.
@@ -475,29 +475,29 @@ sphinxcontrib-matlabdomain-0.3.3 (2018-07-13)
   docstrings.
 
 
-sphinxcontrib-matlabdomain-0.3.2 (2018-07-12)
-=============================================
+0.3.2 (2018-07-12)
+------------------
 
 * Fixed bug where a MATLAB class method containing a variable starting with
   'function' would cause the parser to fail.
 
 
-sphinxcontrib-matlabdomain-0.3.1 (2018-07-12)
-=============================================
+0.3.1 (2018-07-12)
+------------------
 
 * Fixed bug where a MATLAB script with only comments would cause an error.
 
 
-sphinxcontrib-matlabdomain-0.3.0 (2018-04-10)
-==============================================
+0.3.0 (2018-04-10)
+------------------
 
 * Fixed `Issue 66 <https://github.com/sphinx-contrib/matlabdomain/issues/66>`_.
   Sphinx 1.7 broke autodoc :members: functionality.
 * Changed the requirement to Sphinx >= 1.7.2!
 
 
-sphinxcontrib-matlabdomain-0.2.17 (2018-04-09)
-==============================================
+0.2.17 (2018-04-09)
+-------------------
 
 * Fixed `Issue 66 <https://github.com/sphinx-contrib/matlabdomain/issues/66>`_.
   Sphinx 1.7 broke autodoc :members: functionality.
@@ -506,8 +506,8 @@ sphinxcontrib-matlabdomain-0.2.17 (2018-04-09)
 * Added tests of autodoc capabilities.
 
 
-sphinxcontrib-matlabdomain-0.2.16 (2018-03-05)
-==============================================
+0.2.16 (2018-03-05)
+-------------------
 
 * Fixed `Issue 13 <https://github.com/sphinx-contrib/matlabdomain/issues/13>`_.
   crashes if filename and classname are different.
@@ -517,8 +517,8 @@ sphinxcontrib-matlabdomain-0.2.16 (2018-03-05)
   Problem with non ascii characters.
 
 
-sphinxcontrib-matlabdomain-0.2.15 (2018-02-25)
-==============================================
+0.2.15 (2018-02-25)
+-------------------
 
 * Fixed `Issue #30 <https://github.com/sphinx-contrib/matlabdomain/issues/30>`_.
   Some definition of attributes for the "properties" or "methods" blocks causes
@@ -527,23 +527,23 @@ sphinxcontrib-matlabdomain-0.2.15 (2018-02-25)
   Parser fails while parsing new syntax extensions for the class properties.
 
 
-sphinxcontrib-matlabdomain-0.2.14 (2018-02-23)
-==============================================
+0.2.14 (2018-02-23)
+-------------------
 
 * Merge `PR #60 <https://github.com/sphinx-contrib/matlabdomain/pull/60>`_
   Dependency fix for Sphinx 1.7.
 * Added cleobis to as contributor
 
 
-sphinxcontrib-matlabdomain-0.2.13 (2018-01-12)
-==============================================
+0.2.13 (2018-01-12)
+-------------------
 
 * Fix bug when parsing a function without output and no parentheses.
 * Better error messages during parsing of functions.
 
 
-sphinxcontrib-matlabdomain-0.2.12 (2018-01-10)
-==============================================
+0.2.12 (2018-01-10)
+-------------------
 
 * Fixed `Issue #27 <https://github.com/sphinx-contrib/matlabdomain/issues/27>`_.
   An "events" block in a class causes Sphinx to hang.
@@ -554,8 +554,8 @@ sphinxcontrib-matlabdomain-0.2.12 (2018-01-10)
 * Added Christoph Boeddeker as author.
 
 
-sphinxcontrib-matlabdomain-0.2.11 (2017-11-28)
-==============================================
+0.2.11 (2017-11-28)
+-------------------
 
 * Fixed `Issue #42 <https://github.com/sphinx-contrib/matlabdomain/issues/42>`_.
   Comment strings after a function docstring are not included in the docstring
@@ -564,35 +564,35 @@ sphinxcontrib-matlabdomain-0.2.11 (2017-11-28)
   Added Lukas Drude as author.
 
 
-sphinxcontrib-matlabdomain-0.2.10 (2017-11-27)
-==============================================
+0.2.10 (2017-11-27)
+-------------------
 
 * Add Jørgen Cederberg as maintainer.
 * Change bitbucket links to github ditto.
 
 
-sphinxcontrib-matlabdomain-0.2.9 (2017-11-23)
-=============================================
+0.2.9 (2017-11-23)
+------------------
 
 Development migrated to https://github.com/sphinx-contrib/matlabdomain
 
 * Merge `PR #1 <https://github.com/sphinx-contrib/matlabdomain/pull/1>`_
 
 
-sphinxcontrib-matlabdomain-0.2.8 (2016-12-15)
-=============================================
+0.2.8 (2016-12-15)
+------------------
 
 * merge PR #2 nested functions
 
 
-sphinxcontrib-matlabdomain-0.2.6 (2014-11-10)
-=============================================
+0.2.6 (2014-11-10)
+------------------
 
 * fix issues #30
 
 
-sphinxcontrib-matlabdomain-0.2.5 (2014-10-02)
-=============================================
+0.2.5 (2014-10-02)
+------------------
 
 * fix issues #21
 * changeset 8f18a8f adds [+@]? to regular expression for matlab signatures
@@ -601,8 +601,8 @@ sphinxcontrib-matlabdomain-0.2.5 (2014-10-02)
 * update and include CHANGES in README so they're in PyPI documentation
 
 
-sphinxcontrib-matlabdomain-0.2.4 (2014-02-21)
-=============================================
+0.2.4 (2014-02-21)
+------------------
 
 * fix issues #17, #18
 * vastly simplify regex used to remove ellipsis from function signatures
@@ -610,15 +610,15 @@ sphinxcontrib-matlabdomain-0.2.4 (2014-02-21)
   retrieve them instead of re-parsing mfiles every time!
 
 
-sphinxcontrib-matlabdomain-0.2.3 (2014-02-20)
-=============================================
+0.2.3 (2014-02-20)
+------------------
 
 * fix critical bug in class properties, arrays and expressions with ellipsis
   were incorrectly handled
 
 
-sphinxcontrib-matlabdomain-0.2.2 (2014-01-26)
-=============================================
+0.2.2 (2014-01-26)
+------------------
 
 * fix ellipsis in function in output arg
 * fix bases getter method had no default, so crashing build
@@ -627,8 +627,8 @@ sphinxcontrib-matlabdomain-0.2.2 (2014-01-26)
 * fix left-strip dot if in basedir, root_mod is '', so join yields ".test_data"
 
 
-sphinxcontrib-matlabdomain-0.2.1 (2014-01-24)
-=============================================
+0.2.1 (2014-01-24)
+------------------
 
 * allow property defaults to span multiple lines, even w/o ellipsis, and ignore
   ellipsis comments
@@ -640,14 +640,14 @@ sphinxcontrib-matlabdomain-0.2.1 (2014-01-24)
 * allow no function return or empty input args
 
 
-sphinxcontrib-matlabdomain-0.2 (2014-01-23)
-===========================================
+0.2 (2014-01-23)
+----------------
 
 * add autodoc capabilities for MATLAB domain
 
 
-sphinxcontrib-matlabdomain-0.1 (2013-04-25)
-===========================================
+0.1 (2013-04-25)
+----------------
 
 * create a Sphinx domain for MATLAB
 * override standard domain to remove py modules index

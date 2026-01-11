@@ -3,49 +3,40 @@
 
 Test the autodoc extension.
 
-:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
+:copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
 import pickle
 
-import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_package_links"
 
 
-def test_with_prefix(make_app, rootdir):
+@pytest.fixture
+def confdict(matlab_keep_package_prefix):
+    return {"matlab_keep_package_prefix": matlab_keep_package_prefix}
+
+
+@pytest.mark.parametrize("matlab_keep_package_prefix", [True, False])
+def test_package_links(app, confdict):
     # TODO: bases are shown without prefix
-    srcdir = rootdir / "roots" / "test_package_links"
-    confdict = {"matlab_keep_package_prefix": True}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 
-    assert (
-        content[5].astext()
-        == "class +replab.Action\n\nBases: +replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(g, p)\n\nReturns the left action"
+    expected_content = (
+        "class {}replab.Action\n\n"
+        "Bases: {}replab.Str\n\n"
+        "An action group …\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "leftAction(g, p)\n\n"
+        "Returns the left action"
     )
 
-
-def test_without_prefix(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_package_links"
-    confdict = {"matlab_keep_package_prefix": False}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
-
-    assert (
-        content[5].astext()
-        == "class replab.Action\n\nBases: replab.Str\n\nAn action group …\n\nMethod Summary\n\n\n\n\n\nleftAction(g, p)\n\nReturns the left action"
-    )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    if confdict["matlab_keep_package_prefix"]:
+        assert content[5].astext() == expected_content.format("+", "+")
+    else:
+        assert content[5].astext() == expected_content.format("", "")

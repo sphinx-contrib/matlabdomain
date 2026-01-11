@@ -1,37 +1,23 @@
-"""test_autodoc.
-~~~~~~~~~~~~
-
-Test the autodoc extension.
-
-:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
-:license: BSD, see LICENSE for details.
-"""
+"""Test autodoc when code base contains both matlab and python code."""
 
 import pickle
 
-import helper
 import pytest
 from sphinx import addnodes
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_pymat"
 
 
-def test_setup(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_pymat"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_pymat(app):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
+    # python code
     assert isinstance(content[3], addnodes.desc)
     assert content[3].astext() == "func.main()\n\nReturn the answer."
 
+    # matlab code
     assert isinstance(content[7], addnodes.desc)
     assert content[7].astext() == "matsrc.func(x)\n\nReturns x"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -3,7 +3,7 @@
 
 Extend autodoc directives to matlabdomain.
 
-:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:copyright: Copyright by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
@@ -105,7 +105,8 @@ class MatlabDocumenter(PyDocumenter):
         # This only applies when there's no explicit module name and no path
         if base == "." and explicit_modname is None and path is None:
             logger.info(
-                "[sphinxcontrib-matlabdomain] parse_name: Special case for root module detected"
+                "[sphinxcontrib-matlabdomain] parse_name: "
+                "Special case for root module detected"
             )
             # "." means document the global namespace (root module)
             self.modname = ""
@@ -152,7 +153,9 @@ class MatlabDocumenter(PyDocumenter):
                 # Look up the root module in entities_table
                 root_obj = entities_table.get(".")
                 logger.info(
-                    f"[sphinxcontrib-matlabdomain] import_object: Found root module: {root_obj is not None}, type: {type(root_obj).__name__ if root_obj else 'None'}"
+                    "[sphinxcontrib-matlabdomain] import_object: "
+                    f"Found root module: {root_obj is not None}, "
+                    f"type: {type(root_obj).__name__ if root_obj else 'None'}"
                 )
                 self.object = root_obj
                 if self.object is None:
@@ -227,7 +230,7 @@ class MatlabDocumenter(PyDocumenter):
                         # find name
                         match = see_also_cond_re.search(line)
                         if match is not None:
-                            entries_str = match[2]
+                            entries_str = match.group(2)  # the entries
                     elif match := see_also_re.search(line):
                         is_see_also_line = True  # line begins with "See also"
                         entries_str = match.group(2)  # the entries
