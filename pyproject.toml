@@ -36,8 +36,7 @@ dev = [
     "pytest-cov",
     "pre-commit",
     "tox>4.8",
-    "defusedxml>=0.7.1",
-    "sphinxcontrib-napoleon"
+    "defusedxml>=0.7.1"
 ]
 rtd = [
     "sphinx_rtd_theme",
