@@ -1316,7 +1316,7 @@ def test_class_method(mod):
     assert isinstance(mymethod, MatMethod)
     assert mymethod.getter("__name__") == "mymethod"
     # TODO: mymethod.args will contain ['obj', 'b'] if run standalone
-    #       but if test_autopy is run, the 'obj' is removed
+    #       but if test_autodoc.py is run, the 'obj' is removed
     assert mymethod.args
     assert "b" in list(mymethod.args.keys())
     assert list(mymethod.retv.keys()) == ["c"]

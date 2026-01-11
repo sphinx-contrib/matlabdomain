@@ -1,4 +1,4 @@
-"""Fixtures commong to all tests."""
+"""Fixtures common to all tests."""
 
 import shutil
 from pathlib import Path
