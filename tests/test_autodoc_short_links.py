@@ -330,11 +330,9 @@ def test_root_auto_link_basic(app, confdict):
     method_section = content[0][2][1][1][0]  # a bit fragile, I know
     assert method_section.rawsource == (
         "BaseClass Methods:\n"
-        "* :meth:`BaseClass() <BaseClass.BaseClass>` "
-        "- the constructor, whose description extends\n"
-        "    to the next line\n"
-        "* :meth:`DoBase() <BaseClass.DoBase>` "
-        "- another BaseClass method\n"
+        "* :meth:`BaseClass() <BaseClass.BaseClass>` - the constructor, whose description extends\n"
+        "    to the next line\n\n"
+        "DoBase - another BaseClass method\n"
     )
 
     see_also_line_1 = content[0][2][1][1][1]  # a bit fragile, I know
