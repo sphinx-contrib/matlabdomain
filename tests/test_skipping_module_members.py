@@ -1,33 +1,17 @@
-"""test_autodoc.
-~~~~~~~~~~~~
-
-Test the autodoc extension.
-
-:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
-:license: BSD, see LICENSE for details.
-"""
+"""test that some module members can be skipped."""
 
 import pickle
 
-import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_skipping_module_members"
 
 
-def test_setup(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_skipping_module_members"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_skipping_module_members(app):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
     content_text = content.astext()
     assert "The first function" in content_text
     assert "The second function" not in content_text
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

@@ -3,7 +3,7 @@
 
 Extend autodoc directives to matlabdomain.
 
-:copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
+:copyright: Copyright by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
@@ -61,7 +61,11 @@ class MatlabAutodocDirective(AutodocDirective):
         except (KeyError, ValueError, TypeError) as exc:
             # an option is either unknown or has a wrong type
             logger.error(
-                "[sphinxcontrib-matlabdomain] An option to %s is either unknown or has an invalid value: %s",
+                (
+                    "[sphinxcontrib-matlabdomain] "
+                    "An option to %s is either unknown "
+                    "or has an invalid value: %s"
+                ),
                 self.name,
                 exc,
                 location=(source, lineno),

@@ -3,44 +3,53 @@
 
 Test the autodoc extension.
 
-:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
+:copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
 import pickle
 
-import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_numad"
 
 
-def test_first(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_numad"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_first(app):
     content = pickle.loads((app.doctreedir / "index_first.doctree").read_bytes())
-    assert (
-        content.astext()
-        == "First Class\n\n\n\nclass target.FirstClass\n\nFirst class with two properties\n\nProperty Summary\n\n\n\n\n\na\n\nThe a property\n\n\n\nb\n\nThe b property\n\n\n\nFirstClass.a\n\nThe a property\n\n\n\nFirstClass.b\n\nThe b property"
+
+    assert content.astext() == (
+        "First Class\n\n\n\n"
+        "class target.FirstClass\n\n"
+        "First class with two properties\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "a\n\n"
+        "The a property\n\n\n\n"
+        "b\n\n"
+        "The b property\n\n\n\n"
+        "FirstClass.a\n\n"
+        "The a property\n\n\n\n"
+        "FirstClass.b\n\nThe b property"
     )
 
 
-def test_second(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_numad"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
-
+def test_second(app):
     content = pickle.loads((app.doctreedir / "index_second.doctree").read_bytes())
-    assert (
-        content.astext()
-        == "Second Class\n\n\n\nclass target.SecondClass\n\nSecond class with methods and properties\n\nConstructor Summary\n\n\n\n\n\nSecondClass(a)\n\nThe second class constructor\n\nProperty Summary\n\n\n\n\n\na\n\nThe a property\n\n\n\nb\n\nThe b property\n\nMethod Summary\n\n\n\n\n\nfirst_method(b)\n\n"
+
+    assert content.astext() == (
+        "Second Class\n\n\n\n"
+        "class target.SecondClass\n\n"
+        "Second class with methods and properties\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "SecondClass(a)\n\n"
+        "The second class constructor\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "a\n\n"
+        "The a property\n\n\n\n"
+        "b\n\n"
+        "The b property\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "first_method(b)\n\n"
     )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

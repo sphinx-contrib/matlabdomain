@@ -3,47 +3,67 @@
 
 Test the autodoc extension.
 
-:copyright: Copyright 2007-2018 by the Sphinx team, see AUTHORS.
+:copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
 import pickle
 
-import helper
 import pytest
 
 
-@pytest.fixture(scope="module")
-def rootdir():
-    return helper.rootdir(__file__)
+@pytest.fixture
+def srcdir(rootdir):
+    return rootdir / "roots" / "test_module_class_names"
 
 
-def test_index(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_module_class_names"
-    app = make_app(srcdir=srcdir)
-    app.builder.build_all()
+@pytest.fixture
+def confdict(matlab_auto_link):
+    return {"matlab_auto_link": matlab_auto_link}
 
+
+@pytest.mark.parametrize("matlab_auto_link", ["basic", "all"])
+def test_module_class_names(app, confdict):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
-    assert (
-        content.astext()
-        == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\nThe Myclass constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\nThe YourClass constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
-        + "\n\n\n\n\n\n\n\nclass MyOtherClass\n\nmyothertest\n\nProperty Summary\n\n\n\n\n\notherprop\n\nprop\n\nMethod Summary\n\n\n\n\n\notherf()\n\nfunction"
+
+    expected_content = (
+        "Myclass\n\n\n\n"
+        "class Myclass\n\n"
+        "Myclass\n\n"
+        "See Also: YourClass\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "Myclass()\n\n"
+        "The Myclass{} constructor\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "prop\n\n"
+        "The property\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "add(value)\n\n"
+        "Add the value\n\n"
+        "YourClass\n\n\n\n"
+        "class YourClass\n\n"
+        "YourClass\n\n"
+        "See Also: Myclass\n\n"
+        "Constructor Summary\n\n\n\n\n\n"
+        "YourClass()\n\n"
+        "The YourClass{} constructor\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "prop\n\n"
+        "The property\n\n"
+        "Method Summary\n\n\n\n\n\n"
+        "add(value)\n\n"
+        "Add the value\n\n\n\n\n\n\n\n"
+        "class MyOtherClass\n\n"
+        "myothertest\n\n"
+        "Property Summary\n\n\n\n\n\n"
+        "otherprop\n\n"
+        "prop\n\n"
+        "Method Summary\n\n\n\n\n\notherf()\n\n"
+        "function"
     )
 
+    if confdict["matlab_auto_link"] == "basic":
+        assert content.astext() == expected_content.format("", "")
 
-def test_index_auto_link_all(make_app, rootdir):
-    srcdir = rootdir / "roots" / "test_module_class_names"
-    confdict = {"matlab_auto_link": "all"}
-    app = make_app(srcdir=srcdir, confoverrides=confdict)
-    app.builder.build_all()
-
-    content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
-    assert (
-        content.astext()
-        == "Myclass\n\n\n\nclass Myclass\n\nMyclass\n\nSee Also: YourClass\n\nConstructor Summary\n\n\n\n\n\nMyclass()\n\nThe Myclass() constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value\n\nYourClass\n\n\n\nclass YourClass\n\nYourClass\n\nSee Also: Myclass\n\nConstructor Summary\n\n\n\n\n\nYourClass()\n\nThe YourClass() constructor\n\nProperty Summary\n\n\n\n\n\nprop\n\nThe property\n\nMethod Summary\n\n\n\n\n\nadd(value)\n\nAdd the value"
-        + "\n\n\n\n\n\n\n\nclass MyOtherClass\n\nmyothertest\n\nProperty Summary\n\n\n\n\n\notherprop\n\nprop\n\nMethod Summary\n\n\n\n\n\notherf()\n\nfunction"
-    )
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    elif confdict["matlab_auto_link"] == "all":
+        assert content.astext() == expected_content.format("()", "()")

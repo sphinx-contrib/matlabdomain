@@ -1,14 +1,8 @@
 import os
 
+extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
+master_doc = "contents"
 matlab_src_dir = os.path.abspath(".")
 matlab_keep_package_prefix = True
-
-extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 primary_domain = "mat"
-master_doc = "contents"
-
-
-# The suffix of source filenames.
-source_suffix = ".rst"
-
 nitpicky = True

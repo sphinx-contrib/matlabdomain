@@ -1,16 +1,55 @@
 Developing sphinxcontrib-matlabdomain
 =====================================
 
-The project uses `pre-commit https://pre-commit.com/`_ for setting up git
-pre-commit hooks. Development is best done in a Python virtual environment.
+Code style
+----------
+
+The project uses `pre-commit <https://pre-commit.com/>`_ for setting up git pre-commit hooks.
+Development is best done in a Python virtual environment.
 
 Start by running:
 
     python -m venv .venv
     .venv\Scripts\activate
-    pip install -r dev-requirements.txt
+    pip install -e '.[dev]'
     pre-commit install
 
+
+Testing
+-------
+
+Test can be run directly with pytest:
+
+.. code-block:: bash
+
+    python -m venv .venv
+    .venv\Scripts\activate
+    pip install -e '.[dev]'
+    pytest tests
+
+Or via tox:
+
+.. code-block:: bash
+
+    python -m venv .venv
+    .venv\Scripts\activate
+    pip install tox
+
+    # will run tests with all available python and a range of sphinx versions
+    tox
+
+    # or choose a specific python and sphinx version
+    tox run -e py313-sphinxlatest
+
+    # and pass extra pytest options (here for --last-failed and --exitfirst)
+    tox run -e py313-sphinxlatest -- --lf -x
+
+Writing tests
+"""""""""""""
+
+If you need to add tests,
+it may be easier to make use of some of the fixtures in ``tests/conftest.py``
+that can build dummy doc and check the generated output.
 
 PR Structure
 ------------

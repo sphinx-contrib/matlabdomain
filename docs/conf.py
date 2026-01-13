@@ -16,7 +16,7 @@ import os
 # -- Project information -----------------------------------------------------
 
 project = "sphinxcontrib-matlabdomain"
-copyright = "2018, Jørgen Cederberg"
+copyright = "Jørgen Cederberg"
 author = "Jørgen Cederberg"
 
 # The short X.Y version
@@ -45,7 +45,7 @@ templates_path = ["_templates"]
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = ".rst"
+source_suffix = {".rst": "restructuredtext"}
 
 # The master toctree document.
 master_doc = "index"

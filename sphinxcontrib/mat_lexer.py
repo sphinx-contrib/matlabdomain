@@ -3,7 +3,7 @@
 
 Lexers for Matlab and related languages.
 
-:copyright: Copyright 2006-2017 by the Pygments team, see AUTHORS.
+:copyright: Copyright by the Pygments team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 
     Modified by Jørgen Cederberg from original Pygments MATLAB lexer, copied
@@ -46,7 +46,7 @@ class MatlabLexer(RegexLexer):
     # for f in elfun specfun elmat; do
     #   echo -n "$f = "
     #   matlab -nojvm -r "help $f;exit;" | perl -ne \
-    #   'push(@c,$1) if /^    (\w+)\s+-/; END {print q{["}.join(q{","},@c).qq{"]\n};}' # noqa : ERA001
+    #   'push(@c,$1) if /^    (\w+)\s+-/; END {print q{["}.join(q{","},@c).qq{"]\n};}' # noqa : ERA001, E501
     # done
     #
     # elfun: Elementary math functions
