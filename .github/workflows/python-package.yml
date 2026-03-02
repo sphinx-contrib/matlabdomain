@@ -66,7 +66,7 @@ jobs:
 
     - name: Upload html coverage
       if: success() || failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ matrix.os }}_${{ matrix.python-version }}_${{matrix.sphinx-version}}_htmlcov
         path: htmlcov
