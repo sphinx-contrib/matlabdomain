@@ -1008,12 +1008,12 @@ def test_ClassWithTrailingSemicolons(dir_test_data):
     ]
 
 
-def test_ClassWithSeperatedComments(dir_test_data):
-    mfile = dir_test_data / "ClassWithSeperatedComments.m"
+def test_ClassWithSeparatedComments(dir_test_data):
+    mfile = dir_test_data / "ClassWithSeparatedComments.m"
 
-    obj = MatObject.parse_mfile(mfile, "ClassWithSeperatedComments", "test_data")
+    obj = MatObject.parse_mfile(mfile, "ClassWithSeparatedComments", "test_data")
 
-    assert obj.name == "ClassWithSeperatedComments"
+    assert obj.name == "ClassWithSeparatedComments"
     assert obj.bases == []
     assert "prop" in obj.properties
     prop = obj.properties["prop"]
@@ -1115,6 +1115,62 @@ def test_f_with_output_argument_block(dir_test_data):
     assert obj.retv["o3"]["validators"] == ["mustBePositive"]
 
 
+def test_f_with_repeating_argument_block(dir_test_data):
+    mfile = dir_test_data / "f_with_repeating_argument_block.m"
+
+    obj = MatObject.parse_mfile(mfile, "f_with_repeating_argument_block", "test_data")
+
+    assert obj.name == "f_with_repeating_argument_block"
+    assert list(obj.retv.keys()) == ["s"]
+    assert list(obj.args.keys()) == ["a", "varargin"]
+
+    input_arg = obj.args["a"]
+    assert input_arg["attrs"] == {"Input": None}
+    assert input_arg["size"] == ("1", "1")
+    assert input_arg["type"] == "double"
+    assert input_arg["validators"] == ["mustBePositive"]
+    assert input_arg["docstring"] == "Positive scalar input"
+
+    repeating_arg = obj.args["varargin"]
+    assert repeating_arg["attrs"] == {"Repeating": None}
+    assert repeating_arg["size"] == ("1", "1")
+    assert repeating_arg["type"] == "double"
+    assert repeating_arg["validators"] == ["mustBePositive"]
+    assert repeating_arg["docstring"] == "Repeating positive scalar"
+
+    s_out = obj.retv["s"]
+    assert s_out["attrs"] == {"Output": None}
+    assert s_out["size"] == ("1", "1")
+    assert s_out["type"] == "double"
+    assert s_out["docstring"] is None
+
+
+def test_f_with_output_repeating_argument_block(dir_test_data):
+    mfile = dir_test_data / "f_with_output_repeating_argument_block.m"
+
+    obj = MatObject.parse_mfile(
+        mfile, "f_with_output_repeating_argument_block", "test_data"
+    )
+
+    assert obj.name == "f_with_output_repeating_argument_block"
+    assert list(obj.retv.keys()) == ["varargout"]
+    assert list(obj.args.keys()) == ["a1"]
+
+    input_arg = obj.args["a1"]
+    assert input_arg["attrs"] == {"Input": None}
+    assert input_arg["size"] == ("1", "1")
+    assert input_arg["type"] == "double"
+    assert input_arg["validators"] == ["mustBePositive"]
+    assert input_arg["docstring"] == "Positive scalar input"
+
+    output_arg = obj.retv["varargout"]
+    assert output_arg["attrs"] == {"Output": None, "Repeating": None}
+    assert output_arg["size"] == ("1", "1")
+    assert output_arg["type"] == "double"
+    assert output_arg["validators"] == ["mustBePositive"]
+    assert output_arg["docstring"] == "Repeating outputs"
+
+
 @pytest.fixture
 def app(make_app, rootdir):
     # Create app to setup build environment
@@ -1202,6 +1258,8 @@ def test_module(dir_test_data, mod):
         "f_with_function_variable",
         "f_with_input_argument_block",
         "f_with_output_argument_block",
+        "f_with_repeating_argument_block",
+        "f_with_output_repeating_argument_block",
         "ClassWithUndocumentedMembers",
         "ClassWithGetterSetter",
         "ClassWithDoubleQuotedString",
@@ -1218,7 +1276,7 @@ def test_module(dir_test_data, mod):
         "ClassWithPropertyValidators",
         "ClassWithTrailingCommentAfterBases",
         "ClassWithTrailingSemicolons",
-        "ClassWithSeperatedComments",
+        "ClassWithSeparatedComments",
         "ClassWithKeywordsAsFieldnames",
         "ClassWithPropertyCellValues",
         "ClassWithTests",
