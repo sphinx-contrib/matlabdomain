@@ -221,9 +221,11 @@ def test_root_auto_link_basic(app, confdict):
     see_also_line_1 = content[0][2][1][1][1]  # a bit fragile, I know
     see_also_line_2 = content[0][4][1][1][0]  # a bit fragile, I know
     assert len(content) == 1
-    assert (
-        method_section.rawsource
-        == "BaseClass Methods:\n* :meth:`BaseClass() <BaseClass.BaseClass>` - the constructor, whose description extends\n    to the next line\n* :meth:`DoBase() <BaseClass.DoBase>` - another BaseClass method\n"
+    assert method_section.rawsource == (
+        "BaseClass Methods:\n"
+        "* :meth:`BaseClass() <BaseClass.BaseClass>` - the constructor, whose description extends\n"
+        "    to the next line\n\n"
+        "DoBase - another BaseClass method\n"
     )
     assert (
         see_also_line_1.rawsource

@@ -10,4 +10,6 @@ extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 matlab_keep_package_prefix = True
 matlab_src_dir = f"{os.path.dirname(os.path.abspath(f'{__file__}/'))}/_src"
 nitpicky = True
+# ignore warning about inheriting from unknown 'replab.CompactGroup' class
+nitpick_ignore = [("mat:class", "replab.CompactGroup")]
 primary_domain = "mat"
