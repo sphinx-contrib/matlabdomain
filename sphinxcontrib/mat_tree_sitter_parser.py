@@ -369,6 +369,13 @@ class MatFunctionParser:
         attrs = self._parse_attributes(attrs_nodes)
 
         arguments = argblock_match.get("args")
+        # The grammar can fail to produce a (property) node for some arguments,
+        # e.g. a namespaced validator with two or more parts and no size/class
+        # specifier ({a.b.v}); the whole argument is wrapped in an ERROR node
+        # and the "args" capture is None. Skip the block instead of crashing,
+        # mirroring _parse_property_section.
+        if arguments is None:
+            return
 
         # TODO this is almost identical to property parsing.
         #      might be a good idea to extract common code here.

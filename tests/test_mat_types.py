@@ -1092,6 +1092,25 @@ def test_f_with_input_argument_block(dir_test_data):
     assert obj.args["a2"]["docstring"] == "another input"
 
 
+def test_f_with_namespaced_validator_argument(dir_test_data):
+    # A namespaced validator with two or more name parts and no size/class
+    # specifier is wrapped in an ERROR node by the grammar, so the argument
+    # block yields no parsed arguments. Parsing must degrade gracefully
+    # instead of crashing (see issue #335).
+    mfile = dir_test_data / "f_with_namespaced_validator_argument.m"
+
+    obj = MatObject.parse_mfile(
+        mfile, "f_with_namespaced_validator_argument", "test_data"
+    )
+
+    assert obj.name == "f_with_namespaced_validator_argument"
+    assert list(obj.retv.keys()) == ["out"]
+    # The argument is still known from the function signature, but the
+    # unparseable argument block contributes no metadata for it.
+    assert list(obj.args.keys()) == ["a"]
+    assert obj.args["a"] == {}
+
+
 def test_f_with_output_argument_block(dir_test_data):
     mfile = dir_test_data / "f_with_output_argument_block.m"
 
@@ -1202,6 +1221,7 @@ def test_module(dir_test_data, mod):
         "f_with_function_variable",
         "f_with_input_argument_block",
         "f_with_output_argument_block",
+        "f_with_namespaced_validator_argument",
         "ClassWithUndocumentedMembers",
         "ClassWithGetterSetter",
         "ClassWithDoubleQuotedString",
