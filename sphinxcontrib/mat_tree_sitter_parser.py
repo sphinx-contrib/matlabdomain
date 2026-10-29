@@ -233,7 +233,7 @@ q_get_set = ML_LANG.query("""["get." "set."]""")
 q_line_continuation = ML_LANG.query("(line_continuation) @lc")
 
 
-re_percent_remove = re.compile(r"^[ \t]*% ?", flags=re.MULTILINE)
+re_percent_remove = re.compile(r"^[ \t]*%+ ?", flags=re.MULTILINE)
 re_trim_line = re.compile(r"^[ \t]*", flags=re.MULTILINE)
 re_assign_remove = re.compile(r"^=[ \t]*")
 

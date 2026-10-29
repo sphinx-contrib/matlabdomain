@@ -139,6 +139,24 @@ def test_docstring_no_newline(dir_test_data):
     assert obj.docstring == "Test a function without a newline after docstring"
 
 
+def test_docstring_with_cell_separator(dir_test_data):
+    mfile = dir_test_data / "submodule" / "f_with_cell_separator.m"
+
+    obj = MatObject.parse_mfile(mfile, "f_with_cell_separator", "")
+
+    assert obj.name == "f_with_cell_separator"
+    assert list(obj.retv.keys()) == ["output"]
+    assert list(obj.args.keys()) == ["input"]
+    assert obj.docstring == (
+        "Tests a function with a cell section comment\n"
+        "\n"
+        "\n"
+        "Inputs:\n"
+        "  x: Input value.\n"
+        "  Additional information."
+    )
+
+
 def test_ellipsis_after_equals(dir_test_data):
     mfile = dir_test_data / "submodule" / "f_ellipsis_after_equals.m"
 
