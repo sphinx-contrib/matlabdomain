@@ -863,7 +863,15 @@ class MatClass(MatObject):
             objdict.update({en: self.getter(en) for en in self.enumerations})
             return objdict
         else:
-            super().getter(name, *defargs)
+            # Fall back to inherited members so that named lookups (used by
+            # autodoc's :inherited-members:) resolve methods and properties
+            # defined on base classes.
+            for base_obj in self.__bases__.values():
+                if base_obj is not None:
+                    member = base_obj.getter(name, None)
+                    if member is not None:
+                        return member
+            return super().getter(name, *defargs)
 
 
 class MatProperty(MatObject):
