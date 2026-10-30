@@ -14,13 +14,13 @@ repos:
 
     # Format TOML files
 -   repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-    rev: v2.15.0
+    rev: v2.16.0
     hooks:
     -   id: pretty-format-toml
         args: [--autofix, --indent, '4']
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10
+    rev: v0.16.3
     hooks:
     # Run the linter.
     -   id: ruff-check
@@ -32,7 +32,7 @@ repos:
 
     # Checks for spelling errors
 -   repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.3
     hooks:
     -   id: codespell
         args: [--toml, pyproject.toml]
