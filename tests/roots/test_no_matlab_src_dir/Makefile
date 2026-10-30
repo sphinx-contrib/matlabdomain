@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = --verbose --color --fail-on-warning
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = test_autodoc
 SOURCEDIR     = .

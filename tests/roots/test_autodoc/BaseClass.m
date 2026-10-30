@@ -4,6 +4,7 @@ classdef BaseClass
 % BaseClass Methods:
 %   BaseClass - the constructor, whose description extends
 %       to the next line
+%
 %   DoBase - another BaseClass method
 %
 % See Also
