@@ -431,19 +431,31 @@ static or a constructor, and the structure of name-value arguments;
 ``arguments`` blocks; name-value pairs that the code parses itself
 (``varargin``, ``inputParser``) are not detected.
 
-A section starts with a help line that is one of these labels, in any letter
-case, alone or followed by ``:`` (``Inputs``, ``INPUTS:``, ``Options:: ...``):
+A section starts with a help line that begins with one of these labels, in
+any letter case:
 
 * inputs: ``Input``, ``Inputs``, ``Input(s)``, ``Input Arguments``, ``Input
   Parameters``, ``Arguments``, ``Parameters``, ``Params``, ``Required
-  Inputs``, ``Required Arguments``;
+  Inputs``, ``Required Arguments``, ``Optional Inputs``, ``Optional
+  Arguments``, ``Optional Parameters``;
 * outputs: ``Output``, ``Outputs``, ``Output(s)``, ``Output Arguments``,
-  ``Output Parameters``, ``Returns``, ``Return Values``;
+  ``Output Parameters``, ``Returns``, ``Return Values``, ``Return
+  Arguments``;
 * name-value: ``Name-Value Arguments``, ``Name-Value Pairs``, ``Name/Value
-  Pair Arguments`` (``-``, ``/``, a space or nothing between the words),
-  ``Options``, ``Optional Inputs``, ``Optional Arguments``, ``Optional
-  Parameters``; ``Input Arguments (Name-Value Arguments)`` counts for inputs
-  and name-value arguments.
+  Pair Arguments``, ``Name-Value Options`` (``-``, ``/``, a space or nothing
+  between the words; also with ``Optional`` before them), ``Options``,
+  ``Optional Inputs``, ``Optional Arguments``, ``Optional Parameters``;
+  ``Input Arguments (Name-Value Arguments)`` counts for inputs and
+  name-value arguments.
+
+The label is followed by ``:`` and anything (``Inputs: x - data``,
+``Options::``), or by a short qualifier and a ``:`` that ends the line
+(``Inputs (all optional):``, ``Parameters and their meaning:``), or stands
+alone (``INPUTS``, or ``Parameters`` underlined with ``---``). A lowercase
+label alone right after a line of text is a wrapped word of prose, not a
+header. A label that is the name of one of the function's arguments and has
+text after its ``:`` is that argument's entry (``input: the data``), not a
+header.
 
 Configuration (changing it does not make Sphinx read pages again):
 

@@ -36,15 +36,27 @@ _IGNORE_OPTION = "matlab_api_check_ignore_patterns"
 
 
 def _header(*labels):
-    """Regex for a help line that starts a section: a label (any case), alone
-    or followed by ``:`` (``Inputs``, ``INPUTS:``, ``Options:: ...``).
+    """Regexes for a help line that starts a section with a label (any case):
+    ``(colon, alone)``. ``colon``: the label, then ``:`` and anything
+    (``Inputs: x - data``, ``Input : x``, ``Options::``), or a short
+    qualifier and ``:`` ending the line (``Inputs (all optional):``,
+    ``Parameters and their meaning:``). ``alone``: only the label (``Input``).
     """
     alts = "|".join(label.replace(" ", r"\s+") for label in labels)
-    return re.compile(rf"^[ \t]*(?:{alts})[ \t]*(?::|$)", re.IGNORECASE | re.MULTILINE)
+    start = rf"^[ \t]*(?P<label>{alts})"
+    qualifier = r"(?:[ \t]*\([^)\n]*\)|[ \t]+[\w' /-]{1,40}?)[ \t]*::?[ \t]*$"
+    return (
+        re.compile(rf"{start}(?:[ \t]*::?.*$|{qualifier})", re.IGNORECASE),
+        re.compile(rf"{start}[ \t]*$", re.IGNORECASE),
+    )
 
 
 _NV = r"name[-/\s]?value"
-_NV_INPUTS = rf"input arguments? \({_NV} arguments?\)"
+_NV_LABELS = (
+    rf"(?:optional )?{_NV} (?:arguments?|pairs?|pair arguments?|parameters?|options?)",
+    rf"input arguments? \({_NV} arguments?\)",
+)
+_OPTIONAL = r"optional (?:inputs?|arguments?|parameters?)"
 SECTIONS = {
     "inputs": _header(
         r"inputs?(?:\(s\))?",
@@ -52,21 +64,18 @@ SECTIONS = {
         r"arguments?",
         r"param(?:eter)?s?",
         r"required (?:inputs?|arguments?)",
-        _NV_INPUTS,
+        _OPTIONAL,
+        _NV_LABELS[1],
     ),
     "outputs": _header(
         r"outputs?(?:\(s\))?",
         r"output (?:arguments?|parameters?)",
         r"returns?",
-        r"return values?",
+        r"return (?:values?|arguments?)",
     ),
-    "name-value": _header(
-        rf"{_NV} (?:arguments?|pairs?|pair arguments?|parameters?)",
-        r"options?",
-        r"optional (?:inputs?|arguments?|parameters?)",
-        _NV_INPUTS,
-    ),
+    "name-value": _header(r"options?", _OPTIONAL, *_NV_LABELS),
 }
+_UNDERLINE = re.compile(r"^[ \t]*[-=~]{3,}[ \t]*$")
 # rule -> (section, example header, what lacks a comment)
 _MESSAGES = {
     "inputs": ("inputs", "Inputs:", "inputs"),
@@ -141,12 +150,36 @@ def has_description(docstring):
     return bool((docstring or "").split("\n", 1)[0].strip())
 
 
-def undocumented(rule, docstring, comments):
-    """Names in ``comments`` (name -> its ``arguments``-block comment) left
-    undocumented: [] if the help has the rule's section or every name has a
-    comment, else the names without one.
+def has_section(rule, docstring, names=()):
+    """Return True if the help has a line that starts the rule's section.
+
+    A lowercase label alone after a line of text is a wrapped prose word
+    unless it is underlined (``---``). A label with text after its colon
+    that is the name of one of the function's arguments (``names``,
+    lowercase) is an entry, not a section (``input: the data``).
     """
-    if not comments or SECTIONS[rule].search(docstring or ""):
+    colon, alone = SECTIONS[rule]
+    lines = (docstring or "").split("\n")
+    for i, line in enumerate(lines):
+        if match := colon.match(line):
+            label = " ".join(match["label"].lower().split())
+            entry = line[match.end("label") :].partition(":")[2].strip(": \t")
+            if not (entry and label in names):
+                return True
+        elif match := alone.match(line):
+            after = lines[i + 1] if i + 1 < len(lines) else ""
+            prose = i and lines[i - 1].strip() and match["label"].islower()
+            if not prose or _UNDERLINE.match(after):
+                return True
+    return False
+
+
+def undocumented(rule, docstring, comments, names=()):
+    """Names in ``comments`` (name -> its ``arguments``-block comment) left
+    undocumented: [] if the help has the rule's section (``has_section``) or
+    every name has a comment, else the names without one.
+    """
+    if not comments or has_section(rule, docstring, names):
         return []
     return [name for name, comment in comments.items() if not comment]
 
@@ -206,8 +239,9 @@ class _Checker:
             "outputs": {n: (func.retv.get(n) or {}).get("docstring") for n in outputs},
             "name-value": func.name_value,
         }
+        names = {n.lower() for n in (*func.args, *func.retv, *structs)}
         for rule, comments in groups.items():
-            if missing := undocumented(rule, func.docstring, comments):
+            if missing := undocumented(rule, func.docstring, comments, names):
                 section, example, what = _MESSAGES[rule]
                 self.report(
                     rule,

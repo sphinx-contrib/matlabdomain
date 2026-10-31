@@ -217,6 +217,10 @@ def test_html_build_is_unchanged(make_app, root):
     assert not (app.outdir / "api-check.json").exists()
 
 
+def has(rule, help_text, names=()):
+    return mat_api_check.has_section(rule, help_text, names)
+
+
 @pytest.mark.parametrize(
     "line",
     [
@@ -228,11 +232,17 @@ def test_html_build_is_unchanged(make_app, root):
         "Parameters",
         "params:",
         "Required inputs:",
+        "Optional parameters:",
         "Input Arguments (Name-Value Arguments):",
+        "Inputs (all optional except H, C, A and L):",
+        "Parameters and their meaning:",
+        "Inputs :",
+        "Inputs : S, the spectra",
+        "Inputs:ROIS3D1, ROIS3D2 are indexes",
     ],
 )
 def test_input_headers(line):
-    assert mat_api_check.SECTIONS["inputs"].search(f"F Help.\n{line}\n")
+    assert has("inputs", f"F Help.\n\n{line}\n")
 
 
 @pytest.mark.parametrize(
@@ -244,10 +254,12 @@ def test_input_headers(line):
         "Output Arguments:",
         "Returns",
         "Return values:",
+        "Return arguments:",
+        "Outputs (all optional):",
     ],
 )
 def test_output_headers(line):
-    assert mat_api_check.SECTIONS["outputs"].search(f"F Help.\n{line}\n")
+    assert has("outputs", f"F Help.\n\n{line}\n")
 
 
 @pytest.mark.parametrize(
@@ -256,6 +268,9 @@ def test_output_headers(line):
         "Name-Value Arguments:",
         "name value pairs",
         "Name/Value Pair Arguments:",
+        "Optional Name-Value Pairs:",
+        "Name-Value Options:",
+        "OPTIONS - Name-value arguments:",
         "Options::",
         "OPTIONS",
         "Optional inputs:",
@@ -263,7 +278,7 @@ def test_output_headers(line):
     ],
 )
 def test_name_value_headers(line):
-    assert mat_api_check.SECTIONS["name-value"].search(f"F Help.\n{line}\n")
+    assert has("name-value", f"F Help.\n\n{line}\n")
 
 
 @pytest.mark.parametrize(
@@ -274,11 +289,40 @@ def test_name_value_headers(line):
         "Outputs are cached",
         "Returns the sum.",
         "See also options, inputs",
+        "Inputs, see below:",
+        # a wrapped prose word
+        "It supports the following\noptions\n  cfg.a = 1",
     ],
 )
 def test_prose_is_no_header(text):
     help_text = f"F Help.\n{text}\n"
-    assert not any(regex.search(help_text) for regex in mat_api_check.SECTIONS.values())
+    assert not any(has(rule, help_text) for rule in mat_api_check.SECTIONS)
+
+
+@pytest.mark.parametrize(
+    "help_text",
+    [
+        "Input\nF Help.",
+        "F Help.\nWrapped prose\nParameters\n----------\nx : data",
+        "F Help.\nx : data\nOUTPUT\n  y : result",
+        "F Help.\nsome text\noutputs\n-------",
+    ],
+    ids=["first-line", "underlined", "capitalized", "lowercase-underlined"],
+)
+def test_label_alone(help_text):
+    assert has("inputs", help_text) or has("outputs", help_text)
+
+
+def test_argument_named_like_a_label():
+    # function data = zlibencode(input): "input: ..." is an entry
+    help_text = "F Help.\n\ninput: the original data\nOutput:\n  data"
+    assert not has("inputs", help_text, {"input", "data"})
+    assert has("outputs", help_text, {"input", "data"})
+    assert has("inputs", help_text)
+    # numpy style: function obj = f(output)
+    assert not has("outputs", "F Help.\n\noutput : the result", {"output", "obj"})
+    # function y = f(inputs): "INPUTS:" ends its line, so it is a header
+    assert has("inputs", "F Help.\nINPUTS:\n  inputs: levels", {"inputs", "y"})
 
 
 @pytest.mark.parametrize(

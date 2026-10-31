@@ -17,8 +17,9 @@ def remove_build_tree(path):
         try:
             shutil.rmtree(path)
             return
-        except PermissionError as error:
-            if getattr(error, "winerror", None) not in (32, 33) or attempt == 4:
+        except OSError as error:
+            # 32/33: file in use; 145: directory not empty yet (Windows)
+            if getattr(error, "winerror", None) not in (32, 33, 145) or attempt == 4:
                 raise
             time.sleep(0.05 * 2**attempt)
 
