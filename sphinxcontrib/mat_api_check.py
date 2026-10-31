@@ -379,6 +379,9 @@ class MatlabApiCheckBuilder(Builder):
     def write_documents(self, docnames):
         """No pages (Sphinx >= 8.1)."""
 
+    def prepare_writing(self, docnames):
+        """Nothing to prepare (abstract before Sphinx 8.1)."""
+
     def write_doc(self, docname, doctree):
         """No pages (Sphinx 8.0 calls this for every page)."""
 
