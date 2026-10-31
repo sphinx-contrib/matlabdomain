@@ -11,7 +11,7 @@ differences. Added in Phase 8 (14 projects, about 24,000 `.m` files).
 | `fetch.py` | Clones a missing project into `repos/<name>` and moves an existing checkout to its commit. |
 | `gauntlet.py` | Runs the gauntlet on the checkouts and writes `results.json` (the summary) and `manifest.json`. Clones nothing. |
 | `compare.py` | Compares two runs, or a run and a saved summary. |
-| `summaries/` | Saved summaries (`results.json` files); the Phase 8 Windows and Linux runs. |
+| `summaries/` | Saved summaries (`results.json` files); the Phase 8 and Phase 9 Windows and Linux runs. |
 
 `repos/` (checkouts) and `runs/` (output) are ignored by Git.
 
@@ -24,7 +24,7 @@ From the `matlabdomain` repo root, with the project's environment
 python test_slow/gauntlet/fetch.py               # once, then after editing the list
 python test_slow/gauntlet/gauntlet.py --jobs     # all projects -> runs/latest
 python test_slow/gauntlet/gauntlet.py matpower --trials 1 --out test_slow/gauntlet/runs/mp
-python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase8-linux.json test_slow/gauntlet/runs/latest
+python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase9-linux.json test_slow/gauntlet/runs/latest
 ```
 
 NAME arguments keep the projects whose name contains one of them. For each
@@ -63,13 +63,16 @@ can be moved instead of fetched again:
 for d in test_slow/artifacts/*/repo; do n=$(basename "$(dirname "$d")"); mv "$d" "test_slow/gauntlet/repos/$n"; done
 ```
 
-## Expected (Phase 8, `summaries/`)
+## Expected (Phase 9, `summaries/`)
 
-All 14 projects: exit 0 everywhere, no traceback or duplicate object, the
-rerun changes nothing, and Windows and Linux give the same pages and
-warnings (`compare.py` on the two summaries: `0 of 14 projects differ`).
+All 14 projects: exit 0 everywhere except `api` (exit 1: every project has
+findings), no traceback or duplicate object, the rerun changes nothing, and
+Windows and Linux give the same pages, warnings and api-check findings
+(`compare.py` on the two summaries: `0 of 14 projects differ`; the `conf`
+and `all` variants also match Phase 8).
 matpower's serial and `-j` builds differ (13 pages, 65 `ref.equation`
-warnings): its symlinked copies define each equation label twice, and
-Sphinx's math domain merges them per worker. A file that is not valid UTF-8
+warnings; for `api` only the warnings, the reports are identical): its
+symlinked copies define each equation label twice, and Sphinx's math
+domain merges them per worker. A file that is not valid UTF-8
 decodes as ISO-8859-1 on Linux and Windows ANSI on Windows, so its warnings
 may differ between the two.
