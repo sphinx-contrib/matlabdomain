@@ -52,7 +52,7 @@ Pages for a whole project, and a check of its help text:
 
 .. code-block:: console
 
-   $ sphinx-matlab-apidoc -o docs/api src
+   $ sphinx-matlab-apidoc -c docs -o docs/api
    $ sphinx-build -b matlab-api-check docs docs/_build/api-check
 
 Documentation

@@ -13,15 +13,17 @@ regenerates them, compares them with these files and builds the project with
 
 Regenerate and build, from ``docs/``::
 
-    sphinx-matlab-apidoc -f --remove-old -t ../templates -o api ../src
+    sphinx-matlab-apidoc -c .
     sphinx-build -n -W -b html . _build/html
 
-``../src`` is the folder ``matlab_src_code_project_root`` points to in
-``conf.py``. Keep ``--include``, ``--exclude``, ``--matlab-version`` and
-``--encoding`` equal to the matching ``conf.py`` settings.
+``-c .`` reads ``conf.py``: the MATLAB root
+(``matlab_src_code_project_root``), the output folder
+(``matlab_apidoc_output_dir``) and the templates
+(``matlab_apidoc_templatedir``). ``sphinx-matlab-apidoc --check -c .``
+exits with 1 when the pages are out of date.
 
 The templates differ from the defaults in two places: the root page is
 titled "Demo API reference", and classes are documented without
 ``:undoc-members:``. To customize your own output, copy these templates (or
 the defaults in ``sphinxcontrib/matlab_apidoc/templates/``) into your
-project, edit them and pass their folder with ``-t``.
+project, edit them and set ``matlab_apidoc_templatedir`` (or pass ``-t``).

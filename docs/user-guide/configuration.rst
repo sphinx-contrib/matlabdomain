@@ -132,8 +132,9 @@ Some files and folders are never indexed or need care:
 * Generated data files can be large and slow to parse; exclude them
   (``**/data/**``) when they need no documentation.
 
-``sphinx-matlab-apidoc`` does not read ``conf.py`` yet: give it the same
-patterns with its ``--include`` and ``--exclude`` options (:doc:`apidoc`).
+``sphinx-matlab-apidoc -c`` reads the same root and patterns from
+``conf.py``; its ``--include`` and ``--exclude`` options replace them
+(:doc:`apidoc`).
 
 The MATLAB release
 ------------------

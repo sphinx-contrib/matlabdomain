@@ -128,6 +128,13 @@ earlier" in the documentation.
   mirroring the folder tree, from Jinja templates that can be replaced
   (``-t``). Its template context is a public interface: renaming or removing
   a key is a breaking change. See ``examples/apidoc``.
+  ``sphinx-matlab-apidoc -c DIR`` reads its settings from ``DIR/conf.py``:
+  the source settings of the build and the new ``matlab_apidoc_*`` values
+  (output folder, templates, ...); flags override them. Generated pages
+  (those that start with its marker line) are rewritten when they change
+  and removed when they are no longer pages (``--no-remove-old`` keeps
+  them); ``--check`` exits with 1 when the pages are out of date. The
+  command does not run inside ``sphinx-build``; run it before the build.
 * The function files of a class folder ``@X/`` are methods only if ``X.m`` is
   a classdef. In any other ``@`` folder (an old-style class, a classdef named
   differently, no class file) they are documented as functions; before, the

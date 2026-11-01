@@ -20,11 +20,14 @@ that is not a Simulink export.
 ``sphinx-matlab-apidoc``
 ------------------------
 
-* A configuration hook that regenerates the pages on each build from
-  ``conf.py`` values (``matlab_apidoc_*``), like Sphinx's own
-  ``sphinx.ext.apidoc``.
 * ``Contents.m`` as the description of its folder, as MATLAB's ``help
   folder`` shows it.
+* Markdown (MyST) output.
+
+Running the generator inside ``sphinx-build`` (as ``sphinx.ext.apidoc``
+does) is not planned: the build would write into the source folder, which
+races with other builds of the same folder and loops ``sphinx-autobuild``.
+The command reads ``conf.py`` instead (:doc:`../user-guide/apidoc`).
 
 Help text
 ---------
