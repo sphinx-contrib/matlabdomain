@@ -40,6 +40,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "pre-commit",
+    "ruff",
     "tox>4.8",
     "defusedxml>=0.7.1",
     "sphinx-autobuild"
