@@ -1,5 +1,5 @@
 {
-    // VS Code debug configs for working on sphinx-contrib/matlabdomain (SCM).
+    // VS Code debug configs for working on sphinxcontrib-matlabdomain.
     // "justMyCode": false lets you step into Sphinx and tree-sitter internals.
     "version": "0.2.0",
     "configurations": [
@@ -17,7 +17,7 @@
             "justMyCode": false
         },
         {
-            "name": "SCM: Debug profiling harness build",
+            "name": "sphinxcontrib-matlabdomain: Debug profiling harness build",
             "type": "debugpy",
             "request": "launch",
             "module": "sphinx.cmd.build",
@@ -31,7 +31,7 @@
             "justMyCode": false
         },
         {
-            "name": "SCM: Profile harness (cProfile)",
+            "name": "sphinxcontrib-matlabdomain: Profile harness (cProfile)",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/test_slow/profiling/profile_build.py",

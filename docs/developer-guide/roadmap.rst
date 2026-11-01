@@ -31,6 +31,10 @@ Help text
 
 * A mode that shows help as preformatted text instead of parsing it as
   reStructuredText (:doc:`../user-guide/help-text`).
+* A builder that writes the comments of ``arguments`` blocks into the
+  inputs, outputs and name-value sections of the help text, so that
+  MATLAB's ``help`` shows them and the two stay in step
+  (:doc:`../user-guide/api-check`).
 * Checking which lines MATLAB itself treats as "See also" lines.
 
 MATLAB releases

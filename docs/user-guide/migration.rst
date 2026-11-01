@@ -71,7 +71,8 @@ Directives and roles
    * - ``.. mat:decorator::``, ``.. mat:decoratormethod::``
      - removed (no MATLAB equivalent)
    * - ``:special-members:``, ``:inherited-members:``
-     - removed (``:inherited-members:`` crashed the build)
+     - removed (``:inherited-members:`` stopped every build that used it
+       with an exception)
    * - ``:friend-members:``
      - ``:access-list-members:`` (the old name still works)
 

@@ -109,8 +109,33 @@ explains how:
    $ python test_slow/gauntlet/gauntlet.py --jobs
    $ python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase9-linux.json test_slow/gauntlet/runs/latest
 
-The checkouts need about 5 GB. On Windows, Git must create symbolic links
-(``core.symlinks``); ``fetch.py`` sets it for the checkouts it clones.
+The checkouts need about 5 GB. On Windows, Git must create symbolic links:
+matpower, for one, has 807 of them, and without them Git writes small text
+files in their place, so the pages and warnings differ from Linux.
+``fetch.py`` sets ``core.symlinks`` for the checkouts it clones, but
+Windows lets a process create links only if one of these holds:
+
+* **Developer Mode** is on (Settings, System, For developers). Then
+  ordinary users can create links; no administrator rights are needed once
+  it is on. This is the usual choice.
+* The user has the *Create symbolic links* right
+  (``SeCreateSymbolicLinkPrivilege``; Local Security Policy, User Rights
+  Assignment). An administrator grants it once; sign out and in again.
+* The process runs as administrator.
+
+To check, create a link in a scratch folder, as a normal user:
+``New-Item -ItemType SymbolicLink -Path link -Target somefile`` in
+PowerShell, or ``mklink link somefile`` in ``cmd``. Git for Windows' installer
+option "Enable symbolic links" sets ``core.symlinks`` for every repository.
+A checkout made without links can be repaired:
+
+.. code-block:: console
+
+   $ git config core.symlinks true
+   $ git checkout -- .
+
+``git checkout -- .`` discards uncommitted changes in that checkout.
+Junctions (``mklink /J``) need no rights, but Git does not create them.
 
 Testing on Linux and Windows
 ----------------------------

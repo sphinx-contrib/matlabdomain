@@ -46,6 +46,18 @@ after a failed ``-W`` build, a rebuild may say that nothing is out of date.
 To see every warning again (for example after changing
 ``nitpick_ignore``), build from scratch with ``-E``.
 
+Building some pages
+-------------------
+
+``sphinx-build`` accepts page files after the output folder
+(``sphinx-build -b html docs docs/_build/html docs/api/shapes.rst``). Sphinx
+still reads every page that is out of date, and writes only the pages
+given (with a warning that the search index is incomplete). The extension
+behaves as in a full build: it indexes the whole project root and parses
+the files the pages it reads use, so links to objects on other pages work.
+The ``matlab-api-check`` builder ignores the page list: it checks every
+indexed file.
+
 Parallel builds
 ---------------
 

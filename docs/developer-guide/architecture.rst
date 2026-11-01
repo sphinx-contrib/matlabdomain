@@ -42,6 +42,30 @@ Modules
      - ``sphinx-matlab-apidoc``: the command line, the page model, output
        names and the templates.
 
+The main imports between the modules (an arrow points to the module that
+is imported). Most modules also use ``mat_naming.py`` and
+``mat_classify.py`` directly; those arrows are left out.
+
+.. mermaid::
+
+   flowchart TB
+     sphinx(["sphinx-build"]) --> matlab
+     cli(["sphinx-matlab-apidoc"]) --> apidoc
+     matlab["matlab.py<br/>setup, MATLABDomain"] --> documenters["mat_documenters.py<br/>mat_directives.py"]
+     matlab --> apicheck["mat_api_check.py"]
+     documenters --> types
+     apicheck --> types
+     apidoc["matlab_apidoc/"] --> types
+     types["mat_types.py<br/>index, parse, objects"] --> naming["mat_naming.py<br/>references, MATLAB names"]
+     types --> parser["mat_tree_sitter_parser.py"]
+     naming --> handlers["mat_handlers.py<br/>file types"]
+     handlers --> classify["mat_classify.py<br/>file kind, decoding"]
+     handlers -. "when parsing" .-> types
+     parser --> treesitter[("tree-sitter-matlab")]
+
+``mat_handlers.py`` imports ``mat_types`` inside its functions (dotted
+arrow), which breaks the import cycle.
+
 Two stages: index, then parse on demand
 ---------------------------------------
 

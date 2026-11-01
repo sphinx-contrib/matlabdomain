@@ -56,6 +56,59 @@ folders, ``*`` and ``?`` within one folder, and ``**/x`` also matches ``x``
 itself, so ``**/tests`` leaves out every ``tests`` folder with everything
 below it. Matching is case-sensitive on every system.
 
+Examples, for a project root with these files:
+
+.. code-block:: text
+
+   main.m
+   +mypkg/a.m
+   +mypkg/+sub/b.m
+   apps/Viewer.mlapp
+   data/case1.m
+   examples/demo1.m
+   examples/advanced/demo2.m
+   toolbox/f.m
+   toolbox/fTest.m
+   toolbox/legacy_util.m
+   toolbox/+pkg/C.m
+   toolbox/+pkg/private/h.m
+   toolbox/data/big.m
+   toolbox/internal/g.m
+   toolbox/tests/test_f.m
+
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Patterns
+     - Indexed
+   * - include ``["toolbox/**"]``
+     - every file below ``toolbox/``, at any depth
+   * - include ``["toolbox/**", "examples/**"]``
+     - every file below ``toolbox/`` and ``examples/``
+   * - include ``["examples/*.m"]``
+     - ``examples/demo1.m`` only: ``*`` stays in one folder
+   * - include ``["+mypkg/**"]``
+     - the namespace ``mypkg`` with its inner namespaces
+   * - include ``["**/*.m"]``
+     - every ``.m`` file, also ``main.m`` at the root; no ``.mlapp``
+   * - exclude ``["**/tests"]``
+     - all but ``toolbox/tests/test_f.m``: the folder is not searched
+   * - exclude ``["**/test_*.m", "**/*Test.m"]``
+     - all but the test files ``test_f.m`` and ``fTest.m``, wherever they
+       are
+   * - exclude ``["**/data"]``
+     - all but ``data/case1.m`` and ``toolbox/data/big.m``
+   * - exclude ``["**/private"]``
+     - all but ``toolbox/+pkg/private/h.m``; links to private functions
+       then find nothing
+   * - exclude ``["**/*.mlapp"]``
+     - all but ``apps/Viewer.mlapp``
+   * - exclude ``["toolbox/legacy_util.m"]``
+     - all but that one file
+   * - include ``["toolbox/**"]``, exclude ``["toolbox/internal"]``
+     - ``toolbox/`` without ``toolbox/internal/``
+
 These are configuration errors (``ConfigError``), reported when the build
 starts (Sphinx prints "Configuration error!" and the message on the last
 line of a short traceback):
@@ -124,7 +177,29 @@ How things are shown
   property's size, class and validators (``Radius (1,1) double
   {mustBePositive}``).
 * :confval:`matlab_class_signature` (default ``False``): show the
-  constructor's arguments in the class signature (``class Circle(radius)``).
+  constructor's arguments in the class signature. In the sample project
+  (:doc:`documenting`):
+
+  .. list-table::
+     :header-rows: 1
+
+     * - Class
+       - ``False``
+       - ``True``
+     * - ``Circle``, constructor ``Circle(radius)``
+       - ``class shapes.Circle``
+       - ``class shapes.Circle(radius)``
+     * - ``Polygon`` (class folder), constructor ``Polygon(x, y)``
+       - ``class shapes.Polygon``
+       - ``class shapes.Polygon(x, y)``
+     * - ``Shape``, no constructor
+       - ``class shapes.Shape``
+       - ``class shapes.Shape``
+
+  A constructor with ``varargin`` shows ``(varargin)``. If the
+  constructor's first help line looks like its signature and
+  ``autodoc_docstring_signature`` is on (the default), that line is the
+  class signature whatever this setting is.
 * :confval:`matlab_add_namespace_names` (default ``True``): show the
   namespace in signatures (``shapes.Circle``); ``False`` shows ``Circle``.
 * :confval:`matlab_auto_link` (default ``None``): turn names in help text
@@ -173,6 +248,40 @@ Checking help text
 :confval:`matlab_api_check_rules`, :confval:`matlab_api_check_enabled` and
 :confval:`matlab_api_check_ignore_patterns` configure the
 ``matlab-api-check`` builder; see :doc:`api-check`.
+
+The ignore patterns match the path references of files and of methods in a
+``classdef`` file (``+shapes/Circle.m.draw``), with the rules of the
+patterns above; ``*`` matches dots too, so ``Circle.m.*`` matches every
+method of ``Circle``. Ignoring a class file also skips its methods.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Pattern
+     - Not checked
+   * - ``"generated/**"``
+     - everything below ``generated/``
+   * - ``"+pkg/internal/**"``
+     - the files below ``+pkg/internal/`` and their methods
+   * - ``"utils/legacy.m"``
+     - one file
+   * - ``"+shapes/Circle.m"``
+     - the class ``shapes.Circle`` and all its methods
+   * - ``"+shapes/Circle.m.*"``
+     - the methods of ``Circle``, but not the class itself
+   * - ``"+shapes/Circle.m.draw"``
+     - one method
+   * - ``"**.m.set*"``
+     - methods whose names start with ``set``, in every class
+   * - ``"**/*.m.*"``
+     - every method in a ``classdef`` file: only files are checked
+   * - ``"**/tests/**"``, ``"**/*Test.m"``
+     - test folders and test classes
+   * - ``"examples/*.m"``
+     - the scripts directly in ``examples/``, not in its subfolders
+   * - ``"@Legacy/**"``
+     - an old-style class folder
 
 Memory
 ------

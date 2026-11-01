@@ -18,7 +18,7 @@ tree-sitter):
 ``Debug matlab-api-check``
    The builder on the ``test_api_check`` root, which has known gaps, so it
    exits with status 1.
-``SCM: Debug profiling harness build`` and ``SCM: Profile harness (cProfile)``
+``sphinxcontrib-matlabdomain: Debug profiling harness build`` and ``sphinxcontrib-matlabdomain: Profile harness (cProfile)``
    The profiling harness (below).
 
 ``_build/`` is ignored by Git.

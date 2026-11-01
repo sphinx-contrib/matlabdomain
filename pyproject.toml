@@ -46,7 +46,8 @@ dev = [
     "sphinx-autobuild"
 ]
 rtd = [
-    "furo"
+    "furo",
+    "sphinxcontrib-mermaid"
 ]
 
 [project.scripts]
