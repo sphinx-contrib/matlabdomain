@@ -91,6 +91,7 @@ class MatObject(ObjectDescription):
 
     option_spec = {
         "noindex": directives.flag,
+        "no-index": directives.flag,
         "annotation": directives.unchanged,
         # Path reference of the object (written by the auto directives).
         "reference": directives.unchanged,
@@ -386,6 +387,7 @@ class MatFolder(MatObject):
         "platform": lambda x: x,
         "synopsis": lambda x: x,
         "noindex": directives.flag,
+        "no-index": directives.flag,
         "deprecated": directives.flag,
     }
 

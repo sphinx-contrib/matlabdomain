@@ -79,6 +79,23 @@ mat_auto_sig_re = re.compile(
 
 # TODO: check MRO's for all classes, attributes and methods!!!
 
+#: options of the documenters with members (classes and folders)
+MEMBER_OPTIONS = {
+    "members": members_option,
+    "undoc-members": bool_option,
+    "noindex": bool_option,
+    "no-index": bool_option,
+    "show-inheritance": bool_option,
+    "member-order": identity,
+    "exclude-members": exclude_members_option,
+    "private-members": members_option,
+    "protected-members": members_option,
+    "hidden-members": members_option,
+    "access-list-members": members_option,
+    # the old name of access-list-members
+    "friend-members": members_option,
+}
+
 
 logger = getLogger("matlab-domain")
 
@@ -105,6 +122,7 @@ class MatlabDocumenter(PyDocumenter):
     domain = "mat"
     #: True for members of a class (methods, attributes)
     class_level = False
+    option_spec = {"noindex": bool_option, "no-index": bool_option}
 
     def parse_name(self):
         """Resolve *self.name* to the object to document (plan.md Section 2.3).
@@ -700,6 +718,13 @@ class MatlabDocumenter(PyDocumenter):
 class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
     objtype = "folder"
     accepts = staticmethod(is_folder_object)
+    # Members share the options, so the class options apply to their members.
+    option_spec = {
+        **MEMBER_OPTIONS,
+        "synopsis": identity,
+        "platform": identity,
+        "deprecated": bool_option,
+    }
 
     def parse_name(self):
         ret = MatlabDocumenter.parse_name(self)
@@ -859,20 +884,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
     objtype = "class"
     member_order = 20
-    option_spec = {
-        "members": members_option,
-        "undoc-members": bool_option,
-        "noindex": bool_option,
-        "show-inheritance": bool_option,
-        "member-order": identity,
-        "exclude-members": exclude_members_option,
-        "private-members": members_option,
-        "protected-members": members_option,
-        "hidden-members": members_option,
-        "access-list-members": members_option,
-        # the old name of access-list-members
-        "friend-members": members_option,
-    }
+    option_spec = MEMBER_OPTIONS
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API

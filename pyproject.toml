@@ -30,7 +30,7 @@ dependencies = [
 ]
 description = 'Sphinx "matlabdomain" extension'
 dynamic = ["version"]
-license = "BSD-3-Clause"
+license = "BSD-2-Clause"
 name = "sphinxcontrib-matlabdomain"
 readme = "README.rst"
 requires-python = ">=3.11.0"
@@ -44,8 +44,7 @@ dev = [
     "defusedxml>=0.7.1"
 ]
 rtd = [
-    "sphinx-rtd-theme",
-    "sphinxcontrib-napoleon"
+    "sphinx-rtd-theme"
 ]
 
 [project.scripts]
@@ -86,7 +85,6 @@ source_pkgs = [
     "sphinxcontrib.mat_directives",
     "sphinxcontrib.mat_documenters",
     "sphinxcontrib.mat_handlers",
-    "sphinxcontrib.mat_lexer",
     "sphinxcontrib.mat_naming",
     "sphinxcontrib.mat_tree_sitter_parser",
     "sphinxcontrib.mat_types",
