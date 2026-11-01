@@ -1,6 +1,7 @@
 """Autodoc options and member documentation of the mat documenters."""
 
 import os
+import re
 
 import pytest
 from docutils import nodes
@@ -546,7 +547,14 @@ def test_automethod_in_a_written_class(make_app, tmp_path):
         ),
     )
     assert documented(app) == ["Access.m", "Access.m.zMeth"]
-    assert "don't know which object to document for 'nothing'" in app.warning.getvalue()
+    warning = next(
+        line
+        for line in app.warning.getvalue().splitlines()
+        if "don't know which object to document for 'nothing'" in line
+    )
+    # The page and line of the directive, and a subtype to suppress it by.
+    assert re.search(r"index\.rst:\d+: WARNING", warning)
+    assert "[mat.not_found]" in warning
 
 
 def test_folder_members_without_a_documenter(make_app, tmp_path):

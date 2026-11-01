@@ -32,8 +32,8 @@ Every kind of object has two directives: an auto directive
      - with ``:members:``
      - nested directives you write
    * - No file has the name
-     - a warning ("don't know which object to document"); nothing is
-       shown
+     - a ``mat.not_found`` warning ("don't know which object to
+       document"); nothing is shown
      - no warning; shown as written
 
 The auto directives write description directives, filled from the file.

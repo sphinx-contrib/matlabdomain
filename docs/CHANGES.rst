@@ -21,6 +21,9 @@ earlier" in the documentation.
 * **Breaking:** ``matlab_add_namespace_names`` (default ``True``) replaces
   Sphinx's ``add_module_names`` for MATLAB signatures; the MATLAB domain no
   longer reads ``add_module_names``.
+* An auto directive that matches no object warns with the subtype
+  ``mat.not_found`` and the page and line of the directive; its "matches
+  several objects" warning gives the location too.
 * Use treesitter for parsing.
 * Added new configuration: ``matlab_version`` (default ``"R2026a"``, oldest
   supported ``"R2025a"``). It selects version-dependent MATLAB naming rules.

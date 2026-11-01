@@ -35,6 +35,9 @@ all with ``"mat"``. :doc:`../user-guide/warnings` explains each one.
    * - ``mat.ambiguous``
      - a name that matches several objects
      - where the name is used
+   * - ``mat.not_found``
+     - an auto directive whose argument matches no object
+     - where the directive is
    * - ``mat.apidoc``
      - ``sphinx-matlab-apidoc``: an unreadable file, output names that
        differ only by case, a path too long for Windows

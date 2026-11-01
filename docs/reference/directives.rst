@@ -15,8 +15,8 @@ optionally followed by a signature, ``(a, b)``, that replaces the one read
 from the file. It reads the file and writes the matching description directive
 (below) with the help text. Content below the directive is added after the
 help text. ``autodoc_default_options`` supplies default options. If no
-object matches the argument, the build warns ("don't know which object to
-document") and the directive writes nothing.
+object matches the argument, the build warns (``mat.not_found``, "don't
+know which object to document") and the directive writes nothing.
 
 .. rst:directive:: .. mat:autofunction:: name
 

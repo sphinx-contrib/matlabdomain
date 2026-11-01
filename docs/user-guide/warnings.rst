@@ -66,6 +66,15 @@ What each warning means
    them. Copies of files (vendored code, symbolic links) are a common
    cause; exclude them with :confval:`matlab_src_exclusion_patterns`.
 
+``mat.not_found``
+   An auto directive (``mat:autofunction`` and the others) names no object
+   of its kind below the project root ("don't know which object to
+   document"), so it writes nothing. The warning gives the page and line
+   of the directive. Check the name, the current folder
+   (:doc:`referencing`) and :confval:`matlab_src_code_project_root`.
+   Description directives (``mat:function``) never read a file and never
+   get it (:doc:`documenting`).
+
 ``mat.apidoc``
    ``sphinx-matlab-apidoc``: a file that cannot be read was left out, two
    output names differ only by letter case, or an output path is longer
@@ -94,7 +103,6 @@ When warnings appear
 Other warnings
 --------------
 
-A few messages have no subtype: an auto directive that matches no object
-("don't know which object to document"), an unknown directive option, a
-folder directive given a class folder, and duplicate object descriptions.
-Fix the directive; they cannot be suppressed by subtype.
+A few messages have no subtype: an unknown directive option, a folder
+directive given a class folder, and duplicate object descriptions. Fix the
+directive; they cannot be suppressed by subtype.

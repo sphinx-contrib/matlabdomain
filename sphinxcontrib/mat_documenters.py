@@ -155,6 +155,7 @@ class MatlabDocumenter(PyDocumenter):
                 dom, target, self.env.temp_data.get("mat:folder"), self.accepts
             )
         if len(found) != 1:
+            location = (self.env.docname, self.directive.lineno)
             if found:
                 logger.warning(
                     "[sphinxcontrib-matlabdomain] %r matches several objects: %s; "
@@ -163,6 +164,7 @@ class MatlabDocumenter(PyDocumenter):
                     ", ".join(sorted(ref for ref, _ in found)),
                     type="mat",
                     subtype="ambiguous",
+                    location=location,
                 )
             else:
                 logger.warning(
@@ -170,6 +172,9 @@ class MatlabDocumenter(PyDocumenter):
                     "document for %r (use a path reference, a MATLAB name, or a "
                     '"mat:currentfolder" directive)',
                     self.name,
+                    type="mat",
+                    subtype="not_found",
+                    location=location,
                 )
                 self.env.note_reread()
             return False
