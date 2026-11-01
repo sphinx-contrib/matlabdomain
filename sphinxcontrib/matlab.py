@@ -23,6 +23,7 @@ from sphinx.util.nodes import make_refnode
 
 from . import mat_api_check, mat_directives, mat_naming, mat_types
 from . import mat_documenters as doc
+from .matlab_apidoc import _config as apidoc_config
 
 logger = getLogger("matlab-domain")
 
@@ -896,15 +897,7 @@ def ensure_configuration(app, config):
 
 
 def check_encoding(app, config):  # noqa: ARG001
-    if config.matlab_src_encoding is not None:
-        try:
-            # not b"".decode(): it skips the check for non-text codecs (rot13)
-            "a".encode(config.matlab_src_encoding)
-        except (LookupError, TypeError) as err:
-            raise ConfigError(
-                f"matlab_src_encoding {config.matlab_src_encoding!r} is not a "
-                "known text encoding."
-            ) from err
+    mat_types.check_text_encoding(config.matlab_src_encoding, "matlab_src_encoding")
 
 
 def _get_version():
@@ -963,6 +956,8 @@ def setup(app):
     # Rule -> severity, merged over mat_api_check.DEFAULT_RULES.
     app.add_config_value("matlab_api_check_rules", {}, "", dict)
     app.add_config_value("matlab_api_check_ignore_patterns", [], "", [list, tuple])
+    # Read by sphinx-matlab-apidoc -c only.
+    apidoc_config.add_config_values(app)
 
     app.registry.add_documenter("mat:folder", doc.MatFolderDocumenter)
     app.add_directive_to_domain(

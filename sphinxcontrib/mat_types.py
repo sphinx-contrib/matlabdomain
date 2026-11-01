@@ -588,6 +588,10 @@ def project_root(config, srcdir):
     root = config.matlab_src_code_project_root
     if root is None:
         return None
+    if not isinstance(root, str):
+        raise ConfigError(
+            f"matlab_src_code_project_root must be a str or None, not {root!r}."
+        )
     return os.path.normpath(os.path.join(srcdir, root))
 
 
@@ -670,16 +674,33 @@ class SourceFilter:
         )
 
 
+def pattern_list(value, option):
+    """The normalized patterns of a config list (or ConfigError)."""
+    if isinstance(value, str) or not isinstance(value, (list, tuple)):
+        raise ConfigError(f"{option} must be a list of glob patterns.")
+    return [_normalize_pattern(p, option) for p in value]
+
+
+def check_text_encoding(encoding, option):
+    """ConfigError unless ``encoding`` is None or a known text codec."""
+    if encoding is not None:
+        try:
+            # not b"".decode(): it skips the check for non-text codecs (rot13)
+            "a".encode(encoding)
+        except (LookupError, TypeError) as err:
+            raise ConfigError(
+                f"{option} {encoding!r} is not a known text encoding."
+            ) from err
+
+
 def source_filter(config):
     """Return the validated ``SourceFilter`` of the config (or ConfigError)."""
-    values = {}
-    for option in ("matlab_src_include_patterns", "matlab_src_exclusion_patterns"):
-        value = getattr(config, option)
-        if isinstance(value, str) or not isinstance(value, (list, tuple)):
-            raise ConfigError(f"{option} must be a list of glob patterns.")
-        values[option] = [_normalize_pattern(p, option) for p in value]
-    include = values["matlab_src_include_patterns"]
-    exclude = values["matlab_src_exclusion_patterns"]
+    include = pattern_list(
+        config.matlab_src_include_patterns, "matlab_src_include_patterns"
+    )
+    exclude = pattern_list(
+        config.matlab_src_exclusion_patterns, "matlab_src_exclusion_patterns"
+    )
     customized = list(config.matlab_src_include_patterns) != DEFAULT_INCLUDE_PATTERNS
     if (customized or exclude) and config.matlab_src_code_project_root is None:
         raise ConfigError(
