@@ -81,14 +81,14 @@ Output
 
 .. confval:: matlab_show_property_default_value
    :type: ``bool``
-   :default: ``False``
+   :default: ``True``
 
    Show a property's default value after its name. A default that spans
    lines is shortened to its first and last line.
 
 .. confval:: matlab_show_property_specs
    :type: ``bool``
-   :default: ``False``
+   :default: ``True``
 
    Show a property's size, class and validators after its name.
 

@@ -24,8 +24,10 @@ below:
 * Every object is identified by its path below this folder, its *path
   reference* (``+shapes/Circle.m``, see :doc:`referencing`). Choose the root
   once: moving it changes every reference, link anchor and inventory entry.
-* Without it, no file is indexed and the auto directives find nothing.
-  Hand-written directives (:doc:`documenting`) still work.
+* Without it, no file is indexed and the auto directives (``mat:autoclass``
+  and the others) find nothing. Directives whose signature and text you
+  write yourself (``.. mat:function:: f(x)``, :doc:`documenting`) read no
+  source file, so they still work.
 
 Use the folder you would add to the MATLAB path, or the folder above several
 such folders (``src/`` with ``toolbox/`` and ``examples/`` below it). Plain
@@ -77,8 +79,8 @@ Some files and folders are never indexed or need care:
 * Generated data files can be large and slow to parse; exclude them
   (``**/data/**``) when they need no documentation.
 
-The same patterns are the ``--include`` and ``--exclude`` options of
-``sphinx-matlab-apidoc``; keep both equal (:doc:`apidoc`).
+``sphinx-matlab-apidoc`` does not read ``conf.py`` yet: give it the same
+patterns with its ``--include`` and ``--exclude`` options (:doc:`apidoc`).
 
 The MATLAB release
 ------------------
@@ -116,9 +118,9 @@ unknown codec is a configuration error.
 How things are shown
 --------------------
 
-* :confval:`matlab_show_property_default_value` (default ``False``): show a
+* :confval:`matlab_show_property_default_value` (default ``True``): show a
   property's default value after its name (``Radius = 1``).
-* :confval:`matlab_show_property_specs` (default ``False``): show a
+* :confval:`matlab_show_property_specs` (default ``True``): show a
   property's size, class and validators (``Radius (1,1) double
   {mustBePositive}``).
 * :confval:`matlab_class_signature` (default ``False``): show the
@@ -128,6 +130,11 @@ How things are shown
   property and method lists of class help; ``"all"`` also links every known
   class and function name. See :doc:`help-text`.
 
+  Use ``"basic"``. ``"all"`` searches every help text for every class and
+  function name in the project, so it costs more as the project grows, and
+  it also links ordinary words that are names in the project: with a
+  function ``data``, every "data" in the help becomes a link.
+
 These Sphinx and autodoc settings apply too:
 
 * ``autoclass_content``: ``"class"`` (default) shows the class help;
@@ -136,13 +143,23 @@ These Sphinx and autodoc settings apply too:
 * ``autodoc_docstring_signature`` (default ``True``): if the first help line
   of a function or method looks like its signature (``times_two(x)``), use it
   as the signature and drop it from the text.
-* ``autodoc_member_order``, and ``:member-order:`` on a directive:
-  ``"alphabetical"`` (default), ``"groupwise"`` or ``"bysource"``.
+* ``autodoc_member_order``, and ``:member-order:`` on a directive, set the
+  order of the members on a page:
+
+  * ``"alphabetical"`` (default): by name; uppercase letters sort before
+    lowercase ones.
+  * ``"groupwise"``: by kind, then by name. In a class: static methods,
+    other methods, then properties and enumeration values. In a folder:
+    scripts and apps, classes, then functions.
+  * ``"bysource"``: a class's members in the order of its ``classdef``
+    file. The files of a folder have no source order; they stay in name
+    order, whatever order the file system lists them in.
 * ``autodoc_default_options``: default options of the auto directives, for
   example ``{"members": True, "show-inheritance": True}``.
 * ``add_function_parentheses`` (``()`` after function and method links) and
-  ``add_module_names`` (``False`` shows ``Circle`` instead of
-  ``shapes.Circle`` in signatures).
+  ``add_module_names`` (``False`` leaves out the namespace in signatures:
+  ``Circle`` instead of ``shapes.Circle``; Sphinx calls namespaces
+  modules).
 * ``suppress_warnings``: see :doc:`warnings`. Use this to suppress some warnings 
   during the build.
 * The events ``autodoc-process-docstring`` and ``autodoc-skip-member`` are
@@ -162,7 +179,8 @@ Memory
 :confval:`matlab_src_cache_text` (default ``True``) keeps the text that
 indexing read in memory until the file is parsed, during one build. Set it
 to ``False`` for very large projects if memory is short; files are then read
-twice.
+twice. The cache holds the decoded text, about as large as the indexed files
+on disk, so memory is rarely a reason to turn it off.
 
 Removed settings
 ----------------

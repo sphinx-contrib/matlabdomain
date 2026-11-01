@@ -282,7 +282,7 @@ def test_removed_class_file_turns_folder_methods_into_functions(
 def test_config_change_invalidates_parse_cache(make_app, srcdir, parsed):
     build(make_app, srcdir)
     parsed.clear()
-    build(make_app, srcdir, matlab_show_property_default_value=True)
+    build(make_app, srcdir, matlab_show_property_default_value=False)
     assert sorted(parsed) == used_paths(srcdir)
 
 

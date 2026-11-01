@@ -948,8 +948,8 @@ def setup(app):
     app.add_config_value("matlab_src_encoding", None, "env")
     # Removed: setting it raises ConfigError.
     app.add_config_value("matlab_keep_package_prefix", None, "env")
-    app.add_config_value("matlab_show_property_default_value", False, "env")
-    app.add_config_value("matlab_show_property_specs", False, "env")
+    app.add_config_value("matlab_show_property_default_value", True, "env")
+    app.add_config_value("matlab_show_property_specs", True, "env")
     # Removed: setting it raises ConfigError.
     app.add_config_value("matlab_short_links", None, "env")
     app.add_config_value("matlab_auto_link", None, "env")

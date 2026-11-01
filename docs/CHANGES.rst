@@ -14,6 +14,10 @@ earlier" in the documentation.
 
 * Drop support for Python <=3.10.
 * Drop support for Sphinx <=7.x.
+* **Breaking:** ``matlab_show_property_default_value`` and
+  ``matlab_show_property_specs`` default to ``True``: properties show their
+  default value, size, class and validators. Set them to ``False`` for the
+  old output.
 * Use treesitter for parsing.
 * Added new configuration: ``matlab_version`` (default ``"R2026a"``, oldest
   supported ``"R2025a"``). It selects version-dependent MATLAB naming rules.
