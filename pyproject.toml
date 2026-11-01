@@ -41,10 +41,11 @@ dev = [
     "pytest-cov",
     "pre-commit",
     "tox>4.8",
-    "defusedxml>=0.7.1"
+    "defusedxml>=0.7.1",
+    "sphinx-autobuild"
 ]
 rtd = [
-    "sphinx-rtd-theme"
+    "furo"
 ]
 
 [project.scripts]

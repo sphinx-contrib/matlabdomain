@@ -69,16 +69,13 @@ language = "en"
 # snippets/ holds reST that pages both show and include.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "snippets"]
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
-
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "sphinx_rtd_theme"
+# Furo follows the reader's light or dark system setting, with a toggle;
+# it brings its own light and dark Pygments styles.
+html_theme = "furo"
+html_title = project
 
 
 # -- Options for HTMLHelp output ---------------------------------------------

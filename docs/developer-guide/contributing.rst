@@ -17,9 +17,10 @@ The project uses `uv <https://docs.astral.sh/uv/>`_ and a lock file
    $ uv run pre-commit install
 
 ``--all-extras`` installs the ``dev`` tools (pytest, coverage, pre-commit,
-tox) and the ``rtd`` theme the documentation uses. Run tools through the
-environment: ``uv run pytest``, or ``.venv/bin/python`` (Linux, macOS) and
-``.venv\Scripts\python`` (Windows).
+tox, sphinx-autobuild) and the theme the documentation uses (``rtd`` extra,
+`Furo <https://pradyunsg.me/furo/>`_). Run
+tools through the environment: ``uv run pytest``, or ``.venv/bin/python``
+(Linux, macOS) and ``.venv\Scripts\python`` (Windows).
 
 With plain ``pip``:
 
@@ -27,6 +28,27 @@ With plain ``pip``:
 
    $ python -m venv .venv
    $ .venv/bin/python -m pip install -e ".[dev,rtd]"
+
+Writing documentation
+---------------------
+
+The documentation is in ``docs/``. To preview it while you edit, run the
+``livehtml`` target, which rebuilds on every change (also to the worked
+example in ``examples/apidoc``) and serves the pages at
+http://127.0.0.1:8000:
+
+.. code-block:: console
+
+   $ cd docs
+   $ uv run make livehtml        # Linux, macOS
+   $ uv run .\make.bat livehtml  # Windows
+
+It runs ``sphinx-autobuild``. Changes to the extension's own code need a
+restart. Check the final text with a full strict build:
+
+.. code-block:: console
+
+   $ uv run sphinx-build -M html docs docs/_build -E -n -W
 
 Code style
 ----------
