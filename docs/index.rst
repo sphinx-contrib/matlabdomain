@@ -1,6 +1,10 @@
 sphinxcontrib-matlabdomain
 ==========================
 
+If Sphinx is new to you, its `glossary
+<https://www.sphinx-doc.org/en/master/glossary.html>`_ explains terms such as
+directives, roles, domains and builders used in this documentation.
+
 **sphinxcontrib-matlabdomain** is a `Sphinx`_ extension for `MATLAB`_ code. It
 adds a ``mat`` domain to Sphinx, with directives and roles for MATLAB
 functions, classes, scripts, apps and folders, and *auto* directives that
@@ -22,7 +26,7 @@ A ``conf.py`` and a page that document one function:
 .. code-block:: python
 
    extensions = ["sphinxcontrib.matlab"]
-   matlab_src_code_project_root = "../src"  # relative to this folder
+   matlab_src_code_project_root = "../src"  # relative to conf.py folder
 
 .. literalinclude:: snippets/quickstart.rst
    :language: rst

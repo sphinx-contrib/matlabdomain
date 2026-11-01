@@ -50,6 +50,9 @@ replace that line with these lines:
 
    # Optional: lets you write ``.. autofunction::`` instead of
    # ``.. mat:autofunction::`` and ``:func:`` instead of ``:mat:func:``.
+   # RECOMMENDATION: If you have a mixed language project, do not set this and
+   # and use ``mat:*`` roles and directives explicitly. This creates explicit
+   # separation between MATLAB and other languages in your documentation.
    primary_domain = "mat"
 
 :confval:`matlab_src_code_project_root` is the one setting every project needs:
