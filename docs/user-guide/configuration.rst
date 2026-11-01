@@ -29,7 +29,7 @@ below:
 
 Use the folder you would add to the MATLAB path, or the folder above several
 such folders (``src/`` with ``toolbox/`` and ``examples/`` below it). Plain
-folders below the root are not namespaces, as in MATLAB: ``toolbox/f.m`` is
+folders put files into the global namespaces, as in MATLAB: ``toolbox/f.m`` is
 the global function ``f``.
 
 Selecting files
@@ -69,7 +69,8 @@ line of a short traceback):
 Some files and folders are never indexed or need care:
 
 * Folders whose names start with ``.`` or ``_`` are never searched (``.git``,
-  ``_build``).
+  ``_build``). These types of folders are common patterns for version control
+  and build directories.
 * A link or Windows junction below the root that points outside it is left
   out, with one ``mat.outside_root`` warning. Links that stay inside the
   root are followed.
@@ -142,7 +143,8 @@ These Sphinx and autodoc settings apply too:
 * ``add_function_parentheses`` (``()`` after function and method links) and
   ``add_module_names`` (``False`` shows ``Circle`` instead of
   ``shapes.Circle`` in signatures).
-* ``suppress_warnings``: see :doc:`warnings`.
+* ``suppress_warnings``: see :doc:`warnings`. Use this to suppress some warnings 
+  during the build.
 * The events ``autodoc-process-docstring`` and ``autodoc-skip-member`` are
   emitted for MATLAB objects too, so extensions such as
   ``sphinx.ext.napoleon`` work on MATLAB help.

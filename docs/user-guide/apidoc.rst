@@ -6,7 +6,9 @@ below a project root with the auto directives, one page per folder. A large
 project then needs no hand-written directives, and new files appear in the
 docs when you run it again. It is the MATLAB counterpart of Sphinx's
 ``sphinx-apidoc``, with a deliberately small set of options: for different
-output, edit its templates or treat it as a starting point.
+output, edit its templates or treat it as a starting point to write your own
+``sphinx-matlab-apidoc``. Writing your own makes sense when you want fine-grained
+control over the generated output.
 
 A worked example
 ----------------
