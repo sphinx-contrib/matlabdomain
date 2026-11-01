@@ -34,6 +34,9 @@ Python 3.11 or newer and Sphinx 8.0 or newer (:doc:`../getting-started/installat
        signatures show MATLAB names (without the ``+``)
    * - ``matlab_short_links``
      - remove it: signatures show MATLAB names
+   * - ``add_module_names = False``
+     - ``matlab_add_namespace_names = False`` (the MATLAB domain no longer
+       reads ``add_module_names``)
    * - ``extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]``
      - ``sphinx.ext.autodoc`` is optional: the extension loads it
 

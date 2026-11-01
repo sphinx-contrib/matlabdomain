@@ -145,12 +145,20 @@ def test_root_folder_without_a_project_root(make_app, tmp_path):
     assert signature(app, "./").astext() == "folder ./"
 
 
-def test_add_module_names(make_app, tmp_path):
+def test_add_namespace_names(make_app, tmp_path):
     page = "Index\n=====\n\n.. mat:function:: pkg.g\n"
-    app = build(make_app, tmp_path, page, confoverrides={"add_module_names": False})
+    app = build(
+        make_app, tmp_path, page, confoverrides={"matlab_add_namespace_names": False}
+    )
     sig = signature(app, "+pkg/g.m")
     assert texts(sig, addnodes.desc_addname) == []
     assert sig.astext() == "g()"
+
+
+def test_add_module_names_is_not_read(make_app, tmp_path):
+    page = "Index\n=====\n\n.. mat:function:: pkg.g\n"
+    app = build(make_app, tmp_path, page, confoverrides={"add_module_names": False})
+    assert signature(app, "+pkg/g.m").astext() == "pkg.g()"
 
 
 def test_static_and_class_method_prefixes(make_app, tmp_path):

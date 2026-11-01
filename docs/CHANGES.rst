@@ -18,6 +18,9 @@ earlier" in the documentation.
   ``matlab_show_property_specs`` default to ``True``: properties show their
   default value, size, class and validators. Set them to ``False`` for the
   old output.
+* **Breaking:** ``matlab_add_namespace_names`` (default ``True``) replaces
+  Sphinx's ``add_module_names`` for MATLAB signatures; the MATLAB domain no
+  longer reads ``add_module_names``.
 * Use treesitter for parsing.
 * Added new configuration: ``matlab_version`` (default ``"R2026a"``, oldest
   supported ``"R2025a"``). It selects version-dependent MATLAB naming rules.

@@ -98,6 +98,14 @@ Output
 
    Show the constructor's arguments in the class signature.
 
+.. confval:: matlab_add_namespace_names
+   :type: ``bool``
+   :default: ``True``
+
+   Show the namespace before the name in signatures (``shapes.Circle``);
+   ``False`` shows the name alone (``Circle``). It replaces Sphinx's
+   ``add_module_names``, which the MATLAB domain does not read.
+
 .. confval:: matlab_auto_link
    :type: ``None``, ``"basic"`` or ``"all"``
    :default: ``None``
@@ -173,4 +181,4 @@ The auto directives also read these values of Sphinx and
 ``sphinx.ext.autodoc`` (see their documentation):
 ``autoclass_content``, ``autodoc_docstring_signature``,
 ``autodoc_member_order``, ``autodoc_default_options``,
-``add_function_parentheses``, ``add_module_names`` and ``primary_domain``.
+``add_function_parentheses`` and ``primary_domain``.

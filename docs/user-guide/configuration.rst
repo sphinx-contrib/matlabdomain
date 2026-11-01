@@ -25,9 +25,9 @@ below:
   reference* (``+shapes/Circle.m``, see :doc:`referencing`). Choose the root
   once: moving it changes every reference, link anchor and inventory entry.
 * Without it, no file is indexed and the auto directives (``mat:autoclass``
-  and the others) find nothing. Directives whose signature and text you
-  write yourself (``.. mat:function:: f(x)``, :doc:`documenting`) read no
-  source file, so they still work.
+  and the others) find nothing; each one warns. Description directives
+  (``.. mat:function:: f(x)``, :doc:`documenting`) never read a file, so
+  they work the same with or without it.
 
 Use the folder you would add to the MATLAB path, or the folder above several
 such folders (``src/`` with ``toolbox/`` and ``examples/`` below it). Plain
@@ -125,6 +125,8 @@ How things are shown
   {mustBePositive}``).
 * :confval:`matlab_class_signature` (default ``False``): show the
   constructor's arguments in the class signature (``class Circle(radius)``).
+* :confval:`matlab_add_namespace_names` (default ``True``): show the
+  namespace in signatures (``shapes.Circle``); ``False`` shows ``Circle``.
 * :confval:`matlab_auto_link` (default ``None``): turn names in help text
   into links. ``"basic"`` links the entries of "See also" lines and the
   property and method lists of class help; ``"all"`` also links every known
@@ -156,10 +158,9 @@ These Sphinx and autodoc settings apply too:
     order, whatever order the file system lists them in.
 * ``autodoc_default_options``: default options of the auto directives, for
   example ``{"members": True, "show-inheritance": True}``.
-* ``add_function_parentheses`` (``()`` after function and method links) and
-  ``add_module_names`` (``False`` leaves out the namespace in signatures:
-  ``Circle`` instead of ``shapes.Circle``; Sphinx calls namespaces
-  modules).
+* ``add_function_parentheses``: ``()`` after function and method links.
+  Sphinx's ``add_module_names`` is not read; use
+  :confval:`matlab_add_namespace_names`.
 * ``suppress_warnings``: see :doc:`warnings`. Use this to suppress some warnings 
   during the build.
 * The events ``autodoc-process-docstring`` and ``autodoc-skip-member`` are

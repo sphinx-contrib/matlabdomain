@@ -184,7 +184,7 @@ class MatObject(ObjectDescription):
             else:
                 ref, display = self._source_reference(name)
             prefix, shown = mat_naming.split_display(display)
-            if not self.env.config.add_module_names:
+            if not self.env.config.matlab_add_namespace_names:
                 prefix = ""
 
         signode["module"] = mat_naming.folder_of(ref)
@@ -954,6 +954,7 @@ def setup(app):
     app.add_config_value("matlab_short_links", None, "env")
     app.add_config_value("matlab_auto_link", None, "env")
     app.add_config_value("matlab_class_signature", False, "env")
+    app.add_config_value("matlab_add_namespace_names", True, "env", bool)
     app.add_config_value("matlab_version", mat_naming.DEFAULT_MATLAB_VERSION, "env")
     # None: derived from matlab_version (2048 from R2025a on).
     app.add_config_value("matlab_namelengthmax", None, "env")

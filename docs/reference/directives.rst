@@ -12,9 +12,11 @@ Auto directives
 An auto directive takes one argument: a MATLAB name, a path reference, or a
 name relative to the current folder (:doc:`../user-guide/referencing`),
 optionally followed by a signature, ``(a, b)``, that replaces the one read
-from the file. It reads the file and writes the matching domain directive
+from the file. It reads the file and writes the matching description directive
 (below) with the help text. Content below the directive is added after the
-help text. ``autodoc_default_options`` supplies default options.
+help text. ``autodoc_default_options`` supplies default options. If no
+object matches the argument, the build warns ("don't know which object to
+document") and the directive writes nothing.
 
 .. rst:directive:: .. mat:autofunction:: name
 
@@ -198,14 +200,17 @@ help text. ``autodoc_default_options`` supplies default options.
 
       Do not create link targets or index entries.
 
-Domain directives
------------------
+Description directives
+----------------------
 
 The auto directives write these; write them by hand for objects without a
-source file (:doc:`../user-guide/documenting`). The argument is a
+source file (:doc:`../user-guide/documenting`). They never read a file and
+never warn about a missing one: they show the signature and content as
+written. The argument is a
 signature: a name, optionally followed by ``(arguments)`` (optional
 arguments in ``[...]``) and ``-> annotation``. If the name matches a source
-file, the object gets its path reference. Their content may use
+file, the object gets its path reference (for links), not its help. Their
+content may use
 Sphinx's info fields: ``:param x:``, ``:type x:``, ``:returns:``,
 ``:rtype:``, ``:raises Cls:`` (a link to an error class), ``:var v:``.
 

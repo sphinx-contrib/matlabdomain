@@ -6,6 +6,41 @@ signature, the help text and, for classes, the members. This page shows
 them on a small sample project, rendered by this documentation's own build.
 :doc:`../reference/directives` lists every directive and option.
 
+Auto and description directives
+-------------------------------
+
+Every kind of object has two directives: an auto directive
+(``mat:autofunction``) and a description directive (``mat:function``).
+
+.. list-table::
+   :header-rows: 1
+   :stub-columns: 1
+
+   * -
+     - ``mat:autofunction``, ``mat:autoclass``, ...
+     - ``mat:function``, ``mat:class``, ...
+   * - Reads the source file
+     - yes
+     - never
+   * - Signature
+     - from the file (or the one you give)
+     - as you write it
+   * - Text
+     - the help text, then your content
+     - only your content
+   * - Members
+     - with ``:members:``
+     - nested directives you write
+   * - No file has the name
+     - a warning ("don't know which object to document"); nothing is
+       shown
+     - no warning; shown as written
+
+The auto directives write description directives, filled from the file.
+Use the auto directives for code that has files; write description
+directives for objects without a ``.m`` file, such as MEX functions
+(:ref:`below <hand-written>`).
+
 The sample project
 ------------------
 
@@ -197,6 +232,8 @@ Content below an auto directive is added after the help text:
 
       Added by hand: an example that is not in the help text.
 
+.. _hand-written:
+
 Writing directives by hand
 --------------------------
 
@@ -211,8 +248,10 @@ example a MEX function:
 .. include:: ../snippets/handwritten.rst
 
 If the name matches a file below the project root, the object gets that
-file's path reference; otherwise its reference is the name as written,
-below the current folder if one is set (here ``+shapes/fastSolve``).
+file's path reference, so links to the file land here; the file itself is
+not read. Otherwise its reference is the name as written, below the current
+folder if one is set (here ``+shapes/fastSolve``). Either way there is no
+warning.
 Nest ``mat:method`` and ``mat:attribute`` in ``mat:class`` to document
 members. The auto directives generate these directives; you rarely need
 them for code that has files.
