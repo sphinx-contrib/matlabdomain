@@ -1,0 +1,18 @@
+../src/+demo/+geometry/distance.m:1: error: +demo/+geometry/distance.m (demo.geometry.distance): has no inputs section in its help (such as "Inputs:"), and these inputs have no arguments-block comment: p, q [inputs]
+../src/+demo/+geometry/distance.m:1: error: +demo/+geometry/distance.m (demo.geometry.distance): has no outputs section in its help (such as "Outputs:"), and these outputs have no arguments-block comment: d [outputs]
+../src/+demo/@Shape/Shape.m:12: error: +demo/@Shape/Shape.m.Shape (demo.Shape.Shape): has no inputs section in its help (such as "Inputs:"), and these inputs have no arguments-block comment: name, size [inputs]
+../src/+demo/@Shape/area.m:1: error: +demo/@Shape/area.m (demo.Shape.area): has no outputs section in its help (such as "Outputs:"), and these outputs have no arguments-block comment: a [outputs]
+../src/+demo/@Shape/scale.m:1: error: +demo/@Shape/scale.m (demo.Shape.scale): has no inputs section in its help (such as "Inputs:"), and these inputs have no arguments-block comment: factor [inputs]
+../src/+demo/@Shape/scale.m:1: error: +demo/@Shape/scale.m (demo.Shape.scale): has no outputs section in its help (such as "Outputs:"), and these outputs have no arguments-block comment: obj [outputs]
+../src/utils/lerp.m:1: error: utils/lerp.m (lerp): has no inputs section in its help (such as "Inputs:"), and these inputs have no arguments-block comment: a, b, t [inputs]
+../src/utils/lerp.m:1: error: utils/lerp.m (lerp): has no outputs section in its help (such as "Outputs:"), and these outputs have no arguments-block comment: y [outputs]
+../src/utils/private/check_range.m:1: error: utils/private/check_range.m (check_range): has no inputs section in its help (such as "Inputs:"), and these inputs have no arguments-block comment: lo, hi [inputs]
+
+Checked: 4 functions, 2 classes, 3 methods, 1 scripts, 1 apps
+Not checked: 0 ignored, 1 hidden, 0 unreadable, 0 not parsed
+Findings: 9 errors, 0 warnings
+  description (error): 0 errors, 0 warnings
+  method-description (error): 0 errors, 0 warnings
+  inputs (error): 5 errors, 0 warnings
+  outputs (error): 4 errors, 0 warnings
+  name-value (error): 0 errors, 0 warnings

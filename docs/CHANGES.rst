@@ -1,8 +1,16 @@
 Release notes
 =============
 
-0.23.0 (Unreleased)
--------------------
+1.0.0 (Unreleased)
+------------------
+
+The first stable release; from here on the project follows semantic
+versioning. It breaks with 0.x in many places: see "Migrating from 0.22 and
+earlier" in the documentation.
+
+* The documentation is rewritten: getting started, a user guide, a reference
+  of every configuration value, directive, role, option and warning, and a
+  developer guide. Examples are rendered by the documentation's own build.
 
 * Drop support for Python <=3.10.
 * Drop support for Sphinx <=7.x.
@@ -185,8 +193,21 @@ Release notes
   ``matlab_api_check_rules``, ``matlab_api_check_enabled`` and
   ``matlab_api_check_ignore_patterns``. Cached environments from earlier
   versions are rebuilt.
+* **Breaking:** the auto directives accept only the options that do
+  something. ``mat:autofolder`` no longer accepts ``:inherited-members:``,
+  ``:special-members:``, ``:imported-members:``, ``:ignore-module-all:`` and
+  ``:no-value:``; ``mat:autodata`` no longer accepts ``:annotation:`` and
+  ``:no-value:``; no auto directive accepts ``:no-index-entry:``. They were
+  inherited from Python's autodoc and ignored. ``mat:autofolder`` accepts
+  ``:protected-members:``, ``:hidden-members:`` and
+  ``:access-list-members:``, which apply to the classes it documents. Every
+  directive that takes ``:noindex:`` also takes ``:no-index:``.
+* **Breaking:** the unused module ``sphinxcontrib.mat_lexer`` (a Pygments
+  lexer, used by the parser before tree-sitter) is removed.
+* The package metadata names the license in ``LICENSE``, BSD-2-Clause (it
+  said BSD-3-Clause).
 
-.. _PR 232: https://github.com/sphinx-contrib/matlabdomain/pull/253
+.. _PR 232: https://github.com/sphinx-contrib/matlabdomain/pull/232
 
 0.22.1 (2024-08-17)
 -------------------
@@ -195,7 +216,7 @@ Release notes
   ``sphinx.environment.BuildEnvironment.doc2path`` was changed to return a
   path-like object in Sphinx 8.0.2.
 
-.. _Issue 262: https://github.com/sphinx-contrib/matlabdomain/issues/243
+.. _Issue 262: https://github.com/sphinx-contrib/matlabdomain/issues/262
 
 
 0.22.0 (2024-07-17)
@@ -210,11 +231,6 @@ Release notes
   to inline on property comments.
 * Added new configuration: ``matlab_show_property_specs``. When set to ``True``
   it will print the property specification for class properties.
-
-  * Example
-
-    .. image:: ./render_property_specs_0.22.0.png
-      :alt: Rendering property specs in 0.22.0
 
 .. _Issue 243: https://github.com/sphinx-contrib/matlabdomain/issues/243
 .. _Issue 249: https://github.com/sphinx-contrib/matlabdomain/issues/249
@@ -346,20 +362,7 @@ Release notes
   root folder (something that only worked for packages before).
 * We also updated the class rendering to be closer to that of MathWorks. Instead
   of putting both properties and methods together, they are now grouped by:
-  *Constructor Summary*, *Property Summary* and *Method Summary*. Below is an
-  example of how the ``ClassBar`` from
-  ``tests/roots/test_autodoc/target/+package/ClassBar.m`` was rendered before
-  and after.
-
-  Before
-
-    .. image:: ./render_classes_0.18.0.png
-      :alt: Rendering of default ``ClassBar.m`` in 0.18.0
-
-  After
-
-    .. image:: ./render_classes_0.19.0.png
-      :alt: Rendering of default ``ClassBar.m`` in 0.19.0
+  *Constructor Summary*, *Property Summary* and *Method Summary*.
 
 
 0.18.0 (2023-04-14)
@@ -369,16 +372,6 @@ Release notes
   ``matlab_show_property_default_value = True``. Multiline default values are
   now truncated to one line. Excessive spacing is removed and values are just
   shown verbatim as they were parsed instead of in string.
-
-  * Before
-
-    .. image:: ./render_default_values_0.17.1.png
-      :alt: Rendering default property values in 0.17.1
-
-  * After
-
-    .. image:: ./render_default_values_0.18.0.png
-      :alt: Rendering default property values in 0.18.0
 
 
 0.17.1 (2023-04-12)

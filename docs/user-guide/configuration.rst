@@ -1,0 +1,170 @@
+Configuration
+=============
+
+All settings go in ``conf.py``. They start with ``matlab_``;
+:doc:`../reference/configuration` lists every one with its type and default.
+This page explains how to use them.
+
+The project root
+----------------
+
+:confval:`matlab_src_code_project_root` is the folder all MATLAB code lives
+below:
+
+.. code-block:: python
+
+   matlab_src_code_project_root = "../src"
+
+* A relative path is relative to the Sphinx source folder (the folder with
+  ``index.rst`` that you pass to ``sphinx-build``; usually ``conf.py`` is
+  there too), so the docs build the same from any working
+  folder and with `sphinx-multiversion
+  <https://github.com/sphinx-contrib/multiversion>`_. An absolute path works
+  too.
+* Every object is identified by its path below this folder, its *path
+  reference* (``+shapes/Circle.m``, see :doc:`referencing`). Choose the root
+  once: moving it changes every reference, link anchor and inventory entry.
+* Without it, no file is indexed and the auto directives find nothing.
+  Hand-written directives (:doc:`documenting`) still work.
+
+Use the folder you would add to the MATLAB path, or the folder above several
+such folders (``src/`` with ``toolbox/`` and ``examples/`` below it). Plain
+folders below the root are not namespaces, as in MATLAB: ``toolbox/f.m`` is
+the global function ``f``.
+
+Selecting files
+---------------
+
+By default every file below the root is indexed. Two lists of glob patterns
+change that; both are relative to the root and use ``/``:
+
+.. code-block:: python
+
+   matlab_src_include_patterns = ["toolbox/**", "examples/*.m"]
+   matlab_src_exclusion_patterns = ["**/tests/**", "**/private/**"]
+
+* :confval:`matlab_src_include_patterns` (default ``["**/*"]``): a file is
+  indexed if its path reference matches one of them. ``[]`` selects nothing.
+* :confval:`matlab_src_exclusion_patterns` (default ``[]``): files and
+  folders that match one of them are left out; an excluded folder is not
+  searched.
+
+Patterns match like Sphinx's ``exclude_patterns``: ``**`` matches across
+folders, ``*`` and ``?`` within one folder, and ``**/x`` also matches ``x``
+itself, so ``**/tests`` leaves out every ``tests`` folder with everything
+below it. Matching is case-sensitive on every system.
+
+These are configuration errors (``ConfigError``), reported when the build
+starts (Sphinx prints "Configuration error!" and the message on the last
+line of a short traceback):
+
+* changing either list from its default without
+  :confval:`matlab_src_code_project_root`;
+* a pattern that is absolute, has a drive (``C:``, ``\\server``) or a
+  ``\``, is empty, or uses ``..`` to leave the root or after a wildcard
+  (``src/../+pkg/*.m`` is fine: it means ``+pkg/*.m``);
+* a list that is not a list or tuple;
+* a pattern whose leading folders lead out of the root through a link.
+
+Some files and folders are never indexed or need care:
+
+* Folders whose names start with ``.`` or ``_`` are never searched (``.git``,
+  ``_build``).
+* A link or Windows junction below the root that points outside it is left
+  out, with one ``mat.outside_root`` warning. Links that stay inside the
+  root are followed.
+* Generated data files can be large and slow to parse; exclude them
+  (``**/data/**``) when they need no documentation.
+
+The same patterns are the ``--include`` and ``--exclude`` options of
+``sphinx-matlab-apidoc``; keep both equal (:doc:`apidoc`).
+
+The MATLAB release
+------------------
+
+:confval:`matlab_version` (default ``"R2026a"``) is the release the code is
+written for. It sets the defaults of release-dependent rules:
+
+* :confval:`matlab_namelengthmax`, the longest valid name: 2048 from R2025a
+  on, 63 before. Set it to ``63`` or ``2048`` only to override the derived
+  value; an explicit value wins even when :confval:`matlab_version` changes.
+* Whether scripts and functions in a subfolder of a class folder
+  (``@C/sub/x.m``) can be called: before R2026a they can, from R2026a on they
+  cannot (they are then documented by path, with a ``mat.not_callable``
+  warning).
+
+The oldest supported release is R2025a; an older one, or a value that is not
+``R<year>a`` or ``R<year>b``, is a configuration error.
+
+File encoding
+-------------
+
+Files are read like MATLAB R2026a reads them:
+
+1. a byte-order mark selects UTF-8, UTF-16 or UTF-32;
+2. otherwise :confval:`matlab_src_encoding`, a Python codec name such as
+   ``"cp1252"`` or ``"shift_jis"``, if set;
+3. otherwise UTF-8. A file that is not valid UTF-8 is read with the Windows
+   ANSI code page on Windows and as ISO-8859-1 (Latin-1) elsewhere, with one
+   ``mat.encoding`` warning that gives the line of the first invalid byte.
+
+Set :confval:`matlab_src_encoding` when a project uses one legacy encoding
+throughout, so that Windows and Linux builds read it the same way. An
+unknown codec is a configuration error.
+
+How things are shown
+--------------------
+
+* :confval:`matlab_show_property_default_value` (default ``False``): show a
+  property's default value after its name (``Radius = 1``).
+* :confval:`matlab_show_property_specs` (default ``False``): show a
+  property's size, class and validators (``Radius (1,1) double
+  {mustBePositive}``).
+* :confval:`matlab_class_signature` (default ``False``): show the
+  constructor's arguments in the class signature (``class Circle(radius)``).
+* :confval:`matlab_auto_link` (default ``None``): turn names in help text
+  into links. ``"basic"`` links the entries of "See also" lines and the
+  property and method lists of class help; ``"all"`` also links every known
+  class and function name. See :doc:`help-text`.
+
+These Sphinx and autodoc settings apply too:
+
+* ``autoclass_content``: ``"class"`` (default) shows the class help;
+  ``"init"`` the constructor's help instead; ``"both"`` both, and then the
+  constructor is not listed again among the members.
+* ``autodoc_docstring_signature`` (default ``True``): if the first help line
+  of a function or method looks like its signature (``times_two(x)``), use it
+  as the signature and drop it from the text.
+* ``autodoc_member_order``, and ``:member-order:`` on a directive:
+  ``"alphabetical"`` (default), ``"groupwise"`` or ``"bysource"``.
+* ``autodoc_default_options``: default options of the auto directives, for
+  example ``{"members": True, "show-inheritance": True}``.
+* ``add_function_parentheses`` (``()`` after function and method links) and
+  ``add_module_names`` (``False`` shows ``Circle`` instead of
+  ``shapes.Circle`` in signatures).
+* ``suppress_warnings``: see :doc:`warnings`.
+* The events ``autodoc-process-docstring`` and ``autodoc-skip-member`` are
+  emitted for MATLAB objects too, so extensions such as
+  ``sphinx.ext.napoleon`` work on MATLAB help.
+
+Checking help text
+------------------
+
+:confval:`matlab_api_check_rules`, :confval:`matlab_api_check_enabled` and
+:confval:`matlab_api_check_ignore_patterns` configure the
+``matlab-api-check`` builder; see :doc:`api-check`.
+
+Memory
+------
+
+:confval:`matlab_src_cache_text` (default ``True``) keeps the text that
+indexing read in memory until the file is parsed, during one build. Set it
+to ``False`` for very large projects if memory is short; files are then read
+twice.
+
+Removed settings
+----------------
+
+Setting ``matlab_src_dir``, ``matlab_keep_package_prefix`` or
+``matlab_short_links`` is a configuration error that names the replacement.
+:doc:`migration` shows how to update an older ``conf.py``.

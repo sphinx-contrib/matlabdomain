@@ -1,0 +1,40 @@
+Roadmap
+=======
+
+Possible later work. None of it is available yet.
+
+More file types
+---------------
+
+The file-type registry (:doc:`architecture`) is the place for new MATLAB
+file types. Planned:
+
+* Simulink models and libraries (``.slx``, a zip container; ``.mdl``,
+  text; exported ``.xml``) and reference subsystems;
+* Simscape components (``.ssc``, text).
+
+One handler owns one extension: an ``.slx`` handler would tell models,
+libraries and subsystems apart, and an ``.xml`` handler would reject XML
+that is not a Simulink export.
+
+``sphinx-matlab-apidoc``
+------------------------
+
+* A configuration hook that regenerates the pages on each build from
+  ``conf.py`` values (``matlab_apidoc_*``), like Sphinx's own
+  ``sphinx.ext.apidoc``.
+* ``Contents.m`` as the description of its folder, as MATLAB's ``help
+  folder`` shows it.
+
+Help text
+---------
+
+* A mode that shows help as preformatted text instead of parsing it as
+  reStructuredText (:doc:`../user-guide/help-text`).
+* Checking which lines MATLAB itself treats as "See also" lines.
+
+MATLAB releases
+---------------
+
+Releases before R2025a for :confval:`matlab_version`, each with the naming
+and callability rules MATLAB had then.

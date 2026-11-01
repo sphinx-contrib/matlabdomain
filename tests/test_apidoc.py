@@ -869,3 +869,19 @@ def test_example_builds(make_app, tmp_path):
     names = _inventory(app)
     for ref in ("+demo/@Shape/Shape.m.area", "utils/private/check_range.m"):
         assert ref in names
+
+
+def test_example_api_check_reports(make_app, tmp_path):
+    # docs/user-guide/api-check.rst shows these reports.
+    dst = tmp_path / "example"
+    shutil.copytree(EXAMPLE, dst, ignore=shutil.ignore_patterns("_build"))
+    app = make_app("matlab-api-check", srcdir=dst / "docs", freshenv=True)
+    app.build()
+    assert app.statuscode == 1
+    out = Path(app.outdir)
+    report = (out / "api-check.json").read_text(encoding="utf-8")
+    assert report == (EXAMPLE / "api-check.json").read_text(encoding="utf-8")
+    # Locations are absolute; the committed copy is relative to docs/.
+    text = (out / "api-check.txt").read_text(encoding="utf-8")
+    text = text.replace(str(dst / "src") + os.sep, "../src/").replace("\\", "/")
+    assert text == (EXAMPLE / "api-check.txt").read_text(encoding="utf-8")

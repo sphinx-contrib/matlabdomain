@@ -1,0 +1,100 @@
+Warnings
+========
+
+The extension never stops a build because of one bad file: the file gets a
+warning, and everything else is documented as usual. Each warning has the
+type ``mat`` and a subtype, starts with the path reference of the file, and
+gives ``file:line`` where a line is known. :doc:`../reference/warnings`
+lists them in a table.
+
+Turning warnings off
+--------------------
+
+Sphinx's ``suppress_warnings`` turns off warnings by type and subtype:
+
+.. code-block:: python
+
+   suppress_warnings = [
+       "mat.not_callable",  # one subtype
+       "mat.no_code",
+   ]
+
+``"mat"`` turns off every warning of this extension. Warnings about help
+text that is not valid reStructuredText come from docutils and cannot be
+selected this way (:doc:`help-text`).
+
+What each warning means
+-----------------------
+
+``mat.parse_error``
+   A file could not be read (no permission, for example) or parsed, an
+   ``.mlapp`` file is not a valid App Designer file, a folder could not be
+   listed or entered, or a file name is not valid UTF-8. The file is still
+   indexed and documented, without content, so links to it work; a file
+   that cannot be read is tried again on every build. Where the parser
+   found a syntax error, the warning gives its line and column.
+
+``mat.encoding``
+   A file is not valid in its encoding: it was decoded with the fallback
+   (Windows ANSI code page or Latin-1), or bytes were replaced. The warning
+   gives the line of the first bad byte. Save the file as UTF-8, or set
+   :confval:`matlab_src_encoding` (:doc:`configuration`).
+
+``mat.invalid_matlab``
+   The file is probably not valid MATLAB: its first line of code says one
+   type and the parser found another (a ``classdef`` without its ``end``,
+   ``function = 1;``), a ``function`` has a dotted name (``function y =
+   pkg.f(x)``, which MATLAB refuses to run outside a ``classdef``), or a
+   ``.m`` file contains NUL bytes (probably a binary file). It is
+   documented as far as it could be parsed.
+
+``mat.no_code``
+   The file is empty or has only comments. It is documented as a script.
+
+``mat.not_callable``
+   MATLAB cannot call the file for :confval:`matlab_version`, so it has no
+   MATLAB name; it is documented and linked by path (:doc:`referencing`).
+   Rename or move the file, or suppress the warning if that is intended.
+
+``mat.outside_root``
+   A link or Windows junction below the project root points outside it; it
+   is not followed (:doc:`configuration`).
+
+``mat.ambiguous``
+   A name in a directive, role, "See also" line or auto-link matches
+   several objects. The warning lists their path references; use one of
+   them. Copies of files (vendored code, symbolic links) are a common
+   cause; exclude them with :confval:`matlab_src_exclusion_patterns`.
+
+``mat.apidoc``
+   ``sphinx-matlab-apidoc``: a file that cannot be read was left out, two
+   output names differ only by letter case, or an output path is longer
+   than Windows allows.
+
+``mat.api_check``
+   A finding of the ``matlab-api-check`` builder (:doc:`api-check`), an
+   ``ERROR`` or a ``WARNING`` depending on the rule's severity.
+
+Files named ``Contents.m``, ``slblocks.m`` and the other special files
+(:doc:`help-text`) never get ``mat.invalid_matlab``, ``mat.no_code`` or
+``mat.not_callable``.
+
+When warnings appear
+--------------------
+
+* On every build, for every indexed file: ``mat.encoding``,
+  ``mat.no_code``, ``mat.not_callable``, ``mat.outside_root``,
+  ``mat.invalid_matlab`` for NUL bytes, and ``mat.parse_error`` for a file
+  or folder that cannot be read.
+* Once per build, for the files that the pages read in that build use:
+  ``mat.invalid_matlab`` and ``mat.parse_error`` found while parsing. A file
+  that no page uses is not parsed, so it does not get these (the
+  ``matlab-api-check`` builder parses every file, so it reports them all).
+
+Other warnings
+--------------
+
+A few messages have no subtype: an auto directive that matches no object
+("don't know which object to document"), an unknown directive option, a
+folder directive given a class folder, and duplicate object descriptions.
+Fix the directive; they cannot be suppressed by subtype.

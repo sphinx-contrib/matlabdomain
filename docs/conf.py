@@ -15,8 +15,8 @@
 # -- Project information -----------------------------------------------------
 
 project = "sphinxcontrib-matlabdomain"
-copyright = "Jørgen Cederberg"
-author = "Jørgen Cederberg"
+copyright = "Jørgen Cederberg and contributors"
+author = "Jørgen Cederberg and contributors"
 
 # The short X.Y version
 version = ""
@@ -28,14 +28,21 @@ release = ""
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-needs_sphinx = "7.0"
+needs_sphinx = "8.0"
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab", "sphinx.ext.napoleon"]
-matlab_src_code_project_root = "."
+# The sample project rendered in the user guide.
+matlab_src_code_project_root = "src"
+matlab_auto_link = "basic"
 primary_domain = "mat"
+nitpicky = True
+# MATLAB's own classes are not documented here: no warning for links to them.
+nitpick_ignore_regex = [("mat:class", r"handle|matlab\..+")]
+# MathWorks answers link checkers with 403 Forbidden.
+linkcheck_ignore = [r"https://([a-z]+\.)?mathworks\.com/"]
 
 
 # Add any paths that contain templates here, relative to this directory.
@@ -59,7 +66,8 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+# snippets/ holds reST that pages both show and include.
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "snippets"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
