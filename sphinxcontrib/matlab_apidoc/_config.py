@@ -41,6 +41,25 @@ SOURCE_CONFIG = {
 }
 
 
+#: the build's other values, which the CLI accepts and ignores
+BUILD_ONLY_CONFIG = frozenset(
+    {
+        "matlab_src_cache_text",
+        "matlab_src_dir",
+        "matlab_keep_package_prefix",
+        "matlab_short_links",
+        "matlab_show_property_default_value",
+        "matlab_show_property_specs",
+        "matlab_auto_link",
+        "matlab_class_signature",
+        "matlab_add_namespace_names",
+        "matlab_api_check_enabled",
+        "matlab_api_check_rules",
+        "matlab_api_check_ignore_patterns",
+    }
+)
+
+
 def add_config_values(app):
     """Register the ``matlab_apidoc_*`` values (rebuild ``''``)."""
     for name, (default, types) in APIDOC_CONFIG.items():

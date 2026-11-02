@@ -152,6 +152,12 @@ earlier" in the documentation.
   ``matlab_apidoc_tocfile``, ``matlab_apidoc_suffix`` and
   ``matlab_apidoc_remove_old`` are gone, and setting one is an error of the
   command; a script on the Python API can still choose them.
+* **Breaking:** a ``matlab_*`` name in ``conf.py`` that is not a
+  configuration value (a typo, a value this version does not have, a helper
+  variable) is a ``ConfigError`` in the build and in
+  ``sphinx-matlab-apidoc``, with the closest value as a suggestion; Sphinx
+  ignores such names silently. ``sphinx-matlab-apidoc`` also rejects
+  abbreviated options.
 * The function files of a class folder ``@X/`` are methods only if ``X.m`` is
   a classdef. In any other ``@`` folder (an old-style class, a classdef named
   differently, no class file) they are documented as functions; before, the

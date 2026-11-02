@@ -27,6 +27,7 @@ from sphinxcontrib.matlab_apidoc import (
 )
 from sphinxcontrib.matlab_apidoc._config import (
     APIDOC_CONFIG,
+    BUILD_ONLY_CONFIG,
     REMOVED_CONFIG,
     SOURCE_CONFIG,
 )
@@ -642,7 +643,16 @@ def test_output_must_be_a_folder(tmp_path, capsys):
 
 
 @pytest.mark.parametrize(
-    "argv", [["--bogus"], ["-o", "out"], ["src"], ["-t", "templates"], ["-e"]]
+    "argv",
+    [
+        ["--bogus"],
+        ["-o", "out"],
+        ["src"],
+        ["-t", "templates"],
+        ["-e"],
+        ["--conf", "."],
+        ["--dry"],
+    ],
 )
 def test_usage_errors_exit_2(capsys, monkeypatch, argv):
     monkeypatch.setenv("PYTHON_COLORS", "0")  # argparse colors usage from Python 3.14
@@ -913,6 +923,12 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
             "matlab_apidoc_remove_old = False",
             "matlab_apidoc_remove_old is no longer a setting",
         ),
+        (
+            "matlab_apidoc_seperate = True",
+            "matlab_apidoc_seperate is not a configuration value (did you mean "
+            "matlab_apidoc_separate?)",
+        ),
+        ("matlab_zzz = 1", "matlab_zzz is not a configuration value. Correct"),
         ('raise RuntimeError("boom")', "RuntimeError: boom"),
     ],
 )
@@ -932,7 +948,13 @@ def test_removed_values_are_named_together(tmp_path, capsys):
     err = capsys.readouterr().err
     assert "matlab_apidoc_maxdepth is no longer a setting" in err
     assert "; matlab_apidoc_suffix is no longer a setting" in err
-    assert "write a script on the Python API" in err
+    assert "from a script on the Python API" in err
+
+
+def test_build_only_values_are_accepted(tmp_path):
+    conf = 'matlab_auto_link = "all"\n_matlab_helper = 1\n'
+    docs = conf_dir(tmp_path / "docs", tmp_path / "out", conf)
+    assert main(["-q", "-c", docs]) == 0
 
 
 @pytest.mark.parametrize(
@@ -973,6 +995,8 @@ def test_cli_defaults_match_the_build(make_app, project):
     for name, (default, _) in APIDOC_CONFIG.items():
         assert (options[name].default, options[name].rebuild) == (default, ""), name
     assert not set(REMOVED_CONFIG) & set(options)
+    ours = {name for name in options if name.startswith("matlab_")}
+    assert ours == {*SOURCE_CONFIG, *APIDOC_CONFIG, *BUILD_ONLY_CONFIG}
 
 
 # --- POSIX-only names -------------------------------------------------------

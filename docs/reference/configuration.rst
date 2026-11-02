@@ -5,6 +5,12 @@ The values the extension adds to ``conf.py``. :doc:`../user-guide/configuration`
 explains how to use them. Unless noted, changing a value makes Sphinx read
 every page again.
 
+Every name in ``conf.py`` that starts with ``matlab_`` must be one of the
+values below. Any other one (a typo, or a value this version does not have)
+is a ``ConfigError`` in the build and in ``sphinx-matlab-apidoc``, which
+suggests the closest value. Give helper variables another name, such as
+``_matlab_root``.
+
 Source files
 ------------
 

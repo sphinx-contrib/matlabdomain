@@ -940,6 +940,12 @@ _REMOVED_OPTIONS = {
 }
 
 
+def check_config_names(app, config):  # noqa: ARG001
+    mat_types.check_config_names(
+        config._raw_config, config._options, apidoc_config.REMOVED_CONFIG
+    )
+
+
 def ensure_configuration(app, config):
     for name, reason in _REMOVED_OPTIONS.items():
         if getattr(config, name) is not None:
@@ -975,6 +981,7 @@ def _get_version():
 def setup(app):
     # The mat:auto* directives read autodoc's config values.
     app.setup_extension("sphinx.ext.autodoc")
+    app.connect("config-inited", check_config_names)
     app.connect("config-inited", ensure_configuration)
     app.connect("config-inited", check_encoding)
     app.connect("config-inited", mat_sidecars.check_config)

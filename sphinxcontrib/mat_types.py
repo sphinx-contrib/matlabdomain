@@ -9,6 +9,7 @@ Types for MATLAB.
 """
 
 import copy
+import difflib
 import ntpath
 import os
 import stat
@@ -689,6 +690,34 @@ def pattern_list(value, option):
     if isinstance(value, str) or not isinstance(value, (list, tuple)):
         raise ConfigError(f"{option} must be a list of glob patterns.")
     return [_normalize_pattern(p, option) for p in value]
+
+
+def check_config_names(names, known, removed):
+    """ConfigError naming each ``matlab_*`` name in ``names`` (those of
+    ``conf.py``) that is not in ``known``: a typo, or a value this version
+    does not have. ``removed`` maps removed names to what replaced them.
+    """
+    unknown = sorted(n for n in names if n.startswith("matlab_") and n not in known)
+    if not unknown:
+        return
+    problems = []
+    for name in unknown:
+        if name in removed:
+            problems.append(f"{name} is no longer a setting ({removed[name]})")
+        else:
+            ours = sorted(k for k in known if k.startswith("matlab_"))
+            close = difflib.get_close_matches(name, ours, n=1)
+            hint = f" (did you mean {close[0]}?)" if close else ""
+            problems.append(f"{name} is not a configuration value{hint}")
+    tail = (
+        " The fixed choices can be changed from a script on the Python API."
+        if any(name in removed for name in unknown)
+        else ""
+    )
+    raise ConfigError(
+        f"{'; '.join(problems)}. Correct or delete these names in conf.py (a "
+        f"helper variable must not start with matlab_).{tail}"
+    )
 
 
 def check_text_encoding(encoding, option):

@@ -98,10 +98,12 @@ Exit status
 printed like Sphinx prints them); 1 when :option:`--check` finds a page to
 change; 2 for a usage or settings error, such as an invalid pattern,
 version or encoding, a missing ``conf.py`` or required value, an error in
-``conf.py``, or a value that is no longer a setting
+``conf.py``, a ``matlab_*`` name that is not a configuration value (a typo;
+:doc:`configuration`), or a value that is no longer a setting
 (``matlab_apidoc_maxdepth``, ``matlab_apidoc_tocfile``,
 ``matlab_apidoc_suffix``, ``matlab_apidoc_remove_old``). The removed
-flags (``ROOT``, ``-o``, ``--include`` and the others) are usage errors.
+flags (``ROOT``, ``-o``, ``--include`` and the others) and abbreviated
+options (``--dry`` for ``--dry-run``) are usage errors.
 
 Output files
 ------------

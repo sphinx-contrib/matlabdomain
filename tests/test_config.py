@@ -60,3 +60,33 @@ def test_matlab_src_dir_raises(make_app, project, overrides):
 def test_removed_options_raise(make_app, project, name, value):
     with pytest.raises(ConfigError, match=f"{name} was removed"):
         make_app(srcdir=project, confoverrides={name: value})
+
+
+@pytest.mark.parametrize(
+    ("line", "message"),
+    [
+        (
+            'matlab_src_code_project_rot = "code"',
+            r"matlab_src_code_project_rot is not a configuration value \(did you "
+            r"mean matlab_src_code_project_root\?\)\. Correct or delete",
+        ),
+        ("matlab_zzz = 1", r"matlab_zzz is not a configuration value\. Correct"),
+        (
+            "matlab_apidoc_maxdepth = 2",
+            r"matlab_apidoc_maxdepth is no longer a setting .*from a script",
+        ),
+    ],
+)
+def test_unknown_matlab_names_raise(make_app, project, line, message):
+    with open(project / "conf.py", "a", encoding="utf-8") as conf:
+        conf.write(f"{line}\n")
+    with pytest.raises(ConfigError, match=message):
+        make_app(srcdir=project)
+
+
+def test_other_names_in_conf_py_are_ignored(make_app, project):
+    with open(project / "conf.py", "a", encoding="utf-8") as conf:
+        conf.write(
+            '_matlab_helper = "code"\nmatlab_src_code_project_root = _matlab_helper\n'
+        )
+    make_app(srcdir=project)

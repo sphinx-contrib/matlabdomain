@@ -24,6 +24,7 @@ from ..mat_types import (
     IndexSettings,
     SourceFilter,
     build_index,
+    check_config_names,
     check_pattern_folders,
     check_text_encoding,
     pattern_list,
@@ -31,7 +32,13 @@ from ..mat_types import (
     sidecar_layout_error,
     sidecar_suffix_list,
 )
-from ._config import APIDOC_CONFIG, REMOVED_CONFIG, SOURCE_CONFIG, apidoc_value
+from ._config import (
+    APIDOC_CONFIG,
+    BUILD_ONLY_CONFIG,
+    REMOVED_CONFIG,
+    SOURCE_CONFIG,
+    apidoc_value,
+)
 from ._generate import ApidocOptions, generate
 
 #: exit status when --check finds pages to change
@@ -52,6 +59,7 @@ def _version():
 def get_parser():
     parser = argparse.ArgumentParser(
         prog="sphinx-matlab-apidoc",
+        allow_abbrev=False,
         description=(
             "Write reST pages with sphinxcontrib-matlabdomain directives for the "
             "MATLAB files of the project that CONF_DIR/conf.py documents: one "
@@ -109,16 +117,8 @@ def read_conf(confdir):
     if not os.path.isfile(os.path.join(confdir, "conf.py")):
         raise ConfigError(f"-c {confdir!r} has no conf.py.")
     config = Config.read(os.path.abspath(confdir), overrides={}, tags=Tags())
-    removed = [
-        f"{name} is no longer a setting ({fixed})"
-        for name, fixed in REMOVED_CONFIG.items()
-        if name in config._raw_config
-    ]
-    if removed:
-        raise ConfigError(
-            f"{'; '.join(removed)}. Delete from conf.py what is no longer a "
-            "setting, or write a script on the Python API."
-        )
+    known = {*SOURCE_CONFIG, *APIDOC_CONFIG, *BUILD_ONLY_CONFIG}
+    check_config_names(config._raw_config, known, REMOVED_CONFIG)
     for name, default in SOURCE_CONFIG.items():
         config.add(name, default, "env", ())
     for name, (default, types) in APIDOC_CONFIG.items():
