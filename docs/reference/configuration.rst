@@ -174,9 +174,7 @@ Changing these reads no page again.
 
 Read by ``sphinx-matlab-apidoc`` (:doc:`cli`); the build ignores them,
 so changing them reads no page again. No flag overrides them. Paths are
-relative to the folder of ``conf.py``. The toctree depth (4), the name of
-the root page (``index``), the suffix (``.rst``) and the removal of stale
-pages are fixed; a script can change them (:ref:`apidoc-write-your-own`).
+relative to the folder of ``conf.py``.
 
 .. confval:: matlab_apidoc_output_dir
    :type: ``str`` or ``None``
@@ -190,11 +188,36 @@ pages are fixed; a script can change them (:ref:`apidoc-write-your-own`).
 
    One page per file; folder pages list them in toctrees.
 
+.. confval:: matlab_apidoc_maxdepth
+   :type: ``int``
+   :default: ``4``
+
+   The ``:maxdepth:`` of the generated toctrees.
+
+.. confval:: matlab_apidoc_tocfile
+   :type: ``str``
+   :default: ``"index"``
+
+   The name of the root folder's page, without suffix.
+
+.. confval:: matlab_apidoc_suffix
+   :type: ``str``
+   :default: ``"rst"``
+
+   The suffix of the generated files, with or without the dot.
+
 .. confval:: matlab_apidoc_templatedir
    :type: ``str`` or ``None``
    :default: ``None``
 
    A folder with templates that replace the defaults (:doc:`templates`).
+
+.. confval:: matlab_apidoc_remove_old
+   :type: ``bool``
+   :default: ``True``
+
+   Delete generated pages that are no longer pages, so the output stays
+   accurate. Only files that start with the marker line are deleted.
 
 Removed
 -------

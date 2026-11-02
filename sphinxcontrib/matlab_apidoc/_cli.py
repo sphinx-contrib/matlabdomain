@@ -64,15 +64,14 @@ def get_parser():
             "MATLAB files of the project that CONF_DIR/conf.py documents: one "
             "page per folder, mirroring the folder tree. Pages that start with "
             "the marker line are rewritten when they change and removed when "
-            "they are no longer pages."
+            "they are no longer pages (matlab_apidoc_remove_old)."
         ),
         epilog=(
             "The settings come from conf.py only: matlab_src_code_project_root "
             "and matlab_apidoc_output_dir (both required), the other "
-            "matlab_src_* values, matlab_version, matlab_namelengthmax, "
-            "matlab_apidoc_templatedir and matlab_apidoc_separate. For anything "
-            "else, write a script on the Python API "
-            "(sphinxcontrib.matlab_apidoc.generate)."
+            "matlab_src_* values, matlab_version, matlab_namelengthmax and the "
+            "other matlab_apidoc_* values. For full control, write a script on "
+            "the Python API (sphinxcontrib.matlab_apidoc.generate)."
         ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {_version()}")
@@ -131,6 +130,15 @@ def _folder(conf, name, srcdir):
     return None if value is None else os.path.join(srcdir, value)
 
 
+def _file_name(conf, name, value=None):
+    """Return a file-name value of conf.py, or ConfigError."""
+    if value is None:
+        value = apidoc_value(conf, name)
+    if not value or any(sep in value for sep in "/\\"):
+        raise ConfigError(f"{name} {value!r} must be a file name.")
+    return value
+
+
 def _settings(args):
     """``(IndexSettings, ApidocOptions)`` of conf.py and the flags, or
     ConfigError.
@@ -180,12 +188,17 @@ def _settings(args):
         sidecar_suffixes=sidecar_suffixes,
         source_dir=srcdir,
     )
+    suffix = apidoc_value(conf, "matlab_apidoc_suffix").removeprefix(".")
     options = ApidocOptions(
         output_dir=output_dir,
         force=args.force,
         dry_run=args.dry_run or args.check,
         separate=apidoc_value(conf, "matlab_apidoc_separate"),
+        maxdepth=apidoc_value(conf, "matlab_apidoc_maxdepth"),
+        tocfile=_file_name(conf, "matlab_apidoc_tocfile"),
+        suffix=_file_name(conf, "matlab_apidoc_suffix", suffix),
         templatedir=templatedir,
+        remove_old=apidoc_value(conf, "matlab_apidoc_remove_old"),
     )
     return settings, options
 

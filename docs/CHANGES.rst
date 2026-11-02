@@ -132,12 +132,13 @@ earlier" in the documentation.
   interface: renaming or removing a key is a breaking change. See
   ``examples/apidoc``. ``sphinx-matlab-apidoc -c DIR`` (default: the
   current folder) reads every setting from ``DIR/conf.py``: the source
-  settings of the build and the new ``matlab_apidoc_output_dir``
-  (required), ``matlab_apidoc_templatedir`` and ``matlab_apidoc_separate``.
+  settings of the build and the new ``matlab_apidoc_*`` values (output
+  folder, one page per file, toctree depth, root page, suffix, templates,
+  removal of stale pages).
   Its flags only control a run: ``-f``, ``-n``, ``--check``, ``-q``.
   Generated pages (those that start with its marker line) are rewritten
   when they change and removed when they are no longer pages; ``--check``
-  exits with 1 when the pages are out of date. For other output, a script
+  exits with 1 when the pages are out of date. For full control, a script
   calls the Python API (``IndexSettings``, ``build_index``, ``generate``,
   ``ApidocOptions``). The command does not run inside ``sphinx-build``; run
   it before the build.

@@ -106,7 +106,8 @@ What the pages contain
 ----------------------
 
 * One page per folder that has a file to document at or below it. The page
-  of the root folder is ``index`` and is always written.
+  of the root folder is the toc file (``index`` by default) and is always
+  written.
 * The title is the folder's signature: ``namespace demo`` for a ``+``
   folder, ``folder utils/`` for a plain folder, ``folder ./`` for the root.
 * Each page has ``mat:autofolder`` (without ``:members:``), a local table of
@@ -149,20 +150,39 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
   :confval:`matlab_namelengthmax`, :confval:`matlab_src_encoding` and
   :confval:`matlab_src_sidecar_suffixes`;
 * its own settings, which the build ignores:
-  :confval:`matlab_apidoc_output_dir` (required),
-  :confval:`matlab_apidoc_templatedir` and
-  :confval:`matlab_apidoc_separate`.
+
+  .. list-table::
+     :header-rows: 1
+
+     * - Value
+       - Default
+       - Sets
+     * - :confval:`matlab_apidoc_output_dir`
+       - required
+       - the folder for the pages
+     * - :confval:`matlab_apidoc_separate`
+       - ``False``
+       - one page per file
+     * - :confval:`matlab_apidoc_maxdepth`
+       - ``4``
+       - the ``:maxdepth:`` of the toctrees
+     * - :confval:`matlab_apidoc_tocfile`
+       - ``"index"``
+       - the name of the root folder's page
+     * - :confval:`matlab_apidoc_suffix`
+       - ``"rst"``
+       - the suffix of the files
+     * - :confval:`matlab_apidoc_templatedir`
+       - ``None``
+       - a folder of templates that replace the defaults
+     * - :confval:`matlab_apidoc_remove_old`
+       - ``True``
+       - remove marked pages that are no longer pages
 
 Paths in ``conf.py`` are relative to its folder. No flag overrides a
 setting, so the command and the build agree; :doc:`../reference/cli`
-lists the few cases where they can still differ. The rest is fixed:
-
-* toctrees have ``:maxdepth: 4``; a template can change it
-  (:doc:`../reference/templates`);
-* the root folder's page is ``index`` and the files end in ``.rst``;
-* marked pages that are no longer pages are removed (next section).
-
-To change these, write a script (:ref:`apidoc-write-your-own`).
+lists the few cases where they can still differ. The flags only control a
+run: ``-f``, ``-n``, ``--check`` and ``-q``.
 
 Output file names
 -----------------
@@ -185,7 +205,8 @@ Run it whenever the MATLAB files change; the pages stay accurate:
   unchanged pages again.
 * Marked files below the output folder that are no longer pages (of
   deleted or moved folders) are deleted, with the folders this leaves
-  empty. Files without the marker are never deleted.
+  empty; :confval:`matlab_apidoc_remove_old` = ``False`` keeps them. Files
+  without the marker are never deleted.
 * To edit a generated page by hand, delete its marker line: the page is
   then kept, with a ``mat.apidoc`` warning. ``-f`` (``--force``)
   overwrites such files too.
@@ -279,11 +300,11 @@ may be added, but renaming or removing one is a breaking change.
 Write your own
 --------------
 
-When ``conf.py`` and the templates are not enough (another toctree depth,
-another name for the root page, several project roots, keeping stale
-pages), write a short script on the Python API that the command itself
-uses. The example's ``make_api.py`` writes the same pages as
-``sphinx-matlab-apidoc -c docs``; the test suite checks that it does:
+For full control (several project roots, settings computed per folder,
+pages written next to other generated files), write a short script on the
+Python API that the command itself uses. The example's ``make_api.py``
+writes the same pages as ``sphinx-matlab-apidoc -c docs``; the test suite
+checks that it does:
 
 .. literalinclude:: ../../examples/apidoc/make_api.py
    :language: python
@@ -300,10 +321,11 @@ It takes three steps:
 2. ``sphinxcontrib.mat_types.build_index(settings)`` indexes the files, as
    the build does, and returns a ``SourceIndex``.
 3. ``sphinxcontrib.matlab_apidoc.generate(source_index, options)`` writes
-   the pages. ``ApidocOptions`` has ``output_dir`` and the choices of the
-   command line (``force``, ``dry_run``, ``separate``, ``templatedir``),
-   plus those the command line fixes: ``maxdepth`` (4), ``tocfile``
-   (``"index"``), ``suffix`` (``"rst"``) and ``remove_old`` (``True``).
+   the pages. ``ApidocOptions`` has a field for each ``matlab_apidoc_*``
+   value (``output_dir``, ``separate``, ``maxdepth``, ``tocfile``,
+   ``suffix``, ``templatedir``, ``remove_old``; paths as given, not
+   relative to ``conf.py``) and for the flags ``-f`` and ``-n``
+   (``force``, ``dry_run``).
    It returns a ``Result``: ``pages`` (the docnames, without suffix), the
    lists of files ``created``, ``updated``, ``unchanged``, ``kept`` and
    ``removed`` and of files and folders ``renamed`` (paths relative to the

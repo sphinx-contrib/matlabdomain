@@ -40,9 +40,7 @@ One page per folder.
 ``separate``
    True with :confval:`matlab_apidoc_separate`.
 ``maxdepth``
-   The ``:maxdepth:`` of the toctrees: 4 from the command, any value from
-   a script (:ref:`apidoc-write-your-own`). A template can also write
-   its own number.
+   The ``:maxdepth:`` of the toctrees (:confval:`matlab_apidoc_maxdepth`).
 ``sidecars``
    The :doc:`sidecar docs <../user-guide/sidecars>` the folder's page
    lists (its own, and those in its ``@`` folders), sorted by file name;

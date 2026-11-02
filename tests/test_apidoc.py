@@ -790,7 +790,7 @@ def test_check_counts_removals(tmp_path, capsys):
     assert main(["--check", "-c", docs]) == 1
     assert "Would remove file" in capsys.readouterr().out
     assert tree(out) == before
-    # The command line always removes stale pages; a script can keep them.
+    # A script with remove_old=False keeps them.
     kept = generate(
         build_index(IndexSettings(str(ROOT))),
         ApidocOptions(str(out), dry_run=True, remove_old=False),
@@ -819,6 +819,9 @@ matlab_src_exclusion_patterns = ["**/private"]
 matlab_version = "R2025b"
 matlab_apidoc_output_dir = "api"
 matlab_apidoc_separate = True
+matlab_apidoc_maxdepth = 2
+matlab_apidoc_tocfile = "contents"
+matlab_apidoc_suffix = ".txt"
 """
 
 
@@ -843,9 +846,23 @@ def test_conf_gives_the_pages_of_the_python_api(tmp_path):
         matlab_version="R2025b",
     )
     out = tmp_path / "script"
-    generate(build_index(settings), ApidocOptions(str(out), separate=True))
+    options = ApidocOptions(
+        str(out), separate=True, maxdepth=2, tocfile="contents", suffix="txt"
+    )
+    generate(build_index(settings), options)
     assert tree(docs / "api") == tree(out)
-    assert "+nmpkg/@NmCls/NmCls.m.rst" in tree(out)
+    assert "+nmpkg/@NmCls/NmCls.m.txt" in tree(out)
+    assert "   :maxdepth: 2\n" in (out / "contents.txt").read_text()
+
+
+def test_conf_remove_old_false_keeps_stale_pages(tmp_path):
+    out = tmp_path / "out"
+    docs = conf_dir(tmp_path / "docs", out, "matlab_apidoc_remove_old = False\n")
+    assert main(["-q", "-c", docs]) == 0
+    write(out, {"old/index.rst": f"{MARKER}\n\nOld\n===\n"})
+    assert main(["-q", "--check", "-c", docs]) == 0
+    assert main(["-q", "-c", docs]) == 0
+    assert (out / "old" / "index.rst").exists()
 
 
 def test_conf_paths_are_relative_to_the_conf_dir(tmp_path, monkeypatch):
@@ -877,6 +894,19 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
             'matlab_apidoc_separate = "yes"',
             "matlab_apidoc_separate must be bool, not 'yes'",
         ),
+        (
+            "matlab_apidoc_maxdepth = True",
+            "matlab_apidoc_maxdepth must be int, not True",
+        ),
+        (
+            "matlab_apidoc_remove_old = 0",
+            "matlab_apidoc_remove_old must be bool, not 0",
+        ),
+        (
+            'matlab_apidoc_tocfile = "a/b"',
+            "matlab_apidoc_tocfile 'a/b' must be a file name",
+        ),
+        ('matlab_apidoc_suffix = "."', "matlab_apidoc_suffix '' must be a file name"),
         (
             "matlab_apidoc_output_dir = 3",
             "matlab_apidoc_output_dir must be str or None",

@@ -1,7 +1,7 @@
 """Write the example's API pages with the Python API of sphinx-matlab-apidoc.
 
-``sphinx-matlab-apidoc`` takes its settings from ``docs/conf.py`` and fixes
-the rest. A script sets everything itself: these values give the pages of
+``sphinx-matlab-apidoc`` takes its settings from ``docs/conf.py``. A script
+sets them itself: these values give the pages of
 ``sphinx-matlab-apidoc -c docs``; change them (or loop over several roots)
 to get other pages. Run it from anywhere::
 
@@ -25,7 +25,7 @@ def main(output_dir=HERE / "docs" / "api"):
         sidecar_suffixes=(".md", ".rst"),
         source_dir=str(HERE / "docs"),
     )
-    # What to write: the last four are fixed on the command line.
+    # What to write: the matlab_apidoc_* values (the defaults spelled out).
     options = ApidocOptions(
         output_dir=str(output_dir),
         templatedir=str(HERE / "templates"),
