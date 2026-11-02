@@ -8,7 +8,7 @@
 ../src/utils/lerp.m:1: error: utils/lerp.m (lerp): has no outputs section in its help (such as "Outputs:"), and these outputs have no arguments-block comment: y [outputs]
 ../src/utils/private/check_range.m:1: error: utils/private/check_range.m (check_range): has no inputs section in its help (such as "Inputs:"), and these inputs have no arguments-block comment: lo, hi [inputs]
 
-Checked: 4 functions, 2 classes, 3 methods, 1 scripts, 1 apps
+Checked: 4 functions, 2 classes, 3 methods, 1 scripts, 1 apps, 3 pages
 Not checked: 0 ignored, 1 hidden, 0 unreadable, 0 not parsed
 Findings: 9 errors, 0 warnings
   description (error): 0 errors, 0 warnings
@@ -16,3 +16,5 @@ Findings: 9 errors, 0 warnings
   inputs (error): 5 errors, 0 warnings
   outputs (error): 4 errors, 0 warnings
   name-value (error): 0 errors, 0 warnings
+  page-documented (error): 0 errors, 0 warnings
+  page-links (error): 0 errors, 0 warnings

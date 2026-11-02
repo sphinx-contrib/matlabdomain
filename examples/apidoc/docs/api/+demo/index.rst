@@ -9,6 +9,9 @@ namespace demo
    :local:
    :backlinks: none
 
+.. mat:autopage:: +demo/README.md
+   :no-title:
+
 Classes
 -------
 
@@ -18,6 +21,14 @@ demo.Shape
 .. mat:autoclass:: +demo/@Shape/Shape.m
    :members:
    :show-inheritance:
+
+Pages
+-----
+
+.. toctree::
+   :maxdepth: 4
+
+   getting-started-md
 
 Folders
 -------

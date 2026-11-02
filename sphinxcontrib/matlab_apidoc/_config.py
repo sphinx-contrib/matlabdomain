@@ -11,7 +11,7 @@ from __future__ import annotations
 from sphinx.errors import ConfigError
 
 from .. import mat_naming
-from ..mat_types import DEFAULT_INCLUDE_PATTERNS
+from ..mat_types import DEFAULT_EXCLUSION_PATTERNS, DEFAULT_INCLUDE_PATTERNS
 
 _NONE = type(None)
 
@@ -30,7 +30,8 @@ APIDOC_CONFIG = {
 SOURCE_CONFIG = {
     "matlab_src_code_project_root": None,
     "matlab_src_include_patterns": list(DEFAULT_INCLUDE_PATTERNS),
-    "matlab_src_exclusion_patterns": [],
+    "matlab_src_exclusion_patterns": list(DEFAULT_EXCLUSION_PATTERNS),
+    "matlab_src_page_suffixes": [],
     "matlab_src_encoding": None,
     "matlab_version": mat_naming.DEFAULT_MATLAB_VERSION,
     "matlab_namelengthmax": None,

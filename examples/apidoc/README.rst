@@ -10,6 +10,9 @@ regenerates them, compares them with these files and builds the project with
 ``src/`` has a ``+demo`` namespace with a nested ``+geometry`` namespace, an
 ``@Shape`` class folder with method files, a plain folder of global functions
 (``utils/``) with a ``private/`` folder, a script and an App Designer app.
+It also has pages next to code: a Markdown tutorial with an image and a
+README in ``+demo/``, and a reST page in ``utils/`` (``conf.py`` turns them
+on and loads ``myst_parser``).
 
 Regenerate and build, from ``docs/``::
 

@@ -1,0 +1,22 @@
+# Getting started with shapes
+
+This tutorial sits next to the code it describes, in `src/+demo/`. It is a
+Markdown page: `sphinx-matlab-apidoc` gives it a page of its own, and the
+namespace's page lists it under "Pages".
+
+![A square and a triangle](img/shapes.svg)
+
+## Make a shape
+
+Create a [`demo.Shape`](@Shape/Shape.m) and scale it with
+{mat:meth}`demo.Shape.scale`:
+
+```matlab
+s = demo.Shape("square", 2);
+s = s.scale(3);
+```
+
+## Measure
+
+[](+geometry/distance.m) gives the distance between two points. The
+[notes on the utilities](../utils/notes.rst) explain the helpers.

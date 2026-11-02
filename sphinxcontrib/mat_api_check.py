@@ -22,13 +22,25 @@ from .mat_classify import is_hidden
 logger = getLogger("matlab-domain")
 
 #: rule names, in report order
-RULES = ("description", "method-description", "inputs", "outputs", "name-value")
+RULES = (
+    "description",
+    "method-description",
+    "inputs",
+    "outputs",
+    "name-value",
+    "page-documented",
+    "page-links",
+)
 SEVERITIES = ("error", "warning", "ignore")
 DEFAULT_RULES = dict.fromkeys(RULES, "error")
 #: object kinds, in report order
-KINDS = ("function", "class", "method", "script", "application")
+KINDS = ("function", "class", "method", "script", "application", "page")
 _PLURALS = dict(
-    zip(KINDS, ("functions", "classes", "methods", "scripts", "apps"), strict=True)
+    zip(
+        KINDS,
+        ("functions", "classes", "methods", "scripts", "apps", "pages"),
+        strict=True,
+    )
 )
 REPORT_TXT = "api-check.txt"
 REPORT_JSON = "api-check.json"
@@ -314,6 +326,60 @@ class _Checker:
         else:
             self.describe("description", where, "application", obj.docstring)
 
+    def pages(self, env):
+        """Check the pages next to code (plan.md Section 2.11): each is
+        rendered by ``mat:autopage`` in a document that a toctree includes
+        (or an orphan), and its relative links and images exist.
+        """
+        data = self.dom.data
+        included = {env.config.root_doc}
+        included.update(d for docs in env.toctree_includes.values() for d in docs)
+        docs, issues = {}, {}
+        for docname, refs in data["page_docs"].items():
+            for ref in refs:
+                docs.setdefault(ref, set()).add(docname)
+        for found in data["page_issues"].values():
+            for ref, *issue in found:
+                issues.setdefault(ref, set()).add(tuple(issue))
+        for path, record in sorted(
+            data["pages"].items(), key=lambda i: i[1]["reference"]
+        ):
+            ref = record["reference"]
+            if self.ignore(ref):
+                self.not_checked["ignored"] += 1
+                continue
+            self.checked["page"] += 1
+            where = {"reference": ref, "name": None, "path": path, "line": None}
+            shown = docs.get(ref, set())
+            if not shown:
+                self.report(
+                    "page-documented",
+                    where,
+                    "page",
+                    "is not rendered by a mat:autopage directive",
+                )
+            elif not any(
+                d in included or "orphan" in env.metadata.get(d, {}) for d in shown
+            ):
+                self.report(
+                    "page-documented",
+                    where,
+                    "page",
+                    f"is rendered in {', '.join(sorted(shown))}, which no toctree "
+                    "includes",
+                )
+            for kind, target, line in sorted(
+                issues.get(ref, ()), key=lambda i: (i[2] or 0, i[0], i[1])
+            ):
+                what = (
+                    "links to a missing file"
+                    if kind == "link"
+                    else "shows a missing image"
+                )
+                self.report(
+                    "page-links", {**where, "line": line}, "page", f"{what}: {target}"
+                )
+
 
 def _summary(enabled, rules, checker):
     findings = {rule: {"error": 0, "warning": 0} for rule in RULES}
@@ -396,6 +462,7 @@ class MatlabApiCheckBuilder(Builder):
             records = sorted(dom.data["index"].items(), key=lambda i: i[1]["reference"])
             for path, record in records:
                 checker.check(path, record)
+            checker.pages(self.env)
         findings = checker.findings if checker else []
         summary = _summary(enabled, rules, checker)
         # The report first: -W may stop the build at the first warning.

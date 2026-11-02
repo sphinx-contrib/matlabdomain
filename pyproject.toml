@@ -45,6 +45,12 @@ dev = [
     "defusedxml>=0.7.1",
     "sphinx-autobuild"
 ]
+markdown = [
+    # Pages next to code in Markdown (plan.md Section 2.11). The renderer
+    # subclasses myst-parser's SphinxRenderer: test each release before
+    # moving the cap.
+    "myst-parser>=4,<6"
+]
 rtd = [
     "furo",
     "sphinxcontrib-mermaid"
@@ -89,6 +95,7 @@ source_pkgs = [
     "sphinxcontrib.mat_documenters",
     "sphinxcontrib.mat_handlers",
     "sphinxcontrib.mat_naming",
+    "sphinxcontrib.mat_pages",
     "sphinxcontrib.mat_tree_sitter_parser",
     "sphinxcontrib.mat_types",
     "sphinxcontrib.matlab",

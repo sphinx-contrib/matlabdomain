@@ -22,11 +22,16 @@
 {{ title | e | heading }}
 
 .. mat:autofolder:: {{ ref }}
-{%- if sections %}
+{%- if sections or pages %}
 
 .. contents::
    :local:
    :backlinks: none
+{%- endif %}
+{%- if readme %}
+
+.. mat:autopage:: {{ readme }}
+   :no-title:
 {%- endif %}
 {%- for section, entries in sections %}
 
@@ -43,6 +48,12 @@
 {%- endfor %}
 {%- endif %}
 {%- endfor %}
+{%- if pages %}
+
+{{ "Pages" | heading(2) }}
+
+{{ toctree(pages | map(attribute="docname")) }}
+{%- endif %}
 {%- if subfolders %}
 
 {{ "Folders" | heading(2) }}

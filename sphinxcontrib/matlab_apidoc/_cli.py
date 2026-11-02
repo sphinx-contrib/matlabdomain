@@ -25,6 +25,8 @@ from ..mat_types import (
     build_index,
     check_pattern_folders,
     check_text_encoding,
+    page_layout_error,
+    page_suffix_list,
     pattern_list,
     project_root,
 )
@@ -271,6 +273,10 @@ def _settings(args):
     suffix, suffix_name = _pick(
         args.suffix, "--suffix", conf, "matlab_apidoc_suffix", "rst"
     )
+    # Pages next to code come from conf.py only (plan.md Section 2.11).
+    page_suffixes = page_suffix_list(sources.matlab_src_page_suffixes)
+    if page_suffixes:
+        page_layout_error(root, srcdir)
     settings = IndexSettings(
         root=root,
         include=tuple(include),
@@ -278,6 +284,8 @@ def _settings(args):
         encoding=encoding,
         matlab_version=version,
         namelengthmax=namelengthmax,
+        page_suffixes=page_suffixes,
+        source_dir=srcdir,
     )
     options = ApidocOptions(
         output_dir=output_dir,

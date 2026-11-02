@@ -87,6 +87,7 @@ def test_root_findings(make_app, root):
         "method": 8,
         "script": 2,
         "application": 0,
+        "page": 0,
     }
     assert summary["not_checked"] == {
         "ignored": 2,
@@ -111,11 +112,15 @@ def test_root_findings(make_app, root):
     assert lines[0].startswith(f"{root / 'src' / '+pkg' / 'Widget.m'}:20: error: ")
     assert lines[0].endswith("[method-description]")
     assert lines[18:21] == [
-        "Checked: 11 functions, 2 classes, 8 methods, 2 scripts, 0 apps",
+        "Checked: 11 functions, 2 classes, 8 methods, 2 scripts, 0 apps, 0 pages",
         "Not checked: 2 ignored, 1 hidden, 0 unreadable, 0 not parsed",
         "Findings: 17 errors, 0 warnings",
     ]
-    assert lines[-1] == "  name-value (error): 1 errors, 0 warnings"
+    assert lines[-3:] == [
+        "  name-value (error): 1 errors, 0 warnings",
+        "  page-documented (error): 0 errors, 0 warnings",
+        "  page-links (error): 0 errors, 0 warnings",
+    ]
 
 
 @pytest.mark.parametrize(
@@ -163,7 +168,7 @@ def test_disabled(make_app, root):
     text = (app.outdir / "api-check.txt").read_text(encoding="utf-8")
     assert text.splitlines()[:2] == [
         "matlab_api_check_enabled is False: nothing was checked.",
-        "Checked: 0 functions, 0 classes, 0 methods, 0 scripts, 0 apps",
+        "Checked: 0 functions, 0 classes, 0 methods, 0 scripts, 0 apps, 0 pages",
     ]
 
 

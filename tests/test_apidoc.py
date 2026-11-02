@@ -61,6 +61,8 @@ PAGE_KEYS = {
     "subfolders",
     "separate",
     "maxdepth",
+    "pages",
+    "readme",
 }
 ENTRY_KEYS = {
     "ref",
@@ -1121,11 +1123,20 @@ def test_example_is_up_to_date(tmp_path):
     shutil.copytree(EXAMPLE, dst, ignore=shutil.ignore_patterns("_build", "api"))
     assert main(["-q", "-c", str(dst / "docs")]) == 0
     assert tree(dst / "docs" / "api") == tree(EXAMPLE / "docs" / "api")
-    # The same pages from flags only.
+    # The same pages from flags only, but pages next to code come from
+    # conf.py only: compare with -c without them.
+    conf = dst / "docs" / "conf.py"
+    text = conf.read_text(encoding="utf-8")
+    conf.write_text(
+        text.replace('[".md", ".rst"]', "[]"), encoding="utf-8", newline="\n"
+    )
+    shutil.rmtree(dst / "docs" / "api")
+    assert main(["-q", "-c", str(dst / "docs")]) == 0
     out = tmp_path / "api"
     flags = ["-q", "-t", str(EXAMPLE / "templates"), "-o", str(out)]
     assert main([*flags, str(EXAMPLE / "src")]) == 0
-    assert tree(out) == tree(EXAMPLE / "docs" / "api")
+    assert tree(out) == tree(dst / "docs" / "api")
+    assert "getting-started-md.rst" not in str(sorted(tree(out)))
     # --check writes nothing, so it can run on the committed example.
     assert main(["-q", "--check", "-c", str(EXAMPLE / "docs")]) == 0
 

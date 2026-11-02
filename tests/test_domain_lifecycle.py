@@ -88,12 +88,15 @@ def used_paths(srcdir, refs=USED):
 
 
 def test_initial_data_layout():
-    assert MATLABDomain.data_version == 14
+    assert MATLABDomain.data_version == 15
     assert set(MATLABDomain.initial_data) == {
         "objects",
         "folders",
         "doc_sources",
+        "page_docs",
+        "page_issues",
         "index",
+        "pages",
         "parse_cache",
         "parse_warnings",
         "entities_table",
@@ -389,6 +392,7 @@ def test_older_domain_data_version_drops_misdecoded_docstrings(
 
 SOURCE_STATE = (
     "index",
+    "pages",
     "parse_cache",
     "parse_warnings",
     "entities_table",
@@ -420,7 +424,9 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
     app = build(make_app, srcdir)
     dom = app.env.get_domain("mat")
     data = dom.data
-    unchanged = {k: dict(data[k]) for k in ("index", "entities_table", "matlab_names")}
+    unchanged = {
+        k: dict(data[k]) for k in ("index", "pages", "entities_table", "matlab_names")
+    }
     before = dict(data["objects"])
     ours = dict(data["parse_cache"])
     current, stale, unused = (
@@ -446,7 +452,10 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
             "b/": ("doc_b", "", "", False),
         },
         "doc_sources": {"doc_a": {unused: key[unused][1:]}, "doc_b": {}},
+        "page_docs": {"doc_a": {"a/guide.md": "A"}, "doc_b": {"b/guide.md": "B"}},
+        "page_issues": {"doc_a": [], "doc_b": [("b/guide.md", "link", "x", 1)]},
         "index": {"/elsewhere/x.m": {}},
+        "pages": {"/elsewhere/guide.md": {}},
         "parse_cache": {
             key[current]: worker_object,  # we have it already
             (stale, 0, 0): worker_object,  # not the current file
@@ -465,6 +474,10 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
     assert "b/" not in data["folders"]
     assert data["doc_sources"]["doc_a"] == {unused: key[unused][1:]}
     assert "doc_b" not in data["doc_sources"]
+    assert data["page_docs"] == {"doc_a": {"a/guide.md": "A"}}
+    assert data["page_issues"] == {"doc_a": []}
+    assert dom.page_doc("a/guide.md") == "doc_a"
+    assert dom.page_doc("b/guide.md") is None
     # Parses of current files that we lack are adopted; ours are kept.
     assert data["parse_cache"] == {**ours, key[unused]: worker_object}
     assert data["parse_warnings"][key[unused]] == warning

@@ -22,6 +22,14 @@ lerp
 
 .. mat:autofunction:: utils/lerp.m
 
+Pages
+-----
+
+.. toctree::
+   :maxdepth: 4
+
+   notes-rst
+
 Folders
 -------
 

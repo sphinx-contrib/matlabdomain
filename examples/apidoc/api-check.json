@@ -6,14 +6,17 @@
       "method-description": "error",
       "inputs": "error",
       "outputs": "error",
-      "name-value": "error"
+      "name-value": "error",
+      "page-documented": "error",
+      "page-links": "error"
     },
     "checked": {
       "function": 4,
       "class": 2,
       "method": 3,
       "script": 1,
-      "application": 1
+      "application": 1,
+      "page": 3
     },
     "not_checked": {
       "ignored": 0,
@@ -39,6 +42,14 @@
         "warning": 0
       },
       "name-value": {
+        "error": 0,
+        "warning": 0
+      },
+      "page-documented": {
+        "error": 0,
+        "warning": 0
+      },
+      "page-links": {
         "error": 0,
         "warning": 0
       }

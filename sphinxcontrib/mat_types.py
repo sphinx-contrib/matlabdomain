@@ -22,7 +22,7 @@ from zipfile import ZipFile
 from sphinx.environment import CONFIG_OK
 from sphinx.errors import ConfigError
 from sphinx.util.build_phase import BuildPhase
-from sphinx.util.logging import getLogger
+from sphinx.util.logging import getLogger, suppress_logging
 from sphinx.util.matching import Matcher
 
 from . import mat_naming
@@ -334,9 +334,7 @@ def _load_class_folder(dom, folder):
     constructor, a classdef named differently) none is a method.
     """
     cf_entity = dom.entities_table[folder]
-    entities = {
-        ref: _load(dom, ref) for _, ref in cf_entity.members if ref[-1:] != "/"
-    }
+    entities = {ref: _load(dom, ref) for _, ref in cf_entity.members if ref[-1:] != "/"}
     class_ref = class_file_reference(folder)
     cls = entities.get(class_ref)
     record = dom.data["index"].get(dom.source_paths().get(class_ref))
@@ -596,6 +594,18 @@ def project_root(config, srcdir):
 
 
 DEFAULT_INCLUDE_PATTERNS = ["**/*"]
+#: root files that are neither code nor pages (plan.md Section 2.11)
+DEFAULT_EXCLUSION_PATTERNS = [
+    "README.*",
+    "CHANGES.*",
+    "CHANGELOG.*",
+    "LICENSE.*",
+    "CONTRIBUTING.*",
+    "CODE_OF_CONDUCT.*",
+    "SECURITY.*",
+]
+#: suffixes ``matlab_src_page_suffixes`` accepts, in a fixed order
+PAGE_SUFFIXES = (".md", ".rst")
 _GLOB_CHARS = frozenset("*?[")
 
 
@@ -693,6 +703,34 @@ def check_text_encoding(encoding, option):
             ) from err
 
 
+def page_suffix_list(value, option="matlab_src_page_suffixes"):
+    """The page suffixes of a config list, in ``PAGE_SUFFIXES`` order (or
+    ConfigError).
+    """
+    if isinstance(value, str) or not isinstance(value, (list, tuple)):
+        raise ConfigError(f"{option} must be a list of suffixes such as ['.md'].")
+    for suffix in value:
+        if suffix not in PAGE_SUFFIXES:
+            raise ConfigError(
+                f"{option}: {suffix!r} is not a page suffix; use "
+                f"{', '.join(map(repr, PAGE_SUFFIXES))}."
+            )
+    return tuple(s for s in PAGE_SUFFIXES if s in value)
+
+
+def page_layout_error(root, srcdir):
+    """ConfigError if pages cannot be told from the documentation: the
+    project root is the Sphinx source folder.
+    """
+    if os.path.normcase(os.path.normpath(root)) == os.path.normcase(
+        os.path.normpath(srcdir)
+    ):
+        raise ConfigError(
+            "matlab_src_page_suffixes needs matlab_src_code_project_root to differ "
+            "from the Sphinx source folder."
+        )
+
+
 def source_filter(config):
     """Return the validated ``SourceFilter`` of the config (or ConfigError)."""
     include = pattern_list(
@@ -702,7 +740,8 @@ def source_filter(config):
         config.matlab_src_exclusion_patterns, "matlab_src_exclusion_patterns"
     )
     customized = list(config.matlab_src_include_patterns) != DEFAULT_INCLUDE_PATTERNS
-    if (customized or exclude) and config.matlab_src_code_project_root is None:
+    customized |= bool(exclude) and exclude != DEFAULT_EXCLUSION_PATTERNS
+    if customized and config.matlab_src_code_project_root is None:
         raise ConfigError(
             "matlab_src_include_patterns and matlab_src_exclusion_patterns need "
             "matlab_src_code_project_root."
@@ -753,16 +792,21 @@ class IndexSettings:
 
     ``root`` is the absolute project root; ``include`` and ``exclude`` are
     patterns normalized by ``_normalize_pattern``; ``namelengthmax=None``
-    derives it from ``matlab_version``.
+    derives it from ``matlab_version``. ``page_suffixes`` selects the pages
+    next to code (plan.md Section 2.11); files with them below
+    ``source_dir`` (the Sphinx source folder) are not pages when that
+    folder is inside the root.
     """
 
     root: str
     include: tuple[str, ...] = tuple(DEFAULT_INCLUDE_PATTERNS)
-    exclude: tuple[str, ...] = ()
+    exclude: tuple[str, ...] = tuple(DEFAULT_EXCLUSION_PATTERNS)
     encoding: str | None = None
     matlab_version: str = mat_naming.DEFAULT_MATLAB_VERSION
     namelengthmax: int | None = None
     cache_text: bool = True
+    page_suffixes: tuple[str, ...] = ()
+    source_dir: str | None = None
 
     @classmethod
     def from_config(cls, config, srcdir):
@@ -779,6 +823,8 @@ class IndexSettings:
             matlab_version=config.matlab_version,
             namelengthmax=config.matlab_namelengthmax,
             cache_text=config.matlab_src_cache_text,
+            page_suffixes=page_suffix_list(config.matlab_src_page_suffixes),
+            source_dir=os.path.normpath(os.fspath(srcdir)),
         )
 
 
@@ -790,7 +836,10 @@ class SourceIndex:
       warnings, unreadable, matlab_name, private, scope}``, in walk order;
     - ``entities``: folder reference -> ``MatModule`` with its ``members``;
     - ``matlab_names``: MATLAB name -> path references;
-    - ``text_cache``: ``(path, mtime_ns, size)`` -> decoded text.
+    - ``text_cache``: ``(path, mtime_ns, size)`` -> decoded text;
+    - ``pages``: page path -> ``{reference, mtime, size}``, in walk order.
+      Pages are not read, named or members of their folder, so they never
+      shadow code (plan.md Section 2.11).
     """
 
     settings: IndexSettings
@@ -798,6 +847,7 @@ class SourceIndex:
     entities: dict = field(default_factory=dict)
     matlab_names: dict = field(default_factory=dict)
     text_cache: dict = field(default_factory=dict)
+    pages: dict = field(default_factory=dict)
 
 
 def build_index(settings, old_index=None):
@@ -825,13 +875,27 @@ def build_index(settings, old_index=None):
     return out
 
 
+def page_paths(settings):
+    """Paths of the pages below the root, in walk order: the walk of
+    ``build_index`` without reading files or warning.
+    """
+    out = SourceIndex(settings)
+    if settings.page_suffixes and os.path.isdir(settings.root):
+        # The index stage warns about the walk.
+        with suppress_logging():
+            _Indexer(out, {}, pages_only=True).run()
+    return list(out.pages)
+
+
 class _Indexer:
     """The index stage (plan.md Section 2.1): walk the project root and read,
     decode and classify each source file once. Records of files whose
     ``(path, mtime, size)`` did not change are reused without reading.
+    Pages (plan.md Section 2.11) are recorded, not read. With ``pages_only``
+    the walk records pages only.
     """
 
-    def __init__(self, out, old_index):
+    def __init__(self, out, old_index, pages_only=False):
         settings = out.settings
         self.out = out
         self.basedir = settings.root
@@ -841,6 +905,16 @@ class _Indexer:
         self.cache_text = settings.cache_text
         self.encoding = settings.encoding
         self.pending = {}
+        self.pages_only = pages_only
+        self.page_suffixes = frozenset(settings.page_suffixes)
+        # The Sphinx source folder inside the root holds the documentation.
+        docs = settings.source_dir
+        if docs is not None and not (
+            _within(docs, self.basedir)
+            and os.path.normcase(docs) != os.path.normcase(self.basedir)
+        ):
+            docs = None
+        self.docs = docs
 
     def run(self):
         root = MatModule(os.path.basename(self.basedir), self.basedir, ROOT_REFERENCE)
@@ -878,6 +952,9 @@ class _Indexer:
                 "are not documented.",
             )
             return
+        pages = bool(self.page_suffixes) and not (
+            self.docs is not None and _within(mod.path, self.docs)
+        )
         denied = []
         for key in keys:
             if _undecodable(key):
@@ -910,7 +987,20 @@ class _Indexer:
                 mod.members.append((key, ref))
                 continue
             handler = handler_for(path)
-            if handler is None or not self.sources.includes(ref):
+            if handler is None:
+                if (
+                    pages
+                    and os.path.splitext(key)[1] in self.page_suffixes
+                    and self.sources.includes(ref)
+                    and not (_is_link(path) and self.outside(path, ref))
+                ):
+                    self.out.pages[path] = {
+                        "reference": ref,
+                        "mtime": st.st_mtime_ns,
+                        "size": st.st_size,
+                    }
+                continue
+            if self.pages_only or not self.sources.includes(ref):
                 continue
             if _is_link(path) and self.outside(path, ref):
                 continue
@@ -979,6 +1069,7 @@ def analyze(app):
         data["parse_cache"].clear()
         data["parse_warnings"].clear()
     data["index"].clear()
+    data["pages"].clear()
     data["matlab_names"].clear()
     dom.entities_table.clear()
     dom.reset_sources()
@@ -994,6 +1085,7 @@ def analyze(app):
         MatObject.basedir = settings.root
         source_index = build_index(settings, old_index)
         data["index"].update(source_index.index)
+        data["pages"].update(source_index.pages)
         data["matlab_names"].update(source_index.matlab_names)
         dom.entities_table.update(source_index.entities)
         dom.text_cache.update(source_index.text_cache)
@@ -1161,8 +1253,7 @@ def failure_message(err):
     """Warning text for a file that could not be read or parsed."""
     if isinstance(err, OSError):
         return (
-            f"cannot be read ({err.strerror or err}); it is documented without "
-            "content."
+            f"cannot be read ({err.strerror or err}); it is documented without content."
         )
     return (
         f"cannot be parsed ({type(err).__name__}: {err}); it is documented "

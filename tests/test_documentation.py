@@ -80,9 +80,11 @@ def test_directives_and_options(bare_app):
         for name, cls in MATLABDomain.directives.items()
     }
     registry = bare_app.registry
-    for name in registry.domain_directives["mat"]:
-        documenter = registry.documenters[f"mat:{name.removeprefix('auto')}"]
-        directives[name] = set(documenter.option_spec)
+    for name, cls in registry.domain_directives["mat"].items():
+        documenter = registry.documenters.get(f"mat:{name.removeprefix('auto')}")
+        # mat:autopage renders a page, not an object.
+        options = cls.option_spec if documenter is None else documenter.option_spec
+        directives[name] = set(options)
     assert documented_directives() == directives
 
 
