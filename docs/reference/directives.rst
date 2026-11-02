@@ -200,24 +200,24 @@ know which object to document") and the directive writes nothing.
 
       Do not create link targets or index entries.
 
-Pages next to code
-------------------
+Sidecar docs
+------------
 
-.. rst:directive:: .. mat:autopage:: reference
+.. rst:directive:: .. mat:autosidecar:: reference
 
-   Render a page next to code (:doc:`../user-guide/pages`): the path
+   Render a sidecar doc (:doc:`../user-guide/sidecars`): the path
    reference of a ``.md`` or ``.rst`` file that
-   :confval:`matlab_src_page_suffixes` indexes. Its headings become
-   sections; the first is the page's title. A page without a heading gets
-   its file name as title, with a ``mat.page`` warning. Relative paths in
-   the page are relative to its folder. A reference that is not an indexed
-   page writes nothing, with a ``mat.page`` warning. Use it in reST
-   documents (in a Markdown document, a reST page would be read as
-   Markdown).
+   :confval:`matlab_src_sidecar_suffixes` indexes. Its headings become
+   sections; the first is the sidecar doc's title. One without a heading
+   gets its file name as title, with a ``mat.sidecar`` warning. Relative
+   paths in it are relative to its folder. A reference that is not an
+   indexed sidecar doc writes nothing, with a ``mat.sidecar`` warning. Use
+   it in reST documents (in a Markdown document, a reST sidecar doc would be
+   read as Markdown).
 
    .. rst:directive:option:: no-title
 
-      Leave out the page's first heading: the rest of the page continues
+      Leave out the sidecar doc's first heading: the rest of it continues
       the current section (a folder's README as the introduction of the
       folder's page).
 
@@ -430,12 +430,11 @@ prefers objects of its type, then accepts any.
    An object of any type (enumeration values are attributes; prefer
    ``mat:attr``).
 
-.. rst:role:: mat:page
+.. rst:role:: mat:sidecar
 
-   A page next to code, by its path reference only
-   (``:mat:page:`+demo/guide.md```): a link to the document that renders
-   it, with the page's title (its first heading) as text unless one is
-   given.
+   A sidecar doc, by its path reference only
+   (``:mat:sidecar:`+demo/guide.md```): a link to the document that renders
+   it, with its title (its first heading) as text unless one is given.
 
 Indices
 -------

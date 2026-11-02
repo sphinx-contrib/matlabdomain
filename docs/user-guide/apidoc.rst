@@ -26,7 +26,7 @@ shown here is current.
            +demo/
                Contents.m        folder help (left out of the pages)
                README.md         the introduction of the namespace's page
-               getting-started.md  a Markdown page next to code
+               getting-started.md  a Markdown sidecar doc
                img/shapes.svg    its image
                +geometry/
                    Point.m       class demo.geometry.Point
@@ -38,7 +38,7 @@ shown here is current.
            utils/                a plain folder: global functions
                clamp.m
                lerp.m
-               notes.rst         a reST page next to code
+               notes.rst         a reST sidecar doc
                private/
                    check_range.m
            run_demo.m            a script
@@ -50,7 +50,7 @@ shown here is current.
        templates/                edited copies of the default templates
 
 ``docs/conf.py`` points :confval:`matlab_src_code_project_root` at the
-project, turns on :doc:`pages next to code <pages>` and tells
+project, turns on :doc:`sidecar docs <sidecars>` and tells
 ``sphinx-matlab-apidoc`` where to write the pages and which templates to
 use:
 
@@ -66,7 +66,7 @@ Generate the pages with ``-c`` (``--conf-dir``), the folder of
    $ sphinx-matlab-apidoc -c .
 
 This writes one page per folder into ``api/``, mirroring the folder tree,
-and one per page next to code:
+and one per sidecar doc:
 
 .. code-block:: text
 
@@ -130,9 +130,9 @@ What the pages contain
 * ``Contents.m`` and the other special files (:doc:`help-text`) are left
   out. Files MATLAB cannot call are included, by path; files that cannot be
   read are left out with a ``mat.apidoc`` warning.
-* With :confval:`matlab_src_page_suffixes`, each page next to code gets a
-  page of its own, listed in a "Pages" section before "Folders", and a
-  folder's README introduces the folder's page (:doc:`pages`).
+* With :confval:`matlab_src_sidecar_suffixes`, each sidecar doc gets a
+  page of its own, listed in a "Sidecar docs" section before "Folders", and
+  a folder's README introduces the folder's page (:doc:`sidecars`).
 
 Settings
 --------
@@ -145,7 +145,7 @@ With ``-c``, it runs ``conf.py`` as ``sphinx-build`` does and reads:
   :confval:`matlab_src_include_patterns`,
   :confval:`matlab_src_exclusion_patterns`, :confval:`matlab_version`,
   :confval:`matlab_namelengthmax`, :confval:`matlab_src_encoding` and
-  :confval:`matlab_src_page_suffixes` (no flag sets it);
+  :confval:`matlab_src_sidecar_suffixes` (no flag sets it);
 * its own settings, which the build ignores:
   :confval:`matlab_apidoc_output_dir`, :confval:`matlab_apidoc_separate`,
   :confval:`matlab_apidoc_maxdepth`, :confval:`matlab_apidoc_tocfile`,

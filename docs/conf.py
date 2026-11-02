@@ -41,9 +41,9 @@ extensions = [
 ]
 # The sample project rendered in the user guide.
 matlab_src_code_project_root = "src"
-# Pages next to code (user-guide/pages): src/ is inside this folder, so the
+# Sidecar docs (user-guide/sidecars): src/ is inside this folder, so the
 # extension adds them to exclude_patterns.
-matlab_src_page_suffixes = [".rst"]
+matlab_src_sidecar_suffixes = [".rst"]
 matlab_auto_link = "basic"
 primary_domain = "mat"
 nitpicky = True

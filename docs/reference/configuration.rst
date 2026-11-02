@@ -17,7 +17,7 @@ Source files
    ``None`` indexes no files. Required when
    :confval:`matlab_src_include_patterns` differs from its default,
    :confval:`matlab_src_exclusion_patterns` is set to a list other than
-   its default or ``[]``, or :confval:`matlab_src_page_suffixes` is set.
+   its default or ``[]``, or :confval:`matlab_src_sidecar_suffixes` is set.
 
 .. confval:: matlab_src_include_patterns
    :type: ``list[str]``
@@ -39,18 +39,18 @@ Source files
    :confval:`matlab_src_include_patterns`. An excluded folder is not
    searched. The default leaves out the project's own files at the root
    (in upper case only), which are neither code nor
-   :doc:`pages <../user-guide/pages>`; a list of your own replaces it, so
+   :doc:`sidecar docs <../user-guide/sidecars>`; a list of your own replaces it, so
    copy these patterns into it if you want to keep them.
 
-.. confval:: matlab_src_page_suffixes
+.. confval:: matlab_src_sidecar_suffixes
    :type: ``list[str]``
    :default: ``[]``
 
-   The suffixes of the pages next to code: ``".md"`` (needs
+   The suffixes of the sidecar docs: ``".md"`` (needs
    ``myst_parser`` in ``extensions``) and ``".rst"``. ``[]`` indexes no
-   pages. Pages follow the include and exclusion patterns and are read as
-   UTF-8. The root must not be the Sphinx source folder. See
-   :doc:`../user-guide/pages`. Any other suffix, a missing root or
+   sidecar docs. They follow the include and exclusion patterns and are read
+   as UTF-8. The root must not be the Sphinx source folder. See
+   :doc:`../user-guide/sidecars`. Any other suffix, a missing root or
    ``myst_parser``, or the root equal to the source folder is a
    ``ConfigError``.
 
@@ -144,7 +144,7 @@ Changing these reads no page again.
    Rule name to severity, ``"error"``, ``"warning"`` or ``"ignore"``,
    merged over the defaults (every rule ``"error"``). Rules:
    ``description``, ``method-description``, ``inputs``, ``outputs``,
-   ``name-value``, ``page-documented``, ``page-links``. A value that is
+   ``name-value``, ``sidecar-documented``, ``sidecar-links``. A value that is
    not a dictionary, an unknown rule or an unknown severity is a
    ``ConfigError``.
 
@@ -161,7 +161,7 @@ Changing these reads no page again.
    Glob patterns, with the rules of
    :confval:`matlab_src_exclusion_patterns`, of objects not to check,
    matched against the path references of files, methods
-   (``+pkg/Cls.m.helper``) and pages.
+   (``+pkg/Cls.m.helper``) and sidecar docs.
 
 ``sphinx-matlab-apidoc``
 ------------------------

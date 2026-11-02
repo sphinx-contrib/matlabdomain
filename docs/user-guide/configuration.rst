@@ -51,7 +51,7 @@ change that; both are relative to the root and use ``/``:
   one of them are left out; an excluded folder is not searched. The default
   leaves out ``README.*``, ``CHANGES.*``, ``CHANGELOG.*``, ``LICENSE.*``,
   ``CONTRIBUTING.*``, ``CODE_OF_CONDUCT.*`` and ``SECURITY.*`` at the root
-  (they matter for :doc:`pages next to code <pages>`); your own list
+  (they matter for :doc:`sidecar docs <sidecars>`); your own list
   replaces it, so add them to it if you want to keep leaving them out.
 
 Patterns match like Sphinx's ``exclude_patterns``: ``**`` matches across

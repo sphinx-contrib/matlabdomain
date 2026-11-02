@@ -41,12 +41,12 @@ One page per folder.
    True with ``--separate``.
 ``maxdepth``
    The value of ``--maxdepth``.
-``pages``
-   The :doc:`pages next to code <../user-guide/pages>` the folder's page
+``sidecars``
+   The :doc:`sidecar docs <../user-guide/sidecars>` the folder's page
    lists (its own, and those in its ``@`` folders), sorted by file name;
    each a dictionary with ``ref`` (the path reference), ``name`` (the file
-   name) and ``docname`` (the page's own page, relative to this page).
-   Empty when pages are off.
+   name) and ``docname`` (its own page, relative to this page).
+   Empty when sidecar docs are off.
 ``readme``
    The path reference of the folder's README (any letter case, any page
    suffix), the introduction of its page, or ``None``.
@@ -86,10 +86,10 @@ Each entry describes one file:
 With ``--separate``, one page per file. It gets the variables of one entry,
 with ``docname`` relative to the output folder.
 
-``page.rst.jinja``
-------------------
+``sidecar.rst.jinja``
+---------------------
 
-One page per page next to code (``guide.md`` -> ``guide-md.rst``), with or
-without ``--separate``. Its title is the page's first heading. Variables:
-``ref``, ``name`` and ``docname`` (relative to the output folder), as in
-``pages`` above.
+One page per sidecar doc (``guide.md`` -> ``guide-md.rst``), with or
+without ``--separate``. Its title is the sidecar doc's first heading.
+Variables: ``ref``, ``name`` and ``docname`` (relative to the output
+folder), as in ``sidecars`` above.

@@ -13,7 +13,8 @@ One line per finding, in the order of the path references::
    <file>:<line>: <severity>: <reference> (<MATLAB name>): <what is missing> [<rule>]
 
 ``<file>`` is the absolute path of the source file; ``:<line>`` is left out
-for apps and for page findings without a line. Pages have no MATLAB name,
+for apps and for sidecar findings without a line. Sidecar docs have no
+MATLAB name,
 so ``(<MATLAB name>)`` is left out for them. Then a summary: the objects
 checked per kind, the objects not
 checked per reason, and the findings per rule and severity. When
@@ -37,7 +38,7 @@ identical on every system.
       Rule name to the severity in effect.
    ``checked``
       Objects checked per kind: ``function``, ``class``, ``method``,
-      ``script``, ``application``, ``page``.
+      ``script``, ``application``, ``sidecar``.
    ``not_checked``
       Objects not checked per reason: ``ignored``
       (:confval:`matlab_api_check_ignore_patterns`), ``hidden``
@@ -54,15 +55,15 @@ identical on every system.
       The path reference (a method: ``+pkg/Cls.m.method``).
    ``name``
       The MATLAB name, or ``null`` if MATLAB cannot call the file (and for
-      pages).
+      sidecar docs).
    ``kind``
       ``function``, ``class``, ``method``, ``script``, ``application`` or
-      ``page``.
+      ``sidecar``.
    ``rule``, ``severity``
       The rule and its severity (``error`` or ``warning``).
    ``line``
       The line of the declaration (1 for scripts), or ``null`` (apps); for
-      ``page-links``, the line of the link or image when it is known.
+      ``sidecar-links``, the line of the link or image when it is known.
    ``message``
       What is missing.
 

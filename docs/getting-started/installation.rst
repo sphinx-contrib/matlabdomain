@@ -18,7 +18,7 @@ This installs Sphinx, `tree-sitter <https://tree-sitter.github.io/>`_ and the
 MATLAB grammar for tree-sitter, which the extension uses to read MATLAB code.
 MATLAB itself is not needed.
 
-For :doc:`Markdown pages next to code <../user-guide/pages>`, add the
+For :doc:`Markdown sidecar docs <../user-guide/sidecars>`, add the
 ``markdown`` extra, which installs `myst-parser
 <https://myst-parser.readthedocs.io/>`_ 4 or 5:
 

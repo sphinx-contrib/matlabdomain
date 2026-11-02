@@ -30,8 +30,8 @@ source settings of the build and the ``matlab_apidoc_*`` values
 ``--include`` and ``--exclude`` replace the ``conf.py`` lists. Paths given
 as flags are relative to the current folder; paths in ``conf.py`` are
 relative to its folder. Errors name the flag or the config value that
-caused them. :confval:`matlab_src_page_suffixes` has no flag: pages next to
-code (:doc:`../user-guide/pages`) get pages with :option:`-c` only, and
+caused them. :confval:`matlab_src_sidecar_suffixes` has no flag: sidecar
+docs (:doc:`../user-guide/sidecars`) get pages with :option:`-c` only, and
 ``CONF_DIR`` is taken to be the Sphinx source folder.
 
 The command runs ``conf.py`` as ``sphinx-build`` does, but it sets up no

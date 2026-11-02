@@ -225,20 +225,21 @@ earlier" in the documentation.
   lexer, used by the parser before tree-sitter) is removed.
 * The package metadata names the license in ``LICENSE``, BSD-2-Clause (it
   said BSD-3-Clause).
-* Pages next to code: tutorials and notes as ``.md`` and ``.rst`` files
+* Sidecar docs: tutorials and notes as ``.md`` and ``.rst`` files
   among the MATLAB files, selected by the new
-  ``matlab_src_page_suffixes`` (default ``[]``, off) and the include and
-  exclusion patterns. The new directive ``mat:autopage`` renders one into
+  ``matlab_src_sidecar_suffixes`` (default ``[]``, off) and the include and
+  exclusion patterns. The new directive ``mat:autosidecar`` renders one into
   a document, with relative images, downloads, includes and Markdown links
-  (to pages, code and files) resolved from the page's folder; the new role
-  ``:mat:page:`` links to one. ``sphinx-matlab-apidoc -c`` writes a page
+  (to sidecar docs, code and files) resolved from its folder; the new role
+  ``:mat:sidecar:`` links to one. ``sphinx-matlab-apidoc -c`` writes a page
   for each (``guide.md`` -> ``guide-md.rst``, new template
-  ``page.rst.jinja``), lists them on their folder's page and uses a
-  folder's README as its introduction (new template keys ``pages`` and
-  ``readme``). ``matlab-api-check`` has the new rules ``page-documented``
-  and ``page-links``, and counts pages (``page``) in its reports. Markdown
+  ``sidecar.rst.jinja``), lists them on their folder's page and uses a
+  folder's README as its introduction (new template keys ``sidecars`` and
+  ``readme``). ``matlab-api-check`` has the new rules ``sidecar-documented``
+  and ``sidecar-links``, and counts sidecar docs (``sidecar``) in its
+  reports. Markdown
   needs the new ``markdown`` extra (myst-parser). New warning subtype
-  ``mat.page``. Cached environments from earlier versions are rebuilt.
+  ``mat.sidecar``. Cached environments from earlier versions are rebuilt.
 
 .. _PR 232: https://github.com/sphinx-contrib/matlabdomain/pull/232
 

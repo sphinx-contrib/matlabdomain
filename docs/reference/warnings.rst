@@ -40,11 +40,11 @@ all with ``"mat"``. :doc:`../user-guide/warnings` explains each one.
    * - ``mat.not_found``
      - an auto directive whose argument matches no object
      - where the directive is
-   * - ``mat.page``
-     - a page next to code without a heading, a ``mat:autopage`` reference
-       that is not an indexed page, a project root on another drive than
-       the Sphinx source folder
-     - where the page is rendered; the drive at start-up
+   * - ``mat.sidecar``
+     - a sidecar doc without a heading, a ``mat:autosidecar`` reference
+       that is not an indexed sidecar doc, a project root on another drive
+       than the Sphinx source folder
+     - where the sidecar doc is rendered; the drive at start-up
    * - ``mat.apidoc``
      - ``sphinx-matlab-apidoc``: an unreadable file, output names that
        differ only by case, a path too long for Windows

@@ -1,7 +1,7 @@
 Notes on shapes
 ---------------
 
-A reST page next to the code, in ``src/+shapes/``. :mat:class:`shapes.Circle`
+A reST sidecar doc, in ``src/+shapes/``. :mat:class:`shapes.Circle`
 is the simplest shape; its constructor starts like this:
 
 .. literalinclude:: Circle.m

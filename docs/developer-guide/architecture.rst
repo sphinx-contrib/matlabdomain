@@ -38,9 +38,9 @@ Modules
      - The autodoc documenters behind ``mat:auto*``.
    * - ``mat_api_check.py``
      - The ``matlab-api-check`` builder.
-   * - ``mat_pages.py``
-     - Pages next to code: the configuration check, ``mat:autopage``, the
-       myst-parser renderer for Markdown pages and the link mapping.
+   * - ``mat_sidecars.py``
+     - Sidecar docs: the configuration check, ``mat:autosidecar``, the
+       myst-parser renderer for Markdown sidecar docs and the link mapping.
    * - ``matlab_apidoc/``
      - ``sphinx-matlab-apidoc``: the command line, the page model, output
        names and the templates.
@@ -56,10 +56,10 @@ is imported). Most modules also use ``mat_naming.py`` and
      cli(["sphinx-matlab-apidoc"]) --> apidoc
      matlab["matlab.py<br/>setup, MATLABDomain"] --> documenters["mat_documenters.py<br/>mat_directives.py"]
      matlab --> apicheck["mat_api_check.py"]
-     matlab --> pages["mat_pages.py<br/>pages next to code"]
+     matlab --> sidecars["mat_sidecars.py<br/>sidecar docs"]
      documenters --> types
      apicheck --> types
-     pages --> types
+     sidecars --> types
      apidoc["matlab_apidoc/"] --> types
      types["mat_types.py<br/>index, parse, objects"] --> naming["mat_naming.py<br/>references, MATLAB names"]
      types --> parser["mat_tree_sitter_parser.py"]
@@ -92,10 +92,10 @@ Reading and classifying text is cheap; tree-sitter parses are not.
 shares the index stage: it agrees with the build on files, references,
 types, names and warnings, and never parses.
 
-Pages next to code (:doc:`../user-guide/pages`) are found by the same walk
-but kept apart: ``SourceIndex.pages`` records their reference, time and
+Sidecar docs (:doc:`../user-guide/sidecars`) are found by the same walk
+but kept apart: ``SourceIndex.sidecars`` records their reference, time and
 size, without reading them. They are no members of their folder and have
-no MATLAB name, so they never shadow code. ``mat:autopage`` reads one when
+no MATLAB name, so they never shadow code. ``mat:autosidecar`` reads one when
 a document renders it and notes it as a dependency of that document.
 
 State and Sphinx's lifecycle
@@ -106,9 +106,9 @@ All state that outlives a build is in the domain's data
 
 * per page: ``objects`` (documented objects), ``folders``,
   ``doc_sources`` (the source files each page used, with time and size),
-  ``page_docs`` (the pages next to code it renders) and ``page_issues``
+  ``sidecar_docs`` (the sidecar docs it renders) and ``sidecar_issues``
   (their broken links and missing images, for ``matlab-api-check``);
-* rebuilt by each index stage: ``index``, ``pages``, ``entities_table``
+* rebuilt by each index stage: ``index``, ``sidecars``, ``entities_table``
   (path reference to object), ``matlab_names`` (MATLAB name to
   references);
 * caches: ``parse_cache`` and ``parse_warnings``, pruned to files still in
@@ -122,8 +122,9 @@ layout or the cached objects change.
 The events ``setup()`` connects:
 
 * ``config-inited``: ``ensure_configuration`` (removed values, patterns,
-  version), ``check_encoding``, ``mat_pages.check_config`` (page suffixes;
-  with the root inside the source folder, the pages are added to
+  version), ``check_encoding``, ``mat_sidecars.check_config`` (sidecar
+  suffixes;
+  with the root inside the source folder, the sidecar docs are added to
   ``exclude_patterns`` here, because a later change would make Sphinx
   read every page again on every build), ``mat_api_check.check_config``;
 * ``builder-inited``: ``analyze``, the index stage;
