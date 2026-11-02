@@ -781,10 +781,6 @@ def test_apidoc_from_conf_builds(make_app, project, capsys):
         < folder.index("Folders\n---")
     )
     assert main(["-q", "--check", "-c", str(docs)]) == 0
-    # Without conf.py there are no sidecar stubs (no flag turns them on).
-    out = project / "flags"
-    assert main(["-q", "-o", str(out), str(project / "src")]) == 0
-    assert not list(out.rglob("*-md.rst"))
 
     app = build(make_app, docs)
     found = warnings(app)

@@ -6,8 +6,10 @@ Usage, from anywhere (fetch.py first; this script fetches nothing):
 
 For each enabled project in the list (NAME arguments keep the projects whose
 name contains one of them), on its checkout repos/<name>:
-- generates N times (default 3) into fresh folders: exit code, wall time and
-  the CLI summary; CLI warnings by subtype (OUT/<name>/cli_stderr.txt);
+- generates N times (default 3) into fresh folders, each with a conf.py
+  (the checkout as the root, the folder as the output): exit code, wall
+  time and the CLI summary; CLI warnings by subtype
+  (OUT/<name>/cli_stderr.txt);
 - reruns into the first folder with -f (expect 0 created or updated);
 - builds that output with sphinx-build -E (no -W), once per variant:
   ``conf`` (the defaults), ``all`` (``-D matlab_auto_link=all``) and ``api``
@@ -62,6 +64,7 @@ API_REPORTS = ("api-check.json", "api-check.txt")
 CONF = (
     'extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]\n'
     "matlab_src_code_project_root = {root!r}\n"
+    'matlab_apidoc_output_dir = "."\n'
     'exclude_patterns = ["_build"]\n'
 )
 ENV = dict(os.environ)
@@ -102,8 +105,8 @@ def run(*args):
     return proc, time.perf_counter() - start
 
 
-def apidoc(root, docs, *flags):
-    proc, wall = run("sphinxcontrib.matlab_apidoc", *flags, "-o", str(docs), str(root))
+def apidoc(docs, *flags):
+    proc, wall = run("sphinxcontrib.matlab_apidoc", *flags, "-c", str(docs))
     m = SUMMARY.search(proc.stdout)
     return proc, wall, m.groups() if m else None
 
@@ -250,7 +253,9 @@ def run_project(project, lock, args, out):
     for t in range(args.trials):
         docs = out / project.name / f"trial{t}"
         shutil.rmtree(docs, ignore_errors=True)
-        proc, wall, summary = apidoc(root, docs)
+        docs.mkdir()
+        (docs / "conf.py").write_text(CONF.format(root=str(root)), encoding="utf-8")
+        proc, wall, summary = apidoc(docs)
         row["trials"].append(
             {
                 "rc": proc.returncode,
@@ -265,9 +270,8 @@ def run_project(project, lock, args, out):
                 proc.stderr, encoding="utf-8"
             )
     docs = out / project.name / "trial0"
-    proc, wall, summary = apidoc(root, docs, "-f")
+    proc, wall, summary = apidoc(docs, "-f")
     row["rerun"] = {"rc": proc.returncode, "summary": summary}
-    (docs / "conf.py").write_text(CONF.format(root=str(root)), encoding="utf-8")
     for variant in args.variant or list(VARIANTS):
         base = out / project.name / variant
         serial, files, warnings = build(docs, base, root, variant)

@@ -25,7 +25,11 @@ from sphinxcontrib.matlab_apidoc import (
     generate,
     main,
 )
-from sphinxcontrib.matlab_apidoc._config import APIDOC_CONFIG, SOURCE_CONFIG
+from sphinxcontrib.matlab_apidoc._config import (
+    APIDOC_CONFIG,
+    REMOVED_CONFIG,
+    SOURCE_CONFIG,
+)
 from sphinxcontrib.matlab_apidoc._generate import MARKER, build_pages
 
 TESTS = Path(__file__).parent
@@ -105,6 +109,19 @@ def run(root, out, *flags):
     return generate(
         build_index(IndexSettings(str(root))), ApidocOptions(str(out), **dict(flags))
     )
+
+
+def conf_dir(folder, out, conf="", root=ROOT):
+    """Write ``folder/conf.py`` for the MATLAB root ``root`` and the output
+    folder ``out`` (absolute paths) plus ``conf``; return the folder for -c.
+    """
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "conf.py").write_text(
+        f"matlab_src_code_project_root = {str(root)!r}\n"
+        f"matlab_apidoc_output_dir = {str(out)!r}\n{conf}"
+    )
+    return str(folder)
 
 
 @pytest.fixture
@@ -398,10 +415,13 @@ def caplog_sphinx():
 # --- golden trees, rendering and writing ------------------------------------
 
 
-@pytest.mark.parametrize(("name", "flags"), [("default", []), ("separate", ["-e"])])
-def test_golden_tree(tmp_path, name, flags):
+@pytest.mark.parametrize(
+    ("name", "conf"),
+    [("default", ""), ("separate", "matlab_apidoc_separate = True\n")],
+)
+def test_golden_tree(tmp_path, name, conf):
     out = tmp_path / "out"
-    assert main(["-q", *flags, "-o", str(out), str(ROOT)]) == 0
+    assert main(["-q", "-c", conf_dir(tmp_path / "docs", out, conf)]) == 0
     assert tree(out) == tree(GOLDEN / name)
 
 
@@ -543,9 +563,10 @@ def test_case_variant_without_the_marker_is_kept(tmp_path, caplog_sphinx):
 
 
 def test_remove_old_after_files_are_excluded(tmp_path):
-    out = tmp_path / "out"
-    assert main(["-q", "-o", str(out), str(ROOT)]) == 0
-    assert main(["-q", "--exclude", "alpha", "-o", str(out), str(ROOT)]) == 0
+    out, docs = tmp_path / "out", tmp_path / "docs"
+    assert main(["-q", "-c", conf_dir(docs, out)]) == 0
+    conf_dir(docs, out, 'matlab_src_exclusion_patterns = ["alpha"]\n')
+    assert main(["-q", "-c", str(docs)]) == 0
     assert not (out / "alpha").exists()
     assert (out / "beta" / "index.rst").exists()
     # The root page is generated, so it is rewritten without its link.
@@ -553,11 +574,11 @@ def test_remove_old_after_files_are_excluded(tmp_path):
 
 
 def test_no_remove_old_keeps_stale_pages(tmp_path):
-    out = tmp_path / "out"
-    assert main(["-q", "-o", str(out), str(ROOT)]) == 0
-    flags = ["-q", "--no-remove-old", "--exclude", "alpha"]
-    assert main([*flags, "-o", str(out), str(ROOT)]) == 0
-    assert (out / "alpha" / "index.rst").exists()
+    run(ROOT, tmp_path)
+    source_index = build_index(IndexSettings(str(ROOT), exclude=("alpha",)))
+    result = generate(source_index, ApidocOptions(str(tmp_path), remove_old=False))
+    assert result.removed == []
+    assert (tmp_path / "alpha" / "index.rst").exists()
 
 
 def test_templatedir_replaces_a_template(tmp_path):
@@ -573,10 +594,10 @@ def test_templatedir_replaces_a_template(tmp_path):
         "{% endfor %}\n{% endfor %}"
     )
     out = tmp_path / "out"
-    assert (
-        main(["-q", "-e", "-d", "2", "-t", str(templates), "-o", str(out), str(ROOT)])
-        == 0
+    options = ApidocOptions(
+        str(out), separate=True, maxdepth=2, templatedir=str(templates)
     )
+    generate(build_index(IndexSettings(str(ROOT))), options)
     assert (out / "+nmpkg" / "index.rst").read_text() == (
         f"{MARKER}\n\n"
         "namespace|+nmpkg/|+nmpkg/index|False|2|True|private/index\n"
@@ -592,6 +613,15 @@ def test_templatedir_replaces_a_template(tmp_path):
     ).read_bytes()
 
 
+def test_python_api_sets_what_the_command_line_fixes(tmp_path):
+    options = ApidocOptions(str(tmp_path), maxdepth=1, tocfile="contents", suffix="txt")
+    generate(build_index(IndexSettings(str(ROOT))), options)
+    names = sorted(tree(tmp_path))
+    assert "contents.txt" in names
+    assert all(name.endswith(".txt") for name in names)
+    assert "   :maxdepth: 1\n" in (tmp_path / "contents.txt").read_text()
+
+
 def test_long_paths_warn_on_windows(tmp_path, monkeypatch, caplog_sphinx):
     monkeypatch.setattr(_generate, "_WINDOWS", True)
     monkeypatch.setattr(_generate, "too_long", lambda path: path.endswith("index.rst"))
@@ -603,57 +633,21 @@ def test_long_paths_warn_on_windows(tmp_path, monkeypatch, caplog_sphinx):
 # --- command line -----------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    ("flags", "message"),
-    [
-        (["--include", "/abs/*.m"], "--include: '/abs/*.m' must be relative"),
-        (["--include", "a\\b.m"], "--include: 'a\\\\b.m' must use '/'"),
-        (["--exclude", "../x"], "--exclude: '../x' leaves"),
-        (["--include", "**/../x"], "leaves matlab_src_code_project_root"),
-        (["--matlab-version", "R2020a"], "--matlab-version: matlab_version R2020a"),
-        (["--matlab-version", "2026a"], "--matlab-version: matlab_version must"),
-        (["--encoding", "rot13"], "--encoding 'rot13' is not a known text encoding"),
-        (["-t", "missing"], "-t 'missing' is not a folder"),
-        (["--tocfile", "a/b"], "--tocfile 'a/b' must be a file name"),
-        (["--suffix", "."], "--suffix '' must be a file name"),
-    ],
-)
-def test_settings_errors_exit_2(tmp_path, capsys, flags, message):
-    out = tmp_path / "out"
-    assert main([*flags, "-o", str(out), str(ROOT)]) == 2
-    captured = capsys.readouterr()
-    assert message in captured.err
-    assert captured.out == ""
-    assert not out.exists()
-
-
-def test_root_must_be_a_folder(tmp_path, capsys):
-    assert main(["-o", str(tmp_path), str(tmp_path / "missing")]) == 2
-    assert "is not a folder" in capsys.readouterr().err
-
-
 def test_output_must_be_a_folder(tmp_path, capsys):
     (tmp_path / "file").write_text("")
-    assert main(["-o", str(tmp_path / "file"), str(ROOT)]) == 2
-    assert "is not a folder" in capsys.readouterr().err
+    assert main(["-c", conf_dir(tmp_path / "docs", tmp_path / "file")]) == 2
+    err = capsys.readouterr().err
+    assert "matlab_apidoc_output_dir '" in err
+    assert "is not a folder" in err
 
 
 @pytest.mark.parametrize(
-    ("argv", "message"),
-    [
-        ([], "ROOT is required"),
-        ([str(ROOT)], "-o is required"),
-    ],
+    "argv", [["--bogus"], ["-o", "out"], ["src"], ["-t", "templates"], ["-e"]]
 )
-def test_missing_root_or_output_exit_2(argv, message, capsys):
-    assert main(argv) == 2
-    assert message in capsys.readouterr().err
-
-
-def test_usage_errors_exit_2(capsys, monkeypatch):
+def test_usage_errors_exit_2(capsys, monkeypatch, argv):
     monkeypatch.setenv("PYTHON_COLORS", "0")  # argparse colors usage from Python 3.14
     with pytest.raises(SystemExit) as exc:
-        main(["-o", "x", str(ROOT), "--bogus"])
+        main(argv)
     assert exc.value.code == 2
     assert "usage: sphinx-matlab-apidoc" in capsys.readouterr().err
 
@@ -684,7 +678,8 @@ def test_python_m_runs_main(capsys, monkeypatch):
 
 
 def test_output_and_warnings(tmp_path, capsys):
-    assert main(["-o", str(tmp_path), str(ROOT)]) == 0
+    docs = conf_dir(tmp_path / "docs", tmp_path / "out")
+    assert main(["-c", docs]) == 0
     captured = capsys.readouterr()
     assert captured.out.count("Creating file ") == len(FOLDER_PAGES)
     assert f"{len(FOLDER_PAGES)} pages: {len(FOLDER_PAGES)} created" in captured.out
@@ -694,14 +689,14 @@ def test_output_and_warnings(tmp_path, capsys):
         "R2026a; it is documented by its path reference. [mat.not_callable]"
         for ref in NOT_CALLABLE
     )
-    assert main(["-q", "-n", "--remove-old", "-o", str(tmp_path), str(ROOT)]) == 0
+    assert main(["-q", "-n", "-c", docs]) == 0
     captured = capsys.readouterr()
     assert captured.out == ""
     assert len(captured.err.splitlines()) == 4
 
 
 def test_dry_run_lists_changes(tmp_path, capsys):
-    assert main(["-n", "-o", str(tmp_path / "out"), str(ROOT)]) == 0
+    assert main(["-n", "-c", conf_dir(tmp_path / "docs", tmp_path / "out")]) == 0
     out = capsys.readouterr().out
     assert out.count("Would create file ") == len(FOLDER_PAGES)
     assert out.splitlines()[-1].startswith(f"Dry run: {len(FOLDER_PAGES)} pages")
@@ -709,17 +704,18 @@ def test_dry_run_lists_changes(tmp_path, capsys):
 
 def test_include_and_exclude(tmp_path):
     out = tmp_path / "out"
-    flags = ["--include", "+nmpkg/**", "--exclude", "**/private"]
-    assert main(["-q", *flags, "-o", str(out), str(ROOT)]) == 0
+    conf = 'matlab_src_include_patterns = ["+nmpkg/**"]\n'
+    conf += 'matlab_src_exclusion_patterns = ["**/private"]\n'
+    assert main(["-q", "-c", conf_dir(tmp_path / "docs", out, conf)]) == 0
     assert sorted(tree(out)) == ["+nmpkg/index.rst", "index.rst"]
 
 
 def test_matlab_version_changes_callability(tmp_path, capsys):
-    assert (
-        main(["-q", "--matlab-version", "R2025b", "-o", str(tmp_path), str(ROOT)]) == 0
-    )
+    out = tmp_path / "out"
+    docs = conf_dir(tmp_path / "docs", out, 'matlab_version = "R2025b"\n')
+    assert main(["-q", "-c", docs]) == 0
     assert "nm_legacy" not in capsys.readouterr().err
-    root = (tmp_path / "index.rst").read_text()
+    root = (out / "index.rst").read_text()
     assert "\nnm\\_legacy\n" in root
 
 
@@ -728,7 +724,7 @@ def test_logging_is_restored(tmp_path):
 
     logger = logging.getLogger("sphinx")
     before = logger.handlers[:], logger.propagate, logger.level
-    main(["-q", "-o", str(tmp_path), str(ROOT)])
+    main(["-q", "-c", conf_dir(tmp_path / "docs", tmp_path / "out")])
     assert (logger.handlers, logger.propagate, logger.level) == before
 
 
@@ -748,15 +744,10 @@ def test_console_script_and_module(tmp_path):
     )
     assert proc.stdout.startswith("sphinx-matlab-apidoc ")
     out = tmp_path / "out"
+    # -c defaults to the working folder.
     proc = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "sphinxcontrib.matlab_apidoc",
-            "-o",
-            str(out),
-            str(ROOT),
-        ],
+        [sys.executable, "-m", "sphinxcontrib.matlab_apidoc"],
+        cwd=conf_dir(tmp_path / "docs", out),
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -767,44 +758,45 @@ def test_console_script_and_module(tmp_path):
 
 def test_check_exits_1_when_pages_would_change(tmp_path, capsys):
     out = tmp_path / "out"
-    assert main(["-q", "--check", "-o", str(out), str(ROOT)]) == 1
+    docs = conf_dir(tmp_path / "docs", out)
+    assert main(["-q", "--check", "-c", docs]) == 1
     assert not out.exists()
     assert "are out of date" in capsys.readouterr().err
-    assert main(["-q", "-o", str(out), str(ROOT)]) == 0
-    assert main(["-q", "--check", "-o", str(out), str(ROOT)]) == 0
+    assert main(["-q", "-c", docs]) == 0
+    assert main(["-q", "--check", "-c", docs]) == 0
     (out / "alpha" / "index.rst").write_text(f"{MARKER}\n\nStale\n=====\n")
-    assert main(["--check", "-o", str(out), str(ROOT)]) == 1
+    assert main(["--check", "-c", docs]) == 1
     assert "Would update file" in capsys.readouterr().out
     # A hand-written page (no marker) is not a change.
     (out / "alpha" / "index.rst").write_text("Edited\n======\n")
-    assert main(["-q", "--check", "-o", str(out), str(ROOT)]) == 0
+    assert main(["-q", "--check", "-c", docs]) == 0
 
 
-def test_check_counts_removals_only_with_remove_old(tmp_path, capsys):
+def test_check_counts_removals(tmp_path, capsys):
     out = tmp_path / "out"
-    assert main(["-q", "-o", str(out), str(ROOT)]) == 0
+    docs = conf_dir(tmp_path / "docs", out)
+    assert main(["-q", "-c", docs]) == 0
     write(out, {"old/index.rst": f"{MARKER}\n\nOld\n===\n"})
     before = tree(out)
-    assert main(["--check", "-o", str(out), str(ROOT)]) == 1
+    assert main(["--check", "-c", docs]) == 1
     assert "Would remove file" in capsys.readouterr().out
     assert tree(out) == before
-    assert main(["-q", "--check", "--no-remove-old", "-o", str(out), str(ROOT)]) == 0
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    conf = f"matlab_src_code_project_root = {str(ROOT)!r}\n"
-    conf += f"matlab_apidoc_output_dir = {str(out)!r}\n"
-    (docs / "conf.py").write_text(f"{conf}matlab_apidoc_remove_old = False\n")
-    assert main(["-q", "--check", "-c", str(docs)]) == 0
-    assert main(["-q", "--check", "--remove-old", "-c", str(docs)]) == 1
+    # The command line always removes stale pages; a script can keep them.
+    kept = generate(
+        build_index(IndexSettings(str(ROOT))),
+        ApidocOptions(str(out), dry_run=True, remove_old=False),
+    )
+    assert not kept.changed
 
 
 def test_cli_reports_renames(tmp_path, capsys):
     if not _case_insensitive(tmp_path):
         pytest.skip("needs a case-insensitive file system")
     out = tmp_path / "out"
-    assert main(["-q", "-o", str(out), str(ROOT)]) == 0
+    docs = conf_dir(tmp_path / "docs", out)
+    assert main(["-q", "-c", docs]) == 0
     (out / "alpha").rename(out / "ALPHA")
-    assert main(["-o", str(out), str(ROOT)]) == 0
+    assert main(["-c", docs]) == 0
     printed = capsys.readouterr().out
     assert f"Renaming {out / 'alpha'}." in printed
     assert ", 1 renamed," in printed
@@ -818,27 +810,7 @@ matlab_src_exclusion_patterns = ["**/private"]
 matlab_version = "R2025b"
 matlab_apidoc_output_dir = "api"
 matlab_apidoc_separate = True
-matlab_apidoc_maxdepth = 2
-matlab_apidoc_tocfile = "contents"
-matlab_apidoc_suffix = "txt"
 """
-SAME_FLAGS = [
-    "--include",
-    "+nmpkg/**",
-    "--include",
-    "alpha/*",
-    "--exclude",
-    "**/private",
-    "--matlab-version",
-    "R2025b",
-    "-e",
-    "-d",
-    "2",
-    "--tocfile",
-    "contents",
-    "--suffix",
-    "txt",
-]
 
 
 def conf_project(tmp_path, conf, root="../src"):
@@ -852,25 +824,19 @@ def conf_project(tmp_path, conf, root="../src"):
     return docs
 
 
-def test_conf_dir_gives_the_pages_of_the_same_flags(tmp_path):
+def test_conf_gives_the_pages_of_the_python_api(tmp_path):
     docs = conf_project(tmp_path, CONF)
     assert main(["-q", "-c", str(docs)]) == 0
-    out = tmp_path / "flags"
-    assert main(["-q", *SAME_FLAGS, "-o", str(out), str(tmp_path / "src")]) == 0
+    settings = IndexSettings(
+        str(tmp_path / "src"),
+        include=("+nmpkg/**", "alpha/*"),
+        exclude=("**/private",),
+        matlab_version="R2025b",
+    )
+    out = tmp_path / "script"
+    generate(build_index(settings), ApidocOptions(str(out), separate=True))
     assert tree(docs / "api") == tree(out)
-    assert "contents.txt" in tree(out)
-
-
-def test_flags_override_conf(tmp_path, monkeypatch):
-    docs = conf_project(tmp_path, CONF, root="../missing")
-    monkeypatch.chdir(tmp_path)
-    flags = ["-q", "--include", "**/*", "--exclude", "beta", "--no-separate"]
-    flags += ["-d", "4", "--tocfile", "index", "--suffix", "rst"]
-    flags += ["--matlab-version", "R2026a", "--encoding", "utf-8"]
-    assert main([*flags, "-c", str(docs), "-o", "out", "src"]) == 0
-    assert not (docs / "api").exists()
-    assert main(["-q", "--exclude", "beta", "-o", "same", "src"]) == 0
-    assert tree(tmp_path / "out") == tree(tmp_path / "same")
+    assert "+nmpkg/@NmCls/NmCls.m.rst" in tree(out)
 
 
 def test_conf_paths_are_relative_to_the_conf_dir(tmp_path, monkeypatch):
@@ -886,12 +852,12 @@ def test_conf_paths_are_relative_to_the_conf_dir(tmp_path, monkeypatch):
 
 
 def test_conf_namelengthmax_is_explicit(tmp_path):
-    docs = conf_project(
-        tmp_path, 'matlab_namelengthmax = 63\nmatlab_version = "R2026a"\n'
-    )
-    args = _cli.get_parser().parse_args(["-c", str(docs), "-o", "out"])
+    conf = 'matlab_apidoc_output_dir = "api"\nmatlab_namelengthmax = 63\n'
+    docs = conf_project(tmp_path, f'{conf}matlab_version = "R2026a"\n')
+    args = _cli.get_parser().parse_args(["-c", str(docs)])
     settings, options = _cli._settings(args)
     assert settings.namelengthmax == 63
+    assert (options.maxdepth, options.tocfile, options.suffix) == (4, "index", "rst")
     assert options.remove_old
 
 
@@ -903,10 +869,6 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
             "matlab_apidoc_separate must be bool, not 'yes'",
         ),
         (
-            "matlab_apidoc_maxdepth = True",
-            "matlab_apidoc_maxdepth must be int, not True",
-        ),
-        (
             "matlab_apidoc_output_dir = 3",
             "matlab_apidoc_output_dir must be str or None",
         ),
@@ -915,16 +877,41 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
             "matlab_src_include_patterns must be a list",
         ),
         (
+            'matlab_src_include_patterns = ["/abs/*.m"]',
+            "matlab_src_include_patterns: '/abs/*.m' must be relative",
+        ),
+        (
+            'matlab_src_include_patterns = ["a\\\\b.m"]',
+            "matlab_src_include_patterns: 'a\\\\b.m' must use '/'",
+        ),
+        (
+            'matlab_src_include_patterns = ["**/../x"]',
+            "leaves matlab_src_code_project_root",
+        ),
+        (
             'matlab_src_exclusion_patterns = ["../x"]',
             "matlab_src_exclusion_patterns: '../x' leaves",
         ),
         ('matlab_src_encoding = "rot13"', "matlab_src_encoding 'rot13' is not a known"),
         ('matlab_version = "R2020a"', "error: matlab_version R2020a"),
+        ('matlab_version = "2026a"', "error: matlab_version must"),
         ("matlab_namelengthmax = 100", "matlab_namelengthmax"),
         ('matlab_apidoc_templatedir = "missing"', "matlab_apidoc_templatedir '"),
         (
-            'matlab_apidoc_tocfile = "a/b"',
-            "matlab_apidoc_tocfile 'a/b' must be a file name",
+            "matlab_apidoc_maxdepth = 2",
+            "matlab_apidoc_maxdepth is no longer a setting (the toctree depth is 4",
+        ),
+        (
+            'matlab_apidoc_tocfile = "contents"',
+            "matlab_apidoc_tocfile is no longer a setting (the root page is index)",
+        ),
+        (
+            'matlab_apidoc_suffix = "txt"',
+            "matlab_apidoc_suffix is no longer a setting (pages end in .rst)",
+        ),
+        (
+            "matlab_apidoc_remove_old = False",
+            "matlab_apidoc_remove_old is no longer a setting",
         ),
         ('raise RuntimeError("boom")', "RuntimeError: boom"),
     ],
@@ -932,51 +919,50 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
 def test_conf_errors_name_the_config_value(tmp_path, capsys, conf, message):
     docs = conf_project(tmp_path, f'matlab_apidoc_output_dir = "api"\n{conf}\n')
     assert main(["-q", "-c", str(docs)]) == 2
-    assert message in capsys.readouterr().err
+    captured = capsys.readouterr()
+    assert message in captured.err
+    assert captured.out == ""
     assert not (docs / "api").exists()
 
 
-@pytest.mark.parametrize(
-    ("conf", "message"),
-    [
-        ("", "-o is required (or -c with matlab_apidoc_output_dir"),
-        ('matlab_apidoc_output_dir = "api"\n', "matlab_src_code_project_root '"),
-    ],
-)
-def test_conf_without_output_or_root(tmp_path, capsys, conf, message):
-    docs = conf_project(tmp_path, conf, root="../missing" if conf else "../src")
+def test_removed_values_are_named_together(tmp_path, capsys):
+    conf = 'matlab_apidoc_output_dir = "api"\nmatlab_apidoc_maxdepth = 2\n'
+    docs = conf_project(tmp_path, f"{conf}matlab_apidoc_suffix = 'txt'\n")
     assert main(["-q", "-c", str(docs)]) == 2
-    assert message in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "matlab_apidoc_maxdepth is no longer a setting" in err
+    assert "; matlab_apidoc_suffix is no longer a setting" in err
+    assert "write a script on the Python API" in err
 
 
 @pytest.mark.parametrize(
-    ("root", "flags", "message"),
+    ("conf", "root", "message"),
     [
-        (3, [], "matlab_src_code_project_root must be a str or None, not 3."),
-        ("../src", ["--matlab-version", ""], "error: --matlab-version: "),
+        ("", "../src", "matlab_apidoc_output_dir is required in conf.py."),
+        ('matlab_apidoc_output_dir = "api"\n', "../missing", "is not a folder"),
+        (
+            'matlab_apidoc_output_dir = "api"\n',
+            3,
+            "matlab_src_code_project_root must be a str or None, not 3.",
+        ),
     ],
 )
-def test_conf_root_type_and_empty_version_flag(tmp_path, capsys, root, flags, message):
-    docs = conf_project(tmp_path, 'matlab_apidoc_output_dir = "api"\n', root=root)
-    assert main(["-q", *flags, "-c", str(docs)]) == 2
-    assert message in capsys.readouterr().err
-
-
-def test_bad_conf_namelengthmax_is_not_blamed_on_the_flag(tmp_path, capsys):
-    conf = 'matlab_apidoc_output_dir = "api"\nmatlab_namelengthmax = 100\n'
-    docs = conf_project(tmp_path, conf)
-    assert main(["-q", "--matlab-version", "R2026a", "-c", str(docs)]) == 2
+def test_conf_without_output_or_root(tmp_path, capsys, conf, root, message):
+    docs = conf_project(tmp_path, conf, root=root)
+    assert main(["-q", "-c", str(docs)]) == 2
     err = capsys.readouterr().err
-    assert "matlab_namelengthmax" in err
-    assert "--matlab-version" not in err
+    assert message in err
+    assert "matlab_" in err
 
 
-def test_conf_dir_needs_conf_py(tmp_path, capsys):
-    assert main(["-q", "-c", str(tmp_path)]) == 2
-    assert "has no conf.py" in capsys.readouterr().err
+def test_conf_dir_needs_conf_py(tmp_path, capsys, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert main(["-q"]) == 2
+    assert "-c '.' has no conf.py" in capsys.readouterr().err
     (tmp_path / "conf.py").write_text("")
-    assert main(["-q", "-c", str(tmp_path)]) == 2
-    assert "ROOT is required" in capsys.readouterr().err
+    assert main(["-q"]) == 2
+    err = capsys.readouterr().err
+    assert "matlab_src_code_project_root is required in conf.py." in err
 
 
 def test_cli_defaults_match_the_build(make_app, project):
@@ -986,6 +972,7 @@ def test_cli_defaults_match_the_build(make_app, project):
         assert options[name].default == default, name
     for name, (default, _) in APIDOC_CONFIG.items():
         assert (options[name].default, options[name].rebuild) == (default, ""), name
+    assert not set(REMOVED_CONFIG) & set(options)
 
 
 # --- POSIX-only names -------------------------------------------------------
@@ -1091,8 +1078,10 @@ def expected_objects(root):
 
 @pytest.mark.parametrize("separate", [False, True])
 def test_build_of_the_generated_pages(make_app, project, separate):
-    flags = ["-e"] if separate else []
-    assert main(["-q", *flags, "-o", str(project), str(project)]) == 0
+    with open(project / "conf.py", "a", encoding="utf-8") as conf:
+        conf.write('matlab_apidoc_output_dir = "."\n')
+        conf.write(f"matlab_apidoc_separate = {separate}\n")
+    assert main(["-q", "-c", str(project)]) == 0
     app = make_app(
         srcdir=project, confoverrides={"suppress_warnings": ["mat.not_callable"]}
     )
@@ -1107,7 +1096,7 @@ def test_build_of_the_generated_pages(make_app, project, separate):
     assert not any(name.startswith("@Bad/Other.m.") for name in names)
 
     # Idempotent: nothing is written, nothing is read again.
-    assert main(["-q", "-f", *flags, "-o", str(project), str(project)]) == 0
+    assert main(["-q", "-f", "-c", str(project)]) == 0
     again = make_app(
         srcdir=project, confoverrides={"suppress_warnings": ["mat.not_callable"]}
     )
@@ -1123,22 +1112,16 @@ def test_example_is_up_to_date(tmp_path):
     shutil.copytree(EXAMPLE, dst, ignore=shutil.ignore_patterns("_build", "api"))
     assert main(["-q", "-c", str(dst / "docs")]) == 0
     assert tree(dst / "docs" / "api") == tree(EXAMPLE / "docs" / "api")
-    # The same pages from flags only, but sidecar docs come from
-    # conf.py only: compare with -c without them.
-    conf = dst / "docs" / "conf.py"
-    text = conf.read_text(encoding="utf-8")
-    conf.write_text(
-        text.replace('[".md", ".rst"]', "[]"), encoding="utf-8", newline="\n"
-    )
-    shutil.rmtree(dst / "docs" / "api")
-    assert main(["-q", "-c", str(dst / "docs")]) == 0
-    out = tmp_path / "api"
-    flags = ["-q", "-t", str(EXAMPLE / "templates"), "-o", str(out)]
-    assert main([*flags, str(EXAMPLE / "src")]) == 0
-    assert tree(out) == tree(dst / "docs" / "api")
-    assert "getting-started-md.rst" not in str(sorted(tree(out)))
     # --check writes nothing, so it can run on the committed example.
     assert main(["-q", "--check", "-c", str(EXAMPLE / "docs")]) == 0
+
+
+def test_example_script_writes_the_same_pages(tmp_path, monkeypatch, capsys):
+    out = tmp_path / "api"
+    monkeypatch.setattr(sys, "argv", ["make_api.py", str(out)])
+    runpy.run_path(str(EXAMPLE / "make_api.py"), run_name="__main__")
+    assert tree(out) == tree(EXAMPLE / "docs" / "api")
+    assert capsys.readouterr().out.startswith(f"{len(tree(out))} pages: ")
 
 
 def test_example_builds(make_app, tmp_path):

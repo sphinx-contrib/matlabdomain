@@ -51,15 +51,15 @@
             "console": "integratedTerminal",
             "justMyCode": false
         },
+        // A dry run on the worked example (its conf.py); drop -n to write.
         {
             "name": "Debug sphinx-matlab-apidoc (CLI)",
             "type": "debugpy",
             "request": "launch",
             "module": "sphinxcontrib.matlab_apidoc",
             "args": [
-                "-f",
-                "-o", "${workspaceFolder}/_build/apidoc-debug",
-                "${workspaceFolder}/tests/roots/test_apidoc_basics"
+                "-n",
+                "-c", "${workspaceFolder}/examples/apidoc/docs"
             ],
             "console": "integratedTerminal",
             "justMyCode": false
