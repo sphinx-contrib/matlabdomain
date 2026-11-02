@@ -176,9 +176,7 @@ Read by ``sphinx-matlab-apidoc`` (:doc:`cli`); the build ignores them,
 so changing them reads no page again. No flag overrides them. Paths are
 relative to the folder of ``conf.py``. The toctree depth (4), the name of
 the root page (``index``), the suffix (``.rst``) and the removal of stale
-pages are fixed; ``matlab_apidoc_maxdepth``, ``matlab_apidoc_tocfile``,
-``matlab_apidoc_suffix`` and ``matlab_apidoc_remove_old`` are errors
-(:ref:`apidoc-write-your-own` sets them from a script).
+pages are fixed; a script can change them (:ref:`apidoc-write-your-own`).
 
 .. confval:: matlab_apidoc_output_dir
    :type: ``str`` or ``None``

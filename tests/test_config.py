@@ -71,10 +71,6 @@ def test_removed_options_raise(make_app, project, name, value):
             r"mean matlab_src_code_project_root\?\)\. Correct or delete",
         ),
         ("matlab_zzz = 1", r"matlab_zzz is not a configuration value\. Correct"),
-        (
-            "matlab_apidoc_maxdepth = 2",
-            r"matlab_apidoc_maxdepth is no longer a setting .*from a script",
-        ),
     ],
 )
 def test_unknown_matlab_names_raise(make_app, project, line, message):

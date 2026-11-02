@@ -21,14 +21,6 @@ APIDOC_CONFIG = {
     "matlab_apidoc_templatedir": (None, (str, _NONE)),
 }
 
-#: values removed in Phase 13 (an error in conf.py) -> what is fixed now
-REMOVED_CONFIG = {
-    "matlab_apidoc_maxdepth": "the toctree depth is 4; a template can change it",
-    "matlab_apidoc_tocfile": "the root page is index",
-    "matlab_apidoc_suffix": "pages end in .rst",
-    "matlab_apidoc_remove_old": "stale pages with the marker line are removed",
-}
-
 #: the build's values the CLI reads, with the defaults of ``setup()``
 SOURCE_CONFIG = {
     "matlab_src_code_project_root": None,

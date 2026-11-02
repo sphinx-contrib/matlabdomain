@@ -35,7 +35,6 @@ from ..mat_types import (
 from ._config import (
     APIDOC_CONFIG,
     BUILD_ONLY_CONFIG,
-    REMOVED_CONFIG,
     SOURCE_CONFIG,
     apidoc_value,
 )
@@ -118,7 +117,7 @@ def read_conf(confdir):
         raise ConfigError(f"-c {confdir!r} has no conf.py.")
     config = Config.read(os.path.abspath(confdir), overrides={}, tags=Tags())
     known = {*SOURCE_CONFIG, *APIDOC_CONFIG, *BUILD_ONLY_CONFIG}
-    check_config_names(config._raw_config, known, REMOVED_CONFIG)
+    check_config_names(config._raw_config, known)
     for name, default in SOURCE_CONFIG.items():
         config.add(name, default, "env", ())
     for name, (default, types) in APIDOC_CONFIG.items():

@@ -941,9 +941,7 @@ _REMOVED_OPTIONS = {
 
 
 def check_config_names(app, config):  # noqa: ARG001
-    mat_types.check_config_names(
-        config._raw_config, config._options, apidoc_config.REMOVED_CONFIG
-    )
+    mat_types.check_config_names(config._raw_config, config._options)
 
 
 def ensure_configuration(app, config):

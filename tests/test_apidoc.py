@@ -28,7 +28,6 @@ from sphinxcontrib.matlab_apidoc import (
 from sphinxcontrib.matlab_apidoc._config import (
     APIDOC_CONFIG,
     BUILD_ONLY_CONFIG,
-    REMOVED_CONFIG,
     SOURCE_CONFIG,
 )
 from sphinxcontrib.matlab_apidoc._generate import MARKER, build_pages
@@ -908,22 +907,6 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
         ("matlab_namelengthmax = 100", "matlab_namelengthmax"),
         ('matlab_apidoc_templatedir = "missing"', "matlab_apidoc_templatedir '"),
         (
-            "matlab_apidoc_maxdepth = 2",
-            "matlab_apidoc_maxdepth is no longer a setting (the toctree depth is 4",
-        ),
-        (
-            'matlab_apidoc_tocfile = "contents"',
-            "matlab_apidoc_tocfile is no longer a setting (the root page is index)",
-        ),
-        (
-            'matlab_apidoc_suffix = "txt"',
-            "matlab_apidoc_suffix is no longer a setting (pages end in .rst)",
-        ),
-        (
-            "matlab_apidoc_remove_old = False",
-            "matlab_apidoc_remove_old is no longer a setting",
-        ),
-        (
             "matlab_apidoc_seperate = True",
             "matlab_apidoc_seperate is not a configuration value (did you mean "
             "matlab_apidoc_separate?)",
@@ -941,14 +924,13 @@ def test_conf_errors_name_the_config_value(tmp_path, capsys, conf, message):
     assert not (docs / "api").exists()
 
 
-def test_removed_values_are_named_together(tmp_path, capsys):
-    conf = 'matlab_apidoc_output_dir = "api"\nmatlab_apidoc_maxdepth = 2\n'
-    docs = conf_project(tmp_path, f"{conf}matlab_apidoc_suffix = 'txt'\n")
+def test_unknown_names_are_named_together(tmp_path, capsys):
+    conf = 'matlab_apidoc_output_dir = "api"\nmatlab_aaa = 2\n'
+    docs = conf_project(tmp_path, f"{conf}matlab_zzz = 'txt'\n")
     assert main(["-q", "-c", str(docs)]) == 2
     err = capsys.readouterr().err
-    assert "matlab_apidoc_maxdepth is no longer a setting" in err
-    assert "; matlab_apidoc_suffix is no longer a setting" in err
-    assert "from a script on the Python API" in err
+    assert "matlab_aaa is not a configuration value" in err
+    assert "; matlab_zzz is not a configuration value" in err
 
 
 def test_build_only_values_are_accepted(tmp_path):
@@ -994,7 +976,6 @@ def test_cli_defaults_match_the_build(make_app, project):
         assert options[name].default == default, name
     for name, (default, _) in APIDOC_CONFIG.items():
         assert (options[name].default, options[name].rebuild) == (default, ""), name
-    assert not set(REMOVED_CONFIG) & set(options)
     ours = {name for name in options if name.startswith("matlab_")}
     assert ours == {*SOURCE_CONFIG, *APIDOC_CONFIG, *BUILD_ONLY_CONFIG}
 
