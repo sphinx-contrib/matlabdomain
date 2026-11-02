@@ -61,7 +61,7 @@ PAGE_KEYS = {
     "subfolders",
     "separate",
     "maxdepth",
-    "pages",
+    "sidecars",
     "readme",
 }
 ENTRY_KEYS = {
@@ -1123,7 +1123,7 @@ def test_example_is_up_to_date(tmp_path):
     shutil.copytree(EXAMPLE, dst, ignore=shutil.ignore_patterns("_build", "api"))
     assert main(["-q", "-c", str(dst / "docs")]) == 0
     assert tree(dst / "docs" / "api") == tree(EXAMPLE / "docs" / "api")
-    # The same pages from flags only, but pages next to code come from
+    # The same pages from flags only, but sidecar docs come from
     # conf.py only: compare with -c without them.
     conf = dst / "docs" / "conf.py"
     text = conf.read_text(encoding="utf-8")
@@ -1142,6 +1142,8 @@ def test_example_is_up_to_date(tmp_path):
 
 
 def test_example_builds(make_app, tmp_path):
+    # The example's Markdown sidecar doc needs myst-parser (not in the Sphinx dev job).
+    pytest.importorskip("myst_parser")
     dst = tmp_path / "example"
     shutil.copytree(EXAMPLE, dst, ignore=shutil.ignore_patterns("_build"))
     app = make_app(srcdir=dst / "docs")
@@ -1154,6 +1156,7 @@ def test_example_builds(make_app, tmp_path):
 
 def test_example_api_check_reports(make_app, tmp_path):
     # docs/user-guide/api-check.rst shows these reports.
+    pytest.importorskip("myst_parser")
     dst = tmp_path / "example"
     shutil.copytree(EXAMPLE, dst, ignore=shutil.ignore_patterns("_build"))
     app = make_app("matlab-api-check", srcdir=dst / "docs", freshenv=True)

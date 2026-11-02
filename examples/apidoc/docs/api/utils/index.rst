@@ -22,8 +22,8 @@ lerp
 
 .. mat:autofunction:: utils/lerp.m
 
-Pages
------
+Sidecar docs
+------------
 
 .. toctree::
    :maxdepth: 4

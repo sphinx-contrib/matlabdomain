@@ -22,7 +22,7 @@ from sphinx.util.docfields import Field, GroupedField, TypedField
 from sphinx.util.logging import getLogger
 from sphinx.util.nodes import make_refnode
 
-from . import mat_api_check, mat_directives, mat_naming, mat_pages, mat_types
+from . import mat_api_check, mat_directives, mat_naming, mat_sidecars, mat_types
 from . import mat_documenters as doc
 from .matlab_apidoc import _config as apidoc_config
 
@@ -601,24 +601,24 @@ class MATLABDomain(Domain):
         "obj": MatXRefRole(),
         "scpt": MatXRefRole(),
         "app": MatXRefRole(),
-        # A page next to code, by path reference; the text is its title.
-        "page": XRefRole(),
+        # A sidecar doc, by path reference; the text is its title.
+        "sidecar": XRefRole(),
     }
     initial_data = {
         # Per-document registrations (cleared/merged by docname).
         "objects": {},  # path reference -> docname, objtype, display name
         "folders": {},  # folder reference -> docname, synopsis, platform, deprecated
         "doc_sources": {},  # docname -> {source path: (mtime_ns, size)} it used
-        "page_docs": {},  # docname -> {page reference: title} it renders
-        # docname -> [(page reference, kind, target, line)]: broken relative
-        # links and missing images in the pages it renders
-        "page_issues": {},
+        "sidecar_docs": {},  # docname -> {sidecar reference: title} it renders
+        # docname -> [(sidecar reference, kind, target, line)]: broken relative
+        # links and missing images in the sidecar docs it renders
+        "sidecar_issues": {},
         # Shared source state, rebuilt by ``mat_types.analyze`` each build;
         # files are parsed lazily (see ``mat_types``).
         # source path -> {reference, type, mtime, size, warnings, unreadable,
         #                 matlab_name, private, scope}
         "index": {},
-        "pages": {},  # page path -> {reference, mtime, size}
+        "sidecars": {},  # sidecar doc path -> {reference, mtime, size}
         "parse_cache": {},  # (path, mtime_ns, size) -> parsed MatObject
         "parse_warnings": {},  # (path, mtime_ns, size) -> parse-stage warnings
         "entities_table": {},  # path reference -> MatObject (files and folders)
@@ -626,7 +626,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 15
+    data_version = 16
     indices = [
         MATLABFolderIndex,
     ]
@@ -635,8 +635,8 @@ class MATLABDomain(Domain):
         super().__init__(env)
         # display name -> references of documented objects (built lazily)
         self._displays = None
-        # page reference -> the first document that renders it (built lazily)
-        self._page_docs = None
+        # sidecar reference -> the first document that renders it (built lazily)
+        self._sidecar_docs = None
         # Documents read in this build (``env-before-read-docs``).
         self.read_docnames = ()
         self.reset_sources()
@@ -645,8 +645,8 @@ class MATLABDomain(Domain):
         """Forget the in-process state of the previous index stage."""
         # path reference -> source path (built lazily from the index)
         self._sources = None
-        # page reference -> page path (built lazily from the pages)
-        self._pages = None
+        # sidecar reference -> sidecar path (built lazily from the sidecar docs)
+        self._sidecars = None
         # (path, mtime_ns, size) -> decoded text read by the index stage
         self.text_cache = {}
         # files or folders were added, removed or changed type
@@ -660,33 +660,34 @@ class MATLABDomain(Domain):
             }
         return self._sources
 
-    def page_paths(self):
-        """Path reference -> path of every indexed page."""
-        if self._pages is None:
-            self._pages = {
-                record["reference"]: path for path, record in self.data["pages"].items()
+    def sidecar_paths(self):
+        """Path reference -> path of every indexed sidecar doc."""
+        if self._sidecars is None:
+            self._sidecars = {
+                record["reference"]: path
+                for path, record in self.data["sidecars"].items()
             }
-        return self._pages
+        return self._sidecars
 
-    def note_page(self, ref, title, issues):
-        """Record that the document being read renders the page ``ref``."""
+    def note_sidecar(self, ref, title, issues):
+        """Record that the document being read renders the sidecar doc ``ref``."""
         docname = self.env.docname
-        self.data["page_docs"].setdefault(docname, {})[ref] = title
-        self.data["page_issues"].setdefault(docname, []).extend(
+        self.data["sidecar_docs"].setdefault(docname, {})[ref] = title
+        self.data["sidecar_issues"].setdefault(docname, []).extend(
             (ref, *issue) for issue in issues
         )
-        self._page_docs = None
+        self._sidecar_docs = None
 
-    def page_doc(self, ref):
-        """Return the document that renders the page ``ref`` (the first by
+    def sidecar_doc(self, ref):
+        """Return the document that renders the sidecar doc ``ref`` (the first by
         name, so serial and parallel builds agree), or None.
         """
-        if self._page_docs is None:
-            self._page_docs = {}
-            for docname in sorted(self.data["page_docs"]):
-                for page in self.data["page_docs"][docname]:
-                    self._page_docs.setdefault(page, docname)
-        return self._page_docs.get(ref)
+        if self._sidecar_docs is None:
+            self._sidecar_docs = {}
+            for docname in sorted(self.data["sidecar_docs"]):
+                for sidecar in self.data["sidecar_docs"][docname]:
+                    self._sidecar_docs.setdefault(sidecar, docname)
+        return self._sidecar_docs.get(ref)
 
     @property
     def entities_table(self):
@@ -717,10 +718,10 @@ class MATLABDomain(Domain):
             if fn == docname:
                 del self.data["folders"][ref]
         self.data["doc_sources"].pop(docname, None)
-        self.data["page_docs"].pop(docname, None)
-        self.data["page_issues"].pop(docname, None)
+        self.data["sidecar_docs"].pop(docname, None)
+        self.data["sidecar_issues"].pop(docname, None)
         self._displays = None
-        self._page_docs = None
+        self._sidecar_docs = None
 
     def merge_domaindata(self, docnames, otherdata):
         # Merge per-document registrations from a parallel-read worker, and
@@ -732,7 +733,7 @@ class MATLABDomain(Domain):
         for ref, data in otherdata["folders"].items():
             if data[0] in docnames:
                 self.data["folders"][ref] = data
-        for name in ("doc_sources", "page_docs", "page_issues"):
+        for name in ("doc_sources", "sidecar_docs", "sidecar_issues"):
             for docname, value in otherdata[name].items():
                 if docname in docnames:
                     self.data[name][docname] = value
@@ -745,7 +746,7 @@ class MATLABDomain(Domain):
                     continue
                 ours.setdefault(key, value)
         self._displays = None
-        self._page_docs = None
+        self._sidecar_docs = None
 
     def _by_display(self, name):
         if self._displays is None:
@@ -846,8 +847,10 @@ class MATLABDomain(Domain):
         )
 
     def resolve_xref(self, env, fromdocname, builder, type, target, node, contnode):
-        if type == "page":
-            return self._resolve_page(env, fromdocname, builder, target, node, contnode)
+        if type == "sidecar":
+            return self._resolve_sidecar(
+                env, fromdocname, builder, target, node, contnode
+            )
         searchmode = (node.hasattr("refspecific") and 1) or 0
         matches = self.find_obj(
             node.get("mat:folder"), node.get("mat:class"), target, type, searchmode
@@ -861,15 +864,15 @@ class MATLABDomain(Domain):
         ref, entry = matches[0]
         return self._refnode(builder, fromdocname, ref, entry, contnode)
 
-    def _resolve_page(self, env, fromdocname, builder, target, node, contnode):
-        # A link to a page goes to the document that renders it; without
-        # text of its own it shows the page's title.
+    def _resolve_sidecar(self, env, fromdocname, builder, target, node, contnode):
+        # A link to a sidecar doc goes to the document that renders it; without
+        # text of its own it shows the sidecar doc's title.
         ref = unicodedata.normalize("NFC", target)
-        docname = self.page_doc(ref)
+        docname = self.sidecar_doc(ref)
         if docname is None:
             return None
         if not node.get("refexplicit"):
-            title = self.data["page_docs"][docname][ref]
+            title = self.data["sidecar_docs"][docname][ref]
             contnode = nodes.inline(title, title, classes=contnode["classes"])
         # A Markdown heading's slug (myst_heading_anchors) names its section.
         anchor = node.get("reftargetid") or ""
@@ -974,7 +977,7 @@ def setup(app):
     app.setup_extension("sphinx.ext.autodoc")
     app.connect("config-inited", ensure_configuration)
     app.connect("config-inited", check_encoding)
-    app.connect("config-inited", mat_pages.check_config)
+    app.connect("config-inited", mat_sidecars.check_config)
     app.connect("config-inited", mat_api_check.check_config)
     app.connect("builder-inited", analyze)
     app.connect("env-get-outdated", mat_types.outdated_docs)
@@ -1000,8 +1003,8 @@ def setup(app):
         "env",
         [list, tuple],
     )
-    # Pages next to code: [] is off; e.g. [".md", ".rst"] (plan.md 2.11).
-    app.add_config_value("matlab_src_page_suffixes", [], "env", [list, tuple])
+    # Sidecar docs: [] is off; e.g. [".md", ".rst"] (plan.md 2.11).
+    app.add_config_value("matlab_src_sidecar_suffixes", [], "env", [list, tuple])
     # Keep the text read by the index stage for the parse (this process only).
     app.add_config_value("matlab_src_cache_text", True, "", bool)
     # Removed: setting it raises ConfigError.
@@ -1074,7 +1077,7 @@ def setup(app):
 
     app.add_autodoc_attrgetter(mat_types.MatModule, mat_types.MatModule.getter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
-    app.add_directive_to_domain("mat", "autopage", mat_pages.AutoPage)
+    app.add_directive_to_domain("mat", "autosidecar", mat_sidecars.AutoSidecar)
 
     return {
         "version": _get_version(),

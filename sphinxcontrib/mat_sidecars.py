@@ -1,19 +1,19 @@
-"""sphinxcontrib.mat_pages.
-~~~~~~~~~~~~~~~~~~~~~~~
+"""sphinxcontrib.mat_sidecars.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pages next to code (plan.md Section 2.11): ``.md`` and ``.rst`` files in
-the project, indexed with the code (``mat_types``) and rendered into a
-document by ``mat:autopage``.
+Sidecar docs (pages next to code; plan.md Section 2.11): ``.md`` and
+``.rst`` files in the project, indexed with the code (``mat_types``) and
+rendered into a document by ``mat:autosidecar``.
 
-- Relative paths in a page are relative to the page's folder: images and
+- Relative paths in a sidecar doc are relative to its folder: images and
   downloads are rewritten to source-folder-relative paths (``/`` +
   ``relpath(target, srcdir)``); ``literalinclude`` and ``include`` resolve
-  from the page's folder while it is parsed.
-- Markdown links (myst-parser): a page -> its document, an indexed code
-  file -> its API entry, another existing file -> a download; anything else
-  is myst-parser's.
+  from the sidecar doc's folder while it is parsed.
+- Markdown links (myst-parser): a sidecar doc -> its document, an indexed
+  code file -> its API entry, another existing file -> a download; anything
+  else is myst-parser's.
 - Broken relative links and missing images are recorded for
-  ``matlab-api-check`` (``page_issues``).
+  ``matlab-api-check`` (``sidecar_issues``).
 
 :copyright: Copyright by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.
@@ -40,7 +40,7 @@ from . import mat_types
 logger = getLogger("matlab-domain")
 
 MARKDOWN = ".md"
-#: kinds of page issues
+#: kinds of sidecar issues
 LINK, IMAGE = "link", "image"
 
 
@@ -69,32 +69,32 @@ def _escape_glob(path):
 
 
 def check_config(app, config):
-    """``config-inited``: check ``matlab_src_page_suffixes`` (or ConfigError)
+    """``config-inited``: check ``matlab_src_sidecar_suffixes`` (or ConfigError)
     and, when the project root is inside the Sphinx source folder, add the
-    pages to ``exclude_patterns`` so Sphinx does not also read them as
+    sidecar docs to ``exclude_patterns`` so Sphinx does not also read them as
     documents. It must happen here: a later change makes Sphinx see a
     changed config and read every document again on every build.
     """
-    suffixes = mat_types.page_suffix_list(config.matlab_src_page_suffixes)
+    suffixes = mat_types.sidecar_suffix_list(config.matlab_src_sidecar_suffixes)
     if not suffixes:
         return
     root = mat_types.project_root(config, app.srcdir)
     if root is None:
         raise ConfigError(
-            "matlab_src_page_suffixes needs matlab_src_code_project_root."
+            "matlab_src_sidecar_suffixes needs matlab_src_code_project_root."
         )
     if MARKDOWN in suffixes and "myst_parser" not in app.extensions:
         raise ConfigError(
-            "matlab_src_page_suffixes has '.md': add 'myst_parser' to extensions "
+            "matlab_src_sidecar_suffixes has '.md': add 'myst_parser' to extensions "
             "(pip install sphinxcontrib-matlabdomain[markdown])."
         )
     srcdir = os.path.normpath(os.fspath(app.srcdir))
-    mat_types.page_layout_error(root, srcdir)
+    mat_types.sidecar_layout_error(root, srcdir)
     if not same_drive(root, srcdir):
         _warn(
-            "page",
+            "sidecar",
             f"matlab_src_code_project_root {root} is on another drive than the "
-            "Sphinx source folder: relative paths in pages (images, downloads, "
+            "Sphinx source folder: relative paths in sidecar docs (images, downloads, "
             "includes) cannot be resolved.",
         )
     elif mat_types._within(root, srcdir):
@@ -103,13 +103,13 @@ def check_config(app, config):
             *config.exclude_patterns,
             *(
                 _escape_glob(os.path.relpath(path, srcdir).replace(os.sep, "/"))
-                for path in mat_types.page_paths(settings)
+                for path in mat_types.sidecar_paths(settings)
             ),
         ]
 
 
-def read_page(path, ref):
-    """Return the text of a page: UTF-8 (a byte-order mark is dropped);
+def read_sidecar(path, ref):
+    """Return the text of a sidecar doc: UTF-8 (a byte-order mark is dropped);
     invalid bytes are replaced, with one ``mat.encoding`` warning.
     """
     with open(path, "rb") as f:
@@ -139,8 +139,8 @@ def _exists(path):
 
 
 @dataclass
-class _Page:
-    """One page being rendered into the current document."""
+class _Sidecar:
+    """One sidecar doc being rendered into the current document."""
 
     ref: str
     path: str
@@ -164,7 +164,7 @@ class _Page:
         return "/" + rel.replace(os.sep, "/")
 
     def link(self, dest, line):
-        """``(node, text)`` for a Markdown link relative to the page, or None
+        """``(node, text)`` for a Markdown link relative to the sidecar doc, or None
         for myst-parser to handle. ``text`` is shown for a link without text.
         """
         target, _, anchor = dest.partition("#")
@@ -176,10 +176,14 @@ class _Page:
             # Read the document again once the file exists.
             self.dom.env.note_dependency(path)
             return None
-        if (page := self.dom.data["pages"].get(path)) is not None:
-            ref = page["reference"]
+        if (sidecar := self.dom.data["sidecars"].get(path)) is not None:
+            ref = sidecar["reference"]
             node = addnodes.pending_xref(
-                "", refdomain="mat", reftype="page", reftarget=ref, reftargetid=anchor
+                "",
+                refdomain="mat",
+                reftype="sidecar",
+                reftarget=ref,
+                reftargetid=anchor,
             )
             return node, ref
         if (record := self.dom.data["index"].get(path)) is not None:
@@ -224,7 +228,7 @@ def _renderer_class():
     """
     from myst_parser.mdit_to_docutils.sphinx_ import SphinxRenderer
 
-    class PageRenderer(SphinxRenderer):
+    class SidecarRenderer(SphinxRenderer):
         def setup_render(self, options, env):
             super().setup_render(options, env)
             # Sections go below the directive's node, as in MyST's include.
@@ -233,16 +237,16 @@ def _renderer_class():
 
         def add_line_and_source_path(self, node, token):
             super().add_line_and_source_path(node, token)
-            node.source = self.md_options["matlab_page"].path
+            node.source = self.md_options["matlab_sidecar"].path
 
         def create_warning(
             self, message, subtype, *, wtype=None, line=None, append_to=None
         ):
-            # At the page's line, not the line of the rendering document.
+            # At the sidecar doc's line, not the line of the rendering document.
             from myst_parser.warnings_ import create_warning
 
             where = nodes.Element()
-            where.source, where.line = self.md_options["matlab_page"].path, line
+            where.source, where.line = self.md_options["matlab_sidecar"].path, line
             return create_warning(
                 self.document,
                 message,
@@ -254,17 +258,17 @@ def _renderer_class():
 
         def _render_finalise(self):
             # The word count is the document's (a MyST document adds its own);
-            # heading slugs add to those of pages rendered before.
+            # heading slugs add to those of sidecar docs rendered before.
             self.md_env.pop("wordcount", None)
             earlier = getattr(self.document, "myst_slugs", None) or {}
             self._heading_slugs = {**earlier, **self._heading_slugs}
             super()._render_finalise()
 
         def render_link_unknown(self, token):
-            page = self.md_options["matlab_page"]
+            sidecar = self.md_options["matlab_sidecar"]
             dest = self.md.normalizeLinkText(token.attrGet("href") or "")
             explicit = token.info != "auto" and bool(token.children)
-            found = page.link(dest, token.map[0] if token.map else None)
+            found = sidecar.link(dest, token.map[0] if token.map else None)
             if found is None:
                 return super().render_link_unknown(token)
             node, text = found
@@ -277,15 +281,15 @@ def _renderer_class():
             if not explicit and text is not None:
                 node[-1] += nodes.Text(text)
 
-    return PageRenderer
+    return SidecarRenderer
 
 
-class AutoPage(SphinxDirective):
-    """``.. mat:autopage:: <path reference>``: render a page next to code.
+class AutoSidecar(SphinxDirective):
+    """``.. mat:autosidecar:: <path reference>``: render a sidecar doc.
 
-    Its headings become sections; the first is the page title (a page
-    without one gets its file name, with a warning). ``:no-title:`` drops
-    the first heading (a folder's README as the folder page's
+    Its headings become sections; the first is the sidecar doc's title (one
+    without a heading gets its file name, with a warning). ``:no-title:``
+    drops the first heading (a folder's README as the folder page's
     introduction).
     """
 
@@ -296,51 +300,51 @@ class AutoPage(SphinxDirective):
     def run(self):
         ref = unicodedata.normalize("NFC", self.arguments[0].strip())
         dom = self.env.get_domain("mat")
-        path = dom.page_paths().get(ref)
+        path = dom.sidecar_paths().get(ref)
         if path is None:
             root = mat_types.project_root(self.config, self.env.srcdir)
             if root is not None:
-                # Read again once the page exists.
+                # Read again once the sidecar doc exists.
                 self.env.note_dependency(os.path.join(root, *ref.split("/")))
             _warn(
-                "page",
-                f"{ref} is not a page next to code (see matlab_src_page_suffixes).",
+                "sidecar",
+                f"{ref} is not a sidecar doc (see matlab_src_sidecar_suffixes).",
                 self.get_location(),
             )
             return []
         self.env.note_dependency(path)
         try:
-            text = read_page(path, ref)
+            text = read_sidecar(path, ref)
         except OSError as err:
             _warn("parse_error", f"{ref} cannot be read ({err.strerror or err}).")
             return []
-        page = _Page(ref, path, os.path.normpath(os.fspath(self.env.srcdir)), dom)
+        sidecar = _Sidecar(ref, path, os.path.normpath(os.fspath(self.env.srcdir)), dom)
         container = nodes.Element()
         container.document = self.state.document
-        with self._relative_to(page):
+        with self._relative_to(sidecar):
             if path.endswith(MARKDOWN):
-                self._markdown(text, page, container)
+                self._markdown(text, sidecar, container)
             else:
                 lines = StringList(text.splitlines(), source=path)
                 nested_parse_with_titles(self.state, lines, container)
-        page.rewrite(container)
-        result, title = self._titled(list(container.children), page)
-        dom.note_page(ref, title, page.issues)
+        sidecar.rewrite(container)
+        result, title = self._titled(list(container.children), sidecar)
+        dom.note_sidecar(ref, title, sidecar.issues)
         return result
 
     @contextmanager
-    def _relative_to(self, page):
+    def _relative_to(self, sidecar):
         """Resolve relative names in ``literalinclude`` and ``include`` (which
-        call ``env.relfn2path`` without a docname) from the page's folder.
+        call ``env.relfn2path`` without a docname) from the sidecar doc's folder.
         """
         env = self.env
-        # A page may render another page: restore the outer one's wrapper.
+        # A sidecar doc may render another: restore the outer one's wrapper.
         outer = env.__dict__.get("relfn2path")
         original = env.relfn2path
 
         def relfn2path(filename, docname=None):
             if docname is None and not _external(filename):
-                source = page.source_path(os.path.join(page.folder, filename))
+                source = sidecar.source_path(os.path.join(sidecar.folder, filename))
                 if source is not None:
                     filename = source
             return original(filename, docname)
@@ -354,22 +358,22 @@ class AutoPage(SphinxDirective):
             else:
                 env.relfn2path = outer
 
-    def _markdown(self, text, page, container):
+    def _markdown(self, text, sidecar, container):
         from myst_parser.parsers.mdit import create_md_parser
 
         parser = create_md_parser(self.env.myst_config, _renderer_class())
         parser.options["document"] = self.state.document
         parser.options["current_node"] = container
-        parser.options["matlab_page"] = page
+        parser.options["matlab_sidecar"] = sidecar
         parser.render(text, {})
 
-    def _titled(self, result, page):
-        """``(nodes, title)``: the page's nodes and its title text."""
+    def _titled(self, result, sidecar):
+        """``(nodes, title)``: the sidecar doc's nodes and its title text."""
         first = next(
             (i for i, node in enumerate(result) if isinstance(node, nodes.section)),
             None,
         )
-        name = os.path.basename(page.path)
+        name = os.path.basename(sidecar.path)
         title = name if first is None else clean_astext(result[first][0])
         if "no-title" in self.options:
             if first is not None:
@@ -377,9 +381,9 @@ class AutoPage(SphinxDirective):
             return result, title
         if first is None:
             _warn(
-                "page",
-                f"{page.ref} has no heading; its file name is its title.",
-                f"{page.path}:1",
+                "sidecar",
+                f"{sidecar.ref} has no heading; its file name is its title.",
+                f"{sidecar.path}:1",
             )
             section = nodes.section("", nodes.title(name, name), *result)
             section["names"].append(nodes.fully_normalize_name(name))

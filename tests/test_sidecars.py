@@ -1,5 +1,5 @@
-"""Pages next to code (plan.md Section 2.11, Phase 12): the index, the
-``mat:autopage`` directive, links, the ``:mat:page:`` role, the layouts,
+"""Sidecar docs (plan.md Section 2.11, Phase 12): the index, the
+``mat:autosidecar`` directive, links, the ``:mat:sidecar:`` role, the layouts,
 incremental and parallel builds, ``sphinx-matlab-apidoc`` and
 ``matlab-api-check``.
 """
@@ -20,7 +20,7 @@ from sphinx.errors import ConfigError
 from sphinx.util.console import strip_escape_sequences
 from test_lazy_index import ForkLikeTasks
 
-from sphinxcontrib import mat_pages, mat_types
+from sphinxcontrib import mat_sidecars, mat_types
 from sphinxcontrib.mat_types import IndexSettings, build_index
 from sphinxcontrib.matlab_apidoc import ApidocOptions, main
 from sphinxcontrib.matlab_apidoc._generate import build_pages, stub_reference
@@ -30,7 +30,7 @@ pytest.importorskip("myst_parser")
 CONF = (
     'extensions = ["sphinxcontrib.matlab", "myst_parser"]\n'
     'matlab_src_code_project_root = "../src"\n'
-    'matlab_src_page_suffixes = [".md", ".rst"]\n'
+    'matlab_src_sidecar_suffixes = [".md", ".rst"]\n'
     'exclude_patterns = ["_build"]\n'
     "nitpicky = True\n"
 )
@@ -73,8 +73,9 @@ A role: :mat:func:`demo.scale`.
 
 .. image:: img/plot.png
 
-{FIGURE}Pages: :mat:page:`+demo/guide.md` and :mat:page:`the guide <+demo/guide.md>`;
-the introduction: :mat:page:`+demo/README.md`;
+{FIGURE}Sidecar docs: :mat:sidecar:`+demo/guide.md` and
+:mat:sidecar:`the guide <+demo/guide.md>`;
+the introduction: :mat:sidecar:`+demo/README.md`;
 a download: :download:`scale.m`.
 
 .. literalinclude:: scale.m
@@ -113,13 +114,13 @@ API = """namespace demo
 
 .. mat:autofolder:: +demo/
 
-.. mat:autopage:: +demo/README.md
+.. mat:autosidecar:: +demo/README.md
    :no-title:
 
 .. mat:autofunction:: +demo/scale.m
 
-Pages
------
+Sidecar docs
+------------
 
 .. toctree::
 
@@ -154,7 +155,7 @@ def write(root, files):
 
 
 def fresh(root):
-    """Write a MATLAB root ``src/`` with pages and a Sphinx project ``docs/``
+    """Write a MATLAB root ``src/`` with sidecar docs and a Sphinx project ``docs/``
     with hand-written stubs (the source folder outside the root).
     """
     files = {
@@ -165,7 +166,7 @@ def fresh(root):
         "docs/api/+demo/index.rst": API,
     }
     for stub, ref in STUBS.items():
-        files[f"docs/api/+demo/{stub}.rst"] = f".. mat:autopage:: {ref}\n"
+        files[f"docs/api/+demo/{stub}.rst"] = f".. mat:autosidecar:: {ref}\n"
     write(root, files)
     return root
 
@@ -199,13 +200,13 @@ def build(make_app, srcdir, builder="html", **overrides):
 # --- settings and the index -------------------------------------------------
 
 
-def test_page_suffix_list():
-    assert mat_types.page_suffix_list([".rst", ".md", ".rst"]) == (".md", ".rst")
-    assert mat_types.page_suffix_list(()) == ()
+def test_sidecar_suffix_list():
+    assert mat_types.sidecar_suffix_list([".rst", ".md", ".rst"]) == (".md", ".rst")
+    assert mat_types.sidecar_suffix_list(()) == ()
     with pytest.raises(ConfigError, match="must be a list"):
-        mat_types.page_suffix_list(".md")
-    with pytest.raises(ConfigError, match="'md' is not a page suffix"):
-        mat_types.page_suffix_list(["md"])
+        mat_types.sidecar_suffix_list(".md")
+    with pytest.raises(ConfigError, match="'md' is not a sidecar suffix"):
+        mat_types.sidecar_suffix_list(["md"])
 
 
 def test_source_filter_default_exclusions():
@@ -226,12 +227,12 @@ def test_source_filter_default_exclusions():
         mat_types.source_filter(Config)
 
 
-def test_index_records_pages_apart_from_code(project):
+def test_index_records_sidecars_apart_from_code(project):
     src = project / "src"
-    settings = IndexSettings(str(src), page_suffixes=(".md", ".rst"))
+    settings = IndexSettings(str(src), sidecar_suffixes=(".md", ".rst"))
     source_index = build_index(settings)
-    pages = {r["reference"]: path for path, r in source_index.pages.items()}
-    assert sorted(pages) == [
+    sidecars = {r["reference"]: path for path, r in source_index.sidecars.items()}
+    assert sorted(sidecars) == [
         "+demo/README.md",
         "+demo/guide.md",
         "+demo/notes.rst",
@@ -239,14 +240,14 @@ def test_index_records_pages_apart_from_code(project):
         "+demo/scale.md",
         "+demo/sub/deep.md",
     ]
-    record = source_index.pages[pages["+demo/guide.md"]]
-    st = os.stat(pages["+demo/guide.md"])
+    record = source_index.sidecars[sidecars["+demo/guide.md"]]
+    st = os.stat(sidecars["+demo/guide.md"])
     assert record == {
         "reference": "+demo/guide.md",
         "mtime": st.st_mtime_ns,
         "size": st.st_size,
     }
-    # No page is code, a member of its folder or a MATLAB name.
+    # No sidecar doc is code, a member of its folder or a MATLAB name.
     refs = {r["reference"] for r in source_index.index.values()}
     assert refs == {"+demo/scale.m"}
     assert source_index.entities["+demo/"].members == [
@@ -257,10 +258,10 @@ def test_index_records_pages_apart_from_code(project):
     assert "demo.scale" in source_index.matlab_names
     assert not any(n.endswith("guide") for n in source_index.matlab_names)
     # Off by default.
-    assert build_index(IndexSettings(str(src))).pages == {}
+    assert build_index(IndexSettings(str(src))).sidecars == {}
 
 
-def test_page_patterns_and_source_folder_inside_root(tmp_path):
+def test_sidecar_patterns_and_source_folder_inside_root(tmp_path):
     root = tmp_path / "repo"
     write(
         root,
@@ -278,38 +279,38 @@ def test_page_patterns_and_source_folder_inside_root(tmp_path):
     settings = IndexSettings(
         str(root),
         exclude=(*mat_types.DEFAULT_EXCLUSION_PATTERNS, "tests"),
-        page_suffixes=(".md", ".rst"),
+        sidecar_suffixes=(".md", ".rst"),
         source_dir=str(root / "docs"),
     )
     source_index = build_index(settings)
-    pages = sorted(r["reference"] for r in source_index.pages.values())
-    assert pages == ["Readme.rst", "a/guide.md"]
+    sidecars = sorted(r["reference"] for r in source_index.sidecars.values())
+    assert sidecars == ["Readme.rst", "a/guide.md"]
     # Code in the source folder is still indexed.
     refs = sorted(r["reference"] for r in source_index.index.values())
     assert refs == ["a/f.m", "docs/helper.m"]
-    assert mat_types.page_paths(settings) == list(source_index.pages)
-    assert mat_types.page_paths(IndexSettings(str(root / "missing"))) == []
+    assert mat_types.sidecar_paths(settings) == list(source_index.sidecars)
+    assert mat_types.sidecar_paths(IndexSettings(str(root / "missing"))) == []
 
 
 @pytest.mark.skipif(not hasattr(os, "symlink"), reason="no symlinks")
-def test_page_linked_outside_the_root_is_skipped(tmp_path, caplog):
+def test_sidecar_linked_outside_the_root_is_skipped(tmp_path, caplog):
     root = tmp_path / "root"
     write(tmp_path, {"outside.md": "# Outside\n", "root/in.md": "# In\n"})
     try:
         os.symlink(tmp_path / "outside.md", root / "link.md")
     except OSError:
         pytest.skip("cannot create symlinks")
-    settings = IndexSettings(str(root), page_suffixes=(".md",))
-    pages = [r["reference"] for r in build_index(settings).pages.values()]
-    assert pages == ["in.md"]
-    # The quiet walk finds the same pages.
-    assert [os.path.basename(p) for p in mat_types.page_paths(settings)] == ["in.md"]
+    settings = IndexSettings(str(root), sidecar_suffixes=(".md",))
+    sidecars = [r["reference"] for r in build_index(settings).sidecars.values()]
+    assert sidecars == ["in.md"]
+    # The quiet walk finds the same sidecar docs.
+    assert [os.path.basename(p) for p in mat_types.sidecar_paths(settings)] == ["in.md"]
 
 
-def test_page_layout_error():
-    mat_types.page_layout_error("/a/src", "/a/docs")
+def test_sidecar_layout_error():
+    mat_types.sidecar_layout_error("/a/src", "/a/docs")
     with pytest.raises(ConfigError, match="to differ from the Sphinx source folder"):
-        mat_types.page_layout_error("/a/docs/", "/a/docs")
+        mat_types.sidecar_layout_error("/a/docs/", "/a/docs")
 
 
 # --- configuration ---------------------------------------------------------
@@ -318,11 +319,14 @@ def test_page_layout_error():
 @pytest.mark.parametrize(
     ("conf", "match"),
     [
-        ('matlab_src_page_suffixes = ".md"\n', "must be a list"),
-        ('matlab_src_page_suffixes = [".txt"]\n', "'.txt' is not a page suffix"),
+        ('matlab_src_sidecar_suffixes = ".md"\n', "must be a list"),
+        (
+            'matlab_src_sidecar_suffixes = [".txt"]\n',
+            "'.txt' is not a sidecar suffix",
+        ),
         (
             "matlab_src_code_project_root = None\n"
-            'matlab_src_page_suffixes = [".rst"]\n',
+            'matlab_src_sidecar_suffixes = [".rst"]\n',
             "needs matlab_src_code_project_root",
         ),
         (
@@ -340,24 +344,24 @@ def test_config_errors(make_app, project, conf, match):
 
 
 def test_root_on_another_drive_warns(make_app, project, monkeypatch):
-    assert mat_pages.same_drive(str(project), str(project / "docs"))
-    monkeypatch.setattr(mat_pages, "same_drive", lambda *_: False)
+    assert mat_sidecars.same_drive(str(project), str(project / "docs"))
+    monkeypatch.setattr(mat_sidecars, "same_drive", lambda *_: False)
     app = make_app(srcdir=project / "docs")
     assert "on another drive than the Sphinx source folder" in app.warning.getvalue()
-    assert "[mat.page]" in app.warning.getvalue()
+    assert "[mat.sidecar]" in app.warning.getvalue()
 
 
 # --- rendering ---------------------------------------------------------------
 
 
-def test_pages_render(make_app, project):
+def test_sidecars_render(make_app, project):
     app = build(make_app, project / "docs")
     found = warnings(app)
     assert len(found) == 3, found
     plain = str(project / "src" / "+demo" / "plain.md")
     assert (
         f"{plain}:1: WARNING: [sphinxcontrib-matlabdomain] +demo/plain.md has no "
-        "heading; its file name is its title. [mat.page]" in found
+        "heading; its file name is its title. [mat.sidecar]" in found
     )
     assert any("missing.md" in w and "[myst.xref_missing]" in w for w in found)
     assert any("missing.png" in w and "image file not readable" in w for w in found)
@@ -385,7 +389,7 @@ def test_pages_render(make_app, project):
     assert 'src="../../_images/plot.png"' in notes
     assert notes.count('href="guide-md.html"') == 2
     assert ">Getting started</span>" in notes
-    # A README's link text is the page's title, not its document's.
+    # A README's link text is the sidecar doc's title, not its document's.
     assert '<a class="reference internal" href="index.html">' in notes
     assert ">Demo</span>" in notes
     assert "Included from part.inc." in notes
@@ -407,15 +411,15 @@ def test_pages_render(make_app, project):
     # scale.md next to scale.m: the name still finds the function.
     dom = app.env.get_domain("mat")
     assert type(dom.entities_table["+demo/"].getter("scale")).__name__ == "MatFunction"
-    assert dom.page_doc("+demo/README.md") == f"{prefix}index"
-    issues = dom.data["page_issues"]
+    assert dom.sidecar_doc("+demo/README.md") == f"{prefix}index"
+    issues = dom.data["sidecar_issues"]
     assert issues[f"{prefix}guide-md"] == [("+demo/guide.md", "link", "missing.md", 16)]
     assert [i[:3] for i in issues[f"{prefix}notes-rst"]] == [
         ("+demo/notes.rst", "image", "img/missing.png")
     ]
 
 
-def test_autopage_problems(make_app, project, monkeypatch):
+def test_autosidecar_problems(make_app, project, monkeypatch):
     docs = project / "docs"
     write(
         project,
@@ -425,87 +429,90 @@ def test_autopage_problems(make_app, project, monkeypatch):
             "src/+demo/abs.md": "# Absolute\n\n[x](/nowhere.md) and [y]()\n\n"
             "### Skipped a level\n",
             "src/+demo/intro.md": "An introduction without a heading.\n",
-            "src/+demo/nest.rst": "Nest\n====\n\n.. mat:autopage:: +demo/scale.md\n\n"
+            "src/+demo/nest.rst": "Nest\n====\n\n"
+            ".. mat:autosidecar:: +demo/scale.md\n\n"
             ".. literalinclude:: part.inc\n   :language: text\n",
-            "docs/extra.rst": ":orphan:\n\n.. mat:autopage:: +demo/latin.md\n\n"
-            ".. mat:autopage:: +demo/bom.rst\n\n.. mat:autopage:: +demo/later.md\n\n"
-            ".. mat:autopage:: +demo/abs.md\n\n"
-            ".. mat:autopage:: +demo/intro.md\n   :no-title:\n\n"
-            ".. mat:autopage:: +demo/nest.rst\n\n"
-            "See :mat:page:`+demo/nowhere.md`.\n",
+            "docs/extra.rst": ":orphan:\n\n.. mat:autosidecar:: +demo/latin.md\n\n"
+            ".. mat:autosidecar:: +demo/bom.rst\n\n"
+            ".. mat:autosidecar:: +demo/later.md\n\n"
+            ".. mat:autosidecar:: +demo/abs.md\n\n"
+            ".. mat:autosidecar:: +demo/intro.md\n   :no-title:\n\n"
+            ".. mat:autosidecar:: +demo/nest.rst\n\n"
+            "See :mat:sidecar:`+demo/nowhere.md`.\n",
         },
     )
     app = build(make_app, docs)
     text = app.warning.getvalue()
     assert "+demo/latin.md is not valid UTF-8" in text
     assert f"{project / 'src' / '+demo' / 'latin.md'}:1:" in text
-    assert "+demo/later.md is not a page next to code" in text
-    assert "mat:page reference target not found: +demo/nowhere.md" in text
+    assert "+demo/later.md is not a sidecar doc" in text
+    assert "mat:sidecar reference target not found: +demo/nowhere.md" in text
     assert "intro.md has no heading" not in text
-    # myst-parser's warnings point into the page.
+    # myst-parser's warnings point into the sidecar doc.
     abs_md = project / "src" / "+demo" / "abs.md"
     assert f"{abs_md}:5: WARNING: Non-consecutive header level increase" in text
     body = html(app, "extra")
     assert "Caf\ufffd" in body
     assert ">BOM<" in body
     assert "<p>An introduction without a heading.</p>" in body
-    # A page that renders a page: both resolve relative paths.
+    # A sidecar doc that renders another: both resolve relative paths.
     assert ">Scale notes<" in body
     assert "Included from part.inc." in body
     assert "relfn2path" not in vars(app.env)
-    assert app.env.get_domain("mat").data["page_issues"]["extra"] == []
+    assert app.env.get_domain("mat").data["sidecar_issues"]["extra"] == []
 
-    # The missing page appears: the document is read again.
+    # The missing sidecar doc appears: the document is read again.
     write(project, {"src/+demo/later.md": "# Later\n"})
     app = build(make_app, docs)
     assert "extra" in read_docs(app)
-    assert "not a page next to code" not in app.warning.getvalue()
+    assert "not a sidecar doc" not in app.warning.getvalue()
 
     def unreadable(path, ref):
         raise PermissionError(13, "Permission denied")
 
-    monkeypatch.setattr(mat_pages, "read_page", unreadable)
+    monkeypatch.setattr(mat_sidecars, "read_sidecar", unreadable)
     app = make_app(srcdir=docs, freshenv=True)
     app.build()
     assert "+demo/guide.md cannot be read (Permission denied)" in app.warning.getvalue()
 
 
 def test_paths_on_another_drive_are_left_alone(make_app, project, monkeypatch):
-    monkeypatch.setattr(mat_pages._Page, "source_path", lambda *_: None)
+    monkeypatch.setattr(mat_sidecars._Sidecar, "source_path", lambda *_: None)
     app = build(make_app, project / "docs")
     guide = html(app, "api/+demo/guide-md")
     # The image keeps its relative path; the download is myst-parser's.
     assert "plot.png" in guide
-    assert app.env.get_domain("mat").page_doc("+demo/guide.md") == "api/+demo/guide-md"
+    dom = app.env.get_domain("mat")
+    assert dom.sidecar_doc("+demo/guide.md") == "api/+demo/guide-md"
 
 
 @pytest.mark.skipif(os.name != "nt", reason="drives are a Windows thing")
 def test_source_path_on_another_drive():
-    page = mat_pages._Page("a.md", "Z:\\src\\a.md", "C:\\docs", None)
-    assert page.source_path("Z:\\src\\img.png") is None
-    assert page.source_path("C:\\docs\\img.png") == "/img.png"
+    sidecar = mat_sidecars._Sidecar("a.md", "Z:\\src\\a.md", "C:\\docs", None)
+    assert sidecar.source_path("Z:\\src\\img.png") is None
+    assert sidecar.source_path("C:\\docs\\img.png") == "/img.png"
 
 
-def test_autopage_without_a_root(make_app, tmp_path):
+def test_autosidecar_without_a_root(make_app, tmp_path):
     write(
         tmp_path,
         {
             "conf.py": 'extensions = ["sphinxcontrib.matlab"]\n',
-            "index.rst": "Index\n=====\n\n.. mat:autopage:: guide.md\n",
+            "index.rst": "Index\n=====\n\n.. mat:autosidecar:: guide.md\n",
         },
     )
     app = build(make_app, tmp_path)
-    assert "guide.md is not a page next to code" in app.warning.getvalue()
+    assert "guide.md is not a sidecar doc" in app.warning.getvalue()
     assert app.env.dependencies["index"] == set()
 
 
-def test_autopage_in_a_markdown_document(make_app, project):
+def test_autosidecar_in_a_markdown_document(make_app, project):
     # The directive also works in a MyST document.
     write(
         project,
         {
             "docs/md.md": "---\norphan: true\n---\n\n# Host\n\n"
-            "```{mat:autopage} +demo/sub/deep.md\n```\n"
+            "```{mat:autosidecar} +demo/sub/deep.md\n```\n"
         },
     )
     app = build(make_app, project / "docs")
@@ -525,7 +532,7 @@ def test_missing_link_target_is_a_dependency(make_app, project):
     assert "api/+demo/guide-md" in read_docs(build(make_app, docs))
     write(project, {"src/+demo/missing.md": "# Found\n"})
     app = build(make_app, docs)
-    assert app.env.get_domain("mat").data["page_issues"]["api/+demo/guide-md"] == []
+    assert app.env.get_domain("mat").data["sidecar_issues"]["api/+demo/guide-md"] == []
 
 
 # --- incremental and parallel builds ----------------------------------------
@@ -577,7 +584,7 @@ def _outputs(app):
         for p in sorted(out.rglob("*.html"))
     }
     data = app.env.domaindata["mat"]
-    return pages, data["page_docs"], data["page_issues"]
+    return pages, data["sidecar_docs"], data["sidecar_issues"]
 
 
 def test_simulated_parallel_read_matches_serial(make_app, project, monkeypatch):
@@ -635,7 +642,7 @@ def test_root_inside_the_source_folder(make_app, tmp_path):
         {
             "conf.py": CONF.replace('"../src"', '"src"'),
             "index.rst": "Index\n=====\n\n.. toctree::\n\n   guide-md\n   odd-md\n",
-            **{f"{s}.rst": f".. mat:autopage:: {r}\n" for s, r in stubs.items()},
+            **{f"{s}.rst": f".. mat:autosidecar:: {r}\n" for s, r in stubs.items()},
             "src/+demo/scale.m": FILES["src/+demo/scale.m"],
             "src/+demo/guide.md": "# Guide\n\nSee [odd](odd[1].md).\n",
             "src/+demo/odd[1].md": "# Odd\n",
@@ -664,8 +671,8 @@ def test_source_folder_inside_the_root(make_app, tmp_path):
         {
             "docs/conf.py": CONF.replace('"../src"', '".."'),
             "docs/index.rst": "Index\n=====\n\n.. toctree::\n\n   about\n   guide-md\n",
-            "docs/about.md": "# About\n\nA Sphinx document, not a page.\n",
-            "docs/guide-md.rst": ".. mat:autopage:: a/guide.md\n\n"
+            "docs/about.md": "# About\n\nA Sphinx document, not a sidecar doc.\n",
+            "docs/guide-md.rst": ".. mat:autosidecar:: a/guide.md\n\n"
             ".. mat:autofunction:: a/f.m\n",
             "a/guide.md": "# Guide\n\nCalls [f](f.m).\n",
             "a/f.m": "function f\n%F Do nothing.\nend\n",
@@ -673,8 +680,8 @@ def test_source_folder_inside_the_root(make_app, tmp_path):
     )
     app = build(make_app, repo / "docs")
     dom = app.env.get_domain("mat")
-    assert sorted(dom.page_paths()) == ["a/guide.md"]
-    assert "docs/about.md" not in dom.page_paths()
+    assert sorted(dom.sidecar_paths()) == ["a/guide.md"]
+    assert "docs/about.md" not in dom.sidecar_paths()
     assert "about" in app.env.found_docs
     assert warnings(app) == []
 
@@ -683,7 +690,7 @@ def test_source_folder_inside_the_root(make_app, tmp_path):
 
 
 def apidoc_pages(root, **options):
-    settings = IndexSettings(str(root), page_suffixes=(".md", ".rst"))
+    settings = IndexSettings(str(root), sidecar_suffixes=(".md", ".rst"))
     return {
         p.docname: p
         for p in build_pages(build_index(settings), ApidocOptions("o", **options))
@@ -695,7 +702,7 @@ def test_stub_reference():
     assert stub_reference("guide.md.rst") == "guide.md-rst"
 
 
-def test_apidoc_page_model(tmp_path):
+def test_apidoc_sidecar_model(tmp_path):
     root = tmp_path / "root"
     write(
         root,
@@ -727,8 +734,8 @@ def test_apidoc_page_model(tmp_path):
     ]
     demo = pages["+demo/index"].context
     assert demo["readme"] == "+demo/README.md"
-    # By casefold(name), ref; an @ folder's README is an ordinary page.
-    assert [(p["ref"], p["docname"]) for p in demo["pages"]] == [
+    # By casefold(name), ref; an @ folder's README is an ordinary sidecar doc.
+    assert [(p["ref"], p["docname"]) for p in demo["sidecars"]] == [
         ("+demo/alpha.rst", "alpha-rst"),
         ("+demo/f.md", "f-md"),
         ("+demo/@Cls/Readme.md", "@Cls/Readme-md"),
@@ -741,7 +748,7 @@ def test_apidoc_page_model(tmp_path):
         "docname": "+demo/f-md",
     }
     assert pages["my~20folder/index"].context["readme"] == "my folder/README.rst"
-    assert pages["my~20folder/index"].context["pages"] == []
+    assert pages["my~20folder/index"].context["sidecars"] == []
     assert pages["index"].context["subfolders"] == [
         "+demo/index",
         "my~20folder/index",
@@ -764,17 +771,17 @@ def test_apidoc_from_conf_builds(make_app, project, capsys):
     assert (
         (api / "guide-md.rst")
         .read_text(encoding="utf-8")
-        .endswith(".. mat:autopage:: +demo/guide.md\n")
+        .endswith(".. mat:autosidecar:: +demo/guide.md\n")
     )
     folder = (api / "index.rst").read_text(encoding="utf-8")
-    assert ".. mat:autopage:: +demo/README.md\n   :no-title:\n" in folder
+    assert ".. mat:autosidecar:: +demo/README.md\n   :no-title:\n" in folder
     assert (
         folder.index("Functions\n---")
-        < folder.index("Pages\n---")
+        < folder.index("Sidecar docs\n---")
         < folder.index("Folders\n---")
     )
     assert main(["-q", "--check", "-c", str(docs)]) == 0
-    # Without conf.py there are no page stubs (no flag turns pages on).
+    # Without conf.py there are no sidecar stubs (no flag turns them on).
     out = project / "flags"
     assert main(["-q", "-o", str(out), str(project / "src")]) == 0
     assert not list(out.rglob("*-md.rst"))
@@ -798,7 +805,7 @@ def test_apidoc_layout_error(project, capsys):
 # --- matlab-api-check ---------------------------------------------------------
 
 
-def test_api_check_pages(make_app, project):
+def test_api_check_sidecars(make_app, project):
     docs = project / "docs"
     write(
         project,
@@ -806,8 +813,8 @@ def test_api_check_pages(make_app, project):
             "src/+demo/lost.md": "# Not rendered\n",
             "src/+demo/hidden.md": "# Rendered off the toctree\n",
             "src/+demo/kept.md": "# Rendered in an orphan\n",
-            "docs/hidden.rst": ".. mat:autopage:: +demo/hidden.md\n",
-            "docs/kept.rst": ":orphan:\n\n.. mat:autopage:: +demo/kept.md\n",
+            "docs/hidden.rst": ".. mat:autosidecar:: +demo/hidden.md\n",
+            "docs/kept.rst": ":orphan:\n\n.. mat:autosidecar:: +demo/kept.md\n",
         },
     )
     app = build(
@@ -818,35 +825,40 @@ def test_api_check_pages(make_app, project):
     )
     assert app.statuscode == 1
     report = json.loads((Path(app.outdir) / "api-check.json").read_text("utf-8"))
-    pages = [f for f in report["findings"] if f["kind"] == "page"]
-    assert [(f["reference"], f["rule"], f["line"], f["message"]) for f in pages] == [
-        ("+demo/guide.md", "page-links", 16, "links to a missing file: missing.md"),
+    sidecars = [f for f in report["findings"] if f["kind"] == "sidecar"]
+    assert [(f["reference"], f["rule"], f["line"], f["message"]) for f in sidecars] == [
+        (
+            "+demo/guide.md",
+            "sidecar-links",
+            16,
+            "links to a missing file: missing.md",
+        ),
         (
             "+demo/hidden.md",
-            "page-documented",
+            "sidecar-documented",
             None,
             "is rendered in hidden, which no toctree includes",
         ),
         (
             "+demo/lost.md",
-            "page-documented",
+            "sidecar-documented",
             None,
-            "is not rendered by a mat:autopage directive",
+            "is not rendered by a mat:autosidecar directive",
         ),
         (
             "+demo/notes.rst",
-            "page-links",
-            pages[3]["line"],
+            "sidecar-links",
+            sidecars[3]["line"],
             "shows a missing image: img/missing.png",
         ),
     ]
     summary = report["summary"]
-    assert summary["checked"]["page"] == 8
+    assert summary["checked"]["sidecar"] == 8
     assert summary["not_checked"]["ignored"] == 1
-    assert summary["findings"]["page-links"] == {"error": 2, "warning": 0}
+    assert summary["findings"]["sidecar-links"] == {"error": 2, "warning": 0}
     text = (Path(app.outdir) / "api-check.txt").read_text(encoding="utf-8")
     guide = project / "src" / "+demo" / "guide.md"
     assert (
         f"{guide}:16: error: +demo/guide.md: links to a missing file: missing.md "
-        "[page-links]"
+        "[sidecar-links]"
     ) in text

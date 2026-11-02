@@ -82,7 +82,7 @@ def test_directives_and_options(bare_app):
     registry = bare_app.registry
     for name, cls in registry.domain_directives["mat"].items():
         documenter = registry.documenters.get(f"mat:{name.removeprefix('auto')}")
-        # mat:autopage renders a page, not an object.
+        # mat:autosidecar renders a sidecar doc, not an object.
         options = cls.option_spec if documenter is None else documenter.option_spec
         directives[name] = set(options)
     assert documented_directives() == directives

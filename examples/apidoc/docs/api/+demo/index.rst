@@ -9,7 +9,7 @@ namespace demo
    :local:
    :backlinks: none
 
-.. mat:autopage:: +demo/README.md
+.. mat:autosidecar:: +demo/README.md
    :no-title:
 
 Classes
@@ -22,8 +22,8 @@ demo.Shape
    :members:
    :show-inheritance:
 
-Pages
------
+Sidecar docs
+------------
 
 .. toctree::
    :maxdepth: 4

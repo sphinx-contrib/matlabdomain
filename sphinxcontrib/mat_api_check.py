@@ -28,17 +28,17 @@ RULES = (
     "inputs",
     "outputs",
     "name-value",
-    "page-documented",
-    "page-links",
+    "sidecar-documented",
+    "sidecar-links",
 )
 SEVERITIES = ("error", "warning", "ignore")
 DEFAULT_RULES = dict.fromkeys(RULES, "error")
 #: object kinds, in report order
-KINDS = ("function", "class", "method", "script", "application", "page")
+KINDS = ("function", "class", "method", "script", "application", "sidecar")
 _PLURALS = dict(
     zip(
         KINDS,
-        ("functions", "classes", "methods", "scripts", "apps", "pages"),
+        ("functions", "classes", "methods", "scripts", "apps", "sidecars"),
         strict=True,
     )
 )
@@ -326,45 +326,45 @@ class _Checker:
         else:
             self.describe("description", where, "application", obj.docstring)
 
-    def pages(self, env):
-        """Check the pages next to code (plan.md Section 2.11): each is
-        rendered by ``mat:autopage`` in a document that a toctree includes
+    def sidecars(self, env):
+        """Check the sidecar docs (plan.md Section 2.11): each is
+        rendered by ``mat:autosidecar`` in a document that a toctree includes
         (or an orphan), and its relative links and images exist.
         """
         data = self.dom.data
         included = {env.config.root_doc}
         included.update(d for docs in env.toctree_includes.values() for d in docs)
         docs, issues = {}, {}
-        for docname, refs in data["page_docs"].items():
+        for docname, refs in data["sidecar_docs"].items():
             for ref in refs:
                 docs.setdefault(ref, set()).add(docname)
-        for found in data["page_issues"].values():
+        for found in data["sidecar_issues"].values():
             for ref, *issue in found:
                 issues.setdefault(ref, set()).add(tuple(issue))
         for path, record in sorted(
-            data["pages"].items(), key=lambda i: i[1]["reference"]
+            data["sidecars"].items(), key=lambda i: i[1]["reference"]
         ):
             ref = record["reference"]
             if self.ignore(ref):
                 self.not_checked["ignored"] += 1
                 continue
-            self.checked["page"] += 1
+            self.checked["sidecar"] += 1
             where = {"reference": ref, "name": None, "path": path, "line": None}
             shown = docs.get(ref, set())
             if not shown:
                 self.report(
-                    "page-documented",
+                    "sidecar-documented",
                     where,
-                    "page",
-                    "is not rendered by a mat:autopage directive",
+                    "sidecar",
+                    "is not rendered by a mat:autosidecar directive",
                 )
             elif not any(
                 d in included or "orphan" in env.metadata.get(d, {}) for d in shown
             ):
                 self.report(
-                    "page-documented",
+                    "sidecar-documented",
                     where,
-                    "page",
+                    "sidecar",
                     f"is rendered in {', '.join(sorted(shown))}, which no toctree "
                     "includes",
                 )
@@ -377,7 +377,10 @@ class _Checker:
                     else "shows a missing image"
                 )
                 self.report(
-                    "page-links", {**where, "line": line}, "page", f"{what}: {target}"
+                    "sidecar-links",
+                    {**where, "line": line},
+                    "sidecar",
+                    f"{what}: {target}",
                 )
 
 
@@ -462,7 +465,7 @@ class MatlabApiCheckBuilder(Builder):
             records = sorted(dom.data["index"].items(), key=lambda i: i[1]["reference"])
             for path, record in records:
                 checker.check(path, record)
-            checker.pages(self.env)
+            checker.sidecars(self.env)
         findings = checker.findings if checker else []
         summary = _summary(enabled, rules, checker)
         # The report first: -W may stop the build at the first warning.

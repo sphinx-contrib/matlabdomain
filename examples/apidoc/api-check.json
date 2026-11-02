@@ -7,8 +7,8 @@
       "inputs": "error",
       "outputs": "error",
       "name-value": "error",
-      "page-documented": "error",
-      "page-links": "error"
+      "sidecar-documented": "error",
+      "sidecar-links": "error"
     },
     "checked": {
       "function": 4,
@@ -16,7 +16,7 @@
       "method": 3,
       "script": 1,
       "application": 1,
-      "page": 3
+      "sidecar": 3
     },
     "not_checked": {
       "ignored": 0,
@@ -45,11 +45,11 @@
         "error": 0,
         "warning": 0
       },
-      "page-documented": {
+      "sidecar-documented": {
         "error": 0,
         "warning": 0
       },
-      "page-links": {
+      "sidecar-links": {
         "error": 0,
         "warning": 0
       }

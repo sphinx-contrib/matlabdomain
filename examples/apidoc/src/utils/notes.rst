@@ -8,4 +8,4 @@ private helper, :mat:func:`utils/private/check_range.m`:
    :language: matlab
    :lines: 1-2
 
-The :mat:page:`+demo/getting-started.md` tutorial uses the shapes.
+The :mat:sidecar:`+demo/getting-started.md` tutorial uses the shapes.

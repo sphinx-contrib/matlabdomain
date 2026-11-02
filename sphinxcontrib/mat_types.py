@@ -594,7 +594,7 @@ def project_root(config, srcdir):
 
 
 DEFAULT_INCLUDE_PATTERNS = ["**/*"]
-#: root files that are neither code nor pages (plan.md Section 2.11)
+#: root files that are neither code nor sidecar docs (plan.md Section 2.11)
 DEFAULT_EXCLUSION_PATTERNS = [
     "README.*",
     "CHANGES.*",
@@ -604,8 +604,8 @@ DEFAULT_EXCLUSION_PATTERNS = [
     "CODE_OF_CONDUCT.*",
     "SECURITY.*",
 ]
-#: suffixes ``matlab_src_page_suffixes`` accepts, in a fixed order
-PAGE_SUFFIXES = (".md", ".rst")
+#: suffixes ``matlab_src_sidecar_suffixes`` accepts, in a fixed order
+SIDECAR_SUFFIXES = (".md", ".rst")
 _GLOB_CHARS = frozenset("*?[")
 
 
@@ -703,30 +703,30 @@ def check_text_encoding(encoding, option):
             ) from err
 
 
-def page_suffix_list(value, option="matlab_src_page_suffixes"):
-    """The page suffixes of a config list, in ``PAGE_SUFFIXES`` order (or
+def sidecar_suffix_list(value, option="matlab_src_sidecar_suffixes"):
+    """The sidecar suffixes of a config list, in ``SIDECAR_SUFFIXES`` order (or
     ConfigError).
     """
     if isinstance(value, str) or not isinstance(value, (list, tuple)):
         raise ConfigError(f"{option} must be a list of suffixes such as ['.md'].")
     for suffix in value:
-        if suffix not in PAGE_SUFFIXES:
+        if suffix not in SIDECAR_SUFFIXES:
             raise ConfigError(
-                f"{option}: {suffix!r} is not a page suffix; use "
-                f"{', '.join(map(repr, PAGE_SUFFIXES))}."
+                f"{option}: {suffix!r} is not a sidecar suffix; use "
+                f"{', '.join(map(repr, SIDECAR_SUFFIXES))}."
             )
-    return tuple(s for s in PAGE_SUFFIXES if s in value)
+    return tuple(s for s in SIDECAR_SUFFIXES if s in value)
 
 
-def page_layout_error(root, srcdir):
-    """ConfigError if pages cannot be told from the documentation: the
+def sidecar_layout_error(root, srcdir):
+    """ConfigError if sidecar docs cannot be told from the documentation: the
     project root is the Sphinx source folder.
     """
     if os.path.normcase(os.path.normpath(root)) == os.path.normcase(
         os.path.normpath(srcdir)
     ):
         raise ConfigError(
-            "matlab_src_page_suffixes needs matlab_src_code_project_root to differ "
+            "matlab_src_sidecar_suffixes needs matlab_src_code_project_root to differ "
             "from the Sphinx source folder."
         )
 
@@ -792,9 +792,9 @@ class IndexSettings:
 
     ``root`` is the absolute project root; ``include`` and ``exclude`` are
     patterns normalized by ``_normalize_pattern``; ``namelengthmax=None``
-    derives it from ``matlab_version``. ``page_suffixes`` selects the pages
-    next to code (plan.md Section 2.11); files with them below
-    ``source_dir`` (the Sphinx source folder) are not pages when that
+    derives it from ``matlab_version``. ``sidecar_suffixes`` selects the
+    sidecar docs (plan.md Section 2.11); files with them below
+    ``source_dir`` (the Sphinx source folder) are not sidecar docs when that
     folder is inside the root.
     """
 
@@ -805,7 +805,7 @@ class IndexSettings:
     matlab_version: str = mat_naming.DEFAULT_MATLAB_VERSION
     namelengthmax: int | None = None
     cache_text: bool = True
-    page_suffixes: tuple[str, ...] = ()
+    sidecar_suffixes: tuple[str, ...] = ()
     source_dir: str | None = None
 
     @classmethod
@@ -823,7 +823,7 @@ class IndexSettings:
             matlab_version=config.matlab_version,
             namelengthmax=config.matlab_namelengthmax,
             cache_text=config.matlab_src_cache_text,
-            page_suffixes=page_suffix_list(config.matlab_src_page_suffixes),
+            sidecar_suffixes=sidecar_suffix_list(config.matlab_src_sidecar_suffixes),
             source_dir=os.path.normpath(os.fspath(srcdir)),
         )
 
@@ -837,9 +837,9 @@ class SourceIndex:
     - ``entities``: folder reference -> ``MatModule`` with its ``members``;
     - ``matlab_names``: MATLAB name -> path references;
     - ``text_cache``: ``(path, mtime_ns, size)`` -> decoded text;
-    - ``pages``: page path -> ``{reference, mtime, size}``, in walk order.
-      Pages are not read, named or members of their folder, so they never
-      shadow code (plan.md Section 2.11).
+    - ``sidecars``: sidecar doc path -> ``{reference, mtime, size}``, in walk
+      order. Sidecar docs are not read, named or members of their folder, so
+      they never shadow code (plan.md Section 2.11).
     """
 
     settings: IndexSettings
@@ -847,7 +847,7 @@ class SourceIndex:
     entities: dict = field(default_factory=dict)
     matlab_names: dict = field(default_factory=dict)
     text_cache: dict = field(default_factory=dict)
-    pages: dict = field(default_factory=dict)
+    sidecars: dict = field(default_factory=dict)
 
 
 def build_index(settings, old_index=None):
@@ -875,27 +875,27 @@ def build_index(settings, old_index=None):
     return out
 
 
-def page_paths(settings):
-    """Paths of the pages below the root, in walk order: the walk of
+def sidecar_paths(settings):
+    """Paths of the sidecar docs below the root, in walk order: the walk of
     ``build_index`` without reading files or warning.
     """
     out = SourceIndex(settings)
-    if settings.page_suffixes and os.path.isdir(settings.root):
+    if settings.sidecar_suffixes and os.path.isdir(settings.root):
         # The index stage warns about the walk.
         with suppress_logging():
-            _Indexer(out, {}, pages_only=True).run()
-    return list(out.pages)
+            _Indexer(out, {}, sidecars_only=True).run()
+    return list(out.sidecars)
 
 
 class _Indexer:
     """The index stage (plan.md Section 2.1): walk the project root and read,
     decode and classify each source file once. Records of files whose
     ``(path, mtime, size)`` did not change are reused without reading.
-    Pages (plan.md Section 2.11) are recorded, not read. With ``pages_only``
-    the walk records pages only.
+    Sidecar docs (plan.md Section 2.11) are recorded, not read. With
+    ``sidecars_only`` the walk records sidecar docs only.
     """
 
-    def __init__(self, out, old_index, pages_only=False):
+    def __init__(self, out, old_index, sidecars_only=False):
         settings = out.settings
         self.out = out
         self.basedir = settings.root
@@ -905,8 +905,8 @@ class _Indexer:
         self.cache_text = settings.cache_text
         self.encoding = settings.encoding
         self.pending = {}
-        self.pages_only = pages_only
-        self.page_suffixes = frozenset(settings.page_suffixes)
+        self.sidecars_only = sidecars_only
+        self.sidecar_suffixes = frozenset(settings.sidecar_suffixes)
         # The Sphinx source folder inside the root holds the documentation.
         docs = settings.source_dir
         if docs is not None and not (
@@ -952,7 +952,7 @@ class _Indexer:
                 "are not documented.",
             )
             return
-        pages = bool(self.page_suffixes) and not (
+        sidecars = bool(self.sidecar_suffixes) and not (
             self.docs is not None and _within(mod.path, self.docs)
         )
         denied = []
@@ -989,18 +989,18 @@ class _Indexer:
             handler = handler_for(path)
             if handler is None:
                 if (
-                    pages
-                    and os.path.splitext(key)[1] in self.page_suffixes
+                    sidecars
+                    and os.path.splitext(key)[1] in self.sidecar_suffixes
                     and self.sources.includes(ref)
                     and not (_is_link(path) and self.outside(path, ref))
                 ):
-                    self.out.pages[path] = {
+                    self.out.sidecars[path] = {
                         "reference": ref,
                         "mtime": st.st_mtime_ns,
                         "size": st.st_size,
                     }
                 continue
-            if self.pages_only or not self.sources.includes(ref):
+            if self.sidecars_only or not self.sources.includes(ref):
                 continue
             if _is_link(path) and self.outside(path, ref):
                 continue
@@ -1069,7 +1069,7 @@ def analyze(app):
         data["parse_cache"].clear()
         data["parse_warnings"].clear()
     data["index"].clear()
-    data["pages"].clear()
+    data["sidecars"].clear()
     data["matlab_names"].clear()
     dom.entities_table.clear()
     dom.reset_sources()
@@ -1085,7 +1085,7 @@ def analyze(app):
         MatObject.basedir = settings.root
         source_index = build_index(settings, old_index)
         data["index"].update(source_index.index)
-        data["pages"].update(source_index.pages)
+        data["sidecars"].update(source_index.sidecars)
         data["matlab_names"].update(source_index.matlab_names)
         dom.entities_table.update(source_index.entities)
         dom.text_cache.update(source_index.text_cache)

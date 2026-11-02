@@ -22,7 +22,7 @@
 {{ title | e | heading }}
 
 .. mat:autofolder:: {{ ref }}
-{%- if sections or pages %}
+{%- if sections or sidecars %}
 
 .. contents::
    :local:
@@ -30,7 +30,7 @@
 {%- endif %}
 {%- if readme %}
 
-.. mat:autopage:: {{ readme }}
+.. mat:autosidecar:: {{ readme }}
    :no-title:
 {%- endif %}
 {%- for section, entries in sections %}
@@ -48,11 +48,11 @@
 {%- endfor %}
 {%- endif %}
 {%- endfor %}
-{%- if pages %}
+{%- if sidecars %}
 
-{{ "Pages" | heading(2) }}
+{{ "Sidecar docs" | heading(2) }}
 
-{{ toctree(pages | map(attribute="docname")) }}
+{{ toctree(sidecars | map(attribute="docname")) }}
 {%- endif %}
 {%- if subfolders %}
 
