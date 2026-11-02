@@ -2,7 +2,7 @@
 ==================================
 
 ``sphinx-matlab-apidoc`` renders three `Jinja <https://jinja.palletsprojects.com/>`_
-templates, which :confval:`matlab_apidoc_templatedir` (or ``-t``) can
+templates, which :confval:`matlab_apidoc_templatedir` can
 replace (:doc:`../user-guide/apidoc`). The
 defaults are in ``sphinxcontrib/matlab_apidoc/templates/``. They are
 rendered with Sphinx's ``ReSTRenderer``, which adds the filters ``e``
@@ -38,9 +38,11 @@ One page per folder.
    The docnames of the subfolders' pages, relative to this page:
    namespaces, then folders, then ``private/``.
 ``separate``
-   True with ``--separate``.
+   True with :confval:`matlab_apidoc_separate`.
 ``maxdepth``
-   The value of ``--maxdepth``.
+   The ``:maxdepth:`` of the toctrees: 4 from the command, any value from
+   a script (:ref:`apidoc-write-your-own`). A template can also write
+   its own number.
 ``sidecars``
    The :doc:`sidecar docs <../user-guide/sidecars>` the folder's page
    lists (its own, and those in its ``@`` folders), sorted by file name;
@@ -77,19 +79,20 @@ Each entry describes one file:
 ``private``
    True for files below ``private/``.
 ``docname``
-   With ``--separate``: the file's page, relative to the folder page.
-   Otherwise ``None``.
+   With :confval:`matlab_apidoc_separate`: the file's page, relative to
+   the folder page. Otherwise ``None``.
 
 ``object.rst.jinja``
 --------------------
 
-With ``--separate``, one page per file. It gets the variables of one entry,
-with ``docname`` relative to the output folder.
+With :confval:`matlab_apidoc_separate`, one page per file. It gets the
+variables of one entry, with ``docname`` relative to the output folder.
 
 ``sidecar.rst.jinja``
 ---------------------
 
 One page per sidecar doc (``guide.md`` -> ``guide-md.rst``), with or
-without ``--separate``. Its title is the sidecar doc's first heading.
+without :confval:`matlab_apidoc_separate`. Its title is the sidecar doc's
+first heading.
 Variables: ``ref``, ``name`` and ``docname`` (relative to the output
 folder), as in ``sidecars`` above.

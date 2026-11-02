@@ -116,14 +116,13 @@ Sidecar docs with ``sphinx-matlab-apidoc``
 ------------------------------------------
 
 With :confval:`matlab_src_sidecar_suffixes` in ``conf.py``,
-``sphinx-matlab-apidoc -c`` (:doc:`apidoc`) writes a page for each sidecar
+``sphinx-matlab-apidoc`` (:doc:`apidoc`) writes a page for each sidecar
 doc, named after the file with its suffix after a ``-``
 (``getting-started.md`` -> ``getting-started-md.rst``; a name that ends in
 ``.md.rst`` would lose its ``.md`` in a toctree). The folder's page lists
 them in a "Sidecar docs" section after the API sections and before "Folders"
 (sidecar docs in ``@`` folders on the page of the folder above, like their
-code). Sidecar docs come from ``conf.py`` only: no flag turns them on or
-off.
+code).
 
 A folder's README (``README.md``, ``readme.rst``, any letter case) does not
 get a page of its own: it is the introduction of the folder's page, without

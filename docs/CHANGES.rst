@@ -128,15 +128,30 @@ earlier" in the documentation.
   sphinxcontrib.matlab_apidoc``): writes reST pages with ``mat:auto*``
   directives for the MATLAB files of a project, one page per folder,
   mirroring the folder tree, from Jinja templates that can be replaced
-  (``-t``). Its template context is a public interface: renaming or removing
-  a key is a breaking change. See ``examples/apidoc``.
-  ``sphinx-matlab-apidoc -c DIR`` reads its settings from ``DIR/conf.py``:
-  the source settings of the build and the new ``matlab_apidoc_*`` values
-  (output folder, templates, ...); flags override them. Generated pages
-  (those that start with its marker line) are rewritten when they change
-  and removed when they are no longer pages (``--no-remove-old`` keeps
-  them); ``--check`` exits with 1 when the pages are out of date. The
-  command does not run inside ``sphinx-build``; run it before the build.
+  (``matlab_apidoc_templatedir``). Its template context is a public
+  interface: renaming or removing a key is a breaking change. See
+  ``examples/apidoc``. ``sphinx-matlab-apidoc -c DIR`` (default: the
+  current folder) reads every setting from ``DIR/conf.py``: the source
+  settings of the build and the new ``matlab_apidoc_output_dir``
+  (required), ``matlab_apidoc_templatedir`` and ``matlab_apidoc_separate``.
+  Its flags only control a run: ``-f``, ``-n``, ``--check``, ``-q``.
+  Generated pages (those that start with its marker line) are rewritten
+  when they change and removed when they are no longer pages; ``--check``
+  exits with 1 when the pages are out of date. For other output, a script
+  calls the Python API (``IndexSettings``, ``build_index``, ``generate``,
+  ``ApidocOptions``). The command does not run inside ``sphinx-build``; run
+  it before the build.
+* **Breaking** for pre-release builds of 1.0.0: ``sphinx-matlab-apidoc``
+  no longer takes ``ROOT``, ``-o``, ``--include``, ``--exclude``,
+  ``--matlab-version``, ``--encoding``, ``-e``/``--no-separate``, ``-d``,
+  ``--tocfile``, ``--suffix``, ``-t`` or ``--remove-old``/
+  ``--no-remove-old``. The root, patterns, version, encoding, output
+  folder, templates and one page per file come from ``conf.py``. The
+  toctree depth (4), the root page (``index``), the suffix (``rst``) and the
+  removal of stale pages are fixed: ``matlab_apidoc_maxdepth``,
+  ``matlab_apidoc_tocfile``, ``matlab_apidoc_suffix`` and
+  ``matlab_apidoc_remove_old`` are gone, and setting one is an error of the
+  command; a script on the Python API can still choose them.
 * The function files of a class folder ``@X/`` are methods only if ``X.m`` is
   a classdef. In any other ``@`` folder (an old-style class, a classdef named
   differently, no class file) they are documented as functions; before, the

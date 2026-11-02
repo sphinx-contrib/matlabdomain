@@ -41,6 +41,7 @@ Use
 
    extensions = ["sphinxcontrib.matlab"]
    matlab_src_code_project_root = "../src"  # relative to conf.py's folder
+   matlab_apidoc_output_dir = "api"  # where sphinx-matlab-apidoc writes
 
 A page:
 
@@ -55,7 +56,7 @@ Pages for a whole project, and a check of its help text:
 
 .. code-block:: console
 
-   $ sphinx-matlab-apidoc -c docs -o docs/api
+   $ sphinx-matlab-apidoc -c docs
    $ sphinx-build -b matlab-api-check docs docs/_build/api-check
 
 Documentation

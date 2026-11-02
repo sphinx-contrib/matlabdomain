@@ -5,10 +5,11 @@ Generating pages: ``sphinx-matlab-apidoc``
 below a project root with the auto directives, one page per folder. A large
 project then needs no hand-written directives, and new files appear in the
 docs when you run it again. It is the MATLAB counterpart of Sphinx's
-``sphinx-apidoc``, with a deliberately small set of options: for different
-output, edit its templates or treat it as a starting point to write your own
-``sphinx-matlab-apidoc``. Writing your own makes sense when you want fine-grained
-control over the generated output.
+``sphinx-apidoc``, with a deliberately small surface: its settings come
+from ``conf.py``, and its flags only control a run. For different output,
+edit its templates or write your own script on its Python API
+(:ref:`apidoc-write-your-own`); that makes sense when you want
+fine-grained control over the generated output.
 
 A worked example
 ----------------
@@ -48,6 +49,7 @@ shown here is current.
            index.rst
            api/                  generated
        templates/                edited copies of the default templates
+       make_api.py               the same pages from a script
 
 ``docs/conf.py`` points :confval:`matlab_src_code_project_root` at the
 project, turns on :doc:`sidecar docs <sidecars>` and tells
@@ -57,13 +59,13 @@ use:
 .. literalinclude:: ../../examples/apidoc/docs/conf.py
    :language: python
 
-Generate the pages with ``-c`` (``--conf-dir``), the folder of
-``conf.py``:
+Generate the pages in the folder of ``conf.py`` (from elsewhere, name that
+folder with ``-c``, ``--conf-dir``):
 
 .. code-block:: console
 
    $ cd examples/apidoc/docs
-   $ sphinx-matlab-apidoc -c .
+   $ sphinx-matlab-apidoc
 
 This writes one page per folder into ``api/``, mirroring the folder tree,
 and one per sidecar doc:
@@ -71,7 +73,7 @@ and one per sidecar doc:
 .. code-block:: text
 
    api/
-       index.rst                 the root folder (the toc file)
+       index.rst                 the root folder
        +demo/index.rst
        +demo/getting-started-md.rst
        +demo/+geometry/index.rst
@@ -104,7 +106,7 @@ What the pages contain
 ----------------------
 
 * One page per folder that has a file to document at or below it. The page
-  of the root folder is the toc file (``index``) and is always written.
+  of the root folder is ``index`` and is always written.
 * The title is the folder's signature: ``namespace demo`` for a ``+``
   folder, ``folder utils/`` for a plain folder, ``folder ./`` for the root.
 * Each page has ``mat:autofolder`` (without ``:members:``), a local table of
@@ -139,55 +141,28 @@ Settings
 
 The generator indexes the files exactly as the build does (the same
 patterns, MATLAB names, types and warnings), but it does not parse them.
-With ``-c``, it runs ``conf.py`` as ``sphinx-build`` does and reads:
+It runs ``conf.py`` as ``sphinx-build`` does and reads:
 
 * the source settings: :confval:`matlab_src_code_project_root`,
   :confval:`matlab_src_include_patterns`,
   :confval:`matlab_src_exclusion_patterns`, :confval:`matlab_version`,
   :confval:`matlab_namelengthmax`, :confval:`matlab_src_encoding` and
-  :confval:`matlab_src_sidecar_suffixes` (no flag sets it);
+  :confval:`matlab_src_sidecar_suffixes`;
 * its own settings, which the build ignores:
-  :confval:`matlab_apidoc_output_dir`, :confval:`matlab_apidoc_separate`,
-  :confval:`matlab_apidoc_maxdepth`, :confval:`matlab_apidoc_tocfile`,
-  :confval:`matlab_apidoc_suffix`, :confval:`matlab_apidoc_templatedir`
-  and :confval:`matlab_apidoc_remove_old`.
+  :confval:`matlab_apidoc_output_dir` (required),
+  :confval:`matlab_apidoc_templatedir` and
+  :confval:`matlab_apidoc_separate`.
 
-Paths in ``conf.py`` are relative to its folder. A flag overrides the
-matching ``conf.py`` value; its paths are relative to the current folder:
+Paths in ``conf.py`` are relative to its folder. No flag overrides a
+setting, so the command and the build agree; :doc:`../reference/cli`
+lists the few cases where they can still differ. The rest is fixed:
 
-.. list-table::
-   :header-rows: 1
+* toctrees have ``:maxdepth: 4``; a template can change it
+  (:doc:`../reference/templates`);
+* the root folder's page is ``index`` and the files end in ``.rst``;
+* marked pages that are no longer pages are removed (next section).
 
-   * - ``conf.py``
-     - ``sphinx-matlab-apidoc``
-   * - :confval:`matlab_src_code_project_root`
-     - ``ROOT``
-   * - :confval:`matlab_src_include_patterns`
-     - ``--include PATTERN`` (repeat it; replaces the list)
-   * - :confval:`matlab_src_exclusion_patterns`
-     - ``--exclude PATTERN`` (repeat it; replaces the list)
-   * - :confval:`matlab_version`
-     - ``--matlab-version``
-   * - :confval:`matlab_src_encoding`
-     - ``--encoding``
-   * - :confval:`matlab_apidoc_output_dir`
-     - ``-o``
-   * - :confval:`matlab_apidoc_separate`
-     - ``-e``, ``--no-separate``
-   * - :confval:`matlab_apidoc_maxdepth`
-     - ``-d``
-   * - :confval:`matlab_apidoc_tocfile`
-     - ``--tocfile``
-   * - :confval:`matlab_apidoc_suffix`
-     - ``--suffix``
-   * - :confval:`matlab_apidoc_templatedir`
-     - ``-t``
-   * - :confval:`matlab_apidoc_remove_old`
-     - ``--remove-old``, ``--no-remove-old``
-
-Without ``-c``, the command reads no ``conf.py``: pass ``ROOT``, ``-o`` and
-the other settings as flags. :doc:`../reference/cli` lists the few cases
-where a ``conf.py`` can give the build other values than the command.
+To change these, write a script (:ref:`apidoc-write-your-own`).
 
 Output file names
 -----------------
@@ -210,8 +185,7 @@ Run it whenever the MATLAB files change; the pages stay accurate:
   unchanged pages again.
 * Marked files below the output folder that are no longer pages (of
   deleted or moved folders) are deleted, with the folders this leaves
-  empty; ``--no-remove-old`` (or :confval:`matlab_apidoc_remove_old` =
-  ``False``) keeps them. Files without the marker are never deleted.
+  empty. Files without the marker are never deleted.
 * To edit a generated page by hand, delete its marker line: the page is
   then kept, with a ``mat.apidoc`` warning. ``-f`` (``--force``)
   overwrites such files too.
@@ -220,7 +194,7 @@ Run it whenever the MATLAB files change; the pages stay accurate:
   rewritten, renamed or deleted.
 
 The exit status is 0 on success, also with warnings, 1 when ``--check``
-finds a change, and 2 for a usage or settings error. More options:
+finds a change, and 2 for a usage or settings error. All flags:
 :doc:`../reference/cli`.
 
 Run it before each build
@@ -279,15 +253,16 @@ of the generator.
 Customizing the output
 ----------------------
 
-The pages come from two `Jinja <https://jinja.palletsprojects.com/>`_
-templates: ``folder.rst.jinja`` (one folder page) and ``object.rst.jinja``
-(one file's page, with ``-e``). To change them:
+The pages come from three `Jinja <https://jinja.palletsprojects.com/>`_
+templates: ``folder.rst.jinja`` (one folder page), ``object.rst.jinja``
+(one file's page, with :confval:`matlab_apidoc_separate`) and
+``sidecar.rst.jinja`` (one sidecar doc's page). To change them:
 
 1. copy the defaults from ``sphinxcontrib/matlab_apidoc/templates/`` in the
    installed package (or the example's copies) into your project;
 2. edit them;
-3. set :confval:`matlab_apidoc_templatedir` to their folder (or pass
-   ``-t``). A template missing there falls back to the default.
+3. set :confval:`matlab_apidoc_templatedir` to their folder. A template
+   missing there falls back to the default.
 
 The example's ``folder.rst.jinja`` titles the root page "Demo API
 reference" and leaves out ``:undoc-members:``:
@@ -299,7 +274,43 @@ The variables a template can use are listed in
 :doc:`../reference/templates`. They are a public interface: new variables
 may be added, but renaming or removing one is a breaking change.
 
-When templates are not enough, copy the generator: it is a small package
-(``sphinxcontrib/matlab_apidoc/``) built on the same index the build uses
-(``sphinxcontrib.mat_types.build_index``). Options for every layout
-preference are deliberately not offered.
+.. _apidoc-write-your-own:
+
+Write your own
+--------------
+
+When ``conf.py`` and the templates are not enough (another toctree depth,
+another name for the root page, several project roots, keeping stale
+pages), write a short script on the Python API that the command itself
+uses. The example's ``make_api.py`` writes the same pages as
+``sphinx-matlab-apidoc -c docs``; the test suite checks that it does:
+
+.. literalinclude:: ../../examples/apidoc/make_api.py
+   :language: python
+
+It takes three steps:
+
+1. ``sphinxcontrib.mat_types.IndexSettings`` says what to index: ``root``
+   (an absolute path), ``include`` and ``exclude`` (tuples of patterns as
+   in :confval:`matlab_src_include_patterns`, with ``/``, relative to the
+   root), ``encoding``, ``matlab_version``, ``namelengthmax``,
+   ``sidecar_suffixes``, ``source_dir`` (the Sphinx source folder) and
+   ``cache_text`` (keep the text read for a later parse). The defaults
+   are those of the build.
+2. ``sphinxcontrib.mat_types.build_index(settings)`` indexes the files, as
+   the build does, and returns a ``SourceIndex``.
+3. ``sphinxcontrib.matlab_apidoc.generate(source_index, options)`` writes
+   the pages. ``ApidocOptions`` has ``output_dir`` and the choices of the
+   command line (``force``, ``dry_run``, ``separate``, ``templatedir``),
+   plus those the command line fixes: ``maxdepth`` (4), ``tocfile``
+   (``"index"``), ``suffix`` (``"rst"``) and ``remove_old`` (``True``).
+   It returns a ``Result``: ``pages`` (the docnames, without suffix), the
+   lists of files ``created``, ``updated``, ``unchanged``, ``kept`` and
+   ``removed`` and of files and folders ``renamed`` (paths relative to the
+   output folder), and ``changed``, true when a file was (or with
+   ``dry_run`` would be) written, renamed or removed.
+
+Warnings go through Python's ``logging`` (the ``sphinx`` loggers); without
+a handler, Python prints them on stderr. For more than this, the generator
+is a small package (``sphinxcontrib/matlab_apidoc/``) to copy. Options for
+every layout preference are deliberately not offered.

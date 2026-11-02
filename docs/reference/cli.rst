@@ -8,9 +8,8 @@ Synopsis
 
 .. code-block:: text
 
-   sphinx-matlab-apidoc [OPTIONS] -c CONF_DIR
-   sphinx-matlab-apidoc [OPTIONS] -o OUTPUT_DIR ROOT
-   python -m sphinxcontrib.matlab_apidoc [OPTIONS] ...
+   sphinx-matlab-apidoc [-c CONF_DIR] [-f] [-n] [--check] [-q]
+   python -m sphinxcontrib.matlab_apidoc [OPTIONS]
 
 Writes reST pages with ``mat:auto*`` directives for the MATLAB files below
 the project root: one page per folder, mirroring the folder tree.
@@ -19,24 +18,28 @@ the project root: one page per folder, mirroring the folder tree.
 Settings
 --------
 
-With :option:`-c`, every setting below has a ``conf.py`` value: the
-source settings of the build and the ``matlab_apidoc_*`` values
-(:doc:`configuration`). Each one comes from, in order:
+Every setting comes from ``CONF_DIR/conf.py`` (:doc:`configuration`); no
+flag overrides one:
 
-1. the flag;
-2. ``conf.py``;
-3. the default.
+* the source settings of the build: :confval:`matlab_src_code_project_root`
+  (required), :confval:`matlab_src_include_patterns`,
+  :confval:`matlab_src_exclusion_patterns`,
+  :confval:`matlab_src_sidecar_suffixes`, :confval:`matlab_version`,
+  :confval:`matlab_namelengthmax` and :confval:`matlab_src_encoding`;
+* the command's own: :confval:`matlab_apidoc_output_dir` (required),
+  :confval:`matlab_apidoc_templatedir` and
+  :confval:`matlab_apidoc_separate`.
 
-``--include`` and ``--exclude`` replace the ``conf.py`` lists. Paths given
-as flags are relative to the current folder; paths in ``conf.py`` are
-relative to its folder. Errors name the flag or the config value that
-caused them. :confval:`matlab_src_sidecar_suffixes` has no flag: sidecar
-docs (:doc:`../user-guide/sidecars`) get pages with :option:`-c` only, and
-``CONF_DIR`` is taken to be the Sphinx source folder.
+Paths in ``conf.py`` are relative to ``CONF_DIR``, which is taken to be
+the Sphinx source folder. Errors name the config value that caused them.
+The rest is fixed: toctrees have ``:maxdepth: 4`` (a template can change
+it), the root folder's page is ``index``, files end in ``.rst``, and marked
+pages that are no longer pages are removed. For other choices, write a
+script on the Python API (:ref:`apidoc-write-your-own`).
 
 The command runs ``conf.py`` as ``sphinx-build`` does, but it sets up no
 extensions and has no tags. So in a few cases it gets other values than
-the build; give the flag then:
+the build:
 
 * ``conf.py`` tests ``tags`` (``sphinx-build -t NAME``), for example to
   exclude files from a public build;
@@ -46,50 +49,20 @@ the build; give the flag then:
   paths in it are then relative to the source folder in the build, but to
   ``CONF_DIR`` here.
 
+Then make ``conf.py`` give both the same values (test an environment
+variable instead of a tag, for example), or write a script.
+
 Arguments
 ---------
 
 .. option:: -c CONF_DIR, --conf-dir CONF_DIR
 
-   Read the settings from ``CONF_DIR/conf.py``, the folder that holds
-   ``conf.py`` (usually the Sphinx source folder).
+   The folder of ``conf.py``, usually the Sphinx source folder. Default:
+   the current folder. Without a ``conf.py`` there, the command exits
+   with 2.
 
-.. option:: ROOT
-
-   The MATLAB project root. Default:
-   :confval:`matlab_src_code_project_root`; required without :option:`-c`.
-
-.. option:: -o OUTPUT_DIR, --output-dir OUTPUT_DIR
-
-   The folder for the generated files. It is created if needed. Default:
-   :confval:`matlab_apidoc_output_dir`; required without :option:`-c`.
-
-Selecting files
----------------
-
-.. option:: --include PATTERN
-
-   A glob of files to document, relative to the root, like
-   :confval:`matlab_src_include_patterns`. Repeat it for several patterns.
-   Default: ``**/*``.
-
-.. option:: --exclude PATTERN
-
-   A glob of files and folders to leave out, like
-   :confval:`matlab_src_exclusion_patterns`. Repeatable.
-
-.. option:: --matlab-version MATLAB_VERSION
-
-   Like :confval:`matlab_version`. Default: ``R2026a``. With :option:`-c`,
-   :confval:`matlab_namelengthmax` comes from ``conf.py`` too.
-
-.. option:: --encoding ENCODING
-
-   Like :confval:`matlab_src_encoding`. Default: UTF-8 with MATLAB's
-   fallback.
-
-Output
-------
+Run-time options
+----------------
 
 .. option:: -f, --force
 
@@ -105,41 +78,6 @@ Output
 
    A dry run that exits with 1 if a page would be created, rewritten,
    renamed or removed (kept files without the marker do not count).
-
-.. option:: -e, --separate, --no-separate
-
-   One page per file; folder pages list them in toctrees. Default:
-   :confval:`matlab_apidoc_separate`.
-
-.. option:: -d MAXDEPTH, --maxdepth MAXDEPTH
-
-   The ``:maxdepth:`` of the toctrees. Default:
-   :confval:`matlab_apidoc_maxdepth` (4).
-
-.. option:: --tocfile TOCFILE
-
-   The name of the root folder's page, without suffix. Default:
-   :confval:`matlab_apidoc_tocfile` (``index``).
-
-.. option:: --suffix SUFFIX
-
-   The suffix of the generated files, without the dot. Default:
-   :confval:`matlab_apidoc_suffix` (``rst``).
-
-.. option:: -t TEMPLATEDIR, --templatedir TEMPLATEDIR
-
-   A folder with ``folder.rst.jinja`` and/or ``object.rst.jinja`` that
-   replace the default templates (:doc:`templates`). Default:
-   :confval:`matlab_apidoc_templatedir`.
-
-.. option:: --remove-old, --no-remove-old
-
-   Delete the files with the suffix below ``OUTPUT_DIR`` that start with
-   the marker line ``.. Generated by sphinx-matlab-apidoc.`` and are not
-   pages of this run, and the folders this leaves empty. Files without
-   the marker, files with other suffixes and folders whose names start with
-   ``.`` or ``_`` are never touched. Default:
-   :confval:`matlab_apidoc_remove_old` (on).
 
 .. option:: -q, --quiet
 
@@ -159,18 +97,30 @@ Exit status
 0 on success, also with warnings (``mat.apidoc`` and the index warnings,
 printed like Sphinx prints them); 1 when :option:`--check` finds a page to
 change; 2 for a usage or settings error, such as an invalid pattern,
-version or encoding, a missing ``conf.py`` or an error in it.
+version or encoding, a missing ``conf.py`` or required value, an error in
+``conf.py``, or a value that is no longer a setting
+(``matlab_apidoc_maxdepth``, ``matlab_apidoc_tocfile``,
+``matlab_apidoc_suffix``, ``matlab_apidoc_remove_old``). The removed
+flags (``ROOT``, ``-o``, ``--include`` and the others) are usage errors.
 
 Output files
 ------------
 
-* The folder ``a/+p/`` gets ``OUTPUT_DIR/a/+p/index.<suffix>``; with
-  ``--separate``, the file ``a/+p/Cls.m`` also gets
-  ``OUTPUT_DIR/a/+p/Cls.m.<suffix>``. The root folder's page is
-  ``OUTPUT_DIR/<tocfile>.<suffix>``.
+In the folder :confval:`matlab_apidoc_output_dir` (``OUTPUT_DIR``),
+created if needed:
+
+* The folder ``a/+p/`` gets ``OUTPUT_DIR/a/+p/index.rst``; with
+  :confval:`matlab_apidoc_separate`, the file ``a/+p/Cls.m`` also gets
+  ``OUTPUT_DIR/a/+p/Cls.m.rst``. The root folder's page is
+  ``OUTPUT_DIR/index.rst``.
 * Each path segment keeps ``A-Z a-z 0-9 _ . + @ -``; every other character
   becomes ``~XX`` per UTF-8 byte. Windows device names (``CON``, ``NUL``,
   ``COM1``, ...) and a trailing ``.`` get their first or last character
   escaped. Siblings whose names differ only by case get their uppercase
   letters escaped, with a ``mat.apidoc`` warning.
 * Files are UTF-8 with ``\n`` line ends on every system.
+* Files with the suffix ``.rst`` below ``OUTPUT_DIR`` that start with the
+  marker line ``.. Generated by sphinx-matlab-apidoc.`` and are not pages
+  of this run are removed, with the folders this leaves empty. Files
+  without the marker, files with other suffixes and folders whose names
+  start with ``.`` or ``_`` are never touched.

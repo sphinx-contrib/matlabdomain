@@ -13,8 +13,8 @@ tree-sitter):
 ``Python: Debug current test file``
    pytest on the open test file.
 ``Debug sphinx-matlab-apidoc (CLI)``
-   The command on the ``test_apidoc_basics`` root, into
-   ``_build/apidoc-debug``.
+   A dry run (``-n``) of the command on the worked example
+   (``examples/apidoc/docs``); drop ``-n`` to write the pages.
 ``Debug matlab-api-check``
    The builder on the ``test_api_check`` root, which has known gaps, so it
    exits with status 1.

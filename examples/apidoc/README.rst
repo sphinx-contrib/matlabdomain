@@ -16,17 +16,21 @@ on and loads ``myst_parser``).
 
 Regenerate and build, from ``docs/``::
 
-    sphinx-matlab-apidoc -c .
+    sphinx-matlab-apidoc
     sphinx-build -n -W -b html . _build/html
 
-``-c .`` reads ``conf.py``: the MATLAB root
+``sphinx-matlab-apidoc`` reads ``conf.py`` in the current folder (``-c
+DIR`` names another): the MATLAB root
 (``matlab_src_code_project_root``), the output folder
 (``matlab_apidoc_output_dir``) and the templates
-(``matlab_apidoc_templatedir``). ``sphinx-matlab-apidoc --check -c .``
-exits with 1 when the pages are out of date.
+(``matlab_apidoc_templatedir``). ``sphinx-matlab-apidoc --check`` exits
+with 1 when the pages are out of date.
+
+``make_api.py`` writes the same pages with the Python API, the starting
+point for a script of your own (``python make_api.py [OUTPUT_DIR]``).
 
 The templates differ from the defaults in two places: the root page is
 titled "Demo API reference", and classes are documented without
 ``:undoc-members:``. To customize your own output, copy these templates (or
 the defaults in ``sphinxcontrib/matlab_apidoc/templates/``) into your
-project, edit them and set ``matlab_apidoc_templatedir`` (or pass ``-t``).
+project, edit them and set ``matlab_apidoc_templatedir``.
