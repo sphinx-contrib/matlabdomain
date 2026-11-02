@@ -6,7 +6,7 @@ functions of path references: the same names on every OS.
 
 - The output tree mirrors the folder tree: the page of folder ``a/+p/`` is
   ``a/+p/index``, the root folder's page is the toc file, and with
-  ``--separate`` the page of ``a/+p/Cls.m`` is ``a/+p/Cls.m``.
+  ``separate`` the page of ``a/+p/Cls.m`` is ``a/+p/Cls.m``.
 - Each path segment keeps ``A-Z a-z 0-9 _ . + @ -``; every other character
   becomes ``~XX`` per UTF-8 byte (uppercase hex). ``~`` is escaped too, so
   the mapping is injective.

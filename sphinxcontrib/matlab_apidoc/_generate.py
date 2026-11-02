@@ -64,7 +64,10 @@ OPTIONS = {"class": {"members": "", "undoc-members": "", "show-inheritance": ""}
 
 @dataclass(frozen=True)
 class ApidocOptions:
-    """Options of ``generate`` (the CLI flags)."""
+    """Options of ``generate``. The command line sets ``output_dir``,
+    ``force``, ``dry_run``, ``separate`` and ``templatedir``; a script can set
+    them all.
+    """
 
     output_dir: str
     force: bool = False

@@ -2,8 +2,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``matlab_apidoc_*`` config values (plan.md Section 2.8): read from
-``conf.py`` by ``sphinx-matlab-apidoc -c``; the build only registers them.
-Each is ``matlab_apidoc_`` + the long flag with ``-`` -> ``_``.
+``conf.py`` by ``sphinx-matlab-apidoc``; the build only registers them.
 """
 
 from __future__ import annotations
@@ -19,11 +18,15 @@ _NONE = type(None)
 APIDOC_CONFIG = {
     "matlab_apidoc_output_dir": (None, (str, _NONE)),
     "matlab_apidoc_separate": (False, (bool,)),
-    "matlab_apidoc_maxdepth": (4, (int,)),
-    "matlab_apidoc_tocfile": ("index", (str,)),
-    "matlab_apidoc_suffix": ("rst", (str,)),
     "matlab_apidoc_templatedir": (None, (str, _NONE)),
-    "matlab_apidoc_remove_old": (True, (bool,)),
+}
+
+#: values removed in Phase 13 (an error in conf.py) -> what is fixed now
+REMOVED_CONFIG = {
+    "matlab_apidoc_maxdepth": "the toctree depth is 4; a template can change it",
+    "matlab_apidoc_tocfile": "the root page is index",
+    "matlab_apidoc_suffix": "pages end in .rst",
+    "matlab_apidoc_remove_old": "stale pages with the marker line are removed",
 }
 
 #: the build's values the CLI reads, with the defaults of ``setup()``

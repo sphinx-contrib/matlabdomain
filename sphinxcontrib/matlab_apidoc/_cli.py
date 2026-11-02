@@ -1,8 +1,9 @@
 """sphinxcontrib.matlab_apidoc._cli.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Command line of ``sphinx-matlab-apidoc`` (plan.md Section 2.8). With
-``-c DIR`` the settings come from ``DIR/conf.py``; flags override them.
+Command line of ``sphinx-matlab-apidoc`` (plan.md Section 2.8). The
+settings come from ``conf.py`` in ``-c DIR`` (default: the working folder)
+only; the flags are run-time options.
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ from ..mat_types import (
     sidecar_layout_error,
     sidecar_suffix_list,
 )
-from ._config import APIDOC_CONFIG, SOURCE_CONFIG, apidoc_value
+from ._config import APIDOC_CONFIG, REMOVED_CONFIG, SOURCE_CONFIG, apidoc_value
 from ._generate import ApidocOptions, generate
 
 #: exit status when --check finds pages to change
@@ -51,57 +52,29 @@ def _version():
 def get_parser():
     parser = argparse.ArgumentParser(
         prog="sphinx-matlab-apidoc",
-        usage="%(prog)s [OPTIONS] [-c CONF_DIR] [-o OUTPUT_DIR] [ROOT]",
         description=(
             "Write reST pages with sphinxcontrib-matlabdomain directives for the "
-            "MATLAB files below ROOT: one page per folder, mirroring the folder "
-            "tree. Pages that start with the marker line are rewritten when "
-            "they change and removed when they are no longer pages."
+            "MATLAB files of the project that CONF_DIR/conf.py documents: one "
+            "page per folder, mirroring the folder tree. Pages that start with "
+            "the marker line are rewritten when they change and removed when "
+            "they are no longer pages."
         ),
         epilog=(
-            "With -c, ROOT, OUTPUT_DIR and the other settings come from conf.py "
-            "(matlab_src_* , matlab_version, matlab_apidoc_*); flags override "
-            "them. Without -c, ROOT and -o are required."
+            "The settings come from conf.py only: matlab_src_code_project_root "
+            "and matlab_apidoc_output_dir (both required), the other "
+            "matlab_src_* values, matlab_version, matlab_namelengthmax, "
+            "matlab_apidoc_templatedir and matlab_apidoc_separate. For anything "
+            "else, write a script on the Python API "
+            "(sphinxcontrib.matlab_apidoc.generate)."
         ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {_version()}")
     parser.add_argument(
-        "root",
-        metavar="ROOT",
-        nargs="?",
-        help="the MATLAB project root (default: matlab_src_code_project_root)",
-    )
-    parser.add_argument(
         "-c",
         "--conf-dir",
-        help="read the settings from conf.py in this folder (the Sphinx source folder)",
-    )
-    parser.add_argument(
-        "-o",
-        "--output-dir",
-        help="folder for the generated files (default: matlab_apidoc_output_dir)",
-    )
-    parser.add_argument(
-        "--include",
-        action="append",
-        metavar="PATTERN",
-        help="files to document, a glob relative to ROOT like "
-        "matlab_src_include_patterns (repeatable; replaces the conf.py list; "
-        "default: **/*)",
-    )
-    parser.add_argument(
-        "--exclude",
-        action="append",
-        metavar="PATTERN",
-        help="files to leave out, like matlab_src_exclusion_patterns "
-        "(repeatable; replaces the conf.py list)",
-    )
-    parser.add_argument(
-        "--matlab-version",
-        help=f"like matlab_version (default: {mat_naming.DEFAULT_MATLAB_VERSION})",
-    )
-    parser.add_argument(
-        "--encoding", help="like matlab_src_encoding (default: UTF-8, as MATLAB)"
+        default=".",
+        help="the folder of conf.py, the Sphinx source folder (default: the "
+        "working folder)",
     )
     parser.add_argument(
         "-f",
@@ -121,47 +94,12 @@ def get_parser():
         help="a dry run that exits with 1 if a page would change",
     )
     parser.add_argument(
-        "-e",
-        "--separate",
-        action=argparse.BooleanOptionalAction,
-        help="one page per file (default: off)",
-    )
-    parser.add_argument(
-        "-d",
-        "--maxdepth",
-        type=int,
-        help="maximum depth of the toctrees (default: 4)",
-    )
-    parser.add_argument(
-        "--tocfile", help="name of the root folder's page (default: index)"
-    )
-    parser.add_argument("--suffix", help="file suffix (default: rst)")
-    parser.add_argument(
-        "-t",
-        "--templatedir",
-        help="folder with templates (folder.rst.jinja, object.rst.jinja) that "
-        "replace the defaults",
-    )
-    parser.add_argument(
-        "--remove-old",
-        action=argparse.BooleanOptionalAction,
-        help="delete files with the suffix below OUTPUT_DIR (not in folders "
-        "starting with '.' or '_') that start with the marker line and are "
-        "not pages of this run (default: on)",
-    )
-    parser.add_argument(
         "-q",
         "--quiet",
         action="store_true",
         help="no output on stdout, just warnings on stderr",
     )
     return parser
-
-
-def _name(value, option):
-    if not value or any(sep in value for sep in "/\\"):
-        raise ConfigError(f"{option} {value!r} must be a file name.")
-    return value
 
 
 def read_conf(confdir):
@@ -171,6 +109,16 @@ def read_conf(confdir):
     if not os.path.isfile(os.path.join(confdir, "conf.py")):
         raise ConfigError(f"-c {confdir!r} has no conf.py.")
     config = Config.read(os.path.abspath(confdir), overrides={}, tags=Tags())
+    removed = [
+        f"{name} is no longer a setting ({fixed})"
+        for name, fixed in REMOVED_CONFIG.items()
+        if name in config._raw_config
+    ]
+    if removed:
+        raise ConfigError(
+            f"{'; '.join(removed)}. Delete from conf.py what is no longer a "
+            "setting, or write a script on the Python API."
+        )
     for name, default in SOURCE_CONFIG.items():
         config.add(name, default, "env", ())
     for name, (default, types) in APIDOC_CONFIG.items():
@@ -178,103 +126,49 @@ def read_conf(confdir):
     return config
 
 
-def _pick(flag, flag_name, conf, conf_name, default):
-    """``(value, name)``: the flag if given, else the conf.py value, else the
-    default; ``name`` is what an error should name.
-    """
-    if flag is not None:
-        return flag, flag_name
-    if conf is not None:
-        return apidoc_value(conf, conf_name), conf_name
-    return default, conf_name
-
-
-def _path(flag, flag_name, conf, conf_name, srcdir):
-    """Return ``(path, name)``: a flag's path (relative to the working
-    folder), else conf.py's (relative to the source folder), else None.
-    """
-    if flag is not None:
-        return flag, flag_name
-    if conf is not None:
-        value = apidoc_value(conf, conf_name)
-        if value is not None:
-            return os.path.join(srcdir, value), conf_name
-    return None, conf_name
+def _folder(conf, name, srcdir):
+    """Return a path value of conf.py (relative to the source folder) or None."""
+    value = apidoc_value(conf, name)
+    return None if value is None else os.path.join(srcdir, value)
 
 
 def _settings(args):
     """``(IndexSettings, ApidocOptions)`` of conf.py and the flags, or
     ConfigError.
     """
-    conf = read_conf(args.conf_dir) if args.conf_dir is not None else None
-    srcdir = os.path.abspath(args.conf_dir) if conf is not None else None
-    sources = conf if conf is not None else argparse.Namespace(**SOURCE_CONFIG)
+    conf = read_conf(args.conf_dir)
+    srcdir = os.path.abspath(args.conf_dir)
 
-    if args.root is not None:
-        root, root_name = os.path.abspath(args.root), f"ROOT {args.root!r}"
-    elif sources.matlab_src_code_project_root is not None:
-        root = project_root(sources, srcdir)
-        root_name = f"matlab_src_code_project_root {root!r}"
-    else:
-        raise ConfigError(
-            "ROOT is required (or -c with matlab_src_code_project_root in conf.py)."
-        )
+    root = project_root(conf, srcdir)
+    if root is None:
+        raise ConfigError("matlab_src_code_project_root is required in conf.py.")
     if not os.path.isdir(root):
-        raise ConfigError(f"{root_name} is not a folder.")
+        raise ConfigError(f"matlab_src_code_project_root {root!r} is not a folder.")
 
-    if args.include is not None:
-        include, include_name = pattern_list(args.include, "--include"), "--include"
-    else:
-        include_name = "matlab_src_include_patterns"
-        include = pattern_list(sources.matlab_src_include_patterns, include_name)
-    if args.exclude is not None:
-        exclude = pattern_list(args.exclude, "--exclude")
-    else:
-        exclude = pattern_list(
-            sources.matlab_src_exclusion_patterns, "matlab_src_exclusion_patterns"
-        )
+    include_name = "matlab_src_include_patterns"
+    include = pattern_list(conf.matlab_src_include_patterns, include_name)
+    exclude = pattern_list(
+        conf.matlab_src_exclusion_patterns, "matlab_src_exclusion_patterns"
+    )
     check_pattern_folders(SourceFilter(include, exclude), root, include_name)
 
-    encoding = args.encoding
-    if encoding is None:
-        encoding = sources.matlab_src_encoding
-        check_text_encoding(encoding, "matlab_src_encoding")
-    else:
-        check_text_encoding(encoding, "--encoding")
-    if args.matlab_version is not None:
-        version, version_name = args.matlab_version, "--matlab-version: "
-    else:
-        version, version_name = sources.matlab_version, ""
-    namelengthmax = sources.matlab_namelengthmax
-    try:
-        mat_naming.resolve_namelengthmax(version, None)
-    except ValueError as err:
-        raise ConfigError(f"{version_name}{err}") from err
+    encoding = conf.matlab_src_encoding
+    check_text_encoding(encoding, "matlab_src_encoding")
+    version, namelengthmax = conf.matlab_version, conf.matlab_namelengthmax
     try:
         mat_naming.resolve_namelengthmax(version, namelengthmax)
     except ValueError as err:
         raise ConfigError(str(err)) from err
 
-    output_dir, output_name = _path(
-        args.output_dir, "-o", conf, "matlab_apidoc_output_dir", srcdir
-    )
+    output_dir = _folder(conf, "matlab_apidoc_output_dir", srcdir)
     if output_dir is None:
-        raise ConfigError(
-            "-o is required (or -c with matlab_apidoc_output_dir in conf.py)."
-        )
+        raise ConfigError("matlab_apidoc_output_dir is required in conf.py.")
     if os.path.exists(output_dir) and not os.path.isdir(output_dir):
-        raise ConfigError(f"{output_name} {output_dir!r} is not a folder.")
-    templatedir, template_name = _path(
-        args.templatedir, "-t", conf, "matlab_apidoc_templatedir", srcdir
-    )
+        raise ConfigError(f"matlab_apidoc_output_dir {output_dir!r} is not a folder.")
+    templatedir = _folder(conf, "matlab_apidoc_templatedir", srcdir)
     if templatedir is not None and not os.path.isdir(templatedir):
-        raise ConfigError(f"{template_name} {templatedir!r} is not a folder.")
-    tocfile = _pick(args.tocfile, "--tocfile", conf, "matlab_apidoc_tocfile", "index")
-    suffix, suffix_name = _pick(
-        args.suffix, "--suffix", conf, "matlab_apidoc_suffix", "rst"
-    )
-    # Sidecar docs come from conf.py only (plan.md Section 2.11).
-    sidecar_suffixes = sidecar_suffix_list(sources.matlab_src_sidecar_suffixes)
+        raise ConfigError(f"matlab_apidoc_templatedir {templatedir!r} is not a folder.")
+    sidecar_suffixes = sidecar_suffix_list(conf.matlab_src_sidecar_suffixes)
     if sidecar_suffixes:
         sidecar_layout_error(root, srcdir)
     settings = IndexSettings(
@@ -291,16 +185,8 @@ def _settings(args):
         output_dir=output_dir,
         force=args.force,
         dry_run=args.dry_run or args.check,
-        separate=_pick(
-            args.separate, "--separate", conf, "matlab_apidoc_separate", False
-        )[0],
-        maxdepth=_pick(args.maxdepth, "-d", conf, "matlab_apidoc_maxdepth", 4)[0],
-        tocfile=_name(*tocfile),
-        suffix=_name(suffix.removeprefix("."), suffix_name),
+        separate=apidoc_value(conf, "matlab_apidoc_separate"),
         templatedir=templatedir,
-        remove_old=_pick(
-            args.remove_old, "--remove-old", conf, "matlab_apidoc_remove_old", True
-        )[0],
     )
     return settings, options
 
