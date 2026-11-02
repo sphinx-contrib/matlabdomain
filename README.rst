@@ -12,7 +12,10 @@ It also ships:
 
 * ``sphinx-matlab-apidoc``, which writes pages for every file of a project;
 * the ``matlab-api-check`` builder, which checks that help text describes
-  every function, class, method, input and output, for example in CI.
+  every function, class, method, input and output, for example in CI;
+* pages next to code: tutorials and notes as ``.md`` and ``.rst`` files
+  among the MATLAB files, rendered into the documentation (off by default;
+  Markdown with the ``markdown`` extra).
 
 .. note::
 

@@ -14,11 +14,13 @@ all with ``"mat"``. :doc:`../user-guide/warnings` explains each one.
      - Emitted
    * - ``mat.parse_error``
      - a file or folder that cannot be read, an invalid ``.mlapp``, a parser
-       failure, a file name that is not valid UTF-8
+       failure, a file name that is not valid UTF-8, a page that cannot be
+       read
      - every build (reading); parse failures when a page uses the file
    * - ``mat.encoding``
-     - a file decoded with the fallback encoding or with replaced bytes
-     - every build
+     - a file decoded with the fallback encoding or with replaced bytes; a
+       page that is not valid UTF-8
+     - every build; pages when they are rendered
    * - ``mat.invalid_matlab``
      - a file whose first line of code and parse disagree, a dotted
        ``function`` name, a ``.m`` file with NUL bytes
@@ -38,6 +40,11 @@ all with ``"mat"``. :doc:`../user-guide/warnings` explains each one.
    * - ``mat.not_found``
      - an auto directive whose argument matches no object
      - where the directive is
+   * - ``mat.page``
+     - a page next to code without a heading, a ``mat:autopage`` reference
+       that is not an indexed page, a project root on another drive than
+       the Sphinx source folder
+     - where the page is rendered; the drive at start-up
    * - ``mat.apidoc``
      - ``sphinx-matlab-apidoc``: an unreadable file, output names that
        differ only by case, a path too long for Windows

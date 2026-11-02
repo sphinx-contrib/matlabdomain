@@ -52,6 +52,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    user-guide/referencing
    user-guide/help-text
    user-guide/apidoc
+   user-guide/pages
    user-guide/api-check
    user-guide/warnings
    user-guide/builds

@@ -21,7 +21,8 @@ that is not a Simulink export.
 ------------------------
 
 * ``Contents.m`` as the description of its folder, as MATLAB's ``help
-  folder`` shows it.
+  folder`` shows it (before the README introduction of
+  :doc:`../user-guide/pages`).
 * Markdown (MyST) output.
 
 Running the generator inside ``sphinx-build`` (as ``sphinx.ext.apidoc``

@@ -59,6 +59,10 @@ files that cannot be parsed are counted as not checked. The function files
 of a class folder ``@X/`` whose ``X.m`` is a ``classdef`` are methods; in an
 old-style class folder they are functions.
 
+With :confval:`matlab_src_page_suffixes`, the :doc:`pages next to code
+<pages>` are checked too: that each is rendered, and that its relative
+links and images exist.
+
 The rules
 ---------
 
@@ -86,6 +90,14 @@ The rules
      - functions and methods with name-value arguments
      - the help has a name-value section, or every name-value argument has
        a comment in an ``arguments`` block
+   * - ``page-documented``
+     - pages next to code
+     - a ``mat:autopage`` renders the page, in a document that a toctree
+       includes (or an ``:orphan:`` one)
+   * - ``page-links``
+     - pages next to code
+     - every relative link (Markdown) and download points to a file, and
+       every image exists, relative to the page's folder
 
 * Inputs are the named inputs, except ``~``, the object of a method that is
   neither static nor a constructor, and the structure that holds name-value
@@ -95,6 +107,9 @@ The rules
 * Name-value arguments are the ``opts.Name`` entries of ``arguments``
   blocks. Name-value pairs that the code parses itself (``varargin`` with
   ``inputParser``) are not detected.
+* ``page-links`` looks at the pages as they were rendered, so a page that
+  no ``mat:autopage`` renders gets only a ``page-documented`` finding.
+  Links in reST pages written as ```text <path>`_`` are not checked.
 
 Comments in ``arguments`` blocks count as documentation, although MATLAB's
 ``help`` does not show them, and neither does the HTML documentation:
@@ -159,8 +174,9 @@ pages again (:doc:`../reference/configuration`):
 
 * :confval:`matlab_api_check_ignore_patterns`: objects not to check. Globs
   with the rules of :confval:`matlab_src_exclusion_patterns`, matched
-  against the path references of files and of methods
-  (``+pkg/Cls.m.helper``). Use them for generated code, examples and tests:
+  against the path references of files, of methods
+  (``+pkg/Cls.m.helper``) and of pages. Use them for generated code,
+  examples and tests:
 
   .. code-block:: python
 

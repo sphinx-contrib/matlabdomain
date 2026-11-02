@@ -47,9 +47,12 @@ change that; both are relative to the root and use ``/``:
 
 * :confval:`matlab_src_include_patterns` (default ``["**/*"]``): a file is
   indexed if its path reference matches one of them. ``[]`` selects nothing.
-* :confval:`matlab_src_exclusion_patterns` (default ``[]``): files and
-  folders that match one of them are left out; an excluded folder is not
-  searched.
+* :confval:`matlab_src_exclusion_patterns`: files and folders that match
+  one of them are left out; an excluded folder is not searched. The default
+  leaves out ``README.*``, ``CHANGES.*``, ``CHANGELOG.*``, ``LICENSE.*``,
+  ``CONTRIBUTING.*``, ``CODE_OF_CONDUCT.*`` and ``SECURITY.*`` at the root
+  (they matter for :doc:`pages next to code <pages>`); your own list
+  replaces it, so add them to it if you want to keep leaving them out.
 
 Patterns match like Sphinx's ``exclude_patterns``: ``**`` matches across
 folders, ``*`` and ``?`` within one folder, and ``**/x`` also matches ``x``

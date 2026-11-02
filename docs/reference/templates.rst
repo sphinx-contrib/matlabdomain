@@ -1,7 +1,7 @@
 ``sphinx-matlab-apidoc`` templates
 ==================================
 
-``sphinx-matlab-apidoc`` renders two `Jinja <https://jinja.palletsprojects.com/>`_
+``sphinx-matlab-apidoc`` renders three `Jinja <https://jinja.palletsprojects.com/>`_
 templates, which :confval:`matlab_apidoc_templatedir` (or ``-t``) can
 replace (:doc:`../user-guide/apidoc`). The
 defaults are in ``sphinxcontrib/matlab_apidoc/templates/``. They are
@@ -41,6 +41,15 @@ One page per folder.
    True with ``--separate``.
 ``maxdepth``
    The value of ``--maxdepth``.
+``pages``
+   The :doc:`pages next to code <../user-guide/pages>` the folder's page
+   lists (its own, and those in its ``@`` folders), sorted by file name;
+   each a dictionary with ``ref`` (the path reference), ``name`` (the file
+   name) and ``docname`` (the page's own page, relative to this page).
+   Empty when pages are off.
+``readme``
+   The path reference of the folder's README (any letter case, any page
+   suffix), the introduction of its page, or ``None``.
 
 Entries
 ~~~~~~~
@@ -76,3 +85,11 @@ Each entry describes one file:
 
 With ``--separate``, one page per file. It gets the variables of one entry,
 with ``docname`` relative to the output folder.
+
+``page.rst.jinja``
+------------------
+
+One page per page next to code (``guide.md`` -> ``guide-md.rst``), with or
+without ``--separate``. Its title is the page's first heading. Variables:
+``ref``, ``name`` and ``docname`` (relative to the output folder), as in
+``pages`` above.

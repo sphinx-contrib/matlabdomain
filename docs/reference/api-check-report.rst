@@ -13,7 +13,9 @@ One line per finding, in the order of the path references::
    <file>:<line>: <severity>: <reference> (<MATLAB name>): <what is missing> [<rule>]
 
 ``<file>`` is the absolute path of the source file; ``:<line>`` is left out
-for apps. Then a summary: the objects checked per kind, the objects not
+for apps and for page findings without a line. Pages have no MATLAB name,
+so ``(<MATLAB name>)`` is left out for them. Then a summary: the objects
+checked per kind, the objects not
 checked per reason, and the findings per rule and severity. When
 :confval:`matlab_api_check_enabled` is ``False``, the summary says that
 nothing was checked. The worked example's report, with the paths
@@ -35,7 +37,7 @@ identical on every system.
       Rule name to the severity in effect.
    ``checked``
       Objects checked per kind: ``function``, ``class``, ``method``,
-      ``script``, ``application``.
+      ``script``, ``application``, ``page``.
    ``not_checked``
       Objects not checked per reason: ``ignored``
       (:confval:`matlab_api_check_ignore_patterns`), ``hidden``
@@ -51,13 +53,16 @@ identical on every system.
    ``reference``
       The path reference (a method: ``+pkg/Cls.m.method``).
    ``name``
-      The MATLAB name, or ``null`` if MATLAB cannot call the file.
+      The MATLAB name, or ``null`` if MATLAB cannot call the file (and for
+      pages).
    ``kind``
-      ``function``, ``class``, ``method``, ``script`` or ``application``.
+      ``function``, ``class``, ``method``, ``script``, ``application`` or
+      ``page``.
    ``rule``, ``severity``
       The rule and its severity (``error`` or ``warning``).
    ``line``
-      The line of the declaration (1 for scripts), or ``null`` (apps).
+      The line of the declaration (1 for scripts), or ``null`` (apps); for
+      ``page-links``, the line of the link or image when it is known.
    ``message``
       What is missing.
 

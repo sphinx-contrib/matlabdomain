@@ -15,8 +15,9 @@ Source files
    The folder all MATLAB source lives below. Every path reference is
    relative to it. A relative path is relative to the Sphinx source folder.
    ``None`` indexes no files. Required when
-   :confval:`matlab_src_include_patterns` differs from its default or
-   :confval:`matlab_src_exclusion_patterns` is set.
+   :confval:`matlab_src_include_patterns` differs from its default,
+   :confval:`matlab_src_exclusion_patterns` is set to a list other than
+   its default or ``[]``, or :confval:`matlab_src_page_suffixes` is set.
 
 .. confval:: matlab_src_include_patterns
    :type: ``list[str]``
@@ -32,11 +33,26 @@ Source files
 
 .. confval:: matlab_src_exclusion_patterns
    :type: ``list[str]``
-   :default: ``[]``
+   :default: ``["README.*", "CHANGES.*", "CHANGELOG.*", "LICENSE.*", "CONTRIBUTING.*", "CODE_OF_CONDUCT.*", "SECURITY.*"]``
 
    Glob patterns of files and folders to leave out, with the rules of
    :confval:`matlab_src_include_patterns`. An excluded folder is not
-   searched.
+   searched. The default leaves out the project's own files at the root
+   (in upper case only), which are neither code nor
+   :doc:`pages <../user-guide/pages>`; a list of your own replaces it, so
+   copy these patterns into it if you want to keep them.
+
+.. confval:: matlab_src_page_suffixes
+   :type: ``list[str]``
+   :default: ``[]``
+
+   The suffixes of the pages next to code: ``".md"`` (needs
+   ``myst_parser`` in ``extensions``) and ``".rst"``. ``[]`` indexes no
+   pages. Pages follow the include and exclusion patterns and are read as
+   UTF-8. The root must not be the Sphinx source folder. See
+   :doc:`../user-guide/pages`. Any other suffix, a missing root or
+   ``myst_parser``, or the root equal to the source folder is a
+   ``ConfigError``.
 
 .. confval:: matlab_src_encoding
    :type: ``str`` or ``None``
@@ -128,8 +144,9 @@ Changing these reads no page again.
    Rule name to severity, ``"error"``, ``"warning"`` or ``"ignore"``,
    merged over the defaults (every rule ``"error"``). Rules:
    ``description``, ``method-description``, ``inputs``, ``outputs``,
-   ``name-value``. A value that is not a dictionary, an unknown rule or an
-   unknown severity is a ``ConfigError``.
+   ``name-value``, ``page-documented``, ``page-links``. A value that is
+   not a dictionary, an unknown rule or an unknown severity is a
+   ``ConfigError``.
 
 .. confval:: matlab_api_check_enabled
    :type: ``bool``
@@ -143,8 +160,8 @@ Changing these reads no page again.
 
    Glob patterns, with the rules of
    :confval:`matlab_src_exclusion_patterns`, of objects not to check,
-   matched against the path references of files and methods
-   (``+pkg/Cls.m.helper``).
+   matched against the path references of files, methods
+   (``+pkg/Cls.m.helper``) and pages.
 
 ``sphinx-matlab-apidoc``
 ------------------------

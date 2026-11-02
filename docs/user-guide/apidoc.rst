@@ -25,6 +25,9 @@ shown here is current.
        src/                      the MATLAB project (ROOT)
            +demo/
                Contents.m        folder help (left out of the pages)
+               README.md         the introduction of the namespace's page
+               getting-started.md  a Markdown page next to code
+               img/shapes.svg    its image
                +geometry/
                    Point.m       class demo.geometry.Point
                    distance.m    function demo.geometry.distance
@@ -35,6 +38,7 @@ shown here is current.
            utils/                a plain folder: global functions
                clamp.m
                lerp.m
+               notes.rst         a reST page next to code
                private/
                    check_range.m
            run_demo.m            a script
@@ -46,8 +50,9 @@ shown here is current.
        templates/                edited copies of the default templates
 
 ``docs/conf.py`` points :confval:`matlab_src_code_project_root` at the
-project and tells ``sphinx-matlab-apidoc`` where to write the pages and
-which templates to use:
+project, turns on :doc:`pages next to code <pages>` and tells
+``sphinx-matlab-apidoc`` where to write the pages and which templates to
+use:
 
 .. literalinclude:: ../../examples/apidoc/docs/conf.py
    :language: python
@@ -60,15 +65,18 @@ Generate the pages with ``-c`` (``--conf-dir``), the folder of
    $ cd examples/apidoc/docs
    $ sphinx-matlab-apidoc -c .
 
-This writes one page per folder into ``api/``, mirroring the folder tree:
+This writes one page per folder into ``api/``, mirroring the folder tree,
+and one per page next to code:
 
 .. code-block:: text
 
    api/
        index.rst                 the root folder (the toc file)
        +demo/index.rst
+       +demo/getting-started-md.rst
        +demo/+geometry/index.rst
        utils/index.rst
+       utils/notes-rst.rst
        utils/private/index.rst
 
 Add the root page to a toctree, here in ``docs/index.rst``:
@@ -122,6 +130,9 @@ What the pages contain
 * ``Contents.m`` and the other special files (:doc:`help-text`) are left
   out. Files MATLAB cannot call are included, by path; files that cannot be
   read are left out with a ``mat.apidoc`` warning.
+* With :confval:`matlab_src_page_suffixes`, each page next to code gets a
+  page of its own, listed in a "Pages" section before "Folders", and a
+  folder's README introduces the folder's page (:doc:`pages`).
 
 Settings
 --------
@@ -133,7 +144,8 @@ With ``-c``, it runs ``conf.py`` as ``sphinx-build`` does and reads:
 * the source settings: :confval:`matlab_src_code_project_root`,
   :confval:`matlab_src_include_patterns`,
   :confval:`matlab_src_exclusion_patterns`, :confval:`matlab_version`,
-  :confval:`matlab_namelengthmax` and :confval:`matlab_src_encoding`;
+  :confval:`matlab_namelengthmax`, :confval:`matlab_src_encoding` and
+  :confval:`matlab_src_page_suffixes` (no flag sets it);
 * its own settings, which the build ignores:
   :confval:`matlab_apidoc_output_dir`, :confval:`matlab_apidoc_separate`,
   :confval:`matlab_apidoc_maxdepth`, :confval:`matlab_apidoc_tocfile`,

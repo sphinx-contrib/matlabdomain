@@ -112,7 +112,9 @@ earlier" in the documentation.
   keeps the text read by the index for the parse during a build.
 * New configuration ``matlab_src_include_patterns`` (default ``["**/*"]``;
   ``[]`` selects no files) and ``matlab_src_exclusion_patterns`` (default
-  ``[]``): globs relative to ``matlab_src_code_project_root``, matched like
+  the root files ``README.*``, ``CHANGES.*``, ``CHANGELOG.*``,
+  ``LICENSE.*``, ``CONTRIBUTING.*``, ``CODE_OF_CONDUCT.*`` and
+  ``SECURITY.*``): globs relative to ``matlab_src_code_project_root``, matched like
   ``exclude_patterns``, case-sensitive. Patterns must stay below the root
   (``ConfigError`` otherwise) and need ``matlab_src_code_project_root``. A
   link below the root that leaves it is skipped with a ``mat.outside_root``
@@ -223,6 +225,20 @@ earlier" in the documentation.
   lexer, used by the parser before tree-sitter) is removed.
 * The package metadata names the license in ``LICENSE``, BSD-2-Clause (it
   said BSD-3-Clause).
+* Pages next to code: tutorials and notes as ``.md`` and ``.rst`` files
+  among the MATLAB files, selected by the new
+  ``matlab_src_page_suffixes`` (default ``[]``, off) and the include and
+  exclusion patterns. The new directive ``mat:autopage`` renders one into
+  a document, with relative images, downloads, includes and Markdown links
+  (to pages, code and files) resolved from the page's folder; the new role
+  ``:mat:page:`` links to one. ``sphinx-matlab-apidoc -c`` writes a page
+  for each (``guide.md`` -> ``guide-md.rst``, new template
+  ``page.rst.jinja``), lists them on their folder's page and uses a
+  folder's README as its introduction (new template keys ``pages`` and
+  ``readme``). ``matlab-api-check`` has the new rules ``page-documented``
+  and ``page-links``, and counts pages (``page``) in its reports. Markdown
+  needs the new ``markdown`` extra (myst-parser). New warning subtype
+  ``mat.page``. Cached environments from earlier versions are rebuilt.
 
 .. _PR 232: https://github.com/sphinx-contrib/matlabdomain/pull/232
 

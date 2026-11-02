@@ -200,6 +200,27 @@ know which object to document") and the directive writes nothing.
 
       Do not create link targets or index entries.
 
+Pages next to code
+------------------
+
+.. rst:directive:: .. mat:autopage:: reference
+
+   Render a page next to code (:doc:`../user-guide/pages`): the path
+   reference of a ``.md`` or ``.rst`` file that
+   :confval:`matlab_src_page_suffixes` indexes. Its headings become
+   sections; the first is the page's title. A page without a heading gets
+   its file name as title, with a ``mat.page`` warning. Relative paths in
+   the page are relative to its folder. A reference that is not an indexed
+   page writes nothing, with a ``mat.page`` warning. Use it in reST
+   documents (in a Markdown document, a reST page would be read as
+   Markdown).
+
+   .. rst:directive:option:: no-title
+
+      Leave out the page's first heading: the rest of the page continues
+      the current section (a folder's README as the introduction of the
+      folder's page).
+
 Description directives
 ----------------------
 
@@ -408,6 +429,13 @@ prefers objects of its type, then accepts any.
 
    An object of any type (enumeration values are attributes; prefer
    ``mat:attr``).
+
+.. rst:role:: mat:page
+
+   A page next to code, by its path reference only
+   (``:mat:page:`+demo/guide.md```): a link to the document that renders
+   it, with the page's title (its first heading) as text unless one is
+   given.
 
 Indices
 -------
