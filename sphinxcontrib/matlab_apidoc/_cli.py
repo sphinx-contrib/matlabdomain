@@ -38,7 +38,7 @@ from ._config import (
     SOURCE_CONFIG,
     apidoc_value,
 )
-from ._generate import ApidocOptions, generate
+from ._generate import GROUPS, ApidocOptions, generate
 
 #: exit status when --check finds pages to change
 CHECK_FAILED = 1
@@ -62,7 +62,8 @@ def get_parser():
         description=(
             "Write reST pages with sphinxcontrib-matlabdomain directives for the "
             "MATLAB files of the project that CONF_DIR/conf.py documents: one "
-            "page per folder, mirroring the folder tree. Pages that start with "
+            "page per namespace (matlab_apidoc_group = 'namespace', the default) "
+            "or per folder ('folder'). Pages that start with "
             "the marker line are rewritten when they change and removed when "
             "they are no longer pages (matlab_apidoc_remove_old)."
         ),
@@ -189,6 +190,17 @@ def _settings(args):
         source_dir=srcdir,
     )
     suffix = apidoc_value(conf, "matlab_apidoc_suffix").removeprefix(".")
+    group = apidoc_value(conf, "matlab_apidoc_group")
+    if group not in GROUPS:
+        raise ConfigError(
+            f"matlab_apidoc_group must be {' or '.join(map(repr, GROUPS))}, "
+            f"not {group!r}."
+        )
+    page_size = apidoc_value(conf, "matlab_apidoc_page_size")
+    if page_size < 1:
+        raise ConfigError(
+            f"matlab_apidoc_page_size must be 1 or more, not {page_size}."
+        )
     options = ApidocOptions(
         output_dir=output_dir,
         force=args.force,
@@ -199,6 +211,8 @@ def _settings(args):
         suffix=_file_name(conf, "matlab_apidoc_suffix", suffix),
         templatedir=templatedir,
         remove_old=apidoc_value(conf, "matlab_apidoc_remove_old"),
+        group=group,
+        page_size=page_size,
     )
     return settings, options
 

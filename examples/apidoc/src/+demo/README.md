@@ -1,4 +1,4 @@
 # Demo
 
-Shapes and geometry. This README is the introduction of the namespace's
-page: its first heading is left out.
+Shapes and geometry. On the namespace's page this README is a sidecar doc
+like the others; with folder grouping, it introduces the folder's page.

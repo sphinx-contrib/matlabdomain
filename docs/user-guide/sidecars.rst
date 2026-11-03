@@ -116,39 +116,38 @@ Sidecar docs with ``sphinx-matlab-apidoc``
 ------------------------------------------
 
 With :confval:`matlab_src_sidecar_suffixes` in ``conf.py``,
-``sphinx-matlab-apidoc`` (:doc:`apidoc`) writes a page for each sidecar
-doc, named after the file with its suffix after a ``-``
-(``getting-started.md`` -> ``getting-started-md.rst``; a name that ends in
-``.md.rst`` would lose its ``.md`` in a toctree). The folder's page lists
-them in a "Sidecar docs" section after the API sections and before "Folders"
-(sidecar docs in ``@`` folders on the page of the folder above, like their
-code).
+``sphinx-matlab-apidoc`` (:doc:`apidoc`) documents the sidecar docs too.
 
-A folder's README (``README.md``, ``readme.rst``, any letter case) does not
-get a page of its own: it is the introduction of the folder's page, without
-its first heading. A README in an ``@`` folder, which has no page, is an
-ordinary sidecar doc.
-
-The worked example has a Markdown sidecar doc with an image in
-``src/+demo/`` and a reST one in ``src/utils/``:
+In namespace grouping (the default), each sidecar doc is rendered on the
+page of its namespace (or Global), in a "Sidecar docs" section after the
+API sections, sorted by file name, each with its own title. A sidecar doc
+in an ``@`` folder goes with its class, one in ``private/`` with the folder
+above it. READMEs are sidecar docs like the others. The worked example has
+a Markdown sidecar doc with an image and a README in ``src/+demo/``, and a
+reST one in ``src/utils/``:
 
 .. literalinclude:: ../../examples/apidoc/src/+demo/getting-started.md
    :language: markdown
 
-The generated namespace page starts with the README and lists the sidecar
-docs:
+The generated page of the namespace renders both of ``+demo/``:
 
-.. literalinclude:: ../../examples/apidoc/docs/api/+demo/index.rst
+.. literalinclude:: ../../examples/apidoc/docs/api/demo.rst
    :language: rst
 
-and the sidecar doc's own page holds one directive:
+In folder grouping, each sidecar doc gets a page of its own, named after
+the file with its suffix after a ``-`` (``getting-started.md`` ->
+``getting-started-md.rst``; a name that ends in ``.md.rst`` would lose its
+``.md`` in a toctree), with one ``mat:autosidecar`` directive. The folder's
+page lists them in a "Sidecar docs" section after the API sections
+(sidecar docs in ``@`` folders on the page of the folder above, like their
+code). A folder's README (``README.md``, ``readme.rst``, any letter case)
+does not get a page of its own: it is the introduction of the folder's
+page, without its first heading. A README in an ``@`` folder, which has no
+page, is an ordinary sidecar doc.
 
-.. literalinclude:: ../../examples/apidoc/docs/api/+demo/getting-started-md.rst
-   :language: rst
-
-The templates get the sidecar docs as the keys ``sidecars`` and ``readme``,
-and a sidecar doc's page comes from ``sidecar.rst.jinja``
-(:doc:`../reference/templates`).
+The templates get the sidecar docs as the key ``sidecars`` (and, in folder
+grouping, ``readme``); a sidecar doc's page comes from
+``sidecar.rst.jinja`` (:doc:`../reference/templates`).
 
 Checking sidecar docs
 ---------------------

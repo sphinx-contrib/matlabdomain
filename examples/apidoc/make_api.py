@@ -34,6 +34,8 @@ def main(output_dir=HERE / "docs" / "api"):
         tocfile="index",
         suffix="rst",
         remove_old=True,
+        group="namespace",
+        page_size=100,
     )
     result = generate(build_index(settings), options)
     print(

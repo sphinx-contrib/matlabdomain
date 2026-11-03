@@ -23,6 +23,8 @@ APIDOC_CONFIG = {
     "matlab_apidoc_suffix": ("rst", (str,)),
     "matlab_apidoc_templatedir": (None, (str, _NONE)),
     "matlab_apidoc_remove_old": (True, (bool,)),
+    "matlab_apidoc_group": ("namespace", (str,)),
+    "matlab_apidoc_page_size": (100, (int,)),
 }
 
 #: the build's values the CLI reads, with the defaults of ``setup()``

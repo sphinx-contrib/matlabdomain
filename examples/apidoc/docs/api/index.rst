@@ -3,33 +3,9 @@
 Demo API reference
 ==================
 
-.. mat:autofolder:: ./
-
-.. contents::
-   :local:
-   :backlinks: none
-
-Scripts
--------
-
-run\_demo
-~~~~~~~~~
-
-.. mat:autoscript:: run_demo.m
-
-Apps
-----
-
-DemoApp
-~~~~~~~
-
-.. mat:autoapplication:: DemoApp.mlapp
-
-Folders
--------
-
 .. toctree::
    :maxdepth: 4
 
-   +demo/index
-   utils/index
+   global
+   demo
+   demo.geometry

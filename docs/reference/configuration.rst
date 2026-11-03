@@ -183,11 +183,29 @@ relative to the folder of ``conf.py``.
 
    The folder for the generated pages. Required.
 
+.. confval:: matlab_apidoc_group
+   :type: ``str``
+   :default: ``"namespace"``
+
+   How pages are grouped: ``"namespace"``, one page per namespace (all its
+   folders) plus Global for the files outside any namespace, listed flat on
+   the root page; or ``"folder"``, one page per folder, mirroring the
+   folder tree (:doc:`../user-guide/apidoc`). Any other value is a
+   ``ConfigError``.
+
+.. confval:: matlab_apidoc_page_size
+   :type: ``int``
+   :default: ``100``
+
+   In namespace grouping, the most entries (files and sidecar docs) on one
+   page; a longer namespace gets several pages. Less than 1 is a
+   ``ConfigError``.
+
 .. confval:: matlab_apidoc_separate
    :type: ``bool``
    :default: ``False``
 
-   One page per file; folder pages list them in toctrees.
+   One page per file; namespace and folder pages list them in toctrees.
 
 .. confval:: matlab_apidoc_maxdepth
    :type: ``int``
@@ -199,7 +217,7 @@ relative to the folder of ``conf.py``.
    :type: ``str``
    :default: ``"index"``
 
-   The name of the root folder's page, without suffix.
+   The name of the root page, without suffix.
 
 .. confval:: matlab_apidoc_suffix
    :type: ``str``

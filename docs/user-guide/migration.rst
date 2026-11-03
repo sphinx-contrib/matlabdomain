@@ -224,9 +224,10 @@ the new objects above, expect:
   ``:private-members:``. To keep private members on every generated page,
   set ``autodoc_default_options = {"private-members": True}``.
 * The function files of a class folder are methods of the class, not also
-  functions; ``private/`` folders get pages.
-* One page per folder instead of a hand-made grouping, such as one page
-  per namespace across folders.
+  functions. With the default namespace grouping, ``private/`` files are
+  left out; with ``matlab_apidoc_group = "folder"`` they get pages.
+* One page per namespace (and Global), like many 0.x page generators; a
+  0.x page per class folder is now the class on its namespace's page.
 * Fewer warnings: 0.x parser messages ("Expected property", "Unexpected
   class name") are gone.
 

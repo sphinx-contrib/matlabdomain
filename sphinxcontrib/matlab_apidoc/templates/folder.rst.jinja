@@ -33,6 +33,12 @@
 .. mat:autosidecar:: {{ readme }}
    :no-title:
 {%- endif %}
+{#- Before the sections, so subfolders are children of the page itself in
+    the navigation. -#}
+{%- if subfolders %}
+
+{{ toctree(subfolders) }}
+{%- endif %}
 {%- for section, entries in sections %}
 
 {{ section | e | heading(2) }}
@@ -53,10 +59,4 @@
 {{ "Sidecar docs" | heading(2) }}
 
 {{ toctree(sidecars | map(attribute="docname")) }}
-{%- endif %}
-{%- if subfolders %}
-
-{{ "Folders" | heading(2) }}
-
-{{ toctree(subfolders) }}
 {%- endif %}

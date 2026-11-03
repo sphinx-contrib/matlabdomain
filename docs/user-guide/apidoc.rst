@@ -2,7 +2,8 @@ Generating pages: ``sphinx-matlab-apidoc``
 ==========================================
 
 ``sphinx-matlab-apidoc`` writes reST pages that document every MATLAB file
-below a project root with the auto directives, one page per folder. A large
+below a project root with the auto directives: by default one page per
+namespace, as MATLAB sees namespaces, or one page per folder. A large
 project then needs no hand-written directives, and new files appear in the
 docs when you run it again. It is the MATLAB counterpart of Sphinx's
 ``sphinx-apidoc``, with a deliberately small surface: its settings come
@@ -26,8 +27,8 @@ shown here is current.
        src/                      the MATLAB project (ROOT)
            +demo/
                Contents.m        folder help (left out of the pages)
-               README.md         the introduction of the namespace's page
-               getting-started.md  a Markdown sidecar doc
+               README.md         a Markdown sidecar doc
+               getting-started.md  another one
                img/shapes.svg    its image
                +geometry/
                    Point.m       class demo.geometry.Point
@@ -67,19 +68,16 @@ folder with ``-c``, ``--conf-dir``):
    $ cd examples/apidoc/docs
    $ sphinx-matlab-apidoc
 
-This writes one page per folder into ``api/``, mirroring the folder tree,
-and one per sidecar doc:
+This writes one page per namespace into ``api/``, one for the files
+outside any namespace (``global``), and the root page that lists them:
 
 .. code-block:: text
 
    api/
-       index.rst                 the root folder
-       +demo/index.rst
-       +demo/getting-started-md.rst
-       +demo/+geometry/index.rst
-       utils/index.rst
-       utils/notes-rst.rst
-       utils/private/index.rst
+       index.rst                 the root page
+       global.rst                utils/, run_demo.m, DemoApp.mlapp
+       demo.rst                  namespace demo
+       demo.geometry.rst         namespace demo.geometry
 
 Add the root page to a toctree, here in ``docs/index.rst``:
 
@@ -92,27 +90,59 @@ and build as usual:
 
    $ sphinx-build -M html . _build
 
-The generated page of the ``+demo`` namespace:
+The root page and the page of the ``demo`` namespace:
 
-.. literalinclude:: ../../examples/apidoc/docs/api/+demo/index.rst
+.. literalinclude:: ../../examples/apidoc/docs/api/index.rst
    :language: rst
 
-and of the plain folder ``utils/``:
-
-.. literalinclude:: ../../examples/apidoc/docs/api/utils/index.rst
+.. literalinclude:: ../../examples/apidoc/docs/api/demo.rst
    :language: rst
 
 What the pages contain
 ----------------------
 
-* One page per folder that has a file to document at or below it. The page
-  of the root folder is the toc file (``index`` by default) and is always
-  written.
+With :confval:`matlab_apidoc_group` ``"namespace"`` (the default):
+
+* One page per namespace that has a file or sidecar doc to document,
+  whatever folders it is spread over: ``a/+ns/`` and ``b/+ns/`` make one
+  namespace ``ns``, as in MATLAB. Its title is ``namespace ns``.
+* One page for the global namespace, titled ``Global``: the files outside
+  any namespace, in plain folders at any depth.
+* Each page has a local table of contents and sections in this order:
+  Functions, Classes, Scripts, Apps, Sidecar docs. Within a section,
+  entries are sorted by title, ignoring case.
+* A page holds at most :confval:`matlab_apidoc_page_size` entries (100 by
+  default; sidecar docs count). A longer namespace gets several pages,
+  titled with the range they hold: ``namespace ns (1-100)``,
+  ``namespace ns (101-200)``, ``namespace ns (201-253)``.
+* The root page (the toc file, ``index`` by default, always written) has
+  one flat toctree: Global first, then the namespaces sorted by name,
+  ignoring case. Nested namespaces are listed like the others
+  (``demo``, ``demo.geometry``), so the navigation stays one level deep.
+* Files in ``private/`` folders are left out (only the files of their
+  folder can call them). Sidecar docs are rendered on the page of their
+  namespace in the "Sidecar docs" section, each with its own title; one in
+  ``private/`` goes with the folder above it.
+* When two files of one page have the same MATLAB name (two folders with a
+  ``utils.m`` on one path), both are listed, titled by path, with a
+  ``mat.apidoc`` warning.
+
+With ``"folder"``:
+
+* One page per folder that has a file to document at or below it, mirroring
+  the folder tree. The page of the root folder is the toc file.
 * The title is the folder's signature: ``namespace demo`` for a ``+``
   folder, ``folder utils/`` for a plain folder, ``folder ./`` for the root.
-* Each page has ``mat:autofolder`` (without ``:members:``), a local table of
-  contents, and sections in this order: Classes, Functions, Scripts, Apps.
-  Within a section, entries are sorted by title, ignoring case.
+  The page has ``mat:autofolder`` (without ``:members:``), a local table of
+  contents, a toctree of the subfolders' pages (namespaces, then plain
+  folders, then ``private/``; one level of the navigation per folder), and
+  sections in this order: Classes, Functions, Scripts, Apps.
+* With :confval:`matlab_src_sidecar_suffixes`, each sidecar doc gets a
+  page of its own, listed in a "Sidecar docs" section, and a folder's
+  README introduces the folder's page (:doc:`sidecars`).
+
+In both:
+
 * Each file gets a heading, its MATLAB name (or its path when MATLAB cannot
   call it), and an auto directive with its full path reference:
   ``mat:autoclass`` with ``:members:``, ``:undoc-members:`` and
@@ -123,19 +153,14 @@ What the pages contain
   silences it. Sphinx also adds documented classes to the local table of
   contents, so a class appears there twice (its heading and its signature);
   ``toc_object_entries = False`` in ``conf.py`` hides the second.
-* A "Folders" toctree lists the pages of the subfolders: namespaces, then
-  plain folders, then ``private/``.
-* Class folders get no page of their own: their class is listed on the page
-  of the folder above. The function files of a class folder ``@X/`` whose
-  ``X.m`` is a ``classdef`` are its methods and are not listed separately.
-  In any other ``@`` folder (an old-style class, a ``classdef`` with another
-  name, no class file), every file is listed.
+* Class folders get no page of their own: their class is listed with the
+  files of the folder above (its namespace). The function files of a class
+  folder ``@X/`` whose ``X.m`` is a ``classdef`` are its methods and are
+  not listed separately. In any other ``@`` folder (an old-style class, a
+  ``classdef`` with another name, no class file), every file is listed.
 * ``Contents.m`` and the other special files (:doc:`help-text`) are left
   out. Files MATLAB cannot call are included, by path; files that cannot be
   read are left out with a ``mat.apidoc`` warning.
-* With :confval:`matlab_src_sidecar_suffixes`, each sidecar doc gets a
-  page of its own, listed in a "Sidecar docs" section before "Folders", and
-  a folder's README introduces the folder's page (:doc:`sidecars`).
 
 Settings
 --------
@@ -160,6 +185,12 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
      * - :confval:`matlab_apidoc_output_dir`
        - required
        - the folder for the pages
+     * - :confval:`matlab_apidoc_group`
+       - ``"namespace"``
+       - one page per namespace, or ``"folder"``
+     * - :confval:`matlab_apidoc_page_size`
+       - ``100``
+       - the most entries on one namespace page
      * - :confval:`matlab_apidoc_separate`
        - ``False``
        - one page per file
@@ -168,7 +199,7 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
        - the ``:maxdepth:`` of the toctrees
      * - :confval:`matlab_apidoc_tocfile`
        - ``"index"``
-       - the name of the root folder's page
+       - the name of the root page
      * - :confval:`matlab_apidoc_suffix`
        - ``"rst"``
        - the suffix of the files
@@ -187,7 +218,15 @@ run: ``-f``, ``-n``, ``--check`` and ``-q``.
 Output file names
 -----------------
 
-The output tree mirrors the folder tree: the folder ``a/+p/`` gets
+Namespace pages are named by the namespace (``demo.geometry.rst``); its
+further pages get ``-2``, ``-3`` (``demo.geometry-2.rst``). The global
+namespace's page is ``global.rst`` (``global`` is a MATLAB keyword, so no
+namespace has that name). Namespaces whose names differ only by case, and a
+namespace named like the toc file or like a page of
+:confval:`matlab_apidoc_separate`, are escaped as below.
+
+Folder pages and the pages of :confval:`matlab_apidoc_separate` mirror the
+folder tree: the folder ``a/+p/`` gets
 ``a/+p/index.rst``. Characters other than ``A-Z a-z 0-9 _ . + @ -`` in a
 folder or file name become ``~XX`` per UTF-8 byte (``my folder`` becomes
 ``my~20folder``), so names are safe in URLs on every system. Windows device
@@ -273,10 +312,12 @@ folder and run the generator with ``--pre-build`` (:doc:`builds`).
 Customizing the output
 ----------------------
 
-The pages come from three `Jinja <https://jinja.palletsprojects.com/>`_
-templates: ``folder.rst.jinja`` (one folder page), ``object.rst.jinja``
-(one file's page, with :confval:`matlab_apidoc_separate`) and
-``sidecar.rst.jinja`` (one sidecar doc's page). To change them:
+The pages come from `Jinja <https://jinja.palletsprojects.com/>`_
+templates: ``namespace.rst.jinja`` (one page of a namespace) and
+``root.rst.jinja`` (the root page) in namespace grouping,
+``folder.rst.jinja`` (one folder page) and ``sidecar.rst.jinja`` (one
+sidecar doc's page) in folder grouping, and ``object.rst.jinja`` (one
+file's page, with :confval:`matlab_apidoc_separate`). To change them:
 
 1. copy the defaults from ``sphinxcontrib/matlab_apidoc/templates/`` in the
    installed package (or the example's copies) into your project;
@@ -284,10 +325,15 @@ templates: ``folder.rst.jinja`` (one folder page), ``object.rst.jinja``
 3. set :confval:`matlab_apidoc_templatedir` to their folder. A template
    missing there falls back to the default.
 
-The example's ``folder.rst.jinja`` titles the root page "Demo API
-reference" and leaves out ``:undoc-members:``:
+The example's ``root.rst.jinja`` titles the root page "Demo API
+reference":
 
-.. literalinclude:: ../../examples/apidoc/templates/folder.rst.jinja
+.. literalinclude:: ../../examples/apidoc/templates/root.rst.jinja
+   :language: jinja
+
+and its ``namespace.rst.jinja`` leaves out ``:undoc-members:``:
+
+.. literalinclude:: ../../examples/apidoc/templates/namespace.rst.jinja
    :language: jinja
 
 The variables a template can use are listed in
@@ -321,10 +367,10 @@ It takes three steps:
    the build does, and returns a ``SourceIndex``.
 3. ``sphinxcontrib.matlab_apidoc.generate(source_index, options)`` writes
    the pages. ``ApidocOptions`` has a field for each ``matlab_apidoc_*``
-   value (``output_dir``, ``separate``, ``maxdepth``, ``tocfile``,
-   ``suffix``, ``templatedir``, ``remove_old``; paths as given, not
-   relative to ``conf.py``) and for the flags ``-f`` and ``-n``
-   (``force``, ``dry_run``).
+   value (``output_dir``, ``group``, ``page_size``, ``separate``,
+   ``maxdepth``, ``tocfile``, ``suffix``, ``templatedir``, ``remove_old``;
+   paths as given, not relative to ``conf.py``) and for the flags ``-f``
+   and ``-n`` (``force``, ``dry_run``).
    It returns a ``Result``: ``pages`` (the docnames, without suffix), the
    lists of files ``created``, ``updated``, ``unchanged``, ``kept`` and
    ``removed`` and of files and folders ``renamed`` (paths relative to the

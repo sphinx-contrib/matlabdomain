@@ -131,15 +131,21 @@ earlier" in the documentation.
   unreadable files and folders) still appear on every build.
 * New command ``sphinx-matlab-apidoc`` (also ``python -m
   sphinxcontrib.matlab_apidoc``): writes reST pages with ``mat:auto*``
-  directives for the MATLAB files of a project, one page per folder,
-  mirroring the folder tree, from Jinja templates that can be replaced
-  (``matlab_apidoc_templatedir``). Its template context is a public
+  directives for the MATLAB files of a project, from Jinja templates that
+  can be replaced (``matlab_apidoc_templatedir``). By default
+  (``matlab_apidoc_group = "namespace"``) it writes one page per namespace,
+  merging all its folders, and Global for the files outside any namespace,
+  listed flat on the root page (Global first); sections Functions,
+  Classes, Scripts, Apps and the sidecar docs; at most
+  ``matlab_apidoc_page_size`` entries (default 100) per page; ``private/``
+  files are left out. ``matlab_apidoc_group = "folder"`` writes one page
+  per folder, mirroring the folder tree. Its template context is a public
   interface: renaming or removing a key is a breaking change. See
   ``examples/apidoc``. ``sphinx-matlab-apidoc -c DIR`` (default: the
   current folder) reads every setting from ``DIR/conf.py``: the source
   settings of the build and the new ``matlab_apidoc_*`` values (output
-  folder, one page per file, toctree depth, root page, suffix, templates,
-  removal of stale pages).
+  folder, grouping, page size, one page per file, toctree depth, root
+  page, suffix, templates, removal of stale pages).
   Its flags only control a run: ``-f``, ``-n``, ``--check``, ``-q``.
   Generated pages (those that start with its marker line) are rewritten
   when they change and removed when they are no longer pages; ``--check``

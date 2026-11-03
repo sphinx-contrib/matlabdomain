@@ -81,6 +81,7 @@ ENTRY_KEYS = {
     "docname",
 }
 FUNCTION = "function {name}()\n% {name} help.\nend\n"
+FOLDER = 'matlab_apidoc_group = "folder"\n'
 
 
 def tree(folder):
@@ -101,13 +102,17 @@ def write(root, files):
 
 
 def pages_of(root, **options):
+    """Pages of ``root``; folder grouping unless ``group`` is given."""
+    options.setdefault("group", "folder")
     source_index = build_index(IndexSettings(str(root)))
     return build_pages(source_index, ApidocOptions("out", **options))
 
 
 def run(root, out, *flags):
+    """Generate the pages of ``root``; folder grouping unless given."""
+    options = {"group": "folder", **dict(flags)}
     return generate(
-        build_index(IndexSettings(str(root))), ApidocOptions(str(out), **dict(flags))
+        build_index(IndexSettings(str(root))), ApidocOptions(str(out), **options)
     )
 
 
@@ -392,6 +397,190 @@ def test_an_empty_root_gets_its_page_and_a_warning(tmp_path, caplog_sphinx):
     assert any("no documentable files" in m for _, m in caplog_sphinx)
 
 
+# --- namespace grouping -----------------------------------------------------
+
+NAMESPACE_PAGE_KEYS = {
+    "docname",
+    "title",
+    "namespace",
+    "kind",
+    "page",
+    "pages",
+    "first",
+    "last",
+    "sections",
+    "sidecars",
+    "separate",
+    "maxdepth",
+}
+
+
+def namespace_pages(root, **options):
+    return {p.docname: p for p in pages_of(root, group="namespace", **options)}
+
+
+def listed_refs(page):
+    return [e["ref"] for _, entries in page.context["sections"] for e in entries]
+
+
+def test_namespace_pages_of_the_fixture(caplog_sphinx):
+    pages = namespace_pages(ROOT)
+    assert sorted(pages) == ["a", "a.b", "global", "index", "nmpkg"]
+    root = pages["index"]
+    assert root.template == "root.rst.jinja"
+    assert root.context == {
+        "docname": "index",
+        "title": "API reference",
+        "pages": ["global", "a", "a.b", "nmpkg"],
+        "maxdepth": 4,
+    }
+    for name in ("a", "a.b", "global", "nmpkg"):
+        assert set(pages[name].context) == NAMESPACE_PAGE_KEYS
+        assert pages[name].template == "namespace.rst.jinja"
+    nmpkg = pages["nmpkg"].context
+    assert (nmpkg["title"], nmpkg["namespace"], nmpkg["kind"]) == (
+        "namespace nmpkg",
+        "nmpkg",
+        "namespace",
+    )
+    assert (nmpkg["page"], nmpkg["pages"], nmpkg["first"], nmpkg["last"]) == (
+        1,
+        1,
+        1,
+        2,
+    )
+    # Functions first; private/ files and class folder methods left out.
+    assert [t for t, _ in nmpkg["sections"]] == ["Functions", "Classes"]
+    assert listed_refs(pages["nmpkg"]) == ["+nmpkg/nm_func.m", "+nmpkg/@NmCls/NmCls.m"]
+    glob = pages["global"].context
+    assert (glob["title"], glob["namespace"], glob["kind"]) == (
+        "Global",
+        None,
+        "global",
+    )
+    assert [t for t, _ in glob["sections"]] == [
+        "Functions",
+        "Classes",
+        "Scripts",
+        "Apps",
+    ]
+    refs = listed_refs(pages["global"])
+    assert "+for/nm_kw.m" in refs  # not a valid namespace: global, by path
+    assert not any("private/" in ref for ref in refs)
+    assert "@ApCls/ap_method.m" not in refs
+    # Two global functions with one name are titled by path, with a warning.
+    titles = {e["ref"]: e["title"] for _, es in glob["sections"] for e in es}
+    assert titles["alpha/nm_shared.m"] == "alpha/nm_shared.m"
+    assert titles["beta/nm_shared.m"] == "beta/nm_shared.m"
+    assert any(
+        s == "apidoc" and "nm_shared is defined by several files in Global" in m
+        for s, m in caplog_sphinx
+    )
+
+
+def test_a_namespace_merges_its_folders_and_pages_are_split(tmp_path):
+    write(
+        tmp_path,
+        {
+            **{f"a/+ns/f{i}.m": FUNCTION.format(name=f"f{i}") for i in range(3)},
+            **{f"b/+ns/g{i}.m": FUNCTION.format(name=f"g{i}") for i in range(2)},
+            "b/+ns/C.m": "classdef C\nend\n",
+            "b/+ns/+sub/h.m": FUNCTION.format(name="h"),
+            "top.m": FUNCTION.format(name="top"),
+        },
+    )
+    pages = namespace_pages(tmp_path, page_size=2)
+    assert pages["index"].context["pages"] == [
+        "global",
+        "ns",
+        "ns-2",
+        "ns-3",
+        "ns.sub",
+    ]
+    contexts = [pages[name].context for name in ("ns", "ns-2", "ns-3")]
+    assert [c["title"] for c in contexts] == [
+        "namespace ns (1-2)",
+        "namespace ns (3-4)",
+        "namespace ns (5-6)",
+    ]
+    assert [(c["page"], c["pages"], c["first"], c["last"]) for c in contexts] == [
+        (1, 3, 1, 2),
+        (2, 3, 3, 4),
+        (3, 3, 5, 6),
+    ]
+    assert [listed_refs(pages[name]) for name in ("ns", "ns-2", "ns-3")] == [
+        ["a/+ns/f0.m", "a/+ns/f1.m"],
+        ["a/+ns/f2.m", "b/+ns/g0.m"],
+        ["b/+ns/g1.m", "b/+ns/C.m"],
+    ]
+    assert pages["ns-3"].context["sections"][1][0] == "Classes"
+    assert pages["global"].context["title"] == "Global"
+
+
+def test_sidecar_docs_go_on_their_namespace_page(tmp_path):
+    write(
+        tmp_path,
+        {
+            "+ns/f.m": FUNCTION.format(name="f"),
+            "+ns/README.md": "# Ns\n",
+            "+ns/@C/C.m": "classdef C\nend\n",
+            "+ns/@C/guide.md": "# Guide\n",
+            "+ns/private/notes.md": "# Private notes\n",
+            "lib/README.md": "# Library\n",
+            "lib/g.m": FUNCTION.format(name="g"),
+        },
+    )
+    settings = IndexSettings(str(tmp_path), sidecar_suffixes=(".md",))
+    options = ApidocOptions("out", page_size=3)
+    pages = {p.docname: p for p in build_pages(build_index(settings), options)}
+    assert sorted(pages) == ["global", "index", "ns", "ns-2"]
+    sidecars = {
+        name: [s["ref"] for s in pages[name].context["sidecars"]]
+        for name in ("global", "ns", "ns-2")
+    }
+    # Sidecar docs count as entries, after the files, sorted by name.
+    assert sidecars == {
+        "global": ["lib/README.md"],
+        "ns": ["+ns/@C/guide.md"],
+        "ns-2": ["+ns/private/notes.md", "+ns/README.md"],
+    }
+    assert pages["ns-2"].context["sections"] == []
+
+
+def test_namespace_docnames_avoid_collisions(tmp_path):
+    options = ApidocOptions("out")
+    bases = _generate._namespace_docnames(
+        [None, "Ab", "ab", "index", "x.m"], options, {"x.m"}
+    )
+    assert bases == {
+        None: "global",
+        "Ab": "~41b",
+        "ab": "ab",
+        "index": "~69ndex",
+        "x.m": "~78.m",
+    }
+    write(
+        tmp_path,
+        {
+            "+index/h.m": FUNCTION.format(name="h"),
+            "+x/+m/k.m": FUNCTION.format(name="k"),
+            "x.m": FUNCTION.format(name="x"),
+        },
+    )
+    pages = namespace_pages(tmp_path)
+    assert pages["index"].context["pages"] == ["global", "~69ndex", "x.m"]
+    with_files = namespace_pages(tmp_path, separate=True)
+    # The page of the file x.m takes the name; the namespace x.m is escaped.
+    assert with_files["index"].context["pages"] == ["global", "~69ndex", "~78.m"]
+    assert with_files["x.m"].template == "object.rst.jinja"
+
+
+def test_namespace_grouping_of_an_empty_root(tmp_path, caplog_sphinx):
+    (page,) = pages_of(tmp_path, group="namespace")
+    assert (page.docname, page.context["pages"]) == ("index", [])
+    assert any("no documentable files" in m for _, m in caplog_sphinx)
+
+
 @pytest.fixture
 def caplog_sphinx():
     """``(subtype, message)`` of the warnings on the ``sphinx`` loggers; Sphinx
@@ -417,7 +606,12 @@ def caplog_sphinx():
 
 @pytest.mark.parametrize(
     ("name", "conf"),
-    [("default", ""), ("separate", "matlab_apidoc_separate = True\n")],
+    [
+        ("default", ""),
+        ("separate", "matlab_apidoc_separate = True\n"),
+        ("folder", FOLDER),
+        ("folder-separate", f"{FOLDER}matlab_apidoc_separate = True\n"),
+    ],
 )
 def test_golden_tree(tmp_path, name, conf):
     out = tmp_path / "out"
@@ -449,7 +643,7 @@ def test_marked_pages_are_rewritten_unmarked_kept_without_force(
     tmp_path, caplog_sphinx
 ):
     run(ROOT, tmp_path)
-    golden = (GOLDEN / "default" / "alpha" / "index.rst").read_bytes()
+    golden = (GOLDEN / "folder" / "alpha" / "index.rst").read_bytes()
     page = tmp_path / "alpha" / "index.rst"
     page.write_text(f"{MARKER}\n\nStale\n=====\n")
     rewritten = run(ROOT, tmp_path)
@@ -522,7 +716,7 @@ def test_case_only_renames_reach_the_output(tmp_path):
     (out / "alpha").rename(out / "ALPHA")
     (out / "ALPHA" / "nm_shared.m.rst").rename(out / "ALPHA" / "NM_shared.m.rst")
     result = run(ROOT, out, ("separate", True), ("force", True), ("remove_old", True))
-    assert tree(out) == tree(GOLDEN / "separate")
+    assert tree(out) == tree(GOLDEN / "folder-separate")
     if _case_insensitive(tmp_path):
         assert result.removed == []
     else:
@@ -558,14 +752,14 @@ def test_case_variant_without_the_marker_is_kept(tmp_path, caplog_sphinx):
     forced = run(ROOT, out, ("force", True))
     assert (forced.renamed, forced.updated) == (["beta/index.rst"], ["beta/index.rst"])
     assert os.listdir(out / "beta") == ["index.rst"]
-    golden = GOLDEN / "default" / "beta" / "index.rst"
+    golden = GOLDEN / "folder" / "beta" / "index.rst"
     assert (out / "beta" / "index.rst").read_bytes() == golden.read_bytes()
 
 
 def test_remove_old_after_files_are_excluded(tmp_path):
     out, docs = tmp_path / "out", tmp_path / "docs"
-    assert main(["-q", "-c", conf_dir(docs, out)]) == 0
-    conf_dir(docs, out, 'matlab_src_exclusion_patterns = ["alpha"]\n')
+    assert main(["-q", "-c", conf_dir(docs, out, FOLDER)]) == 0
+    conf_dir(docs, out, f'{FOLDER}matlab_src_exclusion_patterns = ["alpha"]\n')
     assert main(["-q", "-c", str(docs)]) == 0
     assert not (out / "alpha").exists()
     assert (out / "beta" / "index.rst").exists()
@@ -576,7 +770,8 @@ def test_remove_old_after_files_are_excluded(tmp_path):
 def test_no_remove_old_keeps_stale_pages(tmp_path):
     run(ROOT, tmp_path)
     source_index = build_index(IndexSettings(str(ROOT), exclude=("alpha",)))
-    result = generate(source_index, ApidocOptions(str(tmp_path), remove_old=False))
+    options = ApidocOptions(str(tmp_path), remove_old=False, group="folder")
+    result = generate(source_index, options)
     assert result.removed == []
     assert (tmp_path / "alpha" / "index.rst").exists()
 
@@ -595,7 +790,7 @@ def test_templatedir_replaces_a_template(tmp_path):
     )
     out = tmp_path / "out"
     options = ApidocOptions(
-        str(out), separate=True, maxdepth=2, templatedir=str(templates)
+        str(out), separate=True, maxdepth=2, templatedir=str(templates), group="folder"
     )
     generate(build_index(IndexSettings(str(ROOT))), options)
     assert (out / "+nmpkg" / "index.rst").read_text() == (
@@ -609,7 +804,7 @@ def test_templatedir_replaces_a_template(tmp_path):
     )
     # object.rst.jinja falls back to the default.
     assert (out / "+nmpkg" / "nm_func.m.rst").read_bytes() == (
-        GOLDEN / "separate" / "+nmpkg" / "nm_func.m.rst"
+        GOLDEN / "folder-separate" / "+nmpkg" / "nm_func.m.rst"
     ).read_bytes()
 
 
@@ -687,7 +882,7 @@ def test_python_m_runs_main(capsys, monkeypatch):
 
 
 def test_output_and_warnings(tmp_path, capsys):
-    docs = conf_dir(tmp_path / "docs", tmp_path / "out")
+    docs = conf_dir(tmp_path / "docs", tmp_path / "out", FOLDER)
     assert main(["-c", docs]) == 0
     captured = capsys.readouterr()
     assert captured.out.count("Creating file ") == len(FOLDER_PAGES)
@@ -705,7 +900,9 @@ def test_output_and_warnings(tmp_path, capsys):
 
 
 def test_dry_run_lists_changes(tmp_path, capsys):
-    assert main(["-n", "-c", conf_dir(tmp_path / "docs", tmp_path / "out")]) == 0
+    assert (
+        main(["-n", "-c", conf_dir(tmp_path / "docs", tmp_path / "out", FOLDER)]) == 0
+    )
     out = capsys.readouterr().out
     assert out.count("Would create file ") == len(FOLDER_PAGES)
     assert out.splitlines()[-1].startswith(f"Dry run: {len(FOLDER_PAGES)} pages")
@@ -716,7 +913,7 @@ def test_include_and_exclude(tmp_path):
     conf = 'matlab_src_include_patterns = ["+nmpkg/**"]\n'
     conf += 'matlab_src_exclusion_patterns = ["**/private"]\n'
     assert main(["-q", "-c", conf_dir(tmp_path / "docs", out, conf)]) == 0
-    assert sorted(tree(out)) == ["+nmpkg/index.rst", "index.rst"]
+    assert sorted(tree(out)) == ["index.rst", "nmpkg.rst"]
 
 
 def test_matlab_version_changes_callability(tmp_path, capsys):
@@ -724,8 +921,8 @@ def test_matlab_version_changes_callability(tmp_path, capsys):
     docs = conf_dir(tmp_path / "docs", out, 'matlab_version = "R2025b"\n')
     assert main(["-q", "-c", docs]) == 0
     assert "nm_legacy" not in capsys.readouterr().err
-    root = (out / "index.rst").read_text()
-    assert "\nnm\\_legacy\n" in root
+    page = (out / "global.rst").read_text()
+    assert "\nnm\\_legacy\n" in page
 
 
 def test_logging_is_restored(tmp_path):
@@ -773,11 +970,11 @@ def test_check_exits_1_when_pages_would_change(tmp_path, capsys):
     assert "are out of date" in capsys.readouterr().err
     assert main(["-q", "-c", docs]) == 0
     assert main(["-q", "--check", "-c", docs]) == 0
-    (out / "alpha" / "index.rst").write_text(f"{MARKER}\n\nStale\n=====\n")
+    (out / "nmpkg.rst").write_text(f"{MARKER}\n\nStale\n=====\n")
     assert main(["--check", "-c", docs]) == 1
     assert "Would update file" in capsys.readouterr().out
     # A hand-written page (no marker) is not a change.
-    (out / "alpha" / "index.rst").write_text("Edited\n======\n")
+    (out / "nmpkg.rst").write_text("Edited\n======\n")
     assert main(["-q", "--check", "-c", docs]) == 0
 
 
@@ -802,7 +999,7 @@ def test_cli_reports_renames(tmp_path, capsys):
     if not _case_insensitive(tmp_path):
         pytest.skip("needs a case-insensitive file system")
     out = tmp_path / "out"
-    docs = conf_dir(tmp_path / "docs", out)
+    docs = conf_dir(tmp_path / "docs", out, FOLDER)
     assert main(["-q", "-c", docs]) == 0
     (out / "alpha").rename(out / "ALPHA")
     assert main(["-c", docs]) == 0
@@ -870,7 +1067,7 @@ def test_conf_paths_are_relative_to_the_conf_dir(tmp_path, monkeypatch):
     templates.mkdir()
     (templates / "folder.rst.jinja").write_text("{{ ref }}\n")
     conf = 'matlab_apidoc_output_dir = "out/api"\n'
-    conf += 'matlab_apidoc_templatedir = "../templates"\n'
+    conf += f'matlab_apidoc_templatedir = "../templates"\n{FOLDER}'
     docs = conf_project(tmp_path, conf)
     monkeypatch.chdir(tmp_path / "src")
     assert main(["-q", "-c", "../docs"]) == 0
@@ -884,6 +1081,7 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
     settings, options = _cli._settings(args)
     assert settings.namelengthmax == 63
     assert (options.maxdepth, options.tocfile, options.suffix) == (4, "index", "rst")
+    assert (options.group, options.page_size) == ("namespace", 100)
     assert options.remove_old
 
 
@@ -935,6 +1133,18 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
         ('matlab_version = "R2020a"', "error: matlab_version R2020a"),
         ('matlab_version = "2026a"', "error: matlab_version must"),
         ("matlab_namelengthmax = 100", "matlab_namelengthmax"),
+        (
+            'matlab_apidoc_group = "package"',
+            "matlab_apidoc_group must be 'namespace' or 'folder', not 'package'",
+        ),
+        (
+            "matlab_apidoc_page_size = 0",
+            "matlab_apidoc_page_size must be 1 or more, not 0",
+        ),
+        (
+            "matlab_apidoc_page_size = 1.5",
+            "matlab_apidoc_page_size must be int, not 1.5",
+        ),
         ('matlab_apidoc_templatedir = "missing"', "matlab_apidoc_templatedir '"),
         (
             "matlab_apidoc_seperate = True",
@@ -1111,11 +1321,13 @@ def expected_objects(root):
     return out
 
 
+@pytest.mark.parametrize("group", ["namespace", "folder"])
 @pytest.mark.parametrize("separate", [False, True])
-def test_build_of_the_generated_pages(make_app, project, separate):
+def test_build_of_the_generated_pages(make_app, project, separate, group):
     with open(project / "conf.py", "a", encoding="utf-8") as conf:
         conf.write('matlab_apidoc_output_dir = "."\n')
         conf.write(f"matlab_apidoc_separate = {separate}\n")
+        conf.write(f"matlab_apidoc_group = {group!r}\n")
     assert main(["-q", "-c", str(project)]) == 0
     app = make_app(
         srcdir=project, confoverrides={"suppress_warnings": ["mat.not_callable"]}
@@ -1126,6 +1338,10 @@ def test_build_of_the_generated_pages(make_app, project, separate):
     assert len(names) == len(set(names))
     expected = expected_objects(project)
     assert len(expected) == 25
+    if group == "namespace":
+        # Namespace grouping leaves private/ files out.
+        expected = [ref for ref in expected if "/private/" not in f"/{ref}"]
+        assert len(expected) == 22
     assert set(expected) <= set(names)
     assert "@Bad/bad_fn.m" in names
     assert not any(name.startswith("@Bad/Other.m.") for name in names)
@@ -1168,8 +1384,32 @@ def test_example_builds(make_app, tmp_path):
     app.build(force_all=True)
     assert app.warning.getvalue() == ""
     names = _inventory(app)
-    for ref in ("+demo/@Shape/Shape.m.area", "utils/private/check_range.m"):
-        assert ref in names
+    assert "+demo/@Shape/Shape.m.area" in names
+    # Namespace grouping leaves private/ out.
+    assert "utils/private/check_range.m" not in names
+
+
+def test_example_in_folder_grouping_builds(make_app, tmp_path):
+    # Folder grouping, default templates: sidecar docs get pages of their
+    # own, and +demo/README.md introduces the folder's page.
+    pytest.importorskip("myst_parser")
+    dst = tmp_path / "example"
+    shutil.copytree(EXAMPLE, dst, ignore=shutil.ignore_patterns("_build", "api"))
+    conf = dst / "docs" / "conf.py"
+    text = conf.read_text(encoding="utf-8").replace(
+        'matlab_apidoc_templatedir = "../templates"\n', FOLDER
+    )
+    conf.write_text(text, encoding="utf-8")
+    assert main(["-q", "-c", str(dst / "docs")]) == 0
+    pages = sorted(tree(dst / "docs" / "api"))
+    assert "+demo/getting-started-md.rst" in pages
+    assert "utils/private/index.rst" in pages
+    demo = (dst / "docs" / "api" / "+demo" / "index.rst").read_text(encoding="utf-8")
+    assert ".. mat:autosidecar:: +demo/README.md\n   :no-title:\n" in demo
+    app = make_app(srcdir=dst / "docs")
+    app.build(force_all=True)
+    assert app.warning.getvalue() == ""
+    assert "utils/private/check_range.m" in _inventory(app)
 
 
 def test_example_api_check_reports(make_app, tmp_path):

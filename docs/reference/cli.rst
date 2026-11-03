@@ -12,7 +12,9 @@ Synopsis
    python -m sphinxcontrib.matlab_apidoc [OPTIONS]
 
 Writes reST pages with ``mat:auto*`` directives for the MATLAB files below
-the project root: one page per folder, mirroring the folder tree.
+the project root: one page per namespace and one for the global namespace
+(:confval:`matlab_apidoc_group` ``"namespace"``, the default), or one page
+per folder, mirroring the folder tree (``"folder"``).
 :doc:`../user-guide/apidoc` is the tutorial.
 
 Settings
@@ -27,6 +29,7 @@ flag overrides one:
   :confval:`matlab_src_sidecar_suffixes`, :confval:`matlab_version`,
   :confval:`matlab_namelengthmax` and :confval:`matlab_src_encoding`;
 * the command's own: :confval:`matlab_apidoc_output_dir` (required),
+  :confval:`matlab_apidoc_group`, :confval:`matlab_apidoc_page_size`,
   :confval:`matlab_apidoc_separate`, :confval:`matlab_apidoc_maxdepth`,
   :confval:`matlab_apidoc_tocfile`, :confval:`matlab_apidoc_suffix`,
   :confval:`matlab_apidoc_templatedir` and
@@ -109,9 +112,12 @@ In the folder :confval:`matlab_apidoc_output_dir` (``OUTPUT_DIR``),
 created if needed, with the suffix :confval:`matlab_apidoc_suffix`
 (``SUFFIX``, default ``rst``):
 
-* The folder ``a/+p/`` gets ``OUTPUT_DIR/a/+p/index.SUFFIX``; with
+* In namespace grouping, the namespace ``a.b`` gets
+  ``OUTPUT_DIR/a.b.SUFFIX`` (further pages ``a.b-2.SUFFIX``, ...) and the
+  global namespace ``OUTPUT_DIR/global.SUFFIX``. In folder grouping, the
+  folder ``a/+p/`` gets ``OUTPUT_DIR/a/+p/index.SUFFIX``. With
   :confval:`matlab_apidoc_separate`, the file ``a/+p/Cls.m`` also gets
-  ``OUTPUT_DIR/a/+p/Cls.m.SUFFIX``. The root folder's page is
+  ``OUTPUT_DIR/a/+p/Cls.m.SUFFIX``. The root page is
   ``OUTPUT_DIR/TOCFILE.SUFFIX`` (:confval:`matlab_apidoc_tocfile`,
   default ``index``).
 * Each path segment keeps ``A-Z a-z 0-9 _ . + @ -``; every other character

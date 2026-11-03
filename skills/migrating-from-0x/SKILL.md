@@ -185,9 +185,13 @@ Replace a page generator or folder-mirroring pages:
 - remove the old generator.
 
 The pages show public members. To keep private members, as many 0.x pages
-did, set `autodoc_default_options = {"private-members": True}`. The pages
-are one per folder; a hand-made grouping (one page per namespace across
-folders) is not reproduced.
+did, set `autodoc_default_options = {"private-members": True}`. By default
+there is one page per namespace (all its folders) plus Global for the files
+outside any namespace, listed flat on the root page, at most
+`matlab_apidoc_page_size` entries (100) per page, without `private/` files
+and with the sidecar docs on their namespace's page: close to a 0.x
+generator that wrote one page per namespace. `matlab_apidoc_group =
+"folder"` gives one page per folder instead.
 
 ## 9. First build and warnings
 
@@ -260,8 +264,9 @@ Expected:
   old generator).
 - Files re-included or newly excluded by the exclusion review.
 - apidoc pages: no private members (step 8); class-folder method files are
-  methods, not also functions; `private/` folders get pages; one page per
-  folder.
+  methods, not also functions (a 0.x page per class folder becomes the
+  class on its namespace page); `private/` files are left out (with
+  `"folder"` grouping they get pages).
 - Anchors are `mat-<path reference>`: deep links and intersphinx users of
   the old names break once.
 

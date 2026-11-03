@@ -2,13 +2,19 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Page model, rendering and writing of ``sphinx-matlab-apidoc`` (plan.md
-Section 2.8). The pages come from a ``SourceIndex`` alone: no file is
-parsed.
+Sections 2.8, 2.12). The pages come from a ``SourceIndex`` alone: no file
+is parsed.
 
-- One page per folder with a documentable file at or below it, mirroring the
-  folder tree. ``@`` folders and everything below them go on the page of the
-  nearest folder above that is not an ``@`` folder; ``private/`` gets its
-  own page.
+- Namespace grouping (the default): one page per namespace, merging all
+  its ``+`` folders, and ``Global`` for the files outside any namespace;
+  sections Functions, Classes, Scripts, Apps, Sidecar docs; at most
+  ``page_size`` entries per page (more pages: ``<name>-2``, ...); the root
+  page lists them flat, Global first. ``private/`` files are left out;
+  sidecar docs are rendered on the page.
+- Folder grouping: one page per folder with a documentable file at or
+  below it, mirroring the folder tree. ``@`` folders and everything below
+  them go on the page of the nearest folder above that is not an ``@``
+  folder; ``private/`` gets its own page.
 - The function files of a class folder ``@X/`` whose ``X.m`` is a classdef
   are methods of that class and are not listed; every other ``@`` folder (an
   old-style class, a classdef named differently, no class file) is not a
@@ -18,7 +24,8 @@ parsed.
   changed, and start with ``MARKER``. A file with the marker belongs to the
   generator: it is rewritten and, when no longer a page, removed. Without
   ``force``, a file without it is kept.
-- Sidecar docs (plan.md Section 2.11) get a page of their own each
+- Sidecar docs (plan.md Section 2.11), in folder grouping, get a page of
+  their own each
   (``<name>-<suffix>``, e.g. ``guide-md``), listed by their folder's page
   after the API sections. A folder's README (any letter case) is that
   page's introduction instead; in an ``@`` folder it is an ordinary sidecar
@@ -39,7 +46,7 @@ from ..mat_classify import UNKNOWN, is_hidden
 from ..mat_handlers import handler_by_extension
 from ..mat_naming import ROOT_REFERENCE, folder_of
 from ..mat_types import class_file_reference
-from ._names import WINDOWS_MAX_PATH, docnames, too_long
+from ._names import WINDOWS_MAX_PATH, docnames, escape_segment, escape_upper, too_long
 
 logger = getLogger("matlab-apidoc")
 
@@ -51,6 +58,15 @@ TEMPLATE_DIR = Path(__file__).parent / "templates"
 FOLDER_TEMPLATE = "folder.rst.jinja"
 OBJECT_TEMPLATE = "object.rst.jinja"
 SIDECAR_TEMPLATE = "sidecar.rst.jinja"
+NAMESPACE_TEMPLATE = "namespace.rst.jinja"
+ROOT_TEMPLATE = "root.rst.jinja"
+#: values of ``matlab_apidoc_group``
+GROUPS = ("namespace", "folder")
+#: docname and title of the global namespace's page; ``global`` is a keyword,
+#: so no namespace has that name
+GLOBAL_DOCNAME = "global"
+GLOBAL_TITLE = "Global"
+ROOT_TITLE = "API reference"
 #: section titles in page order, by index type
 SECTIONS = {
     "class": "Classes",
@@ -58,6 +74,8 @@ SECTIONS = {
     "script": "Scripts",
     "application": "Apps",
 }
+#: section order of namespace pages
+NAMESPACE_ORDER = ("function", "class", "script", "application")
 #: directive options by index type
 OPTIONS = {"class": {"members": "", "undoc-members": "", "show-inheritance": ""}}
 
@@ -78,6 +96,8 @@ class ApidocOptions:
     suffix: str = "rst"
     templatedir: str | None = None
     remove_old: bool = True
+    group: str = "namespace"
+    page_size: int = 100
 
 
 @dataclass
@@ -189,11 +209,11 @@ def _order(entry):
     return entry["title"].casefold(), entry["ref"]
 
 
-def _sections(entries):
+def _sections(entries, order=tuple(SECTIONS)):
     """``(title, entries)`` pairs in page order; entries sorted."""
     entries = sorted(entries, key=_order)
     kinds = {e["kind"] for e in entries}
-    order = [*SECTIONS, *sorted(kinds - set(SECTIONS))]
+    order = [*order, *sorted(kinds - set(order))]
     return [
         (SECTIONS.get(kind, kind.title()), [e for e in entries if e["kind"] == kind])
         for kind in order
@@ -257,9 +277,16 @@ def _sidecars(source_index):
 
 
 def build_pages(source_index, options):
-    """Return the pages of ``source_index`` (folder pages in tree order, then
-    object pages with ``separate``), sorted by docname.
+    """Return the pages of ``source_index``, sorted by docname: namespace
+    pages and the root page, or folder pages in tree order; then object pages
+    with ``separate``.
     """
+    if options.group == "folder":
+        return _folder_pages(source_index, options)
+    return _namespace_pages(source_index, options)
+
+
+def _folder_pages(source_index, options):
     methods = class_folder_methods(source_index)
     listed = {}
     for path, record in source_index.index.items():
@@ -343,6 +370,148 @@ def build_pages(source_index, options):
                 },
             )
         )
+    return sorted(pages_out, key=lambda page: page.docname)
+
+
+def _group_of(source_index, folder):
+    """Return the namespace a page folder belongs to (its MATLAB name), or
+    None for the global namespace. A sidecar doc in ``private/`` goes with
+    the folder above it.
+    """
+    parts = _segments(folder)
+    while parts and parts[-1] == "private":
+        parts.pop()
+    return _namespace(source_index, _join(parts))
+
+
+def _untangle_titles(entries, namespace):
+    """Title by path the entries whose MATLAB name another entry of the same
+    page group has (path shadowing), with a warning.
+    """
+    by_title = {}
+    for entry in entries:
+        by_title.setdefault(entry["title"], []).append(entry)
+    for title, same in sorted(by_title.items()):
+        if len(same) < 2:
+            continue
+        refs = sorted(e["ref"] for e in same)
+        where = f"namespace {namespace}" if namespace else GLOBAL_TITLE
+        _warn(
+            f"{title} is defined by several files in {where}: {', '.join(refs)}; "
+            "they are listed by path."
+        )
+        for entry in same:
+            entry["title"] = entry["display"] = entry["ref"]
+
+
+def _namespace_docnames(namespaces, options, taken):
+    """Docname base of each namespace (None: the global namespace); names
+    that differ only by case, or that equal the toc file or a name in
+    ``taken`` (lowercase), get escaped.
+    """
+    bases = {
+        ns: GLOBAL_DOCNAME if ns is None else escape_segment(ns) for ns in namespaces
+    }
+    lower = {}
+    for ns, base in bases.items():
+        lower.setdefault(base.lower(), []).append(ns)
+    for group in lower.values():
+        if len(group) > 1:
+            for ns in group:
+                bases[ns] = escape_upper(bases[ns])
+    reserved = {options.tocfile.lower(), *taken}
+    for ns, base in bases.items():
+        if base.lower() in reserved:
+            bases[ns] = f"~{ord(base[0]):02X}{base[1:]}"
+    return bases
+
+
+def _namespace_pages(source_index, options):
+    methods = class_folder_methods(source_index)
+    groups = {}
+    for path, record in source_index.index.items():
+        if record["reference"] in methods or record.get("private"):
+            continue
+        entry = _entry(path, record)
+        if entry is not None:
+            group = _group_of(source_index, page_folder(entry["ref"]))
+            groups.setdefault(group, ([], []))[0].append(entry)
+    for record in source_index.sidecars.values():
+        ref = record["reference"]
+        group = _group_of(source_index, page_folder(ref))
+        entry = {"ref": ref, "name": ref.rpartition("/")[2], "docname": None}
+        groups.setdefault(group, ([], []))[1].append(entry)
+    if not groups:
+        _warn("no documentable files were found.")
+
+    file_names = {}
+    if options.separate:
+        refs = [e["ref"] for entries, _ in groups.values() for e in entries]
+        file_names, _ = docnames(refs, options.suffix, options.tocfile)
+    taken = {name.lower() for name in file_names.values()}
+    bases = _namespace_docnames(groups, options, taken)
+    order = sorted(
+        groups, key=lambda ns: (ns is not None, (ns or "").casefold(), ns or "")
+    )
+
+    pages_out, toc = [], []
+    for ns in order:
+        entries, sidecars = groups[ns]
+        _untangle_titles(entries, ns)
+        flat = [
+            e for _, section in _sections(entries, NAMESPACE_ORDER) for e in section
+        ]
+        sidecars.sort(key=lambda e: (e["name"].casefold(), e["ref"]))
+        items = [*flat, *sidecars]
+        size = max(options.page_size, 1)
+        chunks = [items[i : i + size] for i in range(0, len(items), size)]
+        title = GLOBAL_TITLE if ns is None else f"namespace {ns}"
+        for number, chunk in enumerate(chunks, 1):
+            docname = bases[ns] if number == 1 else f"{bases[ns]}-{number}"
+            first = (number - 1) * size + 1
+            last = first + len(chunk) - 1
+            page_title = title if len(chunks) == 1 else f"{title} ({first}-{last})"
+            page_entries = [e for e in chunk if "directive" in e]
+            page_sidecars = [e for e in chunk if "directive" not in e]
+            sections = _sections(page_entries, NAMESPACE_ORDER)
+            if options.separate:
+                for entry in page_entries:
+                    own = file_names[entry["ref"]]
+                    entry["docname"] = own
+                    pages_out.append(Page(own, OBJECT_TEMPLATE, dict(entry)))
+            pages_out.append(
+                Page(
+                    docname,
+                    NAMESPACE_TEMPLATE,
+                    {
+                        "docname": docname,
+                        "title": page_title,
+                        "namespace": ns,
+                        "kind": "global" if ns is None else "namespace",
+                        "page": number,
+                        "pages": len(chunks),
+                        "first": first,
+                        "last": last,
+                        "sections": sections,
+                        "sidecars": page_sidecars,
+                        "separate": options.separate,
+                        "maxdepth": options.maxdepth,
+                    },
+                )
+            )
+            toc.append(docname)
+    pages_out.append(
+        Page(
+            options.tocfile,
+            ROOT_TEMPLATE,
+            {
+                "docname": options.tocfile,
+                "title": ROOT_TITLE,
+                "pages": toc,
+                "maxdepth": options.maxdepth,
+            },
+        )
+    )
     return sorted(pages_out, key=lambda page: page.docname)
 
 

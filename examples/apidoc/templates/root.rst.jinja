@@ -1,0 +1,12 @@
+{#- Edited copy of sphinx-matlab-apidoc's root.rst.jinja for the example.
+    Change: the root page has a project title. -#}
+Demo API reference
+==================
+{%- if pages %}
+
+.. toctree::
+   :maxdepth: {{ maxdepth }}
+{% for docname in pages %}
+   {{ docname }}
+{%- endfor %}
+{%- endif %}

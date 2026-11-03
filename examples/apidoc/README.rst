@@ -31,6 +31,8 @@ point for a script of your own (``python make_api.py [OUTPUT_DIR]``).
 
 The templates differ from the defaults in two places: the root page is
 titled "Demo API reference", and classes are documented without
-``:undoc-members:``. To customize your own output, copy these templates (or
+``:undoc-members:``. The pages are grouped by namespace (the default):
+``global``, ``demo`` and ``demo.geometry``; the ``private/`` helper is left
+out. To customize your own output, copy these templates (or
 the defaults in ``sphinxcontrib/matlab_apidoc/templates/``) into your
 project, edit them and set ``matlab_apidoc_templatedir``.

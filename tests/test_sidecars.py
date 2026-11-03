@@ -690,6 +690,7 @@ def test_source_folder_inside_the_root(make_app, tmp_path):
 
 
 def apidoc_pages(root, **options):
+    options.setdefault("group", "folder")
     settings = IndexSettings(str(root), sidecar_suffixes=(".md", ".rst"))
     return {
         p.docname: p
@@ -761,7 +762,8 @@ def test_apidoc_from_conf_builds(make_app, project, capsys):
     docs = project / "docs"
     shutil.rmtree(docs / "api")
     (docs / "conf.py").write_text(
-        CONF + 'matlab_apidoc_output_dir = "api"\n', encoding="utf-8"
+        CONF + 'matlab_apidoc_output_dir = "api"\nmatlab_apidoc_group = "folder"\n',
+        encoding="utf-8",
     )
     (docs / "index.rst").write_text(
         "Index\n=====\n\n.. toctree::\n\n   api/index\n", encoding="utf-8"
@@ -775,17 +777,33 @@ def test_apidoc_from_conf_builds(make_app, project, capsys):
     )
     folder = (api / "index.rst").read_text(encoding="utf-8")
     assert ".. mat:autosidecar:: +demo/README.md\n   :no-title:\n" in folder
-    assert (
-        folder.index("Functions\n---")
-        < folder.index("Sidecar docs\n---")
-        < folder.index("Folders\n---")
-    )
+    assert folder.index("Functions\n---") < folder.index("Sidecar docs\n---")
+    assert "Folders\n---" not in folder
     assert main(["-q", "--check", "-c", str(docs)]) == 0
 
     app = build(make_app, docs)
     found = warnings(app)
     assert len(found) == 3, found  # plain.md, missing.md, missing.png
     assert app.env.titles["api/+demo/guide-md"].astext() == "Getting started"
+
+
+def test_apidoc_namespace_pages_render_sidecars(make_app, project):
+    docs = project / "docs"
+    shutil.rmtree(docs / "api")
+    (docs / "conf.py").write_text(
+        CONF + 'matlab_apidoc_output_dir = "api"\n', encoding="utf-8"
+    )
+    (docs / "index.rst").write_text(
+        "Index\n=====\n\n.. toctree::\n\n   api/index\n", encoding="utf-8"
+    )
+    assert main(["-q", "-c", str(docs)]) == 0
+    page = (docs / "api" / "demo.rst").read_text(encoding="utf-8")
+    assert ".. mat:autosidecar:: +demo/guide.md\n" in page
+    assert ".. mat:autosidecar:: +demo/README.md\n" in page
+    assert page.index("Functions\n---") < page.index("Sidecar docs\n---")
+    app = build(make_app, docs)
+    found = warnings(app)
+    assert len(found) == 3, found  # plain.md, missing.md, missing.png
 
 
 def test_apidoc_layout_error(project, capsys):

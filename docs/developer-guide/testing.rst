@@ -49,7 +49,8 @@ Layout
    MATLAB files for parser tests.
 ``tests/apidoc_golden/``
    The expected output of ``sphinx-matlab-apidoc`` for the
-   ``test_apidoc_basics`` root (default and ``matlab_apidoc_separate``).
+   ``test_apidoc_basics`` root: namespace grouping (``default``,
+   ``separate``) and folder grouping (``folder``, ``folder-separate``).
 ``examples/apidoc/``
    The worked example: its generated pages and api-check reports are
    compared with fresh output, and the project is built with ``-W``.

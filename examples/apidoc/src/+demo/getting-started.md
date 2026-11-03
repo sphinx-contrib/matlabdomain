@@ -1,8 +1,8 @@
 # Getting started with shapes
 
 This tutorial sits next to the code it describes, in `src/+demo/`. It is a
-Markdown page: `sphinx-matlab-apidoc` gives it a page of its own, and the
-namespace's page lists it under "Sidecar docs".
+Markdown page: `sphinx-matlab-apidoc` renders it on the namespace's page,
+under "Sidecar docs".
 
 ![A square and a triangle](img/shapes.svg)
 

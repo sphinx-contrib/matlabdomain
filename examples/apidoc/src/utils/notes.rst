@@ -2,7 +2,7 @@ Notes on the utilities
 ======================
 
 A reST page next to the code. :mat:func:`clamp` limits values; it calls a
-private helper, :mat:func:`utils/private/check_range.m`:
+private helper, ``check_range``:
 
 .. literalinclude:: clamp.m
    :language: matlab
