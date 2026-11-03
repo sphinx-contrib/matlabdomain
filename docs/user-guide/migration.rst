@@ -61,12 +61,6 @@ If ``matlab_src_dir`` pointed at a folder with several projects,
 patterns, so copy them into it to keep them. Patterns use ``/`` on every
 system; a ``\`` is a ``ConfigError``.
 
-A build that copied or linked the code into a separate source tree (to
-leave files out, or to put the code below the Sphinx source folder) no
-longer needs to: the root may be outside the source folder
-(``matlab_src_code_project_root = ".."``), the patterns leave files out,
-and incremental builds see changes in place. Notes next to the code
-(``README.md``) become :doc:`sidecar docs <sidecars>`.
 
 New settings worth a look: :confval:`matlab_version` (if the code targets a
 release before R2026a), :confval:`matlab_src_encoding` (it used to be
