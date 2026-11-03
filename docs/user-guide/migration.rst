@@ -8,6 +8,11 @@ instead of Python-style dotted module names, the project root replaces
 projects fail early with errors that name the replacement, so the changes
 below can be made one error at a time. :doc:`../CHANGES` lists every change.
 
+The repository's agent skill ``skills/migrating-from-0x/SKILL.md`` walks
+through a migration step by step, with scripts that rewrite dotted names in
+pages, list files with comments above their declaration, and compare the
+objects of the 0.x and 1.0 builds.
+
 From 1.0.0 on, the project follows `semantic versioning
 <https://semver.org/>`_: breaking changes, including changes to link anchors
 and to the ``sphinx-matlab-apidoc`` template variables, come only in a new
@@ -22,10 +27,15 @@ A pin such as ``sphinxcontrib-matlabdomain==0.*`` in a requirements file
 or ``pyproject.toml`` keeps 0.x; change it to ``>=1,<2``. A virtual
 environment that is reused between builds (on a CI agent, or one that a
 script creates only when it is missing) keeps the old version and the old
-Sphinx until it is recreated or upgraded. Check what a build imports with
-``python -c "import sphinxcontrib.matlab as m; print(m.__file__)"``: a
-``conf.py`` that puts a checkout of the extension on ``sys.path`` imports
-that copy instead.
+Sphinx until it is recreated or upgraded. ``sphinx-matlab-apidoc
+--version`` works only with 1.0.
+
+Remove a ``sys.path`` entry in ``conf.py`` that points at a checkout of the
+extension (projects that started from the extension's own test docs have
+one): the old checkout's ``sphinxcontrib/__init__.py`` breaks the
+``sphinxcontrib`` namespace, and the build stops with "Could not import
+extension sphinxcontrib.applehelp (exception: No module named
+'pkg_resources')".
 
 ``conf.py``
 -----------
@@ -150,7 +160,8 @@ Links and anchors
 * The intersphinx inventory names objects by path reference. Projects that
   link to yours with intersphinx need the new names.
 * The module index is now the folder index (``mat-folderindex.html``,
-  ``:ref:`mat-folderindex```).
+  ``:ref:`mat-folderindex```). Replace ``:ref:`modindex``` too (as
+  ``sphinx-quickstart`` writes it): it names Python's module index.
 * "Bases:" and auto-links now always use ``:mat:`` roles, so they link
   without ``primary_domain = "mat"``.
 * Tools that read the build's output (its XML or doctrees, or the HTML ids)
@@ -199,7 +210,8 @@ and add ``-W`` to keep it clean. Typical ones after a migration:
   help of a MEX function) get ``mat.no_code``; suppress it if they are
   intended.
 * ``image.not_readable`` for an image in help text: relative paths in help
-  are relative to the page that documents the file, not to the file.
+  are relative to the documentation page (the ``.rst`` or ``.md`` file
+  with the directive), not to the code file.
 
 Comparing with the 0.x docs
 ---------------------------
