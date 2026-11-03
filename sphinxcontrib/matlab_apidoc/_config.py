@@ -25,6 +25,7 @@ APIDOC_CONFIG = {
     "matlab_apidoc_remove_old": (True, (bool,)),
     "matlab_apidoc_group": ("namespace", (str,)),
     "matlab_apidoc_page_size": (100, (int,)),
+    "matlab_apidoc_private": (None, (bool, _NONE)),
 }
 
 #: the build's values the CLI reads, with the defaults of ``setup()``

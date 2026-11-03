@@ -141,7 +141,8 @@ earlier" in the documentation.
   listed flat on the root page (Global first); sections Functions,
   Classes, Scripts, Apps and the sidecar docs; at most
   ``matlab_apidoc_page_size`` entries (default 100) per page; ``private/``
-  files are left out. ``matlab_apidoc_group = "folder"`` writes one page
+  files are left out (``matlab_apidoc_private = True`` lists them with the
+  folder above). ``matlab_apidoc_group = "folder"`` writes one page
   per folder, mirroring the folder tree. Its template context is a public
   interface: renaming or removing a key is a breaking change. See
   ``examples/apidoc``. ``sphinx-matlab-apidoc -c DIR`` (default: the

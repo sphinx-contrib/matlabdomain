@@ -234,6 +234,15 @@ relative to the folder of ``conf.py``.
    page; a longer namespace gets several pages. Less than 1 is a
    ``ConfigError``.
 
+.. confval:: matlab_apidoc_private
+   :type: ``bool`` or ``None``
+   :default: ``None``
+
+   List the files of ``private/`` folders. ``None``: namespace grouping
+   leaves them out, folder grouping lists them; ``True`` lists them in both
+   (in namespace grouping, with the folder above); ``False`` leaves them
+   out of both. Sidecar docs in ``private/`` are listed either way.
+
 .. confval:: matlab_apidoc_separate
    :type: ``bool``
    :default: ``False``

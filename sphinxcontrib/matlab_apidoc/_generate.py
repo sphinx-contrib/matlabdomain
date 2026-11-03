@@ -9,12 +9,14 @@ is parsed.
   its ``+`` folders, and ``Global`` for the files outside any namespace;
   sections Functions, Classes, Scripts, Apps, Sidecar docs; at most
   ``page_size`` entries per page (more pages: ``<name>-2``, ...); the root
-  page lists them flat, Global first. ``private/`` files are left out;
+  page lists them flat, Global first. ``private/`` files are left out
+  (``private=True`` lists them with the folder above);
   sidecar docs are rendered on the page.
 - Folder grouping: one page per folder with a documentable file at or
   below it, mirroring the folder tree. ``@`` folders and everything below
   them go on the page of the nearest folder above that is not an ``@``
-  folder; ``private/`` gets its own page.
+  folder; ``private/`` gets its own page (``private=False`` leaves its files
+  out).
 - The function files of a class folder ``@X/`` whose ``X.m`` is a classdef
   are methods of that class and are not listed; every other ``@`` folder (an
   old-style class, a classdef named differently, no class file) is not a
@@ -98,6 +100,8 @@ class ApidocOptions:
     remove_old: bool = True
     group: str = "namespace"
     page_size: int = 100
+    #: list ``private/`` files; None: in folder grouping only
+    private: bool | None = None
 
 
 @dataclass
@@ -288,9 +292,10 @@ def build_pages(source_index, options):
 
 def _folder_pages(source_index, options):
     methods = class_folder_methods(source_index)
+    private = options.private is not False
     listed = {}
     for path, record in source_index.index.items():
-        if record["reference"] in methods:
+        if record["reference"] in methods or (record.get("private") and not private):
             continue
         entry = _entry(path, record)
         if entry is not None:
@@ -428,9 +433,10 @@ def _namespace_docnames(namespaces, options, taken):
 
 def _namespace_pages(source_index, options):
     methods = class_folder_methods(source_index)
+    private = options.private is True
     groups = {}
     for path, record in source_index.index.items():
-        if record["reference"] in methods or record.get("private"):
+        if record["reference"] in methods or (record.get("private") and not private):
             continue
         entry = _entry(path, record)
         if entry is not None:

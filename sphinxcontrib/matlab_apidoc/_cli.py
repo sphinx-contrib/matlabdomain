@@ -214,6 +214,7 @@ def _settings(args):
         remove_old=apidoc_value(conf, "matlab_apidoc_remove_old"),
         group=group,
         page_size=page_size,
+        private=apidoc_value(conf, "matlab_apidoc_private"),
     )
     suppress = conf.suppress_warnings
     if isinstance(suppress, str) or not isinstance(suppress, (list, tuple, set)):

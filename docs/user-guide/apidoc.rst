@@ -120,7 +120,9 @@ With :confval:`matlab_apidoc_group` ``"namespace"`` (the default):
   ignoring case. Nested namespaces are listed like the others
   (``demo``, ``demo.geometry``), so the navigation stays one level deep.
 * Files in ``private/`` folders are left out (only the files of their
-  folder can call them). Sidecar docs are rendered on the page of their
+  folder can call them); with :confval:`matlab_apidoc_private` ``= True``
+  they are listed on the page of the folder above (its namespace, or
+  Global). Sidecar docs are rendered on the page of their
   namespace in the "Sidecar docs" section, each with its own title; one in
   ``private/`` goes with the folder above it.
 * When two files of one page have the same MATLAB name (two folders with a
@@ -136,7 +138,9 @@ With ``"folder"``:
   The page has ``mat:autofolder`` (without ``:members:``), a local table of
   contents, a toctree of the subfolders' pages (namespaces, then plain
   folders, then ``private/``; one level of the navigation per folder), and
-  sections in this order: Classes, Functions, Scripts, Apps.
+  sections in this order: Classes, Functions, Scripts, Apps. ``private/``
+  folders get pages like the others; :confval:`matlab_apidoc_private`
+  ``= False`` leaves their files out.
 * With :confval:`matlab_src_sidecar_suffixes`, each sidecar doc gets a
   page of its own, listed in a "Sidecar docs" section, and a folder's
   README introduces the folder's page (:doc:`sidecars`).
@@ -192,6 +196,9 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
      * - :confval:`matlab_apidoc_page_size`
        - ``100``
        - the most entries on one namespace page
+     * - :confval:`matlab_apidoc_private`
+       - ``None``
+       - list ``private/`` files (``None``: in folder grouping only)
      * - :confval:`matlab_apidoc_separate`
        - ``False``
        - one page per file
@@ -368,7 +375,7 @@ It takes three steps:
    the build does, and returns a ``SourceIndex``.
 3. ``sphinxcontrib.matlab_apidoc.generate(source_index, options)`` writes
    the pages. ``ApidocOptions`` has a field for each ``matlab_apidoc_*``
-   value (``output_dir``, ``group``, ``page_size``, ``separate``,
+   value (``output_dir``, ``group``, ``page_size``, ``private``, ``separate``,
    ``maxdepth``, ``tocfile``, ``suffix``, ``templatedir``, ``remove_old``;
    paths as given, not relative to ``conf.py``) and for the flags ``-f``
    and ``-n`` (``force``, ``dry_run``).

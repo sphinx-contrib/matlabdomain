@@ -423,6 +423,41 @@ def listed_refs(page):
     return [e["ref"] for _, entries in page.context["sections"] for e in entries]
 
 
+PRIVATE = {
+    "private/nm_priv.m",
+    "+nmpkg/private/pk_priv.m",
+    "@ApCls/private/ap_cls_helper.m",
+}
+
+
+@pytest.mark.parametrize(
+    ("group", "private", "listed"),
+    [
+        ("namespace", None, False),
+        ("namespace", False, False),
+        ("namespace", True, True),
+        ("folder", None, True),
+        ("folder", True, True),
+        ("folder", False, False),
+    ],
+)
+def test_private_files_setting(group, private, listed):
+    pages = {p.docname: p for p in pages_of(ROOT, group=group, private=private)}
+    refs = {
+        ref
+        for page in pages.values()
+        if "sections" in page.context
+        for ref in listed_refs(page)
+    }
+    assert (refs & PRIVATE == PRIVATE) if listed else not refs & PRIVATE
+    if group == "namespace" and listed:
+        # With the folder above: a namespace, or Global.
+        assert "+nmpkg/private/pk_priv.m" in listed_refs(pages["nmpkg"])
+        assert "private/nm_priv.m" in listed_refs(pages["global"])
+    if group == "folder":
+        assert ("private/index" in pages) is listed
+
+
 def test_namespace_pages_of_the_fixture(caplog_sphinx):
     pages = namespace_pages(ROOT)
     assert sorted(pages) == ["a", "a.b", "global", "index", "nmpkg"]
@@ -1109,6 +1144,7 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
     assert settings.namelengthmax == 63
     assert (options.maxdepth, options.tocfile, options.suffix) == (4, "index", "rst")
     assert (options.group, options.page_size) == ("namespace", 100)
+    assert options.private is None
     assert options.remove_old
 
 
@@ -1171,6 +1207,10 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
         (
             "matlab_apidoc_page_size = 1.5",
             "matlab_apidoc_page_size must be int, not 1.5",
+        ),
+        (
+            'matlab_apidoc_private = "yes"',
+            "matlab_apidoc_private must be bool or None, not 'yes'",
         ),
         ('matlab_apidoc_templatedir = "missing"', "matlab_apidoc_templatedir '"),
         (

@@ -97,7 +97,10 @@ Working with other tools
   A change that the generator turns into a page change triggers one more
   build. The ``--pre-build`` command is split like a POSIX shell line, so
   on Windows write paths in it with ``/`` (or run it from the activated
-  environment, as above).
+  environment, as above). ``--watch`` the folder of
+  :confval:`matlab_src_code_project_root` (``src`` above); that covers
+  sidecar docs too. The extension cannot configure sphinx-autobuild
+  itself, so these options go on its command line.
 * `sphinx-multiversion <https://github.com/sphinx-contrib/multiversion>`_:
   works, because a relative :confval:`matlab_src_code_project_root` is
   relative to the Sphinx source folder, which it moves.
