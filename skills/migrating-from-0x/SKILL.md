@@ -280,7 +280,7 @@ matlab_api_check_rules = {  # start with warnings; make rules "error" as help im
     "description": "warning", "method-description": "warning",
     "inputs": "warning", "outputs": "warning", "name-value": "warning",
     "sidecar-documented": "warning", "sidecar-links": "warning",
-}
+}  # property-description, example and method-example warn by default
 ```
 
 ```console
@@ -291,9 +291,9 @@ Reusing the HTML build's doctrees makes it fast. It checks every file below
 the root that the patterns select, documented or not, so it may report
 parse warnings (`mat.invalid_matlab`) that the HTML build did not. It exits
 1 when a finding has severity `"error"`, else 0; do not add `-W` while
-rules are warnings. Rules that the old script had and the builder lacks
-(an Example section, property descriptions) are gaps to report, not to
-emulate. A pull-request comment from the JSON report, limited to the files
+rules are warnings. An old script's Example-section and property-description
+checks map to the rules `example`, `method-example` and
+`property-description`. A pull-request comment from the JSON report, limited to the files
 a change touches (a large project has thousands of findings; a comment has
 a size limit):
 

@@ -4,9 +4,12 @@
     "rules": {
       "description": "error",
       "method-description": "error",
+      "property-description": "warning",
       "inputs": "error",
       "outputs": "error",
       "name-value": "error",
+      "example": "warning",
+      "method-example": "warning",
       "sidecar-documented": "error",
       "sidecar-links": "error"
     },
@@ -14,6 +17,7 @@
       "function": 4,
       "class": 2,
       "method": 3,
+      "property": 4,
       "script": 1,
       "application": 1,
       "sidecar": 3
@@ -33,6 +37,10 @@
         "error": 0,
         "warning": 0
       },
+      "property-description": {
+        "error": 0,
+        "warning": 0
+      },
       "inputs": {
         "error": 5,
         "warning": 0
@@ -45,6 +53,14 @@
         "error": 0,
         "warning": 0
       },
+      "example": {
+        "error": 0,
+        "warning": 6
+      },
+      "method-example": {
+        "error": 0,
+        "warning": 2
+      },
       "sidecar-documented": {
         "error": 0,
         "warning": 0
@@ -55,9 +71,27 @@
       }
     },
     "errors": 9,
-    "warnings": 0
+    "warnings": 8
   },
   "findings": [
+    {
+      "reference": "+demo/+geometry/Point.m",
+      "name": "demo.geometry.Point",
+      "kind": "class",
+      "rule": "example",
+      "severity": "warning",
+      "line": 1,
+      "message": "has no example section in its help (such as \"Example:\")"
+    },
+    {
+      "reference": "+demo/+geometry/distance.m",
+      "name": "demo.geometry.distance",
+      "kind": "function",
+      "rule": "example",
+      "severity": "warning",
+      "line": 1,
+      "message": "has no example section in its help (such as \"Example:\")"
+    },
     {
       "reference": "+demo/+geometry/distance.m",
       "name": "demo.geometry.distance",
@@ -77,6 +111,15 @@
       "message": "has no outputs section in its help (such as \"Outputs:\"), and these outputs have no arguments-block comment: d"
     },
     {
+      "reference": "+demo/@Shape/Shape.m",
+      "name": "demo.Shape",
+      "kind": "class",
+      "rule": "example",
+      "severity": "warning",
+      "line": 1,
+      "message": "has no example section in its help (such as \"Example:\")"
+    },
+    {
       "reference": "+demo/@Shape/Shape.m.Shape",
       "name": "demo.Shape.Shape",
       "kind": "method",
@@ -89,10 +132,28 @@
       "reference": "+demo/@Shape/area.m",
       "name": "demo.Shape.area",
       "kind": "method",
+      "rule": "method-example",
+      "severity": "warning",
+      "line": 1,
+      "message": "has no example section in its help (such as \"Example:\")"
+    },
+    {
+      "reference": "+demo/@Shape/area.m",
+      "name": "demo.Shape.area",
+      "kind": "method",
       "rule": "outputs",
       "severity": "error",
       "line": 1,
       "message": "has no outputs section in its help (such as \"Outputs:\"), and these outputs have no arguments-block comment: a"
+    },
+    {
+      "reference": "+demo/@Shape/scale.m",
+      "name": "demo.Shape.scale",
+      "kind": "method",
+      "rule": "method-example",
+      "severity": "warning",
+      "line": 1,
+      "message": "has no example section in its help (such as \"Example:\")"
     },
     {
       "reference": "+demo/@Shape/scale.m",
@@ -113,6 +174,24 @@
       "message": "has no outputs section in its help (such as \"Outputs:\"), and these outputs have no arguments-block comment: obj"
     },
     {
+      "reference": "run_demo.m",
+      "name": "run_demo",
+      "kind": "script",
+      "rule": "example",
+      "severity": "warning",
+      "line": 1,
+      "message": "has no example section in its help (such as \"Example:\")"
+    },
+    {
+      "reference": "utils/lerp.m",
+      "name": "lerp",
+      "kind": "function",
+      "rule": "example",
+      "severity": "warning",
+      "line": 1,
+      "message": "has no example section in its help (such as \"Example:\")"
+    },
+    {
       "reference": "utils/lerp.m",
       "name": "lerp",
       "kind": "function",
@@ -129,6 +208,15 @@
       "severity": "error",
       "line": 1,
       "message": "has no outputs section in its help (such as \"Outputs:\"), and these outputs have no arguments-block comment: y"
+    },
+    {
+      "reference": "utils/private/check_range.m",
+      "name": "check_range",
+      "kind": "function",
+      "rule": "example",
+      "severity": "warning",
+      "line": 1,
+      "message": "has no example section in its help (such as \"Example:\")"
     },
     {
       "reference": "utils/private/check_range.m",

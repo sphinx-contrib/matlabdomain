@@ -365,6 +365,7 @@ def test_PropTypeOld(dir_test_data):
             "size": None,
             "type": "char",
             "validators": None,
+            "line": 3,
         },  # 'type': ['char']
         "pos": {
             "docstring": None,
@@ -373,6 +374,7 @@ def test_PropTypeOld(dir_test_data):
             "size": (":", "1"),
             "type": "double",
             "validators": None,
+            "line": 4,
         },  # 'type': ['double', 'vector'],
         "rotm": {
             "docstring": None,
@@ -381,6 +383,7 @@ def test_PropTypeOld(dir_test_data):
             "size": (":", ":"),
             "type": "double",
             "validators": None,
+            "line": 5,
         },  # 'type': ['double', 'matrix'],
         "idx": {
             "docstring": None,
@@ -389,6 +392,7 @@ def test_PropTypeOld(dir_test_data):
             "size": ("1", "1"),
             "type": "uint8",
             "validators": None,
+            "line": 6,
         },  # 'type': ['uint8', 'scalar'],
     }
 
@@ -704,6 +708,7 @@ def test_ClassWithGetterSetter(dir_test_data):
             "size": None,
             "type": None,
             "validators": None,
+            "line": 4,
         }
     }
 
@@ -724,6 +729,7 @@ def test_ClassWithDoubleQuotedString(dir_test_data):
             "size": None,
             "type": None,
             "validators": None,
+            "line": 6,
         }
     }
 
@@ -1179,6 +1185,7 @@ def test_classes(mod):
             "size": None,
             "type": None,
             "validators": None,
+            "line": 8,
         }
     }
     assert cls.getter("__doc__") == "a handle class\n\n:param x: a variable"
@@ -1202,6 +1209,7 @@ def test_abstract_class(mod):
             "size": None,
             "type": None,
             "validators": None,
+            "line": 11,
         },
         "version": {
             "default": "'0.1.1-beta'",
@@ -1210,6 +1218,7 @@ def test_abstract_class(mod):
             "size": None,
             "type": None,
             "validators": None,
+            "line": 8,
         },
     }
     assert (
@@ -1290,6 +1299,7 @@ def test_folder_class(mod):
             "size": None,
             "type": None,
             "validators": None,
+            "line": 5,
         }
     }
 

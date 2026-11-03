@@ -180,9 +180,11 @@ Changing these reads no page again.
    :default: ``{}``
 
    Rule name to severity, ``"error"``, ``"warning"`` or ``"ignore"``,
-   merged over the defaults (every rule ``"error"``). Rules:
-   ``description``, ``method-description``, ``inputs``, ``outputs``,
-   ``name-value``, ``sidecar-documented``, ``sidecar-links``. A value that is
+   merged over the defaults (``"warning"`` for ``property-description``,
+   ``example`` and ``method-example``, ``"error"`` for the others). Rules:
+   ``description``, ``method-description``, ``property-description``,
+   ``inputs``, ``outputs``, ``name-value``, ``example``,
+   ``method-example``, ``sidecar-documented``, ``sidecar-links``. A value that is
    not a dictionary, an unknown rule or an unknown severity is a
    ``ConfigError``.
 

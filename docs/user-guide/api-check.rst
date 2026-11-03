@@ -2,10 +2,11 @@ Checking help text: ``matlab-api-check``
 ========================================
 
 The ``matlab-api-check`` builder checks the help text of a MATLAB project:
-that every function, class and public method has a description, and that
-the help describes its inputs, outputs and name-value arguments. It writes a
-report, logs each finding, and fails the build when it finds a problem, so it
-can guard help text in CI.
+that every function, class and public method has a description, that the
+help describes its inputs, outputs and name-value arguments, and that it
+has an example; and that every public property has a description. It
+writes a report, logs each finding, and fails the build when it finds a
+problem, so it can guard help text in CI.
 
 Running it
 ----------
@@ -30,8 +31,9 @@ with the file paths shortened):
 .. literalinclude:: ../../examples/apidoc/api-check.txt
    :language: text
 
-The build exits with status 1, because the findings are errors.
-``clamp`` passes: its help has ``Inputs:`` and ``Outputs:`` sections.
+The build exits with status 1, because some findings are errors.
+``clamp`` passes: its help has ``Inputs:``, ``Outputs:`` and ``Example::``
+sections.
 
 .. literalinclude:: ../../examples/apidoc/src/utils/clamp.m
    :language: matlab
@@ -51,7 +53,10 @@ Every indexed object below the project root, minus
 * public methods: methods without ``Access = private``, ``protected`` or an
   access list, and not ``Hidden``, including static methods and
   constructors. ``get.``/``set.`` methods, converter methods with dotted
-  names and abstract methods are not checked.
+  names and abstract methods are not checked;
+* public properties of classes: without ``Access`` (or, without it,
+  ``GetAccess``) ``private``, ``protected`` or an access list, and not
+  ``Hidden``; constant and dependent properties included.
 
 Files below ``private/`` and files MATLAB cannot call are checked.
 ``Contents.m`` and the other special files, files that cannot be read and
@@ -70,32 +75,53 @@ The rules
    :header-rows: 1
 
    * - Rule
+     - Default
      - Applies to
      - Passes when
    * - ``description``
+     - error
      - functions, classes, scripts, apps
      - the first help line (MATLAB's H1 line) is not blank
    * - ``method-description``
+     - error
      - methods
      - the same
+   * - ``property-description``
+     - warning
+     - properties
+     - the property has a comment: above it, after it on its line, or on
+       the lines below it (the help that the documentation shows)
    * - ``inputs``
+     - error
      - functions and methods with inputs
      - the help has an inputs section, or every input has a comment in an
        ``arguments`` block
    * - ``outputs``
+     - error
      - functions and methods with outputs
      - the help has an outputs section, or every output has a comment in an
        ``arguments (Output)`` block
    * - ``name-value``
+     - error
      - functions and methods with name-value arguments
      - the help has a name-value section, or every name-value argument has
        a comment in an ``arguments`` block
+   * - ``example``
+     - warning
+     - functions, classes, scripts
+     - the help has an example section
+   * - ``method-example``
+     - warning
+     - methods, except constructors
+     - the same
    * - ``sidecar-documented``
+     - error
      - sidecar docs
      - a ``mat:autosidecar`` renders the sidecar doc, in a document that a
        toctree
        includes (or an ``:orphan:`` one)
    * - ``sidecar-links``
+     - error
      - sidecar docs
      - every relative link (Markdown) and download points to a file, and
        every image exists, relative to the sidecar doc's folder
@@ -138,7 +164,11 @@ any letter case:
   *value*; also with ``Optional`` before them), ``Options``, ``Optional
   Inputs``, ``Optional Arguments``, ``Optional Parameters``.
   ``Input Arguments (Name-Value Arguments)`` counts for inputs and
-  name-value arguments.
+  name-value arguments;
+* **example:** ``Example``, ``Examples``, ``Example(s)``, ``Example 1``
+  (any number), ``Usage``, ``Example Usage``, ``Usage Example``, ``Usage
+  Examples``; also a reST ``.. rubric:: Example`` (or ``Examples``,
+  ``Usage``).
 
 The last word of a label may also be singular or plural (``Parameter``,
 ``Return``, ``Option``, ``Name-Value Pair``).
@@ -164,19 +194,21 @@ Three settings in ``conf.py``; changing them does not make Sphinx read the
 pages again (:doc:`../reference/configuration`):
 
 * :confval:`matlab_api_check_rules`: the severity of each rule:
-  ``"error"`` (the default of every rule), ``"warning"`` or ``"ignore"``.
-  The dictionary is merged over the defaults:
+  ``"error"``, ``"warning"`` or ``"ignore"``. The defaults are in the table
+  above (the newer rules ``property-description``, ``example`` and
+  ``method-example`` warn). The dictionary is merged over the defaults:
 
   .. code-block:: python
 
      matlab_api_check_rules = {
          "method-description": "warning",
          "name-value": "ignore",
+         "example": "error",
      }
 
 * :confval:`matlab_api_check_ignore_patterns`: objects not to check. Globs
   with the rules of :confval:`matlab_src_exclusion_patterns`, matched
-  against the path references of files, of methods
+  against the path references of files, of methods and properties
   (``+pkg/Cls.m.helper``) and of sidecar docs. Use them for generated code,
   examples and tests:
 

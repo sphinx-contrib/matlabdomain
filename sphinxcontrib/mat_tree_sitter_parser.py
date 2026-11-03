@@ -7,11 +7,16 @@ from sphinx.util.logging import getLogger
 def get_nodes(match_dict, key):
     res = match_dict.get(key)
     if res:
-        return sorted(res, key=lambda x: x.start_byte if hasattr(x, 'start_byte') else 0)
+        return sorted(
+            res, key=lambda x: x.start_byte if hasattr(x, "start_byte") else 0
+        )
     return []
+
+
 def get_node(match_dict, key):
     res = match_dict.get(key)
     return res[0] if res else None
+
 
 from tree_sitter import Language, Query, QueryCursor
 
@@ -56,7 +61,8 @@ MATLAB_ATTRIBUTE_DEFAULTS = {
 ML_LANG = Language(tsml.language())
 
 # QUERIES
-q_classdef = Query(ML_LANG, 
+q_classdef = Query(
+    ML_LANG,
     """(class_definition
     .
     "classdef"
@@ -81,10 +87,11 @@ q_classdef = Query(ML_LANG,
     .
     (comment)? @docstring
     ) @prop_node @class
-"""
+""",
 )
 
-q_attributes = Query(ML_LANG, 
+q_attributes = Query(
+    ML_LANG,
     """(attribute
     (identifier) @name
     [
@@ -95,12 +102,13 @@ q_attributes = Query(ML_LANG,
         (cell (row [(string) @value _]*))
     ]? @rhs
     )
-    """
+    """,
 )
 
 q_supers = Query(ML_LANG, """[(identifier) @secs "."]+ """)
 
-q_properties = Query(ML_LANG, 
+q_properties = Query(
+    ML_LANG,
     """(properties
     .
     (attributes
@@ -108,27 +116,30 @@ q_properties = Query(ML_LANG,
     )?
     [(property) @properties  _]+
     ) @prop_block
-"""
+""",
 )
 
-q_methods = Query(ML_LANG, 
+q_methods = Query(
+    ML_LANG,
     """(methods
     (attributes
         [(attribute) @attrs _]+
     )?
     [(function_definition) @methods _]+
     ) @meth_block
-"""
+""",
 )
 
-q_enumerations = Query(ML_LANG, 
+q_enumerations = Query(
+    ML_LANG,
     """(enumeration
     [(enum) @enums _]+
     ) @enum_block
-"""
+""",
 )
 
-q_property = Query(ML_LANG, 
+q_property = Query(
+    ML_LANG,
     """
     (property name: (identifier) @name
      (dimensions
@@ -143,21 +154,23 @@ q_property = Query(ML_LANG,
      (default_value)? @default
      (comment)? @docstring
     ) @prop_node
-"""
+""",
 )
 
-q_enum = Query(ML_LANG, 
+q_enum = Query(
+    ML_LANG,
     """(enum
     .
     (identifier) @name
     [(_) @args _]*
     )
-"""
+""",
 )
 
 # ``name`` is an identifier or a dotted property_name; ``(_)`` matches both and
 # is ~15% faster than the alternation.
-q_fun = Query(ML_LANG, 
+q_fun = Query(
+    ML_LANG,
     """(function_definition
     _*
     (function_output
@@ -179,10 +192,11 @@ q_fun = Query(ML_LANG,
     .
     (comment)? @docstring
     ) @prop_node
-"""
+""",
 )
 
-q_argblock = Query(ML_LANG, 
+q_argblock = Query(
+    ML_LANG,
     """
     (arguments_statement
     .
@@ -192,10 +206,11 @@ q_argblock = Query(ML_LANG,
     .
     [(property) @args _]*
     )
-"""
+""",
 )
 
-q_arg = Query(ML_LANG, 
+q_arg = Query(
+    ML_LANG,
     """
     (property name:
         [
@@ -214,15 +229,16 @@ q_arg = Query(ML_LANG,
      (default_value [(number) (identifier)])? @default
      (comment)? @docstring
     ) @prop_node
-"""
+""",
 )
 
-q_script = Query(ML_LANG, 
+q_script = Query(
+    ML_LANG,
     """
     (source_file
         (comment)? @docstring
     ) @prop_node
-    """
+    """,
 )
 
 q_get_set = Query(ML_LANG, """["get." "set."]""")
@@ -468,7 +484,6 @@ class MatFunctionParser:
             if (matches := list(QueryCursor(q_arg).matches(arg)))
         ]
         for arg, arg_match in matched:
-
             # extract name (this is always available so no need for None check)
             name = [
                 name.text.decode(self.encoding, errors="backslashreplace")
@@ -800,6 +815,7 @@ class MatClassParser:
                 "validators": vfs,
                 "default": default,
                 "docstring": docstring,
+                "line": get_row(prop.start_point) + 1,
             }
 
     def _parse_method_section(self, methods_match):

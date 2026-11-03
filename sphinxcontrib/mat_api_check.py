@@ -25,20 +25,35 @@ logger = getLogger("matlab-domain")
 RULES = (
     "description",
     "method-description",
+    "property-description",
     "inputs",
     "outputs",
     "name-value",
+    "example",
+    "method-example",
     "sidecar-documented",
     "sidecar-links",
 )
 SEVERITIES = ("error", "warning", "ignore")
-DEFAULT_RULES = dict.fromkeys(RULES, "error")
+#: the newer rules warn by default, so they do not fail existing checks
+DEFAULT_RULES = {
+    **dict.fromkeys(RULES, "error"),
+    **dict.fromkeys(("property-description", "example", "method-example"), "warning"),
+}
 #: object kinds, in report order
-KINDS = ("function", "class", "method", "script", "application", "sidecar")
+KINDS = ("function", "class", "method", "property", "script", "application", "sidecar")
 _PLURALS = dict(
     zip(
         KINDS,
-        ("functions", "classes", "methods", "scripts", "apps", "sidecars"),
+        (
+            "functions",
+            "classes",
+            "methods",
+            "properties",
+            "scripts",
+            "apps",
+            "sidecars",
+        ),
         strict=True,
     )
 )
@@ -86,7 +101,17 @@ SECTIONS = {
         r"return (?:values?|arguments?)",
     ),
     "name-value": _header(r"options?", _OPTIONAL, *_NV_LABELS),
+    "example": _header(
+        r"examples?(?:\(s\))?(?:[ \t]+\d+)?",
+        r"usage",
+        r"example usage",
+        r"usage examples?(?:\(s\))?",
+    ),
 }
+_EXAMPLE_RUBRIC = re.compile(
+    r"^[ \t]*\.\.[ \t]+rubric::[ \t]*(?:examples?|usage)\b",
+    re.IGNORECASE | re.MULTILINE,
+)
 _UNDERLINE = re.compile(r"^[ \t]*[-=~]{3,}[ \t]*$")
 # rule -> (section, example header, what lacks a comment)
 _MESSAGES = {
@@ -186,6 +211,13 @@ def has_section(rule, docstring, names=()):
     return False
 
 
+def has_example(docstring):
+    """Return True if the help has an example section (or rubric)."""
+    return has_section("example", docstring) or bool(
+        _EXAMPLE_RUBRIC.search(docstring or "")
+    )
+
+
 def undocumented(rule, docstring, comments, names=()):
     """Names in ``comments`` (name -> its ``arguments``-block comment) left
     undocumented: [] if the help has the rule's section (``has_section``) or
@@ -196,10 +228,13 @@ def undocumented(rule, docstring, comments, names=()):
     return [name for name, comment in comments.items() if not comment]
 
 
-def is_public(method):
-    """Return True unless the method is private, protected, access-listed or hidden."""
-    attrs = method.attrs or {}
-    access = attrs.get("Access")
+def is_public(attrs):
+    """Return True unless a method or property with the attributes ``attrs``
+    is private, protected, access-listed or hidden (a property's
+    ``GetAccess`` applies when it has no ``Access``).
+    """
+    attrs = attrs or {}
+    access = attrs.get("Access") or attrs.get("GetAccess")
     if isinstance(access, str):
         access = access.strip("'\"")
     return access in (None, "public") and not attrs.get("Hidden")
@@ -239,6 +274,15 @@ class _Checker:
                 "has no description: its help is empty or starts with a blank line",
             )
 
+    def example(self, rule, where, kind, docstring):
+        if not has_example(docstring):
+            self.report(
+                rule,
+                where,
+                kind,
+                'has no example section in its help (such as "Example:")',
+            )
+
     def signature(self, where, kind, func, inputs, outputs):
         """Apply the inputs, outputs and name-value rules to a function or method."""
         structs = {name.split(".", 1)[0] for name in func.name_value}
@@ -272,12 +316,37 @@ class _Checker:
         # A constructor's output is the object.
         outputs = [] if constructor else list(func.retv)
         self.describe("method-description", where, "method", func.docstring)
+        if not constructor:
+            self.example("method-example", where, "method", func.docstring)
         self.signature(where, "method", func, inputs, outputs)
 
     def members(self, cls, where):
+        for pname, prop in cls.properties.items():
+            if not is_public(prop["attrs"]):
+                continue
+            ref = f"{where['reference']}.{pname}"
+            if self.ignore(ref):
+                self.not_checked["ignored"] += 1
+                continue
+            self.checked["property"] += 1
+            if not prop["docstring"]:
+                member = {
+                    "reference": ref,
+                    "name": where["name"] and f"{where['name']}.{pname}",
+                    "path": where["path"],
+                    "line": prop["line"],
+                }
+                self.report(
+                    "property-description",
+                    member,
+                    "property",
+                    "has no description: no comment above, after or below it",
+                )
         for mname, method in cls.methods.items():
             # A class-folder method is checked through its own file.
-            if getattr(method, "from_class_folder", False) or not is_public(method):
+            if getattr(method, "from_class_folder", False) or not is_public(
+                method.attrs
+            ):
                 continue
             ref = f"{where['reference']}.{mname}"
             if self.ignore(ref):
@@ -317,12 +386,16 @@ class _Checker:
             self.method(where, obj, obj.cls.name, static=False)
         elif isinstance(obj, mat_types.MatFunction):
             self.describe("description", where, "function", obj.docstring)
+            self.example("example", where, "function", obj.docstring)
             self.signature(where, "function", obj, list(obj.args), list(obj.retv))
         elif isinstance(obj, mat_types.MatClass):
             self.describe("description", where, "class", obj.docstring)
+            self.example("example", where, "class", obj.docstring)
             self.members(obj, where)
         elif isinstance(obj, mat_types.MatScript):
-            self.describe("description", {**where, "line": 1}, "script", obj.docstring)
+            script = {**where, "line": 1}
+            self.describe("description", script, "script", obj.docstring)
+            self.example("example", script, "script", obj.docstring)
         else:
             self.describe("description", where, "application", obj.docstring)
 

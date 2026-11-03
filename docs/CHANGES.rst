@@ -238,6 +238,13 @@ earlier" in the documentation.
   ``matlab_api_check_rules``, ``matlab_api_check_enabled`` and
   ``matlab_api_check_ignore_patterns``. Cached environments from earlier
   versions are rebuilt.
+* ``matlab-api-check`` has three new rules that warn by default:
+  ``example`` and ``method-example`` (the help of a function, class, script
+  or method, except a constructor, has an example section: ``Example:``,
+  ``Examples``, ``Usage:``, ``.. rubric:: Examples``, ...) and
+  ``property-description`` (every public property has a comment). Reports
+  count properties (``property``). Cached environments from earlier
+  versions are rebuilt.
 * **Breaking:** the auto directives accept only the options that do
   something. ``mat:autofolder`` no longer accepts ``:inherited-members:``,
   ``:special-members:``, ``:imported-members:``, ``:ignore-module-all:`` and

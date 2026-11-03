@@ -35,6 +35,40 @@ EXPECTED = {
     ("varargs.m", "inputs"),
     ("varargs.m", "outputs"),
 }
+# The findings of the rules that warn by default: no help has an example.
+WARNED = {
+    *(
+        (ref, "example")
+        for ref in (
+            "+pkg/Widget.m",
+            "@Shape/Shape.m",
+            "argComments.m",
+            "bad-name.m",
+            "blankH1.m",
+            "good.m",
+            "ignoredInput.m",
+            "noHelp.m",
+            "numpyStyle.m",
+            "nvMissing.m",
+            "partialComments.m",
+            "private/helper.m",
+            "scriptNoHelp.m",
+            "scriptWithHelp.m",
+            "varargs.m",
+        )
+    ),
+    *(
+        (ref, "method-example")
+        for ref in (
+            "+pkg/Widget.m.documented",
+            "+pkg/Widget.m.undocumented",
+            "+pkg/Widget.m.noOutputs",
+            "+pkg/Widget.m.make",
+            "+pkg/Widget.m.explicit",
+            "@Shape/area.m",
+        )
+    ),
+}
 
 
 @pytest.fixture
@@ -61,8 +95,9 @@ def test_root_findings(make_app, root):
     app = build(make_app, root)
     assert app.statuscode == 1
     data = report(app)
-    assert {(f["reference"], f["rule"]) for f in data["findings"]} == EXPECTED
-    assert {f["severity"] for f in data["findings"]} == {"error"}
+    assert {(f["reference"], f["rule"]) for f in data["findings"]} == EXPECTED | WARNED
+    severity = {(f["reference"], f["rule"]): f["severity"] for f in data["findings"]}
+    assert {key for key, s in severity.items() if s == "error"} == EXPECTED
     by_key = {(f["reference"], f["rule"]): f for f in data["findings"]}
     assert by_key["+pkg/Widget.m.make", "inputs"] == {
         "reference": "+pkg/Widget.m.make",
@@ -85,6 +120,7 @@ def test_root_findings(make_app, root):
         "function": 11,
         "class": 2,
         "method": 8,
+        "property": 1,
         "script": 2,
         "application": 0,
         "sidecar": 0,
@@ -95,12 +131,12 @@ def test_root_findings(make_app, root):
         "unreadable": 0,
         "not_parsed": 0,
     }
-    assert summary["rules"] == dict.fromkeys(ALL_RULES, "error")
-    assert (summary["errors"], summary["warnings"]) == (17, 0)
+    assert summary["rules"] == mat_api_check.DEFAULT_RULES
+    assert (summary["errors"], summary["warnings"]) == (17, 21)
     assert summary["findings"]["outputs"] == {"error": 5, "warning": 0}
 
     warnings = app.warning.getvalue()
-    assert warnings.count("[mat.api_check]") == 17
+    assert warnings.count("[mat.api_check]") == 38
     assert (
         f"{root / 'src' / 'noHelp.m'}:1: ERROR: [sphinxcontrib-matlabdomain] noHelp.m "
         "(noHelp): has no description: its help is empty or starts with a blank "
@@ -109,15 +145,18 @@ def test_root_findings(make_app, root):
 
     text = (app.outdir / "api-check.txt").read_text(encoding="utf-8")
     lines = text.splitlines()
-    assert lines[0].startswith(f"{root / 'src' / '+pkg' / 'Widget.m'}:20: error: ")
-    assert lines[0].endswith("[method-description]")
-    assert lines[18:21] == [
-        "Checked: 11 functions, 2 classes, 8 methods, 2 scripts, 0 apps, 0 sidecars",
+    assert lines[0].startswith(f"{root / 'src' / '+pkg' / 'Widget.m'}:1: warning: ")
+    assert lines[0].endswith("[example]")
+    assert lines[39:42] == [
+        "Checked: 11 functions, 2 classes, 8 methods, 1 properties, 2 scripts, "
+        "0 apps, 0 sidecars",
         "Not checked: 2 ignored, 1 hidden, 0 unreadable, 0 not parsed",
-        "Findings: 17 errors, 0 warnings",
+        "Findings: 17 errors, 21 warnings",
     ]
-    assert lines[-3:] == [
+    assert lines[-5:] == [
         "  name-value (error): 1 errors, 0 warnings",
+        "  example (warning): 0 errors, 15 warnings",
+        "  method-example (warning): 0 errors, 6 warnings",
         "  sidecar-documented (error): 0 errors, 0 warnings",
         "  sidecar-links (error): 0 errors, 0 warnings",
     ]
@@ -126,7 +165,7 @@ def test_root_findings(make_app, root):
 @pytest.mark.parametrize(
     ("rules", "status", "expected"),
     [
-        (dict.fromkeys(ALL_RULES, "warning"), 0, EXPECTED),
+        (dict.fromkeys(ALL_RULES, "warning"), 0, EXPECTED | WARNED),
         (
             {**dict.fromkeys(ALL_RULES, "ignore"), "description": "error"},
             1,
@@ -140,9 +179,9 @@ def test_root_findings(make_app, root):
 def test_severities(make_app, root, rules, status, expected):
     app = build(make_app, root, matlab_api_check_rules=rules)
     assert app.statuscode == status
-    severities = {**dict.fromkeys(ALL_RULES, "error"), **rules}
+    severities = {**mat_api_check.DEFAULT_RULES, **rules}
     if expected is None:
-        expected = {f for f in EXPECTED if severities[f[1]] != "ignore"}
+        expected = {f for f in EXPECTED | WARNED if severities[f[1]] != "ignore"}
     assert findings(app) == expected
     data = report(app)
     assert data["summary"]["rules"] == severities
@@ -168,7 +207,8 @@ def test_disabled(make_app, root):
     text = (app.outdir / "api-check.txt").read_text(encoding="utf-8")
     assert text.splitlines()[:2] == [
         "matlab_api_check_enabled is False: nothing was checked.",
-        "Checked: 0 functions, 0 classes, 0 methods, 0 scripts, 0 apps, 0 sidecars",
+        "Checked: 0 functions, 0 classes, 0 methods, 0 properties, 0 scripts, "
+        "0 apps, 0 sidecars",
     ]
 
 
@@ -338,6 +378,140 @@ def test_has_description(docstring, expected):
     assert mat_api_check.has_description(docstring) is expected
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Example:",
+        "Examples:",
+        "EXAMPLES",
+        "Example(s):",
+        "Example 1:",
+        "Example: y = f(2)",
+        "Examples::",
+        "Usage:",
+        "Example usage:",
+        "Usage examples:",
+        "Example of use:",
+        "Examples\n--------\n>>> f(1)",
+        ".. rubric:: Examples",
+        ".. rubric:: Usage",
+    ],
+)
+def test_example_headers(text):
+    assert mat_api_check.has_example(f"F Help.\n\n{text}\n")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        None,
+        "F Help.",
+        "F Help. For example, f(2) is 4.",
+        "F Help.\nIts typical\nusage\nis short.",
+        "F Help.\n.. rubric:: Notes",
+    ],
+)
+def test_no_example(text):
+    assert not mat_api_check.has_example(text)
+
+
+RULES_SRC = {
+    "withExample.m": "function withExample\n% WITHEXAMPLE Help.\n%\n% Example:\n"
+    "%   withExample\nend\n",
+    "noExample.m": "function noExample\n% NOEXAMPLE Help.\nend\n",
+    "scriptUsage.m": "% SCRIPTUSAGE Help.\n%\n% Usage:\n%   scriptUsage\nx = 1;\n",
+    "Thing.m": """classdef Thing < handle
+% THING Help.
+%
+% Examples
+% --------
+%   t = Thing();
+    properties
+        Documented % a comment
+        Undocumented
+
+        % a comment above
+        Above
+        Skipped
+    end
+    properties (Constant)
+        LIMIT = 3
+    end
+    properties (Access = private)
+        Secret
+    end
+    properties (GetAccess = protected)
+        Guarded
+    end
+    properties (Hidden)
+        Tag
+    end
+    methods
+        function obj = Thing()
+            % THING Constructor, no example needed.
+        end
+        function run(obj)
+            % RUN Run it.
+            %
+            % .. rubric:: Example
+            %
+            %    t.run()
+        end
+        function stop(obj)
+            % STOP Stop it.
+        end
+    end
+end
+""",
+}
+
+
+def test_example_and_property_rules(make_app, tmp_path):
+    for name, text in RULES_SRC.items():
+        (tmp_path / name).write_text(text)
+    (tmp_path / "conf.py").write_text(
+        f"{CONF}matlab_api_check_ignore_patterns = ['Thing.m.Skipped']\n"
+    )
+    (tmp_path / "index.rst").write_text("Index\n=====\n")
+    app = build(make_app, tmp_path)
+    assert app.statuscode == 0
+    assert findings(app) == {
+        ("noExample.m", "example"),
+        ("Thing.m.stop", "method-example"),
+        ("Thing.m.Undocumented", "property-description"),
+        ("Thing.m.LIMIT", "property-description"),
+    }
+    data = report(app)
+    by_ref = {f["reference"]: f for f in data["findings"]}
+    assert by_ref["Thing.m.Undocumented"] == {
+        "reference": "Thing.m.Undocumented",
+        "name": "Thing.Undocumented",
+        "kind": "property",
+        "rule": "property-description",
+        "severity": "warning",
+        "line": 9,
+        "message": "has no description: no comment above, after or below it",
+    }
+    assert by_ref["noExample.m"]["message"] == (
+        'has no example section in its help (such as "Example:")'
+    )
+    summary = data["summary"]
+    assert summary["checked"]["property"] == 4
+    assert summary["not_checked"]["ignored"] == 1
+    assert (summary["errors"], summary["warnings"]) == (0, 4)
+
+    app = build(
+        make_app,
+        tmp_path,
+        matlab_api_check_rules={"example": "error", "property-description": "ignore"},
+    )
+    assert app.statuscode == 1
+    assert findings(app) == {
+        ("noExample.m", "example"),
+        ("Thing.m.stop", "method-example"),
+    }
+
+
 def test_unreadable_record_is_not_checked():
     checker = mat_api_check._Checker(None, mat_api_check.DEFAULT_RULES, [])
     checker.check("x.m", {"reference": "x.m", "unreadable": True})
@@ -379,6 +553,7 @@ def test_apps_failed_parses_and_parse_warnings(make_app, tmp_path):
     app = build(make_app, tmp_path)
     # The invalid classes are what tree-sitter parsed: scripts without help.
     expected = {(name, "description") for name in ("Bare.mlapp", "Used.m", "Unused.m")}
+    expected |= {("Used.m", "example"), ("Unused.m", "example")}
     assert findings(app) == expected
     data = report(app)
     assert data["findings"][0]["kind"] == "application"
