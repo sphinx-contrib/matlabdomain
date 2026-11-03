@@ -44,7 +44,7 @@ ROOT_REFERENCE = "./"
 _ANCHOR_SAFE = frozenset(string.ascii_letters + string.digits + "-._!$&'()*+,;=:@/")
 
 # Oldest supported MATLAB release and the default target release.
-MATLAB_VERSION_FLOOR = "R2025a"
+MATLAB_VERSION_FLOOR = "R2024a"
 DEFAULT_MATLAB_VERSION = "R2026a"
 
 # Version-dependent MATLAB behavior: rule -> first release with the new behavior.
@@ -53,7 +53,7 @@ MATLAB_VERSION_RULES = {
     # namelengthmax went from 63 to 2048 (R2025a release notes).
     "namelengthmax_2048": "R2025a",
     # Scripts/functions in a subfolder of a class folder (@C/sub/x.m) stopped
-    # being callable (callable in R2024a and R2025b, not in R2026a).
+    # being callable (callable via cd in R2024a, R2024b and R2025b, not in R2026a).
     "class_subfolder_not_callable": "R2026a",
 }
 

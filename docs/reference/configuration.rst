@@ -85,7 +85,7 @@ MATLAB semantics
    :default: ``"R2026a"``
 
    The MATLAB release the code targets, ``R<year>a`` or ``R<year>b``,
-   R2025a or newer (``ConfigError`` otherwise). It selects release-dependent
+   R2024a or newer (``ConfigError`` otherwise). It selects release-dependent
    naming and callability rules and the default of
    :confval:`matlab_namelengthmax`.
 

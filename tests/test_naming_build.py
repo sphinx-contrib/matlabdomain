@@ -218,6 +218,8 @@ def test_inventory_uses_path_references(app):
 @pytest.mark.parametrize(
     ("confdict", "callable_"),
     [
+        ({"matlab_version": "R2024a"}, True),
+        ({"matlab_version": "R2024b"}, True),
         ({"matlab_version": "R2025a"}, True),
         ({"matlab_version": "R2025b"}, True),
         ({"matlab_version": "R2026a"}, False),
@@ -234,6 +236,7 @@ def test_class_subfolder_callability_follows_matlab_version(app, callable_):
 @pytest.mark.parametrize(
     ("confdict", "expected"),
     [
+        ({"matlab_version": "R2024b"}, 63),
         ({"matlab_version": "R2025a"}, 2048),
         ({"matlab_version": "R2026a", "matlab_namelengthmax": 63}, 63),
         ({"matlab_version": "R2025a", "matlab_namelengthmax": 2048}, 2048),

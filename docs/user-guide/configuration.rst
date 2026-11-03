@@ -152,7 +152,7 @@ written for. It sets the defaults of release-dependent rules:
   cannot (they are then documented by path, with a ``mat.not_callable``
   warning).
 
-The oldest supported release is R2025a; an older one, or a value that is not
+The oldest supported release is R2024a; an older one, or a value that is not
 ``R<year>a`` or ``R<year>b``, is a configuration error.
 
 File encoding

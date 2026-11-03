@@ -44,5 +44,5 @@ Help text
 MATLAB releases
 ---------------
 
-Releases before R2025a for :confval:`matlab_version`, each with the naming
+Releases before R2024a for :confval:`matlab_version`, each with the naming
 and callability rules MATLAB had then.

@@ -184,7 +184,7 @@ def test_ensure_configuration_derives_namelengthmax_from_version():
     assert env.matlab_namelengthmax == 2048
 
 
-@pytest.mark.parametrize("version", ["R2024b", "2026a", "R2026c", "r2026a", None])
+@pytest.mark.parametrize("version", ["R2023b", "2026a", "R2026c", "r2026a", None])
 def test_ensure_configuration_rejects_bad_matlab_version(version):
     env = _config(version, None)
     with pytest.raises(ConfigError, match="matlab_version"):
@@ -201,8 +201,11 @@ def test_ensure_configuration_rejects_removed_options(name, value):
 
 
 def test_matlab_version_rules():
+    assert validate_matlab_version("R2024a") == "R2024a"
     assert validate_matlab_version("R2025a") == "R2025a"
     assert validate_matlab_version("R2027b") == "R2027b"
+    assert default_namelengthmax("R2024a") == 63
+    assert default_namelengthmax("R2024b") == 63
     assert default_namelengthmax("R2025a") == 2048
     assert default_namelengthmax("R2026a") == 2048
 
@@ -229,7 +232,7 @@ def test_matlab_version_rules():
     ],
 )
 def test_class_subfolder_callable_before_r2026a(folder, name, is_class, expected):
-    for version in ("R2025a", "R2025b"):
+    for version in ("R2024a", "R2024b", "R2025a", "R2025b"):
         assert (
             form_matlab_name(folder, name, is_class, 2048, version) == _native(expected)
         )
@@ -473,6 +476,9 @@ def _config(version="R2026a", namelengthmax=None):
 @pytest.mark.parametrize(
     ("version", "explicit", "expected"),
     [
+        ("R2024a", None, 63),
+        ("R2024b", None, 63),
+        ("R2024b", 2048, 2048),
         ("R2025a", None, 2048),
         ("R2026a", None, 2048),
         ("R2026a", 63, 63),
@@ -500,7 +506,7 @@ def test_version_rules_table_drives_defaults(monkeypatch):
     assert resolve_namelengthmax("R2025b", 2048) == 2048
     assert has_matlab_behavior("class_subfolder_not_callable", "R2026a")
     assert not has_matlab_behavior("class_subfolder_not_callable", "R2025b")
-    assert MATLAB_VERSION_FLOOR == "R2025a"
+    assert MATLAB_VERSION_FLOOR == "R2024a"
     assert DEFAULT_MATLAB_VERSION == "R2026a"
 
 

@@ -26,7 +26,7 @@ earlier" in the documentation.
   several objects" warning gives the location too.
 * Use treesitter for parsing.
 * Added new configuration: ``matlab_version`` (default ``"R2026a"``, oldest
-  supported ``"R2025a"``). It selects version-dependent MATLAB naming rules.
+  supported ``"R2024a"``). It selects version-dependent MATLAB naming rules.
   Scripts and functions in a subfolder of a class folder (``@C/sub/x.m``) are
   callable before R2026a only.
 * Added new configuration: ``matlab_namelengthmax`` (``63`` or ``2048``). The
