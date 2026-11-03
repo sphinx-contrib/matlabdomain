@@ -28,10 +28,14 @@ from sphinx.util.matching import Matcher
 
 from . import mat_naming
 from .mat_classify import (
+    FUNCTION,
+    SCRIPT,
     UNKNOWN,
     classify,
     decode_source,
     first_line_of_code,
+    has_mex_file,
+    is_help_only,
     is_hidden,
 )
 from .mat_handlers import handler_by_extension, handler_for, handlers
@@ -304,6 +308,9 @@ def _load(dom, ref):
     record = data["index"][path]
     key = (path, record["mtime"], record["size"])
     obj = data["parse_cache"].get(key)
+    if obj is not None and obj.source_type != record["type"]:
+        # a help file whose MEX file was added or removed
+        obj = None
     if obj is None:
         stem = os.path.splitext(os.path.basename(path))[0]
         if record["unreadable"]:
@@ -530,7 +537,7 @@ def display_name(dom, reference):
 
 
 # Warnings hidden files (``is_hidden``) do not get.
-_HIDDEN_QUIET = ("invalid_matlab", "no_code")
+_HIDDEN_QUIET = ("invalid_matlab", "empty_code_file")
 # Warnings the index stage reports; a parse does not repeat them.
 _INDEX_SUBTYPES = ("encoding",)
 
@@ -1043,6 +1050,10 @@ class _Indexer:
             and not old["unreadable"]
         ):
             kind, problems, unreadable = old["type"], old["warnings"], False
+            help_only = old["help_only"]
+            if help_only:
+                # A MEX file may have been added or removed since.
+                kind = FUNCTION if has_mex_file(path) else SCRIPT
         else:
             text = None
             try:
@@ -1051,6 +1062,8 @@ class _Indexer:
             except OSError as err:
                 kind, unreadable = UNKNOWN, True
                 problems = [("parse_error", failure_message(err), None)]
+            help_only = kind in (SCRIPT, FUNCTION) and text is not None
+            help_only = help_only and is_help_only(text)
             if self.cache_text and text is not None:
                 self.out.text_cache[key] = text
         self.out.index[path] = {
@@ -1060,6 +1073,7 @@ class _Indexer:
             "size": key[2],
             "warnings": problems,
             "unreadable": unreadable,
+            "help_only": help_only,
         }
         for subtype, message, row in problems:
             _warn_file(ref, path, subtype, message, row)
@@ -1461,6 +1475,11 @@ class MatObject(object):
                     )
                 )
             parsed = parsed or "script"
+        if source_type == "function" and parsed == "script" and is_help_only(text):
+            # a help file of a MEX function: its comments are the help
+            func = placeholder("function", name, modname)
+            func.docstring = obj.docstring
+            obj, parsed = func, "function"
         obj.source_type = source_type
         obj.parsed_type = parsed
         obj.has_code = source_type != "script" or bool(first_line_of_code(text))

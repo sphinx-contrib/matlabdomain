@@ -154,12 +154,61 @@ def test_first_line_of_code():
 
 
 def test_is_hidden():
-    for name in ("Contents.m", "a/+p/contents.m", "slblocks.m", "SL_CUSTOMIZATION.m",
-                 "pathdef.m", "matlabrc.m", "rtwmakecfg.m"):
+    for name in (
+        "Contents.m",
+        "a/+p/contents.m",
+        "slblocks.m",
+        "SL_CUSTOMIZATION.m",
+        "pathdef.m",
+        "matlabrc.m",
+        "rtwmakecfg.m",
+    ):
         assert is_hidden(name)
-    for name in ("startup.m", "finish.m", "userpath.m", "toolboxdir.m", "Contents.m/",
-                 "a/Contents.m.method", "MyContents.m"):
+    for name in (
+        "startup.m",
+        "finish.m",
+        "userpath.m",
+        "toolboxdir.m",
+        "Contents.m/",
+        "a/Contents.m.method",
+        "MyContents.m",
+    ):
         assert not is_hidden(name)
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("% FAST Help.\n", True),
+        ("\ufeff%{\nHelp.\n%}\n", True),
+        ("", False),
+        ("\ufeff \n\t\n", False),
+        ("% Help.\nx = 1;\n", False),
+        ("function f\n", False),
+    ],
+)
+def test_is_help_only(text, expected):
+    assert mat_classify.is_help_only(text) is expected
+
+
+@pytest.mark.parametrize("ext", mat_classify.MEX_EXTENSIONS)
+def test_help_file_beside_a_mex_file_is_a_function(tmp_path, ext):
+    help_file = tmp_path / "fast.m"
+    help_file.write_text("% FAST Add quickly.\n")
+    (tmp_path / "code.m").write_text("x = 1;\n")
+    (tmp_path / "blank.m").write_text("\n")
+    assert classify(help_file) == "script"
+    for stem in ("fast", "code", "blank"):
+        (tmp_path / (stem + ext)).write_bytes(b"MEX")
+    assert mat_classify.has_mex_file(help_file)
+    assert classify(help_file) == "function"
+    # Only a help file: code or nothing keeps it a script.
+    assert classify(tmp_path / "code.m") == "script"
+    assert classify(tmp_path / "blank.m") == "script"
+    # A folder of that name is not a MEX file.
+    (tmp_path / "other.m").write_text("% OTHER Help.\n")
+    (tmp_path / ("other" + ext)).mkdir()
+    assert classify(tmp_path / "other.m") == "script"
 
 
 # Every row's ``type`` column is the reference classifier's result (checked in
@@ -171,7 +220,9 @@ _REPO = Path(__file__).parents[1]
 def _corpus_path(fullpath):
     _, sep, tail = fullpath.partition("/matlabdomain/test_slow/")
     if not sep and (root := os.environ.get("MATLABDOMAIN_MATLABROOT")):
-        _, matlab_sep, matlab_tail = fullpath.partition("/home/jason/Programs/MATLAB/2026a/")
+        _, matlab_sep, matlab_tail = fullpath.partition(
+            "/home/jason/Programs/MATLAB/2026a/"
+        )
         if matlab_sep:
             return Path(root, *matlab_tail.split("/"))
     if not sep:

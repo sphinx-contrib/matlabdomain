@@ -3,9 +3,9 @@
 Usage: python group_warnings.py WARNINGS_FILE [--show N]
 
 WARNINGS_FILE is the file of ``sphinx-build -w``. Warnings with a type
-(``[mat.no_code]``, ``[ref.class]``) are grouped by it; the others by their
-message with quoted names replaced, so that the same problem in many files
-is one group.
+(``[mat.not_callable]``, ``[ref.class]``) are grouped by it; the others by
+their message with quoted names replaced, so that the same problem in many
+files is one group.
 """
 
 import argparse

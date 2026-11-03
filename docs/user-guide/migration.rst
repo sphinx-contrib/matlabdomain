@@ -186,8 +186,9 @@ What the docs show
 * Files MATLAB cannot call (a keyword namespace, an invalid file name) are
   documented by path, with a ``mat.not_callable`` warning.
 * New warnings point at files that are probably broken
-  (``mat.invalid_matlab``, ``mat.no_code``, ``mat.encoding``); a file that
-  cannot be read or parsed no longer stops the build (:doc:`warnings`).
+  (``mat.invalid_matlab``, ``mat.empty_code_file``, ``mat.encoding``); a
+  file that cannot be read or parsed no longer stops the build
+  (:doc:`warnings`).
 * More objects are documented: enumeration members, and members that the
   0.x parser dropped after it failed on a line (a property default it
   could not read, a method signature with a comment). 0.x also documented
@@ -205,10 +206,9 @@ and add ``-W`` to keep it clean. Typical ones after a migration:
   ``nitpick_ignore_regex`` (:doc:`documenting`).
 * docutils errors in help text ("Unexpected indentation"): help is
   reStructuredText; fix the help (:doc:`help-text`).
-* ``mat.ambiguous``, ``mat.not_callable``, ``mat.no_code`` and the other
-  ``mat`` subtypes: :doc:`warnings`. Comment-only files (help files, the
-  help of a MEX function) get ``mat.no_code``; suppress it if they are
-  intended.
+* ``mat.ambiguous``, ``mat.not_callable``, ``mat.empty_code_file`` and the
+  other ``mat`` subtypes: :doc:`warnings`. Help files (comments only, such
+  as the help of a MEX function) do not warn.
 * ``image.not_readable`` for an image in help text: relative paths in help
   are relative to the documentation page (the ``.rst`` or ``.md`` file
   with the directive), not to the code file.

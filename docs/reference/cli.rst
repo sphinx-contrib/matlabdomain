@@ -98,7 +98,8 @@ Exit status
 -----------
 
 0 on success, also with warnings (``mat.apidoc`` and the index warnings,
-printed like Sphinx prints them); 1 when :option:`--check` finds a page to
+printed like Sphinx prints them, except those named in
+``suppress_warnings``); 1 when :option:`--check` finds a page to
 change; 2 for a usage or settings error, such as an invalid pattern,
 version or encoding, a missing ``conf.py`` or required value, an error in
 ``conf.py``, or a ``matlab_*`` name that is not a configuration value (a

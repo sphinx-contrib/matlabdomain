@@ -42,17 +42,20 @@ What kind of file is it?
 Each ``.m`` file is a script, function or class according to its first line
 of code (blank lines and comments are skipped): ``function`` makes it a
 function, ``classdef`` a class, anything else a script. A script with local
-functions is a script. Two warnings flag suspicious files (see
-:doc:`warnings`): ``mat.invalid_matlab`` when this type and the parser
-disagree (for example a ``classdef`` without its ``end``), and
-``mat.no_code`` for a file that is empty or has only comments.
+functions is a script. A file with only comments is a help file, documented
+as a script with that help; next to a MEX file of the same name
+(``fast.m`` beside ``fast.mexw64``) it is a function, because MATLAB runs
+the MEX file and ``help fast`` shows the help of ``fast.m``. Two warnings
+flag suspicious files (see :doc:`warnings`): ``mat.invalid_matlab`` when
+this type and the parser disagree (for example a ``classdef`` without its
+``end``), and ``mat.empty_code_file`` for an empty file.
 
 MATLAB and Simulink read a few files by name: ``Contents.m`` (folder help),
 ``slblocks.m``, ``sl_customization.m``, ``pathdef.m``, ``matlabrc.m`` and
 ``rtwmakecfg.m`` (in any letter case). They are indexed and can be
 documented with an explicit directive, but ``mat:autofolder`` with
 ``:members:`` and ``sphinx-matlab-apidoc`` leave them out, and they never
-get ``mat.invalid_matlab``, ``mat.no_code`` or ``mat.not_callable``.
+get ``mat.invalid_matlab``, ``mat.empty_code_file`` or ``mat.not_callable``.
 
 Help text is reStructuredText
 -----------------------------

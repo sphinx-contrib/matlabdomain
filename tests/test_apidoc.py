@@ -899,6 +899,32 @@ def test_output_and_warnings(tmp_path, capsys):
     assert len(captured.err.splitlines()) == 4
 
 
+@pytest.mark.parametrize("suppress", ["mat", "mat.not_callable"])
+def test_conf_suppress_warnings_is_honored(tmp_path, capsys, suppress):
+    conf = f"{FOLDER}suppress_warnings = [{suppress!r}]\n"
+    docs = conf_dir(tmp_path / "docs", tmp_path / "out", conf)
+    assert main(["-n", "-c", docs]) == 0
+    captured = capsys.readouterr()
+    assert "27 files indexed, 0 warnings" in captured.out
+    assert captured.err == ""
+
+
+def test_conf_suppress_warnings_of_another_subtype(tmp_path, capsys):
+    conf = f'{FOLDER}suppress_warnings = ("mat.encoding", "ref")\n'
+    docs = conf_dir(tmp_path / "docs", tmp_path / "out", conf)
+    assert main(["-q", "-n", "-c", docs]) == 0
+    assert len(capsys.readouterr().err.splitlines()) == 4
+
+
+@pytest.mark.parametrize("value", ['"mat"', "None"])
+def test_conf_suppress_warnings_must_be_a_list(tmp_path, capsys, value):
+    docs = conf_dir(
+        tmp_path / "docs", tmp_path / "out", f"suppress_warnings = {value}\n"
+    )
+    assert main(["-q", "-c", docs]) == 2
+    assert "error: suppress_warnings must be a list, not " in capsys.readouterr().err
+
+
 def test_dry_run_lists_changes(tmp_path, capsys):
     assert (
         main(["-n", "-c", conf_dir(tmp_path / "docs", tmp_path / "out", FOLDER)]) == 0
@@ -1078,7 +1104,8 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
     conf = 'matlab_apidoc_output_dir = "api"\nmatlab_namelengthmax = 63\n'
     docs = conf_project(tmp_path, f'{conf}matlab_version = "R2026a"\n')
     args = _cli.get_parser().parse_args(["-c", str(docs)])
-    settings, options = _cli._settings(args)
+    settings, options, suppress = _cli._settings(args)
+    assert suppress == []
     assert settings.namelengthmax == 63
     assert (options.maxdepth, options.tocfile, options.suffix) == (4, "index", "rst")
     assert (options.group, options.page_size) == ("namespace", 100)

@@ -215,7 +215,7 @@ python scripts/group_warnings.py warnings.txt
 | `toc.not_readable`, `ref.doc`, include file not found | a page still points into the copied tree (step 5) |
 | `mat.ambiguous` | use the path reference the warning lists, or exclude copies |
 | `mat.not_found` | a name the rewrite missed, a file now excluded or removed |
-| `mat.no_code` | comment-only help files: intended, so `suppress_warnings = ["mat.no_code"]` |
+| `mat.empty_code_file` | an empty `.m` file: delete it, or exclude it |
 | `mat.not_callable` | rename the file, or suppress if intended |
 | `mat.encoding` | save the file as UTF-8; set `matlab_src_encoding` only if all files share one codec; suppress if intended |
 | `mat.invalid_matlab` | the file is probably broken MATLAB; fix it or exclude it |
@@ -236,8 +236,8 @@ nitpick_ignore_regex = [
 When only intended warnings remain, build with `-W --keep-going` and make
 that the CI build. If help-text fixes are deferred, CI builds with `-n`
 without `-W` meanwhile and tracks the warning count (`group_warnings.py`).
-`sphinx-matlab-apidoc` does not read `suppress_warnings`; it prints its own
-warnings and still exits 0.
+`sphinx-matlab-apidoc` skips the warnings named in `suppress_warnings`; it
+still exits 0 after warnings.
 
 ## 10. Compare with the baseline
 

@@ -177,14 +177,54 @@ def test_build_index_warnings(tmp_path, warnings):
     )
     build_index(IndexSettings(str(tmp_path)))
     assert sorted(subtype for subtype, _ in warnings) == [
+        "empty_code_file",
         "encoding",
-        "no_code",
         "not_callable",
     ]
     messages = dict(warnings)
     assert messages["encoding"].startswith("[sphinxcontrib-matlabdomain] bad.m ")
-    assert messages["no_code"].startswith("[sphinxcontrib-matlabdomain] empty.m ")
+    assert messages["empty_code_file"].startswith(
+        "[sphinxcontrib-matlabdomain] empty.m is empty"
+    )
     assert "+for/kw.m is not callable in MATLAB R2026a" in messages["not_callable"]
+
+
+def kinds(source_index):
+    return {
+        r["reference"]: (r["type"], r["help_only"]) for r in source_index.index.values()
+    }
+
+
+def test_help_files_and_mex_functions(tmp_path, warnings):
+    write(
+        tmp_path,
+        {
+            "readme.m": "% README Notes on this folder.\n",
+            "fast.m": b"\xef\xbb\xbf% FAST Add numbers quickly.\n",
+            "fast.mexw64": b"MZ",
+            "blank.m": b"\xef\xbb\xbf\n  \n",
+        },
+    )
+    settings = IndexSettings(str(tmp_path))
+    first = build_index(settings)
+    assert kinds(first) == {
+        "blank.m": ("script", False),
+        "fast.m": ("function", True),
+        "readme.m": ("script", True),
+    }
+    # Comments only is a help file, not a problem; blank is.
+    assert [subtype for subtype, _ in warnings] == ["empty_code_file"]
+    assert "blank.m is empty" in warnings[0][1]
+
+    # Reused records follow the MEX files.
+    (tmp_path / "fast.mexw64").unlink()
+    (tmp_path / "readme.mexa64").write_bytes(b"ELF")
+    second = build_index(settings, first.index)
+    assert kinds(second) == {
+        "blank.m": ("script", False),
+        "fast.m": ("script", True),
+        "readme.m": ("function", True),
+    }
 
 
 def test_build_index_reuses_unchanged_records(tmp_path, monkeypatch):

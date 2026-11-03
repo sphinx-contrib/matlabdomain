@@ -88,7 +88,7 @@ def used_paths(srcdir, refs=USED):
 
 
 def test_initial_data_layout():
-    assert MATLABDomain.data_version == 16
+    assert MATLABDomain.data_version == 17
     assert set(MATLABDomain.initial_data) == {
         "objects",
         "folders",
@@ -128,6 +128,7 @@ def test_source_state_is_env_owned(make_app, srcdir):
         "size": os.stat(second).st_size,
         "warnings": [],
         "unreadable": False,
+        "help_only": False,
         "matlab_name": "Second",
         "private": False,
         "scope": "src/",

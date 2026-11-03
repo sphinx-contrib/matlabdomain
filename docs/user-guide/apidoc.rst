@@ -174,6 +174,8 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
   :confval:`matlab_src_exclusion_patterns`, :confval:`matlab_version`,
   :confval:`matlab_namelengthmax`, :confval:`matlab_src_encoding` and
   :confval:`matlab_src_sidecar_suffixes`;
+* ``suppress_warnings``: the warnings it names are not printed
+  (:doc:`warnings`);
 * its own settings, which the build ignores:
 
   .. list-table::

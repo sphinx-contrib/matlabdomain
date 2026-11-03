@@ -3,7 +3,8 @@ Warnings
 
 Every warning of the extension has the type ``mat`` and one of these
 subtypes. Turn one off with ``suppress_warnings = ["mat.<subtype>"]``, or
-all with ``"mat"``. :doc:`../user-guide/warnings` explains each one.
+all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
+:doc:`../user-guide/warnings` explains each one.
 
 .. list-table::
    :header-rows: 1
@@ -25,8 +26,8 @@ all with ``"mat"``. :doc:`../user-guide/warnings` explains each one.
      - a file whose first line of code and parse disagree, a dotted
        ``function`` name, a ``.m`` file with NUL bytes
      - when a page uses the file (NUL bytes: every build)
-   * - ``mat.no_code``
-     - an empty or comment-only file
+   * - ``mat.empty_code_file``
+     - an empty file (nothing but blank lines)
      - every build
    * - ``mat.not_callable``
      - a file MATLAB cannot call for :confval:`matlab_version`

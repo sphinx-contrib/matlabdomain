@@ -1,4 +1,4 @@
-"""Parse contract in a build: classify() types, divergence and no-code warnings.
+"""Parse contract in a build: classify() types, divergence and empty-file warnings.
 
 plan.md Phase 4, Sections 2.5-2.7.
 """
@@ -86,6 +86,38 @@ def test_index_type_comes_from_classify(make_app, tmp_path):
     assert 'id="mat-&#64;PcBox/PcBox.m"' in html
 
 
+def test_help_file_beside_a_mex_file_is_a_function(make_app, tmp_path):
+    write_project(
+        tmp_path,
+        {"pc_fast.m": "% PC_FAST Add numbers quickly.\n%   y = pc_fast(x)\n"},
+        "Index\n=====\n\n.. mat:autofolder:: ./\n   :members:\n",
+    )
+    mex = tmp_path / "pc_fast.mexw64"
+
+    def build():
+        app = make_app(srcdir=tmp_path)
+        app.build()
+        obj = mat_types.resolve(app.env.get_domain("mat"), "pc_fast.m")
+        html = (app.outdir / "index.html").read_text()
+        assert "Add numbers quickly." in html
+        assert "[mat." not in app.warning.getvalue()
+        return index_by_ref(app)["pc_fast.m"]["type"], type(obj), html
+
+    kind, cls, _ = build()
+    assert (kind, cls) == ("script", mat_types.MatScript)
+
+    # A MEX file added later makes it a function, help kept.
+    mex.write_bytes(b"MZ")
+    kind, cls, html = build()
+    assert (kind, cls) == ("function", mat_types.MatFunction)
+    assert '<dl class="mat function">' in html
+
+    mex.unlink()
+    kind, cls, html = build()
+    assert (kind, cls) == ("script", mat_types.MatScript)
+    assert '<dl class="mat function">' not in html
+
+
 # Pages that use the divergent files (and a script that does not diverge).
 USE_SOURCES = (
     "Index\n=====\n\n.. mat:autoscript:: pc_bad.m\n\n"
@@ -93,7 +125,7 @@ USE_SOURCES = (
 )
 
 
-def test_divergence_and_no_code_warnings(make_app, tmp_path, monkeypatch):
+def test_divergence_and_empty_file_warnings(make_app, tmp_path, monkeypatch):
     write_project(tmp_path, SOURCES, USE_SOURCES)
     app = make_app(srcdir=tmp_path)
     app.build()
@@ -109,12 +141,13 @@ def test_divergence_and_no_code_warnings(make_app, tmp_path, monkeypatch):
         "tree-sitter parsed a script"
     ) in warnings
     assert "pc_functions.m" not in warnings
-    assert warnings.count("has no code") == 2
+    assert warnings.count(" is empty") == 1
     assert (
-        "pc_empty.m has no code; it is documented as a script. [mat.no_code]"
+        "pc_empty.m is empty; it is documented as a script. [mat.empty_code_file]"
         in warnings
     )
-    assert "pc_comment.m has no code" in warnings
+    # A help file (comments only) is normal MATLAB.
+    assert "pc_comment.m" not in warnings
 
     # Re-reading the page from the pickled environment reuses the parse and
     # warns again.
@@ -128,13 +161,13 @@ def test_divergence_and_no_code_warnings(make_app, tmp_path, monkeypatch):
     app2 = make_app(srcdir=tmp_path)
     app2.build()
     assert app2.warning.getvalue().count("may be invalid MATLAB") == 2
-    assert app2.warning.getvalue().count("has no code") == 2
+    assert app2.warning.getvalue().count(" is empty") == 1
 
     # Nothing re-read: index-stage warnings only.
     app3 = make_app(srcdir=tmp_path)
     app3.build()
     assert app3.warning.getvalue().count("may be invalid MATLAB") == 0
-    assert app3.warning.getvalue().count("has no code") == 2
+    assert app3.warning.getvalue().count(" is empty") == 1
 
 
 def test_divergence_of_an_unused_file_is_not_reported(make_app, tmp_path):
@@ -143,10 +176,10 @@ def test_divergence_of_an_unused_file_is_not_reported(make_app, tmp_path):
     app = make_app(srcdir=tmp_path)
     app.build()
     assert "may be invalid MATLAB" not in app.warning.getvalue()
-    assert app.warning.getvalue().count("has no code") == 2
+    assert app.warning.getvalue().count(" is empty") == 1
 
 
-@pytest.mark.parametrize("subtype", ["invalid_matlab", "no_code"])
+@pytest.mark.parametrize("subtype", ["invalid_matlab", "empty_code_file"])
 def test_warnings_are_suppressible(make_app, tmp_path, subtype):
     write_project(tmp_path, SOURCES, USE_SOURCES)
     app = make_app(
@@ -155,7 +188,7 @@ def test_warnings_are_suppressible(make_app, tmp_path, subtype):
     app.build()
     warnings = app.warning.getvalue()
     assert f"[mat.{subtype}]" not in warnings
-    assert "[mat.invalid_matlab]" in warnings or "[mat.no_code]" in warnings
+    assert "[mat.invalid_matlab]" in warnings or "[mat.empty_code_file]" in warnings
 
 
 @pytest.mark.parametrize("reverse", [False, True], ids=["sorted", "reversed"])
@@ -235,10 +268,16 @@ def test_special_files_are_indexed_but_hidden(make_app, tmp_path):
     assert "Start up." in html
     # Documented only when named explicitly.
     assert "Root Toolbox" in html
-    for hidden in ("Library.", "Startup.", "mat-slblocks.m", "mat-pathdef.m",
-                   "mat-rtwmakecfg.m", "mat-sl_customization.m"):
+    for hidden in (
+        "Library.",
+        "Startup.",
+        "mat-slblocks.m",
+        "mat-pathdef.m",
+        "mat-rtwmakecfg.m",
+        "mat-sl_customization.m",
+    ):
         assert hidden not in html
-    # No mat.no_code (Contents.m) or mat.not_callable (+for/contents.m).
+    # No mat.empty_code_file (Contents.m) or mat.not_callable (+for/contents.m).
     assert "WARNING" not in app.warning.getvalue()
 
 
@@ -557,11 +596,24 @@ def test_docstring_positions_render(make_app, tmp_path):
     app = make_app(srcdir=tmp_path)
     app.build()
     html = (app.outdir / "index.html").read_text()
-    for shown in ("dp_before LEAD", "dp_after TRAIL", "dp_both LEAD", "DpLead LEAD",
-                  "DpClass TRAIL", "mAfter TRAIL", "mBoth TRAIL", "mBlank TRAIL"):
+    for shown in (
+        "dp_before LEAD",
+        "dp_after TRAIL",
+        "dp_both LEAD",
+        "DpLead LEAD",
+        "DpClass TRAIL",
+        "mAfter TRAIL",
+        "mBoth TRAIL",
+        "mBlank TRAIL",
+    ):
         assert shown in html
-    for hidden in ("dp_both TRAIL", "DpLead TRAIL", "mBefore LEAD", "mBoth LEAD",
-                   "mBlank LEAD"):
+    for hidden in (
+        "dp_both TRAIL",
+        "DpLead TRAIL",
+        "mBefore LEAD",
+        "mBoth LEAD",
+        "mBlank LEAD",
+    ):
         assert hidden not in html
     assert 'id="mat-DpClass.m.mBefore"' in html
     assert "WARNING" not in app.warning.getvalue()

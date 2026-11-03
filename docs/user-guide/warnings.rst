@@ -16,10 +16,11 @@ Sphinx's ``suppress_warnings`` turns off warnings by type and subtype:
 
    suppress_warnings = [
        "mat.not_callable",  # one subtype
-       "mat.no_code",
+       "mat.empty_code_file",
    ]
 
-``"mat"`` turns off every warning of this extension. Warnings about help
+``"mat"`` turns off every warning of this extension. ``sphinx-matlab-apidoc``
+reads ``suppress_warnings`` from the same ``conf.py``. Warnings about help
 text that is not valid reStructuredText come from docutils and cannot be
 selected this way (:doc:`help-text`).
 
@@ -48,8 +49,10 @@ What each warning means
    ``.m`` file contains NUL bytes (probably a binary file). It is
    documented as far as it could be parsed.
 
-``mat.no_code``
-   The file is empty or has only comments. It is documented as a script.
+``mat.empty_code_file``
+   The file is empty, or has only blank lines. It is documented as a
+   script. A file with only comments is a help file and does not warn
+   (:doc:`help-text`).
 
 ``mat.not_callable``
    MATLAB cannot call the file for :confval:`matlab_version`, so it has no
@@ -85,14 +88,14 @@ What each warning means
    ``ERROR`` or a ``WARNING`` depending on the rule's severity.
 
 Files named ``Contents.m``, ``slblocks.m`` and the other special files
-(:doc:`help-text`) never get ``mat.invalid_matlab``, ``mat.no_code`` or
-``mat.not_callable``.
+(:doc:`help-text`) never get ``mat.invalid_matlab``,
+``mat.empty_code_file`` or ``mat.not_callable``.
 
 When warnings appear
 --------------------
 
 * On every build, for every indexed file: ``mat.encoding``,
-  ``mat.no_code``, ``mat.not_callable``, ``mat.outside_root``,
+  ``mat.empty_code_file``, ``mat.not_callable``, ``mat.outside_root``,
   ``mat.invalid_matlab`` for NUL bytes, and ``mat.parse_error`` for a file
   or folder that cannot be read.
 * Once per build, for the files that the pages read in that build use:

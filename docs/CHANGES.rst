@@ -80,8 +80,11 @@ earlier" in the documentation.
   ``function``/``classdef``, ``classify()``); a script
   with local functions is now a script, not a function. New suppressible
   warnings: ``mat.invalid_matlab`` when that type and the tree-sitter parse
-  disagree (likely invalid MATLAB), and ``mat.no_code`` for empty or
-  comment-only files, which are documented as scripts.
+  disagree (likely invalid MATLAB), and ``mat.empty_code_file`` for empty
+  files, which are documented as scripts. A help file (comments only) does
+  not warn: it is documented as a script, or as a function when a MEX file
+  of the same name is next to it (MATLAB runs the MEX file and shows the
+  help of the ``.m`` file).
 * ``Contents.m``, ``slblocks.m``, ``sl_customization.m``, ``pathdef.m``,
   ``matlabrc.m`` and ``rtwmakecfg.m`` are left out of ``mat:autofolder``
   members and never warn; an explicit directive still documents them.
@@ -127,7 +130,7 @@ earlier" in the documentation.
 * **Breaking:** ``mat.invalid_matlab`` and parse failures
   (``mat.parse_error``) are reported for the files that pages read in the
   build use, once per build; a file no page uses is not parsed. Index
-  warnings (``mat.encoding``, ``mat.no_code``, ``mat.not_callable``,
+  warnings (``mat.encoding``, ``mat.empty_code_file``, ``mat.not_callable``,
   unreadable files and folders) still appear on every build.
 * New command ``sphinx-matlab-apidoc`` (also ``python -m
   sphinxcontrib.matlab_apidoc``): writes reST pages with ``mat:auto*``
@@ -152,7 +155,8 @@ earlier" in the documentation.
   exits with 1 when the pages are out of date. For full control, a script
   calls the Python API (``IndexSettings``, ``build_index``, ``generate``,
   ``ApidocOptions``). The command does not run inside ``sphinx-build``; run
-  it before the build.
+  it before the build. It prints its warnings like the build and skips
+  those named in ``suppress_warnings``.
 * **Breaking:** a ``matlab_*`` name in ``conf.py`` that is not a
   configuration value (a typo, a value this version does not have, a helper
   variable) is a ``ConfigError`` in the build and in

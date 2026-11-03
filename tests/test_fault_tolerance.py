@@ -338,7 +338,7 @@ EXPECTED = [
     ("invalid_matlab", "+ftpkg/ft_dotted.m"),
     ("invalid_matlab", "ft_binary.m"),
     ("invalid_matlab", "ft_trunc_class.m"),
-    ("no_code", "ft_empty.m"),
+    ("empty_code_file", "ft_empty.m"),
     ("parse_error", "ft_corrupt.mlapp"),
 ]
 RST = """Index
@@ -501,7 +501,7 @@ def test_file_warnings_are_suppressible(make_app, malformed):
         confoverrides={"suppress_warnings": ["mat.parse_error", "mat.encoding"]},
     )
     app.build()
-    assert {sub for sub, _ in warnings_of(app)} == {"invalid_matlab", "no_code"}
+    assert {sub for sub, _ in warnings_of(app)} == {"invalid_matlab", "empty_code_file"}
 
 
 def test_configured_encoding_is_applied(make_app, tmp_path):

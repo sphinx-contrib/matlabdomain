@@ -17,6 +17,7 @@ import time
 
 from sphinx.config import Config
 from sphinx.errors import ConfigError
+from sphinx.util.logging import is_suppressed_warning
 from sphinx.util.tags import Tags
 
 from .. import mat_naming
@@ -141,8 +142,8 @@ def _file_name(conf, name, value=None):
 
 
 def _settings(args):
-    """``(IndexSettings, ApidocOptions)`` of conf.py and the flags, or
-    ConfigError.
+    """``(IndexSettings, ApidocOptions, suppress_warnings)`` of conf.py and
+    the flags, or ConfigError.
     """
     conf = read_conf(args.conf_dir)
     srcdir = os.path.abspath(args.conf_dir)
@@ -214,20 +215,28 @@ def _settings(args):
         group=group,
         page_size=page_size,
     )
-    return settings, options
+    suppress = conf.suppress_warnings
+    if isinstance(suppress, str) or not isinstance(suppress, (list, tuple, set)):
+        raise ConfigError(f"suppress_warnings must be a list, not {suppress!r}.")
+    return settings, options, list(suppress)
 
 
 class _WarningHandler(logging.Handler):
     """Print warnings like Sphinx (``location: WARNING: message [type.subtype]``)
-    and count them.
+    and count them; skip those that ``suppress_warnings`` names.
     """
 
-    def __init__(self, stream):
+    def __init__(self, stream, suppress=()):
         super().__init__(logging.WARNING)
         self.stream = stream
+        self.suppress = suppress
         self.count = 0
 
     def emit(self, record):
+        warning_type = getattr(record, "type", None) or ""
+        subtype = getattr(record, "subtype", None) or ""
+        if is_suppressed_warning(warning_type, subtype, self.suppress):
+            return
         self.count += 1
         location = getattr(record, "location", None)
         prefix = f"{location}: " if location else ""
@@ -245,13 +254,13 @@ class _WarningHandler(logging.Handler):
 
 
 @contextlib.contextmanager
-def _sphinx_warnings(stream):
+def _sphinx_warnings(stream, suppress=()):
     """Route the ``sphinx`` loggers (``sphinx.util.logging``) to one handler
     while the generator runs; in-process callers keep their own handlers.
     """
     logger = logging.getLogger("sphinx")
     saved = logger.handlers[:], logger.propagate, logger.level
-    handler = _WarningHandler(stream)
+    handler = _WarningHandler(stream, suppress)
     logger.handlers = [handler]
     logger.propagate = False
     logger.setLevel(logging.WARNING)
@@ -272,13 +281,13 @@ def main(argv=None):
     parser = get_parser()
     args = parser.parse_args(argv)
     try:
-        settings, options = _settings(args)
+        settings, options, suppress = _settings(args)
     except ConfigError as err:
         print(f"{parser.prog}: error: {err}", file=sys.stderr)
         return USAGE_ERROR
 
     start = time.perf_counter()
-    with _sphinx_warnings(sys.stderr) as warnings:
+    with _sphinx_warnings(sys.stderr, suppress) as warnings:
         source_index = build_index(settings)
         result = generate(source_index, options)
     elapsed = time.perf_counter() - start

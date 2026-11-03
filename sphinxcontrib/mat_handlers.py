@@ -88,9 +88,13 @@ class MFileHandler(Handler):
                     mat_classify.row_of(text[:nul]),
                 )
             )
-        if kind == mat_classify.SCRIPT and not mat_classify.first_line_of_code(text):
+        if kind == mat_classify.SCRIPT and not text.replace("\ufeff", "").strip():
             problems.append(
-                ("no_code", "has no code; it is documented as a script.", None)
+                (
+                    "empty_code_file",
+                    "is empty; it is documented as a script.",
+                    None,
+                )
             )
         return kind, text, problems
 

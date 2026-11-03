@@ -8,7 +8,9 @@ classifier for the index, apidoc and api-check.
 The first line of code decides: blank lines, ``%`` comment lines and
 ``%{``/``%}`` block comments are skipped; a line starting with the word
 ``function`` is a function, with ``classdef`` a class, anything else (or no
-code at all) a script. ``unknown`` is a path whose extension is neither
+code at all) a script. A help file (comments, no code) next to a MEX file of
+the same name is a function: MATLAB runs the MEX file and shows the help of
+the ``.m`` file. ``unknown`` is a path whose extension is neither
 ``.m`` nor empty, or a file that cannot be read. The keyword must be a whole
 word, so ``functions = 1;`` is a script, as MATLAB runs it.
 """
@@ -25,6 +27,17 @@ CLASS = "class"
 UNKNOWN = "unknown"
 
 _DECLARATION = re.compile(r"(function|classdef)\b")
+#: MEX file extensions of current and earlier MATLAB platforms
+MEX_EXTENSIONS = (
+    ".mexw64",
+    ".mexa64",
+    ".mexmaci64",
+    ".mexmaca64",
+    ".mexw32",
+    ".mexglx",
+    ".mexmaci",
+    ".mexmac",
+)
 _FALLBACK = ("mbcs", "Windows ANSI") if os.name == "nt" else ("latin-1", "ISO-8859-1")
 # MATLAB ends lines at LF, CRLF or a lone CR.
 _LINE_BREAK = re.compile(r"\r\n?|\n")
@@ -78,9 +91,7 @@ def decode_source(
         if codec is None:
             fallback, label = _FALLBACK
             text = data.decode(fallback, errors="replace")
-            message = (
-                f"is not valid UTF-8 ({where}); decoded as {label} like MATLAB."
-            )
+            message = f"is not valid UTF-8 ({where}); decoded as {label} like MATLAB."
         else:
             text = data.decode(codec, errors="replace")
             message = (
@@ -118,6 +129,17 @@ def first_line_of_code(text: str) -> str:
     return ""
 
 
+def is_help_only(text: str) -> bool:
+    """Return True for a help file: comments, but no code."""
+    return not first_line_of_code(text) and bool(text.replace("\ufeff", "").strip())
+
+
+def has_mex_file(path) -> bool:
+    """Return True if a MEX file with the name of ``path`` is next to it."""
+    stem = os.path.splitext(os.fspath(path))[0]
+    return any(os.path.isfile(stem + ext) for ext in MEX_EXTENSIONS)
+
+
 def classify(path, text: str | None = None) -> str:
     """Return ``script``, ``function``, ``class`` or ``unknown`` for ``path``.
 
@@ -137,5 +159,5 @@ def classify(path, text: str | None = None) -> str:
             return UNKNOWN
     match = _DECLARATION.match(first_line_of_code(text))
     if match is None:
-        return SCRIPT
+        return FUNCTION if is_help_only(text) and has_mex_file(path) else SCRIPT
     return FUNCTION if match[1] == "function" else CLASS
