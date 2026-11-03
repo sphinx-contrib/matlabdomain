@@ -267,9 +267,8 @@ or in a `pre-commit <https://pre-commit.com/>`_ hook, an entry under
          pass_filenames: false
          always_run: true
 
-With ``make livehtml`` (sphinx-autobuild), run the generator first and add
-``--watch`` for the MATLAB folder; a source change then needs another run
-of the generator.
+With ``make livehtml`` (sphinx-autobuild), add ``--watch`` for the MATLAB
+folder and run the generator with ``--pre-build`` (:doc:`builds`).
 
 Customizing the output
 ----------------------

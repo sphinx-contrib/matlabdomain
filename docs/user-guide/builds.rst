@@ -86,8 +86,18 @@ Working with other tools
 ------------------------
 
 * `sphinx-autobuild <https://github.com/sphinx-doc/sphinx-autobuild>`_:
-  works; MATLAB files are not watched unless you add them
-  (``--watch ../src``).
+  works; MATLAB files are not watched unless you add them. With
+  ``sphinx-matlab-apidoc`` pages, also run the generator before each
+  build, so new and moved files get pages:
+
+  .. code-block:: console
+
+     $ sphinx-autobuild docs docs/_build/html --watch src --pre-build "sphinx-matlab-apidoc -c docs -q"
+
+  A change that the generator turns into a page change triggers one more
+  build. The ``--pre-build`` command is split like a POSIX shell line, so
+  on Windows write paths in it with ``/`` (or run it from the activated
+  environment, as above).
 * `sphinx-multiversion <https://github.com/sphinx-contrib/multiversion>`_:
   works, because a relative :confval:`matlab_src_code_project_root` is
   relative to the Sphinx source folder, which it moves.

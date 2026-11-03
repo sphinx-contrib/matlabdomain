@@ -135,7 +135,8 @@ Output
    Turn names in help text into links. ``"basic"`` (any true value other
    than ``"all"``): the entries of "See also" lines and of the property and
    method lists of class help. ``"all"``: also every documented class and
-   function name anywhere in help text. See
+   function name anywhere in help text. A false value (``None``, ``""``)
+   turns it off. See
    :doc:`../user-guide/help-text`.
 
 ``matlab-api-check``

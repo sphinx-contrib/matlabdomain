@@ -18,6 +18,15 @@ Requirements
 
 Python 3.11 or newer and Sphinx 8.0 or newer (:doc:`../getting-started/installation`).
 
+A pin such as ``sphinxcontrib-matlabdomain==0.*`` in a requirements file
+or ``pyproject.toml`` keeps 0.x; change it to ``>=1,<2``. A virtual
+environment that is reused between builds (on a CI agent, or one that a
+script creates only when it is missing) keeps the old version and the old
+Sphinx until it is recreated or upgraded. Check what a build imports with
+``python -c "import sphinxcontrib.matlab as m; print(m.__file__)"``: a
+``conf.py`` that puts a checkout of the extension on ``sys.path`` imports
+that copy instead.
+
 ``conf.py``
 -----------
 
@@ -40,10 +49,24 @@ Python 3.11 or newer and Sphinx 8.0 or newer (:doc:`../getting-started/installat
    * - ``extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]``
      - ``sphinx.ext.autodoc`` is optional: the extension loads it
 
-Setting a removed value is a ``ConfigError``. If ``matlab_src_dir`` pointed
-at a folder with several projects, :confval:`matlab_src_include_patterns`
-can select some of them; :confval:`matlab_src_exclusion_patterns` leaves out
-tests or data (:doc:`configuration`).
+Setting a removed value is a ``ConfigError``; one error names all the
+removed values that ``conf.py`` sets. So is any other ``conf.py`` name that
+starts with ``matlab_`` and is not a configuration value: rename helper
+variables such as ``matlab_root = ...`` (``_matlab_root``).
+
+If ``matlab_src_dir`` pointed at a folder with several projects,
+:confval:`matlab_src_include_patterns` can select some of them;
+:confval:`matlab_src_exclusion_patterns` leaves out tests or data
+(:doc:`configuration`). A list of your own replaces the default exclusion
+patterns, so copy them into it to keep them. Patterns use ``/`` on every
+system; a ``\`` is a ``ConfigError``.
+
+A build that copied or linked the code into a separate source tree (to
+leave files out, or to put the code below the Sphinx source folder) no
+longer needs to: the root may be outside the source folder
+(``matlab_src_code_project_root = ".."``), the patterns leave files out,
+and incremental builds see changes in place. Notes next to the code
+(``README.md``) become :doc:`sidecar docs <sidecars>`.
 
 New settings worth a look: :confval:`matlab_version` (if the code targets a
 release before R2026a), :confval:`matlab_src_encoding` (it used to be
@@ -57,12 +80,14 @@ Directives and roles
 
    * - 0.x
      - 1.0
-   * - ``.. module:: target``
+   * - ``.. module:: target``, ``.. mat:module:: target``
      - ``.. mat:folder:: target/``
-   * - ``.. automodule:: target``
+   * - ``.. automodule:: target``, ``.. mat:automodule:: target``
      - ``.. mat:autofolder:: target/``
-   * - ``.. currentmodule:: target``
+   * - ``.. currentmodule:: target``, ``.. mat:currentmodule:: target``
      - ``.. mat:currentfolder:: target/``
+   * - ``.. module:: .`` (the root, so that names start there)
+     - remove it: path references start at the root
    * - ``:mat:mod:`target```
      - ``:mat:folder:`target/```
    * - ``.. mat:exception::``, ``.. mat:autoexception::``, ``:mat:exc:``
@@ -75,6 +100,17 @@ Directives and roles
        with an exception)
    * - ``:friend-members:``
      - ``:access-list-members:`` (the old name still works)
+
+An old directive or role is an "Unknown directive type" or "Unknown
+interpreted text role" error, and a removed option makes its directive fail
+("An option to mat:autoclass is either unknown or has an invalid value").
+Either way that object is missing from the page, but the build still
+succeeds unless it runs with ``-W``. Search the pages, including Markdown
+ones, before the first build:
+
+.. code-block:: console
+
+   $ grep -rnE "(auto|current)?module::|:mat:mod:|:(special|inherited)-members:|mat:(auto)?(exception|decorator)" docs
 
 Names
 -----
@@ -123,6 +159,9 @@ Links and anchors
   ``:ref:`mat-folderindex```).
 * "Bases:" and auto-links now always use ``:mat:`` roles, so they link
   without ``primary_domain = "mat"``.
+* Tools that read the build's output (its XML or doctrees, or the HTML ids)
+  see the new names. A script that checks help text that way can be
+  replaced by the ``matlab-api-check`` builder (:doc:`api-check`).
 
 What the docs show
 ------------------
@@ -130,7 +169,12 @@ What the docs show
 * Help text follows MATLAB's ``help``: a comment block *before* a file's
   ``function`` or ``classdef`` line wins over the block after it, so a
   licence header at the top of a file becomes its help, as in MATLAB. Put
-  the help block first, above the licence header and a blank line.
+  the help block first, above the licence header and a blank line. Other
+  comments above the declaration count too: a ``%#ok`` pragma, a ``%%``
+  section title, a commented-out signature. MATLAB's ``help`` shows the
+  same text; move such comments below the help. To find them, list the
+  files whose first non-blank line is a comment rather than the
+  declaration.
 * A script with local functions is documented as a script, not a function.
 * Signatures show MATLAB names: ``package.ClassBar``, not ``+package.ClassBar``.
 * ``+`` folders show as ``namespace``; other folders as ``folder``.
@@ -139,10 +183,54 @@ What the docs show
 * New warnings point at files that are probably broken
   (``mat.invalid_matlab``, ``mat.no_code``, ``mat.encoding``); a file that
   cannot be read or parsed no longer stops the build (:doc:`warnings`).
+* More objects are documented: enumeration members, and members that the
+  0.x parser dropped after it failed on a line (a property default it
+  could not read, a method signature with a comment). 0.x also documented
+  members of a ``classdef`` inside a ``%{ ... %}`` block comment; 1.0 does
+  not.
+
+The first build
+---------------
+
+Build with ``-n`` (nitpicky) first, then fix or silence each warning type
+and add ``-W`` to keep it clean. Typical ones after a migration:
+
+* "reference target not found" for MATLAB's own classes (``handle``,
+  ``matlab.mixin.*``) in "Bases:": add a
+  ``nitpick_ignore_regex`` (:doc:`documenting`).
+* docutils errors in help text ("Unexpected indentation"): help is
+  reStructuredText; fix the help (:doc:`help-text`).
+* ``mat.ambiguous``, ``mat.not_callable``, ``mat.no_code`` and the other
+  ``mat`` subtypes: :doc:`warnings`. Comment-only files (help files, the
+  help of a MEX function) get ``mat.no_code``; suppress it if they are
+  intended.
+* ``image.not_readable`` for an image in help text: relative paths in help
+  are relative to the page that documents the file, not to the file.
+
+Comparing with the 0.x docs
+---------------------------
+
+Keep the 0.x build's ``objects.inv`` and compare the objects by kind
+(the old dotted names map to path references as in `Names`_). Besides
+the new objects above, expect:
+
+* ``sphinx-matlab-apidoc`` pages show public members; 0.x pages often had
+  ``:private-members:``. To keep private members on every generated page,
+  set ``autodoc_default_options = {"private-members": True}``.
+* The function files of a class folder are methods of the class, not also
+  functions; ``private/`` folders get pages.
+* One page per folder instead of a hand-made grouping, such as one page
+  per namespace across folders.
+* Fewer warnings: 0.x parser messages ("Expected property", "Unexpected
+  class name") are gone.
 
 New tools
 ---------
 
 * ``sphinx-matlab-apidoc`` writes the pages for a whole project
-  (:doc:`apidoc`); it may replace hand-written ``automodule`` pages.
+  (:doc:`apidoc`); it may replace hand-written ``automodule`` pages and
+  page generators.
 * The ``matlab-api-check`` builder checks help text (:doc:`api-check`).
+  On an existing project, set every rule to ``"warning"`` first, so the
+  check reports without failing, and make rules errors as the help
+  improves. ``api-check.json`` can feed a pull-request comment.
