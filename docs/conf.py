@@ -47,8 +47,6 @@ matlab_src_sidecar_suffixes = [".rst"]
 matlab_auto_link = "basic"
 primary_domain = "mat"
 nitpicky = True
-# MATLAB's own classes are not documented here: no warning for links to them.
-nitpick_ignore_regex = [("mat:class", r"handle|matlab\..+")]
 # MathWorks answers link checkers with 403 Forbidden.
 linkcheck_ignore = [r"https://([a-z]+\.)?mathworks\.com/"]
 

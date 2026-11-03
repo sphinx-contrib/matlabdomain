@@ -147,10 +147,9 @@ In both:
   call it), and an auto directive with its full path reference:
   ``mat:autoclass`` with ``:members:``, ``:undoc-members:`` and
   ``:show-inheritance:``, ``mat:autofunction``, ``mat:autoscript`` or
-  ``mat:autoapplication``. With ``-n``, a class whose base is one of
-  MATLAB's own classes (``< handle``) gives a "reference target not found"
-  warning; :doc:`documenting` shows the ``nitpick_ignore_regex`` that
-  silences it. Sphinx also adds documented classes to the local table of
+  ``mat:autoapplication``. A base class that is one of MATLAB's own
+  (``< handle``) is shown as text (:confval:`matlab_external_names`).
+  Sphinx also adds documented classes to the local table of
   contents, so a class appears there twice (its heading and its signature);
   ``toc_object_entries = False`` in ``conf.py`` hides the second.
 * Class folders get no page of their own: their class is listed with the

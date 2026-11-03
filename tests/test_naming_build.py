@@ -3,12 +3,16 @@
 import html as html_lib
 import re
 from collections import Counter
+from pathlib import Path
 
 import pytest
+from sphinx.errors import ConfigError
+from sphinx.util.console import strip_escape_sequences
 from sphinx.util.inventory import InventoryFile
 
 from sphinxcontrib import mat_naming
 from sphinxcontrib.mat_types import find_source
+from sphinxcontrib.matlab import DEFAULT_EXTERNAL_NAMES
 
 CONF = 'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
 
@@ -144,8 +148,7 @@ def test_anchors_and_signatures(app):
 @pytest.mark.parametrize("confdict", [{}])
 def test_cross_reference_resolution_order(app):
     sections = {
-        chunk.split('"', 1)[0]: chunk
-        for chunk in html(app).split('<section id="')[1:]
+        chunk.split('"', 1)[0]: chunk for chunk in html(app).split('<section id="')[1:]
     }
     # Current folder alpha/ (set by "mat:folder:: alpha").
     assert object_hrefs(sections["matlab-names"]) == [
@@ -287,6 +290,82 @@ def test_unresolved_field_types_are_text(make_app, tmp_path):
     assert '<span class="pre">Missing</span>' in page
 
 
+EXTERNAL_PAGE = (
+    "Index\n=====\n\n"
+    ".. mat:class:: datetime\n\n"
+    "Bases :mat:class:`handle`, :mat:class:`matlab.mixin.Copyable`,\n"
+    ":mat:class:`Simulink.IntEnumType`, :mat:class:`containers.Map`,\n"
+    ":mat:func:`int32`, :mat:class:`datetime`, :mat:class:`sltest.TestCase`,\n"
+    ":mat:class:`Absent`, :mat:class:`handles`.\n\n"
+    "Other domains are left alone: :doc:`handle`.\n"
+)
+
+
+def build_external(make_app, tmp_path, conf=""):
+    (tmp_path / "conf.py").write_text(
+        f'extensions = ["sphinxcontrib.matlab"]\nnitpicky = True\n{conf}'
+    )
+    (tmp_path / "index.rst").write_text(EXTERNAL_PAGE)
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    return app, strip_escape_sequences(app.warning.getvalue())
+
+
+def test_matlab_names_are_text_without_a_warning(make_app, tmp_path):
+    app, warnings = build_external(make_app, tmp_path)
+    missing = re.findall(r"reference target not found: (\S+)", warnings)
+    assert sorted(missing) == ["Absent", "handles", "sltest.TestCase"]
+    assert "unknown document: 'handle'" in warnings
+    page = html(app)
+    assert '<span class="pre">matlab.mixin.Copyable</span>' in page
+    assert "#mat-matlab" not in page
+    # A documented object of that name still links.
+    assert 'href="#mat-datetime"' in page
+
+
+def test_matlab_external_names_is_configurable(make_app, tmp_path):
+    conf = 'matlab_external_names = [r"sltest\\..+", "Absent"]\n'
+    _, warnings = build_external(make_app, tmp_path, conf)
+    missing = re.findall(r"reference target not found: (\S+)", warnings)
+    assert sorted(missing) == [
+        "Simulink.IntEnumType",
+        "containers.Map",
+        "handle",
+        "handles",
+        "int32",
+        "matlab.mixin.Copyable",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        ('"handle"', "matlab_external_names must be a list, not 'handle'."),
+        ("[1]", "matlab_external_names: 1 must be a str."),
+        ('["a("]', "matlab_external_names: 'a(' is not a regular expression"),
+    ],
+)
+def test_matlab_external_names_errors(make_app, tmp_path, value, message):
+    (tmp_path / "conf.py").write_text(
+        f'extensions = ["sphinxcontrib.matlab"]\nmatlab_external_names = {value}\n'
+    )
+    (tmp_path / "index.rst").write_text("Index\n=====\n")
+    with pytest.raises(ConfigError, match=re.escape(message)):
+        make_app(srcdir=tmp_path)
+
+
+def test_no_external_names(make_app, tmp_path):
+    _, warnings = build_external(make_app, tmp_path, "matlab_external_names = []\n")
+    missing = re.findall(r"reference target not found: (\S+)", warnings)
+    assert len(missing) == 8
+
+
+def test_documented_default_external_names():
+    reference = Path(__file__).parents[1] / "docs" / "reference" / "configuration.rst"
+    block = "".join(f'          r"{p}",\n' for p in DEFAULT_EXTERNAL_NAMES)
+    assert f"      [\n{block}      ]\n" in reference.read_text(encoding="utf-8")
+
+
 def test_auto_directives_without_listing_autodoc(make_app, tmp_path):
     write_files(
         tmp_path,
@@ -355,8 +434,7 @@ def test_folder_directive_and_roles(make_app, tmp_path):
         (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / path).write_text(text)
     (tmp_path / "conf.py").write_text(
-        'extensions = ["sphinxcontrib.matlab"]\n'
-        'matlab_src_code_project_root = "."\n'
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
     )
     (tmp_path / "index.rst").write_text(
         "Index\n=====\n\n"

@@ -139,6 +139,37 @@ Output
    turns it off. See
    :doc:`../user-guide/help-text`.
 
+.. confval:: matlab_external_names
+   :type: ``list[str]``
+   :default: MATLAB's own names, below
+
+   Regular expressions of names that the project does not document: a
+   ``mat`` reference to a matching name that resolves to nothing (in the
+   project or through intersphinx) is shown as text, without a "reference
+   target not found" warning. Each expression must match the whole name.
+   The default:
+
+   .. code-block:: python
+
+      [
+          r"handle|dynamicprops",
+          r"(matlab|Simulink|event|meta)\..+",
+          r"double|single|u?int(8|16|32|64)|logical|char|string|cell|struct",
+          r"function_handle|table|timetable|datetime|duration|calendarDuration",
+          r"categorical|containers\.Map|dictionary|MException|missing|timeseries",
+      ]
+
+   To add the names of another toolbox, extend it:
+
+   .. code-block:: python
+
+      from sphinxcontrib.matlab import DEFAULT_EXTERNAL_NAMES
+
+      matlab_external_names = [*DEFAULT_EXTERNAL_NAMES, r"sltest\..+"]
+
+   ``[]`` turns it off. A value that is not a list of valid regular
+   expressions is a ``ConfigError``. Changing it reads no page again.
+
 ``matlab-api-check``
 --------------------
 

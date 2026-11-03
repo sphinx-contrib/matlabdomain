@@ -205,6 +205,11 @@ How things are shown
   class signature whatever this setting is.
 * :confval:`matlab_add_namespace_names` (default ``True``): show the
   namespace in signatures (``shapes.Circle``); ``False`` shows ``Circle``.
+* :confval:`matlab_external_names`: MATLAB's own classes and namespaces
+  (``handle``, ``matlab.*``, ``Simulink.*``, ``double``, ``datetime``,
+  ...). A reference to one of them that the project does not document is
+  text, without a "reference target not found" warning. Add the names of
+  other toolboxes you use (``r"sltest\..+"``) to the default list.
 * :confval:`matlab_auto_link` (default ``None``): turn names in help text
   into links. ``"basic"`` links the entries of "See also" lines and the
   property and method lists of class help; ``"all"`` also links every known

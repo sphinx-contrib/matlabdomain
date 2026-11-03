@@ -109,14 +109,9 @@ constructor, properties, enumeration values and methods, in sections:
 
 * ``:show-inheritance:`` adds the "Bases:" line, with links to base
   classes that are documented. MATLAB's own classes (``handle``,
-  ``matlab.mixin.Copyable``) are not documented in your project, so with
-  ``nitpicky = True`` (or ``-n``) Sphinx warns that their links have no
-  target. These docs silence that in ``conf.py``:
-
-  .. literalinclude:: ../conf.py
-     :language: python
-     :start-at: nitpick_ignore_regex
-     :end-at: nitpick_ignore_regex
+  ``matlab.mixin.Copyable``) are not documented in your project; they are
+  shown as text, without a "reference target not found" warning (see
+  :confval:`matlab_external_names` for the names and how to add others).
 * Members without help are left out (enumeration values are always
   shown); ``:undoc-members:`` adds them.
 * Members with ``Access = private`` or ``protected``, ``Hidden`` members and

@@ -201,9 +201,11 @@ The first build
 Build with ``-n`` (nitpicky) first, then fix or silence each warning type
 and add ``-W`` to keep it clean. Typical ones after a migration:
 
-* "reference target not found" for MATLAB's own classes (``handle``,
-  ``matlab.mixin.*``) in "Bases:": add a
-  ``nitpick_ignore_regex`` (:doc:`documenting`).
+* "reference target not found" for a class of a toolbox in "Bases:"
+  (``sltest.TestCase``): add its names to
+  :confval:`matlab_external_names`. MATLAB's own classes (``handle``,
+  ``matlab.mixin.*``) are in its default, so a ``nitpick_ignore_regex``
+  for them can go.
 * docutils errors in help text ("Unexpected indentation"): help is
   reStructuredText; fix the help (:doc:`help-text`).
 * ``mat.ambiguous``, ``mat.not_callable``, ``mat.empty_code_file`` and the

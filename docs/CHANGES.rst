@@ -271,6 +271,13 @@ earlier" in the documentation.
   ``literalinclude``, ``include``, and hyperlinks (to a sidecar doc, a code
   file's API entry, or a download). They were relative to the documentation
   page.
+* New configuration ``matlab_external_names``: regular expressions of names
+  the project does not document. A ``mat`` reference to such a name that
+  resolves to nothing is text, without a "reference target not found"
+  warning. The default covers MATLAB's own classes and namespaces
+  (``handle``, ``matlab.*``, ``Simulink.*``, ``double``, ``datetime``,
+  ``containers.Map``, ...), so "Bases: handle" no longer needs a
+  ``nitpick_ignore``.
 
 .. _PR 232: https://github.com/sphinx-contrib/matlabdomain/pull/232
 

@@ -207,8 +207,8 @@ python scripts/group_warnings.py warnings.txt
 
 | Warning | Usual fix |
 |---|---|
-| "reference target not found" for `handle`, `matlab.*`, `Simulink.*`, `int32` | `nitpick_ignore_regex` (below) |
-| "reference target not found" for other base classes that are not in the project | add them to `nitpick_ignore` (a class from another toolbox), or document them |
+| "reference target not found" for another toolbox's classes (`sltest.*`, a vendor's namespace) | add them to `matlab_external_names` (below); MATLAB's own (`handle`, `matlab.*`, `Simulink.*`, `int32`) are in its default |
+| "reference target not found" for other base classes that are not in the project | add them to `matlab_external_names`, or document them |
 | "reference target not found" for a project class | its file is excluded (review the exclusions) or not documented |
 | "reference target not found" for a dotted name with `+` or `@` | a 0.x name in help text (step 7) |
 | "duplicate object description" | a hand-written page and a generated page document the same file: `:no-index:` on one |
@@ -224,13 +224,14 @@ python scripts/group_warnings.py warnings.txt
 | unknown directive / role / option | step 6 |
 | MyST and Markdown page warnings | fix the page |
 
-MATLAB's own classes are not documented in the project:
+MATLAB's own classes are text by default (`matlab_external_names`); add
+other toolboxes' names to its default list, and drop a 0.x
+`nitpick_ignore_regex` that only covered MATLAB's names:
 
 ```python
-nitpick_ignore_regex = [
-    ("mat:class", r"handle|dynamicprops|(matlab|Simulink|event)\..+"
-                  r"|u?int(8|16|32|64)|double|single|logical|char|string|cell|struct"),
-]
+from sphinxcontrib.matlab import DEFAULT_EXTERNAL_NAMES
+
+matlab_external_names = [*DEFAULT_EXTERNAL_NAMES, r"sltest\..+"]
 ```
 
 When only intended warnings remain, build with `-W --keep-going` and make

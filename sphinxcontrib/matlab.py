@@ -7,6 +7,7 @@ The MATLAB domain.
 :license: BSD, see LICENSE for details.
 """
 
+import functools
 import re
 import unicodedata
 
@@ -53,11 +54,46 @@ class MatTypedField(TypedField):
         return node
 
 
-def keep_unresolved_types(app, env, node, contnode):  # noqa: ARG001
-    # Runs after intersphinx (priority 900), so other projects' types still link.
-    if node.get("refdomain") == "mat" and node.get("mat:type"):
+def keep_unresolved_references(app, env, node, contnode):  # noqa: ARG001
+    # Runs after intersphinx (priority 900), so other projects' names still link.
+    if node.get("refdomain") != "mat":
+        return None
+    external = _external_names(tuple(app.config.matlab_external_names))
+    if node.get("mat:type") or external.fullmatch(node.get("reftarget", "")):
         return contnode
     return None
+
+
+#: MATLAB's own classes and namespaces, never documented in a project
+DEFAULT_EXTERNAL_NAMES = [
+    r"handle|dynamicprops",
+    r"(matlab|Simulink|event|meta)\..+",
+    r"double|single|u?int(8|16|32|64)|logical|char|string|cell|struct",
+    r"function_handle|table|timetable|datetime|duration|calendarDuration",
+    r"categorical|containers\.Map|dictionary|MException|missing|timeseries",
+]
+
+
+@functools.cache
+def _external_names(patterns):
+    # (?!) matches nothing: no patterns.
+    return re.compile("|".join(f"(?:{p})" for p in patterns) or "(?!)")
+
+
+def check_external_names(app, config):  # noqa: ARG001
+    names = config.matlab_external_names
+    if isinstance(names, str) or not isinstance(names, (list, tuple)):
+        raise ConfigError(f"matlab_external_names must be a list, not {names!r}.")
+    for pattern in names:
+        if not isinstance(pattern, str):
+            raise ConfigError(f"matlab_external_names: {pattern!r} must be a str.")
+        try:
+            re.compile(pattern)
+        except re.error as err:
+            raise ConfigError(
+                f"matlab_external_names: {pattern!r} is not a regular "
+                f"expression ({err})."
+            ) from err
 
 
 # REs for MATLAB signatures: a MATLAB name or path reference, then optional
@@ -1018,6 +1054,7 @@ def setup(app):
     app.connect("config-inited", check_config_names)
     app.connect("config-inited", ensure_configuration)
     app.connect("config-inited", check_encoding)
+    app.connect("config-inited", check_external_names)
     app.connect("config-inited", mat_sidecars.check_config)
     app.connect("config-inited", mat_api_check.check_config)
     app.connect("builder-inited", analyze)
@@ -1025,7 +1062,7 @@ def setup(app):
     app.connect("env-before-read-docs", mat_types.note_read_docs)
     app.connect("env-updated", mat_types.warn_parsed_sources)
     app.connect("build-finished", mat_api_check.set_status)
-    app.connect("missing-reference", keep_unresolved_types, priority=900)
+    app.connect("missing-reference", keep_unresolved_references, priority=900)
 
     app.add_domain(MATLABDomain)
     app.add_builder(mat_api_check.MatlabApiCheckBuilder)
@@ -1061,6 +1098,10 @@ def setup(app):
     app.add_config_value("matlab_auto_link", None, "env")
     app.add_config_value("matlab_class_signature", False, "env")
     app.add_config_value("matlab_add_namespace_names", True, "env", bool)
+    # Regexes of names references to which are text, without a warning.
+    app.add_config_value(
+        "matlab_external_names", list(DEFAULT_EXTERNAL_NAMES), "html", [list, tuple]
+    )
     app.add_config_value("matlab_version", mat_naming.DEFAULT_MATLAB_VERSION, "env")
     # None: derived from matlab_version (2048 from R2025a on).
     app.add_config_value("matlab_namelengthmax", None, "env")
