@@ -29,6 +29,37 @@ from .matlab_apidoc import _config as apidoc_config
 logger = getLogger("matlab-domain")
 
 
+class MatTypedField(TypedField):
+    """A typed field whose types link when documented and are text otherwise.
+
+    MATLAB types in help (``double``, ``(1,1) string``) are rarely documented
+    objects, so an unresolved type gives no "target not found" warning.
+    """
+
+    def make_xref(
+        self,
+        rolename,
+        domain,
+        target,
+        innernode=addnodes.literal_emphasis,
+        *args,
+        **kwargs,
+    ):
+        is_type = innernode is addnodes.literal_emphasis
+        node = super().make_xref(rolename, domain, target, innernode, *args, **kwargs)
+        if is_type:
+            for xref in node.findall(addnodes.pending_xref):
+                xref["mat:type"] = True
+        return node
+
+
+def keep_unresolved_types(app, env, node, contnode):  # noqa: ARG001
+    # Runs after intersphinx (priority 900), so other projects' types still link.
+    if node.get("refdomain") == "mat" and node.get("mat:type"):
+        return contnode
+    return None
+
+
 # REs for MATLAB signatures: a MATLAB name or path reference, then optional
 # arguments and return annotation.
 mat_sig_re = re.compile(
@@ -100,7 +131,7 @@ class MatObject(ObjectDescription):
     }
 
     doc_field_types = [
-        TypedField(
+        MatTypedField(
             "parameter",
             label=translation("Parameters"),
             names=(
@@ -116,7 +147,7 @@ class MatObject(ObjectDescription):
             typenames=("paramtype", "type"),
             can_collapse=True,
         ),
-        TypedField(
+        MatTypedField(
             "variable",
             label=translation("Variables"),
             rolename="obj",
@@ -945,9 +976,14 @@ def check_config_names(app, config):  # noqa: ARG001
 
 
 def ensure_configuration(app, config):
-    for name, reason in _REMOVED_OPTIONS.items():
-        if getattr(config, name) is not None:
-            raise ConfigError(f"{name} was removed: {reason}. Remove it from conf.py.")
+    removed = [
+        f"{name} was removed: {reason}."
+        for name, reason in _REMOVED_OPTIONS.items()
+        if getattr(config, name) is not None
+    ]
+    if removed:
+        them = "it" if len(removed) == 1 else "them"
+        raise ConfigError(" ".join(removed) + f" Remove {them} from conf.py.")
 
     sources = mat_types.source_filter(config)
     if config.matlab_src_code_project_root is not None:
@@ -989,6 +1025,7 @@ def setup(app):
     app.connect("env-before-read-docs", mat_types.note_read_docs)
     app.connect("env-updated", mat_types.warn_parsed_sources)
     app.connect("build-finished", mat_api_check.set_status)
+    app.connect("missing-reference", keep_unresolved_types, priority=900)
 
     app.add_domain(MATLABDomain)
     app.add_builder(mat_api_check.MatlabApiCheckBuilder)

@@ -123,6 +123,10 @@ sections (``Args:``, ``Parameters:``, ``Returns:``) become field lists too:
 
 .. include:: ../snippets/napoleon.rst
 
+Types in these fields (``x (double)``, ``x ((1,1) string)``) link to a
+documented class of that name and are text otherwise, without a warning
+with ``-n``.
+
 Links in help text
 ------------------
 

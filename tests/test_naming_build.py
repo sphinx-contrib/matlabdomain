@@ -260,6 +260,33 @@ def test_section_and_object_ids_do_not_clash(make_app, tmp_path):
     assert {"first", "mat-first", "mat-second"} <= set(ids(html(app)))
 
 
+def test_unresolved_field_types_are_text(make_app, tmp_path):
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\nnitpicky = True\n'
+    )
+    (tmp_path / "index.rst").write_text(
+        "Index\n=====\n\n"
+        ".. mat:class:: Point\n\n"
+        ".. mat:function:: f(a, b)\n\n"
+        "   :param a: first\n"
+        "   :type a: (1,1) double\n"
+        "   :param b: second\n"
+        "   :type b: Point\n"
+        "   :param c: missing\n"
+        "   :type c: Missing\n\n"
+        "See :mat:class:`Absent`.\n"
+    )
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    warnings = app.warning.getvalue()
+    assert "Absent" in warnings
+    assert "double" not in warnings and "Missing" not in warnings
+    page = html(app)
+    assert 'href="#mat-Point"' in page
+    assert '<span class="pre">double</span>' in page
+    assert '<span class="pre">Missing</span>' in page
+
+
 def test_auto_directives_without_listing_autodoc(make_app, tmp_path):
     write_files(
         tmp_path,

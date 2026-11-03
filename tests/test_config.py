@@ -62,6 +62,16 @@ def test_removed_options_raise(make_app, project, name, value):
         make_app(srcdir=project, confoverrides={name: value})
 
 
+def test_removed_options_are_reported_together(make_app, project):
+    overrides = {"matlab_src_dir": "code", "matlab_keep_package_prefix": True}
+    with pytest.raises(ConfigError) as error:
+        make_app(srcdir=project, confoverrides=overrides)
+    message = str(error.value)
+    assert "matlab_src_dir was removed" in message
+    assert "matlab_keep_package_prefix was removed" in message
+    assert message.endswith("Remove them from conf.py.")
+
+
 @pytest.mark.parametrize(
     ("line", "message"),
     [

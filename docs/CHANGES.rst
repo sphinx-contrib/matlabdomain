@@ -24,6 +24,10 @@ earlier" in the documentation.
 * An auto directive that matches no object warns with the subtype
   ``mat.not_found`` and the page and line of the directive; its "matches
   several objects" warning gives the location too.
+* Types in ``:type x:`` and ``:vartype v:`` fields (as written by
+  ``sphinx.ext.napoleon``) link to documented objects and are plain text
+  otherwise; with ``nitpicky`` they no longer warn "reference target not
+  found" (MATLAB types such as ``double`` are never documented).
 * Use treesitter for parsing.
 * Added new configuration: ``matlab_version`` (default ``"R2026a"``, oldest
   supported ``"R2024a"``). It selects version-dependent MATLAB naming rules.
@@ -56,7 +60,8 @@ earlier" in the documentation.
     source directory). ``matlab_src_dir`` was removed: setting it raises a
     ``ConfigError``.
   * Setting ``matlab_keep_package_prefix`` or ``matlab_short_links`` raises a
-    ``ConfigError``; MATLAB names are always displayed.
+    ``ConfigError``; MATLAB names are always displayed. One error names every
+    removed value set in ``conf.py``.
   * Files MATLAB cannot call for ``matlab_version`` (keyword namespaces,
     invalid names, ``@C/sub`` files from R2026a, ...) are documented by path
     with one ``mat.not_callable`` warning each (``suppress_warnings``); files

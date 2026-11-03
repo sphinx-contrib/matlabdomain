@@ -234,6 +234,9 @@ file, the object gets its path reference (for links), not its help. Their
 content may use
 Sphinx's info fields: ``:param x:``, ``:type x:``, ``:returns:``,
 ``:rtype:``, ``:raises Cls:`` (a link to an error class), ``:var v:``.
+A type in ``:type x:`` or ``:vartype v:`` links to a documented object of
+that name; any other type (``double``, ``(1,1) string``) is shown as text,
+without a "reference target not found" warning.
 
 .. rst:directive:: .. mat:function:: signature
 
