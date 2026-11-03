@@ -130,6 +130,33 @@ Types in these fields (``x (double)``, ``x ((1,1) string)``) link to a
 documented class of that name and are text otherwise, without a warning
 with ``-n``.
 
+Paths in help text
+------------------
+
+Relative paths in help text are relative to the folder of the code file,
+as in sidecar docs (:doc:`sidecars`), not to the documentation page:
+
+.. code-block:: matlab
+
+   function y = scale(x)
+   % SCALE Scale a value.
+   %
+   % .. image:: img/plot.png
+   %
+   % The `guide <guide.md>`_ and the :download:`data <data/values.csv>`.
+
+* images (``image``, ``figure``) and downloads (``:download:``) are copied
+  into the output;
+* ``literalinclude`` and ``include`` read files next to the code file;
+* a hyperlink to a relative path goes to a sidecar doc's document, to a
+  code file's API entry, or downloads any other file; a link to a file
+  that does not exist is left as it is.
+
+Absolute paths (``/img/logo.png``) stay relative to the Sphinx source
+folder, and ``:doc:`` and ``:ref:`` name documents and labels, not files.
+Content written in the page, inside an auto directive, stays relative to
+the page.
+
 Links in help text
 ------------------
 

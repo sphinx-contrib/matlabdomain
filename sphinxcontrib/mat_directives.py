@@ -16,6 +16,7 @@ from sphinx.ext.autodoc.directive import (
 )
 from sphinx.util.logging import getLogger
 
+from .mat_sidecars import HelpPaths
 from .mat_types import MatObject
 
 logger = getLogger("matlab-domain")
@@ -88,5 +89,8 @@ class MatlabAutodocDirective(AutodocDirective):
         )
 
         # Source files are not dependencies; the domain tracks them (doc_sources).
-        result = parse_generated_content(self.state, params.result, documenter)
+        paths = HelpPaths(self.env, self.state.document)
+        with paths.parsing():
+            result = parse_generated_content(self.state, params.result, documenter)
+        paths.rewrite(result)
         return result

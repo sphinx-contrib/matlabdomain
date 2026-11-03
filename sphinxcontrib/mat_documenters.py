@@ -35,6 +35,7 @@ from sphinx.util.logging import getLogger
 
 from . import mat_naming
 from .mat_classify import is_hidden
+from .mat_sidecars import HELP_SOURCE
 from .mat_types import (
     MatApplication,
     MatClass,
@@ -219,7 +220,7 @@ class MatlabDocumenter(PyDocumenter):
 
     def add_content(self, more_content, no_docstring=False):
         """Add content from docstrings, attribute documentation and user."""
-        sourcename = f"docstring of {self.fullname}"
+        sourcename = f"{HELP_SOURCE}{self.fullname}"
 
         # add content from docstrings (autodoc API: this extension never
         # passes no_docstring)

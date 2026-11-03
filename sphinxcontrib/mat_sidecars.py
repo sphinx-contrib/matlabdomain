@@ -29,13 +29,14 @@ from dataclasses import dataclass, field
 from docutils import nodes
 from docutils.parsers.rst import directives
 from docutils.statemachine import StringList
+from docutils.utils import get_source_line
 from sphinx import addnodes
 from sphinx.errors import ConfigError
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.logging import getLogger
 from sphinx.util.nodes import clean_astext, nested_parse_with_titles
 
-from . import mat_types
+from . import mat_naming, mat_types
 
 logger = getLogger("matlab-domain")
 
@@ -139,19 +140,14 @@ def _exists(path):
 
 
 @dataclass
-class _Sidecar:
-    """One sidecar doc being rendered into the current document."""
+class _Relative:
+    """Relative paths from ``folder``: a sidecar doc's or a code file's."""
 
-    ref: str
-    path: str
+    folder: str
     srcdir: str
     dom: object
     #: ``(kind, target, line)`` of broken relative links and missing images
     issues: list = field(default_factory=list)
-
-    @property
-    def folder(self):
-        return os.path.dirname(self.path)
 
     def source_path(self, target):
         """``target`` (absolute) as Sphinx's source-folder-relative path
@@ -164,8 +160,8 @@ class _Sidecar:
         return "/" + rel.replace(os.sep, "/")
 
     def link(self, dest, line):
-        """``(node, text)`` for a Markdown link relative to the sidecar doc, or None
-        for myst-parser to handle. ``text`` is shown for a link without text.
+        """``(node, text)`` for a link relative to ``folder``, or None to leave
+        it as it is. ``text`` is shown for a link without text.
         """
         target, _, anchor = dest.partition("#")
         if not target or _external(target):
@@ -204,21 +200,126 @@ class _Sidecar:
         """Make relative image and download paths source-folder-relative;
         record missing targets.
         """
-        targets = [(img, "uri", IMAGE) for img in tree.findall(nodes.image)]
-        targets += [
-            (ref, "reftarget", LINK)
-            for ref in tree.findall(addnodes.download_reference)
-        ]
-        for node, key, kind in targets:
-            target = node[key]
-            if _external(target):
-                continue
-            path = os.path.normpath(os.path.join(self.folder, target))
-            if not _exists(path):
-                self.issues.append((kind, target, node.line))
-            source = self.source_path(path)
-            if source is not None:
-                node[key] = source
+        for node, key, kind in _path_nodes(tree):
+            self.rewrite_node(node, key, kind)
+
+    def rewrite_node(self, node, key, kind):
+        target = node[key]
+        if _external(target):
+            return
+        path = os.path.normpath(os.path.join(self.folder, target))
+        if not _exists(path):
+            self.issues.append((kind, target, node.line))
+        source = self.source_path(path)
+        if source is not None:
+            node[key] = source
+
+
+class _Sidecar(_Relative):
+    """One sidecar doc being rendered into the current document."""
+
+    def __init__(self, ref, path, srcdir, dom):
+        super().__init__(os.path.dirname(path), srcdir, dom)
+        self.ref, self.path = ref, path
+
+
+def _path_nodes(tree):
+    """``(node, attribute, kind)`` of the images and downloads in ``tree``."""
+    targets = [(img, "uri", IMAGE) for img in tree.findall(nodes.image)]
+    targets += [
+        (ref, "reftarget", LINK) for ref in tree.findall(addnodes.download_reference)
+    ]
+    return targets
+
+
+@contextmanager
+def relative_includes(env, current):
+    """Resolve relative names in ``literalinclude`` and ``include`` (which
+    call ``env.relfn2path`` without a docname) from the folder of
+    ``current()``, a ``_Relative``, or as usual when it is None.
+    """
+    # Sidecar docs and help text may nest: restore the outer wrapper.
+    outer = env.__dict__.get("relfn2path")
+    original = env.relfn2path
+
+    def relfn2path(filename, docname=None):
+        if docname is None and not _external(filename):
+            if (rel := current()) is not None:
+                source = rel.source_path(os.path.join(rel.folder, filename))
+                if source is not None:
+                    filename = source
+        return original(filename, docname)
+
+    env.relfn2path = relfn2path
+    try:
+        yield
+    finally:
+        if outer is None:
+            del env.relfn2path
+        else:
+            env.relfn2path = outer
+
+
+#: source of the lines of help text (``MatlabDocumenter.add_content``)
+HELP_SOURCE = "docstring of "
+
+
+class HelpPaths:
+    """Relative paths in help text, resolved from the folder of its code
+    file: images, downloads, ``literalinclude``, ``include`` and hyperlinks.
+    """
+
+    def __init__(self, env, document):
+        self.env = env
+        self.document = document
+        # Help text exists only with a project root.
+        self.root = mat_types.project_root(env.config, env.srcdir)
+        self.srcdir = os.path.normpath(os.fspath(env.srcdir))
+        self.dom = env.get_domain("mat")
+        self._folders = {}
+
+    def at(self, source):
+        """Return the ``_Relative`` of the help text with ``source``, or None."""
+        if not (source or "").startswith(HELP_SOURCE):
+            return None
+        ref = source[len(HELP_SOURCE) :]
+        folder = os.path.normpath(
+            os.path.join(self.root, *mat_naming.folder_of(ref).split("/"))
+        )
+        if folder not in self._folders:
+            self._folders[folder] = _Relative(folder, self.srcdir, self.dom)
+        return self._folders[folder]
+
+    def parsing(self):
+        """Context manager: includes resolve from the line being parsed."""
+        return relative_includes(
+            self.env, lambda: self.at(self.document.current_source)
+        )
+
+    def rewrite(self, result):
+        """Resolve the relative paths of help text in the nodes ``result``."""
+        for tree in result:
+            for node, key, kind in _path_nodes(tree):
+                if (rel := self.at(get_source_line(node)[0])) is not None:
+                    rel.rewrite_node(node, key, kind)
+            for ref in list(tree.findall(nodes.reference)):
+                self._hyperlink(ref)
+
+    def _hyperlink(self, ref):
+        """Turn a relative hyperlink to a sidecar doc or code file into a
+        reference to it, to another file into a download.
+        """
+        target = ref.get("refuri")
+        if not target or (rel := self.at(get_source_line(ref)[0])) is None:
+            return
+        found = rel.link(target, ref.line)
+        if found is None:
+            return
+        node = found[0]
+        node["refdoc"] = self.env.docname
+        node["refexplicit"] = True
+        node += nodes.inline("", "", *ref.children)
+        ref.replace_self(node)
 
 
 @functools.cache
@@ -321,7 +422,7 @@ class AutoSidecar(SphinxDirective):
         sidecar = _Sidecar(ref, path, os.path.normpath(os.fspath(self.env.srcdir)), dom)
         container = nodes.Element()
         container.document = self.state.document
-        with self._relative_to(sidecar):
+        with relative_includes(self.env, lambda: sidecar):
             if path.endswith(MARKDOWN):
                 self._markdown(text, sidecar, container)
             else:
@@ -331,32 +432,6 @@ class AutoSidecar(SphinxDirective):
         result, title = self._titled(list(container.children), sidecar)
         dom.note_sidecar(ref, title, sidecar.issues)
         return result
-
-    @contextmanager
-    def _relative_to(self, sidecar):
-        """Resolve relative names in ``literalinclude`` and ``include`` (which
-        call ``env.relfn2path`` without a docname) from the sidecar doc's folder.
-        """
-        env = self.env
-        # A sidecar doc may render another: restore the outer one's wrapper.
-        outer = env.__dict__.get("relfn2path")
-        original = env.relfn2path
-
-        def relfn2path(filename, docname=None):
-            if docname is None and not _external(filename):
-                source = sidecar.source_path(os.path.join(sidecar.folder, filename))
-                if source is not None:
-                    filename = source
-            return original(filename, docname)
-
-        env.relfn2path = relfn2path
-        try:
-            yield
-        finally:
-            if outer is None:
-                del env.relfn2path
-            else:
-                env.relfn2path = outer
 
     def _markdown(self, text, sidecar, container):
         from myst_parser.parsers.mdit import create_md_parser

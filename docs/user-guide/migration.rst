@@ -210,8 +210,8 @@ and add ``-W`` to keep it clean. Typical ones after a migration:
   other ``mat`` subtypes: :doc:`warnings`. Help files (comments only, such
   as the help of a MEX function) do not warn.
 * ``image.not_readable`` for an image in help text: relative paths in help
-  are relative to the documentation page (the ``.rst`` or ``.md`` file
-  with the directive), not to the code file.
+  are relative to the code file (:doc:`help-text`); 0.x resolved them from
+  the documentation page.
 
 Comparing with the 0.x docs
 ---------------------------

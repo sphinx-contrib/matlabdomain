@@ -266,6 +266,11 @@ earlier" in the documentation.
   reports. Markdown
   needs the new ``markdown`` extra (myst-parser). New warning subtype
   ``mat.sidecar``. Cached environments from earlier versions are rebuilt.
+* **Breaking:** relative paths in help text are relative to the folder of
+  the code file, as in sidecar docs: images, figures, downloads,
+  ``literalinclude``, ``include``, and hyperlinks (to a sidecar doc, a code
+  file's API entry, or a download). They were relative to the documentation
+  page.
 
 .. _PR 232: https://github.com/sphinx-contrib/matlabdomain/pull/232
 

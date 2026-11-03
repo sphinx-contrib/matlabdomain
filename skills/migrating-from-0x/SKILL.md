@@ -220,7 +220,7 @@ python scripts/group_warnings.py warnings.txt
 | `mat.encoding` | save the file as UTF-8; set `matlab_src_encoding` only if all files share one codec; suppress if intended |
 | `mat.invalid_matlab` | the file is probably broken MATLAB; fix it or exclude it |
 | docutils errors in help ("Unexpected indentation") | fix the help text (it is reStructuredText); comment-only changes |
-| `image.not_readable` from help | paths in help are relative to the documentation page, not the code file |
+| `image.not_readable` from help | paths in help are relative to the code file (0.x: the documentation page); fix the path |
 | unknown directive / role / option | step 6 |
 | MyST and Markdown page warnings | fix the page |
 
