@@ -750,7 +750,7 @@ def test_apidoc_sidecar_model(tmp_path):
     }
     assert pages["my~20folder/index"].context["readme"] == "my folder/README.rst"
     assert pages["my~20folder/index"].context["sidecars"] == []
-    assert pages["index"].context["subfolders"] == [
+    assert pages["index"].context["pages"] == [
         "+demo/index",
         "my~20folder/index",
         "notes/index",

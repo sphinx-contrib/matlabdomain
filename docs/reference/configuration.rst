@@ -221,17 +221,17 @@ relative to the folder of ``conf.py``.
    :default: ``"namespace"``
 
    How pages are grouped: ``"namespace"``, one page per namespace (all its
-   folders) plus Global for the files outside any namespace, listed flat on
-   the root page; or ``"folder"``, one page per folder, mirroring the
-   folder tree (:doc:`../user-guide/apidoc`). Any other value is a
+   folders) plus Global for the files outside any namespace; or
+   ``"folder"``, one page per folder with files. Both list their pages flat
+   on the root page (:doc:`../user-guide/apidoc`). Any other value is a
    ``ConfigError``.
 
 .. confval:: matlab_apidoc_page_size
    :type: ``int``
    :default: ``100``
 
-   In namespace grouping, the most entries (files and sidecar docs) on one
-   page; a longer namespace gets several pages. Less than 1 is a
+   The most entries (files and sidecar docs) on one namespace or folder
+   page; a longer one gets several pages. Less than 1 is a
    ``ConfigError``.
 
 .. confval:: matlab_apidoc_private

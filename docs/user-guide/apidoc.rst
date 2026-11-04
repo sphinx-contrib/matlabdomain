@@ -131,14 +131,19 @@ With :confval:`matlab_apidoc_group` ``"namespace"`` (the default):
 
 With ``"folder"``:
 
-* One page per folder that has a file to document at or below it, mirroring
-  the folder tree. The page of the root folder is the toc file.
+* One page per folder that has a file or sidecar doc to document; a
+  folder with nothing of its own gets no page. The root folder's page is
+  ``root``.
+* The root page (the toc file) has one flat toctree, as in namespace
+  grouping: the root folder's page first, then the folders sorted by path,
+  ignoring case, so the navigation stays one level deep.
 * The title is the folder's signature: ``namespace demo`` for a ``+``
   folder, ``folder utils/`` for a plain folder, ``folder ./`` for the root.
   The page has ``mat:autofolder`` (without ``:members:``), a local table of
-  contents, a toctree of the subfolders' pages (namespaces, then plain
-  folders, then ``private/``; one level of the navigation per folder), and
-  sections in this order: Classes, Functions, Scripts, Apps. ``private/``
+  contents, and sections in this order: Classes, Functions, Scripts, Apps.
+  A long folder gets several pages, split at
+  :confval:`matlab_apidoc_page_size` entries like a namespace
+  (``folder utils/ (101-200)``). ``private/``
   folders get pages like the others; :confval:`matlab_apidoc_private`
   ``= False`` leaves their files out.
 * With :confval:`matlab_src_sidecar_suffixes`, each sidecar doc gets a
@@ -195,7 +200,7 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
        - one page per namespace, or ``"folder"``
      * - :confval:`matlab_apidoc_page_size`
        - ``100``
-       - the most entries on one namespace page
+       - the most entries on one namespace or folder page
      * - :confval:`matlab_apidoc_private`
        - ``None``
        - list ``private/`` files (``None``: in folder grouping only)
@@ -233,9 +238,10 @@ namespace has that name). Namespaces whose names differ only by case, and a
 namespace named like the toc file or like a page of
 :confval:`matlab_apidoc_separate`, are escaped as below.
 
-Folder pages and the pages of :confval:`matlab_apidoc_separate` mirror the
-folder tree: the folder ``a/+p/`` gets
-``a/+p/index.rst``. Characters other than ``A-Z a-z 0-9 _ . + @ -`` in a
+Folder pages and the pages of :confval:`matlab_apidoc_separate` follow the
+folder tree: the folder ``a/+p/`` gets ``a/+p/index.rst`` (further pages
+``a/+p/index-2.rst``), and the root folder ``root.rst`` (``~72oot.rst`` if
+the toc file is ``root``). Characters other than ``A-Z a-z 0-9 _ . + @ -`` in a
 folder or file name become ``~XX`` per UTF-8 byte (``my folder`` becomes
 ``my~20folder``), so names are safe in URLs on every system. Windows device
 names (``CON``, ``NUL``, ...) and sibling folders whose names differ only by

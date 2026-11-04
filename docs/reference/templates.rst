@@ -51,54 +51,63 @@ In namespace grouping, one page of a namespace or of the global namespace.
 ``root.rst.jinja``
 ------------------
 
-In namespace grouping, the root page.
+The root page, in both groupings.
 
 ``docname``
    The toc file (:confval:`matlab_apidoc_tocfile`).
 ``title``
    ``"API reference"``.
 ``pages``
-   The docnames of the namespace pages: Global first, then the namespaces
-   sorted by name, ignoring case, each with all its pages.
+   The docnames of the other pages, each group with all its pages. In
+   namespace grouping: Global first, then the namespaces sorted by name,
+   ignoring case. In folder grouping: the root folder's page first, then
+   the folders sorted by path, ignoring case.
 ``maxdepth``
    The ``:maxdepth:`` of its toctree.
 
 ``folder.rst.jinja``
 --------------------
 
-In folder grouping, one page per folder.
+In folder grouping, one page of a folder with files or sidecar docs.
 
 ``docname``
    The page, relative to the output folder, without suffix
-   (``+demo/index``).
+   (``+demo/index``, ``+demo/index-2``; ``root`` for the root folder).
 ``ref``
    The folder's path reference (``+demo/``; ``./`` for the root).
 ``title``
    The folder's signature: ``namespace demo``, ``folder utils/``, or
-   ``folder ./``.
+   ``folder ./``; with several pages, followed by the range of entries
+   (``folder utils/ (101-200)``).
 ``kind``
    ``"namespace"``, ``"folder"`` or ``"root"``.
 ``is_root``
    True for the root folder's page.
+``page``, ``pages``
+   The number of this page and of the folder's pages (1 and 1 for most).
+   The default template documents the folder (``mat:autofolder``) on page
+   1 only.
+``first``, ``last``
+   The numbers of the first and last entries on this page, counting from
+   1 across the folder's pages.
 ``sections``
    ``(title, entries)`` pairs in the order Classes, Functions, Scripts,
-   Apps; only sections with entries. ``entries`` are described below.
-``subfolders``
-   The docnames of the subfolders' pages, relative to this page:
-   namespaces, then folders, then ``private/``.
+   Apps; only sections with entries on this page. ``entries`` are
+   described below.
 ``separate``
    True with :confval:`matlab_apidoc_separate`.
 ``maxdepth``
    The ``:maxdepth:`` of the toctrees (:confval:`matlab_apidoc_maxdepth`).
 ``sidecars``
-   The :doc:`sidecar docs <../user-guide/sidecars>` the folder's page
-   lists (its own, and those in its ``@`` folders), sorted by file name;
+   The :doc:`sidecar docs <../user-guide/sidecars>` on this page (the
+   folder's own, and those in its ``@`` folders), sorted by file name;
    each a dictionary with ``ref`` (the path reference), ``name`` (the file
-   name) and ``docname`` (its own page, relative to this page).
-   Empty when sidecar docs are off.
+   name) and ``docname`` (its own page, relative to this page). They come
+   after the files, so they are on the last pages. Empty when sidecar docs
+   are off.
 ``readme``
    The path reference of the folder's README (any letter case, any page
-   suffix), the introduction of its page, or ``None``.
+   suffix), the introduction of its first page, or ``None``.
 
 Entries
 ~~~~~~~

@@ -9,11 +9,6 @@ namespace a
    :local:
    :backlinks: none
 
-.. toctree::
-   :maxdepth: 4
-
-   +b/index
-
 Scripts
 -------
 

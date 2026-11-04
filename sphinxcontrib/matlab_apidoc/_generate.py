@@ -12,11 +12,13 @@ is parsed.
   page lists them flat, Global first. ``private/`` files are left out
   (``private=True`` lists them with the folder above);
   sidecar docs are rendered on the page.
-- Folder grouping: one page per folder with a documentable file at or
-  below it, mirroring the folder tree. ``@`` folders and everything below
+- Folder grouping: one page per folder with a documentable file or
+  sidecar doc, titled ``namespace ns`` or ``folder a/b/``; the root
+  folder's page is ``root``. The root page lists them flat, the root folder
+  first, then by path. ``@`` folders and everything below
   them go on the page of the nearest folder above that is not an ``@``
   folder; ``private/`` gets its own page (``private=False`` leaves its files
-  out).
+  out). Pages split at ``page_size`` entries, as in namespace grouping.
 - The function files of a class folder ``@X/`` whose ``X.m`` is a classdef
   are methods of that class and are not listed; every other ``@`` folder (an
   old-style class, a classdef named differently, no class file) is not a
@@ -69,6 +71,8 @@ GROUPS = ("namespace", "folder")
 GLOBAL_DOCNAME = "global"
 GLOBAL_TITLE = "Global"
 ROOT_TITLE = "API reference"
+#: docname of the root folder's page in folder grouping
+ROOT_FOLDER_DOCNAME = "root"
 #: section titles in page order, by index type
 SECTIONS = {
     "class": "Classes",
@@ -157,10 +161,6 @@ def page_folder(reference):
     return _join(parts[:cut])
 
 
-def _parent(folder):
-    return _join(_segments(folder)[:-1])
-
-
 def class_folder_methods(source_index):
     """Return the references of the function files that are methods: those
     of a class folder ``@X/`` whose ``X.m`` is a classdef
@@ -230,17 +230,6 @@ def _namespace(source_index, folder):
     return getattr(source_index.entities.get(folder), "matlab_name", None)
 
 
-def _subfolder_order(source_index, folder):
-    """Namespaces, then plain folders, then ``private/``; by name."""
-    name = _segments(folder)[-1]
-    rank = 1
-    if _namespace(source_index, folder):
-        rank = 0
-    elif name == "private":
-        rank = 2
-    return rank, name.casefold(), folder
-
-
 def _relative(docname, page_docname):
     """``docname`` relative to the folder of the page ``page_docname``."""
     base = posixpath.dirname(page_docname)
@@ -290,6 +279,11 @@ def build_pages(source_index, options):
     return _namespace_pages(source_index, options)
 
 
+def _folder_key(folder):
+    """Root folder first, then by path, ignoring case."""
+    return folder != ROOT_REFERENCE, [s.casefold() for s in _segments(folder)], folder
+
+
 def _folder_pages(source_index, options):
     methods = class_folder_methods(source_index)
     private = options.private is not False
@@ -301,16 +295,11 @@ def _folder_pages(source_index, options):
         if entry is not None:
             listed.setdefault(page_folder(entry["ref"]), []).append(entry)
     sidecars, readmes = _sidecars(source_index)
-
-    folders = {ROOT_REFERENCE}
-    for folder in {*listed, *sidecars, *readmes}:
-        while folder not in folders:
-            folders.add(folder)
-            folder = _parent(folder)
-    if not listed and not sidecars and not readmes:
+    folders = {*listed, *sidecars, *readmes}
+    if not folders:
         _warn("no documentable files were found.")
 
-    refs = set(folders)
+    refs = folders - {ROOT_REFERENCE}
     if options.separate:
         refs.update(e["ref"] for entries in listed.values() for e in entries)
     stubs = {
@@ -326,55 +315,79 @@ def _folder_pages(source_index, options):
             f"{folder or 'the output folder'}/ differ only by case; their "
             "uppercase letters are escaped as ~XX."
         )
+    # Other top-level names are folders (``x/index``) or have a suffix.
+    names[ROOT_REFERENCE] = ROOT_FOLDER_DOCNAME
+    if options.tocfile.lower() == ROOT_FOLDER_DOCNAME:
+        names[ROOT_REFERENCE] = f"~{ord('r'):02X}oot"
 
-    children = {}
-    for folder in folders - {ROOT_REFERENCE}:
-        children.setdefault(_parent(folder), []).append(folder)
-
-    pages_out = []
-    for folder in folders:
-        docname = names[folder]
+    size = max(options.page_size, 1)
+    pages_out, toc = [], []
+    for folder in sorted(folders, key=_folder_key):
         namespace = _namespace(source_index, folder)
         if folder == ROOT_REFERENCE:
             kind = "root"
         else:
             kind = "namespace" if namespace else "folder"
-        sections = _sections(listed.get(folder, ()))
-        if options.separate:
-            for entry in (e for _, entries in sections for e in entries):
-                own = names[entry["ref"]]
+        title = f"namespace {namespace}" if namespace else f"folder {folder}"
+        entries = [
+            e for _, section in _sections(listed.get(folder, ())) for e in section
+        ]
+        items = [*entries, *sidecars.get(folder, [])]
+        chunks = [items[i : i + size] for i in range(0, len(items), size)] or [[]]
+        for number, chunk in enumerate(chunks, 1):
+            docname = names[folder] if number == 1 else f"{names[folder]}-{number}"
+            first = (number - 1) * size + 1
+            last = first + len(chunk) - 1
+            page_entries = [e for e in chunk if "directive" in e]
+            page_sidecars = [e for e in chunk if "directive" not in e]
+            if options.separate:
+                for entry in page_entries:
+                    own = names[entry["ref"]]
+                    entry["docname"] = _relative(own, docname)
+                    pages_out.append(
+                        Page(own, OBJECT_TEMPLATE, {**entry, "docname": own})
+                    )
+            for entry in page_sidecars:
+                own = names[stubs[entry["ref"]]]
                 entry["docname"] = _relative(own, docname)
-                pages_out.append(Page(own, OBJECT_TEMPLATE, {**entry, "docname": own}))
-        subfolders = sorted(
-            children.get(folder, ()),
-            key=lambda sub: _subfolder_order(source_index, sub),
-        )
-        folder_sidecars = sidecars.get(folder, [])
-        for entry in folder_sidecars:
-            own = names[stubs[entry["ref"]]]
-            entry["docname"] = _relative(own, docname)
-            pages_out.append(Page(own, SIDECAR_TEMPLATE, {**entry, "docname": own}))
-        pages_out.append(
-            Page(
-                docname,
-                FOLDER_TEMPLATE,
-                {
-                    "docname": docname,
-                    "ref": folder,
-                    "title": f"namespace {namespace}"
-                    if namespace
-                    else f"folder {folder}",
-                    "kind": kind,
-                    "is_root": folder == ROOT_REFERENCE,
-                    "sections": sections,
-                    "subfolders": [_relative(names[s], docname) for s in subfolders],
-                    "separate": options.separate,
-                    "maxdepth": options.maxdepth,
-                    "sidecars": folder_sidecars,
-                    "readme": readmes.get(folder),
-                },
+                pages_out.append(Page(own, SIDECAR_TEMPLATE, {**entry, "docname": own}))
+            pages_out.append(
+                Page(
+                    docname,
+                    FOLDER_TEMPLATE,
+                    {
+                        "docname": docname,
+                        "ref": folder,
+                        "title": title
+                        if len(chunks) == 1
+                        else f"{title} ({first}-{last})",
+                        "kind": kind,
+                        "is_root": folder == ROOT_REFERENCE,
+                        "page": number,
+                        "pages": len(chunks),
+                        "first": first,
+                        "last": last,
+                        "sections": _sections(page_entries),
+                        "separate": options.separate,
+                        "maxdepth": options.maxdepth,
+                        "sidecars": page_sidecars,
+                        "readme": readmes.get(folder) if number == 1 else None,
+                    },
+                )
             )
+            toc.append(docname)
+    pages_out.append(
+        Page(
+            options.tocfile,
+            ROOT_TEMPLATE,
+            {
+                "docname": options.tocfile,
+                "title": ROOT_TITLE,
+                "pages": toc,
+                "maxdepth": options.maxdepth,
+            },
         )
+    )
     return sorted(pages_out, key=lambda page: page.docname)
 
 

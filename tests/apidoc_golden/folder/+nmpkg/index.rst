@@ -9,11 +9,6 @@ namespace nmpkg
    :local:
    :backlinks: none
 
-.. toctree::
-   :maxdepth: 4
-
-   private/index
-
 Classes
 -------
 

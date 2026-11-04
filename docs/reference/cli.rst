@@ -14,7 +14,7 @@ Synopsis
 Writes reST pages with ``mat:auto*`` directives for the MATLAB files below
 the project root: one page per namespace and one for the global namespace
 (:confval:`matlab_apidoc_group` ``"namespace"``, the default), or one page
-per folder, mirroring the folder tree (``"folder"``).
+per folder with files (``"folder"``), listed flat on the root page.
 :doc:`../user-guide/apidoc` is the tutorial.
 
 Settings

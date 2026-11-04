@@ -30,7 +30,7 @@ from sphinxcontrib.matlab_apidoc._config import (
     BUILD_ONLY_CONFIG,
     SOURCE_CONFIG,
 )
-from sphinxcontrib.matlab_apidoc._generate import MARKER, build_pages
+from sphinxcontrib.matlab_apidoc._generate import MARKER, build_pages, render
 
 TESTS = Path(__file__).parent
 ROOT = TESTS / "roots" / "test_apidoc_basics"
@@ -54,6 +54,7 @@ FOLDER_PAGES = [
     "index",
     "my~20folder/index",
     "private/index",
+    "root",
 ]
 PAGE_KEYS = {
     "docname",
@@ -61,13 +62,17 @@ PAGE_KEYS = {
     "title",
     "kind",
     "is_root",
+    "page",
+    "pages",
+    "first",
+    "last",
     "sections",
-    "subfolders",
     "separate",
     "maxdepth",
     "sidecars",
     "readme",
 }
+ROOT_PAGE_KEYS = {"docname", "title", "pages", "maxdepth"}
 ENTRY_KEYS = {
     "ref",
     "kind",
@@ -236,12 +241,31 @@ def test_docnames_are_injective_and_case_insensitive_unique():
 def test_pages_of_the_fixture():
     pages = {p.docname: p for p in pages_of(ROOT)}
     assert sorted(pages) == FOLDER_PAGES
+    index = pages.pop("index")
+    assert index.template == "root.rst.jinja"
+    assert set(index.context) == ROOT_PAGE_KEYS
+    # Flat: the root folder first, then by path.
+    assert index.context["pages"] == [
+        "root",
+        "+a/index",
+        "+a/+b/index",
+        "+for/index",
+        "+nmpkg/index",
+        "+nmpkg/private/index",
+        "alpha/index",
+        "beta/index",
+        "donn~C3~A9es/index",
+        "my~20folder/index",
+        "private/index",
+    ]
     for page in pages.values():
+        assert page.template == "folder.rst.jinja"
         assert set(page.context) == PAGE_KEYS
+        assert (page.context["page"], page.context["pages"]) == (1, 1)
         for _, entries in page.context["sections"]:
             assert all(set(entry) == ENTRY_KEYS for entry in entries)
 
-    root = pages["index"].context
+    root = pages["root"].context
     assert (root["kind"], root["title"], root["is_root"]) == ("root", "folder ./", True)
     sections = {
         title: [e["ref"] for e in entries] for title, entries in root["sections"]
@@ -260,16 +284,6 @@ def test_pages_of_the_fixture():
         "@OldStyle/display.m",
     ]
     assert sections["Apps"] == ["Application.mlapp"]
-    assert root["subfolders"] == [
-        "+a/index",
-        "+nmpkg/index",
-        "+for/index",
-        "alpha/index",
-        "beta/index",
-        "donn~C3~A9es/index",
-        "my~20folder/index",
-        "private/index",
-    ]
     listed = {
         e["ref"]: e
         for page in pages.values()
@@ -294,7 +308,6 @@ def test_pages_of_the_fixture():
 
     nmpkg = pages["+nmpkg/index"].context
     assert (nmpkg["kind"], nmpkg["title"]) == ("namespace", "namespace nmpkg")
-    assert nmpkg["subfolders"] == ["private/index"]
     assert pages["+for/index"].context["title"] == "folder +for/"
     assert pages["my~20folder/index"].context["ref"] == "my folder/"
 
@@ -335,9 +348,10 @@ def test_only_a_class_file_makes_a_class_folder(tmp_path):
             "@F/h.m": FUNCTION.format(name="h"),
         },
     )
-    (page,) = pages_of(tmp_path)
+    pages = {p.docname: p for p in pages_of(tmp_path)}
+    assert sorted(pages) == ["index", "root"]
     listed = sorted(
-        e["ref"] for _, entries in page.context["sections"] for e in entries
+        e["ref"] for _, entries in pages["root"].context["sections"] for e in entries
     )
     assert listed == sorted(
         [
@@ -387,14 +401,47 @@ def test_a_folder_with_only_hidden_files_has_no_page(tmp_path):
         tmp_path, {"a/Contents.m": "% Contents\n", "b/c/f.m": FUNCTION.format(name="f")}
     )
     pages = pages_of(tmp_path)
-    assert [p.docname for p in pages] == ["b/c/index", "b/index", "index"]
+    # No page for a folder without files of its own (b/).
+    assert [p.docname for p in pages] == ["b/c/index", "index"]
 
 
 def test_an_empty_root_gets_its_page_and_a_warning(tmp_path, caplog_sphinx):
     (page,) = pages_of(tmp_path)
     assert page.docname == "index"
-    assert page.context["sections"] == []
+    assert page.context["pages"] == []
     assert any("no documentable files" in m for _, m in caplog_sphinx)
+
+
+def test_folder_pages_split_at_the_page_size(tmp_path):
+    write(tmp_path, {f"a/f{i}.m": FUNCTION.format(name=f"f{i}") for i in range(5)})
+    write(tmp_path, {"a/notes.md": "# Notes\n", "g.m": FUNCTION.format(name="g")})
+    source_index = build_index(IndexSettings(str(tmp_path), sidecar_suffixes=(".md",)))
+    options = ApidocOptions("out", group="folder", page_size=2)
+    pages = {p.docname: p for p in build_pages(source_index, options)}
+    assert pages["index"].context["pages"] == [
+        "root",
+        "a/index",
+        "a/index-2",
+        "a/index-3",
+    ]
+    third = pages["a/index-3"].context
+    assert (third["title"], third["page"], third["pages"]) == (
+        "folder a/ (5-6)",
+        3,
+        3,
+    )
+    assert [e["ref"] for _, es in third["sections"] for e in es] == ["a/f4.m"]
+    assert [e["docname"] for e in third["sidecars"]] == ["notes-md"]
+    assert pages["root"].context["title"] == "folder ./"
+    text = render([pages["a/index-2"], pages["a/index"]])
+    assert ".. mat:autofolder:: a/" in text["a/index"]
+    assert "mat:autofolder" not in text["a/index-2"]
+
+
+def test_root_folder_page_avoids_the_toc_file(tmp_path):
+    write(tmp_path, {"g.m": FUNCTION.format(name="g")})
+    pages = pages_of(tmp_path, tocfile="Root")
+    assert sorted(p.docname for p in pages) == ["Root", "~72oot"]
 
 
 # --- namespace grouping -----------------------------------------------------
@@ -816,7 +863,7 @@ def test_templatedir_replaces_a_template(tmp_path):
     templates.mkdir()
     (templates / "folder.rst.jinja").write_text(
         "{{ kind }}|{{ ref }}|{{ docname }}|{{ is_root }}|{{ maxdepth }}|"
-        "{{ separate }}|{{ subfolders | join(',') }}\n"
+        "{{ separate }}|{{ page }}/{{ pages }}\n"
         "{% for title, entries in sections %}{{ title }}:"
         "{% for e in entries %}{{ e.ref }}={{ e.kind }},{{ e.directive }},"
         "{{ e.options | list | join(';') }},{{ e.title }},{{ e.display }},"
@@ -830,7 +877,7 @@ def test_templatedir_replaces_a_template(tmp_path):
     generate(build_index(IndexSettings(str(ROOT))), options)
     assert (out / "+nmpkg" / "index.rst").read_text() == (
         f"{MARKER}\n\n"
-        "namespace|+nmpkg/|+nmpkg/index|False|2|True|private/index\n"
+        "namespace|+nmpkg/|+nmpkg/index|False|2|True|1/1\n"
         "Classes:+nmpkg/@NmCls/NmCls.m=class,mat:autoclass,"
         "members;undoc-members;show-inheritance,nmpkg.NmCls,nmpkg.NmCls,"
         "nmpkg.NmCls,True,False,@NmCls/NmCls.m \n"
@@ -854,7 +901,7 @@ def test_python_api_sets_what_the_command_line_fixes(tmp_path):
 
 def test_long_paths_warn_on_windows(tmp_path, monkeypatch, caplog_sphinx):
     monkeypatch.setattr(_generate, "_WINDOWS", True)
-    monkeypatch.setattr(_generate, "too_long", lambda path: path.endswith("index.rst"))
+    monkeypatch.setattr(_generate, "too_long", lambda path: path.endswith(".rst"))
     run(ROOT, tmp_path)
     long = [m for s, m in caplog_sphinx if "unless long paths are enabled" in m]
     assert len(long) == len(FOLDER_PAGES)
@@ -1132,7 +1179,7 @@ def test_conf_paths_are_relative_to_the_conf_dir(tmp_path, monkeypatch):
     docs = conf_project(tmp_path, conf)
     monkeypatch.chdir(tmp_path / "src")
     assert main(["-q", "-c", "../docs"]) == 0
-    assert (docs / "out" / "api" / "index.rst").read_text() == f"{MARKER}\n\n./\n"
+    assert (docs / "out" / "api" / "root.rst").read_text() == f"{MARKER}\n\n./\n"
 
 
 def test_conf_namelengthmax_is_explicit(tmp_path):
@@ -1321,7 +1368,7 @@ def test_unreadable_file_is_left_out(tmp_path, caplog_sphinx):
     write(tmp_path, {"ok.m": FUNCTION.format(name="ok"), "locked.m": "x\n"})
     (tmp_path / "locked.m").chmod(0)
     try:
-        (page,) = pages_of(tmp_path)
+        page = {p.docname: p for p in pages_of(tmp_path)}["root"]
     finally:
         (tmp_path / "locked.m").chmod(0o644)
     listed = [e["ref"] for _, entries in page.context["sections"] for e in entries]
@@ -1342,7 +1389,7 @@ def test_kind_without_a_directive_is_left_out(tmp_path, monkeypatch, caplog_sphi
     monkeypatch.setattr(mat_handlers, "_HANDLERS", dict(mat_handlers._HANDLERS))
     mat_handlers.register(ComponentHandler())
     write(tmp_path, {"ok.m": FUNCTION.format(name="ok"), "valve.ssc": "x\n"})
-    (page,) = pages_of(tmp_path)
+    page = {p.docname: p for p in pages_of(tmp_path)}["root"]
     listed = [e["ref"] for _, entries in page.context["sections"] for e in entries]
     assert listed == ["ok.m"]
     assert any("no directive documents a component" in m for _, m in caplog_sphinx)
