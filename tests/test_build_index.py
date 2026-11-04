@@ -172,6 +172,8 @@ def test_build_index_warnings(tmp_path, warnings):
             "bad.m": b"x = 1; % caf\xe9\n",
             "empty.m": "",
             "Contents.m": "% Contents of the folder\n",
+            # Hidden files never get the empty-file warning.
+            "sub/Contents.m": "",
             "private/helper.m": FUNCTION.format(name="helper", help="H"),
         },
     )
