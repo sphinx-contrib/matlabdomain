@@ -3,8 +3,10 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
-SPHINXAUTOBUILD = sphinx-autobuild
+# The commands run in the project's uv environment, as locked in uv.lock.
+UV            = uv run --frozen --all-extras
+SPHINXBUILD   = $(UV) sphinx-build
+SPHINXAUTOBUILD = $(UV) sphinx-autobuild
 SPHINXPROJ    = sphinxcontrib-matlabdomain
 SOURCEDIR     = .
 BUILDDIR      = _build

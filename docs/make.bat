@@ -3,32 +3,32 @@
 pushd %~dp0
 
 REM Command file for Sphinx documentation
+REM The commands run in the project's uv environment, as locked in uv.lock.
 
+if "%UV%" == "" (
+	set UV=uv run --frozen --all-extras
+)
 if "%SPHINXBUILD%" == "" (
-	set SPHINXBUILD=sphinx-build
+	set SPHINXBUILD=%UV% sphinx-build
 )
 if "%SPHINXAUTOBUILD%" == "" (
-	set SPHINXAUTOBUILD=sphinx-autobuild
+	set SPHINXAUTOBUILD=%UV% sphinx-autobuild
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
 set SPHINXPROJ=sphinxcontrib-matlabdomain
 
-if "%1" == "" goto help
-if "%1" == "livehtml" goto livehtml
-
-%SPHINXBUILD% >NUL 2>NUL
+uv --version >NUL 2>NUL
 if errorlevel 9009 (
 	echo.
-	echo.The 'sphinx-build' command was not found. Make sure you have Sphinx
-	echo.installed, then set the SPHINXBUILD environment variable to point
-	echo.to the full path of the 'sphinx-build' executable. Alternatively you
-	echo.may add the Sphinx directory to PATH.
+	echo.The 'uv' command was not found: https://docs.astral.sh/uv/
 	echo.
-	echo.If you don't have Sphinx installed, grab it from
-	echo.http://sphinx-doc.org/
+	popd
 	exit /b 1
 )
+
+if "%1" == "" goto help
+if "%1" == "livehtml" goto livehtml
 
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS%
 goto end
@@ -43,4 +43,6 @@ REM The pages include files from the worked example, so watch it too.
 %SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%\html --watch ..\examples\apidoc %SPHINXOPTS%
 
 :end
+set EXITCODE=%ERRORLEVEL%
 popd
+exit /b %EXITCODE%
