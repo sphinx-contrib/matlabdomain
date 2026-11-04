@@ -91,6 +91,27 @@ def test_help_paths_are_relative_to_the_code_file(make_app, tmp_path):
     assert 'href="#scale"' in page
 
 
+def test_help_uri_links_are_not_dependencies(make_app, tmp_path):
+    files = {
+        **FILES,
+        "src/+demo/scale.m": (
+            "function scale\n% SCALE Scale.\n%\n"
+            "% Mail someone@example.org or `MATLAB <matlab:doc>`_.\nend\n"
+        ),
+    }
+    write(tmp_path, files)
+    app, page, _ = build(make_app, tmp_path)
+    assert 'href="mailto:' in page
+    deps = {str(p) for paths in app.env.dependencies.values() for p in paths}
+    assert not any("mailto:" in p or "matlab:" in p for p in deps), deps
+    # Nothing changed: the second build reads no document again.
+    app = make_app("html", srcdir=tmp_path / "docs")
+    app.build()
+    assert "0 added, 0 changed, 0 removed" in strip_escape_sequences(
+        app.status.getvalue()
+    )
+
+
 def test_help_include_is_not_read_beside_the_page(make_app, tmp_path):
     files = {**FILES, "docs/api/data/snippet.txt": "PAGE SNIPPET\n"}
     del files["src/+demo/data/snippet.txt"]

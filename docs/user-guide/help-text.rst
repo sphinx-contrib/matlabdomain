@@ -104,8 +104,9 @@ What to expect on an existing project:
   (thousands in projects with thousands of files). They do not stop a
   build unless ``-W`` turns warnings into errors.
 * Fix the help where it matters, or build without ``-W``. These warnings
-  come from docutils and have no ``mat.*`` type, so ``suppress_warnings``
-  cannot select them.
+  come from docutils and have the type ``docutils``: ``suppress_warnings =
+  ["docutils"]`` turns them off, for the pages too, so use it only when
+  the help cannot be changed (third-party code).
 
 A mode that shows help as preformatted text, without parsing it as reST, is
 a possible later feature.

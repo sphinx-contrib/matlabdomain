@@ -282,7 +282,8 @@ earlier" in the documentation.
   the code file, as in sidecar docs: images, figures, downloads,
   ``literalinclude``, ``include``, and hyperlinks (to a sidecar doc, a code
   file's API entry, or a download). They were relative to the documentation
-  page.
+  page. Links with a URI scheme (an e-mail address, ``matlab:``) are left
+  as they are.
 * New configuration ``matlab_external_names``: regular expressions of names
   the project does not document. A ``mat`` reference to such a name that
   resolves to nothing is text, without a "reference target not found"

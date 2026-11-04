@@ -22,6 +22,7 @@ rendered into a document by ``mat:autosidecar``.
 import functools
 import glob
 import os
+import re
 import unicodedata
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -127,9 +128,17 @@ def read_sidecar(path, ref):
         return data.decode("utf-8-sig", errors="replace")
 
 
+#: a URI scheme (``mailto:``, ``matlab:``); one letter is a Windows drive
+_SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]+:")
+
+
 def _external(target):
-    """Return True for a URL, a data URI or an absolute path."""
-    return "://" in target or target.startswith(("/", "data:")) or os.path.isabs(target)
+    """Return True for a URI with a scheme (a URL, ``mailto:``, a data URI)
+    or an absolute path.
+    """
+    return (
+        bool(_SCHEME.match(target)) or target.startswith("/") or os.path.isabs(target)
+    )
 
 
 def _exists(path):

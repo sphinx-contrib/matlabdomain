@@ -21,8 +21,9 @@ Sphinx's ``suppress_warnings`` turns off warnings by type and subtype:
 
 ``"mat"`` turns off every warning of this extension. ``sphinx-matlab-apidoc``
 reads ``suppress_warnings`` from the same ``conf.py``. Warnings about help
-text that is not valid reStructuredText come from docutils and cannot be
-selected this way (:doc:`help-text`).
+text that is not valid reStructuredText come from docutils and have the
+type ``docutils``, which covers every page, not only help text
+(:doc:`help-text`).
 
 What each warning means
 -----------------------
