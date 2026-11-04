@@ -134,6 +134,31 @@ Some files and folders are never indexed or need care:
   root are followed.
 * Generated data files can be large and slow to parse; exclude them
   (``**/data/**``) when they need no documentation.
+* Git submodules below the root are indexed like any folder when they are
+  checked out, and are empty folders when not. A project that documents
+  submodules separately can read their paths from ``.gitmodules`` in
+  ``conf.py``, so the list stays in step with the repository:
+
+  .. code-block:: python
+
+     import configparser
+     import os
+
+
+     def _submodule_paths(gitmodules):
+         parser = configparser.ConfigParser()
+         parser.read(gitmodules, encoding="utf-8")
+         return [parser[s]["path"] for s in parser.sections() if "path" in parser[s]]
+
+
+     matlab_src_code_project_root = ".."
+     matlab_src_exclusion_patterns = [
+         "README.*",  # ... the rest of the default list
+         *_submodule_paths(os.path.join(os.path.dirname(__file__), "..", ".gitmodules")),
+     ]
+
+  A helper's name must not start with ``matlab_`` (that prefix is kept for
+  configuration values).
 
 ``sphinx-matlab-apidoc`` reads the same root and patterns from
 ``conf.py``; no option overrides them (:doc:`apidoc`).
