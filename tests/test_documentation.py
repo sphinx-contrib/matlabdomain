@@ -5,6 +5,7 @@ directive option, role, warning and command-line option, and nothing else.
 
 import re
 import shutil
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -154,6 +155,19 @@ def test_repository_configuration():
     documented = re.findall(r"^``([^`]+)``$", section, re.MULTILINE)
     assert len(documented) == len(set(documented)), "duplicate config entries"
     assert set(documented) == repository_configuration(REPO)
+
+
+def test_ruff_hook_matches_dev_pin():
+    project = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))
+    pins = [
+        d.removeprefix("ruff==")
+        for d in project["project"]["optional-dependencies"]["dev"]
+        if d.startswith("ruff==")
+    ]
+    hooks = (REPO / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+    hook = re.search(r"ruff-pre-commit\s+rev: v(\S+)", hooks)
+    assert hook is not None
+    assert pins == [hook[1]]
 
 
 @pytest.mark.parametrize(
