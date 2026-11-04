@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import zipfile
+from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
@@ -103,7 +104,7 @@ def test_decode_platform_fallback(monkeypatch, fallback, expected):
 @pytest.mark.parametrize("winerror", [32, 33])
 def test_build_cleanup_retries_sharing_violation(monkeypatch, tmp_path, winerror):
     error = PermissionError("locked")
-    error.winerror = winerror
+    cast(Any, error).winerror = winerror
     remove = Mock(side_effect=[error, None])
     pause = Mock()
     monkeypatch.setattr("conftest.shutil.rmtree", remove)
@@ -116,7 +117,7 @@ def test_build_cleanup_retries_sharing_violation(monkeypatch, tmp_path, winerror
 @pytest.mark.parametrize(("winerror", "attempts"), [(5, 1), (32, 5)])
 def test_build_cleanup_propagates_errors(monkeypatch, tmp_path, winerror, attempts):
     error = PermissionError("locked")
-    error.winerror = winerror
+    cast(Any, error).winerror = winerror
     remove = Mock(side_effect=error)
     pause = Mock()
     monkeypatch.setattr("conftest.shutil.rmtree", remove)

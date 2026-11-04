@@ -239,7 +239,9 @@ requires = ["tox>=4.60"]
 commands = [
     ["ruff", "check", "."],
     ["ruff", "format", "--check", "."],
-    ["pyright", "--pythonpath", "{env_python}"]
+    ["pyright", "--pythonpath", "{env_python}", "--pythonplatform", "Linux"],
+    ["pyright", "--pythonpath", "{env_python}", "--pythonplatform", "Windows"],
+    ["pyright", "--pythonpath", "{env_python}", "--pythonplatform", "Darwin"]
 ]
 deps = []
 description = "Lint, format-check, and basic-type-check maintained Python"

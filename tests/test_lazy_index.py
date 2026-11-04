@@ -279,6 +279,7 @@ LINK_KINDS = ["symlink", *(["junction"] if sys.platform == "win32" else [])]
 def _link(target, link, kind):
     """Create a folder link; skip when the OS does not allow it here."""
     if kind == "junction":
+        assert sys.platform == "win32"
         import _winapi
 
         _winapi.CreateJunction(str(target), str(link))
