@@ -1118,6 +1118,18 @@ def test_check_counts_removals(tmp_path, capsys):
     assert not kept.changed
 
 
+def test_crlf_pages_are_unchanged(tmp_path):
+    out = tmp_path / "out"
+    docs = conf_dir(tmp_path / "docs", out)
+    assert main(["-q", "-c", docs]) == 0
+    for page in out.rglob("*.rst"):
+        page.write_bytes(page.read_bytes().replace(b"\n", b"\r\n"))
+    before = {p: p.read_bytes() for p in out.rglob("*.rst")}
+    assert main(["-q", "--check", "-c", docs]) == 0
+    assert main(["-q", "-c", docs]) == 0
+    assert {p: p.read_bytes() for p in out.rglob("*.rst")} == before
+
+
 def test_cli_reports_renames(tmp_path, capsys):
     if not _case_insensitive(tmp_path):
         pytest.skip("needs a case-insensitive file system")

@@ -691,7 +691,8 @@ def generate(source_index, options):
         except FileNotFoundError:
             status = result.created
         else:
-            if old == data:
+            # A CRLF checkout (git core.autocrlf) is not a change.
+            if old == data or old.replace(b"\r\n", b"\n") == data:
                 result.unchanged.append(rel)
                 continue
             if not options.force and not _starts_with_marker(old):
