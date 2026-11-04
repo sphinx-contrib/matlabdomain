@@ -1,4 +1,5 @@
 @ECHO OFF
+setlocal
 
 pushd %~dp0
 
@@ -40,7 +41,7 @@ goto end
 REM Rebuild on every change and serve the HTML at http://127.0.0.1:8000.
 REM The pages include files from the worked example, so watch it too.
 :livehtml
-%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%\html --watch ..\examples\apidoc %SPHINXOPTS%
+%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%\html -d %BUILDDIR%\doctrees --watch ..\examples\apidoc %SPHINXOPTS%
 
 :end
 set EXITCODE=%ERRORLEVEL%

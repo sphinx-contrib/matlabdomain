@@ -272,6 +272,11 @@ def _sphinx_warnings(stream, suppress=()):
         logger.setLevel(saved[2])
 
 
+def _count(number, noun):
+    """``1 page``, ``2 pages``."""
+    return f"{number} {noun}{'' if number == 1 else 's'}"
+
+
 def main(argv=None):
     """Run ``sphinx-matlab-apidoc``; return the exit status.
 
@@ -309,12 +314,14 @@ def main(argv=None):
                 print(f"{verb} {shown}.")
         kept = f", {len(result.kept)} kept (-f overwrites)" if result.kept else ""
         renamed = f", {len(result.renamed)} renamed" if result.renamed else ""
+        mode = "Check: " if args.check else "Dry run: " if options.dry_run else ""
         print(
-            f"{'Dry run: ' if options.dry_run else ''}{len(result.pages)} pages: "
+            f"{mode}{_count(len(result.pages), 'page')}: "
             f"{len(result.created)} created, {len(result.updated)} updated, "
             f"{len(result.unchanged)} unchanged{kept}{renamed}, "
-            f"{len(result.removed)} removed; {len(source_index.index)} files "
-            f"indexed, {warnings.count} warnings, {elapsed:.2f} s."
+            f"{len(result.removed)} removed; "
+            f"{_count(len(source_index.index), 'file')} indexed, "
+            f"{_count(warnings.count, 'warning')}, {elapsed:.2f} s."
         )
     if args.check and result.changed:
         print(

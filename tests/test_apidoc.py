@@ -36,12 +36,14 @@ TESTS = Path(__file__).parent
 ROOT = TESTS / "roots" / "test_apidoc_basics"
 GOLDEN = TESTS / "apidoc_golden"
 EXAMPLE = TESTS.parent / "examples" / "apidoc"
-NOT_CALLABLE = [
-    "+for/nm_kw.m",
-    "@Bad/Other.m",
-    "@NmBox/sub/nm_legacy.m",
-    "bad-name.m",
-]
+NOT_CALLABLE = {
+    "+for/nm_kw.m": "folder name 'for' is a MATLAB keyword",
+    "@Bad/Other.m": "a class in @Bad must be named Bad",
+    "@NmBox/sub/nm_legacy.m": (
+        "files in subfolders of a class folder are not callable since R2026a"
+    ),
+    "bad-name.m": "its name 'bad-name' is not a valid MATLAB identifier",
+}
 FOLDER_PAGES = [
     "+a/+b/index",
     "+a/index",
@@ -987,8 +989,9 @@ def test_output_and_warnings(tmp_path, capsys):
     assert "27 files indexed, 4 warnings" in captured.out
     assert sorted(captured.err.splitlines()) == sorted(
         f"WARNING: [sphinxcontrib-matlabdomain] {ref} is not callable in MATLAB "
-        "R2026a; it is documented by its path reference. [mat.not_callable]"
-        for ref in NOT_CALLABLE
+        f"R2026a ({reason}); it is documented by its path reference. "
+        "[mat.not_callable]"
+        for ref, reason in NOT_CALLABLE.items()
     )
     assert main(["-q", "-n", "-c", docs]) == 0
     captured = capsys.readouterr()
@@ -1029,6 +1032,24 @@ def test_dry_run_lists_changes(tmp_path, capsys):
     out = capsys.readouterr().out
     assert out.count("Would create file ") == len(FOLDER_PAGES)
     assert out.splitlines()[-1].startswith(f"Dry run: {len(FOLDER_PAGES)} pages")
+
+
+def test_check_summary(tmp_path, capsys):
+    docs = conf_dir(tmp_path / "docs", tmp_path / "out", FOLDER)
+    assert main(["-q", "-c", docs]) == 0
+    assert main(["--check", "-c", docs]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith(f"Check: {len(FOLDER_PAGES)} pages: 0 created")
+    assert "27 files indexed, 4 warnings, " in out
+
+
+def test_summary_singular(tmp_path, capsys):
+    source = tmp_path / "src"
+    source.mkdir()
+    (source / "f.m").write_text("function f\n% F does it.\nend\n")
+    docs = conf_dir(tmp_path / "docs", tmp_path / "out", root=source)
+    assert main(["-n", "-c", docs]) == 0
+    assert "; 1 file indexed, 0 warnings, " in capsys.readouterr().out
 
 
 def test_include_and_exclude(tmp_path):

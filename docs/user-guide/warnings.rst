@@ -58,7 +58,9 @@ What each warning means
 ``mat.not_callable``
    MATLAB cannot call the file for :confval:`matlab_version`, so it has no
    MATLAB name; it is documented and linked by path (:doc:`referencing`).
-   Rename or move the file, or suppress the warning if that is intended.
+   The warning says why (an invalid name such as ``my-file``, a keyword,
+   a subfolder of a class folder, ...). Rename or move the file, or
+   suppress the warning if that is intended.
 
 ``mat.outside_root``
    A link or Windows junction below the project root points outside it; it

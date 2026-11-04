@@ -24,7 +24,7 @@ apidoc-check:
 
 # Live rebuild on changes to the docs and the MATLAB code.
 livehtml:
-	$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" --watch .. --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "$(APIDOC) -c . -q" $(SPHINXOPTS) $(O)
+	$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" -d "$(BUILDDIR)/doctrees" --watch .. --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "$(APIDOC) -c . -q" $(SPHINXOPTS) $(O)
 
 # Route all other targets to Sphinx's "make mode" (html, clean, ...).
 %: Makefile

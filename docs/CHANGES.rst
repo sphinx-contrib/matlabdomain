@@ -64,8 +64,8 @@ earlier" in the documentation.
     removed value set in ``conf.py``.
   * Files MATLAB cannot call for ``matlab_version`` (keyword namespaces,
     invalid names, ``@C/sub`` files from R2026a, ...) are documented by path
-    with one ``mat.not_callable`` warning each (``suppress_warnings``); files
-    below ``private/`` never warn.
+    with one ``mat.not_callable`` warning each (``suppress_warnings``) that
+    says why; files below ``private/`` never warn.
 * Fixed a segmentation fault (exit code 139) with tree-sitter 0.26.0 on
   standard CPython builds. Its ``Point.row`` getter corrupts reference counts,
   so point rows are now read by index.
@@ -157,6 +157,8 @@ earlier" in the documentation.
   when they change and removed when they are no longer pages; ``--check``
   exits with 1 when the pages are out of date. A page that differs only in
   line endings (a Windows checkout with ``core.autocrlf``) is unchanged.
+  Its summary line starts with ``Check:`` under ``--check`` and
+  ``Dry run:`` under ``-n``.
   For full control, a script
   calls the Python API (``IndexSettings``, ``build_index``, ``generate``,
   ``ApidocOptions``). The command does not run inside ``sphinx-build``; run

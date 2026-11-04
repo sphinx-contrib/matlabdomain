@@ -402,6 +402,54 @@ def _private_name(
     )
 
 
+def _name_problem(name: str, namelengthmax: int) -> str:
+    """Why the invalid ``name`` is no MATLAB identifier."""
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name):
+        return "is not a valid MATLAB identifier"
+    if len(name) > namelengthmax:
+        return f"is longer than {namelengthmax} characters"
+    return "is a MATLAB keyword"
+
+
+def not_callable_reason(
+    folder: str,
+    filename: str,
+    is_class: bool,
+    namelengthmax: int,
+    matlab_version: str = DEFAULT_MATLAB_VERSION,
+) -> str:
+    """Says why ``form_matlab_name`` returns None for a file outside ``private/``."""
+    parts = _split_folder(folder)
+    in_class = False
+    for i, part in enumerate(parts):
+        if part[:1] in ("+", "@"):
+            kind = "namespace" if part[0] == "+" else "class"
+            if in_class:
+                return f"{kind} folder {part} is inside a class folder"
+            first = part[0] == "@" or i == 0 or not parts[i - 1].startswith("+")
+            if not is_valid_identifier(
+                part[1:], namelengthmax, allow_keywords=not first
+            ):
+                problem = _name_problem(part[1:], namelengthmax)
+                return f"folder name {part[1:]!r} {problem}"
+            in_class = part[0] == "@"
+        elif in_class:
+            if is_class:
+                return "classes in subfolders of a class folder are not callable"
+            if has_matlab_behavior("class_subfolder_not_callable", matlab_version):
+                return (
+                    "files in subfolders of a class folder are not callable since "
+                    + MATLAB_VERSION_RULES["class_subfolder_not_callable"]
+                )
+    stem = Path(filename).stem
+    last = parts[-1] if parts else ""
+    if is_class and last.startswith("@") and stem != last[1:]:
+        return f"a class in {last} must be named {last[1:]}"
+    if not is_valid_identifier(stem, namelengthmax, allow_keywords=last[:1] == "@"):
+        return f"its name {stem!r} {_name_problem(stem, namelengthmax)}"
+    return "MATLAB cannot form a name for it"
+
+
 def form_matlab_name(
     folder: str,
     filename: str,

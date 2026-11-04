@@ -30,6 +30,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 primary_domain = "mat"
 highlight_language = "matlab"
+# Keep the straight quotes of the help text ('name', "text") as typed:
+# smartquotes = False
 
 # -- MATLAB domain -----------------------------------------------------------
 
@@ -98,6 +100,9 @@ napoleon_use_admonition_for_notes = False
 napoleon_use_admonition_for_references = False
 napoleon_use_rtype = True
 # The project's own help headings (help_headings.py), besides napoleon's.
+# Headings match ignoring case, and only if made of letters, digits, "_"
+# and spaces ("Name-Value Pairs" never matches). Under a "params_style"
+# heading, "name - text" and "name: text" items become parameters.
 napoleon_custom_sections = [
     ("Inputs", "params_style"),
     ("Outputs", "params_style"),

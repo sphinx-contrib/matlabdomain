@@ -51,8 +51,8 @@ PY = sys.executable
 SUBTYPE = re.compile(r"\[([\w.-]+)\]\s*$")
 RECORD = re.compile(r"(^|: )(WARNING|ERROR|CRITICAL|SEVERE): ")
 SUMMARY = re.compile(
-    r"(\d+) pages: (\d+) created, (\d+) updated, (\d+) unchanged.*?"
-    r"(\d+) files indexed, (\d+) warnings, ([\d.]+) s\."
+    r"(\d+) pages?: (\d+) created, (\d+) updated, (\d+) unchanged.*?"
+    r"(\d+) files? indexed, (\d+) warnings?, ([\d.]+) s\."
 )
 # variant -> (builder, extra sphinx-build arguments)
 VARIANTS = {

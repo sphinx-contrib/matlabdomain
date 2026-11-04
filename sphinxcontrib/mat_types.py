@@ -1227,11 +1227,19 @@ def name_sources(source_index):
         record.update(matlab_name=matlab_name, private=private, scope=scope)
         if name is None:
             if not private and not is_hidden(ref):
+                reason = mat_naming.not_callable_reason(
+                    _naming_folder(ref),
+                    os.path.basename(path),
+                    record["type"] == "class",
+                    namelengthmax,
+                    version,
+                )
                 logger.warning(
-                    "[sphinxcontrib-matlabdomain] %s is not callable in MATLAB %s; "
-                    "it is documented by its path reference.",
+                    "[sphinxcontrib-matlabdomain] %s is not callable in MATLAB %s "
+                    "(%s); it is documented by its path reference.",
                     ref,
                     version,
+                    reason,
                     type="mat",
                     subtype="not_callable",
                 )

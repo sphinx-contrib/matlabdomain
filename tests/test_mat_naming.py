@@ -29,6 +29,7 @@ from sphinxcontrib.mat_naming import (
     is_valid_identifier,
     join_reference,
     make_target_id,
+    not_callable_reason,
     parse_reference,
     path_reference,
     resolve_namelengthmax,
@@ -137,6 +138,26 @@ def test_form_matlab_name_class_folder_under_invalid_package_dropped():
 )
 def test_form_matlab_name_not_callable(folder, name, is_class):
     assert form_matlab_name(folder, name, is_class, namelengthmax=2048) is None
+
+
+@pytest.mark.parametrize(
+    ("folder", "name", "is_class", "version", "reason"),
+    [
+        ("/tmp", "bad-name.m", False, "R2026a", "its name 'bad-name' is not a"),
+        ("/tmp", "end.m", False, "R2026a", "its name 'end' is a MATLAB keyword"),
+        ("/tmp", "a" * 64 + ".m", False, "R2026a", "is longer than 63 characters"),
+        ("/tmp/+for", "f.m", False, "R2026a", "folder name 'for' is a MATLAB"),
+        ("/tmp/+1bad/@C", "C.m", True, "R2026a", "folder name '1bad' is not"),
+        ("/tmp/@O/@I", "I.m", True, "R2026a", "class folder @I is inside a class"),
+        ("/tmp/@C/+p", "f.m", False, "R2026a", "namespace folder +p is inside"),
+        ("/tmp/@C/sub", "f.m", False, "R2026a", "not callable since R2026a"),
+        ("/tmp/@C/sub", "D.m", True, "R2025b", "classes in subfolders of a class"),
+        ("/tmp/@C", "D.m", True, "R2026a", "a class in @C must be named C"),
+    ],
+)
+def test_not_callable_reason(folder, name, is_class, version, reason):
+    assert form_matlab_name(folder, name, is_class, 63, version) is None
+    assert reason in not_callable_reason(folder, name, is_class, 63, version)
 
 
 def test_form_matlab_name_of_a_relative_package_folder():
