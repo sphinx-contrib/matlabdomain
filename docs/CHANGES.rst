@@ -143,8 +143,9 @@ earlier" in the documentation.
   ``matlab_apidoc_page_size`` entries (default 100) per page; ``private/``
   files are left out (``matlab_apidoc_private = True`` lists them with the
   folder above). ``matlab_apidoc_group = "folder"`` writes one page
-  per folder with files, also listed flat on the root page (the root
-  folder's page first, named ``root``). Its template context is a public
+  per folder with files, titled by path (``folder a/+ns/``), also listed
+  flat on the root page (the root folder's page first, named ``root``).
+  Its template context is a public
   interface: renaming or removing a key is a breaking change. See
   ``examples/apidoc``. ``sphinx-matlab-apidoc -c DIR`` (default: the
   current folder) reads every setting from ``DIR/conf.py``: the source

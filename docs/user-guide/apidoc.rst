@@ -137,8 +137,10 @@ With ``"folder"``:
 * The root page (the toc file) has one flat toctree, as in namespace
   grouping: the root folder's page first, then the folders sorted by path,
   ignoring case, so the navigation stays one level deep.
-* The title is the folder's signature: ``namespace demo`` for a ``+``
-  folder, ``folder utils/`` for a plain folder, ``folder ./`` for the root.
+* The title is the folder's path: ``folder +demo/``, ``folder utils/``,
+  ``folder ./`` for the root. A namespace spread over several folders
+  (``a/+ns/``, ``b/+ns/``) gets a page per folder, each with its own title;
+  the ``mat:autofolder`` signature still shows ``namespace ns``.
   The page has ``mat:autofolder`` (without ``:members:``), a local table of
   contents, and sections in this order: Classes, Functions, Scripts, Apps.
   A long folder gets several pages, split at

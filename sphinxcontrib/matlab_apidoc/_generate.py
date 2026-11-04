@@ -328,7 +328,8 @@ def _folder_pages(source_index, options):
             kind = "root"
         else:
             kind = "namespace" if namespace else "folder"
-        title = f"namespace {namespace}" if namespace else f"folder {folder}"
+        # By path: one namespace may span several folders.
+        title = f"folder {folder}"
         entries = [
             e for _, section in _sections(listed.get(folder, ())) for e in section
         ]

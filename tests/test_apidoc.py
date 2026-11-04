@@ -307,7 +307,7 @@ def test_pages_of_the_fixture():
     assert listed["+nmpkg/nm_func.m"]["title"] == "nmpkg.nm_func"
 
     nmpkg = pages["+nmpkg/index"].context
-    assert (nmpkg["kind"], nmpkg["title"]) == ("namespace", "namespace nmpkg")
+    assert (nmpkg["kind"], nmpkg["title"]) == ("namespace", "folder +nmpkg/")
     assert pages["+for/index"].context["title"] == "folder +for/"
     assert pages["my~20folder/index"].context["ref"] == "my folder/"
 
@@ -442,6 +442,21 @@ def test_root_folder_page_avoids_the_toc_file(tmp_path):
     write(tmp_path, {"g.m": FUNCTION.format(name="g")})
     pages = pages_of(tmp_path, tocfile="Root")
     assert sorted(p.docname for p in pages) == ["Root", "~72oot"]
+
+
+def test_folders_of_one_namespace_are_titled_by_path(tmp_path):
+    write(
+        tmp_path,
+        {
+            "a/+ns/f.m": FUNCTION.format(name="f"),
+            "b/+ns/g.m": FUNCTION.format(name="g"),
+        },
+    )
+    pages = {p.docname: p.context for p in pages_of(tmp_path)}
+    assert [(pages[d]["title"], pages[d]["kind"]) for d in pages["index"]["pages"]] == [
+        ("folder a/+ns/", "namespace"),
+        ("folder b/+ns/", "namespace"),
+    ]
 
 
 # --- namespace grouping -----------------------------------------------------

@@ -76,7 +76,8 @@ In folder grouping, one page of a folder with files or sidecar docs.
 ``ref``
    The folder's path reference (``+demo/``; ``./`` for the root).
 ``title``
-   The folder's signature: ``namespace demo``, ``folder utils/``, or
+   ``folder`` and the folder's path reference: ``folder +demo/``,
+   ``folder utils/``, or
    ``folder ./``; with several pages, followed by the range of entries
    (``folder utils/ (101-200)``).
 ``kind``
