@@ -167,8 +167,10 @@ when adding, removing or moving a maintained configuration file.
   CLIs. Uses the selected interpreter; try the relevant profile after changing
   command arguments. Do not copy lint or type policy into launch profiles.
 ``.gitattributes``
-  Git text/binary and LF normalization rules. Keep binary MATLAB artifacts
-  binary; inspect ``git diff --check`` and cross-platform checkouts after edits.
+  Git text/binary and line-ending rules: LF, except CRLF for ``.bat`` and
+  ``.cmd`` (``cmd.exe`` misreads labels in LF files; pre-commit's LF hook skips
+  them). Keep binary MATLAB artifacts binary; inspect ``git diff --check`` and
+  cross-platform checkouts after edits.
 ``.gitignore``
   Git exclusions for environments, build/coverage/cache output and fetched
   gauntlet repositories/runs. It does not define Python analysis scope;
@@ -202,7 +204,8 @@ when adding, removing or moving a maintained configuration file.
 Ruff and basic Pyright analyze ``sphinxcontrib``, tests, documentation config,
 examples, skill scripts and slow-test tools. They exclude ``tests/roots``,
 ``tests/test_data`` and ``tests/test_docs`` (test inputs, sometimes deliberately
-invalid), generated builds/caches and gauntlet checkouts/runs. User-facing
-configuration templates and fixture ``conf.py`` files are tested as data. If 
+invalid), skill templates copied into user projects, generated builds/caches
+and gauntlet checkouts/runs. User-facing configuration templates and fixture
+``conf.py`` files are tested as data. If
 a parent workspace disables Pylance checks, open this repository as its own
 folder to use these settings.

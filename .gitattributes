@@ -26,9 +26,9 @@ uv.lock text eol=lf
 # Shell scripts
 *.sh text eol=lf
 
-# Batch files
-*.bat text eol=lf
-*.cmd text eol=lf
+# Batch files: cmd.exe misreads labels in LF-only files
+*.bat text eol=crlf
+*.cmd text eol=crlf
 
 # Binary files (no line ending conversion)
 *.mlapp binary

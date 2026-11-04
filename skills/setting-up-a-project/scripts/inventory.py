@@ -11,8 +11,8 @@ Usage:
 
 ROOT is the project root (the future ``matlab_src_code_project_root``);
 ``--exclude`` replaces the default exclusion patterns, as the configuration
-value does; ``--docs`` is the Sphinx source folder (its files are never
-sidecar docs).
+value does; ``--docs`` is the Sphinx source folder (default ``ROOT/docs``;
+its files are never sidecar docs).
 """
 
 import argparse
@@ -84,10 +84,11 @@ for path, record in index.index.items():
             plain_in_ns["/".join(parts[: i + 1])] += 1
             break
 
+print(f"== Sphinx source folder (--docs): {docs}")
 print("== Files by top folder and kind")
 for top, counts in sorted(kinds.items()):
     print(f"  {top}: {dict(counts)}")
-print(f"== Namespaces ({len(namespaces)}), files in each")
+print(f"== Namespaces and class folders ({len(namespaces)}), files in each")
 for name, count in sorted(namespaces.items()):
     print(f"  {name}: {count}")
 print("== Duplicate MATLAB names (exclude a copy, or keep both: listed by path)")

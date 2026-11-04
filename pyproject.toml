@@ -113,7 +113,8 @@ exclude = [
     "tests/test_data",
     "tests/test_docs",
     "test_slow/gauntlet/repos",
-    "test_slow/gauntlet/runs"
+    "test_slow/gauntlet/runs",
+    "skills/*/templates"
 ]
 include = ["sphinxcontrib", "tests", "docs", "examples", "skills", "test_slow"]
 pythonVersion = "3.11"
@@ -134,7 +135,8 @@ extend-exclude = [
     "tests/test_data",
     "tests/test_docs",
     "test_slow/gauntlet/repos",
-    "test_slow/gauntlet/runs"
+    "test_slow/gauntlet/runs",
+    "skills/*/templates"
 ]
 force-exclude = true
 indent-width = 4

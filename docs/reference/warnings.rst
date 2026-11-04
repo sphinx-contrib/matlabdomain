@@ -30,7 +30,9 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
      - an empty file (nothing but blank lines)
      - every build
    * - ``mat.not_callable``
-     - a file MATLAB cannot call for :confval:`matlab_version`
+     - a file MATLAB cannot call for :confval:`matlab_version`; the
+       message says why (an invalid name, a keyword, a subfolder of a
+       class folder, ...)
      - every build
    * - ``mat.outside_root``
      - a link below the project root that points outside it

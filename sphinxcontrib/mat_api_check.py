@@ -506,7 +506,7 @@ class MatlabApiCheckBuilder(Builder):
     """
 
     name = "matlab-api-check"
-    epilog = "The MATLAB API check passed; see %(outdir)s/api-check.txt."
+    epilog = f"The MATLAB API check passed; see %(outdir)s{os.sep}{REPORT_TXT}."
 
     def init(self):
         #: number of findings with the severity ``error``

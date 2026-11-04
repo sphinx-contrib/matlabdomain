@@ -1,4 +1,5 @@
 @ECHO OFF
+setlocal
 
 pushd %~dp0
 
@@ -42,7 +43,7 @@ if "%1" == "apidoc-check" (
 )
 
 if "%1" == "livehtml" (
-	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html --watch .. --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% -c . -q" %SPHINXOPTS% %O%
+	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html -d %BUILDDIR%/doctrees --watch .. --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% -c . -q" %SPHINXOPTS% %O%
 	goto end
 )
 

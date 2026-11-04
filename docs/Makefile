@@ -18,7 +18,7 @@ help:
 # Rebuild on every change and serve the HTML at http://127.0.0.1:8000.
 # The pages include files from the worked example, so watch it too.
 livehtml:
-	@$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" --watch ../examples/apidoc $(SPHINXOPTS) $(O)
+	@$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" -d "$(BUILDDIR)/doctrees" --watch ../examples/apidoc $(SPHINXOPTS) $(O)
 
 .PHONY: help livehtml Makefile
 
