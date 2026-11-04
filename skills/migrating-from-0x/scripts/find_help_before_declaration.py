@@ -37,7 +37,7 @@ def main():
         "--exclude",
         action="append",
         default=[],
-        help="fnmatch glob on the path relative to ROOT, such as 'tests/*' (repeatable)",
+        help="fnmatch glob relative to ROOT, such as 'tests/*' (repeatable)",
     )
     args = parser.parse_args()
     root = args.root.resolve()

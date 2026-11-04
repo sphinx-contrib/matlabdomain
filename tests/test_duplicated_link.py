@@ -9,8 +9,8 @@ Test the autodoc extension.
 
 import pickle
 
-import docutils
 import pytest
+from docutils import nodes
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def srcdir(rootdir):
 def test_duplicate_link(app):
     content = pickle.loads((app.doctreedir / "groups.doctree").read_bytes())
 
-    assert isinstance(content[0], docutils.nodes.section)
+    assert isinstance(content[0], nodes.section)
 
     elems = len(content[0])
     section = content[0][elems - 1]

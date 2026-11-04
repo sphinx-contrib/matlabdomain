@@ -1,5 +1,4 @@
-"""
-sphinxcontrib.mat_types
+"""sphinxcontrib.mat_types
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Types for MATLAB.
@@ -17,7 +16,7 @@ import sys
 import unicodedata
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from io import open  # for opening files with encoding in Python 2
+from typing import Any, cast
 from zipfile import ZipFile
 
 from sphinx.environment import CONFIG_OK
@@ -25,6 +24,18 @@ from sphinx.errors import ConfigError
 from sphinx.util.build_phase import BuildPhase
 from sphinx.util.logging import getLogger, suppress_logging
 from sphinx.util.matching import Matcher
+from tree_sitter import Node, Parser, Tree
+
+from sphinxcontrib.mat_tree_sitter_parser import (
+    ML_LANG,
+    MatClassParser,
+    MatFunctionParser,
+    MatScriptParser,
+    declaration,
+    first_error,
+    get_row,
+    parsed_type,
+)
 
 from . import mat_naming
 from .mat_classify import (
@@ -39,19 +50,6 @@ from .mat_classify import (
     is_hidden,
 )
 from .mat_handlers import handler_by_extension, handler_for, handlers
-
-from tree_sitter import Node, Parser, Tree
-
-from sphinxcontrib.mat_tree_sitter_parser import (
-    ML_LANG,
-    MatClassParser,
-    MatFunctionParser,
-    MatScriptParser,
-    declaration,
-    first_error,
-    get_row,
-    parsed_type,
-)
 from .mat_naming import (
     ROOT_REFERENCE,
     folder_of,
@@ -168,7 +166,7 @@ class _DetachedEntityStore:
 
     def resolve(self, ref):
         parts = [] if ref == ROOT_REFERENCE else ref.rstrip("/").split("/")
-        path = os.path.join(MatObject.basedir, *parts)
+        path = os.path.join(cast(str, MatObject.basedir), *parts)
         if ref.endswith("/"):
             if not os.path.isdir(path) or (parts and parts[0][:1] in ("_", ".")):
                 return None
@@ -247,7 +245,7 @@ def _note_use(dom, ref):
             dom.env.note_reread()
 
 
-def resolve(dom, ref):
+def resolve(dom, ref) -> Any:
     """Object of a file or folder reference (without members), or None.
 
     Folders come from the index stage. A file is parsed on first use in this
@@ -283,7 +281,7 @@ def _resolve_path(dom, rel):
     return None
 
 
-def _parse(handler, path, stem, folder, kind, text=None):
+def _parse(handler, path, stem, folder, kind, text=None) -> Any:
     """Parse one file; a failure gives an empty placeholder of the type ``kind``."""
     try:
         if text is None:
@@ -361,6 +359,7 @@ def _load_class_folder(dom, folder):
         # which the folder is no class.
         method = copy.copy(func)
         method.__class__ = MatMethod
+        method = cast(MatMethod, method)
         method.cls = cls
         # TODO: Find the method attributes defined in classfolder class definition.
         method.attrs = {}
@@ -488,7 +487,7 @@ def find_source(dom, target, folder=None, accept=is_source_object):
             return _resolved(dom, [match])
 
     named = [
-        (match, _attrs(dom, base))
+        (match, cast(tuple[str, bool, str], _attrs(dom, base)))
         for ref, base in _named(dom, target)
         if (match := _match(dom, ref, accept))
     ]
@@ -693,7 +692,7 @@ class SourceFilter:
 
 
 def pattern_list(value, option):
-    """The normalized patterns of a config list (or ConfigError)."""
+    """Normalize the patterns of a config list (or raise ConfigError)."""
     if isinstance(value, str) or not isinstance(value, (list, tuple)):
         raise ConfigError(f"{option} must be a list of glob patterns.")
     return [_normalize_pattern(p, option) for p in value]
@@ -732,7 +731,7 @@ def check_text_encoding(encoding, option):
 
 
 def sidecar_suffix_list(value, option="matlab_src_sidecar_suffixes"):
-    """The sidecar suffixes of a config list, in ``SIDECAR_SUFFIXES`` order (or
+    """Normalize sidecar suffixes in ``SIDECAR_SUFFIXES`` order (or raise
     ConfigError).
     """
     if isinstance(value, str) or not isinstance(value, (list, tuple)):
@@ -1063,7 +1062,7 @@ class _Indexer:
                 kind, unreadable = UNKNOWN, True
                 problems = [("parse_error", failure_message(err), None)]
             help_only = kind in (SCRIPT, FUNCTION) and text is not None
-            help_only = help_only and is_help_only(text)
+            help_only = help_only and is_help_only(cast(str, text))
             if self.cache_text and text is not None:
                 self.out.text_cache[key] = text
         self.out.index[path] = {
@@ -1263,7 +1262,7 @@ def _undecodable(name):
     return False
 
 
-def placeholder(kind, name, folder):
+def placeholder(kind, name, folder) -> Any:
     """Empty object of the index type ``kind`` for a file that failed to parse."""
     if kind == "application":
         return MatApplication(name, folder, "")
@@ -1301,9 +1300,8 @@ def _restore_matobject(class_name):
     return cls.__new__(cls)
 
 
-class MatObject(object):
-    """
-    Base MATLAB object to which all others are subclassed.
+class MatObject:
+    """Base MATLAB object to which all others are subclassed.
 
     :param name: Name of MATLAB object.
     :type name: str
@@ -1318,27 +1316,31 @@ class MatObject(object):
     :class:`MatApplication` must be a ``.mlapp`` file.
     """
 
-    basedir = None
+    basedir: str | None = None
     encoding = None
     sphinx_env = None
-    sphinx_app = None
+    sphinx_app: Any = None
     #: index type (the handler's ``classify()``), tree-sitter's type (``.m``
     #: only) and whether the file has code
-    source_type = None
-    parsed_type = None
+    source_type: str | None = None
+    parsed_type: str | None = None
     has_code = True
     #: ``(subtype, message, row or None)`` found while parsing; the build
     #: warns them through ``parse_warnings``
-    source_warnings = ()
+    source_warnings: list[tuple[str, str, int | None]] | tuple = ()
     #: the file could not be read (an empty placeholder that is not cached)
     unreadable = False
+    ref: str
+    matlab_name: str
+    private: bool
+    scope: str
 
     def __init__(self, name):
         #: name of MATLAB object
         self.name = name
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        """Return the role used for references and automatic links"""
         return "ref"
 
     def __reduce_ex__(self, protocol):
@@ -1356,9 +1358,9 @@ class MatObject(object):
 
     def __repr__(self):
         # __str__() method not required, if not given, then __repr__() used
-        return '<%s: "%s">' % (self.__class__.__name__, self.name)
+        return f'<{self.__class__.__name__}: "{self.name}">'
 
-    def getter(self, name, *defargs):
+    def getter(self, name, *defargs) -> Any:
         if name == "__name__":
             return self.__name__
         if defargs:
@@ -1371,9 +1373,8 @@ class MatObject(object):
         return None
 
     @staticmethod
-    def matlabify(objname):
-        """
-        Makes a MatObject.
+    def matlabify(objname) -> Any:
+        """Make a MatObject.
 
         :param objname: Path of the object below the project root
             (:attr:`MatObject.basedir`) with ``/`` separators: a folder
@@ -1393,9 +1394,8 @@ class MatObject(object):
         return _resolve_path(_domain(), rel)
 
     @staticmethod
-    def parse_mfile(mfile, name, path, encoding=None, text=None):
-        """
-        Parse an ``.m`` file with tree-sitter.
+    def parse_mfile(mfile, name, path, encoding=None, text=None) -> Any:
+        """Parse an ``.m`` file with tree-sitter.
 
         :param mfile: Full path of mfile.
         :type mfile: str
@@ -1421,7 +1421,9 @@ class MatObject(object):
         if text is None:
             with open(mfile, "rb") as code_f:
                 text, problem = decode_source(code_f.read(), encoding)
-        warnings = [] if problem is None else [("encoding", *problem)]
+        warnings: list[tuple[str, str, int | None]] = (
+            [] if problem is None else [("encoding", *problem)]
+        )
         source_type = classify(mfile, text)
 
         # tree-sitter reads UTF-8, splits comment blocks at CRLF and ends
@@ -1462,14 +1464,16 @@ class MatObject(object):
         else:
             decl_name = None
             if parsed == "function":
-                decl_name = declaration(tree.root_node).child_by_field_name("name")
+                decl_name = cast(Node, declaration(tree.root_node)).child_by_field_name(
+                    "name"
+                )
             if decl_name is not None and decl_name.type == "property_name":
                 warnings.append(
                     (
                         "invalid_matlab",
                         f"declares the dotted function name "
-                        f"{decl_name.text.decode('utf-8', errors='replace')}; MATLAB "
-                        "allows dotted names only in a classdef file. It is "
+                        f"{cast(bytes, decl_name.text).decode('utf-8', 'replace')}; "
+                        "MATLAB allows dotted names only in a classdef file. It is "
                         "documented under its file name.",
                         get_row(decl_name.start_point),
                     )
@@ -1488,8 +1492,7 @@ class MatObject(object):
 
     @staticmethod
     def parse_mlappfile(mlappfile, name, path):
-        """
-        Uses ZipFile to read the metadata/appMetadata.xml file and
+        """Use ZipFile to read the metadata/appMetadata.xml file and
         the metadata/coreProperties.xml file description tags.
         Parses XML content using ElementTree.
 
@@ -1508,7 +1511,6 @@ class MatObject(object):
         with ZipFile(mlappfile, "r") as mlapp:
             meta = ET.fromstring(mlapp.read("metadata/appMetadata.xml"))
             core = ET.fromstring(mlapp.read("metadata/coreProperties.xml"))
-            # code = ET.fromstring(mlapp.read("matlab/document.xml"))
 
         metaNs = {"ns": "http://schemas.mathworks.com/appDesigner/app/2017/appMetadata"}
         coreNs = {
@@ -1518,12 +1520,9 @@ class MatObject(object):
             "dcterms": "http://purl.org/dc/terms/",
             "xsi": "http://www.w3.org/2001/XMLSchema-instance",
         }
-        # codeNs = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 
         coreDesc = core.find("dc:description", coreNs)
         metaDesc = meta.find("ns:description", metaNs)
-        # codeDesc = code.find(".//w:t", codeNs)
-        # codeText = codeDesc.text
 
         doc = []
         if coreDesc is not None and coreDesc.text is not None:
@@ -1539,8 +1538,7 @@ class MatObject(object):
 
 # TODO: get docstring and __all__ from contents.m if exists
 class MatModule(MatObject):
-    """
-    All MATLAB modules are packages. A package is a folder that serves as the
+    """All MATLAB modules are packages. A package is a folder that serves as the
     namespace for any :class:`MatObjects` in the package folder. Sphinx will
     treats objects without a namespace as builtins, so all MATLAB projects
     should be packaged in a folder so that they will have a namespace. This
@@ -1555,7 +1553,7 @@ class MatModule(MatObject):
     """
 
     def __init__(self, name, path, package):
-        super(MatModule, self).__init__(name)
+        super().__init__(name)
         #: Path to module on disk, path to package's __init__.py
         self.path = path
         #: folder reference
@@ -1566,7 +1564,7 @@ class MatModule(MatObject):
         self.members = None
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        """Return the role used for references and automatic links"""
         return "folder"
 
     def member_refs(self):
@@ -1614,10 +1612,8 @@ class MatModule(MatObject):
     def __package__(self):
         return self.package
 
-    def getter(self, name, *defargs):
-        """
-        :class:`MatModule` ``getter`` method to get attributes.
-        """
+    def getter(self, name, *_defargs) -> Any:
+        """:class:`MatModule` ``getter`` method to get attributes."""
         if name == "__name__":
             return self.__name__
         elif name == "__doc__":
@@ -1632,7 +1628,8 @@ class MatModule(MatObject):
             return self.__package__
         elif name == "__module__":
             logger.debug(
-                "[sphinxcontrib-matlabdomain] mod %s is a package does not have __module__.",
+                "[sphinxcontrib-matlabdomain] mod %s is a package "
+                "and does not have __module__.",
                 self,
             )
             return None
@@ -1647,8 +1644,7 @@ class MatModule(MatObject):
 
 
 class MatFunction(MatObject):
-    """
-    A MATLAB function.
+    """A MATLAB function.
 
     :param name: Name of :class:`MatObject`.
     :type name: str
@@ -1659,7 +1655,7 @@ class MatFunction(MatObject):
     """
 
     def __init__(self, name, modname, tokens, encoding):
-        super(MatFunction, self).__init__(name)
+        super().__init__(name)
         parsed_function = MatFunctionParser(tokens, encoding)
         #: Path of folder containing :class:`MatObject`.
         self.module = modname
@@ -1677,7 +1673,7 @@ class MatFunction(MatObject):
         self.rem_tks = None
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        """Return the role used for references and automatic links"""
         return "func"
 
     @property
@@ -1688,7 +1684,7 @@ class MatFunction(MatObject):
     def __module__(self):
         return self.module
 
-    def getter(self, name, *defargs):
+    def getter(self, name, *defargs) -> Any:
         if name == "__name__":
             return self.__name__
         elif name == "__doc__":
@@ -1696,12 +1692,11 @@ class MatFunction(MatObject):
         elif name == "__module__":
             return self.__module__
         else:
-            return super(MatFunction, self).getter(name, *defargs)
+            return super().getter(name, *defargs)
 
 
 class MatClass(MatObject):
-    """
-    A MATLAB class definition.
+    """A MATLAB class definition.
 
     :param name: Name of :class:`MatObject`.
     :type name: str
@@ -1712,7 +1707,7 @@ class MatClass(MatObject):
     """
 
     def __init__(self, name, modname, tokens, encoding):
-        super(MatClass, self).__init__(name)
+        super().__init__(name)
         parsed_class = MatClassParser(tokens, encoding)
         #: Path of folder containing :class:`MatObject`.
         self.module = modname
@@ -1737,15 +1732,15 @@ class MatClass(MatObject):
         self.rem_tks = None
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        """Return the role used for references and automatic links"""
         return "class"
 
     def fullname(self, env):  # noqa: ARG002
-        """Returns the path reference of the class, for use as link target"""
+        """Return the path reference of the class, for use as a link target"""
         return self.ref
 
     def link(self, env, name=None):  # noqa: ARG002
-        """Returns link for class object"""
+        """Return a link for the class object"""
         title = name or getattr(self, "matlab_name", None) or self.ref
         return f":mat:class:`{title} <{self.ref}>`"
 
@@ -1771,10 +1766,8 @@ class MatClass(MatObject):
 
         return bases_
 
-    def getter(self, name, *defargs):
-        """
-        :class:`MatClass` ``getter`` method to get attributes.
-        """
+    def getter(self, name, *defargs) -> Any:
+        """:class:`MatClass` ``getter`` method to get attributes."""
         if name == "__name__":
             return self.__name__
         elif name == "__doc__":
@@ -1795,12 +1788,12 @@ class MatClass(MatObject):
             objdict.update({en: self.getter(en) for en in self.enumerations})
             return objdict
         else:
-            return super(MatClass, self).getter(name, *defargs)
+            return super().getter(name, *defargs)
 
 
 class MatProperty(MatObject):
     def __init__(self, name, cls, attrs):
-        super(MatProperty, self).__init__(name)
+        super().__init__(name)
         self.cls = cls
         self.attrs = attrs["attrs"]
         self.default = attrs["default"]
@@ -1810,7 +1803,7 @@ class MatProperty(MatObject):
         self.validators = attrs["validators"]
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        """Return the role used for references and automatic links"""
         return "attr"
 
     @property
@@ -1824,12 +1817,12 @@ class MatProperty(MatObject):
 
 class MatEnumeration(MatObject):
     def __init__(self, name, cls, attrs):
-        super(MatEnumeration, self).__init__(name)
+        super().__init__(name)
         self.cls = cls
         self.docstring = attrs["docstring"]
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        """Return the role used for references and automatic links"""
         return "enum"
 
     @property
@@ -1842,6 +1835,8 @@ class MatEnumeration(MatObject):
 
 
 class MatMethod(MatFunction):
+    from_class_folder: bool
+
     def __init__(self, name, parsed_function, modname, cls):
         self.name = name
         #: Path of folder containing :class:`MatObject`.
@@ -1858,7 +1853,7 @@ class MatMethod(MatFunction):
         self.attrs = parsed_function.attrs
 
     def ref_role(self):
-        """Returns role to use for references to this object (e.g. when generating auto-links)"""
+        """Return the role used for references and automatic links"""
         return "meth"
 
     @property
@@ -1872,7 +1867,7 @@ class MatMethod(MatFunction):
 
 class MatScript(MatObject):
     def __init__(self, name, modname, tks, encoding):
-        super(MatScript, self).__init__(name)
+        super().__init__(name)
         parsed_script = MatScriptParser(tks, encoding)
         #: Path of folder containing :class:`MatScript`.
         self.module = modname
@@ -1891,8 +1886,7 @@ class MatScript(MatObject):
 
 
 class MatApplication(MatObject):
-    """
-    Representation of the documentation in a Matlab Application.
+    """Representation of the documentation in a Matlab Application.
 
     :param name: Name of :class:`MatObject`.
     :type name: str
@@ -1903,7 +1897,7 @@ class MatApplication(MatObject):
     """
 
     def __init__(self, name, modname, desc):
-        super(MatApplication, self).__init__(name)
+        super().__init__(name)
         #: Path of folder containing :class:`MatApplication`.
         self.module = modname
         #: docstring
@@ -1922,7 +1916,7 @@ class MatcodeError(Exception):
     """A folder reference that names no discovered folder."""
 
 
-class MatModuleAnalyzer(object):
+class MatModuleAnalyzer:
     """Stands in for Sphinx's ``ModuleAnalyzer`` in autodoc: the source order
     of a folder's files and of its classes' members (``tagorder``).
     """
@@ -1938,7 +1932,7 @@ class MatModuleAnalyzer(object):
             if isinstance(mod, MatModule):
                 entry = cls(mod)
             else:
-                entry = MatcodeError("error importing %r" % modname)
+                entry = MatcodeError(f"error importing {modname!r}")
             cls.cache[modname] = entry
         if isinstance(entry, MatcodeError):
             raise entry

@@ -22,19 +22,27 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-AUTO = r"auto(?:class|function|method|script|application|attribute|property|staticmethod)"
+AUTO = (
+    r"auto(?:class|function|method|script|application|attribute|property|staticmethod)"
+)
 MODULE = r"(?:auto|current)?module"
 # The prefix allows Markdown block quotes ("> ") around eval-rst blocks.
 RST_DIRECTIVE = re.compile(rf"^([\s>]*)\.\. (mat:)?({AUTO}|{MODULE})::[ \t]*(\S*)(.*)$")
-MD_DIRECTIVE = re.compile(rf"^([\s>]*)```\{{(mat:)?({AUTO}|{MODULE})\}}[ \t]*(\S*)(.*)$")
+MD_DIRECTIVE = re.compile(
+    rf"^([\s>]*)```\{{(mat:)?({AUTO}|{MODULE})\}}[ \t]*(\S*)(.*)$"
+)
 REMOVED_OPTION = re.compile(r"^[\s>]*:(special-members|inherited-members):")
 FRIEND_OPTION = re.compile(r"^([\s>]*):friend-members:")
 MODINDEX = re.compile(r"(:ref:`(?:[^`<]*<)?)modindex(>?`)")
 REMOVED_DIRECTIVE = re.compile(
     r"^[\s>]*(?:\.\. |```\{)(?:mat:)?(?:auto)?(?:exception|decorator|decoratormethod)\b"
 )
-ROLE = re.compile(r":(mat:)?(class|func|meth|attr|mod|obj|script|app|prop|exc):`([^`]+)`")
-MD_ROLE = re.compile(r"\{(mat:)?(class|func|meth|attr|mod|obj|script|app|prop|exc)\}`([^`]+)`")
+ROLE = re.compile(
+    r":(mat:)?(class|func|meth|attr|mod|obj|script|app|prop|exc):`([^`]+)`"
+)
+MD_ROLE = re.compile(
+    r"\{(mat:)?(class|func|meth|attr|mod|obj|script|app|prop|exc)\}`([^`]+)`"
+)
 
 
 def walk(root, base, segs):
@@ -98,7 +106,9 @@ def rewrite(root, text, notes, where):
             notes.append(f"{where}:{lineno}: removed {option}")
             continue
         if REMOVED_DIRECTIVE.match(body):
-            notes.append(f"{where}:{lineno}: check by hand (removed directive): {body.strip()}")
+            notes.append(
+                f"{where}:{lineno}: check by hand (removed directive): {body.strip()}"
+            )
         body = FRIEND_OPTION.sub(r"\1:access-list-members:", body)
         body = MODINDEX.sub(r"\1mat-folderindex\2", body)
         m = RST_DIRECTIVE.match(body) or MD_DIRECTIVE.match(body)
@@ -111,7 +121,8 @@ def rewrite(root, text, notes, where):
             if kind.endswith("module"):
                 if ref is None or not ref.endswith("/"):
                     notes.append(
-                        f"{where}:{lineno}: check by hand (folder not found): {body.strip()}"
+                        f"{where}:{lineno}: check by hand (folder not found): "
+                        f"{body.strip()}"
                     )
                 else:
                     current = folder_parts(ref)
@@ -120,8 +131,9 @@ def rewrite(root, text, notes, where):
                         new = "mat:currentfolder"
                         if kind == "automodule":
                             notes.append(
-                                f"{where}:{lineno}: check by hand (automodule of a class "
-                                f"folder or the root; document its class or files): {body.strip()}"
+                                f"{where}:{lineno}: check by hand (automodule of a "
+                                "class folder or the root; document its class or "
+                                f"files): {body.strip()}"
                             )
                     else:
                         new = "mat:autofolder" if kind == "automodule" else "mat:folder"
@@ -140,11 +152,13 @@ def rewrite(root, text, notes, where):
                 )
             elif ref is None and "." in name:
                 notes.append(
-                    f"{where}:{lineno}: check by hand (not found below the root): {body.strip()}"
+                    f"{where}:{lineno}: check by hand (not found below the root): "
+                    f"{body.strip()}"
                 )
             elif ref is None and name:
                 notes.append(
-                    f"{where}:{lineno}: check by hand (kept as a MATLAB name): {body.strip()}"
+                    f"{where}:{lineno}: check by hand (kept as a MATLAB name): "
+                    f"{body.strip()}"
                 )
 
         def role(m, md_role=False, lineno=lineno, current=current):
@@ -152,7 +166,11 @@ def rewrite(root, text, notes, where):
             prefix = prefix or ""
 
             def form(kind, target):
-                return f"{{{prefix}{kind}}}`{target}`" if md_role else f":{prefix}{kind}:`{target}`"
+                return (
+                    f"{{{prefix}{kind}}}`{target}`"
+                    if md_role
+                    else f":{prefix}{kind}:`{target}`"
+                )
 
             if kind == "mod":
                 ref = resolve(root, [], target.lstrip("~"))
@@ -162,7 +180,9 @@ def rewrite(root, text, notes, where):
                 notes.append(f"{where}:{lineno}: check by hand (module role): {m[0]}")
                 return m[0]
             if kind == "exc":
-                notes.append(f"{where}:{lineno}: check by hand (use :mat:class:): {m[0]}")
+                notes.append(
+                    f"{where}:{lineno}: check by hand (use :mat:class:): {m[0]}"
+                )
             new = rewrite_target(root, current, target)
             return form(kind, new) if new else m[0]
 
@@ -188,7 +208,9 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--root", required=True, type=Path, help="the MATLAB project root")
+    parser.add_argument(
+        "--root", required=True, type=Path, help="the MATLAB project root"
+    )
     parser.add_argument(
         "--write", action="store_true", help="change the files (default: print a diff)"
     )
@@ -212,7 +234,9 @@ def main():
             # Without \r, so CRLF pages do not print double-spaced on Windows.
             old_lines = text.replace("\r\n", "\n").splitlines(True)
             new_lines = new.replace("\r\n", "\n").splitlines(True)
-            sys.stdout.writelines(difflib.unified_diff(old_lines, new_lines, str(page), str(page)))
+            sys.stdout.writelines(
+                difflib.unified_diff(old_lines, new_lines, str(page), str(page))
+            )
     if args.summary:
         print("\n".join(str(p) for p in changed))
     print(f"\n{len(changed)} page(s) {'changed' if args.write else 'would change'}")

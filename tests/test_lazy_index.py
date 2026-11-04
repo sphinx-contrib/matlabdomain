@@ -111,13 +111,13 @@ def test_member_lookup_by_file_name_does_not_parse_again(make_app, tmp_path, par
 @pytest.mark.parametrize("cache", [True, False])
 def test_source_text_cache(make_app, tmp_path, monkeypatch, parsed, cache):
     opened = []
-    real_open = mat_types.open
+    real_open = open
 
     def counting_open(file, *args, **kwargs):
         opened.append(str(file))
         return real_open(file, *args, **kwargs)
 
-    monkeypatch.setattr(mat_types, "open", counting_open)
+    monkeypatch.setattr(mat_types, "open", counting_open, raising=False)
     write(tmp_path, FILES, "Index\n=====\n\n.. mat:autofunction:: used\n")
     app = make_app(srcdir=tmp_path, confoverrides={"matlab_src_cache_text": cache})
     app.build()
@@ -373,6 +373,7 @@ class ForkLikeTasks:
 
     def join(self):
         app = self.app
+        assert app is not None
         for func, arg, result_func in self.tasks:
             if func.__name__ != "read_process":
                 ret = func(arg)

@@ -176,8 +176,10 @@ def test_cr_only_line_endings(tmp_path):
     assert obj.docstring == "CR HELP\nsecond"
     assert obj.args == {"x": {}}
     _, problem = decode_source(b"x = 1;\r% caf\xe9\r")
+    assert problem is not None
     assert problem[1] == 1
     _, problem = decode_source(b"x = 1;\r\n% caf\xe9\r\n")
+    assert problem is not None
     assert problem[1] == 1
 
 

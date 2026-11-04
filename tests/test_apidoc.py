@@ -10,6 +10,7 @@ import subprocess
 import sys
 import sysconfig
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from sphinx.util.inventory import InventoryFile
@@ -1427,7 +1428,7 @@ def test_kind_without_a_directive_is_left_out(tmp_path, monkeypatch, caplog_sphi
 
 def _inventory(app):
     with open(app.outdir / "objects.inv", "rb") as f:
-        inventory = InventoryFile.load(f, "", posixpath_join)
+        inventory = InventoryFile.load(cast(Any, f), "", posixpath_join)
     data = getattr(inventory, "data", inventory)
     names = [
         name

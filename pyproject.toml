@@ -1,10 +1,10 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=40.8.0", "setuptools_scm"]
+requires = ["setuptools>=77", "setuptools_scm"]
 
 [project]
 authors = [
-    {name = "Jørgen Cederberg", email = "jorgen@cederberg.be"}
+    { name = "Jørgen Cederberg", email = "jorgen@cederberg.be" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -40,8 +40,9 @@ dev = [
     "pytest",
     "pytest-cov",
     "pre-commit",
-    "ruff",
-    "tox>4.8",
+    "ruff==0.17.3",
+    "pyright==1.1.414",
+    "tox>=4.60",
     "defusedxml>=0.7.1",
     "sphinx-autobuild"
 ]
@@ -102,6 +103,22 @@ source_pkgs = [
     "sphinxcontrib.matlab_apidoc"
 ]
 
+[tool.pyright]
+exclude = [
+    "**/__pycache__",
+    "**/_build",
+    "**/.venv",
+    "**/build",
+    "tests/roots",
+    "tests/test_data",
+    "tests/test_docs",
+    "test_slow/gauntlet/repos",
+    "test_slow/gauntlet/runs"
+]
+include = ["sphinxcontrib", "tests", "docs", "examples", "skills", "test_slow"]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers --show-capture=all --showlocals -s -vv"
 doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
@@ -112,11 +129,14 @@ testpaths = ["tests"]
 xfail_strict = true
 
 [tool.ruff]
-include = [
-    "tests/**/*.py",
-    "sphinxcontrib/**/*.py",
-    "doc/**/*.py"
+extend-exclude = [
+    "tests/roots",
+    "tests/test_data",
+    "tests/test_docs",
+    "test_slow/gauntlet/repos",
+    "test_slow/gauntlet/runs"
 ]
+force-exclude = true
 indent-width = 4
 line-length = 88
 
@@ -129,7 +149,6 @@ quote-style = "double"
 skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
-fixable = ["ALL"]
 ignore = [
     "D100",
     "D101",
@@ -140,11 +159,12 @@ ignore = [
     "D203",
     "D205",
     "D213",
+    "D400",
+    "D415",
     "PLR2004",
     "RUF001",
     "RUF012",
-    "SIM102",
-    "PTH"
+    "SIM102"
 ]
 # List of all the ruff rules (includes why the rule matters)
 # https://docs.astral.sh/ruff/rules/
@@ -162,14 +182,12 @@ select = [
     "FURB",
     "I",
     "PERF",
-    "PTH",
     "PLR",
     "RUF",
     "SIM",
     "UP",
     "W"
 ]
-unfixable = []
 
 [tool.ruff.lint.mccabe]
 max-complexity = 51
@@ -193,14 +211,66 @@ max-statements = 100
 include-package-data = true
 
 [tool.setuptools.package-data]
-"*" = [
-    "README.rst",
-    "LICENSE",
-    "CHANGES.*"
-]
 "sphinxcontrib.matlab_apidoc" = ["templates/*.jinja"]
 
 [tool.setuptools.packages.find]
 include = ["sphinxcontrib*"]
 
 [tool.setuptools_scm]
+
+[tool.tox]
+env_list = [
+    "py311-sphinxmin",
+    "py311-sphinxlatest",
+    "py312-sphinxmin",
+    "py312-sphinxlatest",
+    "py313-sphinxmin",
+    "py313-sphinxlatest",
+    "py314-sphinxmin",
+    "py314-sphinxlatest",
+    "py312-sphinx82",
+    "py314-sphinxdev"
+]
+requires = ["tox>=4.60"]
+
+[tool.tox.env.lint]
+commands = [
+    ["ruff", "check", "."],
+    ["ruff", "format", "--check", "."],
+    ["pyright", "--pythonpath", "{env_python}"]
+]
+deps = []
+description = "Lint, format-check, and basic-type-check maintained Python"
+extras = ["dev", "rtd", "markdown"]
+
+[tool.tox.env_run_base]
+commands = [
+    ["pytest", "--cov", "--cov-report=term-missing", "--cov-report=html", { replace = "posargs", extend = true }],
+    ["sphinx-build", "-b", "html", "-d", "{env_tmp_dir}/doctrees", "tests/test_docs", "{env_tmp_dir}/html"]
+]
+deps = [
+    "pytest",
+    "pytest-cov",
+    "pytest-randomly",
+    "defusedxml",
+    "furo",
+    "sphinxcontrib-mermaid",
+    { replace = "if", condition = "not factor.sphinxdev", then = ["myst-parser"], else = [], extend = true },
+    { replace = "if", condition = "factor.sphinxmin", then = ["myst-parser==4.0.*", "Sphinx==8.0.*", "tree-sitter==0.26.0", "tree-sitter-matlab==1.3.0"], else = [], extend = true },
+    { replace = "if", condition = "factor.sphinx82", then = ["Sphinx==8.2.*"], else = [], extend = true },
+    { replace = "if", condition = "factor.sphinxlatest", then = ["Sphinx"], else = [], extend = true },
+    { replace = "if", condition = "factor.sphinxdev", then = ["https://github.com/sphinx-doc/sphinx/archive/refs/heads/master.zip"], else = [], extend = true }
+]
+pass_env = [
+    "USERNAME",
+    "PY_COLORS",
+    "FORCE_COLOR",
+    "NO_COLOR",
+    "CLICOLOR",
+    "CLICOLOR_FORCE",
+    "COVERAGE_FILE"
+]
+
+[[tool.uv.index]]
+default = true
+url = "https://pypi.org/simple"

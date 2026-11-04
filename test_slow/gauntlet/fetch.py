@@ -90,7 +90,7 @@ def sync(project, target, args):
     if commit != head:
         if changed:
             raise Skip(
-                f"at {head[:12]}, not {commit[:12]}: {changed} changed files "
+                f"at {head[:12]}, not {(commit or '')[:12]}: {changed} changed files "
                 "(--reset discards them)"
             )
         P.git(repo, "checkout", "-q", "--detach", commit)
@@ -101,7 +101,7 @@ def sync(project, target, args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     parser.add_argument(
         "names", nargs="*", help="keep projects whose name contains one"
     )
@@ -142,7 +142,7 @@ def main():
                     "1",
                 )
             lock[project.name] = {"commit": commit, "url": project.url}
-            print(f"{project.name}: {commit[:12]} {note}", flush=True)
+            print(f"{project.name}: {(commit or '')[:12]} {note}", flush=True)
         except Skip as err:
             failed += 1
             print(f"{project.name}: SKIPPED: {err}", flush=True)

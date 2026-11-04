@@ -6,7 +6,7 @@ is the lock-up we intend to fix (Phase 6, lazy parsing).
 
 Why a direct parse-sweep instead of a full ``sphinx-build``: on the bundled
 ``vhlab-toolbox-matlab`` tree the current code **crashes** on at least one
-unparseable ``.m`` file (``AttributeError: 'NoneType' ... 'text'`` in
+unparsable ``.m`` file (``AttributeError: 'NoneType' ... 'text'`` in
 ``mat_tree_sitter_parser``), aborting the whole ``builder-inited`` handler. That
 fault-intolerance is exactly what Phase 5 fixes, but it also means a
 Sphinx-driven build cannot complete today. So we profile the eager parse
@@ -93,12 +93,14 @@ def _sweep(src_dir: Path) -> None:
         try:
             MatObject.parse_mfile(str(mfile), name, path)
             _ok += 1
-        except Exception as exc:  # noqa: BLE001 - harness tallies, never aborts
+        except Exception as exc:
             _failures.append((str(mfile), f"{type(exc).__name__}: {exc}"))
 
 
 def main() -> None:
-    src_dir = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else DEFAULT_SRC.resolve()
+    src_dir = (
+        Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else DEFAULT_SRC.resolve()
+    )
     total = sum(1 for _ in src_dir.rglob("*.m"))
     print(f"Profiling eager parse of {total} .m files under:\n  {src_dir}\n")
 
@@ -117,7 +119,9 @@ def main() -> None:
     print(f"Profile   : {PROFILE_OUT}\n")
 
     if _failures:
-        print(f"First {min(10, len(_failures))} parse failures (Phase 5 bug-list seed):")
+        print(
+            f"First {min(10, len(_failures))} parse failures (Phase 5 bug-list seed):"
+        )
         for path, err in _failures[:10]:
             print(f"  - {path}\n      {err}")
         print()

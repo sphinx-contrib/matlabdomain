@@ -136,10 +136,11 @@ def test_getter_names_and_defaults(built):
 
 def test_reference_roles(built):
     dom = built.env.get_domain("mat")
-    roles = {
-        ref: lookup_reference(dom, ref).ref_role()
-        for ref in ("f.m", "s.m", "Shape.m", "Shape.m.Area", "Shape.m.area")
-    }
+    roles = {}
+    for ref in ("f.m", "s.m", "Shape.m", "Shape.m.Area", "Shape.m.area"):
+        obj = lookup_reference(dom, ref)
+        assert obj is not None
+        roles[ref] = obj.ref_role()
     assert roles == {
         "f.m": "func",
         "s.m": "ref",

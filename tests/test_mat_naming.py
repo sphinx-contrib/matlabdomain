@@ -9,6 +9,7 @@ import random
 import unicodedata
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
 from sphinx.errors import ConfigError
@@ -141,6 +142,7 @@ def test_form_matlab_name_not_callable(folder, name, is_class):
 
 def test_form_matlab_name_of_a_relative_package_folder():
     out = form_matlab_name("+pkg", "f.m", False, namelengthmax=2048)
+    assert out is not None
     assert (out.pseudo_fullname, out.parent_folder) == ("pkg.f", "")
 
 
@@ -233,8 +235,8 @@ def test_matlab_version_rules():
 )
 def test_class_subfolder_callable_before_r2026a(folder, name, is_class, expected):
     for version in ("R2024a", "R2024b", "R2025a", "R2025b"):
-        assert (
-            form_matlab_name(folder, name, is_class, 2048, version) == _native(expected)
+        assert form_matlab_name(folder, name, is_class, 2048, version) == _native(
+            expected
         )
     assert form_matlab_name(folder, name, is_class, 2048, "R2026a") is None
 
@@ -307,7 +309,7 @@ def test_form_matlab_name_uses_constructor_token_for_class_definitions_in_packag
 
 def test_form_matlab_name_errors_when_required_columns_missing():
     with pytest.raises(TypeError):
-        form_matlab_name("/tmp", "demo.m")  # is_class and namelengthmax missing
+        cast(Any, form_matlab_name)("/tmp", "demo.m")
 
 
 def test_form_matlab_name_warns_and_drops_files_with_invalid_package_path():
@@ -395,9 +397,7 @@ def _snake_keys(row):
 @pytest.mark.skipif(not _FULL_ORACLE.exists(), reason="reference corpus not present")
 def test_oracle_full_corpus():
     rows = [
-        _snake_keys(r)
-        for r in json.loads(_FULL_ORACLE.read_text())
-        if not r["ignore"]
+        _snake_keys(r) for r in json.loads(_FULL_ORACLE.read_text()) if not r["ignore"]
     ]
     assert len(rows) > 60000
     mismatches = []
@@ -551,8 +551,7 @@ def test_path_reference_files_folders_and_members(tmp_path):
 def test_path_reference_windows_separators():
     root = r"C:\proj"
     assert (
-        path_reference(root, r"C:\proj\src\+pkg\f.m", pathmod=ntpath)
-        == "src/+pkg/f.m"
+        path_reference(root, r"C:\proj\src\+pkg\f.m", pathmod=ntpath) == "src/+pkg/f.m"
     )
     assert (
         path_reference(root, "C:/proj/src\\@Cls/Cls.m", "m", pathmod=ntpath)
@@ -560,9 +559,7 @@ def test_path_reference_windows_separators():
     )
     assert path_reference(root, "C:\\proj\\src\\", pathmod=ntpath) == "src/"
     # On POSIX a backslash is a folder-name character, not a separator.
-    assert (
-        path_reference("/proj", "/proj/a\\b/f.m", pathmod=posixpath) == "a\\b/f.m"
-    )
+    assert path_reference("/proj", "/proj/a\\b/f.m", pathmod=posixpath) == "a\\b/f.m"
 
 
 def test_path_reference_is_nfc():

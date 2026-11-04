@@ -4,11 +4,14 @@ and hyperlinks.
 """
 
 from pathlib import Path
+from typing import Any, cast
 
-from sphinx.util.console import strip_escape_sequences
+from sphinx.util import console
 from test_sidecars import png, write
 
 from sphinxcontrib import mat_sidecars
+
+strip_escape_sequences = cast(Any, console).strip_escape_sequences
 
 CONF = (
     'extensions = ["sphinxcontrib.matlab"]\n'

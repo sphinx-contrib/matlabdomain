@@ -10,13 +10,14 @@ The MATLAB domain.
 import functools
 import re
 import unicodedata
+from typing import cast
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from sphinx import addnodes
-from sphinx.errors import ConfigError
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, Index, ObjType
+from sphinx.errors import ConfigError
 from sphinx.locale import _ as translation
 from sphinx.roles import XRefRole
 from sphinx.util.docfields import Field, GroupedField, TypedField
@@ -116,7 +117,7 @@ def _pseudo_parse_arglist(signode, arglist):
     string literal (e.g. default argument value).
     """
     paramlist = addnodes.desc_parameterlist()
-    stack = [paramlist]
+    stack: list[nodes.Element] = [paramlist]
     try:
         for argument in arglist.split(","):
             argument = argument.strip()
@@ -324,7 +325,7 @@ class MatObject(ObjectDescription):
             signode["ids"].append(target_id)
             signode["first"] = not self.names
             self.state.document.note_explicit_target(signode)
-            self.env.get_domain("mat").note_object(
+            cast(MATLABDomain, self.env.get_domain("mat")).note_object(
                 ref, self.objtype, display, location=(self.env.docname, self.lineno)
             )
         elif not self._is_same_object(self.state.document.ids[target_id], ref):
@@ -459,7 +460,7 @@ class MatFolder(MatObject):
     }
 
     def handle_signature(self, sig, signode):
-        dom = self.env.get_domain("mat")
+        dom = cast(MATLABDomain, self.env.get_domain("mat"))
         ref = mat_types.folder_reference(
             dom, sig, location=(self.env.docname, self.lineno)
         )
@@ -507,7 +508,7 @@ class MatFolder(MatObject):
             self.state.document.note_explicit_target(signode)
         # Like the former module directive, a folder may be described on
         # several pages without a duplicate warning; the last one wins.
-        dom = self.env.get_domain("mat")
+        dom = cast(MATLABDomain, self.env.get_domain("mat"))
         dom.note_object(ref, self.objtype, display)
         dom.data["folders"][ref] = (
             self.env.docname,

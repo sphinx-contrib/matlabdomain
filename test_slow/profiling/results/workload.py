@@ -68,7 +68,9 @@ env = {
     "sphinx": _ver("sphinx"),
     "mat_types": mt.__file__,
     "code_rev": _git(code_root, "rev-parse", "HEAD"),
-    "code_dirty_files": _git(code_root, "status", "--porcelain", "--", "sphinxcontrib").splitlines(),
+    "code_dirty_files": _git(
+        code_root, "status", "--porcelain", "--", "sphinxcontrib"
+    ).splitlines(),
     "old_row_getter": args.old_row_getter,
 }
 print("ENV " + json.dumps(env), flush=True)

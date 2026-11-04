@@ -4,15 +4,18 @@ import html as html_lib
 import re
 from collections import Counter
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from sphinx.errors import ConfigError
-from sphinx.util.console import strip_escape_sequences
+from sphinx.util import console
 from sphinx.util.inventory import InventoryFile
 
 from sphinxcontrib import mat_naming
 from sphinxcontrib.mat_types import find_source
 from sphinxcontrib.matlab import DEFAULT_EXTERNAL_NAMES
+
+strip_escape_sequences = cast(Any, console).strip_escape_sequences
 
 CONF = 'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
 
@@ -193,7 +196,7 @@ def test_inventory_uses_path_references(app):
         assert anchor == mat_naming.make_target_id(name)
         assert dispname == dom.data["objects"][name][2]
     with open(app.outdir / "objects.inv", "rb") as f:
-        inv = InventoryFile.load(f, "", lambda _base, uri: uri)
+        inv = InventoryFile.load(cast(Any, f), "", lambda _base, uri: uri)
 
     def entry(objtype, name):
         item = inv[objtype][name]

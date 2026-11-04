@@ -28,6 +28,7 @@ import sys
 import tempfile
 from collections import Counter
 from pathlib import Path
+from typing import Any, cast
 
 REPO = Path(__file__).resolve().parents[2]
 VARIANTS = {
@@ -36,7 +37,9 @@ VARIANTS = {
 }
 ID_RE = re.compile(r'\bid="([^"]*)"')
 HREF_RE = re.compile(r'\bhref="([^"#]*#[^"]*)"')
-BODY_RE = re.compile(r'<div class="body"[^>]*>(.*?)<div class="sphinxsidebar"', re.DOTALL)
+BODY_RE = re.compile(
+    r'<div class="body"[^>]*>(.*?)<div class="sphinxsidebar"', re.DOTALL
+)
 SIG_RE = re.compile(r'<dt class="sig sig-object mat"[^>]*>(.*?)</dt>', re.DOTALL)
 HEADERLINK_RE = re.compile(r'<a class="headerlink"[^>]*>.*?</a>', re.DOTALL)
 BLOCK_END_RE = re.compile(r"</(p|dt|dd|li|h\d|div|pre|tr)>|<br\s*/?>")
@@ -74,7 +77,7 @@ def inventory(path):
     from sphinx.util.inventory import InventoryFile
 
     with open(path, "rb") as f:
-        inv = InventoryFile.load(f, "", lambda _base, uri: uri)
+        inv = InventoryFile.load(cast(Any, f), "", lambda _base, uri: uri)
     rows = []
     for objtype, items in inv.items():
         if not objtype.startswith("mat:"):
@@ -139,10 +142,18 @@ def compare(a_path, b_path):
         diffs = []
         if ra["rc"] != rb["rc"]:
             diffs.append(f"  rc {ra['rc']} -> {rb['rc']}")
-        diffs.extend(f"  -warn {w}" for w in sorted(set(ra["warnings"]) - set(rb["warnings"])))
-        diffs.extend(f"  +warn {w}" for w in sorted(set(rb["warnings"]) - set(ra["warnings"])))
-        diffs.extend(f"  -inv {i}" for i in sorted(set(ra["inventory"]) - set(rb["inventory"])))
-        diffs.extend(f"  +inv {i}" for i in sorted(set(rb["inventory"]) - set(ra["inventory"])))
+        diffs.extend(
+            f"  -warn {w}" for w in sorted(set(ra["warnings"]) - set(rb["warnings"]))
+        )
+        diffs.extend(
+            f"  +warn {w}" for w in sorted(set(rb["warnings"]) - set(ra["warnings"]))
+        )
+        diffs.extend(
+            f"  -inv {i}" for i in sorted(set(ra["inventory"]) - set(rb["inventory"]))
+        )
+        diffs.extend(
+            f"  +inv {i}" for i in sorted(set(rb["inventory"]) - set(ra["inventory"]))
+        )
         for page in sorted(set(ra["pages"]) | set(rb["pages"])):
             pa, pb = ra["pages"].get(page), rb["pages"].get(page)
             if pa is None or pb is None:
@@ -193,7 +204,7 @@ def _decode_anchor(anchor):
 
 def _object_ids(build, new):
     """Per page, the ids of documented MATLAB objects in page order."""
-    rows = [INV_ROW_RE.match(row) for row in build["inventory"]]
+    rows = [cast(re.Match[str], INV_ROW_RE.match(row)) for row in build["inventory"]]
     uris = {row[3] for row in rows}
     modules = {f"module-{row[2]}" for row in rows if row[1] == "mat:module"}
     out = {}
@@ -265,7 +276,9 @@ def report(a_path, b_path):
             uniq["issue"][f"rc {ra['rc']} -> {rb['rc']}: {reason[0][:120]}"] += 1
             continue
         ids_a, ids_b = _object_ids(ra, False), _object_ids(rb, True)
-        refs_b = {INV_ROW_RE.match(row)[2] for row in rb["inventory"]}
+        refs_b = {
+            cast(re.Match[str], INV_ROW_RE.match(row))[2] for row in rb["inventory"]
+        }
         mapping = {}
         for page in ra["pages"]:
             pairs, lost, added = _pair(ids_a.get(page, []), ids_b.get(page, []))
@@ -310,8 +323,14 @@ def report(a_path, b_path):
             for line in difflib.unified_diff(pa["text"], pb["text"], n=0, lineterm=""):
                 if line[:1] in "+-" and line[:3] not in ("---", "+++"):
                     uniq["text"][f"{line[0]} {line[1:]}"] += 1
-        inv_a = {INV_ROW_RE.match(row)[3]: row for row in ra["inventory"]}
-        inv_b = {INV_ROW_RE.match(row)[3]: row for row in rb["inventory"]}
+        inv_a = {
+            cast(re.Match[str], INV_ROW_RE.match(row))[3]: row
+            for row in ra["inventory"]
+        }
+        inv_b = {
+            cast(re.Match[str], INV_ROW_RE.match(row))[3]: row
+            for row in rb["inventory"]
+        }
         for uri, row in inv_a.items():
             if mapping.get(uri, uri) not in inv_b:
                 uniq["issue"][f"{key}: inventory row lost: {row}"] += 1

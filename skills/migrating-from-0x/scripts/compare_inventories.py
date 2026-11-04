@@ -16,15 +16,15 @@ Needs Sphinx (run it in either environment).
 import argparse
 from collections import Counter
 from pathlib import Path
+from typing import Any, cast
 
 from sphinx.util.inventory import InventoryFile
 
 
 def load(path):
     with open(path, "rb") as f:
-        inv = InventoryFile.load(f, "", lambda base, uri: uri)
-    if hasattr(inv, "data"):  # Sphinx 8.2+: an _Inventory object
-        inv = inv.data
+        inv = InventoryFile.load(cast(Any, f), "", lambda _base, uri: uri)
+    inv = getattr(inv, "data", inv)
     return {role: set(entries) for role, entries in inv.items()}
 
 
@@ -51,9 +51,14 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("inventories", nargs="+", type=Path)
-    parser.add_argument("--root", type=Path, help="the MATLAB project root (to map 0.x names)")
     parser.add_argument(
-        "--show", type=int, default=10, help="objects to list per kind and side (default 10)"
+        "--root", type=Path, help="the MATLAB project root (to map 0.x names)"
+    )
+    parser.add_argument(
+        "--show",
+        type=int,
+        default=10,
+        help="objects to list per kind and side (default 10)",
     )
     args = parser.parse_args()
     if len(args.inventories) == 1:
@@ -94,7 +99,11 @@ def main():
         for side, names in (("old only", o - n), ("new only", n - o)):
             if names:
                 shown = sorted(names)[: args.show]
-                more = f" (+{len(names) - len(shown)} more)" if len(names) > len(shown) else ""
+                more = (
+                    f" (+{len(names) - len(shown)} more)"
+                    if len(names) > len(shown)
+                    else ""
+                )
                 details.append(f"\n{role} {side}{more}:\n  " + "\n  ".join(shown))
     where_old = {x: r for r, xs in old.items() for x in xs}
     where_new = {x: r for r, xs in new.items() for x in xs}

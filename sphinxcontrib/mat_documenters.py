@@ -8,6 +8,7 @@ Extend autodoc directives to matlabdomain.
 """
 
 import re
+from typing import Any, cast
 
 from sphinx.ext.autodoc import (
     ALL,
@@ -124,6 +125,8 @@ class MatlabDocumenter(PyDocumenter):
     #: True for members of a class (methods, attributes)
     class_level = False
     option_spec = {"noindex": bool_option, "no-index": bool_option}
+    analyzer: MatModuleAnalyzer | None
+    options: Any
 
     def parse_name(self):
         """Resolve *self.name* to the object to document (plan.md Section 2.3).
@@ -186,6 +189,7 @@ class MatlabDocumenter(PyDocumenter):
         if isinstance(self._resolved, MatModule):
             self.modname, self.objpath = self.ref, []
         else:
+            file = cast(str, file)
             stem = file.rpartition("/")[2].rpartition(".")[0]
             self.modname = mat_naming.folder_of(file)
             self.objpath = [stem, *members]
@@ -198,6 +202,9 @@ class MatlabDocumenter(PyDocumenter):
         """Set the object resolved by :meth:`parse_name` as *self.object*."""
         self.object = self._resolved
         return True
+
+    def get_doc(self) -> list[list[str]]:
+        return super().get_doc() or []
 
     #: True for the objects this documenter documents (folders or not)
     accepts = staticmethod(is_source_object)
@@ -241,7 +248,7 @@ class MatlabDocumenter(PyDocumenter):
             for line, src in zip(more_content.data, more_content.items, strict=False):
                 self.add_line(line, src[0], src[1])
 
-    def class_object(self):
+    def class_object(self) -> MatClass | None:
         # the associated MatClass object (for class, property and method documenters)
         return None
 
@@ -299,6 +306,7 @@ class MatlabDocumenter(PyDocumenter):
                     is_see_also_line = False  # end see also section
 
                 if is_see_also_line and entries_str:
+                    match = cast(re.Match[str], match)
                     tail = match.group(3)
                     # "See also f()": the parentheses are the last entry's
                     if tail.startswith("()"):
@@ -311,8 +319,8 @@ class MatlabDocumenter(PyDocumenter):
 
                         # a class or function (path reference or MATLAB name)
                         found = self._find_link(entries[k].rstrip("()"))
-                        role = found and found[1].ref_role()
-                        if role in ["class", "func"]:
+                        role = found[1].ref_role() if found is not None else None
+                        if found is not None and role in ["class", "func"]:
                             entries[k] = self._link(role, entries[k], found[0])
                             continue
 
@@ -333,7 +341,7 @@ class MatlabDocumenter(PyDocumenter):
                                 continue
 
                         # a method or property of another class
-                        if role in ["meth", "attr"]:
+                        if found is not None and role in ["meth", "attr"]:
                             entries[k] = self._link(role, entries[k], found[0])
                             continue
 
@@ -394,6 +402,7 @@ class MatlabDocumenter(PyDocumenter):
             role = o.ref_role()
             if role in ["class", "func"]:
                 if role == "class":
+                    o = cast(MatClass, o)
                     # entity_name IS followed by .<property_or_method>
                     p2 = re.compile(
                         look_behind + re.escape(nn) + r"\.(\w+)" + look_ahead2
@@ -413,7 +422,7 @@ class MatlabDocumenter(PyDocumenter):
                                 if match := p2.search(docstrings[i][j]):
                                     # if match.group(1) is a property
                                     #   -> :attr:`{nn}.{match.group(1)}`
-                                    for nnn in o.properties:
+                                    for nnn in cast(MatClass, o).properties:
                                         if match.group(2) == nnn:
                                             text = self._link(
                                                 "attr", f"{nn}.{nnn}", f"{ref}.{nnn}"
@@ -425,7 +434,7 @@ class MatlabDocumenter(PyDocumenter):
                                             break
                                     # if match.group(1) is a method
                                     #   -> :meth:`{nn}.{match.group(1)}`
-                                    for nnn in o.methods:
+                                    for nnn in cast(MatClass, o).methods:
                                         if match.group(2) == nnn:
                                             text = self._link(
                                                 "meth", f"{nn}.{nnn}", f"{ref}.{nnn}"
@@ -510,7 +519,7 @@ class MatlabDocumenter(PyDocumenter):
                 ]
         return False, sorted(members)
 
-    def filter_members(self, members, want_all):
+    def filter_members(self, members: list[tuple[str, Any]], want_all):
         """Filter the given member list.
 
         Members are skipped if
@@ -803,7 +812,7 @@ class MatClassLevelDocumenter(MatlabDocumenter):
     class_level = True
 
 
-class MatDocstringSignatureMixin:
+class MatDocstringSignatureMixin(MatlabDocumenter):
     """Mixin for FunctionDocumenter and MethodDocumenter to provide the
     feature of reading the signature from the docstring.
     """
@@ -959,7 +968,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                 # without the signature line
                 init_doc, _ = self._constructor_documenter(ctor)
                 initdocstring = "\n".join(
-                    ["\n".join(line) for line in init_doc.get_doc()]
+                    ["\n".join(line) for line in (init_doc.get_doc() or [])]
                 )
             else:
                 initdocstring = ctor.docstring

@@ -22,6 +22,18 @@ env:
 
 jobs:
 
+  static-checks:
+    name: Lint and basic typing
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version-file: .python-version
+    - uses: astral-sh/setup-uv@v7
+    - run: uv sync --locked --all-extras
+    - run: uv run --locked tox -e lint
+
   test-sphinx:
 
     name: Run tests on ${{ matrix.os }} for Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }}
@@ -69,7 +81,7 @@ jobs:
       uses: astral-sh/setup-uv@v7
 
     - name: Install tox
-      run: uv tool install tox --with=tox-uv --with=tox-gh-actions
+      run: uv tool install 'tox>=4.60' --with=tox-uv
 
     - name: Run with Tox
       run: tox -e "${{matrix.python-version}}-sphinx${{matrix.sphinx-version}}"

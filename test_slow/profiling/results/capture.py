@@ -58,22 +58,28 @@ def _harness(text):
         "failed": r"^Failed    : (\d+)",
         "harness_wall_s": r"^Wall time : ([\d.]+)s",
     }.items():
-        m = re.search(pat, text, re.M)
+        m = re.search(pat, text, re.MULTILINE)
         out[key] = (float if key.endswith("_s") else int)(m.group(1)) if m else None
-    out["failures"] = re.findall(r"^  - (.+)\n\s+(.+)$", text, re.M)
+    out["failures"] = re.findall(r"^  - (.+)\n\s+(.+)$", text, re.MULTILINE)
     return out
 
 
 def _profile(text):
-    m = re.search(r"^Profile   : (.+)$", text, re.M)
+    m = re.search(r"^Profile   : (.+)$", text, re.MULTILINE)
     if not m:
         return None
     path = (REPO / m.group(1).strip()).resolve()
-    info = {"path": str(path.relative_to(REPO)) if path.is_relative_to(REPO) else str(path)}
+    info: dict = {
+        "path": str(path.relative_to(REPO)) if path.is_relative_to(REPO) else str(path)
+    }
     try:
         st = pstats.Stats(str(path))
-        info.update(loads=True, total_calls=st.total_calls, total_tt_s=round(st.total_tt, 3))
-    except Exception as exc:  # noqa: BLE001
+        info.update(
+            loads=True,
+            total_calls=getattr(st, "total_calls", 0),
+            total_tt_s=round(getattr(st, "total_tt", 0.0), 3),
+        )
+    except Exception as exc:
         info.update(loads=False, error=f"{type(exc).__name__}: {exc}")
     return info
 
@@ -107,7 +113,11 @@ def capture(label, cmd, probe):
         "command": cmd,
         "env_overrides": {"PYTHONFAULTHANDLER": "1", "PYTHONPATH": "<unset>"},
         "inherited_pythonpath": inherited_pythonpath,
-        "host": {"platform": platform.platform(), "cpu": _cpu(), "cpu_count": os.cpu_count()},
+        "host": {
+            "platform": platform.platform(),
+            "cpu": _cpu(),
+            "cpu_count": os.cpu_count(),
+        },
         "env": run_env,
         "fixture": {
             "path": str(FIXTURE.relative_to(REPO)),
@@ -117,14 +127,19 @@ def capture(label, cmd, probe):
             "m_files": sum(1 for _ in FIXTURE.rglob("*.m")),
         },
         "returncode": rc,
-        "signal": signal.Signals(sig).name if sig and sig in signal.Signals._value2member_map_ else None,
+        "signal": signal.Signals(sig).name
+        if sig and sig in signal.Signals._value2member_map_
+        else None,
         "wall_s": round(wall, 2),
         "harness": _harness(text),
         "profile": _profile(text),
     }
     (HERE / f"{label}.json").write_text(json.dumps(record, indent=1) + "\n")
     h = record["harness"]
-    print(f"{label}: rc={rc} signal={record['signal']} wall={wall:.2f}s ok={h['parsed_ok']} failed={h['failed']}")
+    print(
+        f"{label}: rc={rc} signal={record['signal']} wall={wall:.2f}s "
+        f"ok={h['parsed_ok']} failed={h['failed']}"
+    )
 
 
 def summarize():

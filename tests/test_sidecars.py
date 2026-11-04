@@ -13,17 +13,20 @@ import sys
 import time
 import zlib
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 import sphinx.builders
 from sphinx.errors import ConfigError
-from sphinx.util.console import strip_escape_sequences
+from sphinx.util import console
 from test_lazy_index import ForkLikeTasks
 
 from sphinxcontrib import mat_sidecars, mat_types
 from sphinxcontrib.mat_types import IndexSettings, build_index
 from sphinxcontrib.matlab_apidoc import ApidocOptions, main
 from sphinxcontrib.matlab_apidoc._generate import build_pages, stub_reference
+
+strip_escape_sequences = cast(Any, console).strip_escape_sequences
 
 pytest.importorskip("myst_parser")
 

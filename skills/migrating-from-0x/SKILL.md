@@ -277,9 +277,13 @@ A script that read the 0.x output to check help text breaks; replace it:
 
 ```python
 matlab_api_check_rules = {  # start with warnings; make rules "error" as help improves
-    "description": "warning", "method-description": "warning",
-    "inputs": "warning", "outputs": "warning", "name-value": "warning",
-    "sidecar-documented": "warning", "sidecar-links": "warning",
+    "description": "warning",
+    "method-description": "warning",
+    "inputs": "warning",
+    "outputs": "warning",
+    "name-value": "warning",
+    "sidecar-documented": "warning",
+    "sidecar-links": "warning",
 }  # property-description, example and method-example warn by default
 ```
 
@@ -299,12 +303,22 @@ a size limit):
 
 ```python
 import json, re, subprocess, sys
+
 report = json.load(open(sys.argv[1], encoding="utf-8"))
-changed = set(subprocess.run(["git", "diff", "--name-only", sys.argv[2]],
-                             capture_output=True, text=True).stdout.splitlines())
-prefix = sys.argv[3] if len(sys.argv) > 3 else ""  # code root relative to the repository
+changed = set(
+    subprocess.run(
+        ["git", "diff", "--name-only", sys.argv[2]], capture_output=True, text=True
+    ).stdout.splitlines()
+)
+prefix = (
+    sys.argv[3] if len(sys.argv) > 3 else ""
+)  # code root relative to the repository
+
+
 def file_of(ref):  # "+pkg/Cls.m.method" -> "+pkg/Cls.m"
     return re.match(r".*?\.(?:m|mlapp|md|rst)(?=\.|$)", ref)[0]
+
+
 rows = [f for f in report["findings"] if prefix + file_of(f["reference"]) in changed]
 print("| Object | Rule | Missing |\n|---|---|---|")
 for f in rows:

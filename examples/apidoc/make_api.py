@@ -45,4 +45,4 @@ def main(output_dir=HERE / "docs" / "api"):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:])
+    main(*(Path(arg) for arg in sys.argv[1:]))

@@ -15,7 +15,7 @@ import collections
 import os
 import re
 
-parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+parser = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
 parser.add_argument("root")
 parser.add_argument("--skip", nargs="*", default=["docs", "node_modules"])
 args = parser.parse_args()

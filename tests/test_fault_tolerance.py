@@ -81,6 +81,7 @@ def test_decode_utf8_and_latin1_fallback():
     text, problem = decode_source("café\n".encode() + b"\x80\xff")
     fallback = "mbcs" if sys.platform == "win32" else "latin-1"
     assert text == ("café\n".encode() + b"\x80\xff").decode(fallback, errors="replace")
+    assert problem is not None
     assert problem[1] == 1
 
 
@@ -168,6 +169,7 @@ def test_byte_order_mark_with_invalid_bytes_is_not_latin1():
     # MATLAB R2026a: "not a valid MATLAB file"; here U+FFFD and a warning.
     text, problem = decode_source(codecs.BOM_UTF8 + b"% \xc3\xa9\n% \x80")
     assert text == "% é\n% \ufffd"
+    assert problem is not None
     assert problem[0].startswith("is not valid utf-8 (line 2: invalid start byte)")
 
 
@@ -218,6 +220,7 @@ def test_dotted_function_name_is_named_by_file(tmp_path):
     assert obj.name == "ft_dotted"
     assert obj.retv == {"mHist": {}}
     assert obj.args == {"mX": {}, "vYEdge": {}, "vXEdge": {}}
+    assert obj.docstring is not None
     assert obj.docstring.startswith("function mHist = hist2d")
     ((subtype, message, row),) = obj.source_warnings
     assert subtype == "invalid_matlab"

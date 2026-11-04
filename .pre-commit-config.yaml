@@ -12,7 +12,6 @@ repos:
         args: [--fix=lf]
     -   id: trailing-whitespace
 
-    # Format TOML files
 -   repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
     rev: v2.15.0
     hooks:
@@ -21,17 +20,12 @@ repos:
         exclude: uv.lock
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10
+    rev: v0.17.3
     hooks:
-    # Run the linter.
     -   id: ruff-check
-        # args: [--statistics]
-        args: [--fix, --show-fixes, --unsafe-fixes]
-    # Run the formatter.
+        args: [--fix, --show-fixes]
     -   id: ruff-format
-        # args: [--diff]
 
-    # Checks for spelling errors
 -   repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
@@ -40,7 +34,6 @@ repos:
         additional_dependencies: [tomli]
 
 -   repo: https://github.com/astral-sh/uv-pre-commit
-    # Pin to a specific uv version (check the repo tags for the latest)
     rev: 0.12.5
     hooks:
     -   id: uv-lock

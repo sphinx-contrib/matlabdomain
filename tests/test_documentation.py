@@ -40,10 +40,12 @@ def documented_directives():
             options = directives.setdefault(m[1], set())
             column = None
         elif m := re.match(r"(\s+\.\. rst:directive:option:: )(\S+)$", line):
+            assert options is not None
             options.add(m[2])
             column = len(m[1])
         elif column and re.fullmatch(rf" {{{column}}}\S+", line):
             # another option name of the same entry
+            assert options is not None
             options.add(line.strip())
         else:
             column = None
@@ -111,3 +113,64 @@ def test_command_line_options():
     for line in entries(r"^\.\. option:: (.+)$", "cli.rst"):
         options.update(part.split()[0] for part in line.split(", "))
     assert options == cli
+
+
+def repository_configuration(root):
+    suffixes = {".toml", ".ini", ".cfg", ".yaml", ".yml", ".json"}
+    names = {
+        "uv.lock",
+        ".python-version",
+        ".gitignore",
+        ".gitattributes",
+        ".editorconfig",
+        "MANIFEST.in",
+        "Makefile",
+        "make.bat",
+        "conf.py",
+        "DEVELOPMENT.rst",
+        "codespell_ignore_words.txt",
+    }
+    paths = list(root.iterdir())
+    for folder in (".github", ".vscode"):
+        paths.extend((root / folder).rglob("*"))
+    for folder in ("docs", "test_slow/gauntlet"):
+        if (root / folder).is_dir():
+            paths.extend((root / folder).iterdir())
+    paths.extend((root / "examples").rglob("conf.py"))
+    return {
+        path.relative_to(root).as_posix()
+        for path in paths
+        if path.is_file()
+        and "_build" not in path.relative_to(root).parts
+        and (path.suffix in suffixes or path.name in names)
+    }
+
+
+def test_repository_configuration():
+    page = REPO / "docs/developer-guide/contributing.rst"
+    section = page.read_text(encoding="utf-8").split(
+        ".. _repository-configuration:", 1
+    )[1]
+    documented = re.findall(r"^``([^`]+)``$", section, re.MULTILINE)
+    assert len(documented) == len(set(documented)), "duplicate config entries"
+    assert set(documented) == repository_configuration(REPO)
+
+
+@pytest.mark.parametrize(
+    ("name", "included"),
+    [
+        ("new-tool.toml", True),
+        (".github/workflows/new.yml", True),
+        (".vscode/new.json", True),
+        ("test_slow/gauntlet/new.toml", True),
+        ("examples/apidoc/docs/conf.py", True),
+        ("tests/roots/new/conf.py", False),
+        ("test_slow/gauntlet/runs/new/config.json", False),
+        ("examples/apidoc/docs/_build/conf.py", False),
+    ],
+)
+def test_repository_configuration_scope(tmp_path, name, included):
+    path = tmp_path / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.touch()
+    assert (name in repository_configuration(tmp_path)) == included

@@ -26,7 +26,7 @@ from sphinxcontrib.mat_types import (
     build_index,
 )
 
-parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+parser = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
 parser.add_argument("root")
 parser.add_argument("--version", default="R2026a")
 parser.add_argument("--docs")

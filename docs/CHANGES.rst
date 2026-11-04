@@ -8,6 +8,11 @@ The first stable release; from here on the project follows semantic
 versioning. It breaks with 0.x in many places: see "Migrating from 0.22 and
 earlier" in the documentation.
 
+* Consolidate build, test and static-analysis policy in ``pyproject.toml``;
+  document repository configuration and check its inventory. Add a shared
+  Ruff/basic-Pyright gate and portable editor settings without changing the
+  supported test matrix or manual-only CI triggers.
+
 * The documentation is rewritten: getting started, a user guide, a reference
   of every configuration value, directive, role, option and warning, and a
   developer guide. Examples are rendered by the documentation's own build.

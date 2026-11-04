@@ -290,7 +290,7 @@ def run_project(project, lock, args, out):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     parser.add_argument(
         "names", nargs="*", help="keep projects whose name contains one"
     )

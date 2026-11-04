@@ -79,7 +79,9 @@ class MFileHandler(Handler):
         with open(path, "rb") as f:
             text, problem = mat_classify.decode_source(f.read(), encoding)
         kind = mat_classify.classify(path, text)
-        problems = [] if problem is None else [("encoding", *problem)]
+        problems: list[tuple[str, str, int | None]] = (
+            [] if problem is None else [("encoding", *problem)]
+        )
         if (nul := text.find("\0")) >= 0:
             problems.append(
                 (

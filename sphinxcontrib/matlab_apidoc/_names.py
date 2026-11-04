@@ -88,7 +88,7 @@ def docnames(references, suffix="rst", tocfile="index"):
     names, groups = {}, []
     for parent, kids in children.items():
         page = f"{tocfile if not parent else 'index'}.{suffix}"
-        by_name = {page.lower(): [None]}
+        by_name: dict[str, list[tuple[str, str] | None]] = {page.lower(): [None]}
         for kind, raw in sorted(kids):
             out = escape_segment(raw)
             names[parent, kind, raw] = out

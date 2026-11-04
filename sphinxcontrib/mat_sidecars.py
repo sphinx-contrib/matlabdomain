@@ -26,6 +26,7 @@ import re
 import unicodedata
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, cast
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -38,6 +39,9 @@ from sphinx.util.logging import getLogger
 from sphinx.util.nodes import clean_astext, nested_parse_with_titles
 
 from . import mat_naming, mat_types
+
+if TYPE_CHECKING:
+    from .matlab import MATLABDomain
 
 logger = getLogger("matlab-domain")
 
@@ -63,11 +67,12 @@ def same_drive(a, b):
     )
 
 
-def _escape_glob(path):
+def _escape_glob(path: str):
     """``path`` as an ``exclude_patterns`` entry that matches only itself
     (``[`` also matches ``]``: ``[[]`` would be a nested set to ``re``).
     """
-    return "".join({"*": "[*]", "?": "[?]", "[": "[][]"}.get(c, c) for c in path)
+    replacements = {"*": "[*]", "?": "[?]", "[": "[][]"}
+    return "".join(replacements.get(c, c) for c in path)
 
 
 def check_config(app, config):
@@ -154,7 +159,7 @@ class _Relative:
 
     folder: str
     srcdir: str
-    dom: object
+    dom: "MATLABDomain"
     #: ``(kind, target, line)`` of broken relative links and missing images
     issues: list = field(default_factory=list)
 
@@ -293,7 +298,7 @@ class HelpPaths:
             return None
         ref = source[len(HELP_SOURCE) :]
         folder = os.path.normpath(
-            os.path.join(self.root, *mat_naming.folder_of(ref).split("/"))
+            os.path.join(cast(str, self.root), *mat_naming.folder_of(ref).split("/"))
         )
         if folder not in self._folders:
             self._folders[folder] = _Relative(folder, self.srcdir, self.dom)
@@ -342,7 +347,7 @@ def _renderer_class():
         def setup_render(self, options, env):
             super().setup_render(options, env)
             # Sections go below the directive's node, as in MyST's include.
-            self._level_to_section = {0: self.current_node}
+            self._level_to_section = cast(Any, {0: self.current_node})
             env["temp_root_node"] = self.current_node
 
         def add_line_and_source_path(self, node, token):
@@ -376,7 +381,7 @@ def _renderer_class():
 
         def render_link_unknown(self, token):
             sidecar = self.md_options["matlab_sidecar"]
-            dest = self.md.normalizeLinkText(token.attrGet("href") or "")
+            dest = self.md.normalizeLinkText(str(token.attrGet("href") or ""))
             explicit = token.info != "auto" and bool(token.children)
             found = sidecar.link(dest, token.map[0] if token.map else None)
             if found is None:
@@ -389,7 +394,7 @@ def _renderer_class():
                 classes.insert(1, "download")
             self._process_wrap_node(node, token, explicit, classes, dest)
             if not explicit and text is not None:
-                node[-1] += nodes.Text(text)
+                cast(nodes.Element, node[-1]).append(nodes.Text(text))
 
     return SidecarRenderer
 
@@ -409,7 +414,7 @@ class AutoSidecar(SphinxDirective):
 
     def run(self):
         ref = unicodedata.normalize("NFC", self.arguments[0].strip())
-        dom = self.env.get_domain("mat")
+        dom = cast("MATLABDomain", self.env.get_domain("mat"))
         path = dom.sidecar_paths().get(ref)
         if path is None:
             root = mat_types.project_root(self.config, self.env.srcdir)
@@ -445,7 +450,7 @@ class AutoSidecar(SphinxDirective):
     def _markdown(self, text, sidecar, container):
         from myst_parser.parsers.mdit import create_md_parser
 
-        parser = create_md_parser(self.env.myst_config, _renderer_class())
+        parser = create_md_parser(cast(Any, self.env).myst_config, _renderer_class())
         parser.options["document"] = self.state.document
         parser.options["current_node"] = container
         parser.options["matlab_sidecar"] = sidecar

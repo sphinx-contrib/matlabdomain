@@ -1,8 +1,10 @@
 """Minimal tree-sitter Point.row crash repro: python point_repro.py row|index."""
 
 import sys
-from tree_sitter import Language, Parser
+
 import tree_sitter_matlab
+from tree_sitter import Language, Parser
+
 mode = sys.argv[1]
 p = Parser(Language(tree_sitter_matlab.language()))
 tree = p.parse(b"\n" * 300 + b"% comment\nx=1;\n")

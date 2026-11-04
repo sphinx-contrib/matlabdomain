@@ -5,6 +5,7 @@
 import dataclasses
 import logging
 import os
+from typing import Any, cast
 
 import pytest
 
@@ -58,7 +59,7 @@ def warnings():
     class Collect(logging.Handler):
         def emit(self, record):
             if getattr(record, "type", None) == "mat":
-                records.append((record.subtype, record.getMessage()))
+                records.append((getattr(record, "subtype", None), record.getMessage()))
 
     logger = logging.getLogger("sphinx")
     saved = logger.handlers[:]
@@ -111,7 +112,7 @@ def test_build_index_without_an_app(tmp_path):
 def test_settings_are_frozen(tmp_path):
     settings = IndexSettings(str(tmp_path))
     with pytest.raises(dataclasses.FrozenInstanceError):
-        settings.root = "elsewhere"
+        cast(Any, settings).root = "elsewhere"
 
 
 @pytest.mark.parametrize(
@@ -129,6 +130,7 @@ def test_build_index_matches_the_build(make_app, tmp_path, confoverrides):
     app.build()
     dom = app.env.get_domain("mat")
     settings = IndexSettings.from_config(app.config, app.srcdir)
+    assert settings is not None
     assert settings.root == os.path.normpath(str(tmp_path))
     source_index = build_index(settings)
     assert list(source_index.index.items()) == list(dom.data["index"].items())

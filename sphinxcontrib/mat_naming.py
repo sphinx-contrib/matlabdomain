@@ -35,7 +35,6 @@ from pathlib import Path
 
 from . import mat_handlers
 
-
 VALID_MATLAB_NAMELENGTHMAX = {63, 2048}
 
 # Path reference of the project root folder.
@@ -187,9 +186,7 @@ def path_reference(
     root, path = os.fspath(root), os.fspath(path)
     seps = tuple(sep for sep in (pathmod.sep, pathmod.altsep) if sep)
     if is_folder is None:
-        is_folder = path.endswith(seps) or (
-            pathmod is os.path and os.path.isdir(path)
-        )
+        is_folder = path.endswith(seps) or (pathmod is os.path and os.path.isdir(path))
     rel = pathmod.relpath(pathmod.normpath(path), pathmod.normpath(root))
     if pathmod.altsep:
         rel = rel.replace(pathmod.altsep, pathmod.sep)
@@ -206,9 +203,7 @@ def path_reference(
     return reference
 
 
-def parse_reference(
-    reference: str, extensions=None
-) -> tuple[str | None, list[str]]:
+def parse_reference(reference: str, extensions=None) -> tuple[str | None, list[str]]:
     """Split a path reference into ``(file or folder, members)``.
 
     The file part ends at the first registered extension (``extensions``

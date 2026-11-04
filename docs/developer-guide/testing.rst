@@ -24,11 +24,15 @@ tox runs the suite against each supported Sphinx line, as CI does:
 
 .. code-block:: console
 
-   $ tox run -e py313-sphinxlatest
-   $ tox run -e py311-sphinxmin       # Sphinx 8.0, the lowest pins
-   $ tox run -e py313-sphinxlatest -- -x --lf
+   $ uv run tox -e py313-sphinxlatest
+   $ uv run tox -e py311-sphinxmin       # Sphinx 8.0, the lowest pins
+   $ uv run tox -e py313-sphinxlatest -- -x --lf
+   $ uv run tox -e lint                 # Ruff, format check, basic Pyright
 
 Each tox run also builds ``tests/test_docs`` with Sphinx.
+The ``lint`` environment instead checks maintained Python without modifying it.
+Repository configuration and its documented inventory are checked by
+``test_documentation.py``; see :ref:`repository-configuration`.
 
 Layout
 ------
@@ -145,8 +149,7 @@ Behavior differs between systems in a few places (file name case, links,
 permissions, the default ANSI code page, parallel builds, which Sphinx runs
 serially on Windows), so changes in these areas are tested on both:
 
-* CI runs the suite on Linux, Windows and macOS for every push; start it by
-  hand with ``gh workflow run python-package.yml --ref <branch>``.
+* CI covers Linux, Windows and macOS.
 * For runs on a machine of the other system, put a script in ``tmp/`` at the
   repository root that runs each step and prints the expected values next
   to the results; commit it on a side branch, run it there and bring the

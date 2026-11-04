@@ -24,12 +24,16 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("warnings", type=Path)
-    parser.add_argument("--show", type=int, default=3, help="examples per group (default 3)")
+    parser.add_argument(
+        "--show", type=int, default=3, help="examples per group (default 3)"
+    )
     args = parser.parse_args()
     groups = Counter()
     examples = defaultdict(list)
     other = 0
-    for line in args.warnings.read_text(encoding="utf-8", errors="replace").splitlines():
+    for line in args.warnings.read_text(
+        encoding="utf-8", errors="replace"
+    ).splitlines():
         m = LINE.match(line)
         if not m:
             other += 1  # continuation lines of multi-line messages
@@ -43,7 +47,10 @@ def main():
         print(f"{count:6}  {key}")
         for example in examples[key]:
             print(f"          {example}")
-    print(f"\n{sum(groups.values())} warning(s) in {len(groups)} group(s); {other} other line(s)")
+    print(
+        f"\n{sum(groups.values())} warning(s) in {len(groups)} group(s); "
+        f"{other} other line(s)"
+    )
 
 
 if __name__ == "__main__":
