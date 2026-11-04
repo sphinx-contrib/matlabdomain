@@ -104,3 +104,7 @@ Next steps
 * Link to functions and classes from your text: :doc:`../user-guide/referencing`.
 * Check that the help text describes every input and output:
   :doc:`../user-guide/api-check`.
+* Set up an existing MATLAB repository: the repository's agent skill
+  ``skills/setting-up-a-project/SKILL.md`` walks through it step by step,
+  with an inventory script and templates for ``conf.py`` and the make
+  files.
