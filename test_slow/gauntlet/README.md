@@ -41,6 +41,17 @@ exit code (`api`: 1 with findings of severity `error`, else 0), a
 traceback, a duplicate object, a rerun that changes pages, or a
 serial vs `-j` difference (unless `parallel_may_differ`).
 
+`--quickstart` runs `sphinx-matlab-quickstart -q` instead, on a temporary
+`git worktree` of each checkout (Sphinx source folder `docs`, or
+`sphinx-docs` when `docs` exists), then `sphinx-build -E -n` of what it
+wrote, and removes the worktree. A problem: a nonzero exit code, a
+traceback, a duplicate object, or a checkout that changed. It prints a
+table of API pages, indexed files, warnings and times per project.
+
+```bash
+python test_slow/gauntlet/gauntlet.py --quickstart --out test_slow/gauntlet/runs/quickstart
+```
+
 To save a summary, copy `runs/<name>/results.json` to `summaries/<name>.json`.
 
 ## Repeatable commits

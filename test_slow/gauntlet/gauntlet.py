@@ -21,6 +21,14 @@ name contains one of them), on its checkout repos/<name>:
   codes, the bytes of every *.html and objects.inv (the api-check reports),
   and the warnings (Windows has no fork, so -j runs serially there).
 
+With --quickstart, instead: runs sphinx-matlab-quickstart -q on a temporary
+git worktree of each checkout (the Sphinx source folder ``docs``, or
+``sphinx-docs`` when ``docs`` exists), then a sphinx-build -E -n of what it
+wrote; the worktree is removed and the checkout stays as it was. Records
+the exit codes, wall times, the command's summary (files, API pages,
+indexed files, warnings) and the build's warnings by subtype
+(OUT/<name>/quickstart.warnings.txt, quickstart.stdout.txt).
+
 Writes OUT/results.json (the summary: the environment and, per project, the
 commit and the numbers above) and OUT/manifest.json (SHA-256 of every
 generated file per project). Prints the problems: a checkout not at its
@@ -40,6 +48,7 @@ import shutil
 import subprocess
 import sys
 import sysconfig
+import tempfile
 import time
 from importlib import metadata
 from pathlib import Path
@@ -53,6 +62,10 @@ RECORD = re.compile(r"(^|: )(WARNING|ERROR|CRITICAL|SEVERE): ")
 SUMMARY = re.compile(
     r"(\d+) pages?: (\d+) created, (\d+) updated, (\d+) unchanged.*?"
     r"(\d+) files? indexed, (\d+) warnings?, ([\d.]+) s\."
+)
+QUICKSTART_SUMMARY = re.compile(
+    r"(\d+) files? in (\S+), (\d+) API pages?; (\d+) files? indexed, "
+    r"(\d+) warnings?, ([\d.]+) s\."
 )
 # variant -> (builder, extra sphinx-build arguments)
 VARIANTS = {
@@ -236,17 +249,7 @@ def run_project(project, lock, args, out):
     row = {"commit": None, "changed_files": None, "root": project.root}
     if not (project.checkout / ".git").exists() or not root.is_dir():
         return row, None, [f"no checkout {root} (run fetch.py)"]
-    found = []
-    row["commit"] = P.git(project.checkout, "rev-parse", "HEAD")
-    row["changed_files"] = P.changed_files(project.checkout)
-    expected = project.commit or P.locked_commit(project, lock)
-    if expected is None:
-        found.append("not in the lock file (run fetch.py)")
-    elif P.resolve(project.checkout, expected) != row["commit"]:
-        found.append(f"at {row['commit'][:12]}, not {expected[:12]} (run fetch.py)")
-    if row["changed_files"]:
-        changed = row["changed_files"]
-        print(f"{project.name}: WARNING: {changed} changed files", flush=True)
+    found = check_commit(project, lock, row)
 
     (out / project.name).mkdir(parents=True, exist_ok=True)
     row["trials"] = []
@@ -289,6 +292,106 @@ def run_project(project, lock, args, out):
     return row, manifest(docs), found + problems(project, row)
 
 
+def check_commit(project, lock, row):
+    """Fill in the commit and the changed files; return the problems."""
+    found = []
+    row["commit"] = P.git(project.checkout, "rev-parse", "HEAD")
+    row["changed_files"] = P.changed_files(project.checkout)
+    expected = project.commit or P.locked_commit(project, lock)
+    if expected is None:
+        found.append("not in the lock file (run fetch.py)")
+    elif P.resolve(project.checkout, expected) != row["commit"]:
+        found.append(f"at {row['commit'][:12]}, not {expected[:12]} (run fetch.py)")
+    if row["changed_files"]:
+        changed = row["changed_files"]
+        print(f"{project.name}: WARNING: {changed} changed files", flush=True)
+    return found
+
+
+def quickstart(root, name, folder):
+    """Run sphinx-matlab-quickstart -q in ``root``; return its row."""
+    start = time.perf_counter()
+    proc = subprocess.run(
+        [PY, "-m", "sphinxcontrib.matlab_quickstart", str(root), "-q", "-o", name],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=ENV,
+    )
+    wall = time.perf_counter() - start
+    (folder / "quickstart.stdout.txt").write_text(proc.stdout, encoding="utf-8")
+    (folder / "quickstart.stderr.txt").write_text(proc.stderr, encoding="utf-8")
+    m = QUICKSTART_SUMMARY.search(proc.stdout)
+    return {
+        "rc": proc.returncode,
+        "wall_s": round(wall, 2),
+        "docs": name,
+        "summary": m.groups() if m else None,
+        "warnings": subtypes(proc.stderr),
+        "traceback": "Traceback" in proc.stderr,
+    }
+
+
+def run_quickstart(project, lock, out):
+    """Run sphinx-matlab-quickstart -q and a -n build of its output on a
+    temporary worktree; return the row, None (no manifest) and the problems.
+    """
+    row = {"commit": None, "changed_files": None, "root": project.root}
+    if not (project.checkout / ".git").exists() or not project.source.is_dir():
+        return row, None, [f"no checkout {project.source} (run fetch.py)"]
+    found = check_commit(project, lock, row)
+    before = P.git(project.checkout, "status", "--porcelain")
+    folder = out / project.name
+    folder.mkdir(parents=True, exist_ok=True)
+    tree = Path(tempfile.mkdtemp(prefix="qs-"))
+    tree.rmdir()
+    P.git(project.checkout, "worktree", "add", "--detach", "--quiet", str(tree), "HEAD")
+    try:
+        root = tree / project.root
+        name = next(n for n in ("docs", "sphinx-docs") if not (root / n).exists())
+        row["quickstart"] = qs = quickstart(root, name, folder)
+        if qs["rc"] == 0:
+            base = folder / "quickstart"
+            row["quickstart_build"], _, _ = build(
+                root / name, base, root, "conf", ["-n"]
+            )
+            shutil.rmtree(base, ignore_errors=True)
+    finally:
+        P.git(project.checkout, "worktree", "remove", "--force", str(tree))
+    if qs["rc"] or qs["traceback"] or qs["summary"] is None:
+        found.append(
+            f"quickstart: exit {qs['rc']}, traceback {qs['traceback']}, "
+            f"summary {qs['summary']}"
+        )
+    b = row.get("quickstart_build")
+    if b and (b["rc"] or b["traceback"] or b["duplicate_objects"]):
+        found.append(
+            f"quickstart build: exit {b['rc']}, traceback {b['traceback']}, "
+            f"duplicate objects {b['duplicate_objects']}"
+        )
+    if P.git(project.checkout, "status", "--porcelain") != before:
+        found.append("the checkout changed")
+    return row, None, found
+
+
+def print_quickstart_table(rows):
+    """Per project: API pages, files indexed, warnings and times."""
+    print(
+        f"\n{'project':<22} {'pages':>6} {'files':>6} {'qs warn':>8} "
+        f"{'qs s':>7} {'build warn':>10} {'build s':>8}"
+    )
+    for name, row in rows.items():
+        qs, b = row.get("quickstart") or {}, row.get("quickstart_build") or {}
+        summary = qs.get("summary") or ("?",) * 6
+        print(
+            f"{name:<22} {summary[2]:>6} {summary[3]:>6} {summary[4]:>8} "
+            f"{qs.get('wall_s', '?'):>7} {b.get('warning_records', '?'):>10} "
+            f"{b.get('wall_s', '?'):>8}"
+        )
+
+
 def main():
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     parser.add_argument(
@@ -306,6 +409,11 @@ def main():
     )
     parser.add_argument("--variant", action="append", choices=sorted(VARIANTS))
     parser.add_argument(
+        "--quickstart",
+        action="store_true",
+        help="sphinx-matlab-quickstart and a -n build on a temporary worktree",
+    )
+    parser.add_argument(
         "--projects", default=P.LIST, help="the project list (default: %(default)s)"
     )
     args = parser.parse_args()
@@ -320,7 +428,10 @@ def main():
             args.names and not any(n in project.name for n in args.names)
         ):
             continue
-        row, pages, found[project.name] = run_project(project, lock, args, out)
+        if args.quickstart:
+            row, pages, found[project.name] = run_quickstart(project, lock, out)
+        else:
+            row, pages, found[project.name] = run_project(project, lock, args, out)
         if pages is not None:
             hashes[project.name] = pages
         results["projects"][project.name] = row
@@ -333,6 +444,8 @@ def main():
 
     bad = {name: p for name, p in found.items() if p}
     count = sum(map(len, bad.values()))
+    if args.quickstart:
+        print_quickstart_table(results["projects"])
     print(f"\n{len(found)} projects; {count} problems; results in {out}")
     for name, items in bad.items():
         for item in items:
