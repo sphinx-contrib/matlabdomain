@@ -47,7 +47,9 @@ What is checked
 ---------------
 
 Every indexed object below the project root, minus
-:confval:`matlab_api_check_ignore_patterns`:
+:confval:`matlab_api_check_ignore_patterns` (or only the objects of the
+files :confval:`matlab_api_check_files` selects, see
+`Checking selected files`_):
 
 * functions, classes, scripts and apps (``.mlapp``);
 * public methods: methods without ``Access = private``, ``protected`` or an
@@ -185,13 +187,40 @@ The label is followed by one of:
 Two cases are not headers: a lowercase label alone on a line right after a
 line of text (a word of wrapped prose), and a label that is the name of one
 of the function's arguments with text after its ``:`` (``input: the data``,
-the entry of an argument named ``input``). The labels are fixed; they were
-tuned on the help of 14 open-source MATLAB projects.
+the entry of an argument named ``input``). The built-in labels were tuned
+on the help of 14 open-source MATLAB projects.
+
+With ``sphinx.ext.napoleon`` in ``extensions``, the headings that
+``napoleon_custom_sections`` makes parameter or return sections count
+too, so that the check and the rendered help agree:
+
+.. code-block:: python
+
+   napoleon_custom_sections = [
+       ("Eingaben", "params_style"),  # an inputs section
+       ("Ausgaben", "returns_style"),  # an outputs section
+       ("Eingabe", "Eingaben"),  # an alias of the one above: inputs
+       "Hinweise",  # a plain section: neither
+   ]
+
+The entries are read as Napoleon reads them, in order, the last one for a
+heading winning. ``(heading, "params_style")`` is an inputs section and
+``(heading, "returns_style")`` an outputs section; ``(heading, other)``
+is what an earlier entry made ``other``. A plain heading, and an alias of
+one of Napoleon's own sections (``("Ergebnis", "Returns")``) or of an
+unknown one, adds nothing: write ``("Ergebnis", "returns_style")``
+instead. The headings follow the rules above (any case, the same forms, the
+same two exceptions) and are added to the built-in labels, which still
+count and keep their meaning: ``("Outputs", "params_style")``, as
+``sphinx-matlab-quickstart`` may write it, does not make ``Outputs`` an
+inputs section. A ``params_style`` heading is not a name-value section: name-value
+arguments need a name-value label or ``arguments``-block comments, as
+before. Without Napoleon, ``napoleon_custom_sections`` does nothing.
 
 Configuration
 -------------
 
-Three settings in ``conf.py``; changing them does not make Sphinx read the
+Four settings in ``conf.py``; changing them does not make Sphinx read the
 pages again (:doc:`../reference/configuration`):
 
 * :confval:`matlab_api_check_rules`: the severity of each rule:
@@ -225,7 +254,71 @@ pages again (:doc:`../reference/configuration`):
   nothing; the reports say so. Useful to switch the check off in one
   configuration without removing the CI step.
 
+* :confval:`matlab_api_check_files` (default ``None``, every file): the
+  files to check; see `Checking selected files`_.
+
 An unknown rule or severity is a configuration error.
+
+Checking selected files
+-----------------------
+
+:confval:`matlab_api_check_files` checks only some files, such as the
+files a pull request changes. The project is indexed and the pages are
+read as before, so names resolve, links work and the documentation does
+not change; only the check is narrower, and files that are not selected
+are not parsed for it. Give it on the command line, separated by commas:
+
+.. code-block:: console
+
+   $ sphinx-build -b matlab-api-check -D matlab_api_check_files=+shapes/Circle.m,utils/ docs docs/_build/api-check
+
+or in ``conf.py``, as a list:
+
+.. code-block:: python
+
+   matlab_api_check_files = ["+shapes/Circle.m", "utils/", "+pkg/**/*.m"]
+
+* Entries are paths or glob patterns relative to
+  :confval:`matlab_src_code_project_root`, with ``/`` and the rules of
+  :confval:`matlab_src_include_patterns` (case-sensitive, ``**`` crosses
+  folders). An entry that ends in ``/`` selects every file below that
+  folder.
+* They select files and sidecar docs; a selected ``classdef`` file is
+  checked with its methods and properties. A class folder's method files
+  are files of their own: ``@Shape/area.m`` checks that method only,
+  ``@Shape/Shape.m`` the class and the methods written in it, and
+  ``@Shape/`` all of them.
+* :confval:`matlab_api_check_ignore_patterns` still apply, and selected
+  ``Contents.m`` files are still not checked; the report counts them.
+* ``[]`` (or an empty ``-D matlab_api_check_files=``) selects nothing:
+  the reports say so, and the build passes. ``None``, the default,
+  checks every file.
+* An entry that selects no indexed file or sidecar doc (a typo, a deleted
+  or excluded file, a path relative to another folder) is logged as an
+  ``ERROR`` with the reason, listed in both reports, and makes the build
+  exit with status 1, whatever the rule severities, so the check of a
+  file that was asked for cannot pass silently.
+
+Both reports count the files selected and the files not selected (``not
+selected``) and list the entries that select nothing; ``api-check.json``
+also lists every entry. See :doc:`../reference/api-check-report`.
+
+In CI, pass the files a change touches. They must be relative to the
+project root, exist and be indexed, so filter the list first. With Git,
+for a project root ``src`` (``--relative`` leaves out other files and
+strips ``src/``; ``--diff-filter=d`` leaves out deleted files):
+
+.. code-block:: bash
+
+   files=$(git diff --name-only --diff-filter=d --relative=src origin/main... \
+       -- '*.m' '*.mlapp' ':!src/tests')
+   sphinx-build -b matlab-api-check -D "matlab_api_check_files=$files" \
+       docs docs/_build/api-check
+
+Line breaks separate entries like commas. Leave out the folders that
+:confval:`matlab_src_exclusion_patterns` excludes (``:!src/tests`` above),
+and add the sidecar suffixes if you check sidecar docs. A file name with a
+comma needs a list in ``conf.py``.
 
 Findings and reports
 --------------------
@@ -249,9 +342,9 @@ check passed; see .../api-check.txt".
 In CI
 -----
 
-The exit status is 1 when a finding has severity ``error``, and 0
-otherwise. With ``-W``, any finding fails the build, like any warning. A
-CI step:
+The exit status is 1 when a finding has severity ``error`` or an entry of
+:confval:`matlab_api_check_files` selects no file, and 0 otherwise. With
+``-W``, any finding fails the build, like any warning. A CI step:
 
 .. code-block:: console
 

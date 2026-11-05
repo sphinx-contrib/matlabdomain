@@ -1,11 +1,13 @@
 """The ``matlab-api-check`` builder: audit MATLAB help text (plan.md Section 2.9).
 
-Every indexed object is checked, whether a page documents it or not.
+Every indexed object is checked, whether a page documents it or not, unless
+``matlab_api_check_files`` selects files.
 
 :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
+import functools
 import json
 import os
 import re
@@ -60,6 +62,7 @@ _PLURALS = dict(
 REPORT_TXT = "api-check.txt"
 REPORT_JSON = "api-check.json"
 _IGNORE_OPTION = "matlab_api_check_ignore_patterns"
+_FILES_OPTION = "matlab_api_check_files"
 
 
 def _header(*labels):
@@ -84,8 +87,9 @@ _NV_LABELS = (
     rf"input arguments? \({_NV} arguments?\)",
 )
 _OPTIONAL = r"optional (?:inputs?|arguments?|parameters?)"
-SECTIONS = {
-    "inputs": _header(
+#: the built-in labels of the sections that napoleon_custom_sections can extend
+_LABELS = {
+    "inputs": (
         r"inputs?(?:\(s\))?",
         r"input (?:arguments?|parameters?)",
         r"arguments?",
@@ -94,12 +98,16 @@ SECTIONS = {
         _OPTIONAL,
         _NV_LABELS[1],
     ),
-    "outputs": _header(
+    "outputs": (
         r"outputs?(?:\(s\))?",
         r"output (?:arguments?|parameters?)",
         r"returns?",
         r"return (?:values?|arguments?)",
     ),
+}
+SECTIONS = {
+    "inputs": _header(*_LABELS["inputs"]),
+    "outputs": _header(*_LABELS["outputs"]),
     "name-value": _header(r"options?", _OPTIONAL, *_NV_LABELS),
     "example": _header(
         r"examples?(?:\(s\))?(?:[ \t]+\d+)?",
@@ -119,6 +127,65 @@ _MESSAGES = {
     "outputs": ("outputs", "Outputs:", "outputs"),
     "name-value": ("name-value", "Name-Value Arguments:", "name-value arguments"),
 }
+#: the napoleon_custom_sections styles whose sections are inputs or outputs
+_STYLES = {"params_style": "inputs", "returns_style": "outputs"}
+
+
+def custom_labels(config):
+    """Return the ``napoleon_custom_sections`` headings that Napoleon renders
+    as input or output sections: ``((rule, heading), ...)``, sorted.
+
+    Read as Napoleon reads them, in order, the last entry for a heading
+    winning: ``(heading, "params_style")`` is an input section,
+    ``(heading, "returns_style")`` an output section, ``(heading, other)``
+    the section ``other`` names if an earlier entry made it one. A plain
+    heading is a generic section; an alias of one of Napoleon's own
+    sections, or of an unknown one, is not an input or output section.
+    A built-in label keeps its meaning (``("Outputs", "params_style")``
+    adds no input section). Without ``sphinx.ext.napoleon`` nothing renders
+    them: none.
+    """
+    try:
+        entries = config.napoleon_custom_sections
+    except AttributeError:
+        return ()
+    rules = {}
+    for entry in entries or ():
+        if isinstance(entry, str):
+            rules[entry.lower()] = None
+            continue
+        try:
+            heading, style = entry[0], entry[1]
+        except (TypeError, LookupError):
+            continue
+        if isinstance(heading, str) and isinstance(style, str):
+            rules[heading.lower()] = _STYLES.get(style) or rules.get(style.lower())
+    return tuple(
+        sorted(
+            (rule, heading)
+            for heading, rule in rules.items()
+            if rule
+            and heading.split()
+            and not any(alone.match(heading) for _, alone in SECTIONS.values())
+        )
+    )
+
+
+@functools.cache
+def sections_for(labels):
+    """``SECTIONS`` with the ``custom_labels`` added to their sections."""
+    if not labels:
+        return SECTIONS
+    sections = dict(SECTIONS)
+    for rule, builtin in _LABELS.items():
+        extra = [
+            r"\s+".join(map(re.escape, heading.split()))
+            for r, heading in labels
+            if r == rule
+        ]
+        if extra:
+            sections[rule] = _header(*builtin, *extra)
+    return sections
 
 
 def check_config(app, config):  # noqa: ARG001
@@ -140,6 +207,7 @@ def check_config(app, config):  # noqa: ARG001
                 f"{', '.join(SEVERITIES)}, not {severity!r}."
             )
     ignore_patterns(config)
+    selected_files(config)
 
 
 def ignore_patterns(config):
@@ -148,6 +216,44 @@ def ignore_patterns(config):
     if isinstance(patterns, str) or not isinstance(patterns, (list, tuple)):
         raise ConfigError(f"{_IGNORE_OPTION} must be a list of glob patterns.")
     return [mat_types._normalize_pattern(p, _IGNORE_OPTION) for p in patterns]
+
+
+def selected_files(config):
+    """Return the normalized ``matlab_api_check_files`` without duplicates:
+    None selects every file, ``[]`` none (or ConfigError). A string, as
+    ``-D`` gives it, is a list separated by commas or line breaks.
+    """
+    entries = getattr(config, _FILES_OPTION)
+    if entries is None:
+        return None
+    if isinstance(entries, str):
+        entries = [e.strip() for e in re.split(r"[,\n]", entries)]
+        entries = [e for e in entries if e]
+    elif not isinstance(entries, (list, tuple)):
+        raise ConfigError(
+            f"{_FILES_OPTION} must be None, a list of paths or glob patterns, "
+            "or a string of them separated by commas."
+        )
+    return list(
+        dict.fromkeys(mat_types._normalize_pattern(e, _FILES_OPTION) for e in entries)
+    )
+
+
+def _why_unmatched(root, entry):
+    """Why the ``matlab_api_check_files`` entry ``entry`` selects no file."""
+    if root is None:
+        return "matlab_src_code_project_root is not set"
+    if not mat_types._GLOB_CHARS.isdisjoint(entry) or entry.endswith("/"):
+        return "no indexed file matches it"
+    path = os.path.join(root, *entry.split("/"))
+    if os.path.isdir(path):
+        return "it is a folder; end it with '/' to select the files below it"
+    if os.path.exists(path):
+        return (
+            "the project does not index it (excluded, not a MATLAB file or "
+            "sidecar doc, or another letter case)"
+        )
+    return "no such file below the project root"
 
 
 @dataclass
@@ -187,15 +293,16 @@ def has_description(docstring):
     return bool((docstring or "").split("\n", 1)[0].strip())
 
 
-def has_section(rule, docstring, names=()):
+def has_section(rule, docstring, names=(), sections=SECTIONS):
     """Return True if the help has a line that starts the rule's section.
 
     A lowercase label alone after a line of text is a wrapped prose word
     unless it is underlined (``---``). A label with text after its colon
     that is the name of one of the function's arguments (``names``,
     lowercase) is an entry, not a section (``input: the data``).
+    ``sections`` holds the labels (``sections_for``).
     """
-    colon, alone = SECTIONS[rule]
+    colon, alone = sections[rule]
     lines = (docstring or "").split("\n")
     for i, line in enumerate(lines):
         if match := colon.match(line):
@@ -218,12 +325,12 @@ def has_example(docstring):
     )
 
 
-def undocumented(rule, docstring, comments, names=()):
+def undocumented(rule, docstring, comments, names=(), sections=SECTIONS):
     """Names in ``comments`` (name -> its ``arguments``-block comment) left
     undocumented: [] if the help has the rule's section (``has_section``) or
     every name has a comment, else the names without one.
     """
-    if not comments or has_section(rule, docstring, names):
+    if not comments or has_section(rule, docstring, names, sections):
         return []
     return [name for name, comment in comments.items() if not comment]
 
@@ -243,17 +350,55 @@ def is_public(attrs):
 class _Checker:
     """Applies the rules to the indexed objects of one build."""
 
-    def __init__(self, dom, rules, ignore):
+    def __init__(self, dom, rules, ignore, selection=None, sections=SECTIONS):
         self.dom = dom
         self.rules = rules
         self.ignore = Matcher(ignore)
+        self.sections = sections
         self.findings = []
         #: source paths of the files resolved (parsed or from the cache)
         self.parsed = []
         self.checked = dict.fromkeys(KINDS, 0)
-        self.not_checked = dict.fromkeys(
+        self.not_checked: dict[str, int] = dict.fromkeys(
             ("ignored", "hidden", "unreadable", "not_parsed"), 0
         )
+        #: the ``selected_files`` entries; None selects every file
+        self.selection = selection
+        #: the entries that selected a file, and the number of files selected
+        self.matched = set()
+        self.selected = 0
+        if selection is not None:
+            self.not_checked["not_selected"] = 0
+            self._literal = {
+                e for e in selection if mat_types._GLOB_CHARS.isdisjoint(e)
+            } - {e for e in selection if e.endswith("/")}
+            self._globs = {
+                e: Matcher([f"{e}**" if e.endswith("/") else e])
+                for e in selection
+                if e not in self._literal
+            }
+
+    def select(self, ref):
+        """Return True if the file or sidecar doc ``ref`` is selected (counted)."""
+        if self.selection is None:
+            return True
+        hits = {e for e, match in self._globs.items() if match(ref)}
+        if ref in self._literal:
+            hits.add(ref)
+        self.matched |= hits
+        if hits:
+            self.selected += 1
+        else:
+            self.not_checked["not_selected"] += 1
+        return bool(hits)
+
+    def unmatched(self, root):
+        """``[(entry, why)]``: the selection entries that selected no file."""
+        return [
+            (e, _why_unmatched(root, e))
+            for e in self.selection or ()
+            if e not in self.matched
+        ]
 
     def report(self, rule, where, kind, message):
         severity = self.rules[rule]
@@ -297,7 +442,9 @@ class _Checker:
         }
         names = {n.lower() for n in (*func.args, *func.retv, *structs)}
         for rule, comments in groups.items():
-            if missing := undocumented(rule, func.docstring, comments, names):
+            if missing := undocumented(
+                rule, func.docstring, comments, names, self.sections
+            ):
                 section, example, what = _MESSAGES[rule]
                 self.report(
                     rule,
@@ -362,6 +509,9 @@ class _Checker:
 
     def check(self, path, record):
         ref = record["reference"]
+        # Before anything is parsed: an unselected file costs no parse.
+        if not self.select(ref):
+            return
         if record["unreadable"]:
             self.not_checked["unreadable"] += 1
             return
@@ -418,6 +568,8 @@ class _Checker:
             data["sidecars"].items(), key=lambda i: i[1]["reference"]
         ):
             ref = record["reference"]
+            if not self.select(ref):
+                continue
             if self.ignore(ref):
                 self.not_checked["ignored"] += 1
                 continue
@@ -457,11 +609,11 @@ class _Checker:
                 )
 
 
-def _summary(enabled, rules, checker):
+def _summary(enabled, rules, checker, unmatched=()):
     findings = {rule: {"error": 0, "warning": 0} for rule in RULES}
     for finding in checker.findings if checker else ():
         findings[finding.rule][finding.severity] += 1
-    return {
+    summary = {
         "enabled": enabled,
         "rules": rules,
         "checked": checker.checked if checker else dict.fromkeys(KINDS, 0),
@@ -470,14 +622,36 @@ def _summary(enabled, rules, checker):
         "errors": sum(n["error"] for n in findings.values()),
         "warnings": sum(n["warning"] for n in findings.values()),
     }
+    if checker and checker.selection is not None:
+        summary["selection"] = {
+            "entries": checker.selection,
+            "selected": checker.selected,
+            "unmatched": [{"entry": e, "reason": why} for e, why in unmatched],
+        }
+    return summary
 
 
 def _text_report(summary, findings):
-    lines = [f"{f.location() or f.path}: {f.severity}: {f.text()}" for f in findings]
+    selection = summary.get("selection")
+    lines = [
+        f"{u['entry']}: error: matches no indexed file or sidecar doc: "
+        f"{u['reason']} [{_FILES_OPTION}]"
+        for u in (selection or {}).get("unmatched", ())
+    ]
+    lines += [f"{f.location() or f.path}: {f.severity}: {f.text()}" for f in findings]
     if lines:
         lines.append("")
     if not summary["enabled"]:
         lines.append("matlab_api_check_enabled is False: nothing was checked.")
+    if selection is not None:
+        if not selection["entries"]:
+            lines.append(f"{_FILES_OPTION} is empty: no file was selected.")
+        total = selection["selected"] + summary["not_checked"]["not_selected"]
+        lines.append(
+            f"Selected: {selection['selected']} of {total} files by "
+            f"{len(selection['entries'])} {_FILES_OPTION} entries, "
+            f"{len(selection['unmatched'])} matching no file"
+        )
     checked = ", ".join(
         f"{n} {_PLURALS[kind]}" for kind, n in summary["checked"].items()
     )
@@ -502,7 +676,8 @@ class MatlabApiCheckBuilder(Builder):
     """Checks the help text of the MATLAB sources (``-b matlab-api-check``).
 
     The pages are read as for any builder; the check covers every indexed
-    object, whether a page documents it or not, and writes no pages.
+    object (or those of the files ``matlab_api_check_files`` selects),
+    whether a page documents it or not, and writes no pages.
     """
 
     name = "matlab-api-check"
@@ -511,6 +686,8 @@ class MatlabApiCheckBuilder(Builder):
     def init(self):
         #: number of findings with the severity ``error``
         self.errors = 0
+        #: number of matlab_api_check_files entries that selected no file
+        self.unmatched = 0
 
     def get_outdated_docs(self):
         return "the MATLAB sources"
@@ -533,14 +710,24 @@ class MatlabApiCheckBuilder(Builder):
         rules = {**DEFAULT_RULES, **config.matlab_api_check_rules}
         enabled = bool(config.matlab_api_check_enabled)
         checker = None
+        unmatched = []
         if enabled:
-            checker = _Checker(dom, rules, ignore_patterns(config))
+            checker = _Checker(
+                dom,
+                rules,
+                ignore_patterns(config),
+                selected_files(config),
+                sections_for(custom_labels(config)),
+            )
             records = sorted(dom.data["index"].items(), key=lambda i: i[1]["reference"])
             for path, record in records:
                 checker.check(path, record)
             checker.sidecars(self.env)
+            unmatched = checker.unmatched(
+                mat_types.project_root(config, self.env.srcdir)
+            )
         findings = checker.findings if checker else []
-        summary = _summary(enabled, rules, checker)
+        summary = _summary(enabled, rules, checker, unmatched)
         # The report first: -W may stop the build at the first warning.
         os.makedirs(self.outdir, exist_ok=True)
         with open(
@@ -557,8 +744,19 @@ class MatlabApiCheckBuilder(Builder):
             )
             f.write("\n")
         self.errors = summary["errors"]
+        self.unmatched = len(unmatched)
         if checker:
             _warn_parsed(dom, checker.parsed)
+        for entry, why in unmatched:
+            logger.error(
+                "[sphinxcontrib-matlabdomain] %s: %r matches no indexed file or "
+                "sidecar doc: %s",
+                _FILES_OPTION,
+                entry,
+                why,
+                type="mat",
+                subtype="api_check",
+            )
         for finding in findings:
             log = logger.error if finding.severity == "error" else logger.warning
             log(
@@ -587,11 +785,13 @@ def _warn_parsed(dom, paths):
 
 
 def set_status(app, exception):
-    """``build-finished``: exit status 1 when an ``error`` rule found something."""
+    """``build-finished``: exit status 1 when an ``error`` rule found something
+    or a ``matlab_api_check_files`` entry selected no file.
+    """
     builder = app.builder
     if (
         exception is None
         and isinstance(builder, MatlabApiCheckBuilder)
-        and builder.errors
+        and (builder.errors or builder.unmatched)
     ):
         app.statuscode = 1

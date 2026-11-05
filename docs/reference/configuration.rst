@@ -203,6 +203,25 @@ Changing these reads no page again.
    matched against the path references of files, methods
    (``+pkg/Cls.m.helper``) and sidecar docs.
 
+.. confval:: matlab_api_check_files
+   :type: ``None``, ``list[str]`` or ``str``
+   :default: ``None``
+
+   The files to check. ``None`` checks every indexed file. A list selects
+   the files and sidecar docs whose path references match one of its
+   entries: paths or glob patterns, relative to
+   :confval:`matlab_src_code_project_root`, with the rules of
+   :confval:`matlab_src_include_patterns`; an entry that ends in ``/``
+   selects the files below that folder. A file's methods and properties
+   are checked with it. ``[]`` selects no file. A string is a list
+   separated by commas or line breaks, as ``-D
+   matlab_api_check_files=a.m,b.m`` gives it; blank entries are dropped.
+   It narrows only the check: the index, the pages and the links stay
+   those of the whole project. An entry that selects no file is an error:
+   the build exits with status 1. Any other type, or an entry that
+   :confval:`matlab_src_include_patterns` would reject, is a
+   ``ConfigError``.
+
 ``sphinx-matlab-apidoc``
 ------------------------
 

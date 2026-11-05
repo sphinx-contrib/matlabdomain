@@ -1111,6 +1111,8 @@ def setup(app):
     # Rule -> severity, merged over mat_api_check.DEFAULT_RULES.
     app.add_config_value("matlab_api_check_rules", {}, "", dict)
     app.add_config_value("matlab_api_check_ignore_patterns", [], "", [list, tuple])
+    # None checks every file; a list (or, from -D, a comma-separated str) selects.
+    app.add_config_value("matlab_api_check_files", None, "")
     # Read by sphinx-matlab-apidoc only.
     apidoc_config.add_config_values(app)
 

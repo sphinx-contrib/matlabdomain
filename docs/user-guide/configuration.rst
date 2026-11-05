@@ -278,8 +278,9 @@ These Sphinx and autodoc settings apply too:
 Checking help text
 ------------------
 
-:confval:`matlab_api_check_rules`, :confval:`matlab_api_check_enabled` and
-:confval:`matlab_api_check_ignore_patterns` configure the
+:confval:`matlab_api_check_rules`, :confval:`matlab_api_check_enabled`,
+:confval:`matlab_api_check_ignore_patterns` and
+:confval:`matlab_api_check_files` configure the
 ``matlab-api-check`` builder; see :doc:`api-check`.
 
 The ignore patterns match the path references of files and of methods in a

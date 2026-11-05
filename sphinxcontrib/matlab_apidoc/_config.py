@@ -56,6 +56,7 @@ BUILD_ONLY_CONFIG = frozenset(
         "matlab_api_check_enabled",
         "matlab_api_check_rules",
         "matlab_api_check_ignore_patterns",
+        "matlab_api_check_files",
     }
 )
 
