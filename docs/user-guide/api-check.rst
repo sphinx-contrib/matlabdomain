@@ -62,7 +62,8 @@ Files below ``private/`` and files MATLAB cannot call are checked.
 ``Contents.m`` and the other special files, files that cannot be read and
 files that cannot be parsed are counted as not checked. The function files
 of a class folder ``@X/`` whose ``X.m`` is a ``classdef`` are methods; in an
-old-style class folder they are functions.
+old-style class folder they are functions (old-style classes are not
+supported, see :doc:`documenting`).
 
 With :confval:`matlab_src_sidecar_suffixes`, the :doc:`sidecar docs
 <sidecars>` are checked too: that each is rendered, and that its relative

@@ -145,8 +145,9 @@ the methods in the class file:
 .. include:: ../snippets/autoclass_folder.rst
 
 A folder ``@X/`` is a class folder only if ``@X/X.m`` is a ``classdef``.
-In an old-style class folder (``@X/X.m`` is a function), document each file
-with ``mat:autofunction``.
+Old-style classes (a class folder without a ``classdef``, from before
+MATLAB R2008a) are not supported: their files are functions. Document each
+file with ``mat:autofunction``.
 
 Single members
 --------------

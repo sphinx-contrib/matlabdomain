@@ -167,7 +167,8 @@ In both:
   files of the folder above (its namespace). The function files of a class
   folder ``@X/`` whose ``X.m`` is a ``classdef`` are its methods and are
   not listed separately. In any other ``@`` folder (an old-style class, a
-  ``classdef`` with another name, no class file), every file is listed.
+  ``classdef`` with another name, no class file), every file is listed
+  (old-style classes are not supported, see :doc:`documenting`).
 * ``Contents.m`` and the other special files (:doc:`help-text`) are left
   out. Files MATLAB cannot call are included, by path; files that cannot be
   read are left out with a ``mat.apidoc`` warning.
