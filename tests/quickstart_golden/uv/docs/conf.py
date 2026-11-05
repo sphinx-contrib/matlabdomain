@@ -1,24 +1,22 @@
-# Sphinx configuration for the documentation of a MATLAB project.
-# Template from the setting-up-a-project skill of sphinxcontrib-matlabdomain;
-# replace every <...> and delete what the project does not use.
+# Sphinx configuration of the Quickstart test documentation.
+# Written by sphinx-matlab-quickstart (sphinxcontrib-matlabdomain); edit freely.
+# Configuration values: https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import configparser
 import os
 
-from sphinxcontrib.matlab import DEFAULT_EXTERNAL_NAMES
-
 # -- Project information -----------------------------------------------------
 
-project = "<Project name>"
-copyright = "<year>, <owner>"
-author = "<owner>"
+project = "Quickstart test"
+copyright = "<YEAR>, Test Author"
+author = "Test Author"
 
 # -- General configuration ---------------------------------------------------
 
 extensions = [
     "sphinxcontrib.matlab",
     "sphinx.ext.napoleon",
-    "myst_parser",  # Markdown pages and sidecar docs; drop if unused
+    "myst_parser",  # Markdown pages and sidecar docs
 ]
 
 source_suffix = {
@@ -43,6 +41,9 @@ def _submodule_paths(gitmodules):
     return [parser[s]["path"] for s in parser.sections() if "path" in parser[s]]
 
 
+_GITMODULES = os.path.join(os.path.dirname(__file__), "../.gitmodules")
+
+
 matlab_src_code_project_root = ".."
 matlab_src_exclusion_patterns = [
     # The default list, which a project list replaces.
@@ -53,12 +54,14 @@ matlab_src_exclusion_patterns = [
     "CONTRIBUTING.*",
     "CODE_OF_CONDUCT.*",
     "SECURITY.*",
-    # Not code of the project, or not on its MATLAB path.
-    "<folder>",
+    # Not on the MATLAB project path (matlab.toml); start-up files may
+    # add more. Uncomment what is not the project's API:
+    # "data",
+    # "src/startup_hook.m",
     # Submodules are separate projects with their own docs.
-    *_submodule_paths(os.path.join(os.path.dirname(__file__), "..", ".gitmodules")),
+    *_submodule_paths(_GITMODULES),
 ]
-matlab_version = "<R20xxx>"
+matlab_version = "R2024b"
 # Markdown notes next to the code become part of the API pages.
 matlab_src_sidecar_suffixes = [".md"]
 
@@ -71,11 +74,10 @@ matlab_class_signature = True
 matlab_add_namespace_names = False
 matlab_auto_link = "basic"
 autoclass_content = "class"
-# Classes from other projects (submodules, toolboxes): text, not warnings.
-matlab_external_names = [
-    *DEFAULT_EXTERNAL_NAMES,
-    r"<namespace>\..+",
-]
+# Classes of other projects (submodules, toolboxes) as text, not as
+# "reference target not found" warnings:
+# from sphinxcontrib.matlab import DEFAULT_EXTERNAL_NAMES
+# matlab_external_names = [*DEFAULT_EXTERNAL_NAMES, r"othernamespace\..+"]
 
 # Help-text audit: sphinx-build -b matlab-api-check. All rules warn at first.
 matlab_api_check_rules = {
@@ -99,19 +101,21 @@ napoleon_use_admonition_for_examples = False
 napoleon_use_admonition_for_notes = False
 napoleon_use_admonition_for_references = False
 napoleon_use_rtype = True
-# The project's own help headings (help_headings.py), besides napoleon's.
+# The project's own help headings, used in 10 or more files.
 # Headings match ignoring case, and only if made of letters, digits, "_"
-# and spaces ("Name-Value Pairs" never matches). Under a "params_style"
-# heading, "name - text" and "name: text" items become parameters.
+# and spaces. Under a "params_style" heading, "name - text" and
+# "name: text" items become parameters. ("Input", "Inputs") makes "Input"
+# an alias of "Inputs".
 napoleon_custom_sections = [
-    ("Inputs", "params_style"),
-    ("Outputs", "params_style"),
     "Description",
+    ("Outputs", "params_style"),
+    ("Inputs", "params_style"),
+    ("Input", "Inputs"),
 ]
 
 # -- MyST --------------------------------------------------------------------
 
-myst_enable_extensions = ["colon_fence", "deflist", "dollarmath", "linkify"]
+myst_enable_extensions = ["colon_fence", "deflist", "dollarmath"]
 myst_heading_anchors = 6
 
 # -- HTML output -------------------------------------------------------------

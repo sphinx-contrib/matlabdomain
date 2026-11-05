@@ -52,5 +52,8 @@ What gets installed
 * The command ``sphinx-matlab-apidoc`` (also ``python -m
   sphinxcontrib.matlab_apidoc``), which writes pages for a whole project
   (see :doc:`../user-guide/apidoc`).
+* The command ``sphinx-matlab-quickstart`` (also ``python -m
+  sphinxcontrib.matlab_quickstart``), which sets up the documentation of a
+  MATLAB project (see :doc:`../user-guide/setting-up`).
 
 To work on the extension itself, see :doc:`../developer-guide/contributing`.

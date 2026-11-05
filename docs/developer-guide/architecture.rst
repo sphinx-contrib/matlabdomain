@@ -44,6 +44,12 @@ Modules
    * - ``matlab_apidoc/``
      - ``sphinx-matlab-apidoc``: the command line, the page model, output
        names and the templates.
+   * - ``matlab_quickstart/``
+     - ``sphinx-matlab-quickstart``: the project facts (``_detect.py``), the
+       Sphinx source folder from its templates and the edits outside it
+       (``_write.py``), the prompts and answers file (``_cli.py``), the
+       report (``_report.py``). It builds the index and calls the
+       generator of ``matlab_apidoc/``.
 
 The main imports between the modules (an arrow points to the module that
 is imported). Most modules also use ``mat_naming.py`` and
@@ -54,6 +60,8 @@ is imported). Most modules also use ``mat_naming.py`` and
    flowchart TB
      sphinx(["sphinx-build"]) --> matlab
      cli(["sphinx-matlab-apidoc"]) --> apidoc
+     qs(["sphinx-matlab-quickstart"]) --> quickstart["matlab_quickstart/"]
+     quickstart --> apidoc
      matlab["matlab.py<br/>setup, MATLABDomain"] --> documenters["mat_documenters.py<br/>mat_directives.py"]
      matlab --> apicheck["mat_api_check.py"]
      matlab --> sidecars["mat_sidecars.py<br/>sidecar docs"]

@@ -44,7 +44,8 @@ Layout
    and incremental builds (``test_build_index.py``, ``test_lazy_index.py``,
    ``test_domain_lifecycle.py``), fault tolerance, directives and options,
    ``sphinx-matlab-apidoc`` (``test_apidoc.py``), ``matlab-api-check``
-   (``test_api_check.py``) and this documentation
+   (``test_api_check.py``), ``sphinx-matlab-quickstart``
+   (``test_quickstart.py``) and this documentation
    (``test_documentation.py``).
 ``tests/roots/test_<name>/``
    Small Sphinx projects (``conf.py``, pages and MATLAB files) built by the
@@ -55,6 +56,12 @@ Layout
    The expected output of ``sphinx-matlab-apidoc`` for the
    ``test_apidoc_basics`` root: namespace grouping (``default``,
    ``separate``) and folder grouping (``folder``, ``folder-separate``).
+``tests/quickstart_golden/``
+   The expected output of ``sphinx-matlab-quickstart``: the Sphinx source
+   folder and the printed lines for the ``test_quickstart`` root as a uv
+   project in git (``uv``), for ``test_apidoc_basics`` outside git
+   (``plain``), and a dry run (``dry-run.txt``). The copyright year is
+   ``<YEAR>``, run times ``<T>``.
 ``examples/apidoc/``
    The worked example: its generated pages and api-check reports are
    compared with fresh output, and the project is built with ``-W``.
@@ -113,6 +120,10 @@ explains how:
    $ python test_slow/gauntlet/fetch.py
    $ python test_slow/gauntlet/gauntlet.py --jobs
    $ python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase9-linux.json test_slow/gauntlet/runs/latest
+
+With ``--quickstart`` it runs ``sphinx-matlab-quickstart -q`` on a
+temporary ``git worktree`` of each project instead, then a ``-n`` build of
+what the command wrote; the checkouts stay unchanged.
 
 The checkouts need about 5 GB. On Windows, Git must create symbolic links:
 matpower, for one, has 807 of them, and without them Git writes small text

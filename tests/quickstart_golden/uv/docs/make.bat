@@ -4,10 +4,11 @@ setlocal
 pushd %~dp0
 
 REM Command file for Sphinx documentation
+REM Written by sphinx-matlab-quickstart (sphinxcontrib-matlabdomain).
 REM The commands run in the project's uv environment, as locked in uv.lock.
 
 if "%UV%" == "" (
-	set UV=uv run --frozen
+	set UV=uv run --frozen --group docs
 )
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=%UV% sphinx-build
@@ -43,7 +44,7 @@ if "%1" == "apidoc-check" (
 )
 
 if "%1" == "livehtml" (
-	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html -d %BUILDDIR%/doctrees --watch .. --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% -c . -q" %SPHINXOPTS% %O%
+	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html -d %BUILDDIR%/doctrees --watch ".." --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% -c . -q" %SPHINXOPTS% %O%
 	goto end
 )
 

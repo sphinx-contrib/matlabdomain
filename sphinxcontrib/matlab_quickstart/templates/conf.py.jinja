@@ -1,0 +1,137 @@
+# Sphinx configuration of the {{ project }} documentation.
+# Written by sphinx-matlab-quickstart (sphinxcontrib-matlabdomain); edit freely.
+# Configuration values: https://www.sphinx-doc.org/en/master/usage/configuration.html
+{% if submodules %}
+
+import configparser
+import os
+{% endif %}
+
+# -- Project information -----------------------------------------------------
+
+project = {{ project | py }}
+copyright = {{ copyright | py }}
+author = {{ author | py }}
+
+# -- General configuration ---------------------------------------------------
+
+extensions = [
+    "sphinxcontrib.matlab",
+    "sphinx.ext.napoleon",
+{% if markdown %}
+    "myst_parser",  # Markdown pages and sidecar docs
+{% endif %}
+]
+{% if markdown %}
+
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".md": "markdown",
+}
+{% endif %}
+
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+primary_domain = "mat"
+highlight_language = "matlab"
+# Keep the straight quotes of the help text ('name', "text") as typed:
+# smartquotes = False
+
+# -- MATLAB domain -----------------------------------------------------------
+{% if submodules %}
+
+
+def _submodule_paths(gitmodules):
+    """Paths of the git submodules listed in a .gitmodules file."""
+    parser = configparser.ConfigParser()
+    parser.read(gitmodules, encoding="utf-8")
+    return [parser[s]["path"] for s in parser.sections() if "path" in parser[s]]
+
+
+_GITMODULES = os.path.join(os.path.dirname(__file__), {{ gitmodules | py }})
+
+{% endif %}
+
+matlab_src_code_project_root = {{ root | py }}
+matlab_src_exclusion_patterns = [
+    # The default list, which a project list replaces.
+{% for pattern in default_exclude %}
+    {{ pattern | py }},
+{% endfor %}
+{% if exclude %}
+    # Not documented.
+{% for pattern in exclude %}
+    {{ pattern | py }},
+{% endfor %}
+{% endif %}
+{% if suggestions %}
+    # Not on the MATLAB project path ({{ path_source }}); start-up files may
+    # add more. Uncomment what is not the project's API:
+{% for pattern in suggestions %}
+    # {{ pattern | py }},
+{% endfor %}
+{% endif %}
+{% if submodules %}
+    # Submodules are separate projects with their own docs.
+    *_submodule_paths(_GITMODULES),
+{% endif %}
+]
+matlab_version = {{ matlab_version | py }}
+{% if sidecars %}
+# Markdown notes next to the code become part of the API pages.
+matlab_src_sidecar_suffixes = [".md"]
+{% endif %}
+
+# API pages: sphinx-matlab-apidoc -c {{ docs }} (make apidoc)
+matlab_apidoc_output_dir = "API"
+matlab_apidoc_group = {{ group | py }}
+matlab_apidoc_page_size = 100
+
+matlab_class_signature = True
+matlab_add_namespace_names = False
+matlab_auto_link = "basic"
+autoclass_content = "class"
+# Classes of other projects (submodules, toolboxes) as text, not as
+# "reference target not found" warnings:
+# from sphinxcontrib.matlab import DEFAULT_EXTERNAL_NAMES
+# matlab_external_names = [*DEFAULT_EXTERNAL_NAMES, r"othernamespace\..+"]
+
+# Help-text audit: sphinx-build -b matlab-api-check. All rules warn at first.
+matlab_api_check_rules = {
+{% for rule in api_check_rules %}
+    {{ rule | py }}: "warning",
+{% endfor %}
+}
+
+# -- Napoleon ----------------------------------------------------------------
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = False
+napoleon_use_admonition_for_references = False
+napoleon_use_rtype = True
+{% if napoleon %}
+# The project's own help headings, used in {{ section_files }} or more files.
+# Headings match ignoring case, and only if made of letters, digits, "_"
+# and spaces. Under a "params_style" heading, "name - text" and
+# "name: text" items become parameters. ("Input", "Inputs") makes "Input"
+# an alias of "Inputs".
+napoleon_custom_sections = [
+{% for entry in napoleon %}
+    {{ entry | py }},
+{% endfor %}
+]
+{% endif %}
+{% if markdown %}
+
+# -- MyST --------------------------------------------------------------------
+
+myst_enable_extensions = ["colon_fence", "deflist", "dollarmath"]
+myst_heading_anchors = 6
+{% endif %}
+
+# -- HTML output -------------------------------------------------------------
+
+html_theme = {{ theme | py }}
+html_static_path = ["_static"]

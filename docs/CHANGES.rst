@@ -298,6 +298,21 @@ earlier" in the documentation.
   (``handle``, ``matlab.*``, ``Simulink.*``, ``double``, ``datetime``,
   ``containers.Map``, ...), so "Bases: handle" no longer needs a
   ``nitpick_ignore``.
+* New command ``sphinx-matlab-quickstart`` (also ``python -m
+  sphinxcontrib.matlab_quickstart``): sets up Sphinx documentation for a
+  MATLAB project. It asks one question per choice, with defaults read from
+  the project (the MATLAB release in its CI files and README, git
+  submodules, the MATLAB project path, uv, Markdown notes next to the code,
+  a survey of the help headings for ``napoleon_custom_sections``), and
+  writes ``conf.py``, ``index.rst``, ``Makefile``, ``make.bat``, a build
+  guide and the API pages. In a uv project it adds the docs dependencies
+  with ``uv add --frozen --group docs``, the matlabdomain requirement
+  copied from how matlabdomain is installed; it adds lines to
+  ``.gitignore`` and ``.gitattributes``, and stops if one of these files
+  has uncommitted changes. ``-n`` writes nothing and prints what it would
+  write; ``--answers FILE`` reads saved answers; ``-q`` asks nothing. It
+  prints a report: the inventory, the help headings, the copyright blocks
+  that run into help, and the next steps.
 
 .. _PR 232: https://github.com/sphinx-contrib/matlabdomain/pull/232
 

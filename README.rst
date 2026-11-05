@@ -10,6 +10,9 @@ folders), and help text is found where MATLAB's ``help`` finds it.
 
 It also ships:
 
+* ``sphinx-matlab-quickstart``, which sets up the documentation of a
+  MATLAB project: ``conf.py``, make files and API pages, with defaults read
+  from the project;
 * ``sphinx-matlab-apidoc``, which writes pages for every file of a project;
 * the ``matlab-api-check`` builder, which checks that help text describes
   every function, class, method, input and output, for example in CI;
@@ -35,7 +38,13 @@ Python 3.11 or newer and Sphinx 8.0 or newer; Linux, Windows and macOS.
 Use
 ---
 
-``conf.py``:
+From a MATLAB project's folder:
+
+.. code-block:: console
+
+   $ sphinx-matlab-quickstart
+
+Or by hand, ``conf.py``:
 
 .. code-block:: python
 
@@ -63,7 +72,7 @@ Documentation
 -------------
 
 The documentation is in ``docs/``: getting started, a user guide
-(configuration, directives, references, help text, the two tools,
+(configuration, directives, references, help text, the three tools,
 warnings, migrating from 0.x), a reference and a developer guide. Build it
 with ``sphinx-build -M html docs docs/_build`` after ``uv sync
 --all-extras``.

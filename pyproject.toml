@@ -59,6 +59,7 @@ rtd = [
 
 [project.scripts]
 sphinx-matlab-apidoc = "sphinxcontrib.matlab_apidoc:main"
+sphinx-matlab-quickstart = "sphinxcontrib.matlab_quickstart:main"
 
 [project.urls]
 Download = "http://pypi.python.org/pypi/sphinxcontrib-matlabdomain"
@@ -100,7 +101,8 @@ source_pkgs = [
     "sphinxcontrib.mat_tree_sitter_parser",
     "sphinxcontrib.mat_types",
     "sphinxcontrib.matlab",
-    "sphinxcontrib.matlab_apidoc"
+    "sphinxcontrib.matlab_apidoc",
+    "sphinxcontrib.matlab_quickstart"
 ]
 
 [tool.pyright]
@@ -112,9 +114,9 @@ exclude = [
     "tests/roots",
     "tests/test_data",
     "tests/test_docs",
+    "tests/quickstart_golden",
     "test_slow/gauntlet/repos",
-    "test_slow/gauntlet/runs",
-    "skills/*/templates"
+    "test_slow/gauntlet/runs"
 ]
 include = ["sphinxcontrib", "tests", "docs", "examples", "skills", "test_slow"]
 pythonVersion = "3.11"
@@ -134,9 +136,9 @@ extend-exclude = [
     "tests/roots",
     "tests/test_data",
     "tests/test_docs",
+    "tests/quickstart_golden",
     "test_slow/gauntlet/repos",
-    "test_slow/gauntlet/runs",
-    "skills/*/templates"
+    "test_slow/gauntlet/runs"
 ]
 force-exclude = true
 indent-width = 4
@@ -214,6 +216,7 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 "sphinxcontrib.matlab_apidoc" = ["templates/*.jinja"]
+"sphinxcontrib.matlab_quickstart" = ["templates/*.jinja"]
 
 [tool.setuptools.packages.find]
 include = ["sphinxcontrib*"]

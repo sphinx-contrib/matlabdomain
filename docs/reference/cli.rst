@@ -1,10 +1,130 @@
+Command-line tools
+==================
+
+Two commands come with the package. ``sphinx-matlab-quickstart`` sets up the
+documentation of a MATLAB project once; ``sphinx-matlab-apidoc`` writes its
+API pages, every time the files change.
+
+``sphinx-matlab-quickstart``
+----------------------------
+
+.. program:: sphinx-matlab-quickstart
+
+Synopsis
+~~~~~~~~
+
+.. code-block:: text
+
+   sphinx-matlab-quickstart [ROOT] [-o DOCS] [-q] [-n] [--answers FILE] [--force]
+   python -m sphinxcontrib.matlab_quickstart [OPTIONS]
+
+Sets up Sphinx documentation for the MATLAB project in ``ROOT``: the Sphinx
+source folder ``DOCS`` with its files and API pages, the docs dependencies,
+and two lines for git. It asks one question per choice, with the answer it
+detected as the default, and prints a report of the project.
+:doc:`../user-guide/setting-up` is the tutorial.
+
+Arguments
+~~~~~~~~~
+
+.. option:: ROOT
+
+   The MATLAB project root, the folder all documented code is below.
+   Default: the current folder.
+
+.. option:: -o DOCS, --output-dir DOCS
+
+   The Sphinx source folder, inside ``ROOT``. Default: ``ROOT/docs``. A
+   folder that exists with files but without a ``conf.py`` is in use (an
+   MkDocs ``docs/``, for example): the command says so and asks for
+   another one, relative to ``ROOT``; with :option:`-q`, it stops.
+
+Options
+~~~~~~~
+
+.. option:: -q, --quiet
+
+   Ask nothing: take the answers of :option:`--answers`, then the detected
+   defaults. It does not offer to save the answers.
+
+.. option:: -n, --dry-run
+
+   Write nothing. Print the files it would write in ``DOCS``, the lines
+   it would add outside it and the report, then ask to save the answers
+   (default yes). The answers file is the only file a dry run may write.
+
+.. option:: --answers FILE
+
+   Read answers from a TOML file and ask only for the others. The command
+   offers to save one at the end (default ``ROOT/sphinx-matlab-quickstart.toml``);
+   the keys are those of :ref:`quickstart-answers`.
+
+.. option:: --force
+
+   When ``DOCS/conf.py`` exists, rewrite the files the command writes
+   (``conf.py``, ``index.rst``, ``_static/.gitkeep``, ``Makefile``,
+   ``make.bat``, ``BUILDING_DOCS.md`` and the API pages) and nothing else.
+   Without it, an existing ``DOCS/conf.py`` stops the command.
+
+.. option:: --version
+
+   Print the version and exit.
+
+.. option:: -h, --help
+
+   Print the help and exit.
+
+What it writes
+~~~~~~~~~~~~~~
+
+In ``DOCS``: ``conf.py``, ``index.rst``, ``_static/.gitkeep``,
+``Makefile``, ``make.bat`` (CRLF line ends), ``BUILDING_DOCS.md`` (unless
+the answer ``guide`` is ``false``), and the API pages in ``DOCS/API``,
+written as :program:`sphinx-matlab-apidoc` would write them from that
+``conf.py``. The templates are in the package
+(``sphinxcontrib/matlab_quickstart/templates``).
+
+Outside ``DOCS``, each only if the line is not there yet:
+
+* ``pyproject.toml``: the docs dependencies in the dependency group
+  ``docs``, through ``uv add --frozen --group docs``, when the project uses
+  uv (a ``uv.lock`` or a ``[tool.uv]`` table). The ``uv.lock`` file is
+  never touched; the next steps say to run ``uv lock`` and ``uv sync
+  --group docs``. Without uv it edits nothing and prints the ``pip
+  install`` line (and the ``[dependency-groups]`` table, when there is a
+  ``pyproject.toml``).
+* ``.gitignore``: ``DOCS/_build/`` (and ``DOCS/API/`` when the API pages
+  are not committed).
+* ``.gitattributes``: ``*.bat text eol=crlf``.
+
+Before it writes anything it checks ``git status`` of these three files and
+stops if one has uncommitted changes, so ``git restore`` undoes exactly its
+edits. Outside a git repository it prints the lines instead. It never
+touches MATLAB code or CI, and never commits.
+
+The matlabdomain requirement copies how the running matlabdomain is
+installed (``direct_url.json``, PEP 610): a git URL and commit, an editable
+folder (``uv add --editable``, ``pip install -e``), another URL, or a
+version from an index.
+
+Exit status
+~~~~~~~~~~~
+
+0 on success, also with warnings (the index warnings and ``mat.apidoc``,
+printed like Sphinx prints them); 1 when ``uv add`` fails or the run is
+interrupted; 2 for a usage error and when it stops before writing: ``ROOT``
+is not a folder, ``DOCS`` is not inside ``ROOT`` or is in use with
+:option:`-q`, ``DOCS/conf.py`` exists without :option:`--force`, one of the
+three files has uncommitted changes, or the answers file is missing or
+invalid.
+
 ``sphinx-matlab-apidoc``
-========================
+------------------------
 
 .. program:: sphinx-matlab-apidoc
 
 Synopsis
---------
+~~~~~~~~
 
 .. code-block:: text
 
@@ -18,7 +138,7 @@ per folder with files (``"folder"``), listed flat on the root page.
 :doc:`../user-guide/apidoc` is the tutorial.
 
 Settings
---------
+~~~~~~~~
 
 Every setting comes from ``CONF_DIR/conf.py`` (:doc:`configuration`); no
 flag overrides one:
@@ -56,7 +176,7 @@ Then make ``conf.py`` give both the same values (test an environment
 variable instead of a tag, for example), or write a script.
 
 Arguments
----------
+~~~~~~~~~
 
 .. option:: -c CONF_DIR, --conf-dir CONF_DIR
 
@@ -65,7 +185,7 @@ Arguments
    with 2.
 
 Run-time options
-----------------
+~~~~~~~~~~~~~~~~
 
 .. option:: -f, --force
 
@@ -95,7 +215,7 @@ Run-time options
    Print the help and exit.
 
 Exit status
------------
+~~~~~~~~~~~
 
 0 on success, also with warnings (``mat.apidoc`` and the index warnings,
 printed like Sphinx prints them, except those named in
@@ -107,7 +227,7 @@ typo; :doc:`configuration`). Unknown and abbreviated options (``--dry``
 for ``--dry-run``) are usage errors.
 
 Output files
-------------
+~~~~~~~~~~~~
 
 In the folder :confval:`matlab_apidoc_output_dir` (``OUTPUT_DIR``),
 created if needed, with the suffix :confval:`matlab_apidoc_suffix`

@@ -12,6 +12,7 @@ import pytest
 
 from sphinxcontrib.matlab import MATLABDomain
 from sphinxcontrib.matlab_apidoc._cli import get_parser
+from sphinxcontrib.matlab_quickstart._cli import get_parser as get_quickstart_parser
 
 REPO = Path(__file__).parents[1]
 REFERENCE = REPO / "docs" / "reference"
@@ -106,14 +107,29 @@ def test_warnings():
     assert entries(r"^\s+\* - ``mat\.(\w+)``$", "warnings.rst") == subtypes
 
 
-def test_command_line_options():
-    cli = set()
-    for action in get_parser()._actions:
-        cli.update(action.option_strings or [action.metavar or action.dest.upper()])
+def program_options(program):
+    """Return the ``.. option::`` names after ``.. program:: <program>``."""
+    text = (REFERENCE / "cli.rst").read_text(encoding="utf-8")
+    parts = re.split(r"^\.\. program:: (\S+)$", text, flags=re.MULTILINE)
+    body = dict(zip(parts[1::2], parts[2::2], strict=True))[program]
     options = set()
-    for line in entries(r"^\.\. option:: (.+)$", "cli.rst"):
+    for line in re.findall(r"^\.\. option:: (.+)$", body, re.MULTILINE):
         options.update(part.split()[0] for part in line.split(", "))
-    assert options == cli
+    return options
+
+
+@pytest.mark.parametrize(
+    ("program", "parser"),
+    [
+        ("sphinx-matlab-apidoc", get_parser),
+        ("sphinx-matlab-quickstart", get_quickstart_parser),
+    ],
+)
+def test_command_line_options(program, parser):
+    cli = set()
+    for action in parser()._actions:
+        cli.update(action.option_strings or [action.metavar or action.dest.upper()])
+    assert program_options(program) == cli
 
 
 def repository_configuration(root):

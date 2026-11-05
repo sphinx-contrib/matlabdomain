@@ -13,8 +13,11 @@ read the help text from the ``.m`` and ``.mlapp`` files themselves, much like
 
 It names objects the way MATLAB does: ``+pkg`` folders are namespaces,
 ``@Cls`` folders hold a class and its methods, and help text is found where
-MATLAB's ``help`` finds it. Two tools come with it:
+MATLAB's ``help`` finds it. Three tools come with it:
 
+* ``sphinx-matlab-quickstart`` sets up the documentation of a MATLAB
+  project: ``conf.py``, the make files and the API pages, with defaults
+  read from the project;
 * ``sphinx-matlab-apidoc`` writes pages for every file of a project, so a
   large project needs no hand-written directives;
 * the ``matlab-api-check`` builder checks that functions, classes and
@@ -48,6 +51,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    :caption: User guide
 
    user-guide/configuration
+   user-guide/setting-up
    user-guide/documenting
    user-guide/referencing
    user-guide/help-text
