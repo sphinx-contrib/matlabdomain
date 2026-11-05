@@ -15,6 +15,8 @@ Project:
   matlab_version: R2026a (the default; none is named)
   uv project: no
   matlabdomain is installed as: sphinxcontrib-matlabdomain>=1.0 (version)
+  MATLAB project path: none read (matlab.toml, resources/project); no
+    exclusions suggested
 Inventory:
   27 files indexed: 17 functions, 5 classes, 4 scripts, 1 app; 3 namespaces
   Duplicate MATLAB names (1; exclude a copy, or keep both, listed by path):

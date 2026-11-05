@@ -641,6 +641,61 @@ def test_project_path_toml(tmp_path):
     assert _detect.project_path(tmp_path) is None
     toml.write_text("[x")
     assert _detect.project_path(tmp_path) is None
+    # wrong types are skipped, not a crash
+    toml.write_text('folders = "src"\nproject = 1\n')
+    assert _detect.project_path(tmp_path) is None
+    toml.write_text('[folders]\npath = ["src", 1]\n[project]\nstartup-files = "up.m"\n')
+    assert _detect.project_path(tmp_path) == _detect.ProjectPath(
+        "matlab.toml", frozenset({"src"}), ()
+    )
+
+
+def test_project_path_unreadable_toml(tmp_path, monkeypatch):
+    (tmp_path / "matlab.toml").write_text("[folders]\npath = ['src']\n")
+
+    def denied(_root):
+        raise PermissionError(13, "denied")
+
+    monkeypatch.setattr(_detect, "_project_toml", denied)
+    assert _detect.project_path(tmp_path) is None
+
+
+# What MATLAB R2026a writes for path folders src and src/sub, a start-up and a
+# shut-down file, and a referenced project: one <Info> per file in the
+# multi-file and fixed-path multi-file layouts, all in Project.xml otherwise.
+PRJ_FILES = {
+    "EEtU/YBxV.xml": '<?xml version="1.0"?>\n<Info Ref="src" Type="Relative"/>\n',
+    "EEtU/5sL8.xml": '<?xml version="1.0"?>\n<Info Ref="src/sub" Type="Relative"/>\n',
+    "EEtU/5sL8p.xml": '<?xml version="1.0"?>\n<Info location="5f" type="Reference"/>\n',
+    "KAXf/RAd2.xml": '<?xml version="1.0"?>\n<Info File="src/up.m" '
+    'GroupUUID="default" Icon="" Name="up" Type="StartUp" Visible="0"/>\n',
+    "KAXf/6Ypu.xml": '<?xml version="1.0"?>\n<Info File="src/down.m" '
+    'GroupUUID="default" Icon="" Name="down" Type="Shutdown" Visible="0"/>\n',
+    "U54h/U54h.xml": '<?xml version="1.0"?>\n<Info Ref="../Other" Type="Relative"/>\n',
+}
+
+
+@pytest.mark.parametrize("layout", ["multi-file", "single file"])
+def test_project_path_prj_layouts(tmp_path, layout):
+    folder = tmp_path / "resources" / "project"
+    if layout == "single file":
+        folder.mkdir(parents=True)
+        body = "".join(text.split("?>")[-1] for text in PRJ_FILES.values())
+        (folder / "Project.xml").write_text(
+            f'<project MetadataType="monolithic">{body}</project>\n'
+        )
+    else:
+        for name, text in PRJ_FILES.items():
+            (folder / name).parent.mkdir(parents=True, exist_ok=True)
+            (folder / name).write_text(text)
+    # a folder named like an XML file cannot be read: skipped
+    (folder / "odd.xml").mkdir()
+    path = _detect.project_path(tmp_path)
+    assert path is not None
+    assert path.folders == {"src", "src/sub"}
+    assert sorted(path.hooks) == ["src/down.m", "src/up.m"]
+    refs = {"src/f.m", "src/sub/g.m", "data/d.m", "src/up.m", "src/down.m"}
+    assert _detect.path_suggestions(refs, path) == ["data", "src/down.m", "src/up.m"]
 
 
 def test_project_path_prj(tmp_path):
@@ -999,6 +1054,8 @@ def test_report_facts_variants(capsys):
     assert "matlab_version: R2025a\n" in out
     assert "Not on it" not in out
     assert "Sidecar docs" not in out
+    _report._facts(answers, {**facts, "path": None}, [], [])
+    assert "MATLAB project path: none read" in capsys.readouterr().out
 
 
 def test_report_next_steps(capsys):

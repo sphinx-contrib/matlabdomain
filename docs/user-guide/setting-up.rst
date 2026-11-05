@@ -142,7 +142,10 @@ Exclusions
    project's ``resources/project`` files) names the folders on the MATLAB
    path; the highest folders with code that are not on it, and the start-up
    and shut-down files, are written into ``conf.py`` as commented-out
-   patterns. Uncomment what is not the project's API.
+   patterns. Uncomment what is not the project's API. Any of the three
+   ``.prj`` layouts works (single file, multi-file, fixed-path multi-file);
+   a project file that cannot be read, or names no path folder, gives no
+   suggestions, and the report says so. A ``startup.m`` is not read.
 
 Help headings
    A heading is a comment line that holds only a label and a colon

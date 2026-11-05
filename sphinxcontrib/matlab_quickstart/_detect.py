@@ -202,18 +202,37 @@ def _relative(path):
     return "/".join(parts)
 
 
+def _strings(value):
+    return [v for v in value if isinstance(v, str)] if isinstance(value, list) else []
+
+
+def _table(data, key):
+    value = data.get(key)
+    return value if isinstance(value, dict) else {}
+
+
 def _project_toml(root):
     with open(os.path.join(root, "matlab.toml"), "rb") as f:
         data = tomllib.load(f)
-    project = data.get("project", {})
-    hooks = [*project.get("startup-files", []), *project.get("shutdown-files", [])]
-    return data.get("folders", {}).get("path", []), hooks
+    project = _table(data, "project")
+    hooks = [
+        *_strings(project.get("startup-files")),
+        *_strings(project.get("shutdown-files")),
+    ]
+    return _strings(_table(data, "folders").get("path")), hooks
 
 
 def _project_xml(root):
+    """Path entries and hooks of the three ``.prj`` layouts (single file,
+    multi-file, fixed-path multi-file): ``<Info Ref="src" Type="Relative"/>``
+    and ``<Info File=... Type="StartUp"/>`` (checked in R2026a).
+    """
     folders, hooks = [], []
     for path in sorted(Path(root, "resources", "project").rglob("*.xml")):
-        text = path.read_text(encoding="utf-8", errors="replace")
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
         for tag in _INFO.findall(text):
             attributes = dict(_ATTRIBUTE.findall(tag))
             kind = attributes.get("Type")
@@ -226,13 +245,14 @@ def _project_xml(root):
 
 def project_path(root):
     """Return the ``ProjectPath`` of ``matlab.toml`` or of a ``.prj``
-    project's ``resources/project`` files, or None.
+    project's ``resources/project`` files, or None (none, unreadable, or no
+    path folder): then nothing is suggested.
     """
     if os.path.isfile(os.path.join(root, "matlab.toml")):
         source = "matlab.toml"
         try:
             folders, hooks = _project_toml(root)
-        except tomllib.TOMLDecodeError:
+        except (OSError, tomllib.TOMLDecodeError):
             return None
     elif os.path.isdir(os.path.join(root, "resources", "project")):
         source = "resources/project"

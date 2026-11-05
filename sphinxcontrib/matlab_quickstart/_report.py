@@ -88,6 +88,11 @@ def _facts(answers, facts, candidates, suggestions):
         _line(f"MATLAB project path ({path.source}): {folders}")
         if suggestions:
             _line(f"Not on it, commented out in conf.py: {_items(suggestions)}")
+    else:
+        _line(
+            "MATLAB project path: none read (matlab.toml, resources/project); "
+            "no exclusions suggested"
+        )
     if answers["markdown"]:
         state = "on" if answers["sidecars"] else "off"
         markdown = _count(len(candidates), "Markdown file")
