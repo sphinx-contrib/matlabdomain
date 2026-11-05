@@ -23,7 +23,6 @@ that is not a Simulink export.
 * ``Contents.m`` as the description of its folder, as MATLAB's ``help
   folder`` shows it (before the README introduction of
   :doc:`../user-guide/sidecars`).
-* Markdown (MyST) output.
 
 Running the generator inside ``sphinx-build`` (as ``sphinx.ext.apidoc``
 does) is not planned: the build would write into the source folder, which
