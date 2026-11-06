@@ -54,6 +54,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    user-guide/setting-up
    user-guide/documenting
    user-guide/referencing
+   user-guide/linking-projects
    user-guide/help-text
    user-guide/apidoc
    user-guide/sidecars

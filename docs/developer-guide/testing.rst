@@ -43,7 +43,10 @@ Layout
    and naming (``test_mat_classify.py``, ``test_mat_naming.py``), the index
    and incremental builds (``test_build_index.py``, ``test_lazy_index.py``,
    ``test_domain_lifecycle.py``), fault tolerance, directives and options,
-   ``sphinx-matlab-apidoc`` (``test_apidoc.py``), ``matlab-api-check``
+   ``sphinx-matlab-apidoc`` (``test_apidoc.py``), links from another
+   project through its inventory and page splitting
+   (``test_intersphinx.py``), stable addresses (``test_stable_urls.py``),
+   ``matlab-api-check``
    (``test_api_check.py``), ``sphinx-matlab-quickstart``
    (``test_quickstart.py``) and this documentation
    (``test_documentation.py``).

@@ -175,20 +175,30 @@ than ASCII letters, digits, non-ASCII characters and
 (a space becomes ``~20``, ``~`` becomes ``~7E``). Only folder names can
 contain such characters. Distinct references never share an anchor.
 
-This scheme is a stable contract: an anchor, a deep link or an intersphinx
-entry changes only when its file moves or is renamed.
+This scheme is a stable contract: an anchor and an inventory name change
+only when the file moves or is renamed. The *page* an object is on is not
+part of it: when ``sphinx-matlab-apidoc`` splits long pages
+(:confval:`matlab_apidoc_page_size`), adding or removing a file can move an
+object to another page, and an address copied from the browser then no
+longer shows it. Each object therefore also has a stable address,
+``mat/name/<MATLAB name>.html`` or ``mat/ref/<path reference>.html``,
+which its "¶" link points to (:ref:`library-changes`).
 
 Linking from other projects
 ---------------------------
 
 The ``objects.inv`` inventory names each object by its path reference and
 shows its MATLAB name. Another Sphinx project that loads this extension
-and the inventory (``sphinx.ext.intersphinx``) links with the path
-reference:
+and the inventory (``sphinx.ext.intersphinx``) links with either, as
+for its own objects; its own objects come first:
 
 .. code-block:: rst
 
+   :mat:class:`shapes.Circle`
    :mat:class:`+shapes/Circle.m`
+
+:doc:`linking-projects` shows the setup, the differences from local
+references and how links follow changes of the other project.
 
 Coming from Python
 ------------------

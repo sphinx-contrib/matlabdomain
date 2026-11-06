@@ -52,6 +52,10 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
      - ``sphinx-matlab-apidoc``: an unreadable file, output names that
        differ only by case, a path too long for Windows
      - when it runs
+   * - ``mat.stable_url``
+     - a stable address file (:confval:`matlab_stable_urls`) that cannot be
+       written, for example a path too long for Windows
+     - at the end of an HTML build
    * - ``mat.api_check``
      - a ``matlab-api-check`` finding
      - when the builder runs

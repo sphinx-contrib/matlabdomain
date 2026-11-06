@@ -170,6 +170,17 @@ Output
    ``[]`` turns it off. A value that is not a list of valid regular
    expressions is a ``ConfigError``. Changing it reads no page again.
 
+.. confval:: matlab_stable_urls
+   :type: ``bool``
+   :default: ``True``
+
+   HTML builds write a stable address for every documented object, which
+   redirects to the page the object is on: ``mat/ref/<path
+   reference>.html`` and, for a MATLAB name of non-private objects,
+   ``mat/name/<MATLAB name>.html`` (a list of the objects when several have
+   the name). The "¶" link of an object points to it. ``False`` writes no
+   such files and keeps "¶" on the page (:ref:`library-changes`).
+
 ``matlab-api-check``
 --------------------
 
@@ -251,7 +262,9 @@ relative to the folder of ``conf.py``.
 
    The most entries (files and sidecar docs) on one namespace or folder
    page; a longer one gets several pages. Less than 1 is a
-   ``ConfigError``.
+   ``ConfigError``. Which page an entry is on, and so its address, can
+   change when files are added or removed; anchors and inventory names do
+   not (:ref:`library-changes`).
 
 .. confval:: matlab_apidoc_private
    :type: ``bool`` or ``None``
@@ -267,6 +280,8 @@ relative to the folder of ``conf.py``.
    :default: ``False``
 
    One page per file; namespace and folder pages list them in toctrees.
+   A file's page is named by its path, so its address does not depend on
+   :confval:`matlab_apidoc_page_size`.
 
 .. confval:: matlab_apidoc_maxdepth
    :type: ``int``

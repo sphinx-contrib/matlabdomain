@@ -71,6 +71,18 @@ earlier" in the documentation.
     invalid names, ``@C/sub`` files from R2026a, ...) are documented by path
     with one ``mat.not_callable`` warning each (``suppress_warnings``) that
     says why; files below ``private/`` never warn.
+* References to another project's MATLAB objects (``sphinx.ext.intersphinx``)
+  resolve by MATLAB name too (``:mat:class:`geom.Circle```), not only by
+  path reference: in any inventory, or in the one named with ``lib:`` or
+  ``:external+lib:``. A MATLAB name that several objects have warns with
+  ``mat.ambiguous`` and stays unlinked. The new user-guide page "Linking
+  between projects" gives the setup and explains which links follow an
+  object that page splitting moves to another page.
+* HTML builds write a stable address for every documented object,
+  ``mat/name/<MATLAB name>.html`` (a list of the objects when several have
+  the name) and ``mat/ref/<path reference>.html``, which redirect to the
+  page the object is on; the "¶" link of an object points to it. New
+  ``matlab_stable_urls`` (default ``True``) turns it off.
 * Fixed a segmentation fault (exit code 139) with tree-sitter 0.26.0 on
   standard CPython builds. Its ``Point.row`` getter corrupts reference counts,
   so point rows are now read by index.
