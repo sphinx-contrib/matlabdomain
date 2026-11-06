@@ -271,9 +271,10 @@ earlier" in the documentation.
   files not selected (``not_selected``) and, in ``api-check.json``,
   describe the selection (``selection``); without a selection they are
   unchanged.
-* New configuration ``matlab_api_check_section_labels``: labels of your
-  own for the inputs, outputs, name-value and example sections of
-  ``matlab-api-check``, added to the built-in ones.
+* New configuration ``matlab_api_check_section_labels``: the labels that
+  the inputs, outputs, name-value and example sections of
+  ``matlab-api-check`` accept, replacing the built-in ones for the sections
+  it names (``"<built-in>"`` adds them back).
 * **Breaking:** the auto directives accept only the options that do
   something. ``mat:autofolder`` no longer accepts ``:inherited-members:``,
   ``:special-members:``, ``:imported-members:``, ``:ignore-module-all:`` and

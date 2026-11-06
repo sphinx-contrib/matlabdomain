@@ -249,12 +249,14 @@ Changing these reads no page again.
    :type: ``dict[str, list[str]]``
    :default: ``{}``
 
-   Section to labels of your own, added to the built-in labels of
-   :doc:`../user-guide/api-check`. Sections: ``inputs``, ``outputs``,
-   ``name-value``, ``example``. A label is text without ``:``, matched in
-   any case, with any spaces between its words. A value that is not a
-   dictionary of lists, an unknown section or a label that is not text is
-   a ``ConfigError``.
+   Section to the labels it accepts, replacing its built-in labels (see
+   :doc:`../user-guide/api-check`); a section left out keeps them.
+   Sections: ``inputs``, ``outputs``, ``name-value``, ``example``. A label
+   is text without ``:``, matched in any case, with any spaces between its
+   words. The entry ``"<built-in>"`` stands for the built-in labels, so
+   ``["<built-in>", "Eingaben"]`` extends them. ``[]`` accepts no label. A
+   value that is not a dictionary of lists, an unknown section or a label
+   that is not text is a ``ConfigError``.
 
 ``sphinx-matlab-apidoc``
 ------------------------

@@ -190,24 +190,37 @@ of the function's arguments with text after its ``:`` (``input: the data``,
 the entry of an argument named ``input``). The built-in labels were tuned
 on the help of 14 open-source MATLAB projects.
 
-:confval:`matlab_api_check_section_labels` adds labels of your own to a
-section:
+:confval:`matlab_api_check_section_labels` sets exactly which labels a
+section accepts, replacing its built-in ones; the sections you leave out
+keep theirs. List the headings your project's help uses:
 
 .. code-block:: python
 
    matlab_api_check_section_labels = {
-       "inputs": ["Eingaben"],
-       "outputs": ["Ausgaben", "Results"],
-       "name-value": ["Settings"],
-       "example": ["Beispiel"],
+       "inputs": ["Inputs", "Input"],
+       "outputs": ["Outputs", "Output"],
+       "name-value": ["Name Value Pairs"],
    }
 
-They follow the rules above (any case, the same forms, the same two
-exceptions) and are added to the built-in labels, which still count. The
-check does not read ``napoleon_custom_sections``: that setting decides how
-Napoleon *formats* a section (``params_style`` lists one entry per name,
-which suits outputs too), not what the section means. A heading in both
-settings is formatted by Napoleon and counted by the check.
+With this, ``Parameters:`` or ``Options:`` no longer start a section, so
+help that drifts from the project's style gets a finding. The entry
+``"<built-in>"`` adds the built-in labels back, to extend them instead:
+
+.. code-block:: python
+
+   matlab_api_check_section_labels = {
+       "inputs": ["<built-in>", "Eingaben"],
+       "example": ["<built-in>", "Beispiel"],
+   }
+
+The labels follow the rules above (any case, the same forms, the same two
+exceptions). ``[]`` accepts no label: only ``arguments``-block comments
+pass the section's rule. A ``.. rubric:: Example`` counts whatever the
+example labels. The check does not read ``napoleon_custom_sections``:
+that setting decides how Napoleon *formats* a section (``params_style``
+lists one entry per name, which suits outputs too), not what the section
+means. A heading in both settings is formatted by Napoleon and counted by
+the check.
 
 Configuration
 -------------
@@ -247,7 +260,8 @@ them does not make Sphinx read the pages again
   nothing; the reports say so. Useful to switch the check off in one
   configuration without removing the CI step.
 
-* :confval:`matlab_api_check_section_labels`: labels of your own (above).
+* :confval:`matlab_api_check_section_labels`: the labels each section
+  accepts (above).
 
 * :confval:`matlab_api_check_files`, :confval:`matlab_api_check_files_from`
   and :confval:`matlab_api_check_ignore_unmatched`: the files to check;

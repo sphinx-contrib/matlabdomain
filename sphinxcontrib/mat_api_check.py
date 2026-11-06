@@ -115,6 +115,9 @@ _LABELS = {
     ),
 }
 SECTIONS = {section: _header(*labels) for section, labels in _LABELS.items()}
+#: in matlab_api_check_section_labels: the section's built-in labels
+BUILTIN_LABELS = "<built-in>"
+_NEVER = re.compile(r"(?!)")
 _EXAMPLE_RUBRIC = re.compile(
     r"^[ \t]*\.\.[ \t]+rubric::[ \t]*(?:examples?|usage)\b",
     re.IGNORECASE | re.MULTILINE,
@@ -130,46 +133,52 @@ _MESSAGES = {
 
 def section_labels(config):
     """Return the ``matlab_api_check_section_labels`` as sorted
-    ``((section, label), ...)``, labels lowercased (or ConfigError).
+    ``((section, labels), ...)``, the labels a sorted tuple, lowercased
+    (or ConfigError).
     """
     value = getattr(config, _LABELS_OPTION)
     if not isinstance(value, dict):
         raise ConfigError(f"{_LABELS_OPTION} must be a dict of section -> labels.")
-    labels = set()
-    for section, extra in value.items():
+    sections = []
+    for section, given in value.items():
         if section not in SECTIONS:
             raise ConfigError(
                 f"{_LABELS_OPTION}: unknown section {section!r}; the sections are "
                 f"{', '.join(SECTIONS)}."
             )
-        if isinstance(extra, str) or not isinstance(extra, (list, tuple)):
+        if isinstance(given, str) or not isinstance(given, (list, tuple)):
             raise ConfigError(
                 f"{_LABELS_OPTION}[{section!r}] must be a list of labels."
             )
-        for label in extra:
+        labels = set()
+        for label in given:
             if not isinstance(label, str) or not label.split() or ":" in label:
                 raise ConfigError(
                     f"{_LABELS_OPTION}[{section!r}]: {label!r} is not a label "
                     "(text without ':')."
                 )
-            labels.add((section, " ".join(label.lower().split())))
-    return tuple(sorted(labels))
+            labels.add(" ".join(label.lower().split()))
+        sections.append((section, tuple(sorted(labels))))
+    return tuple(sorted(sections))
 
 
 @functools.cache
 def sections_for(labels):
-    """``SECTIONS`` with the ``section_labels`` added to their sections."""
+    """``SECTIONS`` with the labels of each section in ``section_labels``
+    instead of the built-in ones (kept for ``BUILTIN_LABELS``).
+    """
     if not labels:
         return SECTIONS
     sections = dict(SECTIONS)
-    for section, builtin in _LABELS.items():
-        extra = [
+    for section, given in labels:
+        patterns = [
             r"\s+".join(map(re.escape, label.split()))
-            for s, label in labels
-            if s == section
+            for label in given
+            if label != BUILTIN_LABELS
         ]
-        if extra:
-            sections[section] = _header(*builtin, *extra)
+        if BUILTIN_LABELS in given:
+            patterns[:0] = _LABELS[section]
+        sections[section] = _header(*patterns) if patterns else (_NEVER, _NEVER)
     return sections
 
 

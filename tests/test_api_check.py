@@ -1022,14 +1022,17 @@ LABEL_SRC = {
     "optionen.m": "function optionen(opts)\n% OPTIONEN Help.\n%\n% Optionen:\n"
     "%   opts.Tol - tolerance\narguments\n    opts.Tol = 1\nend\nend\n",
 }
-WITH_LABELS = {
+# findings whatever the labels
+BOTH = {
     ("hinweise.m", "inputs"),
     ("hinweise.m", "outputs"),
     ("prose.m", "inputs"),
     ("arg.m", "inputs"),
     ("nv.m", "name-value"),
 }
-WITHOUT_LABELS = WITH_LABELS | {
+# the labels replace the built-in ones: standard.m's Inputs/Outputs no longer count
+WITH_LABELS = BOTH | {("standard.m", "inputs"), ("standard.m", "outputs")}
+WITHOUT_LABELS = BOTH | {
     ("eingaben.m", "inputs"),
     ("eingaben.m", "outputs"),
     ("eingabe.m", "inputs"),
@@ -1062,6 +1065,16 @@ def test_section_labels(make_app, tmp_path):
     app = build(make_app, without, matlab_api_check_rules=NO_EXAMPLES)
     assert findings(app) == WITHOUT_LABELS
     assert not has("inputs", "F Help.\n\nEingaben:\n")
+
+
+def test_section_labels_with_built_in_ones(make_app, tmp_path):
+    labels = {
+        section: [mat_api_check.BUILTIN_LABELS, *given]
+        for section, given in SECTION_LABELS.items()
+    }
+    srcdir = label_project(tmp_path / "a", labels)
+    app = build(make_app, srcdir, matlab_api_check_rules=NO_EXAMPLES)
+    assert findings(app) == BOTH
 
 
 def test_napoleon_sections_are_not_labels(make_app, tmp_path):
@@ -1106,24 +1119,30 @@ def test_example_label(make_app, tmp_path):
     (tmp_path / "conf.py").write_text(CONF)
     (tmp_path / "index.rst").write_text("Index\n=====\n")
     (tmp_path / "f.m").write_text("function f\n% F Help.\n%\n% Beispiel:\n%   f\nend\n")
+    (tmp_path / "g.m").write_text("function g\n% G Help.\n%\n% Example:\n%   g\nend\n")
+    (tmp_path / "h.m").write_text(
+        "function h\n% H Help.\n%\n% .. rubric:: Example\n%\n%    h\nend\n"
+    )
     assert findings(build(make_app, tmp_path)) == {("f.m", "example")}
     app = build(
         make_app, tmp_path, matlab_api_check_section_labels={"example": ["Beispiel"]}
     )
-    assert findings(app) == set()
+    # The rubric still counts.
+    assert findings(app) == {("g.m", "example")}
 
 
 def test_section_label_values():
     config = SimpleNamespace(
         matlab_api_check_section_labels={
-            "inputs": ["Eingaben", "  Zwei   Worte ", "EINGABEN"],
+            "inputs": ["Eingaben", "  Zwei   Worte ", "EINGABEN", "<Built-In>"],
             "example": ("Beispiel",),
+            "name-value": [],
         }
     )
     assert mat_api_check.section_labels(config) == (
-        ("example", "beispiel"),
-        ("inputs", "eingaben"),
-        ("inputs", "zwei worte"),
+        ("example", ("beispiel",)),
+        ("inputs", ("<built-in>", "eingaben", "zwei worte")),
+        ("name-value", ()),
     )
 
 
@@ -1148,15 +1167,15 @@ def test_section_label_errors(make_app, root, value, match):
 
 def test_sections_with_labels():
     labels = (
-        ("example", "beispiel"),
-        ("inputs", "args (opt)"),
-        ("inputs", "eingaben"),
-        ("outputs", "zwei worte"),
+        ("example", ("beispiel",)),
+        ("inputs", ("args (opt)", "eingaben")),
+        ("name-value", ()),
+        ("outputs", ("<built-in>", "zwei worte")),
     )
     sections = mat_api_check.sections_for(labels)
     assert mat_api_check.sections_for(()) is mat_api_check.SECTIONS
     assert mat_api_check.sections_for(labels) is sections
-    inputs_only = mat_api_check.sections_for((("inputs", "eingaben"),))
+    inputs_only = mat_api_check.sections_for((("inputs", ("eingaben",)),))
     assert inputs_only["outputs"] is mat_api_check.SECTIONS["outputs"]
 
     def has_label(rule, help_text, names=()):
@@ -1165,8 +1184,11 @@ def test_sections_with_labels():
     for line in ("Eingaben:", "EINGABEN", "Eingaben (optional):", "Args (opt):"):
         assert has_label("inputs", f"F Help.\n\n{line}\n")
     assert has_label("outputs", "F Help.\n\nZwei   Worte:\n")
-    assert has_label("inputs", "F Help.\n\nInputs:\n")  # built-ins stay
-    assert has_label("outputs", "F Help.\n\nReturns:\n")
+    assert not has_label("inputs", "F Help.\n\nInputs:\n")  # replaced
+    assert has_label("outputs", "F Help.\n\nReturns:\n")  # <built-in> kept
+    assert has("inputs", "F Help.\n\nInputs:\n")  # other builds unchanged
+    for line in ("Options:", "Name-Value Arguments:", "Optionen:", ":", ""):
+        assert not has_label("name-value", f"F Help.\n\n{line}\n")
     assert not has_label("outputs", "F Help.\n\nEingaben:\n")
     assert not has_label("name-value", "F Help.\n\nEingaben:\n")
     assert not has_label("inputs", "F Help. It takes the\neingaben\n  x - data\n")
@@ -1174,4 +1196,5 @@ def test_sections_with_labels():
     assert not has_label("inputs", "F Help.\n\neingaben: the data", {"eingaben"})
     assert not has_label("inputs", "F Help.\n\nArgs opt:\n")
     assert mat_api_check.has_example("F Help.\n\nBeispiel:\n  f\n", sections)
+    assert not mat_api_check.has_example("F Help.\n\nExample:\n  f\n", sections)
     assert not mat_api_check.has_example("F Help.\n\nBeispiel:\n  f\n")
