@@ -1,6 +1,9 @@
 # Normalize line endings to LF for all text files
 # This ensures consistent behavior across Windows, macOS, and Linux
 
+# Every text file, also without a rule below; wins over core.autocrlf
+* text=auto eol=lf
+
 # Source code
 *.py text eol=lf
 *.m text eol=lf
