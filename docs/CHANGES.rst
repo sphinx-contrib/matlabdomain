@@ -97,6 +97,7 @@ earlier" in the documentation.
 * Incremental HTML builds remove the pages whose ``sphinx-matlab-apidoc``
   source is gone, and write again every page with a link to a MATLAB
   object when objects were added, removed or moved to other pages.
+* Requires ``tree-sitter-matlab`` 1.3.2 (was 1.3.0 to 1.3.1).
 * Fixed a segmentation fault (exit code 139) with tree-sitter 0.26.0 on
   standard CPython builds. Its ``Point.row`` getter corrupts reference counts,
   so point rows are now read by index.
