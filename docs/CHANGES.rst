@@ -19,6 +19,12 @@ earlier" in the documentation.
 
 * Drop support for Python <=3.10.
 * Drop support for Sphinx <=7.x.
+* An unknown ``matlab_*`` name is a ``ConfigError`` also when another
+  extension sets it while the configuration is read (for example
+  sphinx-multiproject's ``config`` option), not only in ``conf.py``.
+* The documentation describes several projects, several versions
+  (sphinx-multiversion), sphinx-multiproject and one search over several
+  sites, with what was checked.
 * **Breaking:** ``matlab_show_property_default_value`` and
   ``matlab_show_property_specs`` default to ``True``: properties show their
   default value, size, class and validators. Set them to ``False`` for the

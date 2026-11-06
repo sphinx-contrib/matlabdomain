@@ -20,7 +20,8 @@ below:
   there too), so the docs build the same from any working
   folder and with `sphinx-multiversion
   <https://github.com/sphinx-contrib/multiversion>`_. An absolute path works
-  too.
+  too, except with sphinx-multiversion: every version would document the
+  code of the checkout (:doc:`projects-and-versions`).
 * Every object is identified by its path below this folder, its *path
   reference* (``+shapes/Circle.m``, see :doc:`referencing`). Choose the root
   once: moving it changes every reference, link anchor and inventory entry.
@@ -269,7 +270,7 @@ These Sphinx and autodoc settings apply too:
 * ``add_function_parentheses``: ``()`` after function and method links.
   Sphinx's ``add_module_names`` is not read; use
   :confval:`matlab_add_namespace_names`.
-* ``suppress_warnings``: see :doc:`warnings`. Use this to suppress some warnings 
+* ``suppress_warnings``: see :doc:`warnings`. Use this to suppress some warnings
   during the build.
 * The events ``autodoc-process-docstring`` and ``autodoc-skip-member`` are
   emitted for MATLAB objects too, so extensions such as

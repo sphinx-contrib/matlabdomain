@@ -102,5 +102,8 @@ Working with other tools
   sidecar docs too. The extension cannot configure sphinx-autobuild
   itself, so these options go on its command line.
 * `sphinx-multiversion <https://github.com/sphinx-contrib/multiversion>`_:
-  works, because a relative :confval:`matlab_src_code_project_root` is
-  relative to the Sphinx source folder, which it moves.
+  works on Sphinx 8 when each version's commit holds its API pages; a
+  relative :confval:`matlab_src_code_project_root` is relative to the
+  Sphinx source folder, which it moves. See :doc:`projects-and-versions`,
+  also for several projects, sphinx-multiproject and one search over
+  several sites.

@@ -198,7 +198,8 @@ for its own objects; its own objects come first:
    :mat:class:`+shapes/Circle.m`
 
 :doc:`linking-projects` shows the setup, the differences from local
-references and how links follow changes of the other project.
+references and how links follow changes of the other project;
+:doc:`projects-and-versions` covers several projects and versions.
 
 Coming from Python
 ------------------
