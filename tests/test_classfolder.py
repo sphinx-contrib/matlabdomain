@@ -187,7 +187,7 @@ def test_declared_attributes_of_folder_methods(make_app, tmp_path):
     assert method_summary(public.split("Method Summary")[1]) == [
         "declared(q)",
         "inline(q)",
-        "static make(y)",
+        "static make(obj, y)",
         "undeclared(q)",
     ]
     assert method_summary(every.split("Method Summary")[1]) == [
@@ -195,7 +195,7 @@ def test_declared_attributes_of_folder_methods(make_app, tmp_path):
         "guarded()",
         "inline(q)",
         "listed()",
-        "static make(y)",
+        "static make(obj, y)",
         "static sealedAway(a)",
         "secret(z)",
         "undeclared(q)",

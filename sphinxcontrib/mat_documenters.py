@@ -1178,16 +1178,17 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         """Format argument.
 
         We omit `obj` and `self` from the output if they are the first argument
-        unless it's a class constructor.
+        unless it's a class constructor or a static method (which has no object).
 
         Rendering -> "(arg1, arg2, arg3)"
 
         """
         is_ctor = self.object.cls.name == self.object.name
+        is_static = bool(self.object.attrs.get("Static"))
 
         if self.object.args:
             arglist = list(self.object.args.keys())
-            if arglist[0] in ("obj", "self") and not is_ctor:
+            if arglist[0] in ("obj", "self") and not (is_ctor or is_static):
                 return "(" + ", ".join(arglist[1:]) + ")"
             else:
                 return "(" + ", ".join(arglist) + ")"

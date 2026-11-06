@@ -32,6 +32,9 @@ earlier" in the documentation.
   before, so a page that links to such a method needs the option that
   documents it (``:private-members:``, ...), and a static one is in the
   inventory as ``mat:staticmethod``.
+* **Breaking:** the signature of a static method keeps a first input named
+  ``obj`` or ``self`` (``static make(obj, y)``): a static method has no
+  object, so that input is a real one. Other methods still leave it out.
 * Attributes written ``~Hidden`` (``Hidden = false``) no longer make a class
   fail to parse (it was documented without content), and logical values
   written as numbers or with ``~`` (``Hidden = 0``, ``Static = ~true``) are

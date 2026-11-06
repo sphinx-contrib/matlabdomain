@@ -99,7 +99,7 @@ know which object to document") and the directive writes nothing.
    ``+pkg/Cls.m.method``), or the method name alone inside a class.
    Static methods are written as ``mat:staticmethod``. In the signature,
    a first input named ``obj`` or ``self`` is left out, except for the
-   constructor.
+   constructor and static methods (they have no object).
 
    .. rst:directive:option:: noindex
                              no-index

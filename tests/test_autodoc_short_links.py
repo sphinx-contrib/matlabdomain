@@ -161,7 +161,7 @@ def test_classfolder(app, confdict):
         "p\n\n"
         "a property of a class folder\n\n"
         "Method Summary\n\n\n\n\n\n"
-        "static a_static_func(args)\n\n"
+        "static a_static_func(obj, args)\n\n"
         "A static method in @ClassFolder\n\n\n\n"
         "classMethod(varargin)\n\n"
         "CLASSMETHOD A function within a package\n\n"
