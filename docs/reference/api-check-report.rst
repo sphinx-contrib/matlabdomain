@@ -21,15 +21,18 @@ checked per reason, and the findings per rule and severity. When
 :confval:`matlab_api_check_enabled` is ``False``, the summary says that
 nothing was checked.
 
-With :confval:`matlab_api_check_files`, the report starts with a line for
+With :confval:`matlab_api_check_files` or
+:confval:`matlab_api_check_files_from`, the report starts with a line for
 each entry that selects no file::
 
-   <entry>: error: matches no indexed file or sidecar doc: <reason> [matlab_api_check_files]
+   <entry>: error: matches no indexed file or sidecar doc: <reason> [selection]
 
-and the summary has a line ``Selected: <n> of <total> files by <entries>
-matlab_api_check_files entries, <unmatched> matching no file`` (after a
-line that says so when the list is empty); the files not selected are
-counted as ``not selected``. Without it, the report is as before. The
+(``ignored`` instead of ``error`` with
+:confval:`matlab_api_check_ignore_unmatched`), and the summary has a line
+``Selected: <n> of <total> files by <entries> entries, <unmatched>
+matching no file`` (with `` (ignored)`` added likewise; after a line that
+says so when the selection is empty); the files not selected are counted
+as ``not selected``. Without a selection, the report is as before. The
 worked example's report, with the paths shortened:
 
 .. literalinclude:: ../../examples/apidoc/api-check.txt
@@ -53,15 +56,17 @@ identical on every system.
       Objects not checked per reason: ``ignored``
       (:confval:`matlab_api_check_ignore_patterns`), ``hidden``
       (``Contents.m`` and the other special files), ``unreadable``,
-      ``not_parsed`` (parse failures); with
-      :confval:`matlab_api_check_files`, also ``not_selected`` (files and
-      sidecar docs; their members are not counted).
+      ``not_parsed`` (parse failures); with a selection, also
+      ``not_selected`` (files and sidecar docs; their members are not
+      counted).
    ``selection``
-      Only with :confval:`matlab_api_check_files`: ``entries`` (the
-      normalized entries, without duplicates), ``selected`` (the number of
-      files and sidecar docs selected) and ``unmatched`` (a list of
-      ``{"entry": ..., "reason": ...}``, one for each entry that selects no
-      file; any makes the exit status 1).
+      Only with a selection (:confval:`matlab_api_check_files`,
+      :confval:`matlab_api_check_files_from`): ``entries`` (the normalized
+      entries, without duplicates), ``selected`` (the number of files and
+      sidecar docs selected), ``unmatched`` (a list of ``{"entry": ...,
+      "reason": ...}``, one for each entry that selects no file) and
+      ``ignore_unmatched`` (:confval:`matlab_api_check_ignore_unmatched`;
+      when ``false``, any unmatched entry makes the exit status 1).
    ``findings``
       Rule name to ``{"error": n, "warning": n}``.
    ``errors``, ``warnings``

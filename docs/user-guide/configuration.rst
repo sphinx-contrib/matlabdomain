@@ -279,8 +279,10 @@ Checking help text
 ------------------
 
 :confval:`matlab_api_check_rules`, :confval:`matlab_api_check_enabled`,
-:confval:`matlab_api_check_ignore_patterns` and
-:confval:`matlab_api_check_files` configure the
+:confval:`matlab_api_check_ignore_patterns`,
+:confval:`matlab_api_check_section_labels`,
+:confval:`matlab_api_check_files`, :confval:`matlab_api_check_files_from`
+and :confval:`matlab_api_check_ignore_unmatched` configure the
 ``matlab-api-check`` builder; see :doc:`api-check`.
 
 The ignore patterns match the path references of files and of methods in a

@@ -258,22 +258,22 @@ earlier" in the documentation.
   count properties (``property``). Cached environments from earlier
   versions are rebuilt.
 * New configuration ``matlab_api_check_files`` (default ``None``, every
-  file): ``matlab-api-check`` checks only the files whose path references
-  match its entries (paths or glob patterns relative to the project root;
-  ``folder/`` for the files below a folder; a comma-separated string from
-  ``-D``), for example the files a change touches. The index, the pages
-  and the links are those of the whole project; files that are not
-  selected are not parsed for the check. ``[]`` selects nothing. An entry
-  that selects no file is logged as an error and makes the exit status 1.
-  The reports count the files not selected (``not_selected``) and, in
-  ``api-check.json``, describe the selection (``selection``); without the
-  setting they are unchanged.
-* ``matlab-api-check`` counts the headings that ``napoleon_custom_sections``
-  maps to ``params_style`` (or an alias of such a heading) as inputs
-  sections, and those it maps to ``returns_style`` as outputs sections,
-  as Napoleon renders them. The built-in labels still count and keep their
-  meaning; plain headings and aliases of Napoleon's own sections add
-  nothing.
+  file) and ``matlab_api_check_files_from`` (a text file of entries, one
+  per line): ``matlab-api-check`` checks only the files whose path
+  references match the entries (paths or glob patterns relative to the
+  project root; ``folder/`` for the files below a folder; a
+  comma-separated string from ``-D``), for example the files a change
+  touches. The index, the pages and the links are those of the whole
+  project; files that are not selected are not parsed for the check. An
+  empty selection checks nothing. An entry that selects no file is logged
+  as an error and makes the exit status 1, unless the new
+  ``matlab_api_check_ignore_unmatched`` is ``True``. The reports count the
+  files not selected (``not_selected``) and, in ``api-check.json``,
+  describe the selection (``selection``); without a selection they are
+  unchanged.
+* New configuration ``matlab_api_check_section_labels``: labels of your
+  own for the inputs, outputs, name-value and example sections of
+  ``matlab-api-check``, added to the built-in ones.
 * **Breaking:** the auto directives accept only the options that do
   something. ``mat:autofolder`` no longer accepts ``:inherited-members:``,
   ``:special-members:``, ``:imported-members:``, ``:ignore-module-all:`` and

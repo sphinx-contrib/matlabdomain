@@ -218,9 +218,43 @@ Changing these reads no page again.
    matlab_api_check_files=a.m,b.m`` gives it; blank entries are dropped.
    It narrows only the check: the index, the pages and the links stay
    those of the whole project. An entry that selects no file is an error:
-   the build exits with status 1. Any other type, or an entry that
-   :confval:`matlab_src_include_patterns` would reject, is a
+   the build exits with status 1 (see
+   :confval:`matlab_api_check_ignore_unmatched`). Any other type, or an
+   entry that :confval:`matlab_src_include_patterns` would reject, is a
    ``ConfigError``.
+
+.. confval:: matlab_api_check_files_from
+   :type: ``str`` or ``None``
+   :default: ``None``
+
+   The path of a UTF-8 text file with more entries for
+   :confval:`matlab_api_check_files`, one per line, such as a list of
+   changed files: ``-D matlab_api_check_files_from=changed-files.txt``. A
+   relative path is relative to the current folder. Blank lines and the
+   spaces around a line are dropped; commas do not separate entries. Set
+   alone, it selects only its lines (none for an empty file). A file that
+   cannot be read, or a line that :confval:`matlab_src_include_patterns`
+   would reject, is a ``ConfigError``.
+
+.. confval:: matlab_api_check_ignore_unmatched
+   :type: ``bool``
+   :default: ``False``
+
+   ``True`` (``-D matlab_api_check_ignore_unmatched=1``): a selection entry
+   that selects no file (a deleted file, a file that is not MATLAB code or
+   is excluded) is listed in the reports as ``ignored``, without an error
+   or exit status 1.
+
+.. confval:: matlab_api_check_section_labels
+   :type: ``dict[str, list[str]]``
+   :default: ``{}``
+
+   Section to labels of your own, added to the built-in labels of
+   :doc:`../user-guide/api-check`. Sections: ``inputs``, ``outputs``,
+   ``name-value``, ``example``. A label is text without ``:``, matched in
+   any case, with any spaces between its words. A value that is not a
+   dictionary of lists, an unknown section or a label that is not text is
+   a ``ConfigError``.
 
 ``sphinx-matlab-apidoc``
 ------------------------

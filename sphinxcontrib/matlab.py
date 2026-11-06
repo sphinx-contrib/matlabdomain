@@ -1113,6 +1113,11 @@ def setup(app):
     app.add_config_value("matlab_api_check_ignore_patterns", [], "", [list, tuple])
     # None checks every file; a list (or, from -D, a comma-separated str) selects.
     app.add_config_value("matlab_api_check_files", None, "")
+    # A text file of selection entries, one per line.
+    app.add_config_value("matlab_api_check_files_from", None, "")
+    app.add_config_value("matlab_api_check_ignore_unmatched", False, "", bool)
+    # Section -> labels added to the built-in ones.
+    app.add_config_value("matlab_api_check_section_labels", {}, "", dict)
     # Read by sphinx-matlab-apidoc only.
     apidoc_config.add_config_values(app)
 

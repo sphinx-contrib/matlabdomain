@@ -127,6 +127,18 @@ sections (``Args:``, ``Parameters:``, ``Returns:``) become field lists too:
 
 .. include:: ../snippets/napoleon.rst
 
+Napoleon's sections are its own headings (``Args:``, ``Returns:``, ...)
+and those of ``napoleon_custom_sections``. A MATLAB heading such as
+``Inputs:`` needs an entry there; ``("Inputs", "params_style")`` lists
+one entry per name, which suits ``Outputs:`` too (``"returns_style"``
+makes the whole section one entry). Napoleon only matches a heading made
+of letters, digits, ``_`` and spaces, followed by ``:`` alone on its line,
+with the entries indented below it. ``Name-Value Pairs:`` therefore never
+becomes a section, whatever ``napoleon_custom_sections`` says, and stays
+plain text; write ``Name Value Pairs:`` (with an entry) instead.
+``matlab-api-check`` does not read ``napoleon_custom_sections``; see
+:doc:`api-check`.
+
 Types in these fields (``x (double)``, ``x ((1,1) string)``) link to a
 documented class of that name and are text otherwise, without a warning
 with ``-n``.
