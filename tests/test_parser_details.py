@@ -190,6 +190,39 @@ def test_continuation_after_class_header(tmp_path, source, help):
     assert obj.docstring == help
 
 
+@pytest.mark.parametrize(
+    "source",
+    [
+        b"function y = f(x)\n% F HELP\ny = x",
+        b"classdef C\n properties\n  a double {}\n end\nend\n",
+        b"classdef E\n enumeration\n  Positive ()\n end\nend\n",
+        b"y = x .';\n",
+        b"% one\r\n% two\r\nx = 1;\r\n",
+    ],
+    ids=[
+        "eof-without-newline",
+        "empty-validators",
+        "empty-enum-args",
+        "spaced-transpose",
+        "crlf-comments",
+    ],
+)
+def test_grammar_fixes_of_1_3_3(source):
+    # tree-sitter-matlab 1.3.2 wheels shipped a stale parser.c (upstream #176).
+    root = Parser(ML_LANG).parse(source).root_node
+    assert first_error(root) is None
+    assert not root.has_error
+
+
+def test_empty_validators_and_enum_args(tmp_path):
+    # 1.3.2 parsed ``{}`` and ``()`` as errors: validators and args ``['']``.
+    cls = parse(tmp_path, "C", "classdef C\n properties\n  a double {}\n end\nend\n")
+    assert cls.properties["a"]["validators"] is None
+    enum = parse(tmp_path, "E", "classdef E\n enumeration\n  Positive ()\n end\nend\n")
+    assert enum.enumerations["Positive"]["args"] is None
+    assert cls.source_warnings == enum.source_warnings == []
+
+
 def test_section_percent_signs(tmp_path):
     # MATLAB R2026a and R2026b ``help`` drops ``%%`` (a section start) or one
     # ``%``, so separator lines of ``%`` keep all but two.
