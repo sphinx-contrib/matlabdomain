@@ -84,8 +84,13 @@ earlier" in the documentation.
   the name) and ``mat/ref/<path reference>.html``, which redirect to the
   page the object is on; the "¶" link of an object and its entry in
   ``objects.inv`` point to it, so other projects' links survive page
-  splitting even with an old inventory. New ``matlab_stable_urls`` (default
+  splitting even with an old inventory. A copied page address that no
+  longer has the object, or a page that is gone (``404.html``), opens the
+  object's stable address. New ``matlab_stable_urls`` (default
   ``True``) turns it off.
+* Incremental HTML builds remove the pages whose ``sphinx-matlab-apidoc``
+  source is gone, and write again every page with a link to a MATLAB
+  object when objects were added, removed or moved to other pages.
 * Fixed a segmentation fault (exit code 139) with tree-sitter 0.26.0 on
   standard CPython builds. Its ``Point.row`` getter corrupts reference counts,
   so point rows are now read by index.

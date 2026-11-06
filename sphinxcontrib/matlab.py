@@ -725,6 +725,8 @@ class MATLABDomain(Domain):
         # docname -> [(sidecar reference, kind, target, line)]: broken relative
         # links and missing images in the sidecar docs it renders
         "sidecar_issues": {},
+        # docname -> True: it has a reference to a MATLAB object
+        "xref_docs": {},
         # Shared source state, rebuilt by ``mat_types.analyze`` each build;
         # files are parsed lazily (see ``mat_types``).
         # source path -> {reference, type, mtime, size, warnings, unreadable,
@@ -738,7 +740,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 18
+    data_version = 19
     indices = [
         MATLABFolderIndex,
     ]
@@ -753,6 +755,9 @@ class MATLABDomain(Domain):
         self._sidecar_docs = None
         # Documents read in this build (``env-before-read-docs``).
         self.read_docnames = ()
+        # Objects and removed documents before this build read (mat_urls).
+        self.objects_before = {}
+        self.removed_docs = set()
         self.reset_sources()
 
     def reset_sources(self):
@@ -834,8 +839,16 @@ class MATLABDomain(Domain):
         self.data["doc_sources"].pop(docname, None)
         self.data["sidecar_docs"].pop(docname, None)
         self.data["sidecar_issues"].pop(docname, None)
+        self.data["xref_docs"].pop(docname, None)
         self._displays = self._stable_urls = None
         self._sidecar_docs = None
+
+    def process_doc(self, env, docname, document):  # noqa: ARG002
+        if any(
+            node.get("refdomain") == "mat" or node.get("reftype") == "any"
+            for node in document.findall(addnodes.pending_xref)
+        ):
+            self.data["xref_docs"][docname] = True
 
     def merge_domaindata(self, docnames, otherdata):
         # Merge per-document registrations from a parallel-read worker, and
@@ -847,7 +860,7 @@ class MATLABDomain(Domain):
         for ref, data in otherdata["folders"].items():
             if data[0] in docnames:
                 self.data["folders"][ref] = data
-        for name in ("doc_sources", "sidecar_docs", "sidecar_issues"):
+        for name in ("doc_sources", "sidecar_docs", "sidecar_issues", "xref_docs"):
             for docname, value in otherdata[name].items():
                 if docname in docnames:
                     self.data[name][docname] = value
@@ -1153,7 +1166,12 @@ def setup(app):
     app.connect("missing-reference", check_inventories, priority=400)
     app.connect("missing-reference", keep_unresolved_references, priority=900)
     app.connect("html-page-context", mat_urls.rewrite_permalinks)
+    app.connect("html-collect-pages", mat_urls.chooser_pages)
+    app.connect("builder-inited", mat_urls.add_script)
+    app.connect("env-get-outdated", mat_urls.note_pages)
+    app.connect("env-get-updated", mat_urls.relink)
     app.connect("build-finished", mat_urls.write_redirects)
+    app.connect("build-finished", mat_urls.remove_stale_pages)
 
     app.add_domain(MATLABDomain)
     app.add_builder(mat_api_check.MatlabApiCheckBuilder)

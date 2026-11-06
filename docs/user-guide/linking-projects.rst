@@ -25,11 +25,13 @@ Publish from an empty output folder:
    sphinx-matlab-apidoc -c docs
    sphinx-build -b html docs docs/_build/html
 
-Sphinx never deletes a page it no longer builds. When
-``sphinx-matlab-apidoc`` writes fewer pages than before (``global-2``
-disappears), an output folder kept from an earlier build still holds the
-old page with its old content, and so does a site copied from it. A CI job
-that starts from a fresh checkout has an empty output folder.
+Sphinx never deletes a page it no longer builds. This extension removes
+the HTML page, and its copy in ``_sources``, of every page below
+:confval:`matlab_apidoc_output_dir` whose source ``sphinx-matlab-apidoc``
+removed (``global-2`` when it writes fewer pages). Other removed pages
+stay in an output folder kept from an earlier build, and in a site copied
+from it; a CI job that starts from a fresh checkout has an empty output
+folder.
 
 The consumer
 ------------
@@ -146,8 +148,9 @@ that sends the browser to the page the object is on now
 
 * ``mat/name/<MATLAB name>.html``, for example ``mat/name/geom.Circle.html``
   or ``mat/name/geom.Circle.area.html``. If several objects have the name
-  (two global ``helper`` functions), the file lists them all, with their
-  path references and types, like MATLAB's ``which -all``. Files in
+  (two global ``helper`` functions), it is a page in the site's theme that
+  lists them all, with their path references and types, like MATLAB's
+  ``which -all``. Files in
   ``private/`` and files MATLAB cannot call have no such address.
 * ``mat/ref/<path reference>.html`` for every object, for example
   ``mat/ref/+geom/Circle.m.html``; a folder's is ``mat/ref/<folder>/index.html``.
@@ -162,12 +165,18 @@ names that differ only by case, are escaped like the output names of
 ``sphinx-matlab-apidoc``.
 
 The address in the browser's address bar after the redirect is the page's
-own, which does not follow the object. If the old page still exists, the
-browser opens it at the top, without an error and without the object; if
-the page is gone, the site answers "404 Not Found". Links between the
-library's own pages follow the object in a full build; an incremental build
-writes only the pages whose source changed, so build with ``-a`` after the
-API pages were regenerated.
+own, which does not follow the object. A small script on every page
+helps when such an address is opened later: if the page no longer has the
+object (``#mat-util/scale.m``), it opens the object's stable address. If
+the page is gone, the build's ``404.html`` does the same, on hosts that
+show it for missing pages, such as GitHub Pages (the build does not
+replace a ``404.html`` of the project's own, for example from
+``sphinx-notfound-page``, whose page still runs the script). Both read
+``mat/refs.js``, a list of all the stable addresses, only when needed.
+
+An incremental build in which objects were added, removed or moved to
+other pages also writes again every page that links to a MATLAB object,
+so the links between the library's own pages follow the objects.
 
 :confval:`matlab_apidoc_separate` gives each file a page named by its path
 (``api/util/scale.m.html``), so its page address does not depend on the
