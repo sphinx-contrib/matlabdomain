@@ -960,8 +960,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
     def add_directive_header(self, sig):
         MatlabDocumenter.add_directive_header(self, sig)
+        # an unreadable file's placeholder has no attributes
         self.add_flags(
-            self.object.attrs, (("abstract", "Abstract"), ("sealed", "Sealed"))
+            getattr(self.object, "attrs", {}),
+            (("abstract", "Abstract"), ("sealed", "Sealed")),
         )
 
         # add inheritance info, if wanted

@@ -628,6 +628,31 @@ def test_broken_link_is_skipped(make_app, tmp_path):
     assert [r["reference"] for r in index.values()] == ["ft_ok_function.m"]
 
 
+def test_class_unreadable_at_indexing_renders(make_app, tmp_path, monkeypatch):
+    # Portable twin of test_unreadable_class_and_function_render: the
+    # placeholder of an unreadable file is not a class, yet autoclass shows it.
+    write(
+        tmp_path,
+        {
+            "conf.py": CONF,
+            "index.rst": "Index\n=====\n\n.. mat:autoclass:: FtLocked\n   :members:\n",
+            "FtLocked.m": "classdef FtLocked < handle\nend\n",
+        },
+    )
+    read = mat_handlers.MFileHandler.read
+
+    def locked(self, path, *args, **kwargs):
+        if path.endswith("FtLocked.m"):
+            raise PermissionError(13, "Permission denied")
+        return read(self, path, *args, **kwargs)
+
+    monkeypatch.setattr(mat_handlers.MFileHandler, "read", locked)
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    assert warnings_of(app) == [("parse_error", "FtLocked.m")]
+    assert app.warning.getvalue().count("WARNING") == 1
+
+
 def test_read_failure_while_parsing_is_not_cached(make_app, tmp_path, monkeypatch):
     write(tmp_path, ONE_FUNCTION)
 

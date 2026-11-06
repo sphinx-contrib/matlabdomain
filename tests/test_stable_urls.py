@@ -148,6 +148,25 @@ def test_no_inventory(tmp_path):
     assert not (tmp_path / "objects.inv").exists()
 
 
+def test_script_that_cannot_be_written(tmp_path, monkeypatch):
+    (tmp_path / "_static" / mat_urls.SCRIPT).mkdir(parents=True)
+    warnings = []
+    monkeypatch.setattr(
+        mat_urls.logger,
+        "warning",
+        lambda msg, *_args, **_kwargs: warnings.append(msg),
+    )
+    added = []
+    app = SimpleNamespace(
+        config=SimpleNamespace(matlab_stable_urls=True),
+        builder=SimpleNamespace(format="html", name="html", outdir=tmp_path),
+        add_js_file=added.append,
+    )
+    mat_urls.add_script(app)
+    assert added == [mat_urls.SCRIPT]
+    assert warnings == ["[sphinxcontrib-matlabdomain] cannot write %s: %s"]
+
+
 BOX = """\
 classdef Box
     % Box A box.
