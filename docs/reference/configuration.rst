@@ -171,6 +171,17 @@ Output
    ``[]`` turns it off. A value that is not a list of valid regular
    expressions is a ``ConfigError``. Changing it reads no page again.
 
+.. confval:: matlab_stable_urls
+   :type: ``bool``
+   :default: ``True``
+
+   HTML builds write a stable address for every documented object, which
+   redirects to the page the object is on: ``mat/ref/<path
+   reference>.html`` and, for a MATLAB name of non-private objects,
+   ``mat/name/<MATLAB name>.html`` (a list of the objects when several have
+   the name). The "¶" link of an object points to it. ``False`` writes no
+   such files and keeps "¶" on the page (:ref:`library-changes`).
+
 ``matlab-api-check``
 --------------------
 
@@ -220,9 +231,45 @@ Changing these reads no page again.
    matlab_api_check_files=a.m,b.m`` gives it; blank entries are dropped.
    It narrows only the check: the index, the pages and the links stay
    those of the whole project. An entry that selects no file is an error:
-   the build exits with status 1. Any other type, or an entry that
-   :confval:`matlab_src_include_patterns` would reject, is a
+   the build exits with status 1 (see
+   :confval:`matlab_api_check_ignore_unmatched`). Any other type, or an
+   entry that :confval:`matlab_src_include_patterns` would reject, is a
    ``ConfigError``.
+
+.. confval:: matlab_api_check_files_from
+   :type: ``str`` or ``None``
+   :default: ``None``
+
+   The path of a UTF-8 text file with more entries for
+   :confval:`matlab_api_check_files`, one per line, such as a list of
+   changed files: ``-D matlab_api_check_files_from=changed-files.txt``. A
+   relative path is relative to the current folder. Blank lines and the
+   spaces around a line are dropped; commas do not separate entries. Set
+   alone, it selects only its lines (none for an empty file). A file that
+   cannot be read, or a line that :confval:`matlab_src_include_patterns`
+   would reject, is a ``ConfigError``.
+
+.. confval:: matlab_api_check_ignore_unmatched
+   :type: ``bool``
+   :default: ``False``
+
+   ``True`` (``-D matlab_api_check_ignore_unmatched=1``): a selection entry
+   that selects no file (a deleted file, a file that is not MATLAB code or
+   is excluded) is listed in the reports as ``ignored``, without an error
+   or exit status 1.
+
+.. confval:: matlab_api_check_section_labels
+   :type: ``dict[str, list[str]]``
+   :default: ``{}``
+
+   Section to the labels it accepts, replacing its built-in labels (see
+   :doc:`../user-guide/api-check`); a section left out keeps them.
+   Sections: ``inputs``, ``outputs``, ``name-value``, ``example``. A label
+   is text without ``:``, matched in any case, with any spaces between its
+   words. The entry ``"<built-in>"`` stands for the built-in labels, so
+   ``["<built-in>", "Eingaben"]`` extends them. ``[]`` accepts no label. A
+   value that is not a dictionary of lists, an unknown section or a label
+   that is not text is a ``ConfigError``.
 
 ``sphinx-matlab-apidoc``
 ------------------------
@@ -253,7 +300,9 @@ relative to the folder of ``conf.py``.
 
    The most entries (files and sidecar docs) on one namespace or folder
    page; a longer one gets several pages. Less than 1 is a
-   ``ConfigError``.
+   ``ConfigError``. Which page an entry is on, and so its address, can
+   change when files are added or removed; anchors and inventory names do
+   not (:ref:`library-changes`).
 
 .. confval:: matlab_apidoc_private
    :type: ``bool`` or ``None``
@@ -269,6 +318,8 @@ relative to the folder of ``conf.py``.
    :default: ``False``
 
    One page per file; namespace and folder pages list them in toctrees.
+   A file's page is named by its path, so its address does not depend on
+   :confval:`matlab_apidoc_page_size`.
 
 .. confval:: matlab_apidoc_maxdepth
    :type: ``int``

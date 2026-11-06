@@ -100,6 +100,7 @@ source_pkgs = [
     "sphinxcontrib.mat_sidecars",
     "sphinxcontrib.mat_tree_sitter_parser",
     "sphinxcontrib.mat_types",
+    "sphinxcontrib.mat_urls",
     "sphinxcontrib.matlab",
     "sphinxcontrib.matlab_apidoc",
     "sphinxcontrib.matlab_quickstart"

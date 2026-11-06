@@ -201,38 +201,44 @@ of the function's arguments with text after its ``:`` (``input: the data``,
 the entry of an argument named ``input``). The built-in labels were tuned
 on the help of 14 open-source MATLAB projects.
 
-With ``sphinx.ext.napoleon`` in ``extensions``, the headings that
-``napoleon_custom_sections`` makes parameter or return sections count
-too, so that the check and the rendered help agree:
+:confval:`matlab_api_check_section_labels` sets exactly which labels a
+section accepts, replacing its built-in ones; the sections you leave out
+keep theirs. List the headings your project's help uses:
 
 .. code-block:: python
 
-   napoleon_custom_sections = [
-       ("Eingaben", "params_style"),  # an inputs section
-       ("Ausgaben", "returns_style"),  # an outputs section
-       ("Eingabe", "Eingaben"),  # an alias of the one above: inputs
-       "Hinweise",  # a plain section: neither
-   ]
+   matlab_api_check_section_labels = {
+       "inputs": ["Inputs", "Input"],
+       "outputs": ["Outputs", "Output"],
+       "name-value": ["Name Value Pairs"],
+   }
 
-The entries are read as Napoleon reads them, in order, the last one for a
-heading winning. ``(heading, "params_style")`` is an inputs section and
-``(heading, "returns_style")`` an outputs section; ``(heading, other)``
-is what an earlier entry made ``other``. A plain heading, and an alias of
-one of Napoleon's own sections (``("Ergebnis", "Returns")``) or of an
-unknown one, adds nothing: write ``("Ergebnis", "returns_style")``
-instead. The headings follow the rules above (any case, the same forms, the
-same two exceptions) and are added to the built-in labels, which still
-count and keep their meaning: ``("Outputs", "params_style")``, as
-``sphinx-matlab-quickstart`` may write it, does not make ``Outputs`` an
-inputs section. A ``params_style`` heading is not a name-value section: name-value
-arguments need a name-value label or ``arguments``-block comments, as
-before. Without Napoleon, ``napoleon_custom_sections`` does nothing.
+With this, ``Parameters:`` or ``Options:`` no longer start a section, so
+help that drifts from the project's style gets a finding. The entry
+``"<built-in>"`` adds the built-in labels back, to extend them instead:
+
+.. code-block:: python
+
+   matlab_api_check_section_labels = {
+       "inputs": ["<built-in>", "Eingaben"],
+       "example": ["<built-in>", "Beispiel"],
+   }
+
+The labels follow the rules above (any case, the same forms, the same two
+exceptions). ``[]`` accepts no label: only ``arguments``-block comments
+pass the section's rule. A ``.. rubric:: Example`` counts whatever the
+example labels. The check does not read ``napoleon_custom_sections``:
+that setting decides how Napoleon *formats* a section (``params_style``
+lists one entry per name, which suits outputs too), not what the section
+means. A heading in both settings is formatted by Napoleon and counted by
+the check.
 
 Configuration
 -------------
 
-Four settings in ``conf.py``; changing them does not make Sphinx read the
-pages again (:doc:`../reference/configuration`):
+These settings in ``conf.py`` (or ``-D``) configure the check; changing
+them does not make Sphinx read the pages again
+(:doc:`../reference/configuration`):
 
 * :confval:`matlab_api_check_rules`: the severity of each rule:
   ``"error"``, ``"warning"`` or ``"ignore"``. The defaults are in the table
@@ -265,29 +271,47 @@ pages again (:doc:`../reference/configuration`):
   nothing; the reports say so. Useful to switch the check off in one
   configuration without removing the CI step.
 
-* :confval:`matlab_api_check_files` (default ``None``, every file): the
-  files to check; see `Checking selected files`_.
+* :confval:`matlab_api_check_section_labels`: the labels each section
+  accepts (above).
 
-An unknown rule or severity is a configuration error.
+* :confval:`matlab_api_check_files`, :confval:`matlab_api_check_files_from`
+  and :confval:`matlab_api_check_ignore_unmatched`: the files to check;
+  see `Checking selected files`_.
+
+An unknown rule, severity or section is a configuration error.
 
 Checking selected files
 -----------------------
 
-:confval:`matlab_api_check_files` checks only some files, such as the
+:confval:`matlab_api_check_files` and
+:confval:`matlab_api_check_files_from` check only some files, such as the
 files a pull request changes. The project is indexed and the pages are
 read as before, so names resolve, links work and the documentation does
 not change; only the check is narrower, and files that are not selected
-are not parsed for it. Give it on the command line, separated by commas:
+are not parsed for it. Give the files on the command line, separated by
+commas:
 
 .. code-block:: console
 
    $ sphinx-build -b matlab-api-check -D matlab_api_check_files=+shapes/Circle.m,utils/ docs docs/_build/api-check
 
-or in ``conf.py``, as a list:
+in ``conf.py``, as a list:
 
 .. code-block:: python
 
    matlab_api_check_files = ["+shapes/Circle.m", "utils/", "+pkg/**/*.m"]
+
+or in a text file, one per line (a long list does not fit on a command
+line):
+
+.. code-block:: console
+
+   $ sphinx-build -b matlab-api-check -D matlab_api_check_files_from=changed-files.txt docs docs/_build/api-check
+
+A relative file path is relative to the current folder. The file is read
+as UTF-8; blank lines and the spaces around a line are dropped, and commas
+do not separate entries. Its lines are added to
+:confval:`matlab_api_check_files`.
 
 * Entries are paths or glob patterns relative to
   :confval:`matlab_src_code_project_root`, with ``/`` and the rules of
@@ -301,35 +325,43 @@ or in ``conf.py``, as a list:
   ``@Shape/`` all of them.
 * :confval:`matlab_api_check_ignore_patterns` still apply, and selected
   ``Contents.m`` files are still not checked; the report counts them.
-* ``[]`` (or an empty ``-D matlab_api_check_files=``) selects nothing:
-  the reports say so, and the build passes. ``None``, the default,
-  checks every file.
+* ``[]``, an empty ``-D matlab_api_check_files=`` or an empty file selects
+  nothing: the reports say so, and the build passes. With both settings
+  ``None``, the default, every file is checked.
 * An entry that selects no indexed file or sidecar doc (a typo, a deleted
-  or excluded file, a path relative to another folder) is logged as an
-  ``ERROR`` with the reason, listed in both reports, and makes the build
-  exit with status 1, whatever the rule severities, so the check of a
-  file that was asked for cannot pass silently.
+  or excluded file, a file that is not MATLAB code, a path relative to
+  another folder) is logged as an ``ERROR`` with the reason, listed in
+  both reports, and makes the build exit with status 1, whatever the rule
+  severities, so the check of a file that was asked for cannot pass
+  silently.
+* With :confval:`matlab_api_check_ignore_unmatched`
+  (``-D matlab_api_check_ignore_unmatched=1``), such entries are still
+  listed in both reports, marked ``ignored``, but they log no error and do
+  not change the exit status.
 
 Both reports count the files selected and the files not selected (``not
 selected``) and list the entries that select nothing; ``api-check.json``
 also lists every entry. See :doc:`../reference/api-check-report`.
 
-In CI, pass the files a change touches. They must be relative to the
-project root, exist and be indexed, so filter the list first. With Git,
-for a project root ``src`` (``--relative`` leaves out other files and
-strips ``src/``; ``--diff-filter=d`` leaves out deleted files):
+In CI, pass the files a change touches, relative to the project root. A
+list of every changed file holds deleted files and files that are not
+MATLAB code; ignore those entries rather than filter them. With Git, for a
+project root ``src`` (``--relative`` leaves out files outside it and
+strips ``src/``):
 
 .. code-block:: bash
 
-   files=$(git diff --name-only --diff-filter=d --relative=src origin/main... \
-       -- '*.m' '*.mlapp' ':!src/tests')
-   sphinx-build -b matlab-api-check -D "matlab_api_check_files=$files" \
+   git diff --name-only --relative=src origin/main... > changed-files.txt
+   sphinx-build -b matlab-api-check \
+       -D matlab_api_check_files_from=changed-files.txt \
+       -D matlab_api_check_ignore_unmatched=1 \
        docs docs/_build/api-check
 
-Line breaks separate entries like commas. Leave out the folders that
-:confval:`matlab_src_exclusion_patterns` excludes (``:!src/tests`` above),
-and add the sidecar suffixes if you check sidecar docs. A file name with a
-comma needs a list in ``conf.py``.
+With the project root at the repository root, ``--relative`` is not
+needed. To catch a list relative to the wrong folder, look at the
+``Selected:`` line, or leave the unmatched entries failing and filter the
+list (``--diff-filter=d`` leaves out deleted files, pathspecs such as
+``'*.m'`` other files).
 
 Findings and reports
 --------------------
@@ -353,8 +385,9 @@ check passed; see .../api-check.txt".
 In CI
 -----
 
-The exit status is 1 when a finding has severity ``error`` or an entry of
-:confval:`matlab_api_check_files` selects no file, and 0 otherwise. With
+The exit status is 1 when a finding has severity ``error`` or a selection
+entry selects no file (unless
+:confval:`matlab_api_check_ignore_unmatched`), and 0 otherwise. With
 ``-W``, any finding fails the build, like any warning. A CI step:
 
 .. code-block:: console

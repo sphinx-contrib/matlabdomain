@@ -691,12 +691,13 @@ def test_selected_files(make_app, root, files, entries, selected):
         "entries": entries,
         "selected": len(selected),
         "unmatched": [],
+        "ignore_unmatched": False,
     }
     assert summary["not_checked"]["not_selected"] == ROOT_FILES - len(selected)
     assert summary["errors"] == len(errors)
     assert (
         f"Selected: {len(selected)} of {ROOT_FILES} files by {len(entries)} "
-        "matlab_api_check_files entries, 0 matching no file"
+        "entries, 0 matching no file"
     ) in text_lines(app)
 
 
@@ -726,8 +727,7 @@ def test_selected_file_members(make_app, root):
         "not_selected": 15,
     }
     assert text_lines(app)[-15:-12] == [
-        "Selected: 3 of 18 files by 3 matlab_api_check_files entries, "
-        "0 matching no file",
+        "Selected: 3 of 18 files by 3 entries, 0 matching no file",
         "Checked: 1 functions, 1 classes, 7 methods, 1 properties, 0 events, "
         "0 scripts, 0 apps, 0 sidecars",
         "Not checked: 1 ignored, 0 hidden, 0 unreadable, 0 not parsed, 15 not selected",
@@ -777,23 +777,20 @@ def test_unmatched_selection(make_app, root):
         "entries": files,
         "selected": 1,
         "unmatched": [{"entry": e, "reason": why} for e, why in unmatched],
+        "ignore_unmatched": False,
     }
     warnings = app.warning.getvalue()
     for entry, why in unmatched:
         assert (
-            f"ERROR: [sphinxcontrib-matlabdomain] matlab_api_check_files: {entry!r} "
+            f"ERROR: [sphinxcontrib-matlabdomain] selection entry {entry!r} "
             f"matches no indexed file or sidecar doc: {why} [mat.api_check]"
         ) in warnings
     lines = text_lines(app)
     assert lines[:5] == [
-        f"{e}: error: matches no indexed file or sidecar doc: {why} "
-        "[matlab_api_check_files]"
+        f"{e}: error: matches no indexed file or sidecar doc: {why} [selection]"
         for e, why in unmatched
     ]
-    assert (
-        "Selected: 1 of 18 files by 6 matlab_api_check_files entries, "
-        "5 matching no file"
-    ) in lines
+    assert "Selected: 1 of 18 files by 6 entries, 5 matching no file" in lines
 
     # No rule severity hides an unmatched entry.
     app = build(
@@ -828,12 +825,12 @@ def test_empty_selection(make_app, root, files):
         "entries": [],
         "selected": 0,
         "unmatched": [],
+        "ignore_unmatched": False,
     }
     assert data["summary"]["not_checked"]["not_selected"] == ROOT_FILES
     assert text_lines(app)[:2] == [
-        "matlab_api_check_files is empty: no file was selected.",
-        "Selected: 0 of 18 files by 0 matlab_api_check_files entries, "
-        "0 matching no file",
+        "The selection is empty: no file was selected.",
+        "Selected: 0 of 18 files by 0 entries, 0 matching no file",
     ]
 
 
@@ -918,28 +915,124 @@ def test_selected_sidecars(make_app, tmp_path):
     assert summary["selection"]["selected"] == 1
 
 
-# --- napoleon_custom_sections -------------------------------------------------
+# --- selection from a file, unmatched entries ---------------------------------
 
-CUSTOM_SECTIONS = [
-    ("Eingaben", "params_style"),
-    ("Ausgaben", "returns_style"),
-    ("Eingabe", "Eingaben"),  # an alias of a custom input section
-    "Hinweise",  # a generic section
-    ("Ergebnis", "Notes"),  # an alias of one of Napoleon's own sections
-    ("Daten", "Unbekannt"),  # an alias of no section: generic
-    # built-in labels keep their meaning (as written by sphinx-matlab-quickstart)
-    ("Outputs", "params_style"),
-    ("Options", "params_style"),
-    ("Output", "Outputs"),
-]
-ALIAS_SRC = {
+
+def test_selection_from_a_file(make_app, root, tmp_path, monkeypatch):
+    listing = tmp_path / "changed.txt"
+    listing.write_text("noHelp.m\r\n\r\n  blankH1.m  \r\n", encoding="utf-8-sig")
+    app = build(
+        make_app,
+        root,
+        matlab_api_check_files=["good.m", "noHelp.m"],
+        matlab_api_check_files_from=str(listing),
+    )
+    entries = report(app)["summary"]["selection"]["entries"]
+    assert entries == ["good.m", "noHelp.m", "blankH1.m"]
+    # A relative path is relative to the current folder.
+    monkeypatch.chdir(tmp_path)
+    app = build(make_app, root, matlab_api_check_files_from="changed.txt")
+    assert report(app)["summary"]["selection"]["entries"] == ["noHelp.m", "blankH1.m"]
+    assert {file_of(ref) for ref, _ in findings(app)} == {"noHelp.m", "blankH1.m"}
+    # An empty file selects nothing; lines are not split at commas.
+    listing.write_text("")
+    app = build(make_app, root, matlab_api_check_files_from="changed.txt")
+    assert app.statuscode == 0
+    assert report(app)["summary"]["selection"]["entries"] == []
+    listing.write_text("a,b.m\n")
+    app = build(make_app, root, matlab_api_check_files_from="changed.txt")
+    assert report(app)["summary"]["selection"]["entries"] == ["a,b.m"]
+
+
+@pytest.mark.parametrize(
+    ("setting", "match"),
+    [
+        ("matlab_api_check_files_from = 3", "must be None or the path"),
+        ('matlab_api_check_files_from = "missing.txt"', "cannot read 'missing.txt'"),
+        ("matlab_api_check_files_from = 'abs.txt'", "must be relative"),
+    ],
+    ids=["type", "missing", "absolute-entry"],
+)
+def test_selection_file_errors(make_app, root, monkeypatch, setting, match):
+    monkeypatch.chdir(root)
+    (root / "abs.txt").write_text("/abs.m\n")
+    conf = root / "conf.py"
+    conf.write_text(f"{conf.read_text()}{setting}\n")
+    with pytest.raises(ConfigError, match=match):
+        make_app(BUILDER, srcdir=root)
+
+
+def test_ignore_unmatched(make_app, root):
+    files = ["good.m", "missing.m"]
+    app = build(
+        make_app,
+        root,
+        matlab_api_check_files=files,
+        matlab_api_check_ignore_unmatched=True,
+    )
+    assert app.statuscode == 0
+    selection = report(app)["summary"]["selection"]
+    assert selection["unmatched"] == [
+        {"entry": "missing.m", "reason": "no such file below the project root"}
+    ]
+    assert selection["ignore_unmatched"] is True
+    assert "missing.m" not in app.warning.getvalue()
+    assert (
+        "selection entry 'missing.m' matches no indexed file or sidecar doc: no "
+        "such file below the project root (ignored)"
+    ) in app.status.getvalue()
+    lines = text_lines(app)
+    assert lines[0] == (
+        "missing.m: ignored: matches no indexed file or sidecar doc: no such file "
+        "below the project root [selection]"
+    )
+    assert "Selected: 1 of 18 files by 2 entries, 1 matching no file (ignored)" in lines
+    # Findings of error rules still fail.
+    app = build(
+        make_app,
+        root,
+        matlab_api_check_files=["noHelp.m", "missing.m"],
+        matlab_api_check_ignore_unmatched=True,
+    )
+    assert app.statuscode == 1
+
+
+@pytest.mark.parametrize(("flag", "status"), [("0", 1), ("1", 0)])
+def test_selection_file_and_flag_on_the_command_line(root, tmp_path, flag, status):
+    listing = tmp_path / "changed-files.txt"
+    listing.write_text("good.m\nREADME.md\ndeleted.m\n")
+    out = tmp_path / "out"
+    argv = [
+        "-b",
+        BUILDER,
+        "-q",
+        "-E",
+        "-D",
+        f"matlab_api_check_files_from={listing}",
+        "-D",
+        f"matlab_api_check_ignore_unmatched={flag}",
+    ]
+    assert build_main([*argv, str(root), str(out)]) == status
+    data = json.loads((out / "api-check.json").read_text(encoding="utf-8"))
+    selection = data["summary"]["selection"]
+    assert selection["selected"] == 1
+    assert [u["entry"] for u in selection["unmatched"]] == ["README.md", "deleted.m"]
+
+
+# --- matlab_api_check_section_labels ------------------------------------------
+
+SECTION_LABELS = {
+    "inputs": ["Eingaben", "Eingabe"],
+    "outputs": ["Ausgaben"],
+    "name-value": ["Optionen"],
+}
+LABEL_SRC = {
     "eingaben.m": "function y = eingaben(x)\n% EINGABEN Help.\n%\n% Eingaben:\n"
     "%   x - the data\n%\n% AUSGABEN\n%   y - the result\nend\n",
     "eingabe.m": "function eingabe(x)\n% EINGABE Help.\n%\n% Eingabe:\n"
     "%   x - data\nend\n",
     "hinweise.m": "function y = hinweise(x)\n% HINWEISE Help.\n%\n% Hinweise:\n"
     "%   x - data\n%\n% Ergebnis:\n%   y - result\nend\n",
-    "daten.m": "function daten(x)\n% DATEN Help.\n%\n% Daten:\n%   x - data\nend\n",
     "standard.m": "function y = standard(x)\n% STANDARD Help.\n%\n% Inputs:\n"
     "%   x - data\n% Outputs:\n%   y - result\nend\n",
     # a lowercase label alone after a line of text is wrapped prose
@@ -948,79 +1041,95 @@ ALIAS_SRC = {
     # an entry of an argument named like the label
     "arg.m": "function y = arg(eingaben)\n% ARG Help.\n%\n% eingaben: the data\n"
     "% Ausgaben:\n%   y - result\nend\n",
-    # params_style aliases are input sections only, not name-value ones
+    # an inputs label is not a name-value label
     "nv.m": "function nv(x, opts)\n% NV Help.\n%\n% Eingaben:\n%   x - data\n"
     "%   opts.Tol - tolerance\narguments\n    x\n    opts.Tol = 1\nend\nend\n",
-    "outonly.m": "function y = outonly(x)\n% OUTONLY Help.\n%\n% Outputs:\n"
-    "%   y - result\n%\n% Options:\n%   none\nend\n",
+    "optionen.m": "function optionen(opts)\n% OPTIONEN Help.\n%\n% Optionen:\n"
+    "%   opts.Tol - tolerance\narguments\n    opts.Tol = 1\nend\nend\n",
 }
-WITH_ALIASES = {
+# findings whatever the labels
+BOTH = {
     ("hinweise.m", "inputs"),
     ("hinweise.m", "outputs"),
-    ("daten.m", "inputs"),
     ("prose.m", "inputs"),
     ("arg.m", "inputs"),
     ("nv.m", "name-value"),
-    ("outonly.m", "inputs"),
 }
-WITHOUT_ALIASES = WITH_ALIASES | {
+# the labels replace the built-in ones: standard.m's Inputs/Outputs no longer count
+WITH_LABELS = BOTH | {("standard.m", "inputs"), ("standard.m", "outputs")}
+WITHOUT_LABELS = BOTH | {
     ("eingaben.m", "inputs"),
     ("eingaben.m", "outputs"),
     ("eingabe.m", "inputs"),
     ("arg.m", "outputs"),
     ("nv.m", "inputs"),
+    ("optionen.m", "name-value"),
 }
 NO_EXAMPLES = {"example": "ignore"}
+NAPOLEON = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinxcontrib.matlab"]
 
 
-def alias_project(path, extensions, sections=None):
+def label_project(path, labels=None, extra=""):
     path.mkdir()
-    for name, text in ALIAS_SRC.items():
+    for name, text in LABEL_SRC.items():
         (path / name).write_text(text)
-    conf = f"extensions = {extensions!r}\nmatlab_src_code_project_root = '.'\n"
-    if sections is not None:
-        conf += f"napoleon_custom_sections = {sections!r}\n"
+    conf = f"extensions = {NAPOLEON!r}\nmatlab_src_code_project_root = '.'\n{extra}"
+    if labels is not None:
+        conf += f"matlab_api_check_section_labels = {labels!r}\n"
     (path / "conf.py").write_text(conf)
     (path / "index.rst").write_text("Index\n=====\n")
     return path
 
 
-NAPOLEON = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinxcontrib.matlab"]
-
-
-def test_napoleon_aliases(make_app, tmp_path):
-    with_aliases = alias_project(tmp_path / "a", NAPOLEON, CUSTOM_SECTIONS)
-    app = build(make_app, with_aliases, matlab_api_check_rules=NO_EXAMPLES)
-    assert findings(app) == WITH_ALIASES
-    # A separate application without the aliases: nothing leaks.
-    without = alias_project(tmp_path / "b", NAPOLEON)
+def test_section_labels(make_app, tmp_path):
+    with_labels = label_project(tmp_path / "a", SECTION_LABELS)
+    app = build(make_app, with_labels, matlab_api_check_rules=NO_EXAMPLES)
+    assert findings(app) == WITH_LABELS
+    # A separate application without them: nothing leaks.
+    without = label_project(tmp_path / "b")
     app = build(make_app, without, matlab_api_check_rules=NO_EXAMPLES)
-    assert findings(app) == WITHOUT_ALIASES
+    assert findings(app) == WITHOUT_LABELS
     assert not has("inputs", "F Help.\n\nEingaben:\n")
-    # Without Napoleon nothing renders the aliases: not headers either.
-    unused = alias_project(tmp_path / "c", NAPOLEON[::2], CUSTOM_SECTIONS)
-    app = build(make_app, unused, matlab_api_check_rules=NO_EXAMPLES)
-    assert findings(app) == WITHOUT_ALIASES
 
 
-def test_napoleon_alias_changes_take_effect(make_app, tmp_path):
-    srcdir = alias_project(tmp_path / "a", NAPOLEON, CUSTOM_SECTIONS)
+def test_section_labels_with_built_in_ones(make_app, tmp_path):
+    labels = {
+        section: [mat_api_check.BUILTIN_LABELS, *given]
+        for section, given in SECTION_LABELS.items()
+    }
+    srcdir = label_project(tmp_path / "a", labels)
     app = build(make_app, srcdir, matlab_api_check_rules=NO_EXAMPLES)
-    assert findings(app) == WITH_ALIASES
+    assert findings(app) == BOTH
+
+
+def test_napoleon_sections_are_not_labels(make_app, tmp_path):
+    sections = [("Eingaben", "params_style"), ("Ausgaben", "params_style")]
+    srcdir = label_project(
+        tmp_path / "a", extra=f"napoleon_custom_sections = {sections!r}\n"
+    )
+    app = build(make_app, srcdir, matlab_api_check_rules=NO_EXAMPLES)
+    assert findings(app) == WITHOUT_LABELS
+
+
+def test_section_label_changes_take_effect(make_app, tmp_path):
+    srcdir = label_project(tmp_path / "a", SECTION_LABELS)
+    app = build(make_app, srcdir, matlab_api_check_rules=NO_EXAMPLES)
+    assert findings(app) == WITH_LABELS
     app = make_app(
         BUILDER,
         srcdir=srcdir,
         confoverrides={
-            "napoleon_custom_sections": [],
+            "matlab_api_check_section_labels": {},
             "matlab_api_check_rules": NO_EXAMPLES,
         },
     )
     app.build()
-    assert findings(app) == WITHOUT_ALIASES
+    assert "0 added, 0 changed, 0 removed" in app.status.getvalue()
+    assert findings(app) == WITHOUT_LABELS
 
 
-def test_napoleon_aliases_with_selection(make_app, tmp_path):
-    srcdir = alias_project(tmp_path / "a", NAPOLEON, CUSTOM_SECTIONS)
+def test_section_labels_with_selection(make_app, tmp_path):
+    srcdir = label_project(tmp_path / "a", SECTION_LABELS)
     app = build(
         make_app,
         srcdir,
@@ -1028,61 +1137,89 @@ def test_napoleon_aliases_with_selection(make_app, tmp_path):
         matlab_api_check_files=["eingaben.m", "hinweise.m"],
     )
     assert findings(app) == {("hinweise.m", "inputs"), ("hinweise.m", "outputs")}
-    assert report(app)["summary"]["not_checked"]["not_selected"] == len(ALIAS_SRC) - 2
+    assert report(app)["summary"]["not_checked"]["not_selected"] == len(LABEL_SRC) - 2
 
 
-def test_custom_labels():
+def test_example_label(make_app, tmp_path):
+    (tmp_path / "conf.py").write_text(CONF)
+    (tmp_path / "index.rst").write_text("Index\n=====\n")
+    (tmp_path / "f.m").write_text("function f\n% F Help.\n%\n% Beispiel:\n%   f\nend\n")
+    (tmp_path / "g.m").write_text("function g\n% G Help.\n%\n% Example:\n%   g\nend\n")
+    (tmp_path / "h.m").write_text(
+        "function h\n% H Help.\n%\n% .. rubric:: Example\n%\n%    h\nend\n"
+    )
+    assert findings(build(make_app, tmp_path)) == {("f.m", "example")}
+    app = build(
+        make_app, tmp_path, matlab_api_check_section_labels={"example": ["Beispiel"]}
+    )
+    # The rubric still counts.
+    assert findings(app) == {("g.m", "example")}
+
+
+def test_section_label_values():
     config = SimpleNamespace(
-        napoleon_custom_sections=[
-            *CUSTOM_SECTIONS,
-            ("Inputs", "params_style"),
-            ("Eingang", "Inputs"),  # an alias of a built-in label made params_style
-            ["Werte", "returns_style"],  # any container, as Napoleon reads it
-            ("Spaeter", "params_style"),
-            "Spaeter",  # the last entry for a heading wins
-            ("Weiter", "PARAMS_STYLE"),  # the style is case-sensitive
-            ("Kurz",),
-            3,
-            ("", "params_style"),
-            (1, "params_style"),
-            ("Leer", None),
-        ]
+        matlab_api_check_section_labels={
+            "inputs": ["Eingaben", "  Zwei   Worte ", "EINGABEN", "<Built-In>"],
+            "example": ("Beispiel",),
+            "name-value": [],
+        }
     )
-    assert mat_api_check.custom_labels(config) == (
-        ("inputs", "eingabe"),
-        ("inputs", "eingaben"),
-        ("inputs", "eingang"),
-        ("outputs", "ausgaben"),
-        ("outputs", "werte"),
+    assert mat_api_check.section_labels(config) == (
+        ("example", ("beispiel",)),
+        ("inputs", ("<built-in>", "eingaben", "zwei worte")),
+        ("name-value", ()),
     )
-    assert mat_api_check.custom_labels(SimpleNamespace()) == ()
-    none = SimpleNamespace(napoleon_custom_sections=None)
-    assert mat_api_check.custom_labels(none) == ()
 
 
-def test_sections_with_aliases():
+@pytest.mark.parametrize(
+    ("value", "match"),
+    [
+        ('["Eingaben"]', "must be a dict"),
+        ('{"input": ["Eingaben"]}', "unknown section 'input'"),
+        ('{"inputs": "Eingaben"}', "must be a list of labels"),
+        ('{"inputs": ["Eingaben:"]}', "is not a label"),
+        ('{"inputs": [" "]}', "is not a label"),
+        ('{"inputs": [1]}', "is not a label"),
+    ],
+    ids=["not-dict", "section", "str", "colon", "blank", "type"],
+)
+def test_section_label_errors(make_app, root, value, match):
+    conf = root / "conf.py"
+    conf.write_text(f"{conf.read_text()}matlab_api_check_section_labels = {value}\n")
+    with pytest.raises(ConfigError, match=match):
+        make_app(BUILDER, srcdir=root)
+
+
+def test_sections_with_labels():
     labels = (
-        ("inputs", "eingaben"),
-        ("inputs", "args (opt)"),
-        ("outputs", "zwei  worte"),
+        ("example", ("beispiel",)),
+        ("inputs", ("args (opt)", "eingaben")),
+        ("name-value", ()),
+        ("outputs", ("<built-in>", "zwei worte")),
     )
     sections = mat_api_check.sections_for(labels)
     assert mat_api_check.sections_for(()) is mat_api_check.SECTIONS
     assert mat_api_check.sections_for(labels) is sections
-    inputs_only = mat_api_check.sections_for((("inputs", "eingaben"),))
+    inputs_only = mat_api_check.sections_for((("inputs", ("eingaben",)),))
     assert inputs_only["outputs"] is mat_api_check.SECTIONS["outputs"]
 
-    def has_alias(rule, help_text, names=()):
+    def has_label(rule, help_text, names=()):
         return mat_api_check.has_section(rule, help_text, names, sections)
 
     for line in ("Eingaben:", "EINGABEN", "Eingaben (optional):", "Args (opt):"):
-        assert has_alias("inputs", f"F Help.\n\n{line}\n")
-    assert has_alias("outputs", "F Help.\n\nZwei Worte:\n")
-    assert has_alias("inputs", "F Help.\n\nInputs:\n")  # built-ins stay
-    assert has_alias("outputs", "F Help.\n\nReturns:\n")
-    assert not has_alias("outputs", "F Help.\n\nEingaben:\n")
-    assert not has_alias("name-value", "F Help.\n\nEingaben:\n")
-    assert not has_alias("inputs", "F Help. It takes the\neingaben\n  x - data\n")
-    assert has_alias("inputs", "F Help. Some\neingaben\n--------\n")
-    assert not has_alias("inputs", "F Help.\n\neingaben: the data", {"eingaben"})
-    assert not has_alias("inputs", "F Help.\n\nArgs opt:\n")
+        assert has_label("inputs", f"F Help.\n\n{line}\n")
+    assert has_label("outputs", "F Help.\n\nZwei   Worte:\n")
+    assert not has_label("inputs", "F Help.\n\nInputs:\n")  # replaced
+    assert has_label("outputs", "F Help.\n\nReturns:\n")  # <built-in> kept
+    assert has("inputs", "F Help.\n\nInputs:\n")  # other builds unchanged
+    for line in ("Options:", "Name-Value Arguments:", "Optionen:", ":", ""):
+        assert not has_label("name-value", f"F Help.\n\n{line}\n")
+    assert not has_label("outputs", "F Help.\n\nEingaben:\n")
+    assert not has_label("name-value", "F Help.\n\nEingaben:\n")
+    assert not has_label("inputs", "F Help. It takes the\neingaben\n  x - data\n")
+    assert has_label("inputs", "F Help. Some\neingaben\n--------\n")
+    assert not has_label("inputs", "F Help.\n\neingaben: the data", {"eingaben"})
+    assert not has_label("inputs", "F Help.\n\nArgs opt:\n")
+    assert mat_api_check.has_example("F Help.\n\nBeispiel:\n  f\n", sections)
+    assert not mat_api_check.has_example("F Help.\n\nExample:\n  f\n", sections)
+    assert not mat_api_check.has_example("F Help.\n\nBeispiel:\n  f\n")

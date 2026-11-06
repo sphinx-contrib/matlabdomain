@@ -425,7 +425,9 @@ def test_auto_directive_resolution_order(make_app, tmp_path):
     assert "don't know which object to document for 'p'" in warnings
     # "See also" in +pk/g.m: an ambiguous MATLAB name warns and stays literal.
     assert "'f' in the docstring of +pk/g.m matches several objects" in warnings
-    assert object_hrefs(html(app)).count("mat-b/f.m") == 2  # headerlink, See also
+    assert object_hrefs(html(app)).count("mat-b/f.m") == 1  # See also
+    # The ambiguous name gives the "¶" link the address by path (mat_urls).
+    assert 'class="headerlink" href="mat/ref/b/f.m.html"' in html(app)
 
 
 def test_folder_directive_and_roles(make_app, tmp_path):
@@ -462,9 +464,13 @@ def test_folder_directive_and_roles(make_app, tmp_path):
     assert "@C/" not in objects
     text = html(app)
     assert 'title="a/: Tools. (deprecated) (Linux)"' in text
-    assert object_hrefs(text) == [
-        *("mat-a/", "mat-+pk/", "mat-./", "mat-+pk/g.m"),  # headerlinks
-        *("mat-a/", "mat-+pk/", "mat-./", "mat-+pk/g.m"),
+    assert object_hrefs(text) == ["mat-a/", "mat-+pk/", "mat-./", "mat-+pk/g.m"]
+    # "¶" links: by MATLAB name where there is one, else by path.
+    assert re.findall(r'class="headerlink" href="(mat/[^"]*)"', text) == [
+        "mat/ref/a/index.html",
+        "mat/name/pk.html",
+        "mat/ref/index.html",
+        "mat/name/pk.g.html",
     ]
     # a/f.m is not documented: the role keeps its text and parentheses.
     assert "a/f.m()" in text

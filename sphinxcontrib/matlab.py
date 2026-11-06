@@ -24,7 +24,14 @@ from sphinx.util.docfields import Field, GroupedField, TypedField
 from sphinx.util.logging import getLogger
 from sphinx.util.nodes import make_refnode
 
-from . import mat_api_check, mat_directives, mat_naming, mat_sidecars, mat_types
+from . import (
+    mat_api_check,
+    mat_directives,
+    mat_naming,
+    mat_sidecars,
+    mat_types,
+    mat_urls,
+)
 from . import mat_documenters as doc
 from .matlab_apidoc import _config as apidoc_config
 
@@ -60,7 +67,11 @@ def keep_unresolved_references(app, env, node, contnode):  # noqa: ARG001
     if node.get("refdomain") != "mat":
         return None
     external = _external_names(tuple(app.config.matlab_external_names))
-    if node.get("mat:type") or external.fullmatch(node.get("reftarget", "")):
+    if (
+        node.get("mat:type")
+        or node.get("mat:ambiguous")
+        or external.fullmatch(node.get("reftarget", ""))
+    ):
         return contnode
     return None
 
@@ -725,6 +736,8 @@ class MATLABDomain(Domain):
         super().__init__(env)
         # display name -> references of documented objects (built lazily)
         self._displays = None
+        # mat_urls.addresses (built lazily)
+        self._stable_urls = None
         # sidecar reference -> the first document that renders it (built lazily)
         self._sidecar_docs = None
         # Documents read in this build (``env-before-read-docs``).
@@ -798,7 +811,7 @@ class MATLABDomain(Domain):
                 location=location,
             )
         objects[name] = (self.env.docname, objtype, display or name)
-        self._displays = None
+        self._displays = self._stable_urls = None
 
     def clear_doc(self, docname):
         for ref, (fn, _, _) in list(self.data["objects"].items()):
@@ -810,7 +823,7 @@ class MATLABDomain(Domain):
         self.data["doc_sources"].pop(docname, None)
         self.data["sidecar_docs"].pop(docname, None)
         self.data["sidecar_issues"].pop(docname, None)
-        self._displays = None
+        self._displays = self._stable_urls = None
         self._sidecar_docs = None
 
     def merge_domaindata(self, docnames, otherdata):
@@ -835,7 +848,7 @@ class MATLABDomain(Domain):
                 if record is None or (record["mtime"], record["size"]) != key[1:]:
                     continue
                 ours.setdefault(key, value)
-        self._displays = None
+        self._displays = self._stable_urls = None
         self._sidecar_docs = None
 
     def _by_display(self, name):
@@ -983,6 +996,43 @@ class MATLABDomain(Domain):
             location=node,
         )
 
+    def get_full_qualified_name(self, node):
+        """Return the path reference of an intersphinx target that is a MATLAB
+        name, or None.
+
+        Intersphinx calls this when no inventory has the target as written
+        (inventories name objects by path reference). The target is the
+        MATLAB name (inventory display name) of exactly one non-private
+        object of the role's types, in the inventory the reference names
+        (``:external+lib:`` or ``lib:``) or else in any inventory. Several:
+        a ``mat.ambiguous`` warning, and the target stays unlinked.
+        """
+        from sphinx.ext.intersphinx import InventoryAdapter
+
+        inventories = InventoryAdapter(self.env).named_inventory
+        target = unicodedata.normalize("NFC", node["reftarget"]).removesuffix("()")
+        named = node.get("inventory")
+        prefix, colon, rest = target.partition(":")
+        if named is None and colon and prefix in inventories:
+            named, target = prefix, rest
+        names = [named] if named is not None else sorted(inventories)
+        role = node["reftype"]
+        objtypes = self.object_types if role == "any" else self.objtypes_for_role(role)
+        found = {}
+        for name in names:
+            for objtype in objtypes or ():
+                for ref, item in inventories[name].get(f"mat:{objtype}", {}).items():
+                    # Sphinx < 8.2: (project, version, uri, display name)
+                    display = getattr(item, "display_name", None) or item[3]
+                    if display != target or mat_naming.is_private_reference(ref):
+                        continue
+                    found.setdefault(ref, f"{name}:{ref}" if len(names) > 1 else ref)
+        if len(found) > 1:
+            node["mat:ambiguous"] = True
+            self._warn_ambiguous(target, [(label,) for label in found.values()], node)
+            return None
+        return next(iter(found), None)
+
     def get_objects(self):
         for ref, (docname, objtype, display) in self.data["objects"].items():
             yield (
@@ -1086,6 +1136,8 @@ def setup(app):
     app.connect("env-updated", mat_types.warn_parsed_sources)
     app.connect("build-finished", mat_api_check.set_status)
     app.connect("missing-reference", keep_unresolved_references, priority=900)
+    app.connect("html-page-context", mat_urls.rewrite_permalinks)
+    app.connect("build-finished", mat_urls.write_redirects)
 
     app.add_domain(MATLABDomain)
     app.add_builder(mat_api_check.MatlabApiCheckBuilder)
@@ -1128,6 +1180,8 @@ def setup(app):
     app.add_config_value("matlab_version", mat_naming.DEFAULT_MATLAB_VERSION, "env")
     # None: derived from matlab_version (2048 from R2025a on).
     app.add_config_value("matlab_namelengthmax", None, "env")
+    # Stable addresses (mat/ref/, mat/name/) and "¶" links to them.
+    app.add_config_value("matlab_stable_urls", True, "html", bool)
     # matlab-api-check: read by the builder only, so no page is read again.
     app.add_config_value("matlab_api_check_enabled", True, "", bool)
     # Rule -> severity, merged over mat_api_check.DEFAULT_RULES.
@@ -1135,6 +1189,11 @@ def setup(app):
     app.add_config_value("matlab_api_check_ignore_patterns", [], "", [list, tuple])
     # None checks every file; a list (or, from -D, a comma-separated str) selects.
     app.add_config_value("matlab_api_check_files", None, "")
+    # A text file of selection entries, one per line.
+    app.add_config_value("matlab_api_check_files_from", None, "")
+    app.add_config_value("matlab_api_check_ignore_unmatched", False, "", bool)
+    # Section -> the labels it accepts, replacing the built-in ones.
+    app.add_config_value("matlab_api_check_section_labels", {}, "", dict)
     # Read by sphinx-matlab-apidoc only.
     apidoc_config.add_config_values(app)
 

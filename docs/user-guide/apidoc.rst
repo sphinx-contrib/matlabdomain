@@ -114,7 +114,9 @@ With :confval:`matlab_apidoc_group` ``"namespace"`` (the default):
 * A page holds at most :confval:`matlab_apidoc_page_size` entries (100 by
   default; sidecar docs count). A longer namespace gets several pages,
   titled with the range they hold: ``namespace ns (1-100)``,
-  ``namespace ns (101-200)``, ``namespace ns (201-253)``.
+  ``namespace ns (101-200)``, ``namespace ns (201-253)``. Adding or
+  removing a file can move the entries after it to another page, and so
+  change their address (:ref:`library-changes`).
 * The root page (the toc file, ``index`` by default, always written) has
   one flat toctree: Global first, then the namespaces sorted by name,
   ignoring case. Nested namespaces are listed like the others

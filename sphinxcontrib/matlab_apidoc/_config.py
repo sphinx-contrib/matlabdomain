@@ -53,10 +53,14 @@ BUILD_ONLY_CONFIG = frozenset(
         "matlab_class_signature",
         "matlab_add_namespace_names",
         "matlab_external_names",
+        "matlab_stable_urls",
         "matlab_api_check_enabled",
         "matlab_api_check_rules",
         "matlab_api_check_ignore_patterns",
         "matlab_api_check_files",
+        "matlab_api_check_files_from",
+        "matlab_api_check_ignore_unmatched",
+        "matlab_api_check_section_labels",
     }
 )
 

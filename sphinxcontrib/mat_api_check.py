@@ -77,6 +77,8 @@ REPORT_TXT = "api-check.txt"
 REPORT_JSON = "api-check.json"
 _IGNORE_OPTION = "matlab_api_check_ignore_patterns"
 _FILES_OPTION = "matlab_api_check_files"
+_FROM_OPTION = "matlab_api_check_files_from"
+_LABELS_OPTION = "matlab_api_check_section_labels"
 
 
 def _header(*labels):
@@ -101,7 +103,7 @@ _NV_LABELS = (
     rf"input arguments? \({_NV} arguments?\)",
 )
 _OPTIONAL = r"optional (?:inputs?|arguments?|parameters?)"
-#: the built-in labels of the sections that napoleon_custom_sections can extend
+#: the built-in labels of each section (regular expressions)
 _LABELS = {
     "inputs": (
         r"inputs?(?:\(s\))?",
@@ -118,18 +120,18 @@ _LABELS = {
         r"returns?",
         r"return (?:values?|arguments?)",
     ),
-}
-SECTIONS = {
-    "inputs": _header(*_LABELS["inputs"]),
-    "outputs": _header(*_LABELS["outputs"]),
-    "name-value": _header(r"options?", _OPTIONAL, *_NV_LABELS),
-    "example": _header(
+    "name-value": (r"options?", _OPTIONAL, *_NV_LABELS),
+    "example": (
         r"examples?(?:\(s\))?(?:[ \t]+\d+)?",
         r"usage",
         r"example usage",
         r"usage examples?(?:\(s\))?",
     ),
 }
+SECTIONS = {section: _header(*labels) for section, labels in _LABELS.items()}
+#: in matlab_api_check_section_labels: the section's built-in labels
+BUILTIN_LABELS = "<built-in>"
+_NEVER = re.compile(r"(?!)")
 _EXAMPLE_RUBRIC = re.compile(
     r"^[ \t]*\.\.[ \t]+rubric::[ \t]*(?:examples?|usage)\b",
     re.IGNORECASE | re.MULTILINE,
@@ -141,64 +143,56 @@ _MESSAGES = {
     "outputs": ("outputs", "Outputs:", "outputs"),
     "name-value": ("name-value", "Name-Value Arguments:", "name-value arguments"),
 }
-#: the napoleon_custom_sections styles whose sections are inputs or outputs
-_STYLES = {"params_style": "inputs", "returns_style": "outputs"}
 
 
-def custom_labels(config):
-    """Return the ``napoleon_custom_sections`` headings that Napoleon renders
-    as input or output sections: ``((rule, heading), ...)``, sorted.
-
-    Read as Napoleon reads them, in order, the last entry for a heading
-    winning: ``(heading, "params_style")`` is an input section,
-    ``(heading, "returns_style")`` an output section, ``(heading, other)``
-    the section ``other`` names if an earlier entry made it one. A plain
-    heading is a generic section; an alias of one of Napoleon's own
-    sections, or of an unknown one, is not an input or output section.
-    A built-in label keeps its meaning (``("Outputs", "params_style")``
-    adds no input section). Without ``sphinx.ext.napoleon`` nothing renders
-    them: none.
+def section_labels(config):
+    """Return the ``matlab_api_check_section_labels`` as sorted
+    ``((section, labels), ...)``, the labels a sorted tuple, lowercased
+    (or ConfigError).
     """
-    try:
-        entries = config.napoleon_custom_sections
-    except AttributeError:
-        return ()
-    rules = {}
-    for entry in entries or ():
-        if isinstance(entry, str):
-            rules[entry.lower()] = None
-            continue
-        try:
-            heading, style = entry[0], entry[1]
-        except (TypeError, LookupError):
-            continue
-        if isinstance(heading, str) and isinstance(style, str):
-            rules[heading.lower()] = _STYLES.get(style) or rules.get(style.lower())
-    return tuple(
-        sorted(
-            (rule, heading)
-            for heading, rule in rules.items()
-            if rule
-            and heading.split()
-            and not any(alone.match(heading) for _, alone in SECTIONS.values())
-        )
-    )
+    value = getattr(config, _LABELS_OPTION)
+    if not isinstance(value, dict):
+        raise ConfigError(f"{_LABELS_OPTION} must be a dict of section -> labels.")
+    sections = []
+    for section, given in value.items():
+        if section not in SECTIONS:
+            raise ConfigError(
+                f"{_LABELS_OPTION}: unknown section {section!r}; the sections are "
+                f"{', '.join(SECTIONS)}."
+            )
+        if isinstance(given, str) or not isinstance(given, (list, tuple)):
+            raise ConfigError(
+                f"{_LABELS_OPTION}[{section!r}] must be a list of labels."
+            )
+        labels = set()
+        for label in given:
+            if not isinstance(label, str) or not label.split() or ":" in label:
+                raise ConfigError(
+                    f"{_LABELS_OPTION}[{section!r}]: {label!r} is not a label "
+                    "(text without ':')."
+                )
+            labels.add(" ".join(label.lower().split()))
+        sections.append((section, tuple(sorted(labels))))
+    return tuple(sorted(sections))
 
 
 @functools.cache
 def sections_for(labels):
-    """``SECTIONS`` with the ``custom_labels`` added to their sections."""
+    """``SECTIONS`` with the labels of each section in ``section_labels``
+    instead of the built-in ones (kept for ``BUILTIN_LABELS``).
+    """
     if not labels:
         return SECTIONS
     sections = dict(SECTIONS)
-    for rule, builtin in _LABELS.items():
-        extra = [
-            r"\s+".join(map(re.escape, heading.split()))
-            for r, heading in labels
-            if r == rule
+    for section, given in labels:
+        patterns = [
+            r"\s+".join(map(re.escape, label.split()))
+            for label in given
+            if label != BUILTIN_LABELS
         ]
-        if extra:
-            sections[rule] = _header(*builtin, *extra)
+        if BUILTIN_LABELS in given:
+            patterns[:0] = _LABELS[section]
+        sections[section] = _header(*patterns) if patterns else (_NEVER, _NEVER)
     return sections
 
 
@@ -222,6 +216,7 @@ def check_config(app, config):  # noqa: ARG001
             )
     ignore_patterns(config)
     selected_files(config)
+    section_labels(config)
 
 
 def ignore_patterns(config):
@@ -233,14 +228,18 @@ def ignore_patterns(config):
 
 
 def selected_files(config):
-    """Return the normalized ``matlab_api_check_files`` without duplicates:
-    None selects every file, ``[]`` none (or ConfigError). A string, as
-    ``-D`` gives it, is a list separated by commas or line breaks.
+    """Return the normalized ``matlab_api_check_files`` and the lines of the
+    ``matlab_api_check_files_from`` file, without duplicates: None selects
+    every file, ``[]`` none (or ConfigError). A string, as ``-D`` gives it,
+    is a list separated by commas or line breaks.
     """
     entries = getattr(config, _FILES_OPTION)
-    if entries is None:
+    listing = getattr(config, _FROM_OPTION)
+    if entries is None and listing is None:
         return None
-    if isinstance(entries, str):
+    if entries is None:
+        entries = []
+    elif isinstance(entries, str):
         entries = [e.strip() for e in re.split(r"[,\n]", entries)]
         entries = [e for e in entries if e]
     elif not isinstance(entries, (list, tuple)):
@@ -248,9 +247,23 @@ def selected_files(config):
             f"{_FILES_OPTION} must be None, a list of paths or glob patterns, "
             "or a string of them separated by commas."
         )
-    return list(
-        dict.fromkeys(mat_types._normalize_pattern(e, _FILES_OPTION) for e in entries)
-    )
+    normalized = [mat_types._normalize_pattern(e, _FILES_OPTION) for e in entries]
+    if listing is not None:
+        if not isinstance(listing, str) or not listing:
+            raise ConfigError(f"{_FROM_OPTION} must be None or the path of a file.")
+        try:
+            with open(listing, encoding="utf-8-sig") as f:
+                lines = f.read().splitlines()
+        except (OSError, UnicodeDecodeError) as err:
+            raise ConfigError(
+                f"{_FROM_OPTION}: cannot read {listing!r}: {err}"
+            ) from err
+        normalized += [
+            mat_types._normalize_pattern(line.strip(), _FROM_OPTION)
+            for line in lines
+            if line.strip()
+        ]
+    return list(dict.fromkeys(normalized))
 
 
 def _why_unmatched(root, entry):
@@ -332,9 +345,9 @@ def has_section(rule, docstring, names=(), sections=SECTIONS):
     return False
 
 
-def has_example(docstring):
+def has_example(docstring, sections=SECTIONS):
     """Return True if the help has an example section (or rubric)."""
-    return has_section("example", docstring) or bool(
+    return has_section("example", docstring, sections=sections) or bool(
         _EXAMPLE_RUBRIC.search(docstring or "")
     )
 
@@ -435,7 +448,7 @@ class _Checker:
             )
 
     def example(self, rule, where, kind, docstring):
-        if not has_example(docstring):
+        if not has_example(docstring, self.sections):
             self.report(
                 rule,
                 where,
@@ -653,7 +666,7 @@ class _Checker:
                 )
 
 
-def _summary(enabled, rules, checker, unmatched=()):
+def _summary(enabled, rules, checker, unmatched=(), ignore_unmatched=False):
     findings = {rule: {"error": 0, "warning": 0} for rule in RULES}
     for finding in checker.findings if checker else ():
         findings[finding.rule][finding.severity] += 1
@@ -671,15 +684,17 @@ def _summary(enabled, rules, checker, unmatched=()):
             "entries": checker.selection,
             "selected": checker.selected,
             "unmatched": [{"entry": e, "reason": why} for e, why in unmatched],
+            "ignore_unmatched": ignore_unmatched,
         }
     return summary
 
 
 def _text_report(summary, findings):
     selection = summary.get("selection")
+    severity = "ignored" if (selection or {}).get("ignore_unmatched") else "error"
     lines = [
-        f"{u['entry']}: error: matches no indexed file or sidecar doc: "
-        f"{u['reason']} [{_FILES_OPTION}]"
+        f"{u['entry']}: {severity}: matches no indexed file or sidecar doc: "
+        f"{u['reason']} [selection]"
         for u in (selection or {}).get("unmatched", ())
     ]
     lines += [f"{f.location() or f.path}: {f.severity}: {f.text()}" for f in findings]
@@ -689,12 +704,13 @@ def _text_report(summary, findings):
         lines.append("matlab_api_check_enabled is False: nothing was checked.")
     if selection is not None:
         if not selection["entries"]:
-            lines.append(f"{_FILES_OPTION} is empty: no file was selected.")
+            lines.append("The selection is empty: no file was selected.")
         total = selection["selected"] + summary["not_checked"]["not_selected"]
         lines.append(
             f"Selected: {selection['selected']} of {total} files by "
-            f"{len(selection['entries'])} {_FILES_OPTION} entries, "
+            f"{len(selection['entries'])} entries, "
             f"{len(selection['unmatched'])} matching no file"
+            + (" (ignored)" if severity == "ignored" else "")
         )
     checked = ", ".join(
         f"{n} {_PLURALS[kind]}" for kind, n in summary["checked"].items()
@@ -720,8 +736,9 @@ class MatlabApiCheckBuilder(Builder):
     """Checks the help text of the MATLAB sources (``-b matlab-api-check``).
 
     The pages are read as for any builder; the check covers every indexed
-    object (or those of the files ``matlab_api_check_files`` selects),
-    whether a page documents it or not, and writes no pages.
+    object (or those of the files ``matlab_api_check_files`` and
+    ``matlab_api_check_files_from`` select), whether a page documents it or
+    not, and writes no pages.
     """
 
     name = "matlab-api-check"
@@ -730,7 +747,7 @@ class MatlabApiCheckBuilder(Builder):
     def init(self):
         #: number of findings with the severity ``error``
         self.errors = 0
-        #: number of matlab_api_check_files entries that selected no file
+        #: number of selection entries that selected no file and fail the build
         self.unmatched = 0
 
     def get_outdated_docs(self):
@@ -753,6 +770,7 @@ class MatlabApiCheckBuilder(Builder):
         dom = self.env.get_domain("mat")
         rules = {**DEFAULT_RULES, **config.matlab_api_check_rules}
         enabled = bool(config.matlab_api_check_enabled)
+        ignore_unmatched = bool(config.matlab_api_check_ignore_unmatched)
         checker = None
         unmatched = []
         if enabled:
@@ -761,7 +779,7 @@ class MatlabApiCheckBuilder(Builder):
                 rules,
                 ignore_patterns(config),
                 selected_files(config),
-                sections_for(custom_labels(config)),
+                sections_for(section_labels(config)),
             )
             records = sorted(dom.data["index"].items(), key=lambda i: i[1]["reference"])
             for path, record in records:
@@ -771,7 +789,7 @@ class MatlabApiCheckBuilder(Builder):
                 mat_types.project_root(config, self.env.srcdir)
             )
         findings = checker.findings if checker else []
-        summary = _summary(enabled, rules, checker, unmatched)
+        summary = _summary(enabled, rules, checker, unmatched, ignore_unmatched)
         # The report first: -W may stop the build at the first warning.
         os.makedirs(self.outdir, exist_ok=True)
         with open(
@@ -788,19 +806,16 @@ class MatlabApiCheckBuilder(Builder):
             )
             f.write("\n")
         self.errors = summary["errors"]
-        self.unmatched = len(unmatched)
+        self.unmatched = 0 if ignore_unmatched else len(unmatched)
         if checker:
             _warn_parsed(dom, checker.parsed)
         for entry, why in unmatched:
-            logger.error(
-                "[sphinxcontrib-matlabdomain] %s: %r matches no indexed file or "
-                "sidecar doc: %s",
-                _FILES_OPTION,
-                entry,
-                why,
-                type="mat",
-                subtype="api_check",
-            )
+            message = "[sphinxcontrib-matlabdomain] selection entry %r matches no "
+            message += "indexed file or sidecar doc: %s"
+            if ignore_unmatched:
+                logger.info(message + " (ignored)", entry, why)
+            else:
+                logger.error(message, entry, why, type="mat", subtype="api_check")
         for finding in findings:
             log = logger.error if finding.severity == "error" else logger.warning
             log(

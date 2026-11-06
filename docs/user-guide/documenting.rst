@@ -254,8 +254,9 @@ Writing directives by hand
 --------------------------
 
 The ``mat:function``, ``mat:class``, ``mat:method``, ``mat:staticmethod``,
-``mat:attribute``, ``mat:script``, ``mat:application``, ``mat:data`` and
-``mat:folder`` directives describe an object without reading a file, for
+``mat:attribute``, ``mat:event``, ``mat:script``, ``mat:application``,
+``mat:data`` and ``mat:folder`` directives describe an object without
+reading a file, for
 example a MEX function:
 
 .. literalinclude:: ../snippets/handwritten.rst
