@@ -20,7 +20,8 @@ below:
   there too), so the docs build the same from any working
   folder and with `sphinx-multiversion
   <https://github.com/sphinx-contrib/multiversion>`_. An absolute path works
-  too.
+  too, except with sphinx-multiversion: every version would document the
+  code of the checkout (:doc:`projects-and-versions`).
 * Every object is identified by its path below this folder, its *path
   reference* (``+shapes/Circle.m``, see :doc:`referencing`). Choose the root
   once: moving it changes every reference, link anchor and inventory entry.

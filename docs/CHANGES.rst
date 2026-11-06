@@ -63,6 +63,12 @@ earlier" in the documentation.
   fail to parse (it was documented without content), and logical values
   written as numbers or with ``~`` (``Hidden = 0``, ``Static = ~true``) are
   read as MATLAB reads them; they were read as ``true``.
+* An unknown ``matlab_*`` name is a ``ConfigError`` also when another
+  extension sets it while the configuration is read (for example
+  sphinx-multiproject's ``config`` option), not only in ``conf.py``.
+* The documentation describes several projects, several versions
+  (sphinx-multiversion), sphinx-multiproject and one search over several
+  sites, with what was checked.
 * **Breaking:** ``matlab_show_property_default_value`` and
   ``matlab_show_property_specs`` default to ``True``: properties show their
   default value, size, class and validators. Set them to ``False`` for the
@@ -118,15 +124,24 @@ earlier" in the documentation.
 * References to another project's MATLAB objects (``sphinx.ext.intersphinx``)
   resolve by MATLAB name too (``:mat:class:`geom.Circle```), not only by
   path reference: in any inventory, or in the one named with ``lib:`` or
-  ``:external+lib:``. A MATLAB name that several objects have warns with
-  ``mat.ambiguous`` and stays unlinked. The new user-guide page "Linking
+  ``:external+lib:``. A MATLAB name that several objects have, or a path
+  reference that several inventories have, warns with ``mat.ambiguous``
+  and stays unlinked. The new user-guide page "Linking
   between projects" gives the setup and explains which links follow an
   object that page splitting moves to another page.
 * HTML builds write a stable address for every documented object,
   ``mat/name/<MATLAB name>.html`` (a list of the objects when several have
   the name) and ``mat/ref/<path reference>.html``, which redirect to the
-  page the object is on; the "¶" link of an object points to it. New
-  ``matlab_stable_urls`` (default ``True``) turns it off.
+  page the object is on; the "¶" link of an object and its entry in
+  ``objects.inv`` point to it, so other projects' links survive page
+  splitting even with an old inventory. A copied page address that no
+  longer has the object, or a page that is gone (``404.html``), opens the
+  object's stable address. New ``matlab_stable_urls`` (default
+  ``True``) turns it off.
+* Incremental HTML builds remove the pages whose ``sphinx-matlab-apidoc``
+  source is gone, and write again every page with a link to a MATLAB
+  object when objects were added, removed or moved to other pages.
+* Requires ``tree-sitter-matlab`` 1.3.2 (was 1.3.0 to 1.3.1).
 * Fixed a segmentation fault (exit code 139) with tree-sitter 0.26.0 on
   standard CPython builds. Its ``Point.row`` getter corrupts reference counts,
   so point rows are now read by index.

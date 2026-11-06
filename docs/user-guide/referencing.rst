@@ -182,7 +182,7 @@ part of it: when ``sphinx-matlab-apidoc`` splits long pages
 object to another page, and an address copied from the browser then no
 longer shows it. Each object therefore also has a stable address,
 ``mat/name/<MATLAB name>.html`` or ``mat/ref/<path reference>.html``,
-which its "¶" link points to (:ref:`library-changes`).
+which its "¶" link and its inventory entry point to (:ref:`library-changes`).
 
 Linking from other projects
 ---------------------------
@@ -198,7 +198,8 @@ for its own objects; its own objects come first:
    :mat:class:`+shapes/Circle.m`
 
 :doc:`linking-projects` shows the setup, the differences from local
-references and how links follow changes of the other project.
+references and how links follow changes of the other project;
+:doc:`projects-and-versions` covers several projects and versions.
 
 Coming from Python
 ------------------

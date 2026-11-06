@@ -61,6 +61,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    user-guide/api-check
    user-guide/warnings
    user-guide/builds
+   user-guide/projects-and-versions
    user-guide/migration
 
 .. toctree::

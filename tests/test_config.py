@@ -3,6 +3,7 @@
 import importlib.metadata
 
 import pytest
+from sphinx.cmd.build import build_main
 from sphinx.errors import ConfigError
 
 
@@ -96,3 +97,34 @@ def test_other_names_in_conf_py_are_ignored(make_app, project):
             '_matlab_helper = "code"\nmatlab_src_code_project_root = _matlab_helper\n'
         )
     make_app(srcdir=project)
+
+
+def test_unknown_matlab_names_set_by_another_extension_raise(make_app, project):
+    # Like sphinx-multiproject, which sets a project's values on config-inited.
+    with open(project / "conf.py", "a", encoding="utf-8") as conf:
+        conf.write(
+            "def setup(app):\n"
+            "    def inject(app, config):\n"
+            '        config["matlab_src_code_projct_root"] = "code"\n'
+            '        config["matlab_src_code_project_root"] = "code"\n'
+            '    app.connect("config-inited", inject, priority=-999)\n'
+        )
+    with pytest.raises(
+        ConfigError,
+        match=r"^matlab_src_code_projct_root is not a configuration value \(did "
+        r"you mean matlab_src_code_project_root\?\)\. Correct",
+    ):
+        make_app(srcdir=project)
+
+
+def test_project_root_is_relative_to_srcdir_not_confdir(project, tmp_path):
+    # sphinx-multiversion and sphinx-multiproject keep conf.py elsewhere.
+    confdir = tmp_path / "conf"
+    confdir.mkdir()
+    (project / "conf.py").rename(confdir / "conf.py")
+    with open(confdir / "conf.py", "a", encoding="utf-8") as conf:
+        conf.write('matlab_src_code_project_root = "code"\n')
+    out = tmp_path / "out"
+    args = ["-q", "-W", "-c", str(confdir), str(project), str(out)]
+    assert build_main(args) == 0
+    assert "F doc" in (out / "index.html").read_text(encoding="utf-8")

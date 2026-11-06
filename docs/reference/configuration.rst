@@ -179,8 +179,11 @@ Output
    redirects to the page the object is on: ``mat/ref/<path
    reference>.html`` and, for a MATLAB name of non-private objects,
    ``mat/name/<MATLAB name>.html`` (a list of the objects when several have
-   the name). The "¶" link of an object points to it. ``False`` writes no
-   such files and keeps "¶" on the page (:ref:`library-changes`).
+   the name). The "¶" link of an object points to it, and so does its
+   entry in ``objects.inv``; ``mat/refs.js``, a script on every page and
+   ``404.html`` send an address of a page that no longer has the object to
+   it. ``False`` writes no such files and keeps "¶"
+   and the inventory on the page (:ref:`library-changes`).
 
 ``matlab-api-check``
 --------------------
