@@ -190,6 +190,17 @@ def test_continuation_after_class_header(tmp_path, source, help):
     assert obj.docstring == help
 
 
+def test_section_percent_signs(tmp_path):
+    # MATLAB R2026a and R2026b ``help`` drops ``%%`` (a section start) or one
+    # ``%``, so separator lines of ``%`` keep all but two.
+    lines = ["% first", "%%", "%% two", "%%x", "%%%", "%%% three", "  %% indented"]
+    lines += ["%%%%", "%  keep", "%%  dbl", "%%\ttab"]
+    obj = parse(tmp_path, "pct", "function pct\n" + "\n".join(lines) + "\nend\n")
+    assert obj.docstring == (
+        "first\n\ntwo\nx\n%\n% three\nindented\n%%\n keep\n dbl\n\ttab"
+    )
+
+
 def test_cr_only_line_endings(tmp_path):
     # MATLAB R2026a ends lines at a lone CR (help shows both lines).
     obj = parse(

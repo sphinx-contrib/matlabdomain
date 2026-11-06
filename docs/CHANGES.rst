@@ -19,6 +19,9 @@ earlier" in the documentation.
 
 * Drop support for Python <=3.10.
 * Drop support for Sphinx <=7.x.
+* Help lines that start with ``%%`` (a section start) lose both ``%``, as
+  in MATLAB's ``help`` (upstream #350): ``%% Inputs:`` gives ``Inputs:``.
+  A separator line of ``%`` signs loses two of them, also as in MATLAB.
 * **Breaking:** the ``mat:classmethod`` directive is removed. MATLAB has no
   class methods apart from static methods; use ``mat:staticmethod``. No
   auto directive wrote it, so only hand-written pages change.

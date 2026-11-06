@@ -32,6 +32,9 @@ The rules follow ``help`` in MATLAB R2026a, and were checked against it:
 * ``%{ ... %}`` **block comments:** help is the first run of ``%`` lines,
   as in MATLAB, so a block comment gives just ``{``. Use ``%`` lines for
   help.
+* ``%%`` **lines** (section starts) are help lines too: as in MATLAB's
+  ``help``, a line loses ``%%`` or else one ``%``, so ``%% Inputs:`` gives
+  ``Inputs:`` and ``%%%%%%`` gives ``%%%%``.
 
 The first help line is the *H1 line*: MATLAB shows it in ``lookfor`` and
 folder listings, and ``matlab-api-check`` requires it (:doc:`api-check`).

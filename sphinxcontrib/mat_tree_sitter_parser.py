@@ -269,7 +269,9 @@ q_function = Query(ML_LANG, "(function_definition) @f")
 q_line_continuation = Query(ML_LANG, "(line_continuation) @lc")
 
 
-re_percent_remove = re.compile(r"^[ \t]*% ?", flags=re.MULTILINE)
+# MATLAB ``help`` (R2026a, R2026b) drops one ``%``, or two (``%%`` starts a
+# section); ``%%%%`` separator lines keep the rest.
+re_percent_remove = re.compile(r"^[ \t]*%%? ?", flags=re.MULTILINE)
 re_trim_line = re.compile(r"^[ \t]*", flags=re.MULTILINE)
 re_assign_remove = re.compile(r"^=[ \t]*")
 
