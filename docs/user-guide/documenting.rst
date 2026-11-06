@@ -133,7 +133,10 @@ constructor, properties, enumeration values and methods, in sections:
 * Abstract methods (declared without a body) are documented; their help is
   found as for properties: a comment on the line, or a comment block right
   above or below it. ``get.``/``set.`` property methods and converter
-  methods with dotted names are not documented.
+  methods with dotted names are not documented. MATLAB does not list
+  property methods either (``methods``, ``metaclass``): describe what they
+  do (a computed value, a check on assignment) in the property's help,
+  which ``help Circle.Radius`` shows.
 * Events are listed under "Event Summary", with their help found as for
   properties. ``ListenAccess`` decides who sees them, as ``Access`` does
   for methods (``ListenAccess = protected`` needs ``:protected-members:``);
