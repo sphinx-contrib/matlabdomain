@@ -1436,8 +1436,8 @@ class MatObject:
         )
         source_type = classify(mfile, text)
 
-        # tree-sitter reads UTF-8, splits comment blocks at CRLF and ends
-        # lines at LF only; MATLAB also ends them at a lone CR
+        # tree-sitter reads UTF-8; help text and line numbers assume LF, and
+        # MATLAB also ends lines at CRLF and a lone CR
         code = text.encode("utf-8").replace(b"\r\n", b"\n").replace(b"\r", b"\n")
         tree = Parser(ML_LANG).parse(code)
 

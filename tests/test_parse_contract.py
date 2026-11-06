@@ -537,7 +537,7 @@ def test_block_comment_fixtures_match_matlab_help(fixture):
     ],
 )
 def test_crlf_docstring_keeps_all_lines(tmp_path, text, expected):
-    # R2026a help shows both lines; tree-sitter-matlab splits blocks at CRLF.
+    # R2026a help shows both lines (tree-sitter-matlab 1.3.2 split the block).
     mfile = tmp_path / "f.m"
     mfile.write_bytes(text.encode())
     assert mat_types.MatObject.parse_mfile(mfile, "f", "./").docstring == expected
