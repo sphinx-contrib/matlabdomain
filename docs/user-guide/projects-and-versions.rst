@@ -168,8 +168,9 @@ HTML, such as `Pagefind`_ (checked with 1.6.0; it is not a dependency of
 this extension):
 
 #. Build every project from scratch, into fresh output folders. An
-   incremental build keeps the HTML of a page that no longer exists, and
-   the search would still find it.
+   incremental build removes the API pages of MATLAB files that are gone,
+   but keeps the HTML of any other page that no longer exists, and the
+   search would still find it.
 #. Copy the outputs next to each other: ``site/alpha/``, ``site/beta/``.
 #. Index them: ``pagefind --site site`` (``python -m pagefind`` from the
    ``pagefind[bin]`` package, or ``npx pagefind``).

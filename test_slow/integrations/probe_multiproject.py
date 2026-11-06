@@ -245,13 +245,20 @@ def prepare(probe):
         "local role resolves locally",
         'href="api/shared.html#mat-+shared/compute.m"' in beta_index,
     )
+    # Links to another project go to its stable address of the object.
     probe.check(
         "explicit external+alpha role goes to Alpha",
-        'href="../alpha/api/shared.html#mat-+shared/compute.m"' in beta_index,
+        'href="../alpha/mat/ref/%2Bshared/compute.m.html"' in beta_index,
     )
     probe.check(
         "external class link goes to Alpha",
-        'href="../alpha/api/shared.html#mat-+shared/Widget.m"' in beta_index,
+        'href="../alpha/mat/ref/%2Bshared/Widget.m.html"' in beta_index,
+    )
+    stable = probe.html("alpha", "mat/ref/+shared/compute.m.html")
+    probe.check(
+        "Alpha's stable address opens the object",
+        'url=../../../api/shared.html#mat-+shared/compute.m"' in stable,
+        stable,
     )
 
     inv_a = inventory(work / "docs/_build/alpha/html/objects.inv")
@@ -261,7 +268,7 @@ def prepare(probe):
         "inventories share the reference, each its own URL",
         inv_a.get("mat:function +shared/compute.m")
         == inv_b.get("mat:function +shared/compute.m")
-        == "api/shared.html#mat-+shared/compute.m",
+        == "mat/ref/%2Bshared/compute.m.html",
     )
     probe.check(
         "inventories hold only their project's objects",
@@ -405,8 +412,8 @@ def update(probe):
     stale = work / "docs/_build/beta/html/api/gizmo.html"
     probe.notes["stale_after_incremental"] = stale.exists()
     probe.check(
-        "incremental build leaves the removed page's HTML (indexing it would be stale)",
-        stale.exists(),
+        "incremental build removes the HTML of the removed API page",
+        not stale.exists(),
     )
 
     for project in PROJECTS:
