@@ -11,7 +11,8 @@ The library
 
 The library needs no setting. Every HTML build writes ``objects.inv`` next
 to the pages: one entry per documented object, named by its path reference,
-with its MATLAB name, type and address (:doc:`referencing`). Publish the
+with its MATLAB name, type and stable address (``mat/ref/util/scale.m.html``,
+:ref:`stable-addresses`). Publish the
 whole output folder, so that the inventory sits at the site's root, for
 example ``https://docs.example.org/team/lib/objects.inv``. The site may be
 below a path, as here.
@@ -24,11 +25,13 @@ Publish from an empty output folder:
    sphinx-matlab-apidoc -c docs
    sphinx-build -b html docs docs/_build/html
 
-Sphinx never deletes a page it no longer builds. When
-``sphinx-matlab-apidoc`` writes fewer pages than before (``global-2``
-disappears), an output folder kept from an earlier build still holds the
-old page with its old content, and so does a site copied from it. A CI job
-that starts from a fresh checkout has an empty output folder.
+Sphinx never deletes a page it no longer builds. This extension removes
+the HTML page, and its copy in ``_sources``, of every page below
+:confval:`matlab_apidoc_output_dir` whose source ``sphinx-matlab-apidoc``
+removed (``global-2`` when it writes fewer pages). Other removed pages
+stay in an output folder kept from an earlier build, and in a site copied
+from it; a CI job that starts from a fresh checkout has an empty output
+folder.
 
 The consumer
 ------------
@@ -79,8 +82,9 @@ A target is looked up:
 
 The ``lib:`` prefix and the ``:external+lib:`` role search only that
 inventory; ``:external:`` and ``:external+lib:`` skip the local objects.
-When two inventories have the same path reference (two versions of one
-library), intersphinx links to one of them: name the inventory.
+When several inventories have the same path reference (two versions of one
+library), a ``mat.ambiguous`` warning lists them (``one:util/scale.m``,
+``two:util/scale.m``) and the text is not linked: write one of them.
 
 Unlike local references:
 
@@ -106,9 +110,12 @@ An object's path reference, inventory name and anchor
 long namespace or folder into pages (``global.html``, ``global-2.html``),
 and adding or removing a file moves the entries after it to another page.
 
-References in a consumer follow the object when the consumer is built again
-with the new inventory. Its links are only as recent as the inventory it
-read and the pages it wrote:
+References in a consumer link to the object's stable address in the
+library, which opens the page the object is on now. They keep working when
+the library's pages split differently, even if the consumer was built with
+an older inventory. A new, renamed or moved file needs a newer inventory,
+and a consumer's links are only as recent as the inventory it read and the
+pages it wrote:
 
 * intersphinx keeps an inventory read from a site for
   ``intersphinx_cache_limit`` days (5 by default). Recent Sphinx versions
@@ -123,9 +130,14 @@ read and the pages it wrote:
 
    sphinx-build -a -D intersphinx_cache_limit=0 -b html docs docs/_build/html
 
-A consumer built with an old inventory links to the object's old page,
-without a warning. ``sphinx-build -b linkcheck docs docs/_build/linkcheck``
-reports such links: ``Anchor 'mat-util/scale.m' not found``.
+A consumer built with an inventory from before a file was renamed or
+removed links to an address that no longer exists, without a warning.
+``sphinx-build -b linkcheck docs docs/_build/linkcheck`` reports such
+links. With :confval:`matlab_stable_urls` ``False`` the inventory holds the
+page addresses (``api/global.html#mat-util/scale.m``), and a consumer built
+with an old inventory links to the object's old page.
+
+.. _stable-addresses:
 
 Stable addresses
 ~~~~~~~~~~~~~~~~
@@ -136,14 +148,16 @@ that sends the browser to the page the object is on now
 
 * ``mat/name/<MATLAB name>.html``, for example ``mat/name/geom.Circle.html``
   or ``mat/name/geom.Circle.area.html``. If several objects have the name
-  (two global ``helper`` functions), the file lists them all, with their
-  path references and types, like MATLAB's ``which -all``. Files in
+  (two global ``helper`` functions), it is a page in the site's theme that
+  lists them all, with their path references and types, like MATLAB's
+  ``which -all``. Files in
   ``private/`` and files MATLAB cannot call have no such address.
 * ``mat/ref/<path reference>.html`` for every object, for example
   ``mat/ref/+geom/Circle.m.html``; a folder's is ``mat/ref/<folder>/index.html``.
 
 The "¶" link next to an object points to its address by MATLAB name, or
-by path reference if the name is not unique. Copy that link, not the
+by path reference if the name is not unique; ``objects.inv`` gives the
+address by path reference. Copy that link, not the
 browser's address bar: these addresses stay the same when the pages split
 differently, and change only when the object is renamed, moved or removed
 (then the file is removed too). Characters that are not safe in a URL, and
@@ -151,12 +165,18 @@ names that differ only by case, are escaped like the output names of
 ``sphinx-matlab-apidoc``.
 
 The address in the browser's address bar after the redirect is the page's
-own, which does not follow the object. If the old page still exists, the
-browser opens it at the top, without an error and without the object; if
-the page is gone, the site answers "404 Not Found". Links between the
-library's own pages follow the object in a full build; an incremental build
-writes only the pages whose source changed, so build with ``-a`` after the
-API pages were regenerated.
+own, which does not follow the object. A small script on every page
+helps when such an address is opened later: if the page no longer has the
+object (``#mat-util/scale.m``), it opens the object's stable address. If
+the page is gone, the build's ``404.html`` does the same, on hosts that
+show it for missing pages, such as GitHub Pages (the build does not
+replace a ``404.html`` of the project's own, for example from
+``sphinx-notfound-page``, whose page still runs the script). Both read
+``mat/refs.js``, a list of all the stable addresses, only when needed.
+
+An incremental build in which objects were added, removed or moved to
+other pages also writes again every page that links to a MATLAB object,
+so the links between the library's own pages follow the objects.
 
 :confval:`matlab_apidoc_separate` gives each file a page named by its path
 (``api/util/scale.m.html``), so its page address does not depend on the

@@ -76,6 +76,39 @@ def keep_unresolved_references(app, env, node, contnode):  # noqa: ARG001
     return None
 
 
+def check_inventories(app, env, node, contnode):
+    """``missing-reference``, before intersphinx: a path reference that
+    several inventories have at different addresses stays unlinked with a
+    ``mat.ambiguous`` warning (intersphinx would pick one of them).
+    """
+    if (
+        node.get("refdomain") != "mat"
+        or node.get("inventory") is not None
+        or "sphinx.ext.intersphinx" not in app.extensions
+    ):
+        return None
+    from sphinx.ext.intersphinx import InventoryAdapter
+
+    inventories = InventoryAdapter(env).named_inventory
+    target = node["reftarget"]
+    if target.partition(":")[0] in inventories:
+        return None
+    objtypes = env.get_domain("mat").objtypes_for_role(node["reftype"]) or ()
+    found = {}
+    for name in sorted(inventories):
+        for objtype in objtypes:
+            item = inventories[name].get(f"mat:{objtype}", {}).get(target)
+            if item is not None:
+                # Sphinx < 8.2: (project, version, uri, display name)
+                found.setdefault(getattr(item, "uri", None) or item[2], name)
+    if len(found) < 2:
+        return None
+    node["mat:ambiguous"] = True
+    labels = [(f"{name}:{target}",) for name in found.values()]
+    MATLABDomain._warn_ambiguous(target, labels, node, "write one of them")
+    return contnode
+
+
 #: MATLAB's own classes and namespaces, never documented in a project
 DEFAULT_EXTERNAL_NAMES = [
     r"handle|dynamicprops",
@@ -692,6 +725,8 @@ class MATLABDomain(Domain):
         # docname -> [(sidecar reference, kind, target, line)]: broken relative
         # links and missing images in the sidecar docs it renders
         "sidecar_issues": {},
+        # docname -> True: it has a reference to a MATLAB object
+        "xref_docs": {},
         # Shared source state, rebuilt by ``mat_types.analyze`` each build;
         # files are parsed lazily (see ``mat_types``).
         # source path -> {reference, type, mtime, size, warnings, unreadable,
@@ -705,7 +740,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 18
+    data_version = 19
     indices = [
         MATLABFolderIndex,
     ]
@@ -720,6 +755,9 @@ class MATLABDomain(Domain):
         self._sidecar_docs = None
         # Documents read in this build (``env-before-read-docs``).
         self.read_docnames = ()
+        # Objects and removed documents before this build read (mat_urls).
+        self.objects_before = {}
+        self.removed_docs = set()
         self.reset_sources()
 
     def reset_sources(self):
@@ -801,8 +839,16 @@ class MATLABDomain(Domain):
         self.data["doc_sources"].pop(docname, None)
         self.data["sidecar_docs"].pop(docname, None)
         self.data["sidecar_issues"].pop(docname, None)
+        self.data["xref_docs"].pop(docname, None)
         self._displays = self._stable_urls = None
         self._sidecar_docs = None
+
+    def process_doc(self, env, docname, document):  # noqa: ARG002
+        if any(
+            node.get("refdomain") == "mat" or node.get("reftype") == "any"
+            for node in document.findall(addnodes.pending_xref)
+        ):
+            self.data["xref_docs"][docname] = True
 
     def merge_domaindata(self, docnames, otherdata):
         # Merge per-document registrations from a parallel-read worker, and
@@ -814,7 +860,7 @@ class MATLABDomain(Domain):
         for ref, data in otherdata["folders"].items():
             if data[0] in docnames:
                 self.data["folders"][ref] = data
-        for name in ("doc_sources", "sidecar_docs", "sidecar_issues"):
+        for name in ("doc_sources", "sidecar_docs", "sidecar_issues", "xref_docs"):
             for docname, value in otherdata[name].items():
                 if docname in docnames:
                     self.data[name][docname] = value
@@ -963,12 +1009,12 @@ class MATLABDomain(Domain):
         return make_refnode(builder, fromdocname, docname, anchor, contnode)
 
     @staticmethod
-    def _warn_ambiguous(target, matches, node):
+    def _warn_ambiguous(target, matches, node, hint="use a path reference"):
         logger.warning(
-            "[sphinxcontrib-matlabdomain] %r matches several objects: %s; "
-            "use a path reference",
+            "[sphinxcontrib-matlabdomain] %r matches several objects: %s; %s",
             target,
             ", ".join(sorted(match[0] for match in matches)),
+            hint,
             type="mat",
             subtype="ambiguous",
             location=node,
@@ -982,8 +1028,9 @@ class MATLABDomain(Domain):
         (inventories name objects by path reference). The target is the
         MATLAB name (inventory display name) of exactly one non-private
         object of the role's types, in the inventory the reference names
-        (``:external+lib:`` or ``lib:``) or else in any inventory. Several:
-        a ``mat.ambiguous`` warning, and the target stays unlinked.
+        (``:external+lib:`` or ``lib:``) or else in any inventory. Several,
+        also the same reference in several inventories: a ``mat.ambiguous``
+        warning, and the target stays unlinked.
         """
         from sphinx.ext.intersphinx import InventoryAdapter
 
@@ -1004,12 +1051,15 @@ class MATLABDomain(Domain):
                     display = getattr(item, "display_name", None) or item[3]
                     if display != target or mat_naming.is_private_reference(ref):
                         continue
-                    found.setdefault(ref, f"{name}:{ref}" if len(names) > 1 else ref)
+                    label = f"{name}:{ref}" if len(names) > 1 else ref
+                    found.setdefault((name, ref), label)
         if len(found) > 1:
             node["mat:ambiguous"] = True
-            self._warn_ambiguous(target, [(label,) for label in found.values()], node)
+            labels = [(label,) for label in found.values()]
+            hint = "write one of them" if len(names) > 1 else "use a path reference"
+            self._warn_ambiguous(target, labels, node, hint)
             return None
-        return next(iter(found), None)
+        return next(iter(found), (None, None))[1]
 
     def get_objects(self):
         for ref, (docname, objtype, display) in self.data["objects"].items():
@@ -1115,9 +1165,15 @@ def setup(app):
     app.connect("env-before-read-docs", mat_types.note_read_docs)
     app.connect("env-updated", mat_types.warn_parsed_sources)
     app.connect("build-finished", mat_api_check.set_status)
+    app.connect("missing-reference", check_inventories, priority=400)
     app.connect("missing-reference", keep_unresolved_references, priority=900)
     app.connect("html-page-context", mat_urls.rewrite_permalinks)
+    app.connect("html-collect-pages", mat_urls.chooser_pages)
+    app.connect("builder-inited", mat_urls.add_script)
+    app.connect("env-get-outdated", mat_urls.note_pages)
+    app.connect("env-get-updated", mat_urls.relink)
     app.connect("build-finished", mat_urls.write_redirects)
+    app.connect("build-finished", mat_urls.remove_stale_pages)
 
     app.add_domain(MATLABDomain)
     app.add_builder(mat_api_check.MatlabApiCheckBuilder)

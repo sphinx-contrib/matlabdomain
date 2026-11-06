@@ -88,13 +88,14 @@ def used_paths(srcdir, refs=USED):
 
 
 def test_initial_data_layout():
-    assert MATLABDomain.data_version == 18
+    assert MATLABDomain.data_version == 19
     assert set(MATLABDomain.initial_data) == {
         "objects",
         "folders",
         "doc_sources",
         "sidecar_docs",
         "sidecar_issues",
+        "xref_docs",
         "index",
         "sidecars",
         "parse_cache",
@@ -456,6 +457,7 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
         "doc_sources": {"doc_a": {unused: key[unused][1:]}, "doc_b": {}},
         "sidecar_docs": {"doc_a": {"a/guide.md": "A"}, "doc_b": {"b/guide.md": "B"}},
         "sidecar_issues": {"doc_a": [], "doc_b": [("b/guide.md", "link", "x", 1)]},
+        "xref_docs": {"doc_a": True, "doc_b": True},
         "index": {"/elsewhere/x.m": {}},
         "sidecars": {"/elsewhere/guide.md": {}},
         "parse_cache": {
@@ -478,6 +480,8 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
     assert "doc_b" not in data["doc_sources"]
     assert data["sidecar_docs"] == {"doc_a": {"a/guide.md": "A"}}
     assert data["sidecar_issues"] == {"doc_a": []}
+    assert "doc_a" in data["xref_docs"]
+    assert "doc_b" not in data["xref_docs"]
     assert dom.sidecar_doc("a/guide.md") == "doc_a"
     assert dom.sidecar_doc("b/guide.md") is None
     # Parses of current files that we lack are adopted; ours are kept.

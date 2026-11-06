@@ -68,9 +68,11 @@ What each warning means
 
 ``mat.ambiguous``
    A name in a directive, role, "See also" line or auto-link matches
-   several objects. The warning lists their path references; use one of
-   them. Copies of files (vendored code, symbolic links) are a common
-   cause; exclude them with :confval:`matlab_src_exclusion_patterns`.
+   several objects, or a reference matches objects in several intersphinx
+   inventories (:doc:`linking-projects`). The warning lists their path
+   references; use one of them. Copies of files (vendored code, symbolic
+   links) are a common cause; exclude them with
+   :confval:`matlab_src_exclusion_patterns`.
 
 ``mat.not_found``
    An auto directive (``mat:autofunction`` and the others) names no object

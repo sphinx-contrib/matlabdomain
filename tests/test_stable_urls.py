@@ -1,30 +1,30 @@
 """Stable addresses of documented objects (mat_urls): redirect files that
-follow an object to whichever page it is on, and the "¶" links to them.
+follow an object to whichever page it is on, the "¶" links to them and the
+inventory entries that point to them.
 """
 
+import json
 import re
 from pathlib import Path
+from types import SimpleNamespace
 
-from test_intersphinx import anchors, build_library
+from test_apidoc import FUNCTION, write
+from test_intersphinx import anchors, build_library, inventory, resolve, target
 
 from sphinxcontrib import mat_urls
+from sphinxcontrib.matlab_apidoc import main as apidoc
+
+CHOICE = re.compile(
+    r'<a class="reference internal" href="([^"]*)"><code[^>]*>'
+    r'<span class="pre">([^<]*)</span></code></a> \((\w+)\)'
+)
 
 
-def target(outdir, stub):
-    """Return the address the redirect file ``stub`` sends the browser to."""
-    text = (outdir / stub).read_text(encoding="utf-8")
-    assert mat_urls.MARKER in text
-    match = re.search(r'url=([^"]*)"', text)
-    assert match
-    return match[1]
-
-
-def resolve(stub, url):
-    """``url``, relative to the redirect file ``stub``, from the output root."""
-    parts = Path(stub).parent.parts
-    while url.startswith("../"):
-        url, parts = url[3:], parts[:-1]
-    return "/".join([*parts, url])
+def refs_map(outdir):
+    text = (outdir / "mat/refs.js").read_text(encoding="utf-8")
+    prefix = "window.matStableRefs = "
+    assert text.startswith(prefix)
+    return json.loads(text[len(prefix) :].rstrip().removesuffix(";"))
 
 
 def test_stable_addresses_follow_a_moved_object(make_app, tmp_path):
@@ -48,7 +48,9 @@ def test_names_of_several_objects_and_members(make_app, tmp_path):
     outdir = build_library(make_app, tmp_path / "lib")
     chooser = (outdir / "mat/name/helper.html").read_text(encoding="utf-8")
     assert "url=" not in chooser
-    assert re.findall(r'<li><a href="([^"]*)">([^<]*)</a> \((\w+)\)', chooser) == [
+    # A page in the site's theme, which this extension still owns.
+    assert mat_mark_and_theme(chooser)
+    assert CHOICE.findall(chooser) == [
         (
             "../../api/examples/index.html#mat-examples/helper.m",
             "examples/helper.m",
@@ -77,6 +79,52 @@ def test_names_of_several_objects_and_members(make_app, tmp_path):
     assert not (outdir / "mat/name/util.html").exists()
 
 
+def mat_mark_and_theme(page):
+    return mat_urls.MARKER in page and 'href="../../_static/' in page
+
+
+def test_moved_object_script_and_not_found_page(make_app, tmp_path):
+    outdir = build_library(make_app, tmp_path / "lib")
+    script = (outdir / "_static" / mat_urls.SCRIPT).read_text(encoding="utf-8")
+    assert "mat/refs.js" in script
+    page = (outdir / "api/util/index.html").read_text(encoding="utf-8")
+    assert f'src="../../_static/{mat_urls.SCRIPT}' in page
+    # Anchor (without mat-) -> stable address, "" if the same.
+    refs = refs_map(outdir)
+    assert refs["util/scale.m"] == ""
+    assert refs["+geom/"] == "+geom/index"
+    for key, value in refs.items():
+        assert (outdir / f"mat/ref/{value or key}.html").is_file()
+    not_found = (outdir / "404.html").read_text(encoding="utf-8")
+    assert mat_urls.MARKER in not_found
+    assert 'data-page="index.html"' in not_found
+    assert "mat/refs.js" in not_found  # the script, inline
+
+
+def test_plain_chooser_without_page_files(make_app, tmp_path):
+    # dirhtml writes a page as a folder: the list is written as a plain page.
+    write(tmp_path / "src", {"a/helper.m": FUNCTION.format(name="helper")})
+    write(tmp_path / "src", {"b/helper.m": FUNCTION.format(name="helper")})
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "src"\n'
+    )
+    (tmp_path / "index.rst").write_text(
+        "Index\n=====\n\n.. mat:autofunction:: a/helper.m\n\n"
+        ".. mat:autofunction:: b/helper.m\n"
+    )
+    app = make_app("dirhtml", srcdir=tmp_path)
+    app.build()
+    app.cleanup()
+    outdir = Path(app.outdir)
+    chooser = (outdir / "mat/name/helper.html").read_text(encoding="utf-8")
+    assert chooser.splitlines()[1] == mat_urls.MARKER
+    assert "<style>" in chooser
+    assert [match[0] for match in CHOICE.findall(chooser)] == [
+        "../../#mat-a/helper.m",
+        "../../#mat-b/helper.m",
+    ]
+
+
 def test_turned_off(make_app, tmp_path):
     outdir = build_library(
         make_app, tmp_path / "lib", conf="matlab_stable_urls = False\n"
@@ -84,6 +132,19 @@ def test_turned_off(make_app, tmp_path):
     assert not (outdir / "mat").exists()
     page = (outdir / "api/util/index.html").read_text(encoding="utf-8")
     assert 'class="headerlink" href="#mat-util/scale.m"' in page
+    assert mat_urls.SCRIPT not in page
+    assert not (outdir / "404.html").exists()
+    # The inventory keeps the page addresses.
+    assert inventory(outdir)["util/scale.m"] == (
+        "api/util/index.html#mat-util/scale.m",
+        "scale",
+    )
+
+
+def test_no_inventory(tmp_path):
+    # A builder of the HTML format that writes no objects.inv.
+    mat_urls.rewrite_inventory(str(tmp_path / "objects.inv"), {"a.m": "x.html"})
+    assert not (tmp_path / "objects.inv").exists()
 
 
 BOX = """\
@@ -134,6 +195,11 @@ def test_names_differing_by_case_and_removed_objects(make_app, tmp_path):
         "mat-Box.m.area",
         "mat-Box.m.area",
     ]
+    # The anchors differ in case only: their stable addresses are escaped.
+    refs = refs_map(outdir)
+    values = [refs["Box.m.Area"], refs["Box.m.area"]]
+    assert all(values)
+    assert len({v.lower() for v in values}) == 2
     assert stubs["mat/ref/sub/gone.m.html"] == "../../../index.html#mat-sub/gone.m"
     # A section whose id starts with mat- keeps its "¶" link.
     page = (outdir / "index.html").read_text(encoding="utf-8")
@@ -142,8 +208,11 @@ def test_names_differing_by_case_and_removed_objects(make_app, tmp_path):
     keep.write_text("not ours\n")
     (outdir / "mat/name/Box.html").unlink()
     (outdir / "mat/name/Box.html").mkdir()  # cannot be written
+    (outdir / "mat/ref/stay.m.html").unlink()
+    (outdir / "mat/ref/stay.m.html").mkdir()
     stay = outdir / "mat/name/stay.html"
     stay_mtime = stay.stat().st_mtime_ns
+    (outdir / "404.html").write_text("mine\n")
 
     # Box moves to another page; gone.m is no longer documented.
     index.write_text(
@@ -159,3 +228,95 @@ def test_names_differing_by_case_and_removed_objects(make_app, tmp_path):
     assert not (outdir / "mat/ref/sub").exists()
     assert keep.is_file()
     assert stay.stat().st_mtime_ns == stay_mtime  # unchanged: not rewritten
+    # The inventory points to the stable address only where it was written.
+    inv = inventory(outdir)
+    assert inv["Box.m"][0] == "mat/ref/Box.m.html"
+    assert inv["stay.m"][0] == "index.html#mat-stay.m"
+    assert (outdir / "404.html").read_text() == "mine\n"  # not ours: kept
+
+
+def test_incremental_builds_remove_stale_pages_and_relink(make_app, tmp_path):
+    def build(files=(), remove=()):
+        write(tmp_path / "src", {f: FUNCTION.format(name=Path(f).stem) for f in files})
+        for name in remove:
+            (tmp_path / name).unlink()
+        assert apidoc(["-q", "-c", str(tmp_path)]) == 0
+        app = make_app(srcdir=tmp_path)
+        app.build()
+        app.cleanup()
+        return Path(app.outdir)
+
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "src"\n'
+        'matlab_apidoc_output_dir = "api"\nmatlab_apidoc_group = "folder"\n'
+        "matlab_apidoc_page_size = 1\n"
+    )
+    (tmp_path / "index.rst").write_text(
+        "Index\n=====\n\n.. toctree::\n\n   api/index\n   links\n   extra\n"
+    )
+    (tmp_path / "links.rst").write_text("Links\n=====\n\n:mat:func:`util/scale.m`\n")
+    (tmp_path / "extra.rst").write_text("Extra\n=====\n\nText.\n")
+    outdir = build(["util/scale.m", "util/zeta.m", "old/f.m"])
+    links = outdir / "links.html"
+    assert 'href="api/util/index.html#mat-util/scale.m"' in links.read_text()
+
+    # alpha.m sorts first: scale.m moves to index-2. links.rst is unchanged,
+    # its page is written again.
+    outdir = build(["util/alpha.m"])
+    assert 'href="api/util/index-2.html#mat-util/scale.m"' in links.read_text()
+    assert (outdir / "404.html").read_text().count(mat_urls.MARKER) == 1
+
+    # Fewer pages: those whose source sphinx-matlab-apidoc removed go too;
+    # the page of a removed hand-written source stays.
+    removed = ["api/util/index-3.html", "_sources/api/util/index-3.rst.txt"]
+    assert all((outdir / p).is_file() for p in removed)
+    assert (outdir / "api/old/index.html").is_file()
+    outdir = build(
+        remove=["src/util/alpha.m", "src/util/zeta.m", "src/old/f.m", "extra.rst"]
+    )
+    assert 'href="api/util/index.html#mat-util/scale.m"' in links.read_text()
+    assert not any((outdir / p).exists() for p in removed)
+    assert not (outdir / "api/util/index-2.html").exists()
+    assert not (outdir / "api/old").exists()
+    assert (outdir / "api/util/index.html").is_file()
+    assert (outdir / "extra.html").is_file()
+
+    # Nothing moved: links.html is not written again.
+    mtime = links.stat().st_mtime_ns
+    build()
+    assert links.stat().st_mtime_ns == mtime
+
+
+def test_stale_pages_outside_or_at_the_source_folder(tmp_path):
+    removed = tmp_path / "out" / "a.html"
+    sources = tmp_path / "out" / "_sources"
+    sources.mkdir(parents=True)
+    removed.write_text("")
+    (sources / "a.txt").write_text("")
+    (sources / "a.rst.txt").write_text("")
+
+    def run(output_dir):
+        dom = SimpleNamespace(removed_docs={"a", "b"})
+        builder = SimpleNamespace(
+            format="html",
+            name="html",
+            outdir=tmp_path / "out",
+            get_outfilename=lambda doc: tmp_path / "out" / f"{doc}.html",
+        )
+        config = SimpleNamespace(
+            matlab_apidoc_output_dir=output_dir,
+            source_suffix={".rst": "restructuredtext", ".txt": "restructuredtext"},
+            html_sourcelink_suffix=".txt",
+        )
+        app = SimpleNamespace(
+            env=SimpleNamespace(get_domain=lambda _: dom),
+            config=config,
+            builder=builder,
+            srcdir=tmp_path / "src",
+        )
+        mat_urls.remove_stale_pages(app, None)
+
+    run("../out")  # not below the source folder: nothing removed
+    assert removed.is_file()
+    run(".")  # the source folder itself
+    assert list((tmp_path / "out").iterdir()) == []
