@@ -88,7 +88,8 @@ def test_moved_object_script_and_not_found_page(make_app, tmp_path):
     script = (outdir / "_static" / mat_urls.SCRIPT).read_text(encoding="utf-8")
     assert "mat/refs.js" in script
     page = (outdir / "api/util/index.html").read_text(encoding="utf-8")
-    assert f'src="../../_static/{mat_urls.SCRIPT}' in page
+    # A clean build too: the script is there before the pages are written.
+    assert f'src="../../_static/{mat_urls.SCRIPT}?v=' in page
     # Anchor (without mat-) -> stable address, "" if the same.
     refs = refs_map(outdir)
     assert refs["util/scale.m"] == ""

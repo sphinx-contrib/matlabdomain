@@ -332,7 +332,6 @@ def write_redirects(app, exception):
         value = stub[len(ROOT) + 5 : -5]  # mat/ref/<value>.html
         refs_map[key] = "" if value == key else value
     files[REFS] = f"window.matStableRefs = {json.dumps(refs_map, sort_keys=True)};\n"
-    files[f"_static/{SCRIPT}"] = _JS
     outdir = str(builder.outdir)
     not_found = os.path.join(outdir, "404.html")
     if not os.path.exists(not_found) or _is_ours(not_found):
@@ -381,9 +380,23 @@ def _not_found(home):
 
 
 def add_script(app):
-    """``builder-inited``: load ``SCRIPT`` on every page."""
+    """``builder-inited``: load ``SCRIPT`` on every page. Written now, before
+    any page, so that a clean build's pages get its checksum (``?v=``) as an
+    incremental build's do.
+    """
     if enabled(app):
         app.add_js_file(SCRIPT)
+        path = os.path.join(str(app.builder.outdir), "_static", SCRIPT)
+        try:
+            _write(path, _JS.encode("utf-8"))
+        except OSError as err:
+            logger.warning(
+                "[sphinxcontrib-matlabdomain] cannot write %s: %s",
+                path,
+                err,
+                type="mat",
+                subtype="stable_url",
+            )
 
 
 def note_pages(app, env, added, changed, removed):  # noqa: ARG001
