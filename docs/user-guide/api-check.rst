@@ -51,7 +51,9 @@ Every indexed object below the project root, minus
 files :confval:`matlab_api_check_files` selects, see
 `Checking selected files`_):
 
-* functions, classes, scripts and apps (``.mlapp``);
+* functions, classes, scripts and apps (``.mlapp``); a class with the
+  ``Hidden`` attribute is not public API and is not checked, nor are its
+  members;
 * public methods: methods without ``Access = private``, ``protected`` or an
   access list, and not ``Hidden``, including static methods and
   constructors. ``get.``/``set.`` methods, converter methods with dotted

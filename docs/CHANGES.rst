@@ -35,6 +35,9 @@ earlier" in the documentation.
 * **Breaking:** the signature of a static method keeps a first input named
   ``obj`` or ``self`` (``static make(obj, y)``): a static method has no
   object, so that input is a real one. Other methods still leave it out.
+* ``matlab-api-check`` does not check a ``Hidden`` class or its members (it
+  counts the class as ``hidden`` in the report), as for ``Hidden``
+  members.
 * Attributes written ``~Hidden`` (``Hidden = false``) no longer make a class
   fail to parse (it was documented without content), and logical values
   written as numbers or with ``~`` (``Hidden = 0``, ``Static = ~true``) are

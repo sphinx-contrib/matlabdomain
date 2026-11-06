@@ -532,6 +532,29 @@ def test_unreadable_record_is_not_checked():
     assert checker.findings == []
 
 
+def test_hidden_class_is_not_checked(make_app, tmp_path):
+    sources = {
+        "Shown.m": "classdef Shown\n% SHOWN Help.\n%\n% Example:\n%   Shown\nend\n",
+        "Secret.m": "classdef (Hidden) Secret\nproperties\n    p\nend\nmethods\n"
+        "    function r = run(obj, x)\n    end\nend\nend\n",
+        "@Vault/Vault.m": "classdef (Hidden = true) Vault\nmethods\n"
+        "    r = open(obj, x)\nend\nend\n",
+        "@Vault/open.m": "function r = open(obj, x)\nend\n",
+    }
+    for name, text in sources.items():
+        (tmp_path / name).parent.mkdir(exist_ok=True)
+        (tmp_path / name).write_text(text)
+    (tmp_path / "conf.py").write_text(CONF)
+    (tmp_path / "index.rst").write_text("Index\n=====\n")
+    app = build(make_app, tmp_path)
+    assert app.statuscode == 0
+    data = report(app)
+    assert data["findings"] == []
+    assert data["summary"]["checked"]["class"] == 1
+    assert data["summary"]["checked"]["method"] == 0
+    assert data["summary"]["not_checked"]["hidden"] == 2
+
+
 def mlapp(path, description):
     with zipfile.ZipFile(path, "w") as z:
         z.writestr(

@@ -534,13 +534,16 @@ class _Checker:
         }
         if isinstance(obj, mat_types.MatMethod):  # a function file of a class folder
             # Its classdef signature gives Access, Hidden and Static.
-            if is_public(obj.attrs):
+            if is_public(obj.attrs) and not obj.cls.attrs.get("Hidden"):
                 self.method(where, obj, obj.cls.name, bool(obj.attrs.get("Static")))
         elif isinstance(obj, mat_types.MatFunction):
             self.describe("description", where, "function", obj.docstring)
             self.example("example", where, "function", obj.docstring)
             self.signature(where, "function", obj, list(obj.args), list(obj.retv))
         elif isinstance(obj, mat_types.MatClass):
+            if obj.attrs.get("Hidden"):  # MATLAB's mark for "not public API"
+                self.not_checked["hidden"] += 1
+                return
             self.describe("description", where, "class", obj.docstring)
             self.example("example", where, "class", obj.docstring)
             self.members(obj, where)

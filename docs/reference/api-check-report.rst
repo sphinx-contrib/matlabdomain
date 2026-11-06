@@ -52,7 +52,8 @@ identical on every system.
    ``not_checked``
       Objects not checked per reason: ``ignored``
       (:confval:`matlab_api_check_ignore_patterns`), ``hidden``
-      (``Contents.m`` and the other special files), ``unreadable``,
+      (``Contents.m`` and the other special files, and ``Hidden`` classes;
+      their members are not counted), ``unreadable``,
       ``not_parsed`` (parse failures); with
       :confval:`matlab_api_check_files`, also ``not_selected`` (files and
       sidecar docs; their members are not counted).
