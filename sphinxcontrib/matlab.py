@@ -1059,7 +1059,9 @@ _REMOVED_OPTIONS = {
 
 
 def check_config_names(app, config):  # noqa: ARG001
-    mat_types.check_config_names(config._raw_config, config._options)
+    # vars(config): names another extension set earlier (sphinx-multiproject).
+    names = {*config._raw_config, *vars(config)}
+    mat_types.check_config_names(names, config._options)
 
 
 def ensure_configuration(app, config):
