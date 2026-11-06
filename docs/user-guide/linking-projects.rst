@@ -11,7 +11,8 @@ The library
 
 The library needs no setting. Every HTML build writes ``objects.inv`` next
 to the pages: one entry per documented object, named by its path reference,
-with its MATLAB name, type and address (:doc:`referencing`). Publish the
+with its MATLAB name, type and stable address (``mat/ref/util/scale.m.html``,
+:ref:`stable-addresses`). Publish the
 whole output folder, so that the inventory sits at the site's root, for
 example ``https://docs.example.org/team/lib/objects.inv``. The site may be
 below a path, as here.
@@ -79,8 +80,9 @@ A target is looked up:
 
 The ``lib:`` prefix and the ``:external+lib:`` role search only that
 inventory; ``:external:`` and ``:external+lib:`` skip the local objects.
-When two inventories have the same path reference (two versions of one
-library), intersphinx links to one of them: name the inventory.
+When several inventories have the same path reference (two versions of one
+library), a ``mat.ambiguous`` warning lists them (``one:util/scale.m``,
+``two:util/scale.m``) and the text is not linked: write one of them.
 
 Unlike local references:
 
@@ -106,9 +108,12 @@ An object's path reference, inventory name and anchor
 long namespace or folder into pages (``global.html``, ``global-2.html``),
 and adding or removing a file moves the entries after it to another page.
 
-References in a consumer follow the object when the consumer is built again
-with the new inventory. Its links are only as recent as the inventory it
-read and the pages it wrote:
+References in a consumer link to the object's stable address in the
+library, which opens the page the object is on now. They keep working when
+the library's pages split differently, even if the consumer was built with
+an older inventory. A new, renamed or moved file needs a newer inventory,
+and a consumer's links are only as recent as the inventory it read and the
+pages it wrote:
 
 * intersphinx keeps an inventory read from a site for
   ``intersphinx_cache_limit`` days (5 by default). Recent Sphinx versions
@@ -123,9 +128,14 @@ read and the pages it wrote:
 
    sphinx-build -a -D intersphinx_cache_limit=0 -b html docs docs/_build/html
 
-A consumer built with an old inventory links to the object's old page,
-without a warning. ``sphinx-build -b linkcheck docs docs/_build/linkcheck``
-reports such links: ``Anchor 'mat-util/scale.m' not found``.
+A consumer built with an inventory from before a file was renamed or
+removed links to an address that no longer exists, without a warning.
+``sphinx-build -b linkcheck docs docs/_build/linkcheck`` reports such
+links. With :confval:`matlab_stable_urls` ``False`` the inventory holds the
+page addresses (``api/global.html#mat-util/scale.m``), and a consumer built
+with an old inventory links to the object's old page.
+
+.. _stable-addresses:
 
 Stable addresses
 ~~~~~~~~~~~~~~~~
@@ -143,7 +153,8 @@ that sends the browser to the page the object is on now
   ``mat/ref/+geom/Circle.m.html``; a folder's is ``mat/ref/<folder>/index.html``.
 
 The "¶" link next to an object points to its address by MATLAB name, or
-by path reference if the name is not unique. Copy that link, not the
+by path reference if the name is not unique; ``objects.inv`` gives the
+address by path reference. Copy that link, not the
 browser's address bar: these addresses stay the same when the pages split
 differently, and change only when the object is renamed, moved or removed
 (then the file is removed too). Characters that are not safe in a URL, and

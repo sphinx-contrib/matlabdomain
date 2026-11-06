@@ -13,7 +13,9 @@ build writes small redirect files whose addresses do not depend on the pages:
   object: a redirect if one object has it, else a page that lists them all.
 
 The "¶" link of an object points to its stable address: by MATLAB name if
-it is unique, else by path reference. File names are escaped like the pages
+it is unique, else by path reference; the ``mat`` entries of ``objects.inv``
+point to the address by path reference, so another project's links follow an
+object even with an old inventory. File names are escaped like the pages
 of ``sphinx-matlab-apidoc``. Only files with ``MARKER`` are rewritten or
 removed.
 """
@@ -24,6 +26,7 @@ import html
 import json
 import os
 import re
+import zlib
 from urllib.parse import quote
 
 from sphinx.util.logging import getLogger
@@ -38,6 +41,8 @@ ROOT = "mat"
 MARKER = "<!-- sphinxcontrib-matlabdomain stable address -->"
 _FRAGMENT_SAFE = "/+-._~:@!$()*,="
 _PERMALINK = re.compile(r'(<a class="headerlink" href=")#(mat-[^"]*)(")')
+# An objects.inv line: name, domain:type, priority, URI, display name.
+_INVENTORY_LINE = re.compile(r"(.+?) (mat:\w+) (-?\d+) \S+ (.*)")
 
 
 def enabled(app):
@@ -139,8 +144,25 @@ def _chooser(name, entries):
     )
 
 
-def _write(path, text):
-    data = text.encode("utf-8")
+def rewrite_inventory(path, uris):
+    """Point the ``mat`` entries of the ``objects.inv`` at ``path`` whose
+    name is in ``uris`` (reference -> URI) to that URI.
+    """
+    if not os.path.isfile(path):
+        return
+    with open(path, "rb") as f:
+        data = f.read()
+    *header, body = data.split(b"\n", 4)
+    lines = zlib.decompress(body).decode("utf-8").split("\n")
+    for i, line in enumerate(lines):
+        match = _INVENTORY_LINE.fullmatch(line)
+        if match and match[1] in uris:
+            lines[i] = f"{match[1]} {match[2]} {match[3]} {uris[match[1]]} {match[4]}"
+    body = zlib.compress("\n".join(lines).encode("utf-8"), 9)
+    _write(path, b"\n".join([*header, body]))
+
+
+def _write(path, data):
     try:
         with open(path, "rb") as f:
             if f.read() == data:
@@ -162,8 +184,8 @@ def _is_ours(path):
 
 
 def write_redirects(app, exception):
-    """``build-finished``: write the stable address files and remove those
-    of objects that are gone.
+    """``build-finished``: write the stable address files, remove those of
+    objects that are gone and point ``objects.inv`` to them.
     """
     if exception is not None or not enabled(app):
         return
@@ -184,11 +206,13 @@ def write_redirects(app, exception):
             ]
             files[stub] = _chooser(name, entries)
     outdir = str(builder.outdir)
+    failed = set()
     for stub, text in files.items():
         path = os.path.join(outdir, *stub.split("/"))
         try:
-            _write(path, text)
+            _write(path, text.encode("utf-8"))
         except OSError as err:
+            failed.add(stub)
             logger.warning(
                 "[sphinxcontrib-matlabdomain] cannot write %s: %s",
                 path,
@@ -205,3 +229,5 @@ def write_redirects(app, exception):
                 os.remove(path)
         if folder != root and not os.listdir(folder):
             os.rmdir(folder)
+    uris = {ref: quote(stub) for ref, stub in by_ref.items() if stub not in failed}
+    rewrite_inventory(os.path.join(outdir, "objects.inv"), uris)

@@ -1,30 +1,14 @@
 """Stable addresses of documented objects (mat_urls): redirect files that
-follow an object to whichever page it is on, and the "¶" links to them.
+follow an object to whichever page it is on, the "¶" links to them and the
+inventory entries that point to them.
 """
 
 import re
 from pathlib import Path
 
-from test_intersphinx import anchors, build_library
+from test_intersphinx import anchors, build_library, inventory, resolve, target
 
 from sphinxcontrib import mat_urls
-
-
-def target(outdir, stub):
-    """Return the address the redirect file ``stub`` sends the browser to."""
-    text = (outdir / stub).read_text(encoding="utf-8")
-    assert mat_urls.MARKER in text
-    match = re.search(r'url=([^"]*)"', text)
-    assert match
-    return match[1]
-
-
-def resolve(stub, url):
-    """``url``, relative to the redirect file ``stub``, from the output root."""
-    parts = Path(stub).parent.parts
-    while url.startswith("../"):
-        url, parts = url[3:], parts[:-1]
-    return "/".join([*parts, url])
 
 
 def test_stable_addresses_follow_a_moved_object(make_app, tmp_path):
@@ -84,6 +68,17 @@ def test_turned_off(make_app, tmp_path):
     assert not (outdir / "mat").exists()
     page = (outdir / "api/util/index.html").read_text(encoding="utf-8")
     assert 'class="headerlink" href="#mat-util/scale.m"' in page
+    # The inventory keeps the page addresses.
+    assert inventory(outdir)["util/scale.m"] == (
+        "api/util/index.html#mat-util/scale.m",
+        "scale",
+    )
+
+
+def test_no_inventory(tmp_path):
+    # A builder of the HTML format that writes no objects.inv.
+    mat_urls.rewrite_inventory(str(tmp_path / "objects.inv"), {"a.m": "x.html"})
+    assert not (tmp_path / "objects.inv").exists()
 
 
 BOX = """\
@@ -142,6 +137,8 @@ def test_names_differing_by_case_and_removed_objects(make_app, tmp_path):
     keep.write_text("not ours\n")
     (outdir / "mat/name/Box.html").unlink()
     (outdir / "mat/name/Box.html").mkdir()  # cannot be written
+    (outdir / "mat/ref/stay.m.html").unlink()
+    (outdir / "mat/ref/stay.m.html").mkdir()
     stay = outdir / "mat/name/stay.html"
     stay_mtime = stay.stat().st_mtime_ns
 
@@ -159,3 +156,7 @@ def test_names_differing_by_case_and_removed_objects(make_app, tmp_path):
     assert not (outdir / "mat/ref/sub").exists()
     assert keep.is_file()
     assert stay.stat().st_mtime_ns == stay_mtime  # unchanged: not rewritten
+    # The inventory points to the stable address only where it was written.
+    inv = inventory(outdir)
+    assert inv["Box.m"][0] == "mat/ref/Box.m.html"
+    assert inv["stay.m"][0] == "index.html#mat-stay.m"

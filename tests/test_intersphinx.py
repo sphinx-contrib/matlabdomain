@@ -1,6 +1,7 @@
 """Intersphinx between a library built with sphinx-matlab-apidoc and a
 consumer project: MATLAB-name, path and named-inventory references, and what
-survives when an object moves to another API page (plan.md Section 2.3).
+survives when an object moves to another API page (plan.md Section 2.3). The
+library's inventory points to the stable addresses (``mat/ref/``).
 """
 
 import functools
@@ -13,11 +14,13 @@ import urllib.request
 import zlib
 from pathlib import Path
 from typing import Any, cast
+from urllib.parse import unquote
 
 import pytest
 from sphinx.util.inventory import InventoryFile
 from test_apidoc import FUNCTION, write
 
+from sphinxcontrib import mat_urls
 from sphinxcontrib.matlab_apidoc import main as apidoc
 
 BASE = "https://docs.example.invalid/team/lib/"
@@ -127,10 +130,32 @@ def anchors(outdir, uri):
     """Return the ids on the page of ``uri`` (relative to ``outdir``); none if
     the page does not exist.
     """
-    page = outdir / uri.partition("#")[0]
+    page = outdir / unquote(uri.partition("#")[0])
     if not page.is_file():
         return set()
     return set(re.findall(r'id="([^"]+)"', page.read_text(encoding="utf-8")))
+
+
+def target(outdir, stub):
+    """Return the address the redirect file ``stub`` sends the browser to."""
+    text = (outdir / unquote(str(stub))).read_text(encoding="utf-8")
+    assert mat_urls.MARKER in text
+    match = re.search(r'url=([^"]*)"', text)
+    assert match
+    return match[1]
+
+
+def resolve(stub, url):
+    """``url``, relative to the redirect file ``stub``, from the output root."""
+    parts = Path(stub).parent.parts
+    while url.startswith("../"):
+        url, parts = url[3:], parts[:-1]
+    return "/".join([*parts, url])
+
+
+def follow(outdir, stub):
+    """Return the page and anchor the redirect file ``stub`` opens."""
+    return resolve(stub, target(outdir, stub))
 
 
 def write_inventory(path, project, entries):
@@ -177,53 +202,35 @@ REFERENCES = {
 }
 EXPECTED = {
     "path": ("#mat-util/scale.m", "util/scale.m()"),
-    "external": (f"{BASE}api/util/index.html#mat-util/scale.m", "scale"),
-    "named": (f"{BASE}api/util/index.html#mat-util/scale.m", "scale"),
-    "prefixed": (f"{BASE}api/util/index.html#mat-util/scale.m", "scale"),
-    "caption": (f"{BASE}api/util/index.html#mat-util/scale.m", "Scale it"),
-    "class": (f"{BASE}api/%2Bgeom/index.html#mat-+geom/Circle.m", "geom.Circle"),
-    "method": (
-        f"{BASE}api/%2Bgeom/index.html#mat-+geom/Circle.m.area",
-        "geom.Circle.area",
-    ),
+    "external": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
+    "named": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
+    "prefixed": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
+    "caption": (f"{BASE}mat/ref/util/scale.m.html", "Scale it"),
+    "class": (f"{BASE}mat/ref/%2Bgeom/Circle.m.html", "geom.Circle"),
+    "method": (f"{BASE}mat/ref/%2Bgeom/Circle.m.area.html", "geom.Circle.area"),
     "property": (
-        f"{BASE}api/%2Bgeom/index.html#mat-+geom/Circle.m.Radius",
+        f"{BASE}mat/ref/%2Bgeom/Circle.m.Radius.html",
         "geom.Circle.Radius",
     ),
-    "folder": (f"{BASE}api/%2Bgeom/index.html#mat-+geom/", "geom"),
-    "private": (
-        f"{BASE}api/util/private/index.html#mat-util/private/check.m",
-        "check",
-    ),
-    "short": (
-        f"{BASE}api/%2Bgeom/%2Bio/index.html#mat-+geom/+io/read.m",
-        "geom.io.read",
-    ),
-    "name_class": (f"{BASE}api/%2Bgeom/index.html#mat-+geom/Circle.m", "geom.Circle"),
-    "name_function": (
-        f"{BASE}api/%2Bgeom/%2Bio/index.html#mat-+geom/+io/read.m",
-        "geom.io.read",
-    ),
+    "folder": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
+    "private": (f"{BASE}mat/ref/util/private/check.m.html", "check"),
+    "short": (f"{BASE}mat/ref/%2Bgeom/%2Bio/read.m.html", "geom.io.read"),
+    "name_class": (f"{BASE}mat/ref/%2Bgeom/Circle.m.html", "geom.Circle"),
+    "name_function": (f"{BASE}mat/ref/%2Bgeom/%2Bio/read.m.html", "geom.io.read"),
     "name_method": (
-        f"{BASE}api/%2Bgeom/index.html#mat-+geom/Circle.m.area",
+        f"{BASE}mat/ref/%2Bgeom/Circle.m.area.html",
         "geom.Circle.area",
     ),
-    "name_namespace": (f"{BASE}api/%2Bgeom/index.html#mat-+geom/", "geom"),
-    "name_any": (f"{BASE}api/%2Bgeom/index.html#mat-+geom/Circle.m", "geom.Circle"),
-    "name_named": (f"{BASE}api/util/index.html#mat-util/scale.m", "scale"),
-    "name_prefixed": (f"{BASE}api/util/index.html#mat-util/scale.m", "scale"),
-    "name_caption": (
-        f"{BASE}api/%2Bgeom/index.html#mat-+geom/Circle.m",
-        "A circle",
-    ),
+    "name_namespace": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
+    "name_any": (f"{BASE}mat/ref/%2Bgeom/Circle.m.html", "geom.Circle"),
+    "name_named": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
+    "name_prefixed": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
+    "name_caption": (f"{BASE}mat/ref/%2Bgeom/Circle.m.html", "A circle"),
     # The consumer's own object wins over the library's.
     "name_local": ("#mat-util/scale.m", "scale()"),
     "name_private": (None, "check()"),
     "name_ambiguous": (None, "helper()"),
-    "path_disambiguates": (
-        f"{BASE}api/toolbox/index.html#mat-toolbox/helper.m",
-        "helper",
-    ),
+    "path_disambiguates": (f"{BASE}mat/ref/toolbox/helper.m.html", "helper"),
     # Intersphinx matches only the role's types.
     "wrong_role": (None, "+geom/Circle.m()"),
 }
@@ -246,8 +253,8 @@ def test_consumer_links_to_the_library(make_app, tmp_path):
     # Every remote link opens a page of the library that has its anchor.
     for href, _ in links.values():
         if href and href.startswith(BASE):
-            uri = href.removeprefix(BASE).replace("%2B", "+")
-            assert uri.partition("#")[2] in anchors(outdir, uri)
+            url = follow(outdir, href.removeprefix(BASE))
+            assert url.partition("#")[2] in anchors(outdir, url)
 
 
 def test_names_in_several_inventories(make_app, tmp_path):
@@ -255,8 +262,12 @@ def test_names_in_several_inventories(make_app, tmp_path):
         "one": [
             ("a/f.m", "function", "api.html#mat-a/f.m", "f"),
             ("a/g.m", "function", "api.html#mat-a/g.m", "g"),
+            ("c/h.m", "function", "api.html#mat-c/h.m", "h"),
         ],
-        "two": [("b/f.m", "function", "api.html#mat-b/f.m", "f")],
+        "two": [
+            ("b/f.m", "function", "api.html#mat-b/f.m", "f"),
+            ("c/h.m", "function", "api.html#mat-c/h.m", "h"),
+        ],
     }
     mapping = {}
     for name, items in entries.items():
@@ -269,6 +280,11 @@ def test_names_in_several_inventories(make_app, tmp_path):
         "two": ":external+two:mat:func:`f`",
         "unique": ":mat:func:`g`",
         "missing": ":mat:func:`two:g`",
+        # The same reference (and so name) in both: name the inventory.
+        "same_path": ":mat:func:`c/h.m`",
+        "same_name": ":mat:func:`h`",
+        "same_path_named": ":mat:func:`two:c/h.m`",
+        "same_name_named": ":external+one:mat:func:`h`",
     }
     links, warnings = build_consumer(make_app, tmp_path / "app", mapping, references)
     assert links == {
@@ -277,10 +293,19 @@ def test_names_in_several_inventories(make_app, tmp_path):
         "two": ("https://two.example.invalid/api.html#mat-b/f.m", "f"),
         "unique": ("https://one.example.invalid/api.html#mat-a/g.m", "g"),
         "missing": (None, "two:g()"),
+        "same_path": (None, "c/h.m()"),
+        "same_name": (None, "h()"),
+        "same_path_named": ("https://two.example.invalid/api.html#mat-c/h.m", "h"),
+        "same_name_named": ("https://one.example.invalid/api.html#mat-c/h.m", "h"),
     }
-    assert "'f' matches several objects: one:a/f.m, two:b/f.m" in warnings
+    assert "'f' matches several objects: one:a/f.m, two:b/f.m; write one" in warnings
     assert "target not found: two:g" in warnings
-    assert warnings.count("WARNING") == 2
+    assert (
+        "'c/h.m' matches several objects: one:c/h.m, two:c/h.m; write one of them"
+        in warnings
+    )
+    assert "'h' matches several objects: one:c/h.m, two:c/h.m; write one" in warnings
+    assert warnings.count("WARNING") == 4
 
 
 # --- repaging (plan.md open items L1/L2) -------------------------------------
@@ -294,48 +319,49 @@ REPAGING = [
 
 
 @pytest.mark.parametrize(("group", "size", "before", "after"), REPAGING)
-def test_refreshed_inventory_follows_a_moved_object(
-    make_app, tmp_path, group, size, before, after
-):
-    target = "util/scale.m"
+def test_links_follow_a_moved_object(make_app, tmp_path, group, size, before, after):
+    ref = "util/scale.m"
     anchor = "mat-util/scale.m"
+    stable = "mat/ref/util/scale.m.html"
     references = {
         "name": ":mat:class:`geom.Circle`",
-        "path": f":mat:func:`lib:{target}`",
+        "path": f":mat:func:`lib:{ref}`",
     }
     lib = tmp_path / "lib"
     outdir = build_library(make_app, lib, group, size)
     inv_v1 = inventory(outdir)
-    assert inv_v1[target] == (f"{before}#{anchor}", "scale")
+    assert inv_v1[ref] == (stable, "scale")
+    assert follow(outdir, stable) == f"{before}#{anchor}"
     shutil.copy(outdir / "objects.inv", tmp_path / "objects-v1.inv")
     pages_v1 = {p.relative_to(outdir).as_posix() for p in outdir.rglob("*.html")}
     mapping = {"lib": (BASE, str(outdir / "objects.inv"))}
     links, _ = build_consumer(make_app, tmp_path / "app", mapping, references)
-    assert links["path"] == (f"{BASE}{before}#{anchor}", "scale")
+    assert links["path"] == (f"{BASE}{stable}", "scale")
 
     outdir = build_library(make_app, lib, group, size, extra=["util/alpha.m"])
     inv_v2 = inventory(outdir)
-    # Same inventory name, display name and anchor; another page.
-    assert inv_v2[target] == (f"{after}#{anchor}", "scale")
+    # Same inventory entry; the stable address opens another page.
+    assert inv_v2[ref] == (stable, "scale")
     assert set(inv_v2) - set(inv_v1) == {"util/alpha.m"}
+    assert follow(outdir, stable) == f"{after}#{anchor}"
     assert anchor in anchors(outdir, after)
 
-    # Refreshed inventory: the unchanged references follow the objects.
+    # Refreshed inventory: the same links.
     links, warnings = build_consumer(make_app, tmp_path / "app", mapping, references)
-    assert links["path"] == (f"{BASE}{after}#{anchor}", "scale")
-    assert links["name"][0].startswith(BASE)
-    assert links["name"][0].endswith("#mat-+geom/Circle.m")
+    assert links["path"] == (f"{BASE}{stable}", "scale")
+    assert links["name"] == (f"{BASE}mat/ref/%2Bgeom/Circle.m.html", "geom.Circle")
     assert "WARNING" not in warnings
 
-    # The URL copied before the move still opens a page, without the object.
+    # The page URL copied before the move still opens a page, without the
+    # object.
     assert before in pages_v1
     assert (outdir / before).is_file()
     assert anchor not in anchors(outdir, before)
 
-    # A stale inventory resolves without a warning to that same old URL.
+    # A stale inventory gives the same links, which open the moved object.
     stale = {"lib": (BASE, str(tmp_path / "objects-v1.inv"))}
     links, warnings = build_consumer(make_app, tmp_path / "app", stale, references)
-    assert links["path"] == (f"{BASE}{before}#{anchor}", "scale")
+    assert links["path"] == (f"{BASE}{stable}", "scale")
     assert "WARNING" not in warnings
 
 
@@ -348,12 +374,14 @@ def test_separate_pages_keep_their_url_when_listings_split(
     # With one page per file, the page of a file is named by its path; only
     # the listing pages split.
     url = "api/util/scale.m.html#mat-util/scale.m"
+    stable = "mat/ref/util/scale.m.html"
     lib = tmp_path / "lib"
     outdir = build_library(make_app, lib, group, 1, separate=True)
-    assert inventory(outdir)["util/scale.m"] == (url, "scale")
+    assert inventory(outdir)["util/scale.m"] == (stable, "scale")
+    assert follow(outdir, stable) == url
     pages_v1 = {p.relative_to(outdir).as_posix() for p in outdir.rglob("*.html")}
     outdir = build_library(make_app, lib, group, 1, ["util/alpha.m"], separate=True)
-    assert inventory(outdir)["util/scale.m"] == (url, "scale")
+    assert follow(outdir, stable) == url
     assert "mat-util/scale.m" in anchors(outdir, url)
     pages_v2 = {p.relative_to(outdir).as_posix() for p in outdir.rglob("*.html")}
     new = {p for p in pages_v2 - pages_v1 if not p.startswith("mat/")}
@@ -399,7 +427,12 @@ def test_inventory_from_a_deployed_site(make_app, tmp_path, site):
     assert "WARNING" not in warnings
     for key, page in (("name", "geom"), ("path", "global")):
         href = links[key][0]
-        assert href.startswith(f"{base}api/{page}.html#mat-")
-        url, _, fragment = href.partition("#")
-        with urllib.request.urlopen(url) as response:
-            assert f'id="{fragment}"' in response.read().decode("utf-8")
+        assert href.startswith(f"{base}mat/ref/")
+        # The redirect file names the page; the server serves both.
+        with urllib.request.urlopen(href) as response:
+            redirect = response.read().decode("utf-8")
+        match = re.search(r'url=\.\./(?:\.\./)*api/([^"#]*)#([^"]*)"', redirect)
+        assert match
+        assert match[1] == f"{page}.html"
+        with urllib.request.urlopen(f"{base}api/{match[1]}") as response:
+            assert f'id="{unquote(match[2])}"' in response.read().decode("utf-8")
