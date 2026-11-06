@@ -42,6 +42,7 @@ from .mat_types import (
     MatClass,
     MatcodeError,
     MatEnumeration,
+    MatEvent,
     MatFunction,
     MatMethod,
     MatModule,
@@ -345,9 +346,15 @@ class MatlabDocumenter(PyDocumenter):
                                     f"<{cls.fullname(self.env)}.{name}>`"
                                 )
                                 continue
+                            elif name in cls.events:
+                                entries[k] = (
+                                    f":mat:event:`{name} "
+                                    f"<{cls.fullname(self.env)}.{name}>`"
+                                )
+                                continue
 
-                        # a method or property of another class
-                        if found is not None and role in ["meth", "attr"]:
+                        # a method, property or event of another class
+                        if found is not None and role in ["meth", "attr", "event"]:
                             entries[k] = self._link(role, entries[k], found[0])
                             continue
 
@@ -551,9 +558,8 @@ class MatlabDocumenter(PyDocumenter):
             value = (self.get_attr(member, "attrs", None) or {}).get(name)
             return value.strip("'\"") if isinstance(value, str) else value
 
-        def access_list(member):
-            # ``Access = ?Cls`` or ``Access = {?A, ?B}`` (without ``?``), else None
-            value = access_of(member, "Access")
+        def access_list(value):
+            # ``?Cls`` or ``{?A, ?B}`` (without ``?``), else None
             if isinstance(value, str):
                 value = [value] if value.startswith("?") else None
             if not isinstance(value, list):
@@ -574,9 +580,13 @@ class MatlabDocumenter(PyDocumenter):
             isattr = False
 
             has_doc = bool(self.get_attr(member, "__doc__", None))
-            # GetAccess applies when Access is not given
-            level = access_of(member, "Access") or access_of(member, "GetAccess")
-            classes = access_list(member)
+            # GetAccess applies when Access is not given; an event's is ListenAccess
+            level = (
+                access_of(member, "Access")
+                or access_of(member, "GetAccess")
+                or access_of(member, "ListenAccess")
+            )
+            classes = access_list(level)
             # (the option that keeps a restricted member, names in that option)
             if not want_all:
                 rule = None
@@ -1083,6 +1093,11 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             for (membername, member) in filtered_members
             if isinstance(member, MatEnumeration)
         ]
+        event_names = [
+            membername
+            for (membername, member) in filtered_members
+            if isinstance(member, MatEvent)
+        ]
         # (a class has no other members)
         # create list of members that are not properties
         non_properties = [
@@ -1108,9 +1123,14 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             for (membername, member) in members
             if not isinstance(member, MatEnumeration)
         ]
+        non_events = [
+            membername
+            for (membername, member) in members
+            if not isinstance(member, MatEvent)
+        ]
 
         # container
-        if cons_names or prop_names or enum_names or meth_names:
+        if cons_names or prop_names or enum_names or meth_names or event_names:
             self.add_line("", "<autodoc>")
             self.add_line(".. container:: members", "<autodoc>")
             self.add_line("", "<autodoc>")
@@ -1135,6 +1155,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         # methods
         if meth_names:
             self.document_member_section("Method Summary", non_methods, all_members)
+
+        if event_names:
+            self.document_member_section("Event Summary", non_events, all_members)
 
     def document_member_section(self, heading, new_excludes, all_members):
         # save up original indent and exclude_members
@@ -1385,6 +1408,29 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
     def auto_link_all(self, docstrings):
         docstrings = self.auto_link_methods(self.object.cls, docstrings)
         docstrings = self.auto_link_self(docstrings)
+        return MatlabDocumenter.auto_link_all(self, docstrings)
+
+
+class MatEventDocumenter(MatClassLevelDocumenter):
+    """Specialized Documenter subclass for events."""
+
+    objtype = "event"
+    member_order = 70
+    option_spec = dict(MatModuleLevelDocumenter.option_spec)
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+        return isinstance(member, MatEvent)
+
+    def document_members(self, all_members=False):
+        pass
+
+    def class_object(self):
+        # the associated MatClass object
+        return self.object.cls
+
+    def auto_link_all(self, docstrings):
+        docstrings = self.auto_link_methods(self.object.cls, docstrings)
         return MatlabDocumenter.auto_link_all(self, docstrings)
 
 

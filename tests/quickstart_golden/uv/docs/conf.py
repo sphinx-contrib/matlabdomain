@@ -84,6 +84,7 @@ matlab_api_check_rules = {
     "description": "warning",
     "method-description": "warning",
     "property-description": "warning",
+    "event-description": "warning",
     "inputs": "warning",
     "outputs": "warning",
     "name-value": "warning",

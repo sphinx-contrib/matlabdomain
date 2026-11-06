@@ -285,7 +285,7 @@ matlab_api_check_rules = {  # start with warnings; make rules "error" as help im
     "name-value": "warning",
     "sidecar-documented": "warning",
     "sidecar-links": "warning",
-}  # property-description, example and method-example warn by default
+}  # property-, event-description, example and method-example warn by default
 ```
 
 ```console

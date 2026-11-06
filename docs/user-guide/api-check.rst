@@ -61,7 +61,9 @@ files :confval:`matlab_api_check_files` selects, see
   not checked;
 * public properties of classes: without ``Access`` (or, without it,
   ``GetAccess``) ``private``, ``protected`` or an access list, and not
-  ``Hidden``; constant and dependent properties included.
+  ``Hidden``; constant and dependent properties included;
+* public events: without ``ListenAccess`` ``private``, ``protected`` or an
+  access list, and not ``Hidden``.
 
 Files below ``private/`` and files MATLAB cannot call are checked.
 ``Contents.m`` and the other special files, files that cannot be read and
@@ -99,6 +101,10 @@ The rules
      - properties
      - the property has a comment: above it, after it on its line, or on
        the lines below it (the help that the documentation shows)
+   * - ``event-description``
+     - warning
+     - events
+     - the same, for the event
    * - ``inputs``
      - error
      - functions and methods with inputs
@@ -230,8 +236,8 @@ pages again (:doc:`../reference/configuration`):
 
 * :confval:`matlab_api_check_rules`: the severity of each rule:
   ``"error"``, ``"warning"`` or ``"ignore"``. The defaults are in the table
-  above (the newer rules ``property-description``, ``example`` and
-  ``method-example`` warn). The dictionary is merged over the defaults:
+  above (the newer rules ``property-description``, ``event-description``,
+  ``example`` and ``method-example`` warn). The dictionary is merged over the defaults:
 
   .. code-block:: python
 

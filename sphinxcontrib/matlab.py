@@ -433,6 +433,7 @@ class MatClassmember(MatObject):
             "method": translation("%s() (%s method)"),
             "staticmethod": translation("%s() (%s static method)"),
             "attribute": translation("%s (%s attribute)"),
+            "event": translation("%s (%s event)"),
         }[self.objtype]
         clsname, _, member = name.rpartition(".")
         if not clsname:
@@ -658,6 +659,7 @@ class MATLABDomain(Domain):
         "method": ObjType(translation("method"), "meth", "obj"),
         "staticmethod": ObjType(translation("static method"), "meth", "obj"),
         "attribute": ObjType(translation("attribute"), "attr", "obj"),
+        "event": ObjType(translation("event"), "event", "obj"),
         "folder": ObjType(translation("folder"), "folder", "obj"),
         "script": ObjType(translation("script"), "scpt", "obj"),
         "application": ObjType(translation("application"), "app", "obj"),
@@ -670,6 +672,7 @@ class MATLABDomain(Domain):
         "method": MatMethodlike,
         "staticmethod": MatMethodlike,
         "attribute": MatAttributelike,
+        "event": MatClassmember,
         "folder": MatFolder,
         "currentfolder": MatCurrentFolder,
         "script": MatModulelevel,
@@ -682,6 +685,7 @@ class MATLABDomain(Domain):
         "const": MatXRefRole(),
         "attr": MatXRefRole(),
         "enum": MatXRefRole(),
+        "event": MatXRefRole(),
         "meth": MatXRefRole(fix_parens=True),
         "folder": MatXRefRole(),
         "obj": MatXRefRole(),
@@ -712,7 +716,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 20
+    data_version = 21
     indices = [
         MATLABFolderIndex,
     ]
@@ -1167,6 +1171,11 @@ def setup(app):
     app.registry.add_documenter("mat:enum", doc.MatAttributeDocumenter)
     app.add_directive_to_domain(
         "mat", "autoenum", mat_directives.MatlabAutodocDirective
+    )
+
+    app.registry.add_documenter("mat:event", doc.MatEventDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autoevent", mat_directives.MatlabAutodocDirective
     )
 
     app.registry.add_documenter("mat:data", doc.MatDataDocumenter)

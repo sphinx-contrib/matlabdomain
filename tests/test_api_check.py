@@ -123,6 +123,7 @@ def test_root_findings(make_app, root):
         "class": 2,
         "method": 8,
         "property": 1,
+        "event": 0,
         "script": 2,
         "application": 0,
         "sidecar": 0,
@@ -151,8 +152,8 @@ def test_root_findings(make_app, root):
     assert lines[0].startswith(f"{root / 'src' / '+pkg' / 'Widget.m'}:1: warning: ")
     assert lines[0].endswith("[example]")
     assert lines[39:42] == [
-        "Checked: 11 functions, 2 classes, 8 methods, 1 properties, 2 scripts, "
-        "0 apps, 0 sidecars",
+        "Checked: 11 functions, 2 classes, 8 methods, 1 properties, 0 events, "
+        "2 scripts, 0 apps, 0 sidecars",
         "Not checked: 2 ignored, 1 hidden, 0 unreadable, 0 not parsed",
         "Findings: 17 errors, 21 warnings",
     ]
@@ -210,8 +211,8 @@ def test_disabled(make_app, root):
     text = (app.outdir / "api-check.txt").read_text(encoding="utf-8")
     assert text.splitlines()[:2] == [
         "matlab_api_check_enabled is False: nothing was checked.",
-        "Checked: 0 functions, 0 classes, 0 methods, 0 properties, 0 scripts, "
-        "0 apps, 0 sidecars",
+        "Checked: 0 functions, 0 classes, 0 methods, 0 properties, 0 events, "
+        "0 scripts, 0 apps, 0 sidecars",
     ]
 
 
@@ -712,6 +713,7 @@ def test_selected_file_members(make_app, root):
         "class": 1,
         "method": 7,
         "property": 1,
+        "event": 0,
         "script": 0,
         "application": 0,
         "sidecar": 0,
@@ -723,11 +725,11 @@ def test_selected_file_members(make_app, root):
         "not_parsed": 0,
         "not_selected": 15,
     }
-    assert text_lines(app)[-14:-11] == [
+    assert text_lines(app)[-15:-12] == [
         "Selected: 3 of 18 files by 3 matlab_api_check_files entries, "
         "0 matching no file",
-        "Checked: 1 functions, 1 classes, 7 methods, 1 properties, 0 scripts, "
-        "0 apps, 0 sidecars",
+        "Checked: 1 functions, 1 classes, 7 methods, 1 properties, 0 events, "
+        "0 scripts, 0 apps, 0 sidecars",
         "Not checked: 1 ignored, 0 hidden, 0 unreadable, 0 not parsed, 15 not selected",
     ]
 

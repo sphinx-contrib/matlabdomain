@@ -132,6 +132,15 @@ know which object to document") and the directive writes nothing.
 
       As for ``mat:autoattribute``.
 
+.. rst:directive:: .. mat:autoevent:: name
+
+   One event of a class, named like a method.
+
+   .. rst:directive:option:: noindex
+                             no-index
+
+      Do not create a link target or an index entry.
+
 .. rst:directive:: .. mat:autoscript:: name
 
    A script file.
@@ -327,6 +336,17 @@ without a "reference target not found" warning.
       read access (``SetAccess = private``, ``immutable``, ...), except for
       constants.
 
+.. rst:directive:: .. mat:event:: name
+
+   An event, inside ``mat:class`` or named ``Cls.event``.
+
+   .. rst:directive:option:: noindex
+                             no-index
+                             annotation
+                             reference
+
+      As for ``mat:function``.
+
 .. rst:directive:: .. mat:script:: name
 
    A script.
@@ -416,6 +436,10 @@ prefers objects of its type, then accepts any.
 .. rst:role:: mat:attr
 
    A property or enumeration value.
+
+.. rst:role:: mat:event
+
+   An event.
 
 .. rst:role:: mat:folder
 

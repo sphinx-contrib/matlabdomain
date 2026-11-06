@@ -49,6 +49,16 @@ earlier" in the documentation.
   does not check them: MATLAB's ``help`` shows no text for them.
 * Enumeration values show their constructor arguments (``Red (1, 0, 0)``)
   when :confval:`matlab_show_property_default_value` is true.
+* Events are documented: an "Event Summary" section in ``mat:autoclass``,
+  ``mat:autoevent``, the ``mat:event`` directive and the ``:mat:event:``
+  role (inventory type ``mat:event``). ``ListenAccess`` and ``Hidden``
+  filter them as ``Access`` and ``Hidden`` filter methods. New
+  ``matlab-api-check`` rule ``event-description`` (a warning by default);
+  reports count events (``event``).
+* A property or event whose read access (``GetAccess``, ``ListenAccess``)
+  is a list of classes is left out of ``mat:autoclass`` unless
+  ``:access-list-members:`` adds it, as with ``Access`` lists; it was
+  shown.
 * Attributes written ``~Hidden`` (``Hidden = false``) no longer make a class
   fail to parse (it was documented without content), and logical values
   written as numbers or with ``~`` (``Hidden = 0``, ``Static = ~true``) are

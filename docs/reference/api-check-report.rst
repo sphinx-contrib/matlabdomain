@@ -48,7 +48,7 @@ identical on every system.
       Rule name to the severity in effect.
    ``checked``
       Objects checked per kind: ``function``, ``class``, ``method``,
-      ``property``, ``script``, ``application``, ``sidecar``.
+      ``property``, ``event``, ``script``, ``application``, ``sidecar``.
    ``not_checked``
       Objects not checked per reason: ``ignored``
       (:confval:`matlab_api_check_ignore_patterns`), ``hidden``
@@ -76,8 +76,8 @@ identical on every system.
       The MATLAB name, or ``null`` if MATLAB cannot call the file (and for
       sidecar docs).
    ``kind``
-      ``function``, ``class``, ``method``, ``property``, ``script``,
-      ``application`` or ``sidecar``.
+      ``function``, ``class``, ``method``, ``property``, ``event``,
+      ``script``, ``application`` or ``sidecar``.
    ``rule``, ``severity``
       The rule and its severity (``error`` or ``warning``).
    ``line``

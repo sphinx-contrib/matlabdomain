@@ -134,6 +134,10 @@ constructor, properties, enumeration values and methods, in sections:
   found as for properties: a comment on the line, or a comment block right
   above or below it. ``get.``/``set.`` property methods and converter
   methods with dotted names are not documented.
+* Events are listed under "Event Summary", with their help found as for
+  properties. ``ListenAccess`` decides who sees them, as ``Access`` does
+  for methods (``ListenAccess = protected`` needs ``:protected-members:``);
+  link to one with ``:mat:event:``.
 
 Enumeration values, here in the order of the file (``:member-order:
 bysource``; the default is alphabetical):
@@ -178,7 +182,8 @@ The help text of ``Shape`` lists its properties and methods in MATLAB's
 ``matlab_auto_link = "basic"``, as in these docs, those entries and the "See
 also" line become links (:doc:`help-text`).
 
-``mat:autoenum`` is ``mat:autoattribute`` for an enumeration value.
+``mat:autoenum`` is ``mat:autoattribute`` for an enumeration value, and
+``mat:autoevent`` documents one event.
 
 Scripts, apps and private files
 -------------------------------
@@ -190,7 +195,10 @@ Scripts, apps and private files
 
 Files in ``private/`` folders are documented like any other file. Their
 MATLAB name (``checkPositive``) is only visible from the parent folder, as
-in MATLAB, so from elsewhere name them by path. App Designer apps show the
+in MATLAB, so from elsewhere name them by path. The ``private/`` folder of a
+class folder (``@Polygon/private/``) holds scripts, functions and classes
+that only that class can use; they are files, not members of the class.
+App Designer apps show the
 summary and description stored in the app.
 
 ``mat:autodata`` documents a script as data (a script that defines

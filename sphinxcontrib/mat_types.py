@@ -64,6 +64,7 @@ __all__ = [
     "MatApplication",
     "MatClass",
     "MatEnumeration",
+    "MatEvent",
     "MatFunction",
     "MatMethod",
     "MatModule",
@@ -1283,7 +1284,7 @@ def placeholder(kind, name, folder) -> Any:
     if cls is MatClass:
         obj.attrs, obj.bases, obj.properties = {}, [], {}
         obj.methods, obj.enumerations, obj.rem_tks = {}, {}, None
-        obj.declarations = {}
+        obj.declarations, obj.events = {}, {}
     elif cls is MatFunction:
         obj.retv, obj.args, obj.rem_tks = {}, {}, None
         obj.name_value = {}
@@ -1739,6 +1740,8 @@ class MatClass(MatObject):
         self.declarations = parsed_class.declarations
         #:
         self.enumerations = parsed_class.enumerations
+        #: ``{name: {"attrs", "docstring", "line"}}`` of the events
+        self.events = parsed_class.events
         #: remaining tokens after main class definition is parsed
         self.rem_tks = None
 
@@ -1793,10 +1796,13 @@ class MatClass(MatObject):
             return MatEnumeration(name, self, self.enumerations[name])
         elif name in self.methods:
             return self.methods[name]
+        elif name in self.events:
+            return MatEvent(name, self, self.events[name])
         elif name == "__dict__":
             objdict = {pn: self.getter(pn) for pn in self.properties}
             objdict.update(self.methods)
             objdict.update({en: self.getter(en) for en in self.enumerations})
+            objdict.update({ev: self.getter(ev) for ev in self.events})
             return objdict
         else:
             return super().getter(name, *defargs)
@@ -1837,6 +1843,26 @@ class MatEnumeration(MatObject):
     def ref_role(self):
         """Return the role used for references and automatic links"""
         return "enum"
+
+    @property
+    def __module__(self):
+        return self.cls.module
+
+    @property
+    def __doc__(self):
+        return self.docstring
+
+
+class MatEvent(MatObject):
+    def __init__(self, name, cls, attrs):
+        super().__init__(name)
+        self.cls = cls
+        self.attrs = attrs["attrs"]
+        self.docstring = attrs["docstring"]
+
+    def ref_role(self):
+        """Return the role used for references and automatic links"""
+        return "event"
 
     @property
     def __module__(self):

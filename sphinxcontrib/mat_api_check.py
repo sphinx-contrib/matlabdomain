@@ -28,6 +28,7 @@ RULES = (
     "description",
     "method-description",
     "property-description",
+    "event-description",
     "inputs",
     "outputs",
     "name-value",
@@ -40,10 +41,22 @@ SEVERITIES = ("error", "warning", "ignore")
 #: the newer rules warn by default, so they do not fail existing checks
 DEFAULT_RULES = {
     **dict.fromkeys(RULES, "error"),
-    **dict.fromkeys(("property-description", "example", "method-example"), "warning"),
+    **dict.fromkeys(
+        ("property-description", "event-description", "example", "method-example"),
+        "warning",
+    ),
 }
 #: object kinds, in report order
-KINDS = ("function", "class", "method", "property", "script", "application", "sidecar")
+KINDS = (
+    "function",
+    "class",
+    "method",
+    "property",
+    "event",
+    "script",
+    "application",
+    "sidecar",
+)
 _PLURALS = dict(
     zip(
         KINDS,
@@ -52,6 +65,7 @@ _PLURALS = dict(
             "classes",
             "methods",
             "properties",
+            "events",
             "scripts",
             "apps",
             "sidecars",
@@ -336,12 +350,13 @@ def undocumented(rule, docstring, comments, names=(), sections=SECTIONS):
 
 
 def is_public(attrs):
-    """Return True unless a method or property with the attributes ``attrs``
-    is private, protected, access-listed or hidden (a property's
-    ``GetAccess`` applies when it has no ``Access``).
+    """Return True unless a method, property or event with the attributes
+    ``attrs`` is private, protected, access-listed or hidden (a property's
+    ``GetAccess`` applies when it has no ``Access``; an event's access is its
+    ``ListenAccess``).
     """
     attrs = attrs or {}
-    access = attrs.get("Access") or attrs.get("GetAccess")
+    access = attrs.get("Access") or attrs.get("GetAccess") or attrs.get("ListenAccess")
     if isinstance(access, str):
         access = access.strip("'\"")
     return access in (None, "public") and not attrs.get("Hidden")
@@ -487,6 +502,27 @@ class _Checker:
                     "property-description",
                     member,
                     "property",
+                    "has no description: no comment above, after or below it",
+                )
+        for ename, event in cls.events.items():
+            if not is_public(event["attrs"]):
+                continue
+            ref = f"{where['reference']}.{ename}"
+            if self.ignore(ref):
+                self.not_checked["ignored"] += 1
+                continue
+            self.checked["event"] += 1
+            if not event["docstring"]:
+                member = {
+                    "reference": ref,
+                    "name": where["name"] and f"{where['name']}.{ename}",
+                    "path": where["path"],
+                    "line": event["line"],
+                }
+                self.report(
+                    "event-description",
+                    member,
+                    "event",
                     "has no description: no comment above, after or below it",
                 )
         for mname, method in cls.methods.items():

@@ -148,6 +148,17 @@ q_enumerations = Query(
 """,
 )
 
+q_events = Query(
+    ML_LANG,
+    """(events
+    (attributes
+        [(attribute) @attrs _]+
+    )?
+    [(identifier) @events _]+
+    ) @event_block
+""",
+)
+
 q_property = Query(
     ML_LANG,
     """
@@ -631,12 +642,37 @@ class MatFunctionParser:
         return attrs
 
 
-class MatSignature:
-    """A method signature declared without a body (an abstract method).
-
-    Its help is found as for a property: a comment on its line, or a comment
-    block right above or below it.
+def member_help(node, encoding):
+    """Return the help of a one-line class member (an abstract method
+    signature, an event) as for a property: a comment on its line, or a
+    comment block right above or below it; None if it has none.
     """
+    docstring = ""
+    after = node.next_named_sibling
+    if after is not None and after.type == "comment":
+        gap = get_row(after.start_point) - get_row(node.end_point)
+        if gap == 0:
+            docstring = process_text_into_docstring(after.text, encoding)
+            docstring = docstring.split("\n")[0]
+        elif gap == 1:
+            docstring = process_text_into_docstring(after.text, encoding)
+    before = node.prev_named_sibling
+    if (
+        before is not None
+        and before.type == "comment"
+        and get_row(node.start_point) - get_row(before.end_point) <= 1
+    ):
+        ds = process_text_into_docstring(before.text, encoding)
+        prev = before.prev_named_sibling
+        if prev is not None and get_row(before.start_point) == get_row(prev.end_point):
+            ds = "\n".join(ds.split("\n")[1:])
+        if ds:
+            docstring = ds
+    return docstring if docstring.strip() else None
+
+
+class MatSignature:
+    """A method signature declared without a body (an abstract method)."""
 
     def __init__(self, cls, node, name, attrs):
         def text(n):
@@ -657,30 +693,7 @@ class MatSignature:
                 self.retv = {text(n): {} for n in outs}
             elif child.type == "function_arguments":
                 self.args = {text(n): {} for n in child.named_children}
-        docstring = ""
-        after = node.next_named_sibling
-        if after is not None and after.type == "comment":
-            gap = get_row(after.start_point) - get_row(node.end_point)
-            if gap == 0:
-                docstring = process_text_into_docstring(after.text, cls.encoding)
-                docstring = docstring.split("\n")[0]
-            elif gap == 1:
-                docstring = process_text_into_docstring(after.text, cls.encoding)
-        before = node.prev_named_sibling
-        if (
-            before is not None
-            and before.type == "comment"
-            and get_row(node.start_point) - get_row(before.end_point) <= 1
-        ):
-            ds = process_text_into_docstring(before.text, cls.encoding)
-            prev = before.prev_named_sibling
-            if prev is not None and get_row(before.start_point) == get_row(
-                prev.end_point
-            ):
-                ds = "\n".join(ds.split("\n")[1:])
-            if ds:
-                docstring = ds
-        self.docstring = docstring if docstring.strip() else None
+        self.docstring = member_help(node, cls.encoding)
 
 
 class MatClassParser:
@@ -697,6 +710,8 @@ class MatClassParser:
         #: (implemented in class-folder files, or abstract), by name
         self.declarations = {}
         self.enumerations = {}
+        #: ``{name: {"attrs", "docstring", "line"}}`` of the events
+        self.events = {}
 
         self.root_node = root_node
 
@@ -737,10 +752,10 @@ class MatClassParser:
             docstring = help_text(leading.text, self.encoding)
         self.docstring = docstring
 
-        # ``events`` blocks are not documented (Notes.md, parked features).
         prop_matches = list(QueryCursor(q_properties).matches(self.cls))
         method_matches = list(QueryCursor(q_methods).matches(self.cls))
         enum_matches = list(QueryCursor(q_enumerations).matches(self.cls))
+        event_matches = list(QueryCursor(q_events).matches(self.cls))
 
         for _, prop_match in prop_matches:
             self._parse_property_section(prop_match)
@@ -748,6 +763,15 @@ class MatClassParser:
             self._parse_enum_section(enum_match)
         for _, method_match in method_matches:
             self._parse_method_section(method_match)
+        for _, event_match in event_matches:
+            attrs = self._parse_attributes(event_match.get("attrs"))
+            for event in event_match.get("events", ()):
+                name = node_text(event).decode(self.encoding, errors="backslashreplace")
+                self.events[name] = {
+                    "attrs": attrs,
+                    "docstring": member_help(event, self.encoding),
+                    "line": get_row(event.start_point) + 1,
+                }
 
     def _parse_property_section(self, props_match):
         properties = props_match.get("properties")
