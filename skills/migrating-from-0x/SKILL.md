@@ -138,7 +138,8 @@ and `:friend-members:` into `:access-list-members:`, and removes
 becomes `mat:currentfolder`, which documents nothing; check that the page
 documents the class or its files), names not found below the root, bare
 names it keeps as MATLAB names (after `.. module:: .`, say; they must be
-unique, or use a path reference), `exception` and `decorator` directives.
+unique, or use a path reference), `exception`, `decorator` and
+`classmethod` directives (use `mat:staticmethod` for a static method).
 It also reads directives inside Markdown block quotes (`> .. module::`).
 Pages that a generator writes are replaced in step 8 instead.
 
@@ -146,7 +147,7 @@ Old directives and removed options are errors that drop the object, yet the
 build exits 0 without `-W`. After the rewrite, nothing should match:
 
 ```console
-grep -rnE "(auto|current)?module::|:mat:mod:|:(special|inherited)-members:|mat:(auto)?(exception|decorator)" docs
+grep -rnE "(auto|current)?module::|:mat:mod:|:(special|inherited)-members:|mat:(auto)?(exception|decorator)|mat:classmethod" docs
 ```
 
 ## 7. Help text

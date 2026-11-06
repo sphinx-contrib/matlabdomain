@@ -161,11 +161,14 @@ def test_add_module_names_is_not_read(make_app, tmp_path):
     assert signature(app, "+pkg/g.m").astext() == "pkg.g()"
 
 
-def test_static_and_class_method_prefixes(make_app, tmp_path):
-    page = (
-        "Index\n=====\n\n.. mat:class:: Shape\n\n   .. mat:staticmethod:: make()\n\n"
-        "   .. mat:classmethod:: create()\n"
-    )
+def test_static_method_prefix(make_app, tmp_path):
+    page = "Index\n=====\n\n.. mat:class:: Shape\n\n   .. mat:staticmethod:: make()\n"
     app = build(make_app, tmp_path, page)
     assert signature(app, "Shape.m.make").astext() == "static make()"
-    assert signature(app, "Shape.m.create").astext() == "classmethod create()"
+
+
+def test_classmethod_directive_is_removed(make_app, tmp_path):
+    page = "Index\n=====\n\n.. mat:class:: Shape\n\n   .. mat:classmethod:: create()\n"
+    app = build(make_app, tmp_path, page)
+    assert "classmethod" not in app.env.get_domain("mat").object_types
+    assert 'Unknown directive type "mat:classmethod"' in app.warning.getvalue()

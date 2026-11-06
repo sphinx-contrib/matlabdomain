@@ -416,8 +416,6 @@ class MatClassmember(MatObject):
     def get_signature_prefix(self):
         if self.objtype == "staticmethod":
             return "static "
-        elif self.objtype == "classmethod":
-            return "classmethod "
         return ""
 
     def get_index_text(self, folder, name_cls):  # noqa: ARG002
@@ -425,7 +423,6 @@ class MatClassmember(MatObject):
         kind = {
             "method": translation("%s() (%s method)"),
             "staticmethod": translation("%s() (%s static method)"),
-            "classmethod": translation("%s() (%s class method)"),
             "attribute": translation("%s (%s attribute)"),
         }[self.objtype]
         clsname, _, member = name.rpartition(".")
@@ -636,7 +633,6 @@ class MATLABDomain(Domain):
         "data": ObjType(translation("data"), "data", "obj"),
         "class": ObjType(translation("class"), "class", "obj"),
         "method": ObjType(translation("method"), "meth", "obj"),
-        "classmethod": ObjType(translation("class method"), "meth", "obj"),
         "staticmethod": ObjType(translation("static method"), "meth", "obj"),
         "attribute": ObjType(translation("attribute"), "attr", "obj"),
         "folder": ObjType(translation("folder"), "folder", "obj"),
@@ -649,7 +645,6 @@ class MATLABDomain(Domain):
         "data": MatModulelevel,
         "class": MatClasslike,
         "method": MatClassmember,
-        "classmethod": MatClassmember,
         "staticmethod": MatClassmember,
         "attribute": MatClassmember,
         "folder": MatFolder,
@@ -694,7 +689,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 18
+    data_version = 19
     indices = [
         MATLABFolderIndex,
     ]

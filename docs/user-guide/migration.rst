@@ -99,6 +99,8 @@ Directives and roles
        ``:mat:class:``
    * - ``.. mat:decorator::``, ``.. mat:decoratormethod::``
      - removed (no MATLAB equivalent)
+   * - ``.. mat:classmethod::``
+     - ``.. mat:staticmethod::`` (MATLAB has no other class methods)
    * - ``:special-members:``, ``:inherited-members:``
      - removed (``:inherited-members:`` stopped every build that used it
        with an exception)
@@ -114,7 +116,7 @@ ones, before the first build:
 
 .. code-block:: console
 
-   $ grep -rnE "(auto|current)?module::|:mat:mod:|:(special|inherited)-members:|mat:(auto)?(exception|decorator)" docs
+   $ grep -rnE "(auto|current)?module::|:mat:mod:|:(special|inherited)-members:|mat:(auto)?(exception|decorator)|mat:classmethod" docs
 
 Names
 -----

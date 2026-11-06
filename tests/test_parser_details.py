@@ -150,6 +150,28 @@ def test_property_and_enumeration_help(tmp_path):
     }
 
 
+def test_attribute_value_forms(tmp_path):
+    # MATLAB R2026a and R2026b: ``~Name`` is ``Name = false``; a value is a
+    # logical expression, so ``0``, ``1`` and ``~true`` are logical values.
+    source = (
+        "classdef (~Sealed, Abstract = 0) Forms\n"
+        "properties (~Hidden, Constant = 1)\n    a\nend\n"
+        "properties (Hidden = ~true, Transient = ~false)\n    b\nend\n"
+        "properties (Hidden = 0x1, Access = ~private)\n    c\nend\n"
+        "methods (~Static, Access = protected)\n"
+        "    function m(obj)\n    end\n"
+        "end\nend\n"
+    )
+    obj = parse(tmp_path, "Forms", source)
+    assert obj.source_warnings == []
+    assert obj.attrs == {"Sealed": False, "Abstract": False}
+    assert obj.properties["a"]["attrs"] == {"Hidden": False, "Constant": True}
+    assert obj.properties["b"]["attrs"] == {"Hidden": False, "Transient": True}
+    # Other literals and expressions keep their text.
+    assert obj.properties["c"]["attrs"] == {"Hidden": "0x1", "Access": "~private"}
+    assert obj.methods["m"].attrs == {"Static": False, "Access": "protected"}
+
+
 @pytest.mark.parametrize(
     ("source", "help"),
     [

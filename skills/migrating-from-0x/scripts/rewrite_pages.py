@@ -35,7 +35,8 @@ REMOVED_OPTION = re.compile(r"^[\s>]*:(special-members|inherited-members):")
 FRIEND_OPTION = re.compile(r"^([\s>]*):friend-members:")
 MODINDEX = re.compile(r"(:ref:`(?:[^`<]*<)?)modindex(>?`)")
 REMOVED_DIRECTIVE = re.compile(
-    r"^[\s>]*(?:\.\. |```\{)(?:mat:)?(?:auto)?(?:exception|decorator|decoratormethod)\b"
+    r"^[\s>]*(?:\.\. |```\{)(?:mat:)?"
+    r"(?:(?:auto)?(?:exception|decorator|decoratormethod)|classmethod)\b"
 )
 ROLE = re.compile(
     r":(mat:)?(class|func|meth|attr|mod|obj|script|app|prop|exc):`([^`]+)`"

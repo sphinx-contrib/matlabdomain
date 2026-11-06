@@ -19,6 +19,23 @@ earlier" in the documentation.
 
 * Drop support for Python <=3.10.
 * Drop support for Sphinx <=7.x.
+* **Breaking:** the ``mat:classmethod`` directive is removed. MATLAB has no
+  class methods apart from static methods; use ``mat:staticmethod``. No
+  auto directive wrote it, so only hand-written pages change.
+* **Breaking:** a method in its own file of a class folder takes the
+  attributes of its signature in the ``classdef`` (``methods (Static)`` with
+  ``out = make(x)``): it is documented as ``mat:staticmethod`` when static,
+  ``mat:autoclass`` leaves it out when it is private, protected,
+  access-listed or hidden (unless an option adds it), and
+  ``matlab-api-check`` checks it only when it is public, counting the first
+  input of a static method. They were all public, non-static methods
+  before, so a page that links to such a method needs the option that
+  documents it (``:private-members:``, ...), and a static one is in the
+  inventory as ``mat:staticmethod``.
+* Attributes written ``~Hidden`` (``Hidden = false``) no longer make a class
+  fail to parse (it was documented without content), and logical values
+  written as numbers or with ``~`` (``Hidden = 0``, ``Static = ~true``) are
+  read as MATLAB reads them; they were read as ``true``.
 * **Breaking:** ``matlab_show_property_default_value`` and
   ``matlab_show_property_specs`` default to ``True``: properties show their
   default value, size, class and validators. Set them to ``False`` for the

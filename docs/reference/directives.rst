@@ -291,18 +291,6 @@ without a "reference target not found" warning.
 
       As for ``mat:function``.
 
-.. rst:directive:: .. mat:classmethod:: signature
-
-   A method shown with ``classmethod``. No auto directive writes it; it is
-   kept for hand-written documentation.
-
-   .. rst:directive:option:: noindex
-                             no-index
-                             annotation
-                             reference
-
-      As for ``mat:function``.
-
 .. rst:directive:: .. mat:attribute:: name
 
    A property or enumeration value.

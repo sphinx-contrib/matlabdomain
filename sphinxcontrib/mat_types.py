@@ -361,8 +361,8 @@ def _load_class_folder(dom, folder):
         method.__class__ = MatMethod
         method = cast(MatMethod, method)
         method.cls = cls
-        # TODO: Find the method attributes defined in classfolder class definition.
-        method.attrs = {}
+        # The attributes of its signature in the classdef; none if undeclared.
+        method.attrs = cls.declarations.get(method.name, {})
         method.from_class_folder = True
         cls.methods[method.name] = method
         dom.entities_table[ref] = method
@@ -1283,6 +1283,7 @@ def placeholder(kind, name, folder) -> Any:
     if cls is MatClass:
         obj.attrs, obj.bases, obj.properties = {}, [], {}
         obj.methods, obj.enumerations, obj.rem_tks = {}, {}, None
+        obj.declarations = {}
     elif cls is MatFunction:
         obj.retv, obj.args, obj.rem_tks = {}, {}, None
         obj.name_value = {}
@@ -1734,6 +1735,8 @@ class MatClass(MatObject):
             name: MatMethod(name, parsed_fun, modname, self)
             for (name, parsed_fun) in parsed_class.methods.items()
         }
+        #: attributes of the methods declared without a body, by name
+        self.declarations = parsed_class.declarations
         #:
         self.enumerations = parsed_class.enumerations
         #: remaining tokens after main class definition is parsed

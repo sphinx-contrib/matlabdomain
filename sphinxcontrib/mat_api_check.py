@@ -533,7 +533,9 @@ class _Checker:
             "line": getattr(obj, "line", None),
         }
         if isinstance(obj, mat_types.MatMethod):  # a function file of a class folder
-            self.method(where, obj, obj.cls.name, static=False)
+            # Its classdef signature gives Access, Hidden and Static.
+            if is_public(obj.attrs):
+                self.method(where, obj, obj.cls.name, bool(obj.attrs.get("Static")))
         elif isinstance(obj, mat_types.MatFunction):
             self.describe("description", where, "function", obj.docstring)
             self.example("example", where, "function", obj.docstring)

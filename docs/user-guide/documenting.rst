@@ -137,7 +137,11 @@ bysource``; the default is alphabetical):
 
 A class folder (``@Polygon/``) is documented through its class. Methods
 defined in their own files in the folder (``perimeter.m``) are members like
-the methods in the class file:
+the methods in the class file. A method whose signature the ``classdef``
+declares in a ``methods`` block (``methods (Static)`` with
+``out = make(x)``) has that block's attributes, so it is static, private,
+protected or hidden as declared; a method file without a declaration is
+public:
 
 .. literalinclude:: ../snippets/autoclass_folder.rst
    :language: rst

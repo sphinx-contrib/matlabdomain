@@ -105,6 +105,8 @@ q_attributes = Query(
     [
         (identifier) @value
         (string) @value
+        (number) @value
+        (not_operator) @value
         (metaclass_operator) @value
         (cell (row [(metaclass_operator) @value _]*))
         (cell (row [(string) @value _]*))
@@ -133,7 +135,7 @@ q_methods = Query(
     (attributes
         [(attribute) @attrs _]+
     )?
-    [(function_definition) @methods _]+
+    [(function_definition) @methods (function_signature) @signatures _]+
     ) @meth_block
 """,
 )
@@ -639,6 +641,9 @@ class MatClassParser:
         self.docstring = ""
         self.properties = {}
         self.methods = {}
+        #: attributes of the method signatures declared without a body
+        #: (implemented in class-folder files, or abstract), by name
+        self.declarations = {}
         self.enumerations = {}
 
         self.root_node = root_node
@@ -828,11 +833,16 @@ class MatClassParser:
             }
 
     def _parse_method_section(self, methods_match):
+        attrs_nodes = methods_match.get("attrs")
+        attrs = self._parse_attributes(attrs_nodes)
+        for signature in methods_match.get("signatures", ()):
+            name = signature.child_by_field_name("name")
+            self.declarations[
+                node_text(name).decode(self.encoding, errors="backslashreplace")
+            ] = attrs
         methods = methods_match.get("methods")
         if methods is None:
             return
-        attrs_nodes = methods_match.get("attrs")
-        attrs = self._parse_attributes(attrs_nodes)
         for method in methods:
             is_set_get = list(QueryCursor(q_get_set).matches(method))
             # Skip getter and setter
@@ -908,6 +918,14 @@ class MatClassParser:
         attrs = {}
         if attrs_nodes is not None:
             for attr_node in attrs_nodes:
+                first = attr_node.named_children[0]
+                if first.type == "not_operator":
+                    # ``~Hidden`` is ``Hidden = false``
+                    name = node_text(first.named_children[-1]).decode(
+                        self.encoding, errors="backslashreplace"
+                    )
+                    attrs[name] = False
+                    continue
                 attr_match = QueryCursor(q_attributes).captures(attr_node)
                 name = node_text(required_node(attr_match, "name")).decode(
                     self.encoding, errors="backslashreplace"
@@ -921,16 +939,23 @@ class MatClassParser:
                             for vn in value_node
                         ]
                     else:
-                        val = value_node[0].text.decode(
-                            self.encoding, errors="backslashreplace"
-                        )
-                        if val == "true":
-                            attrs[name] = True
-                        elif val == "false":
-                            attrs[name] = False
-                        else:
-                            attrs[name] = val
+                        attrs[name] = self._attribute_value(value_node[0])
                 else:
                     attrs[name] = MATLAB_ATTRIBUTE_DEFAULTS.get(name)
 
         return attrs
+
+    def _attribute_value(self, node):
+        """Return a logical value as a bool (``0``, ``~true``), else the text."""
+        text = node_text(node).decode(self.encoding, errors="backslashreplace")
+        if node.type == "not_operator":
+            inner = self._attribute_value(node.named_children[-1])
+            return not inner if isinstance(inner, bool) else text
+        if text in ("true", "false"):
+            return text == "true"
+        if node.type == "number":
+            try:
+                return float(text) != 0
+            except ValueError:  # a hexadecimal or binary literal
+                return text
+        return text
