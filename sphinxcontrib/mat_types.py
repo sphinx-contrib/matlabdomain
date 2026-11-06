@@ -1831,6 +1831,8 @@ class MatEnumeration(MatObject):
         super().__init__(name)
         self.cls = cls
         self.docstring = attrs["docstring"]
+        #: constructor arguments (``Red (1, 0, 0)``), or None
+        self.args = attrs.get("args")
 
     def ref_role(self):
         """Return the role used for references and automatic links"""

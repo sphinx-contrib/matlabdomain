@@ -167,6 +167,23 @@ def test_static_method_prefix(make_app, tmp_path):
     assert signature(app, "Shape.m.make").astext() == "static make()"
 
 
+def test_attribute_flags(make_app, tmp_path):
+    page = (
+        "Index\n=====\n\n.. mat:class:: Shape\n   :sealed:\n   :abstract:\n\n"
+        "   .. mat:staticmethod:: make()\n      :sealed:\n      :abstract:\n\n"
+        "   .. mat:attribute:: Area\n      :read-only:\n      :dependent:\n"
+        "      :constant:\n      :abstract:\n"
+    )
+    app = build(make_app, tmp_path, page)
+    assert app.warning.getvalue() == ""
+    assert signature(app, "Shape.m").astext() == "abstract sealed class Shape"
+    assert signature(app, "Shape.m.make").astext() == "abstract sealed static make()"
+    assert (
+        signature(app, "Shape.m.Area").astext()
+        == "abstract constant dependent read-only Area"
+    )
+
+
 def test_classmethod_directive_is_removed(make_app, tmp_path):
     page = "Index\n=====\n\n.. mat:class:: Shape\n\n   .. mat:classmethod:: create()\n"
     app = build(make_app, tmp_path, page)

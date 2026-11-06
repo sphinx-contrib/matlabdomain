@@ -225,6 +225,12 @@ class MatlabDocumenter(PyDocumenter):
             self.add_line("   :noindex:", sourcename)
         self.add_line(f"   :reference: {self.ref}", sourcename)
 
+    def add_flags(self, attrs, flags):
+        """Add the flag options (``:abstract:``) whose MATLAB attribute is set."""
+        for flag, attr in flags:
+            if attrs.get(attr):
+                self.add_line(f"   :{flag}:", self.get_sourcename())
+
     def add_content(self, more_content, no_docstring=False):
         """Add content from docstrings, attribute documentation and user."""
         sourcename = f"{HELP_SOURCE}{self.fullname}"
@@ -944,6 +950,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
     def add_directive_header(self, sig):
         MatlabDocumenter.add_directive_header(self, sig)
+        self.add_flags(
+            self.object.attrs, (("abstract", "Abstract"), ("sealed", "Sealed"))
+        )
 
         # add inheritance info, if wanted
         if self.options.show_inheritance:
@@ -1174,6 +1183,12 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
             self.directivetype = "method"
         return ret
 
+    def add_directive_header(self, sig):
+        super().add_directive_header(sig)
+        self.add_flags(
+            self.object.attrs, (("abstract", "Abstract"), ("sealed", "Sealed"))
+        )
+
     def format_args(self):
         """Format argument.
 
@@ -1230,6 +1245,23 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         return MatlabDocumenter.auto_link_all(self, docstrings)
 
 
+def is_read_only(attrs):
+    """Return True for a property whose set access is stricter than its read
+    access (``SetAccess = private``, ``immutable``, ...); not for constants.
+    """
+
+    def level(*names):
+        for name in names:
+            if (value := attrs.get(name)) is not None:
+                return value.strip("'\"") if isinstance(value, str) else value
+        return "public"
+
+    if attrs.get("Constant"):
+        return False
+    setter = level("SetAccess", "Access")
+    return setter != "public" and setter != level("GetAccess", "Access")
+
+
 class MatAttributeDocumenter(MatClassLevelDocumenter):
     """Specialized Documenter subclass for attributes (properties and
     enumeration values).
@@ -1265,8 +1297,24 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     def add_directive_header(self, sig):
         MatClassLevelDocumenter.add_directive_header(self, sig)
+        if isinstance(self.object, MatProperty):
+            attrs = self.object.attrs
+            self.add_flags(
+                {**attrs, "read-only": is_read_only(attrs)},
+                (
+                    ("abstract", "Abstract"),
+                    ("constant", "Constant"),
+                    ("dependent", "Dependent"),
+                    ("read-only", "read-only"),
+                ),
+            )
         if not self.options.annotation:
-            if not self._datadescriptor:
+            if isinstance(self.object, MatEnumeration):
+                # its constructor arguments
+                args = self.object.args
+                if args and self.env.config.matlab_show_property_default_value:
+                    self.add_line(f"   :annotation: ({', '.join(args)})", "<autodoc>")
+            elif not self._datadescriptor:
                 obj_default = ""
                 if self.env.config.matlab_show_property_default_value:
                     obj_default = self.object.default

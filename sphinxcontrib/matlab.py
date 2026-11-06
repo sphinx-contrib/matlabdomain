@@ -219,6 +219,13 @@ class MatObject(ObjectDescription):
         """May return a prefix to put before the object name in the signature."""
         return ""
 
+    def flag_prefix(self):
+        """Return the attribute flags given as options (``:abstract:``) as a prefix."""
+        return "".join(f"{flag} " for flag in self.flags if flag in self.options)
+
+    #: attribute flag options, in the order of the signature prefix
+    flags: tuple[str, ...] = ()
+
     def needs_arglist(self):
         """May return true if an empty argument list is to be generated even if
         the document contains none.
@@ -377,6 +384,9 @@ class MatModulelevel(MatObject):
 class MatClasslike(MatObject):
     """Description of a class."""
 
+    flags = ("abstract", "sealed")
+    option_spec = {**MatObject.option_spec, **dict.fromkeys(flags, directives.flag)}
+
     def _object_hierarchy_parts(self, sig):
         """Return a tuple of strings, one entry for each part of the object's \
            hierarchy (e.g. ``('package', 'Class')``).
@@ -394,7 +404,7 @@ class MatClasslike(MatObject):
         return mat_naming.split_display(sig.attributes.get("fullname"))[1]
 
     def get_signature_prefix(self):
-        return f"{self.objtype} "
+        return f"{self.flag_prefix()}{self.objtype} "
 
     def get_index_text(self, folder, name_cls):
         return translation("%s (class in %s)") % (name_cls[1], folder)
@@ -414,9 +424,8 @@ class MatClassmember(MatObject):
         return self.objtype.endswith("method")
 
     def get_signature_prefix(self):
-        if self.objtype == "staticmethod":
-            return "static "
-        return ""
+        static = "static " if self.objtype == "staticmethod" else ""
+        return f"{self.flag_prefix()}{static}"
 
     def get_index_text(self, folder, name_cls):  # noqa: ARG002
         name = name_cls[1]
@@ -438,6 +447,20 @@ class MatClassmember(MatObject):
                 cls = (ref.rpartition(".")[0], display.rpartition(".")[0])
                 self.env.temp_data["mat:class"] = cls
                 self.clsname_set = True
+
+
+class MatMethodlike(MatClassmember):
+    """Description of a method."""
+
+    flags = ("abstract", "sealed")
+    option_spec = {**MatObject.option_spec, **dict.fromkeys(flags, directives.flag)}
+
+
+class MatAttributelike(MatClassmember):
+    """Description of a property or enumeration value."""
+
+    flags = ("abstract", "constant", "dependent", "read-only")
+    option_spec = {**MatObject.option_spec, **dict.fromkeys(flags, directives.flag)}
 
 
 class MatFolder(MatObject):
@@ -644,9 +667,9 @@ class MATLABDomain(Domain):
         "function": MatModulelevel,
         "data": MatModulelevel,
         "class": MatClasslike,
-        "method": MatClassmember,
-        "staticmethod": MatClassmember,
-        "attribute": MatClassmember,
+        "method": MatMethodlike,
+        "staticmethod": MatMethodlike,
+        "attribute": MatAttributelike,
         "folder": MatFolder,
         "currentfolder": MatCurrentFolder,
         "script": MatModulelevel,
@@ -689,7 +712,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 19
+    data_version = 20
     indices = [
         MATLABFolderIndex,
     ]

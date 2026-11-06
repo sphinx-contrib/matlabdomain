@@ -200,7 +200,8 @@ How things are shown
 --------------------
 
 * :confval:`matlab_show_property_default_value` (default ``True``): show a
-  property's default value after its name (``Radius = 1``).
+  property's default value after its name (``Radius = 1``), and the
+  constructor arguments of an enumeration value (``Red (1, 0, 0)``).
 * :confval:`matlab_show_property_specs` (default ``True``): show a
   property's size, class and validators (``Radius (1,1) double
   {mustBePositive}``).
@@ -269,7 +270,7 @@ These Sphinx and autodoc settings apply too:
 * ``add_function_parentheses``: ``()`` after function and method links.
   Sphinx's ``add_module_names`` is not read; use
   :confval:`matlab_add_namespace_names`.
-* ``suppress_warnings``: see :doc:`warnings`. Use this to suppress some warnings 
+* ``suppress_warnings``: see :doc:`warnings`. Use this to suppress some warnings
   during the build.
 * The events ``autodoc-process-docstring`` and ``autodoc-skip-member`` are
   emitted for MATLAB objects too, so extensions such as

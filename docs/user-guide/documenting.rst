@@ -123,9 +123,17 @@ constructor, properties, enumeration values and methods, in sections:
   private method ``check``.
 * ``:members: area, Radius`` documents only the named members;
   ``:exclude-members: unit`` leaves out the named ones.
-* Static methods are marked ``static``. ``get.``/``set.`` property methods,
-  abstract methods (declared without a body) and converter methods with
-  dotted names are not documented.
+* The signatures show the attributes a reader needs: ``abstract`` and
+  ``sealed`` classes and methods, ``static`` methods, ``abstract``,
+  ``constant``, ``dependent`` and ``read-only`` properties (``read-only``:
+  ``SetAccess`` is stricter than the read access, as with ``SetAccess =
+  immutable``), and the constructor arguments of enumeration values
+  (``Red (1, 0, 0)``; :confval:`matlab_show_property_default_value` turns
+  them off with the property defaults).
+* Abstract methods (declared without a body) are documented; their help is
+  found as for properties: a comment on the line, or a comment block right
+  above or below it. ``get.``/``set.`` property methods and converter
+  methods with dotted names are not documented.
 
 Enumeration values, here in the order of the file (``:member-order:
 bysource``; the default is alphabetical):

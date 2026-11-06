@@ -57,7 +57,8 @@ files :confval:`matlab_api_check_files` selects, see
 * public methods: methods without ``Access = private``, ``protected`` or an
   access list, and not ``Hidden``, including static methods and
   constructors. ``get.``/``set.`` methods, converter methods with dotted
-  names and abstract methods are not checked;
+  names and abstract methods (MATLAB's ``help`` shows no text for them) are
+  not checked;
 * public properties of classes: without ``Access`` (or, without it,
   ``GetAccess``) ``private``, ``protected`` or an access list, and not
   ``Hidden``; constant and dependent properties included.

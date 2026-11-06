@@ -631,6 +631,58 @@ class MatFunctionParser:
         return attrs
 
 
+class MatSignature:
+    """A method signature declared without a body (an abstract method).
+
+    Its help is found as for a property: a comment on its line, or a comment
+    block right above or below it.
+    """
+
+    def __init__(self, cls, node, name, attrs):
+        def text(n):
+            return node_text(n).decode(cls.encoding, errors="backslashreplace")
+
+        self.name = name
+        self.attrs = attrs
+        self.line = get_row(node.start_point) + 1
+        self.name_value = {}
+        self.retv = {}
+        self.args = {}
+        for child in node.named_children:
+            if child.type == "function_output":
+                out = child.named_children[0]
+                outs = (
+                    out.named_children if out.type == "multioutput_variable" else [out]
+                )
+                self.retv = {text(n): {} for n in outs}
+            elif child.type == "function_arguments":
+                self.args = {text(n): {} for n in child.named_children}
+        docstring = ""
+        after = node.next_named_sibling
+        if after is not None and after.type == "comment":
+            gap = get_row(after.start_point) - get_row(node.end_point)
+            if gap == 0:
+                docstring = process_text_into_docstring(after.text, cls.encoding)
+                docstring = docstring.split("\n")[0]
+            elif gap == 1:
+                docstring = process_text_into_docstring(after.text, cls.encoding)
+        before = node.prev_named_sibling
+        if (
+            before is not None
+            and before.type == "comment"
+            and get_row(node.start_point) - get_row(before.end_point) <= 1
+        ):
+            ds = process_text_into_docstring(before.text, cls.encoding)
+            prev = before.prev_named_sibling
+            if prev is not None and get_row(before.start_point) == get_row(
+                prev.end_point
+            ):
+                ds = "\n".join(ds.split("\n")[1:])
+            if ds:
+                docstring = ds
+        self.docstring = docstring if docstring.strip() else None
+
+
 class MatClassParser:
     def __init__(self, root_node, encoding):
         # DATA
@@ -837,9 +889,10 @@ class MatClassParser:
         attrs = self._parse_attributes(attrs_nodes)
         for signature in methods_match.get("signatures", ()):
             name = signature.child_by_field_name("name")
-            self.declarations[
-                node_text(name).decode(self.encoding, errors="backslashreplace")
-            ] = attrs
+            name = node_text(name).decode(self.encoding, errors="backslashreplace")
+            self.declarations[name] = attrs
+            if attrs.get("Abstract"):
+                self.methods[name] = MatSignature(self, signature, name, attrs)
         methods = methods_match.get("methods")
         if methods is None:
             return

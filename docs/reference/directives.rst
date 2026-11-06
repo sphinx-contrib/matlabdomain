@@ -269,6 +269,12 @@ without a "reference target not found" warning.
 
       As for ``mat:function``.
 
+   .. rst:directive:option:: abstract
+                             sealed
+
+      Show the MATLAB class attribute before ``class`` (``abstract class
+      Shape``). ``mat:autoclass`` sets them from the ``classdef``.
+
 .. rst:directive:: .. mat:method:: signature
 
    A method, inside ``mat:class`` or named ``Cls.method``.
@@ -280,6 +286,12 @@ without a "reference target not found" warning.
 
       As for ``mat:function``.
 
+   .. rst:directive:option:: abstract
+                             sealed
+
+      Show the MATLAB method attribute before the name (``abstract
+      area()``). The auto directives set them from the ``methods`` block.
+
 .. rst:directive:: .. mat:staticmethod:: signature
 
    A static method, shown with ``static``.
@@ -288,8 +300,10 @@ without a "reference target not found" warning.
                              no-index
                              annotation
                              reference
+                             abstract
+                             sealed
 
-      As for ``mat:function``.
+      As for ``mat:method``.
 
 .. rst:directive:: .. mat:attribute:: name
 
@@ -301,6 +315,17 @@ without a "reference target not found" warning.
                              reference
 
       As for ``mat:function``.
+
+   .. rst:directive:option:: abstract
+                             constant
+                             dependent
+                             read-only
+
+      Show the property attribute before the name (``constant Max = 10``).
+      The auto directives set them from the ``properties`` block;
+      ``read-only`` when ``SetAccess`` (or ``Access``) is stricter than the
+      read access (``SetAccess = private``, ``immutable``, ...), except for
+      constants.
 
 .. rst:directive:: .. mat:script:: name
 

@@ -106,7 +106,8 @@ Output
    :default: ``True``
 
    Show a property's default value after its name. A default that spans
-   lines is shortened to its first and last line.
+   lines is shortened to its first and last line. Also shows the
+   constructor arguments of an enumeration value (``Red (1, 0, 0)``).
 
 .. confval:: matlab_show_property_specs
    :type: ``bool``

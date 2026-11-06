@@ -490,9 +490,12 @@ class _Checker:
                     "has no description: no comment above, after or below it",
                 )
         for mname, method in cls.methods.items():
-            # A class-folder method is checked through its own file.
-            if getattr(method, "from_class_folder", False) or not is_public(
-                method.attrs
+            # A class-folder method is checked through its own file; MATLAB's
+            # help shows no text for an abstract method.
+            if (
+                getattr(method, "from_class_folder", False)
+                or method.attrs.get("Abstract")
+                or not is_public(method.attrs)
             ):
                 continue
             ref = f"{where['reference']}.{mname}"

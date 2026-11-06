@@ -38,6 +38,17 @@ earlier" in the documentation.
 * ``matlab-api-check`` does not check a ``Hidden`` class or its members (it
   counts the class as ``hidden`` in the report), as for ``Hidden``
   members.
+* Signatures show MATLAB attributes: ``abstract`` and ``sealed`` classes and
+  methods; ``abstract``, ``constant``, ``dependent`` and ``read-only``
+  properties (``SetAccess`` stricter than the read access). New flag
+  options of ``mat:class``, ``mat:method``, ``mat:staticmethod`` and
+  ``mat:attribute`` (``:abstract:``, ``:sealed:``, ``:constant:``,
+  ``:dependent:``, ``:read-only:``); the auto directives set them.
+* Abstract methods (declared without a body) are documented, marked
+  ``abstract``, with their help found as for properties. ``matlab-api-check``
+  does not check them: MATLAB's ``help`` shows no text for them.
+* Enumeration values show their constructor arguments (``Red (1, 0, 0)``)
+  when :confval:`matlab_show_property_default_value` is true.
 * Attributes written ``~Hidden`` (``Hidden = false``) no longer make a class
   fail to parse (it was documented without content), and logical values
   written as numbers or with ``~`` (``Hidden = 0``, ``Static = ~true``) are
