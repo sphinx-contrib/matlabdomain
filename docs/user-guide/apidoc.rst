@@ -251,6 +251,9 @@ folder or file name become ``~XX`` per UTF-8 byte (``my folder`` becomes
 ``my~20folder``), so names are safe in URLs on every system. Windows device
 names (``CON``, ``NUL``, ...) and sibling folders whose names differ only by
 case are escaped too, the latter with a ``mat.apidoc`` warning.
+If a folder would have the same output path as a generated page file, its
+last dot is escaped too: ``guide-md.rst/`` next to ``guide.md`` becomes
+``guide-md~2Erst/``, leaving ``guide-md.rst`` for the sidecar page.
 
 Running it again
 ----------------

@@ -79,8 +79,16 @@ documentation's sample project:
 
 .. mat:autosidecar:: +shapes/notes.rst
 
-Use ``mat:autosidecar`` in reST documents; in a Markdown document, a reST
-sidecar doc would be read as Markdown.
+In reST documents, ``mat:autosidecar`` supports both sidecar formats.
+Markdown sidecars also work directly in MyST documents. For a reST sidecar
+in a MyST document, use an ``eval-rst`` block; otherwise MyST reads the
+sidecar's contents as Markdown:
+
+.. code-block:: markdown
+
+   ```{eval-rst}
+   .. mat:autosidecar:: +demo/notes.rst
+   ```
 
 Paths and links
 ---------------
@@ -91,7 +99,8 @@ Relative paths in a sidecar doc are relative to its folder, as on GitHub:
   downloads (``:download:``) are copied into the output;
 * ``literalinclude`` and ``include`` read files next to the sidecar doc.
 
-In Markdown, a relative link goes to:
+A relative link written in Markdown (``[notes](notes.rst)``) or as a reST
+hyperlink (```notes <notes.rst>`_``) goes to:
 
 * another sidecar doc: the document that renders it, with its title when
   the link has no text (``[](notes.rst)``); an anchor (``notes.rst#usage``)
@@ -100,7 +109,7 @@ In Markdown, a relative link goes to:
 * a code file (``[](scale.m)``, ``[the class](@Shape/Shape.m)``): its API
   entry, with its MATLAB name when the link has no text;
 * any other file: a download;
-* anything else: myst-parser decides, as in any Markdown document.
+* anything else: the document's parser decides.
 
 The domain's roles work in sidecar docs: ``:mat:func:`demo.scale``` in reST,
 ``{mat:func}`demo.scale``` in Markdown. ``:mat:sidecar:`` links to a sidecar

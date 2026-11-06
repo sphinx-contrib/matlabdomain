@@ -865,7 +865,10 @@ class MATLABDomain(Domain):
         self._displays = self._stable_urls = None
         self._sidecar_docs = None
 
-    def process_doc(self, env, docname, document):  # noqa: ARG002
+    def process_doc(self, env, docname, document):
+        if slugs := document.get("matlab_sidecar_slugs"):
+            metadata = env.metadata[docname]
+            metadata["myst_slugs"] = {**slugs, **metadata.get("myst_slugs", {})}
         if any(
             node.get("refdomain") == "mat" or node.get("reftype") == "any"
             for node in document.findall(addnodes.pending_xref)

@@ -312,8 +312,8 @@ def _folder_pages(source_index, options):
     for folder, members in collisions:
         _warn(
             f"the output names of {', '.join(members)} in "
-            f"{folder or 'the output folder'}/ differ only by case; their "
-            "uppercase letters are escaped as ~XX."
+            f"{folder or 'the output folder'}/ are equal or differ only by case; "
+            "conflicting characters are escaped as ~XX."
         )
     # Other top-level names are folders (``x/index``) or have a suffix.
     names[ROOT_REFERENCE] = ROOT_FOLDER_DOCNAME

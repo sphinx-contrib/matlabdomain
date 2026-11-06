@@ -217,6 +217,20 @@ class _Relative:
         for node, key, kind in _path_nodes(tree):
             self.rewrite_node(node, key, kind)
 
+    def rewrite_hyperlink(self, ref):
+        """Resolve a hyperlink to a sidecar doc, code file or download."""
+        target = ref.get("refuri")
+        if not target:
+            return
+        found = self.link(target, ref.line or get_source_line(ref)[1])
+        if found is None:
+            return
+        node = found[0]
+        node["refdoc"] = self.dom.env.docname
+        node["refexplicit"] = True
+        node += nodes.inline("", "", *ref.children)
+        ref.replace_self(node)
+
     def rewrite_node(self, node, key, kind):
         target = node[key]
         if _external(target):
@@ -235,6 +249,14 @@ class _Sidecar(_Relative):
     def __init__(self, ref, path, srcdir, dom):
         super().__init__(os.path.dirname(path), srcdir, dom)
         self.ref, self.path = ref, path
+
+    def rewrite(self, tree):
+        """Also resolve this sidecar doc's relative hyperlinks."""
+        super().rewrite(tree)
+        for ref in list(tree.findall(nodes.reference)):
+            # Nested sidecar docs and help text resolve their own links.
+            if get_source_line(ref)[0] == self.path:
+                self.rewrite_hyperlink(ref)
 
 
 def _path_nodes(tree):
@@ -323,17 +345,8 @@ class HelpPaths:
         """Turn a relative hyperlink to a sidecar doc or code file into a
         reference to it, to another file into a download.
         """
-        target = ref.get("refuri")
-        if not target or (rel := self.at(get_source_line(ref)[0])) is None:
-            return
-        found = rel.link(target, ref.line)
-        if found is None:
-            return
-        node = found[0]
-        node["refdoc"] = self.env.docname
-        node["refexplicit"] = True
-        node += nodes.inline("", "", *ref.children)
-        ref.replace_self(node)
+        if (rel := self.at(get_source_line(ref)[0])) is not None:
+            rel.rewrite_hyperlink(ref)
 
 
 @functools.cache
@@ -375,6 +388,9 @@ def _renderer_class():
             # The word count is the document's (a MyST document adds its own);
             # heading slugs add to those of sidecar docs rendered before.
             self.md_env.pop("wordcount", None)
+            self.document.setdefault("matlab_sidecar_slugs", {}).update(
+                self._heading_slugs
+            )
             earlier = getattr(self.document, "myst_slugs", None) or {}
             self._heading_slugs = {**earlier, **self._heading_slugs}
             super()._render_finalise()

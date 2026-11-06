@@ -221,8 +221,9 @@ Sidecar docs
    gets its file name as title, with a ``mat.sidecar`` warning. Relative
    paths in it are relative to its folder. A reference that is not an
    indexed sidecar doc writes nothing, with a ``mat.sidecar`` warning. Use
-   it in reST documents (in a Markdown document, a reST sidecar doc would be
-   read as Markdown).
+   it in reST documents. In a Markdown document, wrap a reST sidecar's
+   directive in a MyST ``eval-rst`` block; otherwise its contents are read
+   as Markdown (see :doc:`../user-guide/sidecars`).
 
    .. rst:directive:option:: no-title
 

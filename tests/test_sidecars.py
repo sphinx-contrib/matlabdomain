@@ -422,6 +422,60 @@ def test_sidecars_render(make_app, project):
     ]
 
 
+def test_rst_sidecar_relative_hyperlinks(make_app, project):
+    write(
+        project,
+        {
+            "src/+demo/links.rst": "Links\n=====\n\n"
+            "`notes <notes.rst#section-two>`_, `scale <scale.m>`_,\n"
+            "`data <img/plot.png>`_, `missing <later.rst>`_,\n"
+            "`external <https://example.com>`_.\n",
+            "docs/links.rst": ":orphan:\n\n.. mat:autosidecar:: +demo/links.rst\n",
+        },
+    )
+    docs = project / "docs"
+    app = build(make_app, docs)
+    body = html(app, "links")
+    assert 'href="api/%2Bdemo/notes-rst.html#section-two"' in body
+    assert 'href="api/%2Bdemo/index.html#mat-+demo/scale.m"' in body
+    assert "_downloads/" in body
+    assert 'href="https://example.com"' in body
+    issues = app.env.get_domain("mat").data["sidecar_issues"]["links"]
+    assert issues == [("+demo/links.rst", "link", "later.rst", 4)]
+    assert str(project / "src" / "+demo" / "later.rst") in {
+        str(path) for path in app.env.dependencies["links"]
+    }
+    app.cleanup()
+    write(project, {"src/+demo/later.rst": "Later\n=====\n"})
+    app = build(make_app, docs)
+    assert "links" in read_docs(app)
+    assert app.env.get_domain("mat").data["sidecar_issues"]["links"] == []
+
+
+def test_outer_sidecar_leaves_nested_links_alone(make_app, project):
+    write(
+        project,
+        {
+            "src/outer/outer.rst": "Outer\n=====\n\n"
+            ".. mat:autosidecar:: +demo/inner.rst\n\n"
+            ".. mat:autofunction:: +demo/helped.m\n",
+            "src/outer/gone.rst": "Decoy\n=====\n",
+            "src/outer/help-gone.rst": "Help decoy\n==========\n",
+            "src/+demo/inner.rst": "Inner\n=====\n\n`gone <gone.rst>`_.\n",
+            "src/+demo/helped.m": "function helped\n"
+            "%HELPED See `help gone <help-gone.rst>`_.\nend\n",
+            "docs/nested.rst": ":orphan:\n\n.. mat:autosidecar:: outer/outer.rst\n",
+        },
+    )
+    app = build(make_app, project / "docs")
+    body = html(app, "nested")
+    assert 'href="gone.rst"' in body
+    assert 'href="help-gone.rst"' in body
+    assert app.env.get_domain("mat").data["sidecar_issues"]["nested"] == [
+        ("+demo/inner.rst", "link", "gone.rst", 4)
+    ]
+
+
 def test_autosidecar_problems(make_app, project, monkeypatch):
     docs = project / "docs"
     write(
@@ -523,10 +577,57 @@ def test_autosidecar_in_a_markdown_document(make_app, project):
     assert "wordcount" not in app.warning.getvalue()
 
 
+@pytest.mark.parametrize("eval_rst", [False, True])
+def test_rst_sidecar_in_markdown_needs_eval_rst(make_app, project, eval_rst):
+    directive = (
+        "```{eval-rst}\n.. mat:autosidecar:: +demo/rst.rst\n```\n"
+        if eval_rst
+        else "```{mat:autosidecar} +demo/rst.rst\n```\n"
+    )
+    write(
+        project,
+        {
+            "src/+demo/rst.rst": "RST title\n=========\n\n"
+            ".. note::\n\n   A reST note.\n",
+            "docs/md.md": "---\norphan: true\n---\n\n# Host\n\n" + directive,
+        },
+    )
+    app = build(make_app, project / "docs")
+    body = html(app, "md")
+    assert ('class="admonition note"' in body) == eval_rst
+    assert (".. note::" in body) != eval_rst
+
+
 def test_heading_slugs_name_sections(make_app, project):
     app = build(make_app, project / "docs", myst_heading_anchors=2)
     # GitHub's slug foo_bar; the section's id is foo-bar.
     assert 'href="../guide-md.html#foo-bar"' in html(app, "api/+demo/sub/deep-md")
+
+
+def test_markdown_host_keeps_sidecar_heading_slugs(make_app, project):
+    write(
+        project,
+        {
+            "src/+demo/embedded.md": "# Embedded\n\n## Inner_heading\n\nText.\n",
+            "src/+demo/second.md": "# Second\n\n## Second_heading\n\nText.\n",
+            "src/+demo/linked.md": "# Links\n\n"
+            "[inner](embedded.md#inner_heading), [second](second.md#second_heading).\n",
+            "docs/md.md": "---\norphan: true\n---\n\n# Host_title\n\n"
+            "```{mat:autosidecar} +demo/embedded.md\n```\n\n"
+            "```{mat:autosidecar} +demo/second.md\n```\n\n"
+            "## Host_section\n\nText.\n",
+            "docs/linked.rst": ":orphan:\n\n.. mat:autosidecar:: +demo/linked.md\n",
+        },
+    )
+    app = build(make_app, project / "docs", myst_heading_anchors=2)
+    body = html(app, "linked")
+    assert 'href="md.html#inner-heading"' in body
+    assert 'href="md.html#second-heading"' in body
+    slugs = app.env.metadata["md"]["myst_slugs"]
+    assert slugs["inner_heading"][1] == "inner-heading"
+    assert slugs["second_heading"][1] == "second-heading"
+    assert slugs["host_title"][1] == "host-title"
+    assert slugs["host_section"][1] == "host-section"
 
 
 def test_missing_link_target_is_a_dependency(make_app, project):
@@ -706,6 +807,40 @@ def test_stub_reference():
     assert stub_reference("guide.md.rst") == "guide.md-rst"
 
 
+@pytest.mark.parametrize(
+    ("source", "content", "folder", "output"),
+    [
+        ("guide.md", "# Guide\n", "guide-md.rst", "guide-md~2Erst"),
+        ("Cls.m", "classdef Cls\nend\n", "Cls.m.rst", "Cls.m~2Erst"),
+    ],
+)
+def test_apidoc_file_folder_collisions_build(
+    make_app, tmp_path, source, content, folder, output
+):
+    write(
+        tmp_path,
+        {
+            "docs/conf.py": CONF
+            + 'matlab_apidoc_output_dir = "api"\n'
+            + 'matlab_apidoc_group = "folder"\n'
+            + "matlab_apidoc_separate = True\n",
+            "docs/index.rst": "Index\n=====\n\n.. toctree::\n\n   api/index\n",
+            f"src/+demo/{source}": content,
+            f"src/+demo/{folder}/child.md": "# Child\n",
+            f"src/+demo/{folder.replace('.', '~2E')}/other.md": "# Other\n",
+        },
+    )
+    docs = tmp_path / "docs"
+    assert main(["-q", "-c", str(docs)]) == 0
+    assert (docs / "api" / "+demo" / output / "child-md.rst").is_file()
+    page = source if source.endswith(".m") else stub_reference(source)
+    assert (docs / "api" / "+demo" / f"{page}.rst").is_file()
+    assert main(["-q", "--check", "-c", str(docs)]) == 0
+    app = build(make_app, docs)
+    assert warnings(app) == []
+    assert app.env.titles[f"api/+demo/{output}/child-md"].astext() == "Child"
+
+
 def test_apidoc_sidecar_model(tmp_path):
     root = tmp_path / "root"
     write(
@@ -820,6 +955,24 @@ def test_apidoc_layout_error(project, capsys):
 
 
 # --- matlab-api-check ---------------------------------------------------------
+
+
+def test_api_check_rst_sidecar_links(make_app, tmp_path):
+    write(
+        tmp_path,
+        {
+            "docs/conf.py": CONF,
+            "docs/index.rst": ".. mat:autosidecar:: guide.rst\n",
+            "src/guide.rst": "Guide\n=====\n\n`missing <missing.rst>`_.\n",
+        },
+    )
+    app = build(make_app, tmp_path / "docs", "matlab-api-check")
+    assert app.statuscode == 1
+    report = json.loads((Path(app.outdir) / "api-check.json").read_text("utf-8"))
+    assert [
+        (finding["reference"], finding["rule"], finding["message"])
+        for finding in report["findings"]
+    ] == [("guide.rst", "sidecar-links", "links to a missing file: missing.rst")]
 
 
 def test_api_check_sidecars(make_app, project):

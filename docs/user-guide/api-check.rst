@@ -137,8 +137,8 @@ The rules
    * - ``sidecar-links``
      - error
      - sidecar docs
-     - every relative link (Markdown) and download points to a file, and
-       every image exists, relative to the sidecar doc's folder
+     - every relative link (Markdown or reST) and download points to a file,
+       and every image exists, relative to the sidecar doc's folder
 
 * Inputs are the named inputs, except ``~``, the object of a method that is
   neither static nor a constructor, and the structure that holds name-value
@@ -150,8 +150,7 @@ The rules
   ``inputParser``) are not detected.
 * ``sidecar-links`` looks at the sidecar docs as they were rendered, so one
   that no ``mat:autosidecar`` renders gets only a ``sidecar-documented``
-  finding. Links in reST sidecar docs written as ```text <path>`_`` are not
-  checked.
+  finding. It checks target files, not section anchors.
 
 Comments in ``arguments`` blocks count as documentation, although MATLAB's
 ``help`` does not show them, and neither does the HTML documentation:

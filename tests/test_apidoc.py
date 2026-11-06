@@ -225,6 +225,30 @@ def test_docnames_avoid_the_page_name():
     assert collisions == [("", ["api.m"]), ("a", ["index.rst/"])]
 
 
+@pytest.mark.parametrize("suffix", ["rst", "txt"])
+@pytest.mark.parametrize("stem", ["guide-md", "Cls.m"])
+def test_docnames_avoid_file_folder_collisions(suffix, stem):
+    folder = f"{stem}.{suffix}"
+    literal = f"{stem}~2E{suffix}/"
+    refs = ["./", stem, f"{folder}/", f"{folder}/child.m", literal]
+    names, collisions = _names.docnames(refs, suffix=suffix)
+    assert names[stem] == stem
+    page_file = f"{names[stem]}.{suffix}"
+    output_folder = names[f"{folder}/"].rsplit("/", 1)[0]
+    assert page_file.lower() != output_folder.lower()
+    assert output_folder.lower() != names[literal].rsplit("/", 1)[0].lower()
+    assert names[f"{folder}/child.m"] == f"{output_folder}/child.m"
+    assert collisions == [("", sorted([stem, f"{folder}/"]))]
+    assert _names.docnames(reversed(refs), suffix=suffix) == (names, collisions)
+
+
+def test_docnames_keep_case_only_file_folder_names():
+    names, collisions = _names.docnames(["./", "Cls.m", "cls.m.rst/", "cls.m.rst/x.m"])
+    assert names["Cls.m"] == "~43ls.m"
+    assert names["cls.m.rst/x.m"] == "cls.m.rst/x.m"
+    assert collisions == [("", ["Cls.m", "cls.m.rst/"])]
+
+
 def test_docnames_are_injective_and_case_insensitive_unique():
     segments = [
         "a b", "a~20b", "a%20b", "~", "~7E", "aux", "~61ux", "AUX", "Aux",
