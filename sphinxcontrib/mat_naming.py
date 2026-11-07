@@ -525,10 +525,12 @@ def form_matlab_name(
 
 
 def _model_folder_problem(parts: list[str]) -> str | None:
-    # Simulink:Commands:UnsuitableModelFileLocation (R2024a-R2026b)
-    if any(part == "private" or part.startswith("@") for part in parts):
+    # Simulink:Commands:UnsuitableModelFileLocation (R2024a-R2026b) checks the
+    # file's own folder only: private/sub/ and @C/sub/ load.
+    last = parts[-1] if parts else ""
+    if last == "private" or last.startswith("@"):
         return "Simulink cannot load models in private or class folders"
-    if any("*" in part for part in parts):
+    if "*" in last:
         return "Simulink cannot load models in folders with * in their names"
     return None
 
@@ -546,7 +548,10 @@ def form_model_name(
     that is no keyword and at most ``namelengthmax`` long, in the global
     namespace only: Simulink cannot run or reference a model in a namespace
     folder by name (R2026a and R2026b load ``pkg.model``, but ``sim`` and
-    Model blocks refuse it); nothing in ``private/`` or class folders loads.
+    Model blocks refuse it). Nothing directly in ``private/`` or a class
+    folder loads, even by path; their subfolders are plain folders in every
+    release (``.m`` files in ``@C/sub/`` are not callable from R2026a,
+    models there still load).
     """
     validate_namelengthmax(namelengthmax)
     validate_matlab_version(matlab_version)
@@ -556,18 +561,16 @@ def form_model_name(
     stem = Path(filename).stem
     if not is_valid_identifier(stem, namelengthmax, allow_keywords=False):
         return None
-    location = _location(parts, namelengthmax, matlab_version)
-    if location is None or location[0] == "package":
+    if parts[-1].startswith("+"):
         # A release that runs namespace models would name them pkg.model here.
         return None
-    return MatlabName(stem, "", stem, location[2])
+    return MatlabName(stem, "", stem, _join_parts(parts))
 
 
 def model_not_callable_reason(
     folder: str,
     filename: str,
     namelengthmax: int,
-    matlab_version: str = DEFAULT_MATLAB_VERSION,
 ) -> str:
     """Says why ``form_model_name`` returns None."""
     parts = _split_folder(folder)
@@ -577,6 +580,4 @@ def model_not_callable_reason(
     stem = Path(filename).stem
     if not is_valid_identifier(stem, namelengthmax, allow_keywords=False):
         return f"its name {stem!r} {_name_problem(stem, namelengthmax)}"
-    if _location(parts, namelengthmax, matlab_version) is not None:
-        return "Simulink runs and references models only from the global namespace"
-    return not_callable_reason(folder, filename, False, namelengthmax, matlab_version)
+    return "Simulink runs and references models only from the global namespace"

@@ -103,7 +103,7 @@ def test_bad_settings_are_not_updated(make_app, tmp_path, text):
     root = project(tmp_path, text)
     app = build(make_app, root)
     assert "is not a JSON object" in app.warning.getvalue()
-    assert "[mat.simulink_linker]" in app.warning.getvalue()
+    assert "[mat.simulink_documentation_linker_json]" in app.warning.getvalue()
     path = root / "+sphinxcontrib" / "+matlabdomain" / _linker.NAME
     assert path.read_text() == text
     assert state(root) == {"mode": "local"}

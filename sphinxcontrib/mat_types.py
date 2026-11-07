@@ -1281,7 +1281,7 @@ def name_sources(source_index):
         if name is None:
             if naming == "model":
                 reason = mat_naming.model_not_callable_reason(
-                    _naming_folder(ref), filename, namelengthmax, version
+                    _naming_folder(ref), filename, namelengthmax
                 )
             elif not private and not is_hidden(ref):
                 reason = mat_naming.not_callable_reason(

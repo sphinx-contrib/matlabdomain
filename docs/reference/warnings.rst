@@ -39,8 +39,8 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
    * - ``mat.not_callable``
      - a file MATLAB cannot call for :confval:`matlab_version`; the
        message says why (an invalid name, a keyword, a subfolder of a
-       class folder, a Simulink file in ``private/``, a class folder or a
-       namespace folder, ...)
+       class folder, a Simulink file directly in ``private/`` or a class
+       folder, or in a namespace folder, ...)
      - every build
    * - ``mat.outside_root``
      - a link below the project root that points outside it
@@ -64,7 +64,7 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
      - a stable address file (:confval:`matlab_stable_urls`) that cannot be
        written, for example a path too long for Windows
      - at the end of an HTML build
-   * - ``mat.simulink_linker``
+   * - ``mat.simulink_documentation_linker_json``
      - ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.json``
        is not a JSON object, so the build cannot update it
      - at the end of an HTML build

@@ -69,6 +69,7 @@ def project(root):
     copy(SLX / "probeSub.slx", root / "+pk" / "probeSub.slx")
     copy(SLX / "probeRef.slx", root / "private" / "probeRef.slx")
     copy(SLX / "probeRef.slx", root / "@Cls" / "inClass.slx")
+    copy(SLX / "probeRef.slx", root / "@Cls" / "sub" / "inSub.slx")
     copy(FIXTURES / "R2026a" / "mdl" / "probeLib.mdl", root / "mdl" / "probeLib.mdl")
     copy(FIXTURES / "R2024a-native" / "xml" / "probeLib.xml", root / "export.xml")
     (root / "@Cls" / "Cls.m").write_text("classdef Cls\nend\n")
@@ -112,6 +113,12 @@ def test_block_references():
         ("root/+pk/sub", "probe.slx", "R2024a", "probe"),
         ("root/private", "probe.slx", "R2026a", None),
         ("root/@Cls", "probe.slx", "R2026a", None),
+        # Simulink checks the file's own folder only (R2024a-R2026b).
+        ("root/private/deep", "probe.slx", "R2026b", "probe"),
+        ("root/@Cls/sub", "probe.slx", "R2024a", "probe"),
+        ("root/@Cls/sub", "probe.slx", "R2026b", "probe"),
+        ("root/+pk/@Cls/sub", "probe.slx", "R2026b", "probe"),
+        ("root/@Cls/private", "probe.slx", "R2024a", None),
         ("root/a*b", "probe.slx", "R2026a", None),
         ("root/+for", "probe.slx", "R2026a", None),
         ("root", "end.slx", "R2026a", None),
@@ -130,17 +137,17 @@ def test_form_model_name(folder, filename, version, name):
     ("folder", "filename", "version", "reason"),
     [
         ("root/private", "m.slx", "R2026a", "private or class folders"),
-        ("root/@C/x", "m.slx", "R2026a", "private or class folders"),
+        ("root/@C", "m.slx", "R2026a", "private or class folders"),
         ("root/a*b", "m.slx", "R2026a", "with * in their names"),
         ("root", "end.slx", "R2026a", "its name 'end' is a MATLAB keyword"),
         ("root", "L" + "x" * 63 + ".slx", "R2024a", "longer than 63 characters"),
         ("root/+pk", "m.slx", "R2026b", "only from the global namespace"),
-        ("root/+for", "m.slx", "R2026a", "folder name 'for' is a MATLAB keyword"),
+        ("root/+for", "m.slx", "R2026a", "only from the global namespace"),
     ],
 )
 def test_model_not_callable_reason(folder, filename, version, reason):
     namelengthmax = mat_naming.default_namelengthmax(version)
-    assert reason in model_not_callable_reason(folder, filename, namelengthmax, version)
+    assert reason in model_not_callable_reason(folder, filename, namelengthmax)
 
 
 def test_handlers(tmp_path):
@@ -199,6 +206,7 @@ def test_index(tmp_path, warnings):
         "+pk/probeSub.slx": "subsystem",
         "@Cls/Cls.m": "class",
         "@Cls/inClass.slx": "model",
+        "@Cls/sub/inSub.slx": "model",
         "export.xml": "library",
         "lfs.slx": "unknown",
         "mdl/probeLib.mdl": "library",
@@ -214,6 +222,8 @@ def test_index(tmp_path, warnings):
     assert names["+pk/probeSub.slx"] is None
     assert names["private/probeRef.slx"] is None
     assert names["@Cls/inClass.slx"] is None
+    # R2026a: .m files there are not callable, models still load.
+    assert names["@Cls/sub/inSub.slx"] == "inSub"
     assert names["export.xml"] is None
     assert names["lfs.slx"] is None
     assert names["notes.slx"] is None

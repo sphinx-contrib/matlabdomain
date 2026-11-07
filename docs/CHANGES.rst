@@ -26,9 +26,9 @@ earlier" in the documentation.
 * The index reads Simulink files without MATLAB: models, libraries and
   subsystem files (``.slx``, ``.mdl`` and ``.xml`` exported by
   ``save_system``), from every release since R2006a. They get MATLAB names
-  as Simulink runs them: only from the global namespace, so a file in a
-  namespace folder, ``private/`` or a class folder has none
-  (``mat.not_callable``), and a
+  as Simulink runs them: only from the global namespace, and not directly
+  in ``private/`` or a class folder (Simulink refuses to load them there),
+  so these have none (``mat.not_callable``), and a
   block of a library is referenced by its Simulink path after the file
   (``lib.slx/Group/Gain``, a ``/`` in a block name doubled). Directives
   that document them are not in this release yet.

@@ -101,7 +101,7 @@ def write_settings(app, exception):
             shown,
             settings,
             type="mat",
-            subtype="simulink_linker",
+            subtype="simulink_documentation_linker_json",
         )
         return
     wanted = {}
