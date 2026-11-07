@@ -68,6 +68,10 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
      - ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.json``
        is not a JSON object, so the build cannot update it
      - at the end of an HTML build
+   * - ``mat.simulink``
+     - an unknown name in :confval:`matlab_simulink_metadata` or a
+       ``:metadata:`` option
+     - where the directive is
    * - ``mat.api_check``
      - a ``matlab-api-check`` finding
      - when the builder runs

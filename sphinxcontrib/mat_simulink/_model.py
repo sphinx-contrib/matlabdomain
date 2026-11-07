@@ -54,6 +54,8 @@ class MaskParameter:
     type: str
     value: str
     options: tuple[str, ...] = ()
+    #: False for a parameter the mask dialog does not show (``Visible`` off)
+    visible: bool = True
 
 
 @dataclass(frozen=True)
@@ -478,6 +480,7 @@ def _element_mask(mask: Node) -> Mask:
             options=tuple(
                 o.text for t in p.findall("TypeOptions") for o in t.findall("Option")
             ),
+            visible=p.attrs.get("Visible", "on") != "off",
         )
         for p in mask.findall("MaskParameter")
     )
@@ -512,6 +515,7 @@ def _object_mask(obj: Node) -> Mask:
                     p.param("Type"),
                     p.param("Value"),
                     tuple(options),
+                    p.param("Visible") != "off",
                 )
             )
     return Mask(
@@ -526,7 +530,8 @@ def _object_mask(obj: Node) -> Mask:
 def _old_mask(block: Node) -> Mask:
     """Mask block parameters of old classic MDL files: ``MaskType``,
     ``MaskPromptString`` (``|``-separated), ``MaskStyleString``,
-    ``MaskVariables`` (``name=@1;``) and ``MaskValueString``.
+    ``MaskVariables`` (``name=@1;``), ``MaskValueString`` and
+    ``MaskVisibilityString`` (``on,off``).
     """
     names = [
         v.split("=", 1)[0] for v in block.param("MaskVariables").split(";") if v.strip()
@@ -534,6 +539,7 @@ def _old_mask(block: Node) -> Mask:
     prompts = block.param("MaskPromptString").split("|")
     styles = re.findall(r"\w+(?:\([^)]*\))?", block.param("MaskStyleString"))
     values = block.param("MaskValueString").split("|")
+    visibilities = block.param("MaskVisibilityString").split(",")
     parameters = []
     for i, name in enumerate(names):
         style = styles[i] if i < len(styles) else "edit"
@@ -545,6 +551,7 @@ def _old_mask(block: Node) -> Mask:
                 type=kind,
                 value=values[i] if i < len(values) else "",
                 options=tuple(rest.rstrip(")").split("|")) if rest else (),
+                visible=i >= len(visibilities) or visibilities[i].strip() != "off",
             )
         )
     return Mask(

@@ -30,8 +30,16 @@ earlier" in the documentation.
   in ``private/`` or a class folder (Simulink refuses to load them there),
   so these have none (``mat.not_callable``), and a
   block of a library is referenced by its Simulink path after the file
-  (``lib.slx/Group/Gain``, a ``/`` in a block name doubled). Directives
-  that document them are not in this release yet.
+  (``lib.slx/Group/Gain``, a ``/`` in a block name doubled). New
+  directives ``mat:autosimulink_model``, ``mat:autosimulink_library``,
+  ``mat:autosimulink_subsystem_reference`` and
+  ``mat:autosimulink_library_block`` (and their description directives
+  and roles) document them: description, mask type, description and Help
+  (a link for a URL or a ``web(...)`` call), metadata
+  (:confval:`matlab_simulink_metadata`), mask parameters (hidden ones with
+  ``:hidden-mask-parameters:``) and ports. A library's blocks and
+  ``sphinx-matlab-apidoc`` pages for Simulink files are not in this release
+  yet.
   ``matlab-api-check`` counts Simulink files as not
   checked (``simulink_files``). ``sphinx-matlab-quickstart`` adds
   ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` to a

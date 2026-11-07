@@ -185,6 +185,16 @@ Output
    it. ``False`` writes no such files and keeps "¶"
    and the inventory on the page (:ref:`library-changes`).
 
+.. confval:: matlab_simulink_metadata
+   :type: ``list[str]``
+   :default: ``["release", "model_version"]``
+
+   The metadata of a Simulink file that its page shows, in this order:
+   ``release`` (the release that saved it), ``model_version``,
+   ``creator``, ``created``, ``last_modified_by``, ``modified``. The
+   ``:metadata:`` option of a directive replaces it for one object. An
+   unknown name is a ``mat.simulink`` warning.
+
 .. confval:: matlab_link_shadowed_files_to_chooser_pages
    :type: ``bool``
    :default: ``False``

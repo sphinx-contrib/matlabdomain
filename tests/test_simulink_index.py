@@ -308,7 +308,8 @@ def test_objects(tmp_path):
     assert block.name == "Group/Inner Masked"
     assert block.library is lib
     assert block.__module__ == "./"
-    assert block.__doc__ == block.block.description
+    # no block description: the mask's
+    assert block.__doc__ == "Inner masked description."
     assert not hasattr(block, "ref")
     assert lib.getter("missing") is None
     assert lib.getter("__name__") == "probeLib"

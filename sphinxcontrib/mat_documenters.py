@@ -7,6 +7,7 @@ Extend autodoc directives to matlabdomain.
 :license: BSD, see LICENSE for details.
 """
 
+import json
 import re
 from typing import Any, cast
 
@@ -34,11 +35,13 @@ from sphinx.util.docstrings import prepare_docstring
 from sphinx.util.inspect import safe_getattr
 from sphinx.util.logging import getLogger
 
-from . import mat_naming
+from . import mat_naming, mat_simulink
 from .mat_classify import is_hidden
 from .mat_sidecars import HELP_SOURCE
 from .mat_types import (
+    SIMULINK_CLASSES,
     MatApplication,
+    MatBlock,
     MatClass,
     MatcodeError,
     MatEnumeration,
@@ -49,6 +52,7 @@ from .mat_types import (
     MatModuleAnalyzer,
     MatProperty,
     MatScript,
+    MatSimulinkFile,
     display_name,
     find_source,
     is_code_object,
@@ -56,6 +60,7 @@ from .mat_types import (
     is_source_object,
     lookup_reference,
     resolve,
+    simulink_accepts,
 )
 
 mat_ext_sig_re = re.compile(
@@ -126,6 +131,8 @@ class MatlabDocumenter(PyDocumenter):
     domain = "mat"
     #: True for members of a class (methods, attributes)
     class_level = False
+    #: splits the auto directive's argument into (target, arguments, return)
+    name_pattern = mat_auto_sig_re
     option_spec = {"noindex": bool_option, "no-index": bool_option}
     analyzer: MatModuleAnalyzer | None
     options: Any
@@ -139,7 +146,7 @@ class MatlabDocumenter(PyDocumenter):
         *self.retann*. Returns False (after a warning) if *self.name* does
         not name exactly one object.
         """
-        match = mat_auto_sig_re.match(self.name)
+        match = self.name_pattern.match(self.name)
         if match is None:  # pragma: no cover - the re matches any non-empty name
             logger.warning(
                 "[sphinxcontrib-matlabdomain] Invalid signature for mat:auto%s (%r)",
@@ -1475,3 +1482,259 @@ class MatApplicationDocumenter(MatModuleLevelDocumenter):
 
     def document_members(self, all_members=False):
         pass
+
+
+#: metadata of a Simulink file (``matlab_simulink_metadata``) -> its label
+SIMULINK_METADATA = {
+    "release": _("Release"),
+    "model_version": _("Model version"),
+    "creator": _("Created by"),
+    "created": _("Created"),
+    "last_modified_by": _("Last modified by"),
+    "modified": _("Last modified"),
+}
+_PORT_KINDS = {
+    "Inport": _("input"),
+    "Outport": _("output"),
+    "PMIOPort": _("connection"),
+}
+# Port settings Simulink leaves to inheritance: shown as empty cells.
+_PORT_UNSET = {"data_type": "Inherit: auto", "dimensions": "-1", "unit": "inherit"}
+_PORT_COLUMNS = (
+    ("data_type", _("Data type")),
+    ("dimensions", _("Dimensions")),
+    ("unit", _("Unit")),
+    ("description", _("Description")),
+)
+
+
+def metadata_option(arg):
+    """``:metadata: release, creator``: the metadata to show (none if empty)."""
+    return [key.strip() for key in (arg or "").split(",") if key.strip()]
+
+
+def _literal(text):
+    """``text`` as reST that shows it as it is, in code font."""
+    text = " ".join(text.split())
+    if text and "`" not in text:
+        return f"``{text}``"
+    return _escaped(text)
+
+
+def _escaped(text):
+    """``text`` as reST that shows it as it is."""
+    return re.sub(r"([^\w\s])", r"\\\1", " ".join(text.split()))
+
+
+def _block(first, text, indent):
+    """Lines of ``first`` followed by the lines of reST ``text``, indented."""
+    lines = text.strip().splitlines() or [""]
+    return [
+        f"{first}{lines[0]}".rstrip(),
+        *(f"{indent}{line}".rstrip() for line in lines[1:]),
+    ]
+
+
+class MatSimulinkDocumenter(MatModuleLevelDocumenter):
+    """Documenter of a Simulink model; the base of the other Simulink
+    documenters. Shows the description, the mask (type, help, parameters),
+    the ports and the metadata of ``matlab_simulink_metadata``.
+    """
+
+    objtype = "simulink_model"
+    # The argument is the whole name: block names may hold parentheses.
+    name_pattern = re.compile(r"\s*(.+?)\s*((?!))?((?!))?\Z", re.DOTALL)
+    option_spec = {
+        **MatlabDocumenter.option_spec,
+        "hidden-mask-parameters": bool_option,
+        "metadata": metadata_option,
+    }
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.accepts = staticmethod(simulink_accepts(SIMULINK_CLASSES[cls.objtype]))
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+        return isinstance(member, SIMULINK_CLASSES[cls.objtype])
+
+    def format_name(self):
+        return self.display.replace("\n", " ")
+
+    def format_signature(self, **kwargs):  # noqa: ARG002
+        return ""
+
+    def add_directive_header(self, sig):  # noqa: ARG002
+        sourcename = self.get_sourcename()
+        self.add_line(f".. mat:{self.objtype}:: {self.format_name()}", sourcename)
+        if self.options.no_index or self.options.noindex:
+            self.add_line("   :noindex:", sourcename)
+        ref = self.ref
+        # An option value is one line without surrounding space.
+        if "\n" in ref or ref != ref.strip() or ref[:1] == '"':
+            ref = json.dumps(ref, ensure_ascii=False)
+        self.add_line(f"   :reference: {ref}", sourcename)
+
+    def document_members(self, all_members=False):
+        pass
+
+    def add_content(self, more_content, no_docstring=False):
+        super().add_content(more_content, no_docstring)
+        sourcename = self.get_sourcename()
+        for line in self.simulink_lines():
+            self.add_line(line, sourcename)
+
+    def simulink_parts(self):
+        """Return ``(mask, ports, metadata)`` of the object."""
+        obj = self.object
+        if isinstance(obj, MatBlock):
+            return obj.block.mask, obj.block.ports, ()
+        diagram = cast(MatSimulinkFile, obj).diagram
+        if diagram is None:  # a placeholder: the file could not be read
+            return None, (), ()
+        return diagram.system_mask, diagram.ports, diagram.metadata
+
+    def simulink_lines(self):
+        """Return the reST of the mask, ports and metadata."""
+        mask, ports, metadata = self.simulink_parts()
+        fields = []
+        if mask is not None:
+            if mask.type:
+                fields.append(f":{_('Mask type')}: {_literal(mask.type)}")
+            if mask.description and mask.description != self.object.docstring:
+                fields += _block(f":{_('Mask description')}: ", mask.description, "   ")
+            fields += self.help_lines(mask.help)
+        fields += self.metadata_lines(metadata)
+        lines = ["", *fields, ""] if fields else [""]
+        if mask is not None:
+            lines += self.mask_parameter_lines(mask.parameters)
+        return lines + self.port_lines(ports)
+
+    def help_lines(self, text):
+        """Return the mask Help: a link for a URL, ``web(...)`` or a linker line
+        to another object (one to this object is left out), else its text.
+        """
+        if not text.strip():
+            return []
+        label = f":{_('Help')}: "
+        target = mat_simulink.help_target(text)
+        if target is None:
+            return _block(label, text, "   ")
+        kind, value = target
+        if kind == "url":
+            return [f"{label}`{value} <{value}>`__"]
+        if value == self.ref or "\n" in value:
+            return []
+        return [f"{label}:mat:obj:`{value}`"]
+
+    def metadata_lines(self, metadata):
+        keys = self.options.metadata
+        if keys is None:
+            keys = self.env.config.matlab_simulink_metadata
+        values = dict(metadata)
+        lines = []
+        for key in keys:
+            if key not in SIMULINK_METADATA:
+                logger.warning(
+                    "[sphinxcontrib-matlabdomain] unknown Simulink metadata %r; "
+                    "known: %s",
+                    key,
+                    ", ".join(SIMULINK_METADATA),
+                    type="mat",
+                    subtype="simulink",
+                    location=(self.env.docname, self.directive.lineno),
+                )
+            elif values.get(key):
+                text = _escaped(values[key])
+                lines.append(f":{SIMULINK_METADATA[key]}: {text}")
+        return lines
+
+    def mask_parameter_lines(self, parameters):
+        """Return the mask parameters, like the input arguments of a function;
+        hidden ones only with ``:hidden-mask-parameters:``.
+        """
+        lines = []
+        for p in parameters:
+            if not (p.visible or self.options.hidden_mask_parameters) or not p.name:
+                continue
+            prompt = " ".join(p.prompt.split())
+            if prompt and prompt[-1] not in ".?!:":
+                prompt += "."
+            details = [prompt] if prompt else []
+            if p.value:
+                details.append(_("Default: %s.") % _literal(p.value))
+            if p.options:
+                choices = ", ".join(_literal(o) for o in p.options)
+                details.append(_("Options: %s.") % choices)
+            lines += _block(f":maskparam {p.name}: ", " ".join(details), "   ")
+            if p.type:
+                lines.append(f":maskparamtype {p.name}: {p.type}")
+        return [*lines, ""] if lines else []
+
+    def port_lines(self, ports):
+        """Return the ports as a table, with the columns that have a value."""
+        if not ports:
+            return []
+
+        def value(port, key):
+            text = getattr(port, key)
+            return "" if text == _PORT_UNSET.get(key) else text
+
+        columns = [
+            (key, title)
+            for key, title in _PORT_COLUMNS
+            if any(value(port, key) for port in ports)
+        ]
+        lines = [
+            f".. rubric:: {_('Ports')}",
+            "",
+            ".. list-table::",
+            "   :header-rows: 1",
+            "",
+            f"   * - {_('Port')}",
+            f"     - {_('Name')}",
+            *(f"     - {title}" for _key, title in columns),
+        ]
+        for port in ports:
+            # a bus element port: port.element
+            name = ".".join(filter(None, (port.port_name, port.element))) or port.name
+            kind = _PORT_KINDS.get(port.block_type, port.block_type)
+            lines.append(f"   * - {kind} {port.number}")
+            lines.append(f"     - {_literal(name)}")
+            for key, _title in columns:
+                text = value(port, key)
+                if key == "description":
+                    lines += _block("     - ", text, "       ")
+                else:
+                    lines.append(f"     - {_literal(text)}".rstrip())
+        return [*lines, ""]
+
+
+class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
+    """Documenter of a Simulink library (its blocks: S5b)."""
+
+    objtype = "simulink_library"
+
+
+class MatSimulinkSubsystemDocumenter(MatSimulinkDocumenter):
+    """Documenter of a Simulink subsystem file (a Subsystem Reference's target)."""
+
+    objtype = "simulink_subsystem_reference"
+
+
+class MatSimulinkBlockDocumenter(MatSimulinkDocumenter):
+    """Documenter of a block of a Simulink library."""
+
+    objtype = "simulink_library_block"
+
+
+MatSimulinkDocumenter.accepts = staticmethod(
+    simulink_accepts(SIMULINK_CLASSES[MatSimulinkDocumenter.objtype])
+)
+#: registered as ``mat:auto<objtype>``
+SIMULINK_DOCUMENTERS = (
+    MatSimulinkDocumenter,
+    MatSimulinkLibraryDocumenter,
+    MatSimulinkSubsystemDocumenter,
+    MatSimulinkBlockDocumenter,
+)

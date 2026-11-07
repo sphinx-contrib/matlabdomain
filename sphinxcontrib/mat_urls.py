@@ -135,10 +135,17 @@ def enabled(app):
 
 
 def _names(dom):
-    """MATLAB name -> references of the non-private objects that have it."""
+    """MATLAB name -> references of the non-private objects that have it.
+
+    A Simulink block's display name is a Simulink path, not a MATLAB name.
+    """
     out = {}
     for ref, (_, _, display) in dom.data["objects"].items():
-        if display != ref and not mat_naming.is_private_reference(ref):
+        if (
+            display != ref
+            and "/" not in display
+            and not mat_naming.is_private_reference(ref)
+        ):
             out.setdefault(display, []).append(ref)
     return {name: sorted(refs) for name, refs in out.items()}
 

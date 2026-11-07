@@ -8,6 +8,7 @@ The MATLAB domain.
 """
 
 import functools
+import json
 import re
 import unicodedata
 from typing import cast
@@ -380,11 +381,11 @@ class MatObject(ObjectDescription):
             signode += addnodes.desc_annotation(f" {anno}", f" {anno}")
         return ref, display
 
-    def _source_reference(self, name):
+    def _source_reference(self, name, accept=mat_types.is_code_object):
         # A directive written by hand: use the source file it names, if any.
         dom = self.env.get_domain("mat")
         folder = self.env.temp_data.get("mat:folder")
-        found = mat_types.find_source(dom, name, folder, mat_types.is_code_object)
+        found = mat_types.find_source(dom, name, folder, accept)
         if len(found) == 1:
             ref = found[0][0]
             return ref, mat_types.display_name(dom, ref)
@@ -465,6 +466,69 @@ class MatModulelevel(MatObject):
             return translation("%s (application in %s)") % (name_cls[1], folder)
         else:
             return ""
+
+
+class MatSimulinkObject(MatObject):
+    """Description of a Simulink model, library, subsystem file or library
+    block. The signature is its name as Simulink shows it, without
+    arguments; a ``:reference:`` with a newline is written as JSON text.
+    """
+
+    doc_field_types = [
+        *MatObject.doc_field_types,
+        TypedField(
+            "maskparameter",
+            label=translation("Mask parameters"),
+            names=("maskparam",),
+            typenames=("maskparamtype",),
+            can_collapse=True,
+        ),
+    ]
+
+    def handle_signature(self, sig, signode):
+        sig = sig.strip()
+        reference = self.options.get("reference")
+        if reference:
+            ref = json.loads(reference) if reference[:1] == '"' else reference
+            display = sig
+        else:
+            accept = mat_types.simulink_accepts(
+                mat_types.SIMULINK_CLASSES[self.objtype]
+            )
+            ref, display = self._source_reference(sig, accept)
+            display = display.replace("\n", " ")
+        _, members = mat_naming.parse_reference(ref)
+        shown = members[0].replace("\n", " ") if members else ""
+        if shown and display.endswith(shown) and len(display) > len(shown):
+            prefix, shown = display[: -len(shown)], shown
+        else:
+            prefix, shown = mat_naming.split_display(display)
+
+        signode["module"] = mat_naming.folder_of(ref)
+        signode["class"] = ""
+        signode["fullname"] = display
+        label = f"{SIMULINK_LABELS[self.objtype]} "
+        signode += addnodes.desc_annotation(label, label)
+        if prefix:
+            signode += addnodes.desc_addname(prefix, prefix)
+        signode += addnodes.desc_name(shown, shown)
+        return ref, display
+
+    def get_index_text(self, folder, name_cls):
+        return translation("%s (%s in %s)") % (
+            name_cls[1],
+            SIMULINK_LABELS[self.objtype],
+            folder,
+        )
+
+
+#: object type -> what its signature calls it
+SIMULINK_LABELS = {
+    "simulink_model": translation("Simulink model"),
+    "simulink_library": translation("Simulink library"),
+    "simulink_subsystem_reference": translation("Simulink subsystem reference"),
+    "simulink_library_block": translation("Simulink library block"),
+}
 
 
 class MatClasslike(MatObject):
@@ -749,6 +813,10 @@ class MATLABDomain(Domain):
         "folder": ObjType(translation("folder"), "folder", "obj"),
         "script": ObjType(translation("script"), "scpt", "obj"),
         "application": ObjType(translation("application"), "app", "obj"),
+        **{
+            objtype: ObjType(label, objtype, "obj")
+            for objtype, label in SIMULINK_LABELS.items()
+        },
     }
 
     directives = {
@@ -763,6 +831,7 @@ class MATLABDomain(Domain):
         "currentfolder": MatCurrentFolder,
         "script": MatModulelevel,
         "application": MatModulelevel,
+        **dict.fromkeys(SIMULINK_LABELS, MatSimulinkObject),
     }
     roles = {
         "data": MatXRefRole(),
@@ -777,6 +846,7 @@ class MATLABDomain(Domain):
         "obj": MatXRefRole(),
         "scpt": MatXRefRole(),
         "app": MatXRefRole(),
+        **{objtype: MatXRefRole() for objtype in SIMULINK_LABELS},
         # A sidecar doc, by path reference; the text is its title.
         "sidecar": XRefRole(),
     }
@@ -804,7 +874,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 25
+    data_version = 26
     indices = [
         MATLABFolderIndex,
     ]
@@ -1324,6 +1394,10 @@ def setup(app):
     )
     # The sphinx-autobuild address for Simulink Help links (make livehtml).
     app.add_config_value("matlab_simulink_server", None, "")
+    # Metadata of Simulink files shown by default (directive option :metadata:).
+    app.add_config_value(
+        "matlab_simulink_metadata", ["release", "model_version"], "env", [list, tuple]
+    )
     # matlab-api-check: read by the builder only, so no page is read again.
     app.add_config_value("matlab_api_check_enabled", True, "", bool)
     # Rule -> severity, merged over mat_api_check.DEFAULT_RULES.
@@ -1388,6 +1462,12 @@ def setup(app):
     app.add_directive_to_domain(
         "mat", "autoapplication", mat_directives.MatlabAutodocDirective
     )
+
+    for documenter in doc.SIMULINK_DOCUMENTERS:
+        app.registry.add_documenter(f"mat:{documenter.objtype}", documenter)
+        app.add_directive_to_domain(
+            "mat", f"auto{documenter.objtype}", mat_directives.MatlabAutodocDirective
+        )
 
     app.add_autodoc_attrgetter(mat_types.MatModule, mat_types.MatModule.getter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)

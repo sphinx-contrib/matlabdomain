@@ -453,10 +453,20 @@ def is_code_object(obj):
 
 
 is_code_object.folders = False
-# Simulink files have no role to link to yet.
+# Directives that document code never take a Simulink file.
 is_code_object.refs = lambda file: (
     not mat_naming.is_block_container(file.rpartition("/")[2])
 )
+
+
+def simulink_accepts(cls):
+    """Return a ``find_source`` predicate for the Simulink objects of ``cls``."""
+
+    def accept(obj):
+        return isinstance(obj, cls)
+
+    accept.refs = lambda file: mat_naming.is_block_container(file.rpartition("/")[2])
+    return accept
 
 
 def _match(dom, ref, accept):
@@ -549,11 +559,15 @@ def folder_reference(dom, target, location=None):
 
 
 def display_name(dom, reference):
-    """MATLAB name of a reference, or the reference if it has none."""
+    """MATLAB name of a reference, or the reference if it has none. A block
+    of a Simulink file follows the file's name with its Simulink path.
+    """
     file, members = parse_reference(reference)
     attrs = _attrs(dom, file if file is not None else reference)
     if attrs is None or attrs[0] is None:
         return reference
+    if members and mat_naming.is_block_container(cast(str, file).rpartition("/")[2]):
+        return "/".join([attrs[0], *members])
     return ".".join([attrs[0], *members])
 
 
@@ -2037,8 +2051,11 @@ class MatSimulinkFile(MatObject):
         super().__init__(name)
         self.module = modname
         self.diagram = diagram
-        #: the description saved in the file
-        self.docstring = diagram.description if diagram is not None else None
+        #: the description saved in the file, else the system mask's
+        self.docstring = None
+        if diagram is not None:
+            mask = diagram.system_mask
+            self.docstring = diagram.description or (mask.description if mask else "")
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -2058,15 +2075,21 @@ class MatSimulinkFile(MatObject):
 class MatModel(MatSimulinkFile):
     """A Simulink model file."""
 
+    objtype = "simulink_model"
+
 
 class MatSubsystemFile(MatSimulinkFile):
     """A Simulink subsystem file (the target of a Subsystem Reference)."""
+
+    objtype = "simulink_subsystem_reference"
 
 
 class MatLibrary(MatSimulinkFile):
     """A Simulink library; its members are the blocks of the library walk,
     by their path below the library.
     """
+
+    objtype = "simulink_library"
 
     def getter(self, name, *defargs) -> Any:
         blocks = self.diagram.library_blocks if self.diagram is not None else ()
@@ -2088,7 +2111,9 @@ class MatBlock(MatObject):
         self.block = block
         self.library = library
         self.module = library.module
-        self.docstring = block.description
+        self.docstring = block.description or (
+            block.mask.description if block.mask else ""
+        )
         if hasattr(library, "ref"):
             self.ref = f"{library.ref}/{block.path}"
 
@@ -2106,6 +2131,13 @@ SIMULINK_TYPES = {
     "model": MatModel,
     "library": MatLibrary,
     "subsystem": MatSubsystemFile,
+}
+#: object type (directive and role name) -> object class
+SIMULINK_CLASSES = {
+    "simulink_model": MatModel,
+    "simulink_library": MatLibrary,
+    "simulink_subsystem_reference": MatSubsystemFile,
+    "simulink_library_block": MatBlock,
 }
 
 

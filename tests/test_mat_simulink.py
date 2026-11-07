@@ -420,6 +420,7 @@ Library {
       MaskStyleString "edit,popup(a|b)"
       MaskVariables "k=@1;mode=&2;extra=@3;"
       MaskValueString "2|a"
+      MaskVisibilityString "on,off"
     }
   }
 }
@@ -442,10 +443,38 @@ def test_classic_old_mask_parameters(tmp_path):
         "",
         (
             mat_simulink.MaskParameter("k", "Gain", "edit", "2"),
-            mat_simulink.MaskParameter("mode", "Mode", "popup", "a", ("a", "b")),
+            mat_simulink.MaskParameter(
+                "mode", "Mode", "popup", "a", ("a", "b"), visible=False
+            ),
             mat_simulink.MaskParameter("extra", "Extra", "edit", ""),
         ),
     )
+
+
+def test_hidden_mask_parameters(tmp_path):
+    element = _nodes.parse_xml(
+        b'<Mask><Type>T</Type><MaskParameter Name="a" Type="edit"/>'
+        b'<MaskParameter Name="b" Type="edit" Visible="off"/></Mask>',
+        "test",
+    )
+    mask = _model.block_mask(_nodes.Node("Block", children=[element]))
+    assert mask is not None
+    assert [(p.name, p.visible) for p in mask.parameters] == [("a", True), ("b", False)]
+    path = tmp_path / "lib.mdl"
+    path.write_text(
+        "Library {\n  System {\n    Block {\n      BlockType SubSystem\n"
+        '      Name "M"\n      Object {\n        $ClassName "Simulink.Mask"\n'
+        '        Type "T"\n        Array {\n          PropName "Parameters"\n'
+        '          Object {\n            Name "a"\n          }\n'
+        '          Object {\n            Name "b"\n            Visible "off"\n'
+        "          }\n        }\n      }\n    }\n  }\n}\n"
+    )
+    (block,) = read_diagram(path).library_blocks
+    assert block.mask is not None
+    assert [(p.name, p.visible) for p in block.mask.parameters] == [
+        ("a", True),
+        ("b", False),
+    ]
 
 
 @pytest.mark.parametrize(
