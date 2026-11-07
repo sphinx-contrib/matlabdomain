@@ -51,8 +51,8 @@ from .mat_types import (
     MatScript,
     display_name,
     find_source,
+    is_code_object,
     is_folder_object,
-    is_source_object,
     lookup_reference,
     resolve,
 )
@@ -208,7 +208,7 @@ class MatlabDocumenter(PyDocumenter):
         return super().get_doc() or []
 
     #: True for the objects this documenter documents (folders or not)
-    accepts = staticmethod(is_source_object)
+    accepts = staticmethod(is_code_object)
 
     def format_name(self):
         return self.display
@@ -276,7 +276,10 @@ class MatlabDocumenter(PyDocumenter):
         Warns and returns None if the MATLAB name is ambiguous.
         """
         found = find_source(
-            self.env.get_domain("mat"), target, mat_naming.folder_of(self.ref)
+            self.env.get_domain("mat"),
+            target,
+            mat_naming.folder_of(self.ref),
+            is_code_object,
         )
         if len(found) > 1:
             logger.warning(
@@ -402,7 +405,7 @@ class MatlabDocumenter(PyDocumenter):
             # Only names in the text can link; resolving parses their files.
             if not any(nn in line for lines in docstrings for line in lines):
                 continue
-            found = find_source(dom, nn, folder)
+            found = find_source(dom, nn, folder, is_code_object)
             if not found:
                 continue
             # entity_name is NOT followed by .<property_or_method>

@@ -342,7 +342,7 @@ class MatObject(ObjectDescription):
         # A directive written by hand: use the source file it names, if any.
         dom = self.env.get_domain("mat")
         folder = self.env.temp_data.get("mat:folder")
-        found = mat_types.find_source(dom, name, folder)
+        found = mat_types.find_source(dom, name, folder, mat_types.is_code_object)
         if len(found) == 1:
             ref = found[0][0]
             return ref, mat_types.display_name(dom, ref)

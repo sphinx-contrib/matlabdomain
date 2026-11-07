@@ -447,6 +447,18 @@ is_source_object.folders = False
 is_folder_object.folders = True
 
 
+def is_code_object(obj):
+    """Return True for anything but a folder or a Simulink file."""
+    return is_source_object(obj) and not isinstance(obj, MatSimulinkFile)
+
+
+is_code_object.folders = False
+# Simulink files have no role to link to yet.
+is_code_object.refs = lambda file: (
+    not mat_naming.is_block_container(file.rpartition("/")[2])
+)
+
+
 def _match(dom, ref, accept):
     """``(ref, object)`` if ``ref`` names an accepted object, else None.
 
@@ -455,6 +467,9 @@ def _match(dom, ref, accept):
     """
     file, members = parse_reference(ref)
     if file is None:
+        return None
+    refs = getattr(accept, "refs", None)
+    if refs is not None and not refs(file):
         return None
     folders = getattr(accept, "folders", None)
     if folders is not None and not members:
