@@ -143,6 +143,34 @@ def _is_block_diagram(name: str) -> bool:
     return name == BLOCK_DIAGRAM
 
 
+_LINKER = "sphinxcontrib.matlabdomain.simulinkDocumentationLinker"
+# The schemes of a Help URL (R2026b Mask Editor documentation).
+_SCHEMES = r"(?:https?|www|file|ftp|mailto):"
+_URL = re.compile(rf"{_SCHEMES}\S+")
+_WEB_URL = re.compile(rf"""web\(\s*(["'])({_SCHEMES}[^"']+)\1[^)]*\)\s*;?""")
+_WEB_LINKER = re.compile(
+    rf'web\(\s*{re.escape(_LINKER)}\(\s*("(?:[^"]|"")*"'
+    r'(?:\s*\+\s*newline\s*\+\s*"(?:[^"]|"")*")*)\s*\)\s*\)\s*;?'
+)
+
+
+def help_target(text: str) -> tuple[str, str] | None:
+    """Return what a mask Help opens: ``("url", url)`` for a URL on its first line
+    or ``web("url")``, ``("reference", reference)`` for a
+    ``web(sphinxcontrib.matlabdomain.simulinkDocumentationLinker("..."))``
+    line, else None (text that Simulink shows as it is).
+    """
+    line = text.strip().split("\n", 1)[0].strip()
+    if match := _WEB_LINKER.fullmatch(line):
+        pieces = re.findall(r'"((?:[^"]|"")*)"', match.group(1))
+        return "reference", "\n".join(p.replace('""', '"') for p in pieces)
+    if match := _WEB_URL.fullmatch(line):
+        return "url", match.group(2)
+    if _URL.fullmatch(line):
+        return "url", line
+    return None
+
+
 def is_exported_xml(path) -> bool:
     """Return True if ``path`` (an ``.xml`` file) is an exported Simulink
     file (root ``ModelInformation``).

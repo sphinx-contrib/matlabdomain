@@ -2,6 +2,7 @@
 names, lookups and incremental builds (S4 of the Simulink plan).
 """
 
+import json
 import logging
 import pickle
 import shutil
@@ -27,6 +28,7 @@ from sphinxcontrib.mat_types import (
 )
 from sphinxcontrib.matlab_apidoc import ApidocOptions
 from sphinxcontrib.matlab_apidoc._generate import build_pages
+from sphinxcontrib.matlab_apidoc._names import docnames
 
 FIXTURES = Path(__file__).parent / "simulink" / "fixtures"
 SLX = FIXTURES / "R2026b" / "slx"
@@ -358,6 +360,62 @@ def test_exported_xml_is_like_its_slx_twin(name):
     fields = ("name", "kind", "ports", "references", "library_blocks")
     for field in fields:
         assert getattr(xml.diagram, field) == getattr(slx.diagram, field), field
+
+
+def test_linker_addresses_match_stable_addresses():
+    """``simulinkDocumentationLinker.m`` gives the addresses of ``mat_urls``
+    (``linker.json`` is written by ``make_fixtures("linker", ...)``).
+    """
+    cases = json.loads((FIXTURES.parent / "linker.json").read_text("utf-8"))["cases"]
+    assert len(cases) == 20
+    for case in cases:
+        ref = case["reference"]
+        names, _ = docnames([ref], "html")
+        assert f"mat/ref/{names[ref]}.html" == case["address"], ref
+
+
+def test_block_output_names():
+    refs = ["src/lib.slx", "src/lib.slx/Group/Inner Masked", "src/lib.slx/A//B"]
+    names, collisions = docnames(refs)
+    assert names == {
+        "src/lib.slx": "src/lib.slx",
+        "src/lib.slx/Group/Inner Masked": "src/lib.slx~2FGroup~2FInner~20Masked",
+        "src/lib.slx/A//B": "src/lib.slx~2FA~2F~2FB",
+    }
+    assert collisions == []
+
+
+@pytest.mark.parametrize(
+    ("text", "target"),
+    [
+        (
+            'web(sphinxcontrib.matlabdomain.simulinkDocumentationLinker("src/m.slx"))',
+            ("reference", "src/m.slx"),
+        ),
+        (
+            "web(sphinxcontrib.matlabdomain.simulinkDocumentationLinker("
+            '"src/l.slx/Two" + newline + "Lines"));',
+            ("reference", "src/l.slx/Two\nLines"),
+        ),
+        (
+            "web( sphinxcontrib.matlabdomain.simulinkDocumentationLinker( "
+            '"a/""q"".slx" ) )',
+            ("reference", 'a/"q".slx'),
+        ),
+        ("web('https://example.org/x.html')", ("url", "https://example.org/x.html")),
+        ('web("file:///C:/doc/x.html", "-browser")', ("url", "file:///C:/doc/x.html")),
+        (
+            "  https://example.org/page.html\nmore text",
+            ("url", "https://example.org/page.html"),
+        ),
+        ("mailto:team@example.org", ("url", "mailto:team@example.org")),
+        ("Plain help text.", None),
+        ("eval('doc gain')", None),
+        ("", None),
+    ],
+)
+def test_help_target(text, target):
+    assert mat_simulink.help_target(text) == target
 
 
 def test_unparsable_model_is_a_placeholder(tmp_path):

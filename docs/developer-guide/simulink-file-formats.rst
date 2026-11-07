@@ -179,6 +179,13 @@ Where each fact is
        ``Simulink.MaskParameter`` objects. Very old classic files keep
        masks as block parameters (``MaskType``, ``MaskPromptString``
        separated by ``|``, ``MaskVariables``, ``MaskValueString``).
+   * - Help
+     - The mask's ``Help``. A model or subsystem file has no help
+       parameter of its own (R2026b ``ObjectParameters``): its help is the
+       ``Help`` of its system mask (``modelMask.xml``), so a file without a
+       system mask has none. When its first line is a URL (``https:``,
+       ``file:``, ...) or a ``web`` or ``eval`` call, Simulink opens or runs
+       it; other text is shown (R2026b Mask Editor documentation).
    * - Ports
      - ``Inport``, ``Outport`` and ``PMIOPort`` blocks of a system: ``Port``,
        ``OutDataTypeStr``, ``PortDimensions``, ``Unit``, ``Description``. A
@@ -222,12 +229,17 @@ of the test projects without an error.
 Keeping this page current
 -------------------------
 
-For each new MATLAB release:
+For each new MATLAB release (the steps and commands are in
+``test_slow/simulink/README.md``):
 
 1. run ``make_fixtures("sources", ...)``, ``make_fixtures("export", ...)``
    and ``make_fixtures("oracle", ...)`` in the new release, after adding the
    previous release to ``fixtureReleases`` when it changed the format;
-2. compare the parts and the oracle with the previous release's;
+2. compare the parts and the oracle with the previous release's
+   (``test_slow/simulink/survey.py``);
 3. add a row to `What changes per release`_ and, if the reader needs a
    change, a test;
-4. read the ``.slx`` and ``.mdl`` files that ship with the new release.
+4. read the ``.slx`` and ``.mdl`` files that ship with the new release
+   (``test_slow/simulink/corpus.py``);
+5. rerun ``test_slow/simulink/naming_probe.m``, which checks how Simulink
+   loads files by name, and add any change to ``MATLAB_VERSION_RULES``.

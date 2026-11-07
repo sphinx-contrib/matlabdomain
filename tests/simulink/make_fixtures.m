@@ -16,12 +16,16 @@ function make_fixtures(step, outDir)
 %   make_fixtures("oracle", outDir) loads every fixture below outDir and
 %   writes what the Simulink API reports to outDir/../oracle.json.
 %
+%   make_fixtures("linker", outDir) writes the addresses that
+%   sphinxcontrib.matlabdomain.simulinkDocumentationLinker gives for some
+%   path references to outDir/../linker.json (any release).
+%
 %   Run "sources", "export" and "oracle" in R2026b, and "xml" in R2024a.
 %   Creator and modifier are set to "matlabdomain", so no user name is
 %   saved in the files.
 
 arguments
-    step (1,1) string {mustBeMember(step, ["sources", "export", "xml", "oracle"])}
+    step (1,1) string {mustBeMember(step, ["sources", "export", "xml", "oracle", "linker"])}
     outDir (1,1) string
 end
 
@@ -36,7 +40,40 @@ switch step
         exportXml(fullfile(nativeDir, "slx"), fullfile(nativeDir, "xml"));
     case "oracle"
         writeOracle(outDir);
+    case "linker"
+        writeLinker(outDir);
 end
+end
+
+function writeLinker(outDir)
+references = ["./", "src/", "src/+pkg/@Cls/", "src/f.m", "src/+pkg/Cls.m.method", ...
+    "my folder/données.m", "CON.m", "aux/Lpt1.txt.m", "src/trail.", "src/a~b.m", ...
+    "src/lib.slx", "src/lib.slx/Group/Inner Masked", "src/lib.slx/A//B", ...
+    "src/lib.slx/Two" + newline + "Lines", "src/lib.mdl/Größe", "src/lib.xml/v1.2", ...
+    "lib.slx/x", "src/x.slx.d/f.m", "src/M.SLX/x.m", "src/.slx/f.m"];
+source = fullfile(fileparts(mfilename("fullpath")), "..", "..", "sphinxcontrib", ...
+    "mat_simulink", "matlab");
+scratch = tempname;
+copyfile(source, scratch);
+base = "https://example.org/docs/";
+writelines(jsonencode(struct("mode", "published", "published", base)), ...
+    fullfile(scratch, "+sphinxcontrib", "+matlabdomain", "simulinkDocumentationLinker.json"));
+oldPath = addpath(scratch);
+cleanup = onCleanup(@() removeScratch(oldPath, scratch));
+clear("sphinxcontrib.matlabdomain.simulinkDocumentationLinker");
+cases = struct("reference", {}, "address", {});
+for reference = references
+    url = sphinxcontrib.matlabdomain.simulinkDocumentationLinker(reference);
+    cases(end+1) = struct("reference", reference, "address", extractAfter(url, base)); %#ok<AGROW>
+end
+text = jsonencode(struct("generatedBy", currentRelease(), "cases", cases), ...
+    "PrettyPrint", true);
+writelines(text, fullfile(outDir, "..", "linker.json"), "Encoding", "UTF-8");
+end
+
+function removeScratch(oldPath, scratch)
+path(oldPath);
+rmdir(scratch, "s");
 end
 
 function releases = fixtureReleases()

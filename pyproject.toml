@@ -217,6 +217,7 @@ max-statements = 100
 include-package-data = true
 
 [tool.setuptools.package-data]
+"sphinxcontrib.mat_simulink" = ["matlab/+sphinxcontrib/+matlabdomain/*.m"]
 "sphinxcontrib.matlab_apidoc" = ["templates/*.jinja"]
 "sphinxcontrib.matlab_quickstart" = ["templates/*.jinja"]
 

@@ -1,0 +1,85 @@
+{
+  "generatedBy": "R2026b",
+  "cases": [
+    {
+      "reference": "./",
+      "address": "mat/ref/index.html"
+    },
+    {
+      "reference": "src/",
+      "address": "mat/ref/src/index.html"
+    },
+    {
+      "reference": "src/+pkg/@Cls/",
+      "address": "mat/ref/src/+pkg/@Cls/index.html"
+    },
+    {
+      "reference": "src/f.m",
+      "address": "mat/ref/src/f.m.html"
+    },
+    {
+      "reference": "src/+pkg/Cls.m.method",
+      "address": "mat/ref/src/+pkg/Cls.m.method.html"
+    },
+    {
+      "reference": "my folder/données.m",
+      "address": "mat/ref/my~20folder/donn~C3~A9es.m.html"
+    },
+    {
+      "reference": "CON.m",
+      "address": "mat/ref/~43ON.m.html"
+    },
+    {
+      "reference": "aux/Lpt1.txt.m",
+      "address": "mat/ref/~61ux/~4Cpt1.txt.m.html"
+    },
+    {
+      "reference": "src/trail.",
+      "address": "mat/ref/src/trail~2E.html"
+    },
+    {
+      "reference": "src/a~b.m",
+      "address": "mat/ref/src/a~7Eb.m.html"
+    },
+    {
+      "reference": "src/lib.slx",
+      "address": "mat/ref/src/lib.slx.html"
+    },
+    {
+      "reference": "src/lib.slx/Group/Inner Masked",
+      "address": "mat/ref/src/lib.slx~2FGroup~2FInner~20Masked.html"
+    },
+    {
+      "reference": "src/lib.slx/A//B",
+      "address": "mat/ref/src/lib.slx~2FA~2F~2FB.html"
+    },
+    {
+      "reference": "src/lib.slx/Two\nLines",
+      "address": "mat/ref/src/lib.slx~2FTwo~0ALines.html"
+    },
+    {
+      "reference": "src/lib.mdl/Größe",
+      "address": "mat/ref/src/lib.mdl~2FGr~C3~B6~C3~9Fe.html"
+    },
+    {
+      "reference": "src/lib.xml/v1.2",
+      "address": "mat/ref/src/lib.xml~2Fv1.2.html"
+    },
+    {
+      "reference": "lib.slx/x",
+      "address": "mat/ref/lib.slx~2Fx.html"
+    },
+    {
+      "reference": "src/x.slx.d/f.m",
+      "address": "mat/ref/src/x.slx.d/f.m.html"
+    },
+    {
+      "reference": "src/M.SLX/x.m",
+      "address": "mat/ref/src/M.SLX/x.m.html"
+    },
+    {
+      "reference": "src/.slx/f.m",
+      "address": "mat/ref/src/.slx/f.m.html"
+    }
+  ]
+}
