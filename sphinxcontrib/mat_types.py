@@ -57,21 +57,27 @@ from .mat_naming import (
     join_reference,
     parse_reference,
 )
+from .mat_simulink import read_diagram
 
 logger = getLogger("matlab-domain")
 
 __all__ = [
     "MatApplication",
+    "MatBlock",
     "MatClass",
     "MatEnumeration",
     "MatEvent",
     "MatFunction",
+    "MatLibrary",
     "MatMethod",
+    "MatModel",
     "MatModule",
     "MatModuleAnalyzer",
     "MatObject",
     "MatProperty",
     "MatScript",
+    "MatSimulinkFile",
+    "MatSubsystemFile",
 ]
 
 
@@ -1009,6 +1015,14 @@ class _Indexer:
                 ref += "/"
                 if not self.sources.walks(ref):
                     continue
+                if mat_naming.is_block_container(key):
+                    _warn(
+                        "parse_error",
+                        f"{ref}: the folder name ends in a Simulink file extension, "
+                        "so references would read it as a file; its contents are "
+                        "not documented.",
+                    )
+                    continue
                 if _is_link(path) and self.outside(path, ref):
                     continue
                 self.pending[ref] = MatModule(key, path, ref)
@@ -1214,35 +1228,51 @@ def name_sources(source_index):
     matlab_names = source_index.matlab_names
     for path, record in source_index.index.items():
         ref = record["reference"]
-        name = mat_naming.form_matlab_name(
-            _naming_folder(ref),
-            os.path.basename(path),
-            record["type"] == "class",
-            namelengthmax,
-            version,
-        )
+        naming = getattr(handler_by_extension(path), "naming", "code")
+        if naming is None:
+            record.update(matlab_name=None, private=False, scope=None)
+            continue
+        filename = os.path.basename(path)
+        if naming == "model":
+            name = mat_naming.form_model_name(
+                _naming_folder(ref), filename, namelengthmax, version
+            )
+        else:
+            name = mat_naming.form_matlab_name(
+                _naming_folder(ref),
+                filename,
+                record["type"] == "class",
+                namelengthmax,
+                version,
+            )
         matlab_name = mat_naming.canonical_name(name) if name else None
         private = is_private_reference(ref)
         scope = _scope(folder_of(ref)) if name is not None else None
         record.update(matlab_name=matlab_name, private=private, scope=scope)
         if name is None:
-            if not private and not is_hidden(ref):
+            if naming == "model":
+                reason = mat_naming.model_not_callable_reason(
+                    _naming_folder(ref), filename, namelengthmax, version
+                )
+            elif not private and not is_hidden(ref):
                 reason = mat_naming.not_callable_reason(
                     _naming_folder(ref),
-                    os.path.basename(path),
+                    filename,
                     record["type"] == "class",
                     namelengthmax,
                     version,
                 )
-                logger.warning(
-                    "[sphinxcontrib-matlabdomain] %s is not callable in MATLAB %s "
-                    "(%s); it is documented by its path reference.",
-                    ref,
-                    version,
-                    reason,
-                    type="mat",
-                    subtype="not_callable",
-                )
+            else:
+                continue
+            logger.warning(
+                "[sphinxcontrib-matlabdomain] %s is not callable in MATLAB %s "
+                "(%s); it is documented by its path reference.",
+                ref,
+                version,
+                reason,
+                type="mat",
+                subtype="not_callable",
+            )
             continue
         if matlab_name == name.pseudo_fullname:
             matlab_names.setdefault(matlab_name, []).append(ref)
@@ -1275,6 +1305,8 @@ def placeholder(kind, name, folder) -> Any:
     """Empty object of the index type ``kind`` for a file that failed to parse."""
     if kind == "application":
         return MatApplication(name, folder, "")
+    if kind in SIMULINK_TYPES:
+        return SIMULINK_TYPES[kind](name, folder, None)
     cls = {"class": MatClass, "function": MatFunction}.get(kind, MatScript)
     obj = cls.__new__(cls)
     MatObject.__init__(obj, name)
@@ -1544,6 +1576,18 @@ class MatObject:
         modname = path  # folder reference
 
         return MatApplication(name, modname, docstring)
+
+    @staticmethod
+    def parse_simulink(path, name, folder) -> Any:
+        """Read a Simulink file (``.slx``, ``.mdl``, exported ``.xml``).
+
+        :returns: :class:`MatModel`, :class:`MatLibrary` or
+            :class:`MatSubsystemFile`.
+        :raises SimulinkFileError: for a file that is not a readable
+            Simulink file.
+        """
+        diagram = read_diagram(path)
+        return SIMULINK_TYPES[diagram.kind](name, folder, diagram)
 
 
 # TODO: get docstring and __all__ from contents.m if exists
@@ -1949,6 +1993,91 @@ class MatApplication(MatObject):
     @property
     def __module__(self):
         return self.module
+
+
+class MatSimulinkFile(MatObject):
+    """A Simulink file: model, library or subsystem file (S5 documents them).
+
+    :param name: File name without extension.
+    :param modname: Folder reference of its folder.
+    :param diagram: What ``mat_simulink.read_diagram`` read; None for a
+        placeholder.
+    """
+
+    def __init__(self, name, modname, diagram):
+        super().__init__(name)
+        self.module = modname
+        self.diagram = diagram
+        #: the description saved in the file
+        self.docstring = diagram.description if diagram is not None else None
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        # a subclass's own ``__doc__`` and ``__module__`` hide the properties
+        for name in ("__doc__", "__module__"):
+            type.__setattr__(cls, name, MatSimulinkFile.__dict__[name])
+
+    @property
+    def __doc__(self):
+        return self.docstring
+
+    @property
+    def __module__(self):
+        return self.module
+
+
+class MatModel(MatSimulinkFile):
+    """A Simulink model file."""
+
+
+class MatSubsystemFile(MatSimulinkFile):
+    """A Simulink subsystem file (the target of a Subsystem Reference)."""
+
+
+class MatLibrary(MatSimulinkFile):
+    """A Simulink library; its members are the blocks of the library walk,
+    by their path below the library.
+    """
+
+    def getter(self, name, *defargs) -> Any:
+        blocks = self.diagram.library_blocks if self.diagram is not None else ()
+        for block in blocks:
+            if block.path == name:
+                return MatBlock(block, self)
+        return super().getter(name, *defargs)
+
+
+class MatBlock(MatObject):
+    """A block of a library found by the library walk.
+
+    :param block: The ``mat_simulink.LibraryBlock``.
+    :param library: The :class:`MatLibrary` that holds it.
+    """
+
+    def __init__(self, block, library):
+        super().__init__(block.path)
+        self.block = block
+        self.library = library
+        self.module = library.module
+        self.docstring = block.description
+        if hasattr(library, "ref"):
+            self.ref = f"{library.ref}/{block.path}"
+
+    @property
+    def __doc__(self):
+        return self.docstring
+
+    @property
+    def __module__(self):
+        return self.module
+
+
+#: Simulink index type -> object class
+SIMULINK_TYPES = {
+    "model": MatModel,
+    "library": MatLibrary,
+    "subsystem": MatSubsystemFile,
+}
 
 
 class MatcodeError(Exception):

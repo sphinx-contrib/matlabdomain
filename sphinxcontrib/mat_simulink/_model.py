@@ -143,6 +143,17 @@ def _is_block_diagram(name: str) -> bool:
     return name == BLOCK_DIAGRAM
 
 
+def is_exported_xml(path) -> bool:
+    """Return True if ``path`` (an ``.xml`` file) is an exported Simulink
+    file (root ``ModelInformation``).
+    """
+    path = Path(path)
+    try:
+        return sniff(path, read_head(path)) == "xml"
+    except SimulinkFileError:
+        return False
+
+
 def classify(path) -> str:
     """Return ``model``, ``library``, ``subsystem`` or ``unknown``, reading
     as little as possible.

@@ -20,17 +20,20 @@ handler provides:
   ``source_type`` defaults to it. The default returns ``classify(path)``;
 - ``parse(path, stem, folder, encoding)``: the parsed ``MatObject``; a
   handler whose ``read`` returns text also accepts it as ``text=``;
-- ``document(kind)``: the autodoc directive that documents a ``kind``.
+- ``document(kind)``: the autodoc directive that documents a ``kind``;
+  None for an index type that has no directive yet (apidoc leaves it out);
+- ``blocks``: True if references continue into the file's blocks with
+  ``/`` (``mat_naming.parse_reference``);
+- ``naming``: how MATLAB names the file: ``"code"`` (``form_matlab_name``),
+  ``"model"`` (``form_model_name``) or None (not by name).
 
 Registration order is lookup order: a name without extension tries ``.m``
 before ``.mlapp``.
 
-Planned types (the seam only, nothing implemented): Simulink models and
-libraries (``.slx``, a zip container; ``.mdl``, text; exported ``.xml``),
-reference subsystems (``.slx``, ``.mdl``) and Simscape components (``.ssc``,
-text). One handler owns one extension: an ``.slx`` handler tells models,
-libraries and subsystems apart in ``classify``, and an ``.xml`` handler's
-``discover`` must reject XML files that are not Simulink exports.
+Simulink files: models, libraries and subsystem files (``.slx``, a zip
+container; ``.mdl``, text; exported ``.xml``), read by
+``sphinxcontrib.mat_simulink``. The ``.xml`` handler claims only Simulink
+exports. Planned: Simscape components (``.ssc``, text).
 
 ``mat_naming`` imports this module, so it must not import the parser or
 ``mat_types`` at import time; handlers import them when they parse.
@@ -40,7 +43,7 @@ from __future__ import annotations
 
 import os
 
-from . import mat_classify
+from . import mat_classify, mat_simulink
 
 
 class Handler:
@@ -49,6 +52,8 @@ class Handler:
     extension = ""
     #: index types this handler's ``classify`` returns (besides ``unknown``)
     kinds: tuple[str, ...] = ()
+    blocks = False
+    naming: str | None = "code"
 
     def discover(self, path) -> bool:
         return os.path.isfile(path)
@@ -121,6 +126,63 @@ class MlappHandler(Handler):
         return MatObject.parse_mlappfile(path, stem, folder)
 
 
+class SimulinkHandler(Handler):
+    """Simulink models, libraries and subsystem files."""
+
+    kinds = mat_simulink.KINDS
+    blocks = True
+    naming = "model"
+
+    def classify(self, path, text=None):  # noqa: ARG002
+        try:
+            return mat_simulink.classify(path)
+        except (OSError, mat_simulink.SimulinkFileError):
+            return "unknown"
+
+    def read(self, path, encoding=None):  # noqa: ARG002
+        try:
+            kind = mat_simulink.classify(path)
+        except mat_simulink.SimulinkFileError as err:
+            return "unknown", None, [("parse_error", f"{err}", None)]
+        if kind == "unknown":
+            message = "is not a Simulink model, library or subsystem file."
+            return kind, None, [("parse_error", message, None)]
+        return kind, None, []
+
+    def parse(self, path, stem, folder, encoding=None):  # noqa: ARG002
+        from .mat_types import MatObject
+
+        return MatObject.parse_simulink(path, stem, folder)
+
+    def document(self, kind):  # noqa: ARG002
+        return None
+
+
+class SlxHandler(SimulinkHandler):
+    extension = ".slx"
+
+
+class MdlHandler(SimulinkHandler):
+    extension = ".mdl"
+
+
+class SimulinkXmlHandler(SimulinkHandler):
+    """Simulink files exported as XML (``save_system`` ``ExportToXML``);
+    MATLAB does not load them by name.
+    """
+
+    extension = ".xml"
+    naming = None
+
+    def discover(self, path) -> bool:
+        if not super().discover(path):
+            return False
+        try:
+            return mat_simulink.is_exported_xml(path)
+        except OSError:
+            return False
+
+
 _HANDLERS: dict[str, Handler] = {}
 
 
@@ -141,6 +203,11 @@ def handlers() -> tuple[Handler, ...]:
     return tuple(_HANDLERS.values())
 
 
+def block_extensions() -> tuple[str, ...]:
+    """Return the extensions of files with blocks (``Handler.blocks``)."""
+    return tuple(ext for ext, h in _HANDLERS.items() if h.blocks)
+
+
 def handler_by_extension(path) -> Handler | None:
     """Return the handler registered for the extension of ``path``."""
     return _HANDLERS.get(os.path.splitext(os.fspath(path))[1])
@@ -156,3 +223,6 @@ def handler_for(path) -> Handler | None:
 
 register(MFileHandler())
 register(MlappHandler())
+register(SlxHandler())
+register(MdlHandler())
+register(SimulinkXmlHandler())

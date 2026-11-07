@@ -191,6 +191,9 @@ def _entry(path, record):
     handler = handler_by_extension(path)
     directive = handler.document(kind) if handler is not None else None
     if directive is None:
+        if handler is not None and kind in handler.kinds:
+            # an index type without a directive yet
+            return None
         _warn(f"{ref}: no directive documents a {kind}; it is left out.")
         return None
     matlab_name = record.get("matlab_name")

@@ -19,6 +19,16 @@ earlier" in the documentation.
 
 * Drop support for Python <=3.10.
 * Drop support for Sphinx <=7.x.
+* The index reads Simulink files without MATLAB: models, libraries and
+  subsystem files (``.slx``, ``.mdl`` and ``.xml`` exported by
+  ``save_system``), from every release since R2006a. They get MATLAB names
+  as Simulink loads them (a file in a namespace folder from R2026a, none
+  in ``private/`` or class folders, with ``mat.not_callable``), and a
+  block of a library is referenced by its Simulink path after the file
+  (``lib.slx/Group/Gain``, a ``/`` in a block name doubled). Directives
+  that document them are not in this release yet. A folder whose name ends
+  in ``.slx``, ``.mdl`` or ``.xml`` is no longer documented
+  (``mat.parse_error``).
 * Help lines that start with ``%%`` (a section start) lose both ``%``, as
   in MATLAB's ``help`` (upstream #350): ``%% Inputs:`` gives ``Inputs:``.
   A separator line of ``%`` signs loses two of them, also as in MATLAB.

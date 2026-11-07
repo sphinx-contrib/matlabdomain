@@ -23,15 +23,18 @@ Modules
        and the object model (``MatObject`` and subclasses).
    * - ``mat_naming.py``
      - Path references, anchors, MATLAB names (``form_matlab_name``, a port
-       of MATLAB's own naming rules) and the release-dependent rules
-       (``MATLAB_VERSION_RULES``).
+       of MATLAB's own naming rules; ``form_model_name`` for Simulink
+       files) and the release-dependent rules (``MATLAB_VERSION_RULES``).
    * - ``mat_classify.py``
      - ``classify()`` (script, function, class or unknown, from the first
        line of code), ``decode_source()`` (encodings as MATLAB reads them),
        the special files.
    * - ``mat_handlers.py``
      - The file-type registry: one handler per extension (``.m``,
-       ``.mlapp``).
+       ``.mlapp``, ``.slx``, ``.mdl``, exported Simulink ``.xml``).
+   * - ``mat_simulink/``
+     - The Simulink file reader: layouts, limits, parsers and the
+       format-neutral content (see :doc:`simulink-file-formats`).
    * - ``mat_tree_sitter_parser.py``
      - tree-sitter queries: signatures, members, arguments and help text.
    * - ``mat_documenters.py``, ``mat_directives.py``
@@ -73,6 +76,7 @@ is imported). Most modules also use ``mat_naming.py`` and
      types --> parser["mat_tree_sitter_parser.py"]
      naming --> handlers["mat_handlers.py<br/>file types"]
      handlers --> classify["mat_classify.py<br/>file kind, decoding"]
+     handlers --> simulink["mat_simulink/<br/>Simulink files"]
      handlers -. "when parsing" .-> types
      parser --> treesitter[("tree-sitter-matlab")]
 

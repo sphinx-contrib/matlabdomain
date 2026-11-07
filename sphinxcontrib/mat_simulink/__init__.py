@@ -8,6 +8,7 @@ guide page "Simulink file formats".
 """
 
 from ._model import (
+    KINDS,
     Diagram,
     LibraryBlock,
     Mask,
@@ -15,12 +16,14 @@ from ._model import (
     Port,
     Reference,
     classify,
+    is_exported_xml,
     read_diagram,
     simulink_release,
 )
 from ._parts import SimulinkFileError
 
 __all__ = [
+    "KINDS",
     "Diagram",
     "LibraryBlock",
     "Mask",
@@ -29,6 +32,7 @@ __all__ = [
     "Reference",
     "SimulinkFileError",
     "classify",
+    "is_exported_xml",
     "read_diagram",
     "simulink_release",
 ]

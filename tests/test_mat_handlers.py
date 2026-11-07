@@ -10,7 +10,8 @@ from sphinxcontrib.mat_types import MatApplication
 
 
 def test_registered_handlers(tmp_path):
-    assert mat_handlers.extensions() == (".m", ".mlapp")
+    assert mat_handlers.extensions() == (".m", ".mlapp", ".slx", ".mdl", ".xml")
+    assert mat_handlers.block_extensions() == (".slx", ".mdl", ".xml")
     (tmp_path / "f.m").write_text("function f\nend\n")
     (tmp_path / "app.mlapp").write_bytes(b"")
     (tmp_path / "x.txt").write_text("")
@@ -29,7 +30,7 @@ def test_registered_handlers(tmp_path):
 
 
 def test_document_directives():
-    m, mlapp = mat_handlers.handlers()
+    m, mlapp, slx, *_ = mat_handlers.handlers()
     assert [m.document(k) for k in ("script", "function", "class")] == [
         "mat:autoscript",
         "mat:autofunction",
@@ -37,6 +38,8 @@ def test_document_directives():
     ]
     assert mlapp.document("application") == "mat:autoapplication"
     assert m.document("application") is None
+    # no Simulink directives yet
+    assert slx.document("model") is None
 
 
 def test_extension_has_one_handler():
