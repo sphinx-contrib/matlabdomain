@@ -20,6 +20,7 @@ from sphinx.domains import Domain, Index, ObjType
 from sphinx.errors import ConfigError
 from sphinx.locale import _ as translation
 from sphinx.roles import XRefRole
+from sphinx.transforms.post_transforms import SphinxPostTransform
 from sphinx.util.docfields import Field, GroupedField, TypedField
 from sphinx.util.logging import getLogger
 from sphinx.util.nodes import make_refnode
@@ -78,35 +79,72 @@ def keep_unresolved_references(app, env, node, contnode):  # noqa: ARG001
 
 
 def check_inventories(app, env, node, contnode):
-    """``missing-reference``, before intersphinx: a path reference that
-    several inventories have at different addresses stays unlinked with a
-    ``mat.ambiguous`` warning (intersphinx would pick one of them).
+    """``missing-reference``, before intersphinx: a reference that several
+    inventories have at different addresses stays unlinked with a
+    ``mat.ambiguous`` warning (intersphinx would pick one of them). So does
+    a MATLAB name of several objects of one inventory (its chooser page)
+    unless ``matlab_document_shadowed_files`` accepts them.
     """
-    if (
-        node.get("refdomain") != "mat"
-        or node.get("inventory") is not None
-        or "sphinx.ext.intersphinx" not in app.extensions
-    ):
+    if node.get("refdomain") != "mat" or "sphinx.ext.intersphinx" not in app.extensions:
         return None
+    return _check_inventories(env, node, contnode)
+
+
+class CheckExternalReferences(SphinxPostTransform):
+    """``check_inventories`` for the ``:external:`` roles, which intersphinx
+    resolves before the ``missing-reference`` event.
+    """
+
+    default_priority = 8  # before intersphinx's IntersphinxRoleResolver (9)
+
+    def run(self, **kwargs):  # noqa: ARG002
+        for node in list(self.document.findall(addnodes.pending_xref)):
+            if "intersphinx" in node and node.get("refdomain") == "mat":
+                contnode = node[0].deepcopy()
+                if _check_inventories(self.env, node, contnode) is not None:
+                    node.replace_self(contnode)
+
+
+def _check_inventories(env, node, contnode):
     from sphinx.ext.intersphinx import InventoryAdapter
 
     inventories = InventoryAdapter(env).named_inventory
     target = node["reftarget"]
-    if target.partition(":")[0] in inventories:
-        return None
+    named = node.get("inventory")
+    prefix, colon, rest = target.partition(":")
+    if named is None and colon and prefix in inventories:
+        named, target = prefix, rest
+    names = [named] if named is not None else sorted(inventories)
     objtypes = env.get_domain("mat").objtypes_for_role(node["reftype"]) or ()
     found = {}
-    for name in sorted(inventories):
+    for name in names:
         for objtype in objtypes:
-            item = inventories[name].get(f"mat:{objtype}", {}).get(target)
+            item = inventories.get(name, {}).get(f"mat:{objtype}", {}).get(target)
             if item is not None:
                 # Sphinx < 8.2: (project, version, uri, display name)
                 found.setdefault(getattr(item, "uri", None) or item[2], name)
-    if len(found) < 2:
+    if len(found) > 1:
+        node["mat:ambiguous"] = True
+        labels = [(f"{name}:{target}",) for name in found.values()]
+        MATLABDomain._warn_ambiguous(target, labels, node, "write one of them")
+        return contnode
+    if not found:
         return None
+    uri, found_in = next(iter(found.items()))
+    if env.config.matlab_document_shadowed_files or not mat_urls.is_chooser_uri(uri):
+        return None
+    refs = {
+        ref
+        for objtype in objtypes
+        for ref, item in inventories[found_in].get(f"mat:{objtype}", {}).items()
+        # Sphinx < 8.2: (project, version, uri, display name)
+        if ref != target
+        and (getattr(item, "display_name", None) or item[3]) == target
+        and not mat_naming.is_private_reference(ref)
+    }
+    prefix = "" if len(names) == 1 else f"{found_in}:"
     node["mat:ambiguous"] = True
-    labels = [(f"{name}:{target}",) for name in found.values()]
-    MATLABDomain._warn_ambiguous(target, labels, node, "write one of them")
+    MATLABDomain._warn_ambiguous(target, [(prefix + ref,) for ref in refs], node)
     return contnode
 
 
@@ -1011,6 +1049,9 @@ class MATLABDomain(Domain):
         if not matches:
             return None
         if len(matches) > 1:
+            if self._shadowed(matches):
+                refs = [ref for ref, _ in matches]
+                return mat_urls.chooser_link(self, builder, fromdocname, refs, contnode)
             self._warn_ambiguous(target, matches, node)
             # Unlinked, without a second "target not found" warning.
             return contnode
@@ -1046,6 +1087,15 @@ class MATLABDomain(Domain):
             location=node,
         )
 
+    def _shadowed(self, matches):
+        """Return True for objects of one MATLAB name that the project accepts
+        (``matlab_document_shadowed_files``).
+        """
+        return (
+            self.env.config.matlab_document_shadowed_files
+            and len({entry[2] for _, entry in matches}) == 1
+        )
+
     def get_full_qualified_name(self, node):
         """Return the path reference of an intersphinx target that is a MATLAB
         name, or None.
@@ -1060,6 +1110,8 @@ class MATLABDomain(Domain):
         """
         from sphinx.ext.intersphinx import InventoryAdapter
 
+        if node.get("mat:ambiguous"):  # check_inventories warned
+            return None
         inventories = InventoryAdapter(self.env).named_inventory
         target = unicodedata.normalize("NFC", node["reftarget"]).removesuffix("()")
         named = node.get("inventory")
@@ -1075,12 +1127,23 @@ class MATLABDomain(Domain):
                 for ref, item in inventories[name].get(f"mat:{objtype}", {}).items():
                     # Sphinx < 8.2: (project, version, uri, display name)
                     display = getattr(item, "display_name", None) or item[3]
-                    if display != target or mat_naming.is_private_reference(ref):
+                    # ``ref == target``: a chooser page's entry
+                    if (
+                        display != target
+                        or ref == target
+                        or mat_naming.is_private_reference(ref)
+                    ):
                         continue
                     label = f"{name}:{ref}" if len(names) > 1 else ref
                     found.setdefault((name, ref), label)
         if len(found) > 1:
             node["mat:ambiguous"] = True
+            # One site's duplicates: its chooser page, if it has one, was
+            # found before this.
+            if self.env.config.matlab_document_shadowed_files and (
+                len({name for name, _ in found}) == 1
+            ):
+                return None
             labels = [(label,) for label in found.values()]
             hint = "write one of them" if len(names) > 1 else "use a path reference"
             self._warn_ambiguous(target, labels, node, hint)
@@ -1104,8 +1167,12 @@ class MATLABDomain(Domain):
             node.get("mat:folder"), node.get("mat:class"), target, None, searchmode
         )
         if len(matches) > 1:
-            self._warn_ambiguous(target, matches, node)
             role = self.role_for_objtype(matches[0][1][1])
+            if self._shadowed(matches):
+                refs = [ref for ref, _ in matches]
+                link = mat_urls.chooser_link(self, builder, fromdocname, refs, contnode)
+                return [(f"mat:{role}", link)]
+            self._warn_ambiguous(target, matches, node)
             return [(f"mat:{role}", contnode)]
         return [
             (
@@ -1193,6 +1260,7 @@ def setup(app):
     app.connect("env-updated", mat_types.warn_parsed_sources)
     app.connect("build-finished", mat_api_check.set_status)
     app.connect("missing-reference", check_inventories, priority=400)
+    app.add_post_transform(CheckExternalReferences)
     app.connect("missing-reference", keep_unresolved_references, priority=900)
     app.connect("html-page-context", mat_urls.rewrite_permalinks)
     app.connect("html-collect-pages", mat_urls.chooser_pages)
@@ -1246,6 +1314,9 @@ def setup(app):
     app.add_config_value("matlab_namelengthmax", None, "env")
     # Stable addresses (mat/ref/, mat/name/) and "¶" links to them.
     app.add_config_value("matlab_stable_urls", True, "html", bool)
+    # Several objects of one MATLAB name are intended: link to their chooser
+    # page, without mat.ambiguous.
+    app.add_config_value("matlab_document_shadowed_files", False, "env", bool)
     # The sphinx-autobuild address for Simulink Help links (make livehtml).
     app.add_config_value("matlab_simulink_server", None, "")
     # matlab-api-check: read by the builder only, so no page is read again.

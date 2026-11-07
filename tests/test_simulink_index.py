@@ -431,9 +431,11 @@ def test_help_target(text, target):
     assert mat_simulink.help_target(text) == target
 
 
-def test_code_lookups_ignore_simulink_files(make_app, tmp_path):
-    """A model named like a function does not make the function's name
-    ambiguous: Simulink files have no directive or role yet.
+def test_simulink_files_share_names_with_code(make_app, tmp_path):
+    """A model named like a function is a second object of that name, like a
+    second ``.m`` file: "See also" warns, or links with
+    ``matlab_document_shadowed_files`` (to the function: models have no
+    directive yet). Directives that document code still find the function.
     """
     src = tmp_path / "src"
     copy(SLX / "probeRef.slx", src / "same.slx")
@@ -442,16 +444,30 @@ def test_code_lookups_ignore_simulink_files(make_app, tmp_path):
     (src / "user.m").write_text(
         "function user\n% Calls same.\n%\n% See also same\nend\n"
     )
-    (tmp_path / "conf.py").write_text(CONF + 'matlab_auto_link = "all"\n')
     (tmp_path / "index.rst").write_text(
         "Index\n=====\n\n.. mat:autofunction:: same\n\n.. mat:autofunction:: user\n\n"
         ".. mat:function:: same\n   :no-index:\n"
     )
-    app = make_app(srcdir=tmp_path)
-    app.build()
-    assert "ambiguous" not in app.warning.getvalue()
-    html = (app.outdir / "index.html").read_text(encoding="utf-8")
-    assert 'href="#mat-same.m"' in html
+    for shadowed in (False, True):
+        (tmp_path / "conf.py").write_text(
+            CONF
+            + f"matlab_auto_link = 'all'\nmatlab_document_shadowed_files = {shadowed}\n"
+        )
+        app = make_app(srcdir=tmp_path, freshenv=True)
+        app.build(force_all=True)
+        app.cleanup()
+        warnings = app.warning.getvalue()
+        html = (app.outdir / "index.html").read_text(encoding="utf-8")
+        if shadowed:
+            assert "ambiguous" not in warnings
+            # "Calls same." and "See also same"
+            assert html.count('href="#mat-same.m"') == 2
+        else:
+            assert (
+                "'same' in the docstring of user.m matches several objects: same.m, "
+                "same.slx" in warnings
+            )
+            assert 'href="#mat-same.m"' not in html
     dom = app.env.get_domain("mat")
     assert mat_types.find_source(dom, "same.slx", accept=mat_types.is_code_object) == []
 

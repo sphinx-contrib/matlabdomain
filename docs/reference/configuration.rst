@@ -185,6 +185,22 @@ Output
    it. ``False`` writes no such files and keeps "¶"
    and the inventory on the page (:ref:`library-changes`).
 
+.. confval:: matlab_document_shadowed_files
+   :type: ``bool``
+   :default: ``False``
+
+   Several files with one MATLAB name (two global ``helper.m`` in
+   different folders, ``foo.m`` and ``foo.slx``) are documented either
+   way, each by its path reference. ``False``: a role, "See also" entry
+   or auto-link that names them by MATLAB name gets a ``mat.ambiguous``
+   warning and stays text. ``True``: it links to the page that lists them
+   (``mat/name/<MATLAB name>.html``, :confval:`matlab_stable_urls`) without
+   a warning; a build without that page (LaTeX, or
+   ``matlab_stable_urls = False``) leaves it as text, also without a
+   warning. The same holds for such a name of another site, through
+   intersphinx. An auto directive that names them still warns: it
+   documents one object, so give its path reference.
+
 .. confval:: matlab_simulink_server
    :type: ``str`` or ``None``
    :default: ``None``

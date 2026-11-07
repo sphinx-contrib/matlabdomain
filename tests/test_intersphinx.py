@@ -81,9 +81,10 @@ def build_library(
     return Path(app.outdir)
 
 
-def build_consumer(make_app, root, mapping, references):
+def build_consumer(make_app, root, mapping, references, conf=""):
     """Build a consumer that documents its own ``util/scale.m`` and lists
-    ``references`` (key -> role); return ``(links, warnings)`` where links
+    ``references`` (key -> role; other ``conf.py`` lines in ``conf``); return
+    ``(links, warnings)`` where links
     maps each key to the ``(href, text)`` of its link (href None: no link).
     """
     write(root / "src", {"util/scale.m": FUNCTION.format(name="scale")})
@@ -92,7 +93,7 @@ def build_consumer(make_app, root, mapping, references):
         'extensions = ["sphinxcontrib.matlab", "sphinx.ext.intersphinx"]\n'
         'matlab_src_code_project_root = "src"\n'
         f"intersphinx_mapping = {mapping!r}\n"
-        "nitpicky = True\n"
+        "nitpicky = True\n" + conf
     )
     items = "".join(f"* {key}: {role}\n" for key, role in references.items())
     (root / "index.rst").write_text(

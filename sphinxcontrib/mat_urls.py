@@ -37,8 +37,9 @@ import os
 import re
 import zlib
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
+from docutils import nodes
 from sphinx.util.logging import getLogger
 from sphinx.util.osutil import relative_uri
 
@@ -55,6 +56,7 @@ _FRAGMENT_SAFE = "/+-._~:@!$()*,="
 _PERMALINK = re.compile(r'(<a class="headerlink" href=")#(mat-[^"]*)(")')
 # An objects.inv line: name, domain:type, priority, URI, display name.
 _INVENTORY_LINE = re.compile(r"(.+?) (mat:\w+) (-?\d+) \S+ (.*)")
+_CHOOSER_LINE = re.compile(rf"\S+ mat:\w+ -1 {ROOT}/name/\S+ -")
 _HOME = "sphinxcontrib-matlabdomain-home"
 # Finds the site root (the page's, else each folder above it) by loading
 # mat/refs.js there; then opens the stable address of the anchor's object and
@@ -119,7 +121,10 @@ _JS = """\
 
 
 def _html(app):
-    builder = app.builder
+    return _html_builder(app.builder)
+
+
+def _html_builder(builder):
     return getattr(builder, "format", "") == "html" and not builder.name.startswith(
         "epub"
     )
@@ -164,6 +169,28 @@ def permalink(dom, ref):
     if names.get(display) == [ref]:
         return by_name[display]
     return by_ref[ref]
+
+
+def chooser_link(dom, builder, fromdocname, refs, contnode):
+    """Link ``contnode`` to the chooser page that lists all of ``refs`` (one
+    MATLAB name), or return it unlinked when the build writes no such page.
+    """
+    if not (builder.config.matlab_stable_urls and _html_builder(builder)):
+        return contnode
+    _, by_name, names, _ = addresses(dom)
+    name = dom.data["objects"][refs[0]][2]
+    listed = names.get(name, [])
+    if len(listed) < 2 or not set(refs) <= set(listed):
+        return contnode
+    uri = relative_uri(builder.get_target_uri(fromdocname), by_name[name])
+    node = nodes.reference("", "", internal=True, refuri=uri, reftitle=name)
+    node += contnode
+    return node
+
+
+def is_chooser_uri(uri):
+    """Return True for the address of a chooser page of another site."""
+    return f"/{ROOT}/name/" in "/" + urlsplit(uri).path
 
 
 def rewrite_permalinks(app, pagename, templatename, context, doctree):  # noqa: ARG001
@@ -268,9 +295,10 @@ def chooser_pages(app):
     return pages
 
 
-def rewrite_inventory(path, uris):
+def rewrite_inventory(path, uris, choosers=()):
     """Point the ``mat`` entries of the ``objects.inv`` at ``path`` whose
-    name is in ``uris`` (reference -> URI) to that URI.
+    name is in ``uris`` (reference -> URI) to that URI, and add the
+    ``choosers`` entries ``(MATLAB name, objtype, URI)``.
     """
     if not os.path.isfile(path):
         return
@@ -282,6 +310,11 @@ def rewrite_inventory(path, uris):
         match = _INVENTORY_LINE.fullmatch(line)
         if match and match[1] in uris:
             lines[i] = f"{match[1]} {match[2]} {match[3]} {uris[match[1]]} {match[4]}"
+    # Priority -1: not offered by search; keyed by the name, which no path
+    # reference equals. Entries of an earlier rewrite are replaced.
+    lines = [line for line in lines if line and not _CHOOSER_LINE.fullmatch(line)]
+    lines += [f"{name} mat:{objtype} -1 {uri} -" for name, objtype, uri in choosers]
+    lines.append("")
     body = zlib.compress("\n".join(lines).encode("utf-8"), 9)
     _write(path, b"\n".join([*header, body]))
 
@@ -362,7 +395,13 @@ def write_redirects(app, exception):
         if folder != root and not os.listdir(folder):
             os.rmdir(folder)
     uris = {ref: quote(stub) for ref, stub in by_ref.items() if stub not in failed}
-    rewrite_inventory(os.path.join(outdir, "objects.inv"), uris)
+    choosers = [
+        (name, objtype, quote(by_name[name]))
+        for name, refs in sorted(names.items())
+        if len(refs) > 1 and by_name[name] not in failed
+        for objtype in sorted({objects[ref][1] for ref in refs})
+    ]
+    rewrite_inventory(os.path.join(outdir, "objects.inv"), uris, choosers)
 
 
 def _not_found(home):

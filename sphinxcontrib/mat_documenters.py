@@ -53,6 +53,7 @@ from .mat_types import (
     find_source,
     is_code_object,
     is_folder_object,
+    is_source_object,
     lookup_reference,
     resolve,
 )
@@ -273,15 +274,19 @@ class MatlabDocumenter(PyDocumenter):
     def _find_link(self, target):
         """Return the (reference, object) ``target`` names from this object's folder.
 
-        Warns and returns None if the MATLAB name is ambiguous.
+        A MATLAB name of several objects warns and returns None; with
+        ``matlab_document_shadowed_files`` it returns ``(target, None)``, a
+        reference to the name (its chooser page).
         """
         found = find_source(
             self.env.get_domain("mat"),
             target,
             mat_naming.folder_of(self.ref),
-            is_code_object,
+            is_source_object,
         )
         if len(found) > 1:
+            if self.env.config.matlab_document_shadowed_files:
+                return target, None
             logger.warning(
                 "[sphinxcontrib-matlabdomain] %r in the docstring of %s matches "
                 "several objects: %s; use a path reference",
@@ -329,6 +334,9 @@ class MatlabDocumenter(PyDocumenter):
 
                         # a class or function (path reference or MATLAB name)
                         found = self._find_link(entries[k].rstrip("()"))
+                        if found is not None and found[1] is None:
+                            entries[k] = self._link("obj", entries[k], found[0])
+                            continue
                         role = found[1].ref_role() if found is not None else None
                         if found is not None and role in ["class", "func"]:
                             entries[k] = self._link(role, entries[k], found[0])
@@ -405,18 +413,22 @@ class MatlabDocumenter(PyDocumenter):
             # Only names in the text can link; resolving parses their files.
             if not any(nn in line for lines in docstrings for line in lines):
                 continue
-            found = find_source(dom, nn, folder, is_code_object)
+            found = find_source(dom, nn, folder, is_source_object)
             if not found:
                 continue
             # entity_name is NOT followed by .<property_or_method>
             p = re.compile(look_behind + re.escape(nn) + look_ahead)
             if len(found) > 1:
-                if any(p.search(line) for lines in docstrings for line in lines):
-                    self._find_link(nn)  # warns about the ambiguity
-                continue
-            ref, o = found[0]
-            role = o.ref_role()
-            if role in ["class", "func"]:
+                if not any(p.search(line) for lines in docstrings for line in lines):
+                    continue
+                # warns about the ambiguity, or gives the name to link
+                if self._find_link(nn) is None:
+                    continue
+                ref, o, role = nn, None, "obj"
+            else:
+                ref, o = found[0]
+                role = o.ref_role()
+            if role in ["class", "func", "obj"]:
                 if role == "class":
                     o = cast(MatClass, o)
                     # entity_name IS followed by .<property_or_method>

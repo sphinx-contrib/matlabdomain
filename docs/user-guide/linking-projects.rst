@@ -78,7 +78,10 @@ A target is looked up:
    global ``helper`` functions in different folders), a ``mat.ambiguous``
    warning lists their path references (with the inventory,
    ``lib:examples/helper.m``, when several are loaded), and the text is not
-   linked: write one of them instead.
+   linked: write one of them instead. With
+   :confval:`matlab_document_shadowed_files`, the text links to the page of
+   the other site that lists them, without the warning, if that site was
+   built with this release or later.
 
 The ``lib:`` prefix and the ``:external+lib:`` role search only that
 inventory; ``:external:`` and ``:external+lib:`` skip the local objects.
@@ -157,7 +160,9 @@ that sends the browser to the page the object is on now
 
 The "¶" link next to an object points to its address by MATLAB name, or
 by path reference if the name is not unique; ``objects.inv`` gives the
-address by path reference. Copy that link, not the
+address by path reference, and has an entry for each MATLAB name of
+several objects (once per object type) that points to the page listing
+them. Copy that link, not the
 browser's address bar: these addresses stay the same when the pages split
 differently, and change only when the object is renamed, moved or removed
 (then the file is removed too). Characters that are not safe in a URL, and

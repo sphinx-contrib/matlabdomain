@@ -43,6 +43,12 @@ earlier" in the documentation.
   builds keep the function's settings up to date, so Help links open the
   local build, the sphinx-autobuild server of ``make livehtml`` (new
   :confval:`matlab_simulink_server`) or the published site.
+* New :confval:`matlab_document_shadowed_files`: names of several objects
+  (two global ``helper.m``, ``foo.m`` and ``foo.slx``) link to the page
+  that lists them, locally and through intersphinx, without
+  ``mat.ambiguous``. ``objects.inv`` has an entry for each such page, once
+  per object type. Default ``False``: such names warn and stay text, as
+  before; "See also" lines and auto-links now count Simulink files too.
 * Help lines that start with ``%%`` (a section start) lose both ``%``, as
   in MATLAB's ``help`` (upstream #350): ``%% Inputs:`` gives ``Inputs:``.
   A separator line of ``%`` signs loses two of them, also as in MATLAB.
