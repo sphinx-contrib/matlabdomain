@@ -25,7 +25,8 @@ from urllib.request import url2pathname
 
 from .. import mat_naming
 from ..mat_classify import UNKNOWN, is_hidden
-from ..mat_handlers import extensions
+from ..mat_handlers import extensions, handler_by_extension
+from ..mat_simulink import KINDS
 
 DISTRIBUTION = "sphinxcontrib-matlabdomain"
 #: a heading used in at least this many files becomes a napoleon section
@@ -433,17 +434,25 @@ def napoleon_headings(found, threshold=SECTION_FILES):
     return out
 
 
+def has_simulink(source_index):
+    """Return True if the index has a Simulink model, library or subsystem file."""
+    return any(r["type"] in KINDS for r in source_index.index.values())
+
+
 def inventory(source_index):
     """Return counts and lists of the index for the report."""
     kinds = collections.Counter()
     namespaces = set()
     not_callable, encoding = [], []
-    for record in source_index.index.values():
+    for path, record in source_index.index.items():
         ref = record["reference"]
         kinds[record["type"]] += 1
         if record["matlab_name"] is None:
             # as the mat.not_callable warnings
-            if not record["private"] and not is_hidden(ref):
+            naming = getattr(handler_by_extension(path), "naming", "code")
+            if naming == "model" or (
+                naming == "code" and not record["private"] and not is_hidden(ref)
+            ):
                 not_callable.append(ref)
         else:
             parts = ref.split("/")[:-1]

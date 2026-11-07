@@ -85,8 +85,10 @@ def get_parser():
         epilog=(
             "It stops before writing anything when DOCS/conf.py exists (unless "
             "--force) or when pyproject.toml, .gitignore or .gitattributes have "
-            "uncommitted changes. It never touches uv.lock, MATLAB code or CI, "
-            "and never commits."
+            "uncommitted changes. It never touches uv.lock, the project's MATLAB "
+            "code or CI, and never commits. For a project with Simulink files it "
+            "adds +sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m and "
+            "its settings to ROOT, for Help links to the documentation."
         ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {_version()}")
@@ -499,6 +501,19 @@ def _apply(args, root, docs, answers, facts, files, dirty):
     return commands, written
 
 
+def _write_linker(args, root, docs_rel):
+    """Write the function behind the Help links of the Simulink files."""
+    written = _write.write_files(
+        root, _write.linker_files(root, docs_rel), args.dry_run
+    )
+    verbs = (
+        ("Would create", "Would update") if args.dry_run else ("Creating", "Updating")
+    )
+    for verb, names in zip(verbs, (written.created, written.updated), strict=True):
+        for name in names:
+            print(f"{verb} file {name} (Help links of the Simulink files).")
+
+
 def run(args):
     """Run the command for ``args``; return the exit status, or Stop."""
     start = time.perf_counter()
@@ -514,7 +529,9 @@ def run(args):
     facts = _facts(root)
     candidates = _ask(prompter, facts, root, docs)
     answers = prompter.answers
-    exclude = pattern_list([*facts["exclude"], *answers["exclude"]], "exclude")
+    linker = os.path.join(root, *_write.LINKER_FOLDER.split("/"), f"{_write.LINKER}.m")
+    tools = [_write.LINKER_EXCLUDE] if os.path.isfile(linker) else []
+    exclude = pattern_list([*facts["exclude"], *answers["exclude"], *tools], "exclude")
     settings = IndexSettings(
         root=root,
         exclude=tuple(exclude),
@@ -525,6 +542,7 @@ def run(args):
     with _sphinx_warnings(sys.stderr) as warnings:
         source_index = build_index(settings)
         found = _detect.survey(source_index)
+        simulink = bool(tools) or _detect.has_simulink(source_index)
         headings = _detect.napoleon_headings(found)
         _ask_napoleon(prompter, headings)
         path = facts["path"]
@@ -539,11 +557,14 @@ def run(args):
             "gitmodules": f"{rel_root}/.gitmodules",
             "suggestions": suggestions,
             "path_source": path.source if path else "",
+            "linker_exclude": _write.LINKER_EXCLUDE if simulink else "",
             # A contributor's guide names no folder of this machine.
             "install": "\n".join(_write.pip_lines(answers, _guide_install(facts))),
         }
         files = _write.render(answers, context)
         commands, written = _apply(args, root, docs, answers, facts, files, dirty)
+        if simulink:
+            _write_linker(args, root, docs_rel)
         result = generate(
             source_index,
             ApidocOptions(

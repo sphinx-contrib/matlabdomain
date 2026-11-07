@@ -64,6 +64,10 @@ matlab_src_exclusion_patterns = [
     {{ pattern | py }},
 {% endfor %}
 {% endif %}
+{% if linker_exclude %}
+    # The MATLAB function behind the Help links of the Simulink files.
+    {{ linker_exclude | py }},
+{% endif %}
 {% if suggestions %}
     # Not on the MATLAB project path ({{ path_source }}); start-up files may
     # add more. Uncomment what is not the project's API:

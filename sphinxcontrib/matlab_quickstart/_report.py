@@ -22,12 +22,17 @@ _KINDS = {
     "class": "class",
     "script": "script",
     "application": "app",
+    "model": "model",
+    "library": "library",
+    "subsystem": "subsystem file",
 }
 
 
 def _count(number, noun):
     if noun == "class":
         return f"{number} class{'' if number == 1 else 'es'}"
+    if noun == "library":
+        return f"{number} librar{'y' if number == 1 else 'ies'}"
     return _apidoc_count(number, noun)
 
 

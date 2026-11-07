@@ -18,7 +18,7 @@ from sphinx.errors import ConfigError
 from sphinx.util.logging import getLogger
 from sphinx.util.matching import Matcher
 
-from . import mat_types
+from . import mat_simulink, mat_types
 from .mat_classify import is_hidden
 
 logger = getLogger("matlab-domain")
@@ -388,7 +388,7 @@ class _Checker:
         self.parsed = []
         self.checked = dict.fromkeys(KINDS, 0)
         self.not_checked: dict[str, int] = dict.fromkeys(
-            ("ignored", "hidden", "unreadable", "not_parsed"), 0
+            ("ignored", "hidden", "unreadable", "not_parsed", "simulink_files"), 0
         )
         #: the ``selected_files`` entries; None selects every file
         self.selection = selection
@@ -572,6 +572,9 @@ class _Checker:
             return
         if self.ignore(ref):
             self.not_checked["ignored"] += 1
+            return
+        if record["type"] in mat_simulink.KINDS:  # no rules for them yet
+            self.not_checked["simulink_files"] += 1
             return
         obj = mat_types.resolve(self.dom, ref)
         self.parsed.append(path)

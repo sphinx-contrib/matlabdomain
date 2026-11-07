@@ -17,7 +17,7 @@
 ../src/utils/private/check_range.m:1: error: utils/private/check_range.m (check_range): has no inputs section in its help (such as "Inputs:"), and these inputs have no arguments-block comment: lo, hi [inputs]
 
 Checked: 4 functions, 2 classes, 3 methods, 4 properties, 0 events, 1 scripts, 1 apps, 3 sidecars
-Not checked: 0 ignored, 1 hidden, 0 unreadable, 0 not parsed
+Not checked: 0 ignored, 1 hidden, 0 unreadable, 0 not parsed, 0 simulink files
 Findings: 9 errors, 8 warnings
   description (error): 0 errors, 0 warnings
   method-description (error): 0 errors, 0 warnings

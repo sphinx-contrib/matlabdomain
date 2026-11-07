@@ -30,11 +30,15 @@ What each warning means
 
 ``mat.parse_error``
    A file could not be read (no permission, for example) or parsed, an
-   ``.mlapp`` file is not a valid App Designer file, a folder could not be
-   listed or entered, or a file name is not valid UTF-8. The file is still
+   ``.mlapp`` file is not a valid App Designer file, a ``.slx`` or ``.mdl``
+   file is not a Simulink model, library or subsystem file (or is a Git
+   LFS pointer, or exceeds the size limits), a folder could not be listed
+   or entered, or a file name is not valid UTF-8. The file is still
    indexed and documented, without content, so links to it work; a file
    that cannot be read is tried again on every build. Where the parser
-   found a syntax error, the warning gives its line and column.
+   found a syntax error, the warning gives its line and column. A folder
+   whose name ends in ``.slx``, ``.mdl`` or ``.xml`` is not documented:
+   references would read it as a Simulink file.
 
 ``mat.encoding``
    A file is not valid in its encoding: it was decoded with the fallback
@@ -59,7 +63,9 @@ What each warning means
    MATLAB cannot call the file for :confval:`matlab_version`, so it has no
    MATLAB name; it is documented and linked by path (:doc:`referencing`).
    The warning says why (an invalid name such as ``my-file``, a keyword,
-   a subfolder of a class folder, ...). Rename or move the file, or
+   a subfolder of a class folder, ...). Simulink loads no model, library or
+   subsystem file from ``private/`` or a class folder, and one in a
+   namespace folder only from R2026a. Rename or move the file, or
    suppress the warning if that is intended.
 
 ``mat.outside_root``

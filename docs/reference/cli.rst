@@ -96,11 +96,16 @@ Outside ``DOCS``, each only if the line is not there yet:
 * ``.gitignore``: ``DOCS/_build/`` (and ``DOCS/API/`` when the API pages
   are not committed).
 * ``.gitattributes``: ``*.bat text eol=crlf``.
+* In a project with Simulink models, libraries or subsystem files:
+  ``ROOT/+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` (the
+  MATLAB function that Help links of Simulink files call; rewritten on
+  each run) and its settings ``simulinkDocumentationLinker.json`` (written
+  once, then left to you); ``conf.py`` excludes ``+sphinxcontrib/``.
 
 Before it writes anything it checks ``git status`` of these three files and
 stops if one has uncommitted changes, so ``git restore`` undoes exactly its
 edits. Outside a git repository it prints the lines instead. It never
-touches MATLAB code or CI, and never commits.
+touches the project's MATLAB code or CI, and never commits.
 
 The matlabdomain requirement copies how the running matlabdomain is
 installed (``direct_url.json``, PEP 610): a git URL and commit, an editable

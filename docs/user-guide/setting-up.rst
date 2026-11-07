@@ -209,9 +209,18 @@ project (``uv add --frozen --group docs``, the dependency group ``docs``),
 three files first and stops if one has uncommitted changes, so ``git
 restore`` undoes exactly its edits; outside git, it prints the lines
 instead. Without uv it prints the ``pip install`` line. It never touches
-``uv.lock``, MATLAB code or CI, and never commits. (``uv add`` writes
-``pyproject.toml`` with LF line ends, so a CRLF file shows as changed on
-every line.)
+``uv.lock``, the project's MATLAB code or CI, and never commits. (``uv
+add`` writes ``pyproject.toml`` with LF line ends, so a CRLF file shows as
+changed on every line.)
+
+In a project with Simulink models, libraries or subsystem files it also
+writes ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` in
+the project root, with its settings ``simulinkDocumentationLinker.json``
+(the local build ``DOCS/_build/html/``; set ``"published"`` and
+``"mode"`` for the published site). Help fields of Simulink files call
+this function to open their page; ``conf.py`` excludes it from the
+documentation. Commit both files. The function is rewritten on each run,
+the settings only written when missing.
 
 A ``DOCS`` folder that exists with files but no ``conf.py`` is in use (an
 MkDocs ``docs/``): the command asks for another folder. One with a

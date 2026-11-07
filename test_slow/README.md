@@ -9,6 +9,7 @@ collect them.
 | `profiling/` | The profiling harness (a parse sweep and a `sphinx-build` of vhlab-toolbox-matlab, from the gauntlet's checkouts) and its recorded results. |
 | `naming/` | `compare_render.py`: snapshots the rendered anchors, links, inventories and warnings of the test roots and docs, and compares two code versions. |
 | `integrations/` | Probes with sphinx-multiproject, one search over several sites (Pagefind) and sphinx-multiversion. Details: [integrations/README.md](integrations/README.md). |
+| `simulink/` | The Simulink file survey, corpus check and naming probe, run for each new MATLAB release. Details: [simulink/README.md](simulink/README.md). |
 
 ## Run the gauntlet
 

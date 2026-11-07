@@ -57,9 +57,10 @@ identical on every system.
       (:confval:`matlab_api_check_ignore_patterns`), ``hidden``
       (``Contents.m`` and the other special files, and ``Hidden`` classes;
       their members are not counted), ``unreadable``,
-      ``not_parsed`` (parse failures); with a selection, also
-      ``not_selected`` (files and sidecar docs; their members are not
-      counted).
+      ``not_parsed`` (parse failures), ``simulink_files`` (Simulink models,
+      libraries and subsystem files: no rule checks them yet); with a
+      selection, also ``not_selected`` (files and sidecar docs; their
+      members are not counted).
    ``selection``
       Only with a selection (:confval:`matlab_api_check_files`,
       :confval:`matlab_api_check_files_from`): ``entries`` (the normalized

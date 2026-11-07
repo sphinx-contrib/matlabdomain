@@ -28,7 +28,13 @@ earlier" in the documentation.
   (``lib.slx/Group/Gain``, a ``/`` in a block name doubled). Directives
   that document them are not in this release yet. A folder whose name ends
   in ``.slx``, ``.mdl`` or ``.xml`` is no longer documented
-  (``mat.parse_error``).
+  (``mat.parse_error``). ``matlab-api-check`` counts Simulink files as not
+  checked (``simulink_files``). ``sphinx-matlab-quickstart`` adds
+  ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` to a
+  project with Simulink files: Help fields call it to open the page of a
+  model, subsystem file or library block, on the local or the published
+  site; ``sphinxcontrib.matlabdomain.setSimulinkHelp`` (shipped with the
+  package) writes those Help fields.
 * Help lines that start with ``%%`` (a section start) lose both ``%``, as
   in MATLAB's ``help`` (upstream #350): ``%% Inputs:`` gives ``Inputs:``.
   A separator line of ``%`` signs loses two of them, also as in MATLAB.
