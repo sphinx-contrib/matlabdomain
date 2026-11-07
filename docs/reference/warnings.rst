@@ -64,6 +64,10 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
      - a stable address file (:confval:`matlab_stable_urls`) that cannot be
        written, for example a path too long for Windows
      - at the end of an HTML build
+   * - ``mat.simulink_linker``
+     - ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.json``
+       is not a JSON object, so the build cannot update it
+     - at the end of an HTML build
    * - ``mat.api_check``
      - a ``matlab-api-check`` finding
      - when the builder runs

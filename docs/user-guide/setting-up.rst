@@ -220,12 +220,29 @@ changed on every line.)
 
 In a project with Simulink models, libraries or subsystem files it also
 writes ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` in
-the project root, with its settings ``simulinkDocumentationLinker.json``
-(the local build ``DOCS/_build/html/``; set ``"published"`` and
-``"mode"`` for the published site). Help fields of Simulink files call
-this function to open their page; ``conf.py`` excludes it from the
-documentation. Commit both files. The function is rewritten on each run,
-the settings only written when missing.
+the project root, with its settings ``simulinkDocumentationLinker.json``:
+
+.. code-block:: json
+
+   {
+    "mode": "local",
+    "local": "DOCS/_build/html/",
+    "server": "http://127.0.0.1:8000/",
+    "published": ""
+   }
+
+Help fields of Simulink files call this function to open their page;
+``conf.py`` excludes it from the documentation. Commit both files. The
+function is rewritten on each run, the settings only written when
+missing. HTML builds keep the settings up to date (the output folder,
+``html_baseurl`` as ``"published"``) and record which site they made:
+after ``make html`` the Help links open the local files, after ``make
+livehtml`` the sphinx-autobuild server (:confval:`matlab_simulink_server`;
+the local files once it stops). Without a local build they open the
+published site. ``"mode"`` is the choice before the first build; one
+person can choose for themselves in MATLAB with
+``setpref("sphinxcontrib_matlabdomain", "linkerMode", "published")``
+(``"local"``, ``"server"`` or ``"published"``; ``rmpref`` removes it).
 
 A ``DOCS`` folder that exists with files but no ``conf.py`` is in use (an
 MkDocs ``docs/``): the command asks for another folder. One with a

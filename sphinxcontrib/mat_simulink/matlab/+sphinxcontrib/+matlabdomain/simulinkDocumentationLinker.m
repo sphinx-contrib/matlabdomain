@@ -11,21 +11,33 @@ function url = simulinkDocumentationLinker(reference)
 %
 %       web(sphinxcontrib.matlabdomain.simulinkDocumentationLinker("src/lib.slx/Gain"))
 %
-%   simulinkDocumentationLinker.json, next to this file, chooses the site;
-%   it is read on every call, so switching sites changes no model:
+%   simulinkDocumentationLinker.json, next to this file, names the sites;
+%   sphinx-matlab-quickstart writes it and HTML builds keep "local",
+%   "server" and "published" up to date:
 %
-%       {"mode": "published",
-%        "published": "https://example.org/docs/",
-%        "local": "docs/_build/html/"}
+%       {"mode": "local",
+%        "local": "docs/_build/html/",
+%        "server": "http://127.0.0.1:8000/",
+%        "published": "https://example.org/docs/"}
 %
-%   A site without "://" is a folder relative to the folder that holds
-%   +sphinxcontrib (the project root), opened as a file:// address.
+%   "local" is a folder relative to the folder that holds +sphinxcontrib
+%   (the project root), opened as a file:// address; a value with "://"
+%   is used as it is.
+%
+%   The mode is, first that is set: the preference
+%   getpref("sphinxcontrib_matlabdomain", "linkerMode") (one person's
+%   choice; rmpref removes it), the last build (each HTML build writes
+%   mat/simulinkDocumentationLinker.json in "local": "local" after make
+%   html, "server" after make livehtml), "mode" above. A site that is not
+%   there gives way: server (not running), then the local build (not
+%   built), then the published site. The files are read on every call,
+%   so switching sites changes no model.
 %
 %   The address is the object's stable address (mat/ref/...). It does not
 %   know about files whose names differ only by case; their pages get
 %   other addresses.
 %
-%   See also web, sphinxcontrib.matlabdomain.setSimulinkHelp.
+%   See also web, sphinxcontrib.matlabdomain.setSimulinkHelp, setpref.
 
 arguments
     reference (1,1) string
@@ -35,28 +47,109 @@ end
 
 function base = baseUrl()
 folder = fileparts(mfilename("fullpath"));
+projectRoot = fileparts(fileparts(folder));
 file = fullfile(folder, "simulinkDocumentationLinker.json");
 if ~isfile(file)
     error("sphinxcontrib:matlabdomain:noSettings", ...
         "No settings file %s; sphinx-matlab-quickstart writes it.", file);
 end
 settings = jsondecode(fileread(file));
-mode = string(settings.mode);
-if ~ismember(mode, ["published", "local"]) || ~isfield(settings, mode)
-    error("sphinxcontrib:matlabdomain:badSettings", ...
-        "%s: ""mode"" must be ""published"" or ""local"" and name a field.", file);
+modes = ["local", "server", "published"];
+mode = textField(settings, "mode", "local");
+local = textField(settings, "local", "");
+state = [];
+if local ~= "" && ~contains(local, "://")
+    stateFile = fullfile(projectRoot, local, "mat", "simulinkDocumentationLinker.json");
+    if isfile(stateFile)
+        try
+            state = jsondecode(fileread(stateFile));
+            mode = textField(state, "mode", mode);
+        catch
+            state = [];
+        end
+    end
 end
-base = string(settings.(mode));
+source = file;
+if ispref("sphinxcontrib_matlabdomain", "linkerMode")
+    mode = string(getpref("sphinxcontrib_matlabdomain", "linkerMode"));
+    source = "getpref(""sphinxcontrib_matlabdomain"", ""linkerMode"")";
+end
+if ~isscalar(mode) || ~ismember(mode, modes)
+    error("sphinxcontrib:matlabdomain:badSettings", ...
+        "%s: the mode must be ""local"", ""server"" or ""published"".", source);
+end
+switch mode
+    case "server"
+        order = ["server", "local", "published"];
+    case "local"
+        order = ["local", "published"];
+    otherwise
+        order = ["published", "local"];
+end
+for site = order
+    switch site
+        case "server"
+            server = textField(state, "server", ...
+                textField(settings, "server", "http://127.0.0.1:8000/"));
+            base = withSlash(server);
+            if isServing(base)
+                return
+            end
+        case "local"
+            if local == ""
+                continue
+            end
+            base = siteUrl(local, projectRoot);
+            if contains(local, "://") || isfolder(fullfile(projectRoot, local, "mat"))
+                return
+            end
+        case "published"
+            published = textField(settings, "published", "");
+            if published ~= ""
+                base = withSlash(published);
+                return
+            end
+    end
+end
+error("sphinxcontrib:matlabdomain:noSite", ...
+    "No documentation site: build it (make html in the docs folder) or " + ...
+    "set ""published"" in %s.", file);
+end
+
+function value = textField(settings, name, default)
+% settings.(name) as a string, or default when it is missing or empty.
+value = default;
+if isstruct(settings) && isfield(settings, name) && ~isempty(settings.(name))
+    value = string(settings.(name));
+end
+end
+
+function base = siteUrl(site, projectRoot)
+base = site;
 if ~contains(base, "://")
-    projectRoot = fileparts(fileparts(folder));
     base = replace(string(fullfile(projectRoot, base)), filesep, "/");
     if ~startsWith(base, "/")
         base = "/" + base;
     end
     base = "file://" + base;
 end
-if ~endsWith(base, "/")
-    base = base + "/";
+base = withSlash(base);
+end
+
+function url = withSlash(url)
+if ~endsWith(url, "/")
+    url = url + "/";
+end
+end
+
+function tf = isServing(base)
+% True when the server answers with the build state within half a second.
+try
+    webread(base + "mat/simulinkDocumentationLinker.json", ...
+        weboptions("Timeout", 0.5, "ContentType", "text"));
+    tf = true;
+catch
+    tf = false;
 end
 end
 

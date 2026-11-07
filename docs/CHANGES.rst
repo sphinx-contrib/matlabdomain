@@ -39,7 +39,10 @@ earlier" in the documentation.
   model, subsystem file or library block, on the local or the published
   site; ``sphinxcontrib.matlabdomain.setSimulinkHelp`` (shipped with the
   package) writes those Help fields. The quickstart asks for the URL of the
-  published site and writes it to ``html_baseurl`` in ``conf.py``.
+  published site and writes it to ``html_baseurl`` in ``conf.py``. HTML
+  builds keep the function's settings up to date, so Help links open the
+  local build, the sphinx-autobuild server of ``make livehtml`` (new
+  :confval:`matlab_simulink_server`) or the published site.
 * Help lines that start with ``%%`` (a section start) lose both ``%``, as
   in MATLAB's ``help`` (upstream #350): ``%% Inputs:`` gives ``Inputs:``.
   A separator line of ``%`` signs loses two of them, also as in MATLAB.

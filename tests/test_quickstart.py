@@ -235,7 +235,7 @@ def test_simulink_project_gets_the_help_linker(tmp_path, capsys, fixed, no_git):
     shutil.copyfile(slx / "probeModel.slx", root / "models" / "probeModel.slx")
     shutil.copyfile(slx / "probeLib.slx", root / "models" / "probeLib.slx")
     shutil.copyfile(slx / "probeRef.slx", root / "models" / "private" / "probeRef.slx")
-    text = f'{ANSWERS}markdown = false\nmake = "plain"\n'
+    text = f'{ANSWERS}markdown = false\nmake = "plain"\nhtml_baseurl = "https://x.org/d/"\n'
     args = [str(root), "-q", "--answers", answers_file(tmp_path, text)]
     assert matlab_quickstart.main(args) == 0
     out = " ".join(normalize(capsys.readouterr().out, root).split())
@@ -248,7 +248,12 @@ def test_simulink_project_gets_the_help_linker(tmp_path, capsys, fixed, no_git):
         ).read_bytes()
     )
     settings = json.loads((folder / "simulinkDocumentationLinker.json").read_text())
-    assert settings == {"mode": "local", "published": "", "local": "docs/_build/html/"}
+    assert settings == {
+        "mode": "local",
+        "local": "docs/_build/html/",
+        "server": "http://127.0.0.1:8000/",
+        "published": "https://x.org/d/",
+    }
     assert (
         "Creating file +sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m "
         "(Help links of the Simulink files)." in out

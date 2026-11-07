@@ -185,6 +185,25 @@ Output
    it. ``False`` writes no such files and keeps "¶"
    and the inventory on the page (:ref:`library-changes`).
 
+.. confval:: matlab_simulink_server
+   :type: ``str`` or ``None``
+   :default: ``None``
+
+   The address of a sphinx-autobuild server of this site, such as
+   ``"http://127.0.0.1:8000/"``; the ``livehtml`` target of the make files
+   that ``sphinx-matlab-quickstart`` writes sets it with ``-D``. In a
+   project with ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.json``
+   below :confval:`matlab_src_code_project_root`, each HTML build writes
+   ``mat/simulinkDocumentationLinker.json`` in its output folder: the mode
+   ``"server"`` and this address when it is set, else ``"local"``. So the
+   Help links of Simulink files open the site of the last build. The build
+   also writes its output folder (``"local"``, when it is inside the
+   project root and not a sphinx-multiversion build), this address
+   (``"server"``) and ``html_baseurl`` (``"published"``, when set) into
+   that settings file, only when they changed; commit it. Any other value
+   than ``None`` or an ``http://`` or ``https://`` address is a
+   ``ConfigError``.
+
 ``matlab-api-check``
 --------------------
 

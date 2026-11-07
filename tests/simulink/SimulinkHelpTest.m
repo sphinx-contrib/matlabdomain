@@ -45,6 +45,7 @@ classdef SimulinkHelpTest < matlab.unittest.TestCase
             testCase.verifyEqual(url, "file:///C:/project/docs/_build/html/" + ...
                 "mat/ref/src/probeLib.slx~2FGroup~2FInner~20Masked.html");
             testCase.writeSettings(struct("mode", "local", "local", "docs/_build/html"));
+            mkdir(fullfile(testCase.Package, "docs", "_build", "html", "mat"));
             url = sphinxcontrib.matlabdomain.simulinkDocumentationLinker("src/m.slx");
             expected = "file://" + replace(string(fullfile(testCase.Package, ...
                 "docs", "_build", "html")), filesep, "/") + "/mat/ref/src/m.slx.html";
@@ -61,6 +62,40 @@ classdef SimulinkHelpTest < matlab.unittest.TestCase
             delete(testCase.settingsFile());
             testCase.verifyError(@() sphinxcontrib.matlabdomain.simulinkDocumentationLinker("a.slx"), ...
                 "sphinxcontrib:matlabdomain:noSettings");
+            testCase.writeSettings(struct("mode", "local", "local", "site/"));
+            testCase.verifyError(@() sphinxcontrib.matlabdomain.simulinkDocumentationLinker("a.slx"), ...
+                "sphinxcontrib:matlabdomain:noSite");
+        end
+
+        function linkerFollowsTheLastBuild(testCase)
+            linker = @() sphinxcontrib.matlabdomain.simulinkDocumentationLinker("a.slx");
+            % No server answers on this port (the check gives up after 0.5 s).
+            testCase.writeSettings(struct("mode", "local", "local", "site/", ...
+                "server", "http://127.0.0.1:9/", ...
+                "published", "https://example.org/docs/"));
+            % Not built: the published site.
+            testCase.verifyEqual(linker(), "https://example.org/docs/mat/ref/a.slx.html");
+            site = fullfile(testCase.Package, "site");
+            mkdir(fullfile(site, "mat"));
+            local = "file://" + replace(string(site), filesep, "/");
+            if ~startsWith(local, "file:///")
+                local = replace(local, "file://", "file:///");
+            end
+            local = local + "/mat/ref/a.slx.html";
+            testCase.verifyEqual(linker(), local);
+            % make livehtml: the server, or the local files when it stopped.
+            writelines(jsonencode(struct("mode", "server", ...
+                "server", "http://127.0.0.1:9/")), ...
+                fullfile(site, "mat", "simulinkDocumentationLinker.json"));
+            testCase.verifyEqual(linker(), local);
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture( ...
+                testCase.fakeServer()));
+            testCase.verifyEqual(linker(), "http://127.0.0.1:9/mat/ref/a.slx.html");
+            % One person's choice wins over the build.
+            testCase.setPreference("published");
+            testCase.verifyEqual(linker(), "https://example.org/docs/mat/ref/a.slx.html");
+            testCase.setPreference("other");
+            testCase.verifyError(linker, "sphinxcontrib:matlabdomain:badSettings");
         end
 
         function libraryBlocksGetHelp(testCase)
@@ -125,6 +160,27 @@ classdef SimulinkHelpTest < matlab.unittest.TestCase
 
         function writeSettings(testCase, settings)
             writelines(jsonencode(settings), testCase.settingsFile());
+        end
+
+        function folder = fakeServer(testCase)
+            % A webread that answers: a server that is running.
+            folder = fullfile(testCase.Package, "..", "server");
+            mkdir(folder);
+            writelines(["function out = webread(varargin)", "out = '{}';", "end"], ...
+                fullfile(folder, "webread.m"));
+        end
+
+        function setPreference(testCase, mode)
+            group = "sphinxcontrib_matlabdomain";
+            if ~ispref(group)
+                testCase.addTeardown(@() rmpref(group));
+            elseif ispref(group, "linkerMode")
+                old = getpref(group, "linkerMode");
+                testCase.addTeardown(@() setpref(group, "linkerMode", old));
+            else
+                testCase.addTeardown(@() rmpref(group, "linkerMode"));
+            end
+            setpref(group, "linkerMode", mode);
         end
     end
 

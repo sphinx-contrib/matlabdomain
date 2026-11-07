@@ -100,7 +100,9 @@ Outside ``DOCS``, each only if the line is not there yet:
   ``ROOT/+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` (the
   MATLAB function that Help links of Simulink files call; rewritten on
   each run) and its settings ``simulinkDocumentationLinker.json`` (written
-  once, then left to you); ``conf.py`` excludes ``+sphinxcontrib/``.
+  once, then kept up to date by HTML builds,
+  :confval:`matlab_simulink_server`); ``conf.py`` excludes
+  ``+sphinxcontrib/``.
 
 Before it writes anything it checks ``git status`` of these three files and
 stops if one has uncommitted changes, so ``git restore`` undoes exactly its

@@ -33,6 +33,7 @@ from . import (
     mat_urls,
 )
 from . import mat_documenters as doc
+from .mat_simulink import _linker as simulink_linker
 from .matlab_apidoc import _config as apidoc_config
 
 logger = getLogger("matlab-domain")
@@ -1185,6 +1186,7 @@ def setup(app):
     app.connect("config-inited", check_external_names)
     app.connect("config-inited", mat_sidecars.check_config)
     app.connect("config-inited", mat_api_check.check_config)
+    app.connect("config-inited", simulink_linker.check_config)
     app.connect("builder-inited", analyze)
     app.connect("env-get-outdated", mat_types.outdated_docs)
     app.connect("env-before-read-docs", mat_types.note_read_docs)
@@ -1199,6 +1201,7 @@ def setup(app):
     app.connect("env-get-updated", mat_urls.relink)
     app.connect("build-finished", mat_urls.write_redirects)
     app.connect("build-finished", mat_urls.remove_stale_pages)
+    app.connect("build-finished", simulink_linker.write_settings)
 
     app.add_domain(MATLABDomain)
     app.add_builder(mat_api_check.MatlabApiCheckBuilder)
@@ -1243,6 +1246,8 @@ def setup(app):
     app.add_config_value("matlab_namelengthmax", None, "env")
     # Stable addresses (mat/ref/, mat/name/) and "¶" links to them.
     app.add_config_value("matlab_stable_urls", True, "html", bool)
+    # The sphinx-autobuild address for Simulink Help links (make livehtml).
+    app.add_config_value("matlab_simulink_server", None, "")
     # matlab-api-check: read by the builder only, so no page is read again.
     app.add_config_value("matlab_api_check_enabled", True, "", bool)
     # Rule -> severity, merged over mat_api_check.DEFAULT_RULES.

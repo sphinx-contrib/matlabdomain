@@ -194,19 +194,28 @@ LINKER_FOLDER = "+sphinxcontrib/+matlabdomain"
 LINKER = "simulinkDocumentationLinker"
 #: the exclusion pattern of the linker's folder
 LINKER_EXCLUDE = "+sphinxcontrib/"
+#: the address of ``make livehtml`` (sphinx-autobuild's default)
+LIVE_SERVER = "http://127.0.0.1:8000/"
 
 
-def linker_files(root, docs_rel):
+def linker_files(root, docs_rel, published=""):
     """Return ``{name: bytes}`` below ``root``: the function behind the Help
     links of Simulink files, and its settings unless they exist (the user
-    may have set the published site).
+    may have set the published site; HTML builds keep them up to date).
     """
     source = MATLAB_TOOLS / "+sphinxcontrib" / "+matlabdomain" / f"{LINKER}.m"
     files = {f"{LINKER_FOLDER}/{LINKER}.m": source.read_bytes()}
     settings = f"{LINKER_FOLDER}/{LINKER}.json"
     if not os.path.isfile(os.path.join(root, *settings.split("/"))):
-        local = f"{docs_rel}/_build/html/"
-        text = json.dumps({"mode": "local", "published": "", "local": local}, indent=1)
+        text = json.dumps(
+            {
+                "mode": "local",
+                "local": f"{docs_rel}/_build/html/",
+                "server": LIVE_SERVER,
+                "published": published,
+            },
+            indent=1,
+        )
         files[settings] = (text + "\n").encode("utf-8")
     return files
 

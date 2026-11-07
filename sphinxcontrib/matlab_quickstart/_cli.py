@@ -515,10 +515,10 @@ def _apply(args, root, docs, answers, facts, files, dirty):
     return commands, written
 
 
-def _write_linker(args, root, docs_rel):
+def _write_linker(args, root, docs_rel, published):
     """Write the function behind the Help links of the Simulink files."""
     written = _write.write_files(
-        root, _write.linker_files(root, docs_rel), args.dry_run
+        root, _write.linker_files(root, docs_rel, published), args.dry_run
     )
     verbs = (
         ("Would create", "Would update") if args.dry_run else ("Creating", "Updating")
@@ -578,7 +578,7 @@ def run(args):
         files = _write.render(answers, context)
         commands, written = _apply(args, root, docs, answers, facts, files, dirty)
         if simulink:
-            _write_linker(args, root, docs_rel)
+            _write_linker(args, root, docs_rel, answers["html_baseurl"])
         result = generate(
             source_index,
             ApidocOptions(
