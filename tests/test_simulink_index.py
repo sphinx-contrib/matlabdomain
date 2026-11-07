@@ -346,6 +346,20 @@ def test_build_lookups_and_incremental(make_app, tmp_path):
     assert app2.env.get_domain("mat").read_docnames == ["index"]
 
 
+@pytest.mark.parametrize("name", ["probeModel", "probeLib", "probeSub", "probeRef"])
+def test_exported_xml_is_like_its_slx_twin(name):
+    native = FIXTURES / "R2024a-native"
+    xml = mat_types.MatObject.parse_simulink(native / "xml" / f"{name}.xml", name, "./")
+    slx = mat_types.MatObject.parse_simulink(native / "slx" / f"{name}.slx", name, "./")
+    assert type(xml) is type(slx)
+    assert xml.__doc__ == slx.__doc__
+    # the export drops the model mask (formats page, "Exported XML")
+    assert xml.diagram.system_mask is None
+    fields = ("name", "kind", "ports", "references", "library_blocks")
+    for field in fields:
+        assert getattr(xml.diagram, field) == getattr(slx.diagram, field), field
+
+
 def test_unparsable_model_is_a_placeholder(tmp_path):
     import zipfile
 
