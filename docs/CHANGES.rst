@@ -43,7 +43,7 @@ earlier" in the documentation.
   builds keep the function's settings up to date, so Help links open the
   local build, the sphinx-autobuild server of ``make livehtml`` (new
   :confval:`matlab_simulink_server`) or the published site.
-* New :confval:`matlab_document_shadowed_files`: names of several objects
+* New :confval:`matlab_link_shadowed_files_to_chooser_pages`: names of several objects
   (two global ``helper.m``, ``foo.m`` and ``foo.slx``) link to the page
   that lists them, locally and through intersphinx, without
   ``mat.ambiguous``. ``objects.inv`` has an entry for each such page, once

@@ -79,7 +79,7 @@ A target is looked up:
    warning lists their path references (with the inventory,
    ``lib:examples/helper.m``, when several are loaded), and the text is not
    linked: write one of them instead. With
-   :confval:`matlab_document_shadowed_files`, the text links to the page of
+   :confval:`matlab_link_shadowed_files_to_chooser_pages`, the text links to the page of
    the other site that lists them, without the warning, if that site was
    built with this release or later.
 

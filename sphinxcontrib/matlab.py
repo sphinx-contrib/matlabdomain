@@ -83,7 +83,7 @@ def check_inventories(app, env, node, contnode):
     inventories have at different addresses stays unlinked with a
     ``mat.ambiguous`` warning (intersphinx would pick one of them). So does
     a MATLAB name of several objects of one inventory (its chooser page)
-    unless ``matlab_document_shadowed_files`` accepts them.
+    unless ``matlab_link_shadowed_files_to_chooser_pages`` accepts them.
     """
     if node.get("refdomain") != "mat" or "sphinx.ext.intersphinx" not in app.extensions:
         return None
@@ -131,7 +131,10 @@ def _check_inventories(env, node, contnode):
     if not found:
         return None
     uri, found_in = next(iter(found.items()))
-    if env.config.matlab_document_shadowed_files or not mat_urls.is_chooser_uri(uri):
+    if (
+        env.config.matlab_link_shadowed_files_to_chooser_pages
+        or not mat_urls.is_chooser_uri(uri)
+    ):
         return None
     refs = {
         ref
@@ -1089,10 +1092,10 @@ class MATLABDomain(Domain):
 
     def _shadowed(self, matches):
         """Return True for objects of one MATLAB name that the project accepts
-        (``matlab_document_shadowed_files``).
+        (``matlab_link_shadowed_files_to_chooser_pages``).
         """
         return (
-            self.env.config.matlab_document_shadowed_files
+            self.env.config.matlab_link_shadowed_files_to_chooser_pages
             and len({entry[2] for _, entry in matches}) == 1
         )
 
@@ -1140,7 +1143,7 @@ class MATLABDomain(Domain):
             node["mat:ambiguous"] = True
             # One site's duplicates: its chooser page, if it has one, was
             # found before this.
-            if self.env.config.matlab_document_shadowed_files and (
+            if self.env.config.matlab_link_shadowed_files_to_chooser_pages and (
                 len({name for name, _ in found}) == 1
             ):
                 return None
@@ -1316,7 +1319,9 @@ def setup(app):
     app.add_config_value("matlab_stable_urls", True, "html", bool)
     # Several objects of one MATLAB name are intended: link to their chooser
     # page, without mat.ambiguous.
-    app.add_config_value("matlab_document_shadowed_files", False, "env", bool)
+    app.add_config_value(
+        "matlab_link_shadowed_files_to_chooser_pages", False, "env", bool
+    )
     # The sphinx-autobuild address for Simulink Help links (make livehtml).
     app.add_config_value("matlab_simulink_server", None, "")
     # matlab-api-check: read by the builder only, so no page is read again.

@@ -185,7 +185,7 @@ Output
    it. ``False`` writes no such files and keeps "¶"
    and the inventory on the page (:ref:`library-changes`).
 
-.. confval:: matlab_document_shadowed_files
+.. confval:: matlab_link_shadowed_files_to_chooser_pages
    :type: ``bool``
    :default: ``False``
 

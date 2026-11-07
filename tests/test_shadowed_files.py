@@ -1,5 +1,5 @@
 """Several objects of one MATLAB name: ``mat.ambiguous`` and no link, or,
-with ``matlab_document_shadowed_files``, a link to the page that lists them
+with ``matlab_link_shadowed_files_to_chooser_pages``, a link to the page that lists them
 (``mat/name/``), locally and through intersphinx.
 """
 
@@ -39,7 +39,7 @@ def build(make_app, tmp_path, shadowed, builder="html", conf=""):
         'extensions = ["sphinxcontrib.matlab"]\n'
         'matlab_src_code_project_root = "src"\n'
         'matlab_auto_link = "all"\n'
-        f"matlab_document_shadowed_files = {shadowed}\n{conf}"
+        f"matlab_link_shadowed_files_to_chooser_pages = {shadowed}\n{conf}"
     )
     (tmp_path / "index.rst").write_text(
         "Index\n=====\n\n.. mat:autofunction:: a/helper.m\n\n"
@@ -113,7 +113,7 @@ def test_other_sites_shadowed_names(make_app, tmp_path, shadowed):
         tmp_path / "app",
         mapping,
         REFERENCES,
-        f"matlab_document_shadowed_files = {shadowed}\n",
+        f"matlab_link_shadowed_files_to_chooser_pages = {shadowed}\n",
     )
     chooser = f"{BASE}mat/name/helper.html"
     # Only functions have the name.
@@ -153,7 +153,7 @@ def test_old_inventories_without_lists(make_app, tmp_path, shadowed):
         tmp_path / "app",
         mapping,
         {"name": ":mat:func:`f`"},
-        f"matlab_document_shadowed_files = {shadowed}\n",
+        f"matlab_link_shadowed_files_to_chooser_pages = {shadowed}\n",
     )
     assert links["name"] == (None, "f()")
     ambiguous = "'f' matches several objects: a/f.m, b/f.m" in warnings

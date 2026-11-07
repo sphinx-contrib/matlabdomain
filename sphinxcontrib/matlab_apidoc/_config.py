@@ -54,7 +54,7 @@ BUILD_ONLY_CONFIG = frozenset(
         "matlab_add_namespace_names",
         "matlab_external_names",
         "matlab_stable_urls",
-        "matlab_document_shadowed_files",
+        "matlab_link_shadowed_files_to_chooser_pages",
         "matlab_simulink_server",
         "matlab_api_check_enabled",
         "matlab_api_check_rules",

@@ -275,7 +275,7 @@ class MatlabDocumenter(PyDocumenter):
         """Return the (reference, object) ``target`` names from this object's folder.
 
         A MATLAB name of several objects warns and returns None; with
-        ``matlab_document_shadowed_files`` it returns ``(target, None)``, a
+        ``matlab_link_shadowed_files_to_chooser_pages`` it returns ``(target, None)``, a
         reference to the name (its chooser page).
         """
         found = find_source(
@@ -285,7 +285,7 @@ class MatlabDocumenter(PyDocumenter):
             is_source_object,
         )
         if len(found) > 1:
-            if self.env.config.matlab_document_shadowed_files:
+            if self.env.config.matlab_link_shadowed_files_to_chooser_pages:
                 return target, None
             logger.warning(
                 "[sphinxcontrib-matlabdomain] %r in the docstring of %s matches "

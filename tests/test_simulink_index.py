@@ -434,7 +434,7 @@ def test_help_target(text, target):
 def test_simulink_files_share_names_with_code(make_app, tmp_path):
     """A model named like a function is a second object of that name, like a
     second ``.m`` file: "See also" warns, or links with
-    ``matlab_document_shadowed_files`` (to the function: models have no
+    ``matlab_link_shadowed_files_to_chooser_pages`` (to the function: models have no
     directive yet). Directives that document code still find the function.
     """
     src = tmp_path / "src"
@@ -451,7 +451,8 @@ def test_simulink_files_share_names_with_code(make_app, tmp_path):
     for shadowed in (False, True):
         (tmp_path / "conf.py").write_text(
             CONF
-            + f"matlab_auto_link = 'all'\nmatlab_document_shadowed_files = {shadowed}\n"
+            + "matlab_auto_link = 'all'\n"
+            + f"matlab_link_shadowed_files_to_chooser_pages = {shadowed}\n"
         )
         app = make_app(srcdir=tmp_path, freshenv=True)
         app.build(force_all=True)

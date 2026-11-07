@@ -129,7 +129,7 @@ this order:
    ``private/`` files are not considered, so a private helper never makes a
    public name ambiguous. If several objects have the name, a
    ``mat.ambiguous`` warning lists their path references, which you can use
-   instead. With :confval:`matlab_document_shadowed_files` the name links
+   instead. With :confval:`matlab_link_shadowed_files_to_chooser_pages` the name links
    to the page that lists them (:ref:`stable-addresses`), without the
    warning;
 4. a folder path without its trailing ``/`` (``scripts``), tried last so
