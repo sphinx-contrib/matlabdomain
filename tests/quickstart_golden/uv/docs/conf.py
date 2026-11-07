@@ -123,3 +123,6 @@ myst_heading_anchors = 6
 
 html_theme = "furo"
 html_static_path = ["_static"]
+# Put published URL here. Blank, it means local mode is used.
+# This assists Simulink documentation linking.
+html_baseurl = ""

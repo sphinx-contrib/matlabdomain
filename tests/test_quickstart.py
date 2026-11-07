@@ -908,8 +908,9 @@ def test_inventory(tmp_path):
 def _all_answers():
     return (
         'matlab_version = "R2024b"\ngroup = "namespace"\ntheme = "furo"\n'
-        'exclude = []\nmarkdown = true\nsidecars = true\nmake = "plain"\n'
-        'guide = true\napi_pages = "commit"\nnapoleon_custom_sections = []\n'
+        'html_baseurl = ""\nexclude = []\nmarkdown = true\nsidecars = true\n'
+        'make = "plain"\nguide = true\napi_pages = "commit"\n'
+        "napoleon_custom_sections = []\n"
     )
 
 
@@ -924,6 +925,7 @@ def _all_answers():
         ("napoleon_custom_sections = 1\n", "must be a list"),
         ("napoleon_custom_sections = [[1, 2]]\n", "[heading, style] pairs"),
         ('project = " "\n', "project must be a text"),
+        ("html_baseurl = 1\n", "html_baseurl must be a text"),
         ('matlab_version = "R2019b"\n', "older than the oldest supported"),
     ],
 )
@@ -975,6 +977,8 @@ def test_prompts(tmp_path, capsys, replies, fixed, no_git):
         "flat",  # a bad grouping
         "folder",
         "",  # theme
+        "ftp://x",  # not a web address: asked again
+        "https://example.org/docs/",  # published site
         "data, ext",  # exclusions
         "maybe",  # not y or n
         "y",  # markdown
@@ -997,6 +1001,8 @@ def test_prompts(tmp_path, capsys, replies, fixed, no_git):
     assert saved["exclude"] == ["data", "ext"]
     assert saved["napoleon_custom_sections"] == []
     assert saved["matlab_version"] == "R2025b"
+    assert saved["html_baseurl"] == "https://example.org/docs/"
+    assert "* html_baseurl must start with https:// or http://" in out
     assert "Saved the answers" in out
     assert not (root / "docs").exists()
 

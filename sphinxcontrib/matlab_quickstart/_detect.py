@@ -450,7 +450,7 @@ def inventory(source_index):
         if record["matlab_name"] is None:
             # as the mat.not_callable warnings
             naming = getattr(handler_by_extension(path), "naming", "code")
-            if naming == "model" or (
+            if (naming == "model" and record["type"] != UNKNOWN) or (
                 naming == "code" and not record["private"] and not is_hidden(ref)
             ):
                 not_callable.append(ref)

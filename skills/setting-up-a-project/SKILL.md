@@ -76,7 +76,7 @@ submodules, folders not on the MATLAB project path, the inventory
 the help headings, and the copyright blocks that run into help. At the end
 it offers to save the answers to a TOML file; edit that file with the
 decisions of step 0 (keys: `project`, `author`, `matlab_version`, `group`,
-`theme`, `exclude`, `markdown`, `sidecars`, `make`, `guide`, `api_pages`,
+`theme`, `html_baseurl`, `exclude`, `markdown`, `sidecars`, `make`, `guide`, `api_pages`,
 `napoleon_custom_sections`).
 
 Also check what the command cannot know:

@@ -808,15 +808,17 @@ def test_stub_reference():
 
 
 @pytest.mark.parametrize(
-    ("source", "content", "folder", "output"),
+    ("source", "content", "folder"),
     [
-        ("guide.md", "# Guide\n", "guide-md.rst", "guide-md~2Erst"),
-        ("Cls.m", "classdef Cls\nend\n", "Cls.m.rst", "Cls.m~2Erst"),
+        ("guide.md", "# Guide\n", "guide-md.rst"),
+        ("Cls.m", "classdef Cls\nend\n", "Cls.m.rst"),
     ],
 )
-def test_apidoc_file_folder_collisions_build(
-    make_app, tmp_path, source, content, folder, output
+def test_apidoc_folders_named_like_pages_are_skipped(
+    make_app, tmp_path, capsys, source, content, folder
 ):
+    # A folder named like a page could take the page's output name; such
+    # folders (named like a .rst sidecar doc) are not documented.
     write(
         tmp_path,
         {
@@ -827,18 +829,18 @@ def test_apidoc_file_folder_collisions_build(
             "docs/index.rst": "Index\n=====\n\n.. toctree::\n\n   api/index\n",
             f"src/+demo/{source}": content,
             f"src/+demo/{folder}/child.md": "# Child\n",
-            f"src/+demo/{folder.replace('.', '~2E')}/other.md": "# Other\n",
         },
     )
     docs = tmp_path / "docs"
-    assert main(["-q", "-c", str(docs)]) == 0
-    assert (docs / "api" / "+demo" / output / "child-md.rst").is_file()
+    main(["-q", "-c", str(docs)])
+    assert f"{folder}/: a folder must not be named like a .rst file" in (
+        capsys.readouterr().err
+    )
+    assert not (docs / "api" / "+demo" / folder.replace(".", "~2E")).exists()
     page = source if source.endswith(".m") else stub_reference(source)
     assert (docs / "api" / "+demo" / f"{page}.rst").is_file()
-    assert main(["-q", "--check", "-c", str(docs)]) == 0
     app = build(make_app, docs)
-    assert warnings(app) == []
-    assert app.env.titles[f"api/+demo/{output}/child-md"].astext() == "Child"
+    assert [w for w in warnings(app) if "folder must not" not in w] == []
 
 
 def test_apidoc_sidecar_model(tmp_path):

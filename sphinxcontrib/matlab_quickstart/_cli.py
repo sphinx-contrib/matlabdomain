@@ -44,6 +44,7 @@ KEYS = (
     "matlab_version",
     "group",
     "theme",
+    "html_baseurl",
     "exclude",
     "markdown",
     "sidecars",
@@ -168,6 +169,13 @@ def check_answer(key, value):
         if not isinstance(value, list):
             raise ValueError(f"{key} must be a list, not {value!r}.")
         value = [_section(entry) for entry in value]
+    elif key == "html_baseurl":
+        if not isinstance(value, str):
+            raise ValueError(f"{key} must be a text, not {value!r}.")
+        if value and not value.startswith(("https://", "http://")):
+            raise ValueError(
+                f"{key} must start with https:// or http://, not {value!r}."
+            )
     else:
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"{key} must be a text, not {value!r}.")
@@ -362,6 +370,12 @@ def _ask(prompter, facts, root, docs):
     p.ask("matlab_version", "MATLAB release the code targets", facts["version"])
     p.ask("group", "API pages per namespace or per folder", "namespace")
     p.ask("theme", "HTML theme", "furo")
+    p.ask(
+        "html_baseurl",
+        "URL of the published site (blank: not published yet)",
+        "",
+        shown="none",
+    )
     exclude = p.ask(
         "exclude",
         "Folders and files not to document (patterns relative to ROOT, "

@@ -17,9 +17,14 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
      - a file or folder that cannot be read, an invalid ``.mlapp``, a
        ``.slx`` or ``.mdl`` file that is not a readable Simulink file (a Git
        LFS pointer, too large), a parser failure, a file name that is not
-       valid UTF-8, a folder named like a Simulink file, a page that cannot
-       be read
+       valid UTF-8, a page that cannot be read
      - every build (reading); parse failures when a page uses the file
+   * - ``mat.folder_name``
+     - an error, not a warning (``suppress_warnings`` does not hide it): a
+       folder named like a supported file (``.m``, ``.mlapp``, ``.slx``,
+       ``.mdl``, ``.xml``, ``.md``, ``.rst``, any case); it is not
+       documented
+     - every build
    * - ``mat.encoding``
      - a file decoded with the fallback encoding or with replaced bytes; a
        page that is not valid UTF-8
@@ -34,8 +39,8 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
    * - ``mat.not_callable``
      - a file MATLAB cannot call for :confval:`matlab_version`; the
        message says why (an invalid name, a keyword, a subfolder of a
-       class folder, a Simulink file in ``private/`` or a class folder,
-       ...)
+       class folder, a Simulink file in ``private/``, a class folder or a
+       namespace folder, ...)
      - every build
    * - ``mat.outside_root``
      - a link below the project root that points outside it

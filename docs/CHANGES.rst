@@ -19,22 +19,27 @@ earlier" in the documentation.
 
 * Drop support for Python <=3.10.
 * Drop support for Sphinx <=7.x.
+* **Breaking:** a folder named like a file the extension reads (``.m``,
+  ``.mlapp``, ``.slx``, ``.mdl``, ``.xml``, ``.md``, ``.rst``, any case) is
+  not documented and logs the error ``mat.folder_name``: references and
+  output names could take it for a file.
 * The index reads Simulink files without MATLAB: models, libraries and
   subsystem files (``.slx``, ``.mdl`` and ``.xml`` exported by
   ``save_system``), from every release since R2006a. They get MATLAB names
-  as Simulink loads them (a file in a namespace folder from R2026a, none
-  in ``private/`` or class folders, with ``mat.not_callable``), and a
+  as Simulink runs them: only from the global namespace, so a file in a
+  namespace folder, ``private/`` or a class folder has none
+  (``mat.not_callable``), and a
   block of a library is referenced by its Simulink path after the file
   (``lib.slx/Group/Gain``, a ``/`` in a block name doubled). Directives
-  that document them are not in this release yet. A folder whose name ends
-  in ``.slx``, ``.mdl`` or ``.xml`` is no longer documented
-  (``mat.parse_error``). ``matlab-api-check`` counts Simulink files as not
+  that document them are not in this release yet.
+  ``matlab-api-check`` counts Simulink files as not
   checked (``simulink_files``). ``sphinx-matlab-quickstart`` adds
   ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` to a
   project with Simulink files: Help fields call it to open the page of a
   model, subsystem file or library block, on the local or the published
   site; ``sphinxcontrib.matlabdomain.setSimulinkHelp`` (shipped with the
-  package) writes those Help fields.
+  package) writes those Help fields. The quickstart asks for the URL of the
+  published site and writes it to ``html_baseurl`` in ``conf.py``.
 * Help lines that start with ``%%`` (a section start) lose both ``%``, as
   in MATLAB's ``help`` (upstream #350): ``%% Inputs:`` gives ``Inputs:``.
   A separator line of ``%`` signs loses two of them, also as in MATLAB.

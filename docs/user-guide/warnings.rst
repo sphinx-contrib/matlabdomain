@@ -36,9 +36,14 @@ What each warning means
    or entered, or a file name is not valid UTF-8. The file is still
    indexed and documented, without content, so links to it work; a file
    that cannot be read is tried again on every build. Where the parser
-   found a syntax error, the warning gives its line and column. A folder
-   whose name ends in ``.slx``, ``.mdl`` or ``.xml`` is not documented:
-   references would read it as a Simulink file.
+   found a syntax error, the warning gives its line and column.
+
+``mat.folder_name``
+   An error, which ``suppress_warnings`` does not hide: a folder is named
+   like a file the extension reads (``.m``, ``.mlapp``, ``.slx``, ``.mdl``,
+   ``.xml``, ``.md``, ``.rst``, in any case), so references and output
+   names could take it for a file. The folder and everything in it are not
+   documented; the build goes on. Rename the folder.
 
 ``mat.encoding``
    A file is not valid in its encoding: it was decoded with the fallback
@@ -63,10 +68,10 @@ What each warning means
    MATLAB cannot call the file for :confval:`matlab_version`, so it has no
    MATLAB name; it is documented and linked by path (:doc:`referencing`).
    The warning says why (an invalid name such as ``my-file``, a keyword,
-   a subfolder of a class folder, ...). Simulink loads no model, library or
-   subsystem file from ``private/`` or a class folder, and one in a
-   namespace folder only from R2026a. Rename or move the file, or
-   suppress the warning if that is intended.
+   a subfolder of a class folder, ...). Simulink runs and references
+   models, libraries and subsystem files only from the global namespace:
+   one in ``private/``, a class folder or a namespace folder has no name.
+   Rename or move the file, or suppress the warning if that is intended.
 
 ``mat.outside_root``
    A link or Windows junction below the project root points outside it; it

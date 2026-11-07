@@ -107,8 +107,8 @@ def test_block_references():
     ("folder", "filename", "version", "name"),
     [
         ("root", "probe.slx", "R2026a", "probe"),
-        ("root/+pk", "probe.slx", "R2026a", "pk.probe"),
-        ("root/+pk", "probe.slx", "R2025b", None),
+        ("root/+pk", "probe.slx", "R2026b", None),
+        ("root/+pk", "probe.slx", "R2024a", None),
         ("root/+pk/sub", "probe.slx", "R2024a", "probe"),
         ("root/private", "probe.slx", "R2026a", None),
         ("root/@Cls", "probe.slx", "R2026a", None),
@@ -134,7 +134,7 @@ def test_form_model_name(folder, filename, version, name):
         ("root/a*b", "m.slx", "R2026a", "with * in their names"),
         ("root", "end.slx", "R2026a", "its name 'end' is a MATLAB keyword"),
         ("root", "L" + "x" * 63 + ".slx", "R2024a", "longer than 63 characters"),
-        ("root/+pk", "m.slx", "R2024b", "namespace folders by name since R2026a"),
+        ("root/+pk", "m.slx", "R2026b", "only from the global namespace"),
         ("root/+for", "m.slx", "R2026a", "folder name 'for' is a MATLAB keyword"),
     ],
 )
@@ -211,29 +211,31 @@ def test_index(tmp_path, warnings):
     }
     names = {ref: r["matlab_name"] for ref, r in records.items()}
     assert names["probeModel.slx"] == "probeModel"
-    assert names["+pk/probeSub.slx"] == "pk.probeSub"
+    assert names["+pk/probeSub.slx"] is None
     assert names["private/probeRef.slx"] is None
     assert names["@Cls/inClass.slx"] is None
     assert names["export.xml"] is None
+    assert names["lfs.slx"] is None
+    assert names["notes.slx"] is None
     assert records["export.xml"]["scope"] is None
-    assert source_index.matlab_names["same"] == ["same.m", "same.slx"]
-    assert source_index.matlab_names["probeLib"] == [
+    assert sorted(source_index.matlab_names["same"]) == ["same.m", "same.slx"]
+    assert sorted(source_index.matlab_names["probeLib"]) == [
         "mdl/probeLib.mdl",
         "probeLib.slx",
-    ] or source_index.matlab_names["probeLib"] == [
-        "probeLib.slx",
-        "mdl/probeLib.mdl",
     ]
     assert "data.slx/" not in source_index.entities
     messages = sorted(warnings)
     assert (
-        "parse_error",
-        "[sphinxcontrib-matlabdomain] data.slx/: the folder name ends in a Simulink "
-        "file extension, so references would read it as a file; its contents are "
-        "not documented.",
+        "folder_name",
+        "[sphinxcontrib-matlabdomain] data.slx/: a folder must not be named like "
+        "a .slx file; its contents are not documented.",
     ) in messages
     not_callable = [m for s, m in messages if s == "not_callable"]
-    assert len(not_callable) == 2
+    assert len(not_callable) == 3
+    assert any(
+        "+pk/probeSub.slx is not callable" in m and "global namespace" in m
+        for m in not_callable
+    )
     assert any(
         "private/probeRef.slx is not callable" in m and "private or class" in m
         for m in not_callable
@@ -242,20 +244,20 @@ def test_index(tmp_path, warnings):
     assert any("lfs.slx is a Git LFS pointer" in m for _, m in messages)
 
 
-def test_index_old_release(tmp_path, warnings):
+@pytest.mark.parametrize("name", ["x.m", "x.MLAPP", "x.mdl", "x.xml", "x.md", "x.rst"])
+def test_folders_named_like_files_are_errors(tmp_path, warnings, name):
     root = tmp_path / "src"
-    copy(SLX / "probeSub.slx", root / "+pk" / "probeSub.slx")
-    source_index = build_index(IndexSettings(str(root), matlab_version="R2024b"))
-    (record,) = source_index.index.values()
-    assert record["matlab_name"] is None
-    assert warnings == [
-        (
-            "not_callable",
-            "[sphinxcontrib-matlabdomain] +pk/probeSub.slx is not callable in "
-            "MATLAB R2024b (Simulink loads files in namespace folders by name "
-            "since R2026a); it is documented by its path reference.",
-        )
-    ]
+    (root / name).mkdir(parents=True)
+    (root / name / "f.m").write_text("function f\nend\n")
+    (root / "ok.d").mkdir()
+    (root / "ok.d" / "g.m").write_text("function g\nend\n")
+    source_index = build_index(IndexSettings(str(root)))
+    assert [r["reference"] for r in source_index.index.values()] == ["ok.d/g.m"]
+    (warning,) = warnings
+    assert warning[0] == "folder_name"
+    assert f"{name}/: a folder must not be named like a" in warning[1]
+    folder = mat_types.MatModule("src", str(root), "./")
+    assert folder.member_refs() == [("ok.d", "ok.d/")]
 
 
 def test_apidoc_leaves_simulink_files_out(tmp_path, warnings):
@@ -333,7 +335,8 @@ def test_build_lookups_and_incremental(make_app, tmp_path):
         "same.m",
         "same.slx",
     }
-    assert mat_types.display_name(dom, "+pk/probeSub.slx") == "pk.probeSub"
+    assert mat_types.display_name(dom, "+pk/probeSub.slx") == "+pk/probeSub.slx"
+    assert mat_types.display_name(dom, "probeLib.slx") == "probeLib"
     assert mat_types.display_name(dom, "export.xml") == "export.xml"
     broken = mat_types.resolve(dom, "notes.slx")
     assert isinstance(broken, mat_types.MatScript)

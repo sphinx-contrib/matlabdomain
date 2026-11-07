@@ -30,6 +30,14 @@ report("pkg which pkm", which("pkm"));
 report("pkg load pk.pkm", tryLoad("pk.pkm"));
 report("pkg load pkm", tryLoad("pkm"));
 report("pkg load path", tryLoad(fullfile(p2, "+pk", "pkm.slx")));
+% Loading pk.pkm works from R2026a; running or referencing it does not.
+report("pkg sim pk.pkm", attempt(@() class(sim("pk.pkm"))));
+top = new_system();
+add_block("simulink/Ports & Subsystems/Model", get_param(top, "Name") + "/Ref");
+report("pkg Model block pk.pkm", attempt(@() set_param( ...
+    get_param(top, "Name") + "/Ref", "ModelName", "pk.pkm")));
+close_system(top, 0);
+bdclose("all");
 
 % 3 private folder
 p3 = mk(root, "p3");
@@ -138,6 +146,15 @@ h = new_system();
 set_param(h, "Description", name + ext);
 save_system(h, fullfile(folder, name + ext));
 close_system(h, 0);
+end
+
+function out = attempt(f)
+try
+    f();
+    out = "ok";
+catch e
+    out = "error " + e.identifier;
+end
 end
 
 function out = tryLoad(name)

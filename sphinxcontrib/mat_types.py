@@ -563,6 +563,17 @@ _HIDDEN_QUIET = ("invalid_matlab", "empty_code_file")
 _INDEX_SUBTYPES = ("encoding",)
 
 
+def file_like_folder(name):
+    """Return the extension of a supported file type (source or sidecar
+    doc, any case) that the folder name ``name`` ends in, else None.
+    """
+    lowered = name.lower()
+    for extension in (*(h.extension for h in handlers()), *SIDECAR_SUFFIXES):
+        if len(lowered) > len(extension) and lowered.endswith(extension):
+            return extension
+    return None
+
+
 def _warn(subtype, message, location=None):
     logger.warning(
         "[sphinxcontrib-matlabdomain] %s",
@@ -1030,12 +1041,14 @@ class _Indexer:
                 ref += "/"
                 if not self.sources.walks(ref):
                     continue
-                if mat_naming.is_block_container(key):
-                    _warn(
-                        "parse_error",
-                        f"{ref}: the folder name ends in a Simulink file extension, "
-                        "so references would read it as a file; its contents are "
-                        "not documented.",
+                if (extension := file_like_folder(key)) is not None:
+                    logger.error(
+                        "[sphinxcontrib-matlabdomain] %s: a folder must not be "
+                        "named like a %s file; its contents are not documented.",
+                        ref,
+                        extension,
+                        type="mat",
+                        subtype="folder_name",
                     )
                     continue
                 if _is_link(path) and self.outside(path, ref):
@@ -1244,7 +1257,8 @@ def name_sources(source_index):
     for path, record in source_index.index.items():
         ref = record["reference"]
         naming = getattr(handler_by_extension(path), "naming", "code")
-        if naming is None:
+        # a .slx that is no Simulink file (an LFS pointer) is nothing to call
+        if naming is None or (naming == "model" and record["type"] == UNKNOWN):
             record.update(matlab_name=None, private=False, scope=None)
             continue
         filename = os.path.basename(path)
@@ -1648,7 +1662,7 @@ class MatModule(MatObject):
                 path = os.path.join(self.path, key)
                 ref = join_reference(self.ref, unicodedata.normalize("NFC", key))
                 if os.path.isdir(path):
-                    if not key.startswith((".", "_")):
+                    if not key.startswith((".", "_")) and not file_like_folder(key):
                         self.members.append((key, f"{ref}/"))
                 elif handler_for(path) is not None:
                     self.members.append((os.path.splitext(key)[0], ref))

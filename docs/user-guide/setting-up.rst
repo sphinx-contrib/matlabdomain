@@ -74,6 +74,10 @@ defaults.
    * - ``theme``
      - HTML theme
      - ``"furo"``
+   * - ``html_baseurl``
+     - URL of the published site
+     - blank: not published yet. Written to ``html_baseurl`` in
+       ``conf.py``; Simulink Help links use it (blank: the local build)
    * - ``exclude``
      - Folders and files not to document
      - none; the defaults of :confval:`matlab_src_exclusion_patterns` and
@@ -114,6 +118,7 @@ asks only for what the file leaves out:
    matlab_version = "R2024b"
    group = "namespace"
    theme = "furo"
+   html_baseurl = "https://example.org/my-toolbox/"
    exclude = ["tests", "examples/data"]
    markdown = true
    sidecars = true
