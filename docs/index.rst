@@ -83,6 +83,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    developer-guide/testing
    developer-guide/architecture
    developer-guide/debugging
+   developer-guide/simulink-file-formats
    developer-guide/roadmap
 
 .. toctree::

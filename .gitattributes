@@ -35,6 +35,9 @@ uv.lock text eol=lf
 
 # Binary files (no line ending conversion)
 *.mlapp binary
+# Simulink files: test fixtures must keep the bytes MATLAB wrote
+*.slx binary
+*.mdl binary
 *.png binary
 *.jpg binary
 *.jpeg binary

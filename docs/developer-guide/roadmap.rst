@@ -15,7 +15,9 @@ file types. Planned:
 
 One handler owns one extension: an ``.slx`` handler would tell models,
 libraries and subsystems apart, and an ``.xml`` handler would reject XML
-that is not a Simulink export.
+that is not a Simulink export. The reader for these files exists
+(``sphinxcontrib.mat_simulink``, :doc:`simulink-file-formats`); the
+directives and pages that use it are not there yet.
 
 ``sphinx-matlab-apidoc``
 ------------------------

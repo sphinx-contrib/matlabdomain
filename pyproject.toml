@@ -98,6 +98,7 @@ source_pkgs = [
     "sphinxcontrib.mat_handlers",
     "sphinxcontrib.mat_naming",
     "sphinxcontrib.mat_sidecars",
+    "sphinxcontrib.mat_simulink",
     "sphinxcontrib.mat_tree_sitter_parser",
     "sphinxcontrib.mat_types",
     "sphinxcontrib.mat_urls",

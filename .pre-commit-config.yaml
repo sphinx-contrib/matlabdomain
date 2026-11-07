@@ -1,5 +1,5 @@
-# Recorded tool output is kept verbatim.
-exclude: ^test_slow/profiling/results/
+# Recorded tool output and MATLAB-written fixtures are kept verbatim.
+exclude: ^(test_slow/profiling/results/|tests/simulink/fixtures/)
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
