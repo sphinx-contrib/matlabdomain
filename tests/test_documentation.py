@@ -146,6 +146,7 @@ def repository_configuration(root):
         "conf.py",
         "DEVELOPMENT.rst",
         "codespell_ignore_words.txt",
+        "CODEOWNERS",
     }
     paths = list(root.iterdir())
     for folder in (".github", ".vscode"):
@@ -191,6 +192,7 @@ def test_ruff_hook_matches_dev_pin():
     [
         ("new-tool.toml", True),
         (".github/workflows/new.yml", True),
+        (".github/CODEOWNERS", True),
         (".vscode/new.json", True),
         ("test_slow/gauntlet/new.toml", True),
         ("examples/apidoc/docs/conf.py", True),

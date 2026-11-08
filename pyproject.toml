@@ -54,7 +54,9 @@ description = 'Sphinx "matlabdomain" extension'
 dynamic = ["version"]
 license = "BSD-2-Clause"
 maintainers = [
-    { name = "Jason H. Nicholson", email = "github@jasonhnicholson.com" }
+    { name = "Jason H. Nicholson", email = "github@jasonhnicholson.com" },
+    { name = "Remi Gau" },
+    { name = "Anton Edvinovich Pozharskiy" }
 ]
 name = "sphinxcontrib-matlabdomain"
 readme = "README.rst"

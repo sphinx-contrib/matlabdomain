@@ -82,6 +82,34 @@ Pull requests
   ``-n -W`` in the test suite.
 * Tag the title when it helps: ``[FIX]``, ``[DOC]``, ``[ENH]``, ``[STY]``,
   ``[REF]``, ``[MAINT]``; ``[WIP]`` or a draft for work in progress.
+* GitHub requests a review from the maintainers listed in
+  ``.github/CODEOWNERS``.
+
+.. _project-roles:
+
+Project roles
+-------------
+
+GitHub's repository settings decide who can do what; this list says who
+plays which part. ``AUTHORS`` credits everyone.
+
+Lead maintainer
+  Jason H. Nicholson (`@jasonnicholson
+  <https://github.com/jasonnicholson>`_): design decisions, releases,
+  repository settings.
+Maintainers
+  Remi Gau (`@Remi-Gau <https://github.com/Remi-Gau>`_) and Anton
+  Edvinovich Pozharskiy (`@apozharski <https://github.com/apozharski>`_):
+  review, merge and triage.
+Former maintainer
+  Jørgen Cederberg (`@joeced <https://github.com/joeced>`_).
+Original author
+  Mark Mikofski (`@mikofski <https://github.com/mikofski>`_).
+
+Releases are published from tags by
+``.github/workflows/python-package.yml``. The `PyPI project
+<https://pypi.org/project/sphinxcontrib-matlabdomain/>`_ is owned by
+Jørgen Cederberg. Read the Docs project owner: to be confirmed.
 
 Versions and compatibility
 --------------------------
@@ -142,6 +170,10 @@ when adding, removing or moving a maintained configuration file.
   Hand-maintained project vocabulary for codespell, referenced by
   ``tool.codespell``. Add legitimate words, not misspellings; check with the
   codespell pre-commit hook.
+``.github/CODEOWNERS``
+  GitHub review routing: the maintainers of :ref:`project-roles` own every
+  path. Keep it in step with that list; GitHub flags unknown owners on the
+  file's page.
 ``.github/dependabot.yml``
   GitHub-required YAML for weekly Actions dependency updates. Python dependency
   changes go through ``pyproject.toml`` and ``uv lock`` instead.
@@ -150,7 +182,8 @@ when adding, removing or moving a maintained configuration file.
   (``workflow_dispatch``); check workflow syntax and run it after hook edits.
 ``.github/workflows/python-package.yml``
   GitHub Actions static checks, supported Python/OS/Sphinx matrix, combined
-  100% coverage gate and upstream tag publishing. Currently manual-only; the
+  100% coverage gate and upstream tag publishing. Runs on pull requests to
+  ``master``, monthly and on demand; the
   Sphinx-development job is non-blocking. Uses the shared tox environments;
   local checks cannot substitute for the cross-platform coverage gate.
 ``readthedocs.yml``
