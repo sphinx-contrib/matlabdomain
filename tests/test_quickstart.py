@@ -924,7 +924,8 @@ def test_headings_singular_section_plural_alias():
 
 def test_survey_skips_files_without_text(tmp_path):
     (tmp_path / "f.m").write_text("function f\n% Inputs:\nend\n")
-    index = build_index(IndexSettings(str(tmp_path), cache_text=False))
+    index = build_index(IndexSettings(str(tmp_path)))
+    index.text_cache.clear()
     assert _detect.survey(index).files == {}
 
 

@@ -84,7 +84,7 @@ Follow the `conf.py` table of the migration guide:
   R2024a or newer). Set `matlab_src_encoding` only if every file without a
   byte-order mark uses that codec; otherwise leave it, and files that are
   not UTF-8 get `mat.encoding` (step 9).
-- Exclusions: `matlab_src_exclusion_patterns` replaces its defaults
+- Exclusions: `matlab_src_exclude_patterns` replaces its defaults
   (`"README.*", "CHANGES.*", "CHANGELOG.*", "LICENSE.*", "CONTRIBUTING.*",
   "CODE_OF_CONDUCT.*", "SECURITY.*"`); copy them into your list. Patterns
   use `/` and match path references (folder names such as `"tests"` or

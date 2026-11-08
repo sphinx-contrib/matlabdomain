@@ -14,6 +14,9 @@ or with ``pip``:
 
    $ pip install sphinxcontrib-matlabdomain
 
+Examples use ``uv run``. With another environment manager, run the same
+commands without that prefix when the installed tools are on ``PATH``.
+
 This installs Sphinx, `tree-sitter <https://tree-sitter.github.io/>`_ and the
 MATLAB grammar for tree-sitter, which the extension uses to read MATLAB code.
 MATLAB itself is not needed.
@@ -24,7 +27,9 @@ For :doc:`Markdown sidecar docs <../user-guide/sidecars>`, add the
 
 .. code-block:: console
 
-   $ pip install "sphinxcontrib-matlabdomain[markdown]"
+   $ uv add "sphinxcontrib-matlabdomain[markdown]"
+
+With pip, use ``pip install "sphinxcontrib-matlabdomain[markdown]"``.
 
 Requirements
 ------------

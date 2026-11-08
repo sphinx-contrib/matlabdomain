@@ -60,13 +60,12 @@ use:
 .. literalinclude:: ../../examples/apidoc/docs/conf.py
    :language: python
 
-Generate the pages in the folder of ``conf.py`` (from elsewhere, name that
-folder with ``-c``, ``--conf-dir``):
+Generate the pages from the repository root, naming the folder of
+``conf.py`` with ``--conf-dir``:
 
 .. code-block:: console
 
-   $ cd examples/apidoc/docs
-    $ scmd apidoc
+   $ uv run scmd apidoc --conf-dir examples/apidoc/docs
 
 This writes one page per namespace into ``api/``, one for the files
 outside any namespace (``global``), and the root page that lists them:
@@ -88,7 +87,7 @@ and build as usual:
 
 .. code-block:: console
 
-   $ sphinx-build -M html . _build
+   $ uv run sphinx-build -M html examples/apidoc/docs examples/apidoc/docs/_build
 
 The root page and the page of the ``demo`` namespace:
 
@@ -150,8 +149,8 @@ With ``"folder"``:
   A long folder gets several pages, split at
   :confval:`matlab_apidoc_page_size` entries like a namespace
   (``folder utils/ (101-200)``). ``private/``
-  folders get pages like the others; :confval:`matlab_apidoc_private`
-  ``= False`` leaves their files out.
+  files are left out by default; :confval:`matlab_apidoc_private`
+  ``= True`` includes them on folder pages.
 * With :confval:`matlab_src_sidecar_suffixes`, each sidecar doc gets a
   page of its own, listed in a "Sidecar docs" section, and a folder's
   README introduces the folder's page (:doc:`sidecars`).
@@ -191,8 +190,8 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
 
 * the source settings: :confval:`matlab_src_code_project_root`,
   :confval:`matlab_src_include_patterns`,
-  :confval:`matlab_src_exclusion_patterns`, :confval:`matlab_version`,
-  :confval:`matlab_namelengthmax`, :confval:`matlab_src_encoding` and
+  :confval:`matlab_src_exclude_patterns`, :confval:`matlab_version`,
+  :confval:`matlab_src_encoding` and
   :confval:`matlab_src_sidecar_suffixes`;
 * ``suppress_warnings``: the warnings it names are not printed
   (:doc:`warnings`);
@@ -214,8 +213,8 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
        - ``100``
        - the most entries on one namespace or folder page
      * - :confval:`matlab_apidoc_private`
-       - ``None``
-       - list ``private/`` files (``None``: in folder grouping only)
+       - ``False``
+       - list ``private/`` files
      * - :confval:`matlab_apidoc_separate`
        - ``False``
        - one page per file
@@ -225,9 +224,6 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
      * - :confval:`matlab_apidoc_tocfile`
        - ``"index"``
        - the name of the root page
-     * - :confval:`matlab_apidoc_suffix`
-       - ``"rst"``
-       - the suffix of the files
      * - :confval:`matlab_apidoc_templatedir`
        - ``None``
        - a folder of templates that replace the defaults
@@ -294,19 +290,17 @@ The build does not run the generator; run it first. ``sphinx-build``
 finds the new pages as usual.
 
 A ``Makefile`` target (Sphinx's ``Makefile`` passes other targets to
-``sphinx-build``; recipe lines start with a tab):
+``sphinx-build``):
 
 .. code-block:: text
 
    .PHONY: apidoc
-   html: apidoc
-   	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-
-     apidoc:
-       scmd apidoc --quiet --conf-dir "$(SOURCEDIR)"
+   html: apidoc ; @$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+   apidoc: ; uv run scmd apidoc --quiet --conf-dir "$(SOURCEDIR)"
 
 Read the Docs: add a ``pre_build`` job to the ``build`` section of
-``.readthedocs.yaml``:
+``.readthedocs.yaml``. It runs in the environment Read the Docs installed
+the documentation's requirements into, so it needs no ``uv run``:
 
 .. code-block:: yaml
 
@@ -320,7 +314,7 @@ are current:
 
 .. code-block:: console
 
-  $ scmd apidoc --check --conf-dir docs
+   $ uv run scmd apidoc --check --conf-dir docs
 
 or in a `pre-commit <https://pre-commit.com/>`_ hook, an entry under
 ``repos:`` in ``.pre-commit-config.yaml``:
@@ -331,7 +325,7 @@ or in a `pre-commit <https://pre-commit.com/>`_ hook, an entry under
      hooks:
        - id: sphinx-matlab-apidoc
          name: API pages are current
-         entry: scmd apidoc --check --quiet --conf-dir docs
+         entry: uv run scmd apidoc --check --quiet --conf-dir docs
          language: system
          pass_filenames: false
          always_run: true
@@ -389,17 +383,17 @@ It takes three steps:
 1. ``sphinxcontrib.mat_types.IndexSettings`` says what to index: ``root``
    (an absolute path), ``include`` and ``exclude`` (tuples of patterns as
    in :confval:`matlab_src_include_patterns`, with ``/``, relative to the
-   root), ``encoding``, ``matlab_version``, ``namelengthmax``,
-   ``sidecar_suffixes``, ``source_dir`` (the Sphinx source folder) and
-   ``cache_text`` (keep the text read for a later parse). The defaults
-   are those of the build.
+   root), ``encoding``, ``matlab_version``, ``sidecar_suffixes`` and
+   ``source_dir`` (the Sphinx source folder). The defaults are those of
+   the build.
 2. ``sphinxcontrib.mat_types.build_index(settings)`` indexes the files, as
    the build does, and returns a ``SourceIndex``.
 3. ``sphinxcontrib.matlab_apidoc.generate(source_index, options)`` writes
    the pages. ``ApidocOptions`` has a field for each ``matlab_apidoc_*``
    value (``output_dir``, ``group``, ``page_size``, ``private``, ``separate``,
-   ``maxdepth``, ``tocfile``, ``suffix``, ``templatedir``, ``remove_old``;
-   paths as given, not relative to ``conf.py``) and for the flags ``-f``
+   ``maxdepth``, ``tocfile``, ``templatedir``, ``remove_old``;
+   paths as given, not relative to ``conf.py``), for the file suffix
+   (``suffix``, default ``"rst"``) and for the flags ``-f``
    and ``-n`` (``force``, ``dry_run``).
    It returns a ``Result``: ``pages`` (the docnames, without suffix), the
    lists of files ``created``, ``updated``, ``unchanged``, ``kept`` and

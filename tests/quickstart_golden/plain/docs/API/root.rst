@@ -44,11 +44,6 @@ Functions
 
 .. mat:autofunction:: @NmBox/sub/nm_legacy.m
 
-ap\_cls\_helper
-~~~~~~~~~~~~~~~
-
-.. mat:autofunction:: @ApCls/private/ap_cls_helper.m
-
 bad\-name.m
 ~~~~~~~~~~~
 

@@ -141,7 +141,7 @@ Help of an object calls it with the object's path reference:
    web(sphinxcontrib.matlabdomain.simulinkDocumentationLinker("src/controlLib.slx/PID"))
 
 It opens the local build after ``make html``, the server of ``make
-livehtml`` while it runs (:confval:`matlab_simulink_server`), or else the
+livehtml`` while it runs (:confval:`matlab_simulink_autobuild_server`), or else the
 published site; ``help sphinxcontrib.matlabdomain.simulinkDocumentationLinker``
 describes the choice. The documentation shows such a Help as a link to the
 page.

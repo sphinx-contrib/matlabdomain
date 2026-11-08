@@ -38,7 +38,7 @@ Source files
    relative to it. A relative path is relative to the Sphinx source folder.
    ``None`` indexes no files. Required when
    :confval:`matlab_src_include_patterns` differs from its default,
-   :confval:`matlab_src_exclusion_patterns` is set to a list other than
+   :confval:`matlab_src_exclude_patterns` is set to a list other than
    its default or ``[]``, or :confval:`matlab_src_sidecar_suffixes` is set.
 
 .. confval:: matlab_src_include_patterns
@@ -50,12 +50,12 @@ Source files
    of them; ``[]`` selects no files. Patterns use ``/``, match like
    ``exclude_patterns`` (``**`` crosses folders, ``**/x`` also matches
    ``x``) and are case-sensitive. A file that also matches
-   :confval:`matlab_src_exclusion_patterns` is left out: exclude wins over
+   :confval:`matlab_src_exclude_patterns` is left out: exclude wins over
    include. An absolute pattern, a drive, a ``\``, an
    empty pattern, or ``..`` that leaves the root or follows a wildcard is a
    ``ConfigError``.
 
-.. confval:: matlab_src_exclusion_patterns
+.. confval:: matlab_src_exclude_patterns
    :type: ``list[str]``
    :default: ``["README.*", "CHANGES.*", "CHANGELOG.*", "LICENSE.*", "CONTRIBUTING.*", "CODE_OF_CONDUCT.*", "SECURITY.*"]``
 
@@ -87,14 +87,6 @@ Source files
    ISO-8859-1 (elsewhere) for files that are not valid UTF-8, like MATLAB.
    An unknown or non-text codec is a ``ConfigError``.
 
-.. confval:: matlab_src_cache_text
-   :type: ``bool``
-   :default: ``True``
-
-   Keep the text read by the index in memory until the file is parsed,
-   during one build. ``False`` reads the file again to parse it. Changing it
-   reads no page again.
-
 MATLAB semantics
 ----------------
 
@@ -104,17 +96,8 @@ MATLAB semantics
 
    The MATLAB release the code targets, ``R<year>a`` or ``R<year>b``,
    R2024a or newer (``ConfigError`` otherwise). It selects release-dependent
-   naming and callability rules and the default of
-   :confval:`matlab_namelengthmax`.
-
-.. confval:: matlab_namelengthmax
-   :type: ``int`` or ``None``
-   :default: ``None``
-
-   The longest valid MATLAB name, like MATLAB's ``namelengthmax``: ``63``
-   or ``2048`` (``ConfigError`` otherwise). ``None`` derives it from
-   :confval:`matlab_version`: 2048 from R2025a on, else 63. An explicit
-   value always wins.
+   naming and callability rules. The identifier length limit is 2048 from
+   R2025a on, and 63 before.
 
 Output
 ------
@@ -151,12 +134,12 @@ Output
    :type: ``None``, ``"basic"`` or ``"all"``
    :default: ``None``
 
-   Turn names in help text into links. ``"basic"`` (any true value other
-   than ``"all"``): the entries of "See also" lines and of the property and
+   Turn names in help text into links. ``"basic"``: the entries of "See also"
+   lines and of the property and
    method lists of class help. ``"all"``: also every documented class,
    function, Simulink model, library and subsystem file name anywhere in
-   help text ("See also" entries link to these files too). A false value
-   (``None``, ``""``) turns it off. See
+   help text ("See also" entries link to these files too). ``None`` turns
+   it off; any other value is a ``ConfigError``. See
    :doc:`../user-guide/help-text`.
 
 .. confval:: matlab_external_names
@@ -201,8 +184,12 @@ Output
    the name). The "¶" link of an object points to it, and so does its
    entry in ``objects.inv``; ``mat/refs.js``, a script on every page and
    ``404.html`` send an address of a page that no longer has the object to
-   it. ``False`` writes no such files and keeps "¶"
-   and the inventory on the page (:ref:`library-changes`).
+   it. ``False`` writes no such files and keeps "¶" and the inventory on
+   the page (:ref:`library-changes`). This option applies only to HTML
+   builders other than EPUB; other output formats use their normal links.
+   Disable it when the additional redirect files or their browser redirects
+   are unsuitable for the host. A collision with an unowned stable-output
+   file fails the build instead of overwriting it.
 
 .. confval:: matlab_simulink_metadata
    :type: ``list[str]``
@@ -251,7 +238,7 @@ Output
    intersphinx. An auto directive that names them still warns: it
    documents one object, so give its path reference.
 
-.. confval:: matlab_simulink_server
+.. confval:: matlab_simulink_autobuild_server
    :type: ``str`` or ``None``
    :default: ``None``
 
@@ -280,29 +267,37 @@ Changing these reads no page again.
    :default: ``{}``
 
    Rule name to severity, ``"error"``, ``"warning"`` or ``"ignore"``,
-   merged over the defaults (``"warning"`` for ``property-description``,
-   ``event-description``, ``example`` and ``method-example``, ``"error"``
-   for the others). Rules: ``description``, ``method-description``,
-   ``property-description``, ``event-description``, ``inputs``,
-   ``outputs``, ``name-value``, ``example``, ``method-example``,
-   ``sidecar-documented``, ``sidecar-links``. A value that is
-   not a dictionary, an unknown rule or an unknown severity is a
-   ``ConfigError``.
+   merged over these defaults:
 
-.. confval:: matlab_api_check_enabled
-   :type: ``bool``
-   :default: ``True``
+   .. csv-table::
+      :header: "Rule", "Default", "Checks"
 
-   ``False`` checks nothing; the reports say so.
+      "``description``", "error", "Function, class, script or app description"
+      "``method-description``", "error", "Method description"
+      "``property-description``", "warning", "Property description"
+      "``event-description``", "warning", "Event description"
+      "``inputs``", "error", "Input descriptions"
+      "``outputs``", "error", "Output descriptions"
+      "``name-value``", "error", "Name-value argument descriptions"
+      "``example``", "warning", "Function, class or script example"
+      "``method-example``", "warning", "Method example"
+      "``sidecar-documented``", "error", "Sidecar is included in documentation"
+      "``sidecar-links``", "error", "Sidecar links and images exist"
+
+   See :doc:`../user-guide/api-check` for details. An unknown rule or
+   severity, or a value that is not a dictionary, is a ``ConfigError``.
 
 .. confval:: matlab_api_check_ignore_patterns
    :type: ``list[str]``
    :default: ``[]``
 
    Glob patterns, with the rules of
-   :confval:`matlab_src_exclusion_patterns`, of objects not to check,
+   :confval:`matlab_src_exclude_patterns`, of objects not to check,
    matched against the path references of files, methods
-   (``+pkg/Cls.m.helper``) and sidecar docs.
+   (``+pkg/Cls.m.helper``), properties, events and sidecar docs. Use this
+   for content that should still be documented but need not meet the
+   API-check rules. Ignored objects are not checked; indexing, pages and
+   links are unchanged.
 
 .. confval:: matlab_api_check_files
    :type: ``None``, ``list[str]`` or ``str``
@@ -393,13 +388,13 @@ relative to the folder of ``conf.py``.
    not (:ref:`library-changes`).
 
 .. confval:: matlab_apidoc_private
-   :type: ``bool`` or ``None``
-   :default: ``None``
+   :type: ``bool``
+   :default: ``False``
 
-   List the files of ``private/`` folders. ``None``: namespace grouping
-   leaves them out, folder grouping lists them; ``True`` lists them in both
-   (in namespace grouping, with the folder above); ``False`` leaves them
-   out of both. Sidecar docs in ``private/`` are listed either way.
+   List the files of ``private/`` folders. ``False`` leaves them out in
+   both grouping modes; ``True`` lists them in both (in namespace grouping,
+   with the folder above). Sidecar docs in ``private/`` are listed either
+   way.
 
 .. confval:: matlab_apidoc_separate
    :type: ``bool``
@@ -413,19 +408,14 @@ relative to the folder of ``conf.py``.
    :type: ``int``
    :default: ``4``
 
-   The ``:maxdepth:`` of the generated toctrees.
+   The ``:maxdepth:`` of the generated toctrees. It controls navigation,
+   not how deeply the source tree is searched.
 
 .. confval:: matlab_apidoc_tocfile
    :type: ``str``
    :default: ``"index"``
 
    The name of the root page, without suffix.
-
-.. confval:: matlab_apidoc_suffix
-   :type: ``str``
-   :default: ``"rst"``
-
-   The suffix of the generated files, with or without the dot.
 
 .. confval:: matlab_apidoc_templatedir
    :type: ``str`` or ``None``
@@ -453,7 +443,7 @@ Setting one of these is a ``ConfigError`` that names the replacement
    Use :confval:`matlab_src_code_project_root` (relative to the Sphinx
    source folder) and, to select files,
    :confval:`matlab_src_include_patterns` and
-   :confval:`matlab_src_exclusion_patterns`.
+   :confval:`matlab_src_exclude_patterns`.
 
 .. confval:: matlab_keep_package_prefix
    :type: removed

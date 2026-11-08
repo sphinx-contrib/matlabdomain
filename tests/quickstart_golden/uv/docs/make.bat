@@ -48,7 +48,7 @@ if "%1" == "apidoc-check" (
 )
 
 if "%1" == "livehtml" (
-	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html -d %BUILDDIR%/doctrees --watch ".." --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% --conf-dir . --quiet" --port %LIVEPORT% -D matlab_simulink_server=http://127.0.0.1:%LIVEPORT%/ %SPHINXOPTS% %O%
+	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html -d %BUILDDIR%/doctrees --watch ".." --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% --conf-dir . --quiet" --port %LIVEPORT% -D matlab_simulink_autobuild_server=http://127.0.0.1:%LIVEPORT%/ %SPHINXOPTS% %O%
 	goto end
 )
 

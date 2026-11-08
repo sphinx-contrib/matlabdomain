@@ -44,11 +44,11 @@ change that; both are relative to the root and use ``/``:
 .. code-block:: python
 
    matlab_src_include_patterns = ["toolbox/**", "examples/*.m"]
-   matlab_src_exclusion_patterns = ["**/tests/**", "**/private/**"]
+   matlab_src_exclude_patterns = ["**/tests/**", "**/private/**"]
 
 * :confval:`matlab_src_include_patterns` (default ``["**/*"]``): a file is
   indexed if its path reference matches one of them. ``[]`` selects nothing.
-* :confval:`matlab_src_exclusion_patterns`: files and folders that match
+* :confval:`matlab_src_exclude_patterns`: files and folders that match
   one of them are left out; an excluded folder is not searched. The default
   leaves out ``README.*``, ``CHANGES.*``, ``CHANGELOG.*``, ``LICENSE.*``,
   ``CONTRIBUTING.*``, ``CODE_OF_CONDUCT.*`` and ``SECURITY.*`` at the root
@@ -155,7 +155,7 @@ Some files and folders are never indexed or need care:
 
 
      matlab_src_code_project_root = ".."
-     matlab_src_exclusion_patterns = [
+     matlab_src_exclude_patterns = [
          "README.*",  # ... the rest of the default list
          *_submodule_paths(os.path.join(os.path.dirname(__file__), "..", ".gitmodules")),
      ]
@@ -172,9 +172,7 @@ The MATLAB release
 :confval:`matlab_version` (default ``"R2026a"``) is the release the code is
 written for. It sets the defaults of release-dependent rules:
 
-* :confval:`matlab_namelengthmax`, the longest valid name: 2048 from R2025a
-  on, 63 before. Set it to ``63`` or ``2048`` only to override the derived
-  value; an explicit value wins even when :confval:`matlab_version` changes.
+* The longest valid name: 2048 from R2025a on, 63 before.
 * Whether scripts and functions in a subfolder of a class folder
   (``@C/sub/x.m``) can be called: before R2026a they can, from R2026a on they
   cannot (they are then documented by path, with a ``mat.not_callable``
@@ -282,7 +280,7 @@ These Sphinx and autodoc settings apply too:
 Checking help text
 ------------------
 
-:confval:`matlab_api_check_rules`, :confval:`matlab_api_check_enabled`,
+:confval:`matlab_api_check_rules`,
 :confval:`matlab_api_check_ignore_patterns`,
 :confval:`matlab_api_check_section_labels`,
 :confval:`matlab_api_check_files`, :confval:`matlab_api_check_files_from`
@@ -326,11 +324,8 @@ method of ``Circle``. Ignoring a class file also skips its methods.
 Memory
 ------
 
-:confval:`matlab_src_cache_text` (default ``True``) keeps the text that
-indexing read in memory until the file is parsed, during one build. Set it
-to ``False`` for very large projects if memory is short; files are then read
-twice. The cache holds the decoded text, about as large as the indexed files
-on disk, so memory is rarely a reason to turn it off.
+The index keeps decoded source text in memory until it is parsed or the
+build ends. Its memory cost depends on the selected source files.
 
 Removed settings
 ----------------

@@ -86,7 +86,7 @@ What each warning means
    inventories (:doc:`linking-projects`). The warning lists their path
    references; use one of them. Copies of files (vendored code, symbolic
    links) are a common cause; exclude them with
-   :confval:`matlab_src_exclusion_patterns`. When the copies are intended,
+   :confval:`matlab_src_exclude_patterns`. When the copies are intended,
    :confval:`matlab_link_shadowed_files_to_chooser_pages` links such names to the page
    that lists the objects and turns the warning off for them (an auto
    directive still has to name one object).

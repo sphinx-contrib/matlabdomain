@@ -1,6 +1,5 @@
 {
   "summary": {
-    "enabled": true,
     "rules": {
       "description": "error",
       "method-description": "error",

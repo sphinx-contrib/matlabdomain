@@ -105,7 +105,7 @@ def validate_namelengthmax(namelengthmax: int) -> int:
         or namelengthmax not in VALID_MATLAB_NAMELENGTHMAX
     ):
         raise ValueError(
-            "matlab_namelengthmax must be one of "
+            "namelengthmax must be one of "
             f"{VALID_MATLAB_NAMELENGTHMAX}; got {namelengthmax}."
         )
     return namelengthmax
@@ -136,14 +136,6 @@ def has_matlab_behavior(rule: str, matlab_version: str) -> bool:
 
 def default_namelengthmax(matlab_version: str) -> int:
     return 2048 if has_matlab_behavior("namelengthmax_2048", matlab_version) else 63
-
-
-def resolve_namelengthmax(matlab_version: str, namelengthmax: int | None) -> int:
-    """Explicit ``namelengthmax`` wins; ``None`` derives it from the version."""
-    validate_matlab_version(matlab_version)
-    if namelengthmax is None:
-        return default_namelengthmax(matlab_version)
-    return validate_namelengthmax(namelengthmax)
 
 
 def _identifier_pattern(namelengthmax: int) -> re.Pattern[str]:

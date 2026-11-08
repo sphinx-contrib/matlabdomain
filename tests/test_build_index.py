@@ -119,9 +119,9 @@ def test_settings_are_frozen(tmp_path):
     "confoverrides",
     [
         {},
-        {"matlab_src_exclusion_patterns": ["tests"]},
+        {"matlab_src_exclude_patterns": ["tests"]},
         {"matlab_src_include_patterns": ["+pkg/**", "src/../top.m"]},
-        {"matlab_version": "R2025b", "matlab_src_cache_text": False},
+        {"matlab_version": "R2025b"},
     ],
 )
 def test_build_index_matches_the_build(make_app, tmp_path, confoverrides):
@@ -253,13 +253,6 @@ def test_build_index_reuses_unchanged_records(tmp_path, monkeypatch):
     third = build_index(settings, second.index)
     assert reads == ["top.m"]
     assert len(third.text_cache) == 1
-
-
-def test_build_index_without_the_text_cache(tmp_path):
-    write(tmp_path, FILES)
-    source_index = build_index(IndexSettings(str(tmp_path), cache_text=False))
-    assert refs(source_index) == sorted(FILES)
-    assert source_index.text_cache == {}
 
 
 def test_build_index_of_a_missing_root(tmp_path):

@@ -17,8 +17,9 @@ The "¶" link of an object points to its stable address: by MATLAB name if
 it is unique, else by path reference; the ``mat`` entries of ``objects.inv``
 point to the address by path reference, so another project's links follow an
 object even with an old inventory. File names are escaped like the pages
-of ``sphinx-matlab-apidoc``. Only files with ``MARKER`` are rewritten or
-removed.
+of ``sphinx-matlab-apidoc``. Only files this extension wrote (``MARKER``,
+``JS_MARKER``) are rewritten or removed; any other file at one of these
+addresses fails the build.
 
 A page opened at the anchor of an object that is no longer on it (an
 address copied from the browser), and the site's ``404.html``, send the
@@ -40,6 +41,7 @@ from pathlib import Path
 from urllib.parse import quote, urlsplit
 
 from docutils import nodes
+from sphinx.errors import ExtensionError
 from sphinx.util.logging import getLogger
 from sphinx.util.osutil import relative_uri
 
@@ -50,6 +52,7 @@ logger = getLogger("matlab-domain")
 
 ROOT = "mat"
 MARKER = "<!-- sphinxcontrib-matlabdomain stable address -->"
+JS_MARKER = "/* sphinxcontrib-matlabdomain stable address */"
 SCRIPT = "mat_urls.js"
 REFS = f"{ROOT}/refs.js"
 _FRAGMENT_SAFE = "/+-._~:@!$()*,="
@@ -294,6 +297,7 @@ def chooser_pages(app):
     pages = []
     for name, stub in sorted(by_name.items()):
         if len(names[name]) > 1:
+            _check_owned(os.path.join(str(builder.outdir), *stub.split("/")))
             body = _chooser_body(name, _entries(builder, dom, stub, names[name]))
             pages.append(
                 (stub.removesuffix(".html"), {"title": name, "body": body}, "page.html")
@@ -341,9 +345,27 @@ def _write(path, data):
 def _is_ours(path):
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
-            return MARKER in f.read()
+            text = f.read()
     except OSError:  # pragma: no cover - defensive: unreadable file in mat/
         return False
+    if MARKER in text or text.startswith(JS_MARKER):
+        return True
+    # Written without JS_MARKER by earlier versions.
+    folder, name = os.path.split(os.path.normpath(path))
+    if name == SCRIPT:
+        return text.startswith(_JS.partition("\n")[0])
+    return (
+        name == os.path.basename(REFS)
+        and os.path.basename(folder) == ROOT
+        and text.startswith("window.matStableRefs = ")
+    )
+
+
+def _check_owned(path):
+    if os.path.islink(path) or (os.path.isfile(path) and not _is_ours(path)):
+        raise ExtensionError(
+            f"stable URL output would overwrite an unowned file: {path}"
+        )
 
 
 def write_redirects(app, exception):
@@ -371,11 +393,15 @@ def write_redirects(app, exception):
         key = mat_naming.make_target_id(ref)[4:]
         value = stub[len(ROOT) + 5 : -5]  # mat/ref/<value>.html
         refs_map[key] = "" if value == key else value
-    files[REFS] = f"window.matStableRefs = {json.dumps(refs_map, sort_keys=True)};\n"
+    files[REFS] = (
+        f"{JS_MARKER}\nwindow.matStableRefs = {json.dumps(refs_map, sort_keys=True)};\n"
+    )
     outdir = str(builder.outdir)
     not_found = os.path.join(outdir, "404.html")
     if not os.path.exists(not_found) or _is_ours(not_found):
         files["404.html"] = _not_found(builder.get_target_uri(app.config.root_doc))
+    for stub in files:
+        _check_owned(os.path.join(outdir, *stub.split("/")))
     failed = set()
     for stub, text in files.items():
         path = os.path.join(outdir, *stub.split("/"))
@@ -432,9 +458,13 @@ def add_script(app):
     """
     if enabled(app):
         app.add_js_file(SCRIPT)
-        path = os.path.join(str(app.builder.outdir), "_static", SCRIPT)
+        outdir = str(app.builder.outdir)
+        # Fail before any page is written; the other stubs are checked later.
+        _check_owned(os.path.join(outdir, *REFS.split("/")))
+        path = os.path.join(outdir, "_static", SCRIPT)
+        _check_owned(path)
         try:
-            _write(path, _JS.encode("utf-8"))
+            _write(path, f"{JS_MARKER}\n{_JS}".encode())
         except OSError as err:
             logger.warning(
                 "[sphinxcontrib-matlabdomain] cannot write %s: %s",

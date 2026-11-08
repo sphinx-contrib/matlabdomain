@@ -683,7 +683,7 @@ class MatFolder(MatObject):
         elif ref != mat_naming.ROOT_REFERENCE:
             namespace = mat_naming.folder_namespace(
                 ref.rstrip("/"),
-                self.env.config.matlab_namelengthmax,
+                mat_naming.default_namelengthmax(self.env.config.matlab_version),
                 self.env.config.matlab_version,
             )
         else:
@@ -1300,7 +1300,7 @@ _REMOVED_OPTIONS = {
     "matlab_src_dir": (
         "use matlab_src_code_project_root (relative to the Sphinx source "
         "directory) and, to select files, matlab_src_include_patterns and "
-        "matlab_src_exclusion_patterns"
+        "matlab_src_exclude_patterns"
     ),
     "matlab_keep_package_prefix": (
         "objects are referenced by path (which keeps '+') and signatures show "
@@ -1326,16 +1326,16 @@ def ensure_configuration(app, config):
         them = "it" if len(removed) == 1 else "them"
         raise ConfigError(" ".join(removed) + f" Remove {them} from conf.py.")
 
+    if config.matlab_auto_link not in (None, "basic", "all"):
+        raise ConfigError("matlab_auto_link must be None, 'basic', or 'all'.")
+
     sources = mat_types.source_filter(config)
     if config.matlab_src_code_project_root is not None:
         root = mat_types.project_root(config, app.srcdir)
         mat_types.check_pattern_folders(sources, root)
 
-    # Explicit matlab_namelengthmax wins; None derives it from matlab_version.
     try:
-        config.matlab_namelengthmax = mat_naming.resolve_namelengthmax(
-            config.matlab_version, config.matlab_namelengthmax
-        )
+        mat_naming.validate_matlab_version(config.matlab_version)
     except ValueError as err:
         raise ConfigError(str(err)) from err
 
@@ -1393,15 +1393,13 @@ def setup(app):
         [list, tuple],
     )
     app.add_config_value(
-        "matlab_src_exclusion_patterns",
+        "matlab_src_exclude_patterns",
         list(mat_types.DEFAULT_EXCLUSION_PATTERNS),
         "env",
         [list, tuple],
     )
     # Sidecar docs: [] is off; e.g. [".md", ".rst"] (plan.md 2.11).
     app.add_config_value("matlab_src_sidecar_suffixes", [], "env", [list, tuple])
-    # Keep the text read by the index stage for the parse (this process only).
-    app.add_config_value("matlab_src_cache_text", True, "", bool)
     # Removed: setting it raises ConfigError.
     app.add_config_value("matlab_src_dir", None, "env")
     app.add_config_value("matlab_src_encoding", None, "env")
@@ -1419,8 +1417,6 @@ def setup(app):
         "matlab_external_names", list(DEFAULT_EXTERNAL_NAMES), "html", [list, tuple]
     )
     app.add_config_value("matlab_version", mat_naming.DEFAULT_MATLAB_VERSION, "env")
-    # None: derived from matlab_version (2048 from R2025a on).
-    app.add_config_value("matlab_namelengthmax", None, "env")
     # Stable addresses (mat/ref/, mat/name/) and "¶" links to them.
     app.add_config_value("matlab_stable_urls", True, "html", bool)
     # Several objects of one MATLAB name are intended: link to their chooser
@@ -1429,7 +1425,7 @@ def setup(app):
         "matlab_link_shadowed_files_to_chooser_pages", False, "env", bool
     )
     # The sphinx-autobuild address for Simulink Help links (make livehtml).
-    app.add_config_value("matlab_simulink_server", None, "")
+    app.add_config_value("matlab_simulink_autobuild_server", None, "")
     # Metadata of Simulink files shown by default (directive option :metadata:).
     app.add_config_value(
         "matlab_simulink_metadata", ["release", "model_version"], "env", [list, tuple]
@@ -1439,7 +1435,6 @@ def setup(app):
         "matlab_simulink_doc_suffixes", [".md", ".rst"], "env", [list, tuple]
     )
     # matlab-api-check: read by the builder only, so no page is read again.
-    app.add_config_value("matlab_api_check_enabled", True, "", bool)
     # Rule -> severity, merged over mat_api_check.DEFAULT_RULES.
     app.add_config_value("matlab_api_check_rules", {}, "", dict)
     app.add_config_value("matlab_api_check_ignore_patterns", [], "", [list, tuple])

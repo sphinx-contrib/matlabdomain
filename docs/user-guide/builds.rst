@@ -21,8 +21,8 @@ What a build does
    file's path, modification time and size. The next build reuses them while
    none of these change; a file whose size or time changed is parsed again.
 
-:confval:`matlab_src_cache_text` keeps the text the index read until the
-parse, so a file is read from disk once per build.
+The index keeps decoded text in memory for the parse, avoiding a second read
+when a newly indexed file is parsed in the same process.
 
 Incremental builds
 ------------------
@@ -33,8 +33,8 @@ it is read again; edit a file no page uses and nothing is read again. When
 files or folders are added, removed or change type, every page that looks
 up MATLAB files is read again, because a name may now mean another file.
 
-Changing a ``matlab_*`` setting (other than the ``matlab_api_check_*`` ones
-and :confval:`matlab_src_cache_text`) reads every page again and drops the
+Changing a ``matlab_*`` setting (other than the ``matlab_api_check_*`` ones)
+reads every page again and drops the
 cached parses. Upgrading the extension may do the same.
 
 Pages that only *link* to an object (with a role) are not read again when
@@ -70,7 +70,7 @@ Large projects
 --------------
 
 * Exclude what needs no documentation (tests, generated data, vendored
-  copies) with :confval:`matlab_src_exclusion_patterns`; excluded folders
+  copies) with :confval:`matlab_src_exclude_patterns`; excluded folders
   are not even listed.
 * Large generated data files (megabytes of numbers in a ``.m`` file) are
   slow to parse when a page documents them.
@@ -92,7 +92,7 @@ Working with other tools
 
   .. code-block:: console
 
-    $ sphinx-autobuild docs docs/_build/html --watch src --pre-build "scmd apidoc --conf-dir docs --quiet"
+     $ uv run sphinx-autobuild docs docs/_build/html --watch src --pre-build "uv run scmd apidoc --conf-dir docs --quiet"
 
   A change that the generator turns into a page change triggers one more
   build. The ``--pre-build`` command is split like a POSIX shell line, so

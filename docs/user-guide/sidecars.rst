@@ -27,7 +27,7 @@ Which files are sidecar docs
 
 * Files with one of the suffixes below the project root that
   :confval:`matlab_src_include_patterns` and
-  :confval:`matlab_src_exclusion_patterns` select, like code. By default
+  :confval:`matlab_src_exclude_patterns` select, like code. By default
   the exclusion patterns leave out ``README.*``, ``CHANGES.*``,
   ``CHANGELOG.*``, ``LICENSE.*``, ``CONTRIBUTING.*``,
   ``CODE_OF_CONDUCT.*`` and ``SECURITY.*`` at the root, which describe the

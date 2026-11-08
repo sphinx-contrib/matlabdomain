@@ -17,9 +17,7 @@ for apps and for sidecar findings without a line. Sidecar docs have no
 MATLAB name,
 so ``(<MATLAB name>)`` is left out for them. Then a summary: the objects
 checked per kind, the objects not
-checked per reason, and the findings per rule and severity. When
-:confval:`matlab_api_check_enabled` is ``False``, the summary says that
-nothing was checked.
+checked per reason, and the findings per rule and severity.
 
 With :confval:`matlab_api_check_files` or
 :confval:`matlab_api_check_files_from`, the report starts with a line for
@@ -45,8 +43,6 @@ The same information for tools. It contains no absolute paths, so it is
 identical on every system.
 
 ``summary``
-   ``enabled``
-      :confval:`matlab_api_check_enabled`.
    ``rules``
       Rule name to the severity in effect.
    ``checked``

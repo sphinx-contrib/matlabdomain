@@ -659,15 +659,14 @@ def test_read_failure_while_parsing_is_not_cached(make_app, tmp_path, monkeypatc
     def locked(*args, **kwargs):
         raise PermissionError(13, "Permission denied")
 
-    # Readable for the index stage (text not kept), not when parsed.
     monkeypatch.setattr(mat_handlers.MFileHandler, "parse", locked)
-    app = make_app(srcdir=tmp_path, confoverrides={"matlab_src_cache_text": False})
+    app = make_app(srcdir=tmp_path)
     app.build()
     assert warnings_of(app) == [("parse_error", "ft_ok_function.m")]
     assert app.env.get_domain("mat").data["parse_cache"] == {}
 
     monkeypatch.undo()
-    app2 = make_app(srcdir=tmp_path, confoverrides={"matlab_src_cache_text": False})
+    app2 = make_app(srcdir=tmp_path)
     app2.build()
     # The page that used the unreadable file is read again.
     assert app2.env.get_domain("mat").read_docnames == ["index"]

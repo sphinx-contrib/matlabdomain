@@ -669,20 +669,19 @@ class _Checker:
                 )
 
 
-def _summary(enabled, rules, checker, unmatched=(), ignore_unmatched=False):
+def _summary(rules, checker, unmatched=(), ignore_unmatched=False):
     findings = {rule: {"error": 0, "warning": 0} for rule in RULES}
-    for finding in checker.findings if checker else ():
+    for finding in checker.findings:
         findings[finding.rule][finding.severity] += 1
     summary = {
-        "enabled": enabled,
         "rules": rules,
-        "checked": checker.checked if checker else dict.fromkeys(KINDS, 0),
-        "not_checked": checker.not_checked if checker else {},
+        "checked": checker.checked,
+        "not_checked": checker.not_checked,
         "findings": findings,
         "errors": sum(n["error"] for n in findings.values()),
         "warnings": sum(n["warning"] for n in findings.values()),
     }
-    if checker and checker.selection is not None:
+    if checker.selection is not None:
         summary["selection"] = {
             "entries": checker.selection,
             "selected": checker.selected,
@@ -703,8 +702,6 @@ def _text_report(summary, findings):
     lines += [f"{f.location() or f.path}: {f.severity}: {f.text()}" for f in findings]
     if lines:
         lines.append("")
-    if not summary["enabled"]:
-        lines.append("matlab_api_check_enabled is False: nothing was checked.")
     if selection is not None:
         if not selection["entries"]:
             lines.append("The selection is empty: no file was selected.")
@@ -772,27 +769,21 @@ class MatlabApiCheckBuilder(Builder):
         config = self.config
         dom = self.env.get_domain("mat")
         rules = {**DEFAULT_RULES, **config.matlab_api_check_rules}
-        enabled = bool(config.matlab_api_check_enabled)
         ignore_unmatched = bool(config.matlab_api_check_ignore_unmatched)
-        checker = None
-        unmatched = []
-        if enabled:
-            checker = _Checker(
-                dom,
-                rules,
-                ignore_patterns(config),
-                selected_files(config),
-                sections_for(section_labels(config)),
-            )
-            records = sorted(dom.data["index"].items(), key=lambda i: i[1]["reference"])
-            for path, record in records:
-                checker.check(path, record)
-            checker.sidecars(self.env)
-            unmatched = checker.unmatched(
-                mat_types.project_root(config, self.env.srcdir)
-            )
-        findings = checker.findings if checker else []
-        summary = _summary(enabled, rules, checker, unmatched, ignore_unmatched)
+        checker = _Checker(
+            dom,
+            rules,
+            ignore_patterns(config),
+            selected_files(config),
+            sections_for(section_labels(config)),
+        )
+        records = sorted(dom.data["index"].items(), key=lambda i: i[1]["reference"])
+        for path, record in records:
+            checker.check(path, record)
+        checker.sidecars(self.env)
+        unmatched = checker.unmatched(mat_types.project_root(config, self.env.srcdir))
+        findings = checker.findings
+        summary = _summary(rules, checker, unmatched, ignore_unmatched)
         # The report first: -W may stop the build at the first warning.
         os.makedirs(self.outdir, exist_ok=True)
         with open(
@@ -810,8 +801,7 @@ class MatlabApiCheckBuilder(Builder):
             f.write("\n")
         self.errors = summary["errors"]
         self.unmatched = 0 if ignore_unmatched else len(unmatched)
-        if checker:
-            _warn_parsed(dom, checker.parsed)
+        _warn_parsed(dom, checker.parsed)
         for entry, why in unmatched:
             message = "[sphinxcontrib-matlabdomain] selection entry %r matches no "
             message += "indexed file or sidecar doc: %s"

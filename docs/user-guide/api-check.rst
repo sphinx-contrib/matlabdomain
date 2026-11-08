@@ -16,7 +16,7 @@ of your docs:
 
 .. code-block:: console
 
-   $ sphinx-build -b matlab-api-check docs docs/_build/api-check
+   $ uv run sphinx-build -b matlab-api-check docs docs/_build/api-check
 
 It reads the pages like any builder; give it the ``-d`` folder of the HTML
 build (``-d docs/_build/doctrees``) to avoid reading them twice. (If the two
@@ -255,7 +255,7 @@ them does not make Sphinx read the pages again
      }
 
 * :confval:`matlab_api_check_ignore_patterns`: objects not to check. Globs
-  with the rules of :confval:`matlab_src_exclusion_patterns`, matched
+  with the rules of :confval:`matlab_src_exclude_patterns`, matched
   against the path references of files, of methods and properties
   (``+pkg/Cls.m.helper``) and of sidecar docs. Use them for generated code,
   examples and tests:
@@ -267,10 +267,6 @@ them does not make Sphinx read the pages again
          "examples/**",
          "+pkg/Legacy.m.*",
      ]
-
-* :confval:`matlab_api_check_enabled` (default ``True``): ``False`` checks
-  nothing; the reports say so. Useful to switch the check off in one
-  configuration without removing the CI step.
 
 * :confval:`matlab_api_check_section_labels`: the labels each section
   accepts (above).
@@ -294,7 +290,7 @@ commas:
 
 .. code-block:: console
 
-   $ sphinx-build -b matlab-api-check -D matlab_api_check_files=+shapes/Circle.m,utils/ docs docs/_build/api-check
+   $ uv run sphinx-build -b matlab-api-check -D matlab_api_check_files=+shapes/Circle.m,utils/ docs docs/_build/api-check
 
 in ``conf.py``, as a list:
 
@@ -307,7 +303,7 @@ line):
 
 .. code-block:: console
 
-   $ sphinx-build -b matlab-api-check -D matlab_api_check_files_from=changed-files.txt docs docs/_build/api-check
+   $ uv run sphinx-build -b matlab-api-check -D matlab_api_check_files_from=changed-files.txt docs docs/_build/api-check
 
 A relative file path is relative to the current folder. The file is read
 as UTF-8; blank lines and the spaces around a line are dropped, and commas
@@ -393,7 +389,7 @@ entry selects no file (unless
 
 .. code-block:: console
 
-   $ sphinx-build -b matlab-api-check -d docs/_build/doctrees docs docs/_build/api-check
+   $ uv run sphinx-build -b matlab-api-check -d docs/_build/doctrees docs docs/_build/api-check
 
 To adopt the check on an existing project, start with the rules that pass,
 set the others to ``"warning"``, and tighten them as the help improves.

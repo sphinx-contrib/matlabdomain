@@ -216,16 +216,16 @@ def test_source_filter_default_exclusions():
     class Config:
         matlab_src_code_project_root = None
         matlab_src_include_patterns = ["**/*"]
-        matlab_src_exclusion_patterns = list(mat_types.DEFAULT_EXCLUSION_PATTERNS)
+        matlab_src_exclude_patterns = list(mat_types.DEFAULT_EXCLUSION_PATTERNS)
 
     sources = mat_types.source_filter(Config)
     assert not sources.includes("README.md")
     assert not sources.includes("LICENSE.txt")
     assert sources.includes("readme.md")
     assert sources.includes("+pkg/README.md")
-    Config.matlab_src_exclusion_patterns = []
+    Config.matlab_src_exclude_patterns = []
     assert mat_types.source_filter(Config).includes("README.md")
-    Config.matlab_src_exclusion_patterns = ["**/tests"]
+    Config.matlab_src_exclude_patterns = ["**/tests"]
     with pytest.raises(ConfigError, match="need matlab_src_code_project_root"):
         mat_types.source_filter(Config)
 

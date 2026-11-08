@@ -11,7 +11,7 @@ of a site. It reads two files:
   ``published``;
 - the build state ``mat/simulinkDocumentationLinker.json`` in that output
   folder, written by every HTML build: ``{"mode": "local"}``, or
-  ``"server"`` and its address when ``matlab_simulink_server`` is set (the
+  ``"server"`` and its address when ``matlab_simulink_autobuild_server`` is set (the
   ``livehtml`` target of the make files sets it for sphinx-autobuild).
   So the last build chooses between the local files and the server.
 
@@ -41,13 +41,13 @@ STATE = f"{mat_urls.ROOT}/{NAME}"
 
 
 def check_config(_app, config):
-    """``config-inited``: ``matlab_simulink_server`` is None or a web address."""
-    server = config.matlab_simulink_server
+    """Validate the autobuild server address at ``config-inited``."""
+    server = config.matlab_simulink_autobuild_server
     if server is not None and not (
         isinstance(server, str) and server.startswith(("http://", "https://"))
     ):
         raise ConfigError(
-            "matlab_simulink_server must be None or start with http:// or "
+            "matlab_simulink_autobuild_server must be None or start with http:// or "
             f"https://, not {server!r}."
         )
 
@@ -80,7 +80,7 @@ def write_settings(app, exception):
     if not os.path.isfile(path):
         return
     outdir = str(app.builder.outdir)
-    server = app.config.matlab_simulink_server
+    server = app.config.matlab_simulink_autobuild_server
     state = {"mode": "local"}
     if server:
         state = {"mode": "server", "server": _slash(server)}

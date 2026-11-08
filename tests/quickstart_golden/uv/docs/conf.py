@@ -45,7 +45,7 @@ _GITMODULES = os.path.join(os.path.dirname(__file__), "../.gitmodules")
 
 
 matlab_src_code_project_root = ".."
-matlab_src_exclusion_patterns = [
+matlab_src_exclude_patterns = [
     # The default list, which a project list replaces.
     "README.*",
     "CHANGES.*",

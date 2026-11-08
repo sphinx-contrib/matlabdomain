@@ -72,7 +72,7 @@ def get_parser(prog="sphinx-matlab-apidoc"):
         epilog=(
             "The settings come from conf.py only: matlab_src_code_project_root "
             "and matlab_apidoc_output_dir (both required), the other "
-            "matlab_src_* values, matlab_version, matlab_namelengthmax and the "
+            "matlab_src_* values, matlab_version and the "
             "other matlab_apidoc_* values. For full control, write a script on "
             "the Python API (sphinxcontrib.matlab_apidoc.generate)."
         ),
@@ -161,15 +161,15 @@ def _settings(args):
     include_name = "matlab_src_include_patterns"
     include = pattern_list(conf.matlab_src_include_patterns, include_name)
     exclude = pattern_list(
-        conf.matlab_src_exclusion_patterns, "matlab_src_exclusion_patterns"
+        conf.matlab_src_exclude_patterns, "matlab_src_exclude_patterns"
     )
     check_pattern_folders(SourceFilter(include, exclude), root, include_name)
 
     encoding = conf.matlab_src_encoding
     check_text_encoding(encoding, "matlab_src_encoding")
-    version, namelengthmax = conf.matlab_version, conf.matlab_namelengthmax
+    version = conf.matlab_version
     try:
-        mat_naming.resolve_namelengthmax(version, namelengthmax)
+        mat_naming.validate_matlab_version(version)
     except ValueError as err:
         raise ConfigError(str(err)) from err
 
@@ -190,14 +190,12 @@ def _settings(args):
         exclude=tuple(exclude),
         encoding=encoding,
         matlab_version=version,
-        namelengthmax=namelengthmax,
         sidecar_suffixes=sidecar_suffixes,
         source_dir=srcdir,
         simulink_doc_suffixes=simulink_doc_suffix_list(
             conf.matlab_simulink_doc_suffixes
         ),
     )
-    suffix = apidoc_value(conf, "matlab_apidoc_suffix").removeprefix(".")
     group = apidoc_value(conf, "matlab_apidoc_group")
     if group not in GROUPS:
         raise ConfigError(
@@ -216,7 +214,6 @@ def _settings(args):
         separate=apidoc_value(conf, "matlab_apidoc_separate"),
         maxdepth=apidoc_value(conf, "matlab_apidoc_maxdepth"),
         tocfile=_file_name(conf, "matlab_apidoc_tocfile"),
-        suffix=_file_name(conf, "matlab_apidoc_suffix", suffix),
         templatedir=templatedir,
         remove_old=apidoc_value(conf, "matlab_apidoc_remove_old"),
         group=group,

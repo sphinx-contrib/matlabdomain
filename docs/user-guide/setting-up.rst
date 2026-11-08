@@ -18,7 +18,7 @@ prints what it would write, then the report:
 
 .. code-block:: console
 
-   $ scmd quickstart --dry-run
+   $ uv run scmd quickstart --dry-run
 
 The report lists:
 
@@ -41,7 +41,7 @@ them back:
 
 .. code-block:: console
 
-   $ scmd quickstart --answers sphinx-matlab-quickstart.toml
+   $ uv run scmd quickstart --answers sphinx-matlab-quickstart.toml
 
 The questions
 -------------
@@ -80,7 +80,7 @@ defaults.
        ``conf.py``; Simulink Help links use it (blank: the local build)
    * - ``exclude``
      - Folders and files not to document
-     - none; the defaults of :confval:`matlab_src_exclusion_patterns` and
+     - none; the defaults of :confval:`matlab_src_exclude_patterns` and
        the git submodules are always left out
    * - ``markdown``
      - Markdown pages with MyST
@@ -237,7 +237,7 @@ function is rewritten on each run, the settings only written when
 missing. HTML builds keep the settings up to date (the output folder,
 ``html_baseurl`` as ``"published"``) and record which site they made:
 after ``make html`` the Help links open the local files, after ``make
-livehtml`` the sphinx-autobuild server (:confval:`matlab_simulink_server`;
+livehtml`` the sphinx-autobuild server (:confval:`matlab_simulink_autobuild_server`;
 the local files once it stops). Without a local build they open the
 published site. ``"mode"`` is the choice before the first build; one
 person can choose for themselves in MATLAB with

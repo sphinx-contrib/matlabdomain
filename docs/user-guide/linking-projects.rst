@@ -22,8 +22,8 @@ Publish from an empty output folder:
 .. code-block:: bash
 
    rm -rf docs/_build
-  scmd apidoc --conf-dir docs
-   sphinx-build -b html docs docs/_build/html
+   uv run scmd apidoc --conf-dir docs
+   uv run sphinx-build -b html docs docs/_build/html
 
 Sphinx never deletes a page it no longer builds. This extension removes
 the HTML page, and its copy in ``_sources``, of every page below

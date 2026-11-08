@@ -244,12 +244,28 @@ def test_class_subfolder_callability_follows_matlab_version(app, callable_):
     [
         ({"matlab_version": "R2024b"}, 63),
         ({"matlab_version": "R2025a"}, 2048),
-        ({"matlab_version": "R2026a", "matlab_namelengthmax": 63}, 63),
-        ({"matlab_version": "R2025a", "matlab_namelengthmax": 2048}, 2048),
+        ({"matlab_version": "R2026a"}, 2048),
     ],
 )
 def test_namelengthmax_in_build(app, expected):
-    assert app.config.matlab_namelengthmax == expected
+    assert mat_naming.default_namelengthmax(app.config.matlab_version) == expected
+
+
+@pytest.mark.parametrize(
+    ("version", "callable_"), [("R2024b", False), ("R2025a", True)]
+)
+def test_long_identifier_follows_release(make_app, tmp_path, version, callable_):
+    name = "a" * 64
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\n'
+        f'matlab_src_code_project_root = "."\nmatlab_version = "{version}"\n'
+    )
+    (tmp_path / "index.rst").write_text("Index\n=====\n")
+    (tmp_path / f"{name}.m").write_text(f"function {name}\n% Help.\nend\n")
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    record = app.env.get_domain("mat").data["index"][str(tmp_path / f"{name}.m")]
+    assert record["matlab_name"] == (name if callable_ else None)
 
 
 def test_section_and_object_ids_do_not_clash(make_app, tmp_path):

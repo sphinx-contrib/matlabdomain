@@ -90,7 +90,7 @@ ENTRY_KEYS = {
     "docname",
 }
 FUNCTION = "function {name}()\n% {name} help.\nend\n"
-FOLDER = 'matlab_apidoc_group = "folder"\n'
+FOLDER = 'matlab_apidoc_group = "folder"\nmatlab_apidoc_private = True\n'
 
 
 def tree(folder):
@@ -111,15 +111,21 @@ def write(root, files):
 
 
 def pages_of(root, **options):
-    """Pages of ``root``; folder grouping unless ``group`` is given."""
+    """Pages of ``root``; folder grouping, with private files, unless given."""
     options.setdefault("group", "folder")
+    if options["group"] == "folder":
+        options.setdefault("private", True)
     source_index = build_index(IndexSettings(str(root)))
     return build_pages(source_index, ApidocOptions("out", **options))
 
 
 def run(root, out, *flags):
-    """Generate the pages of ``root``; folder grouping unless given."""
+    """Generate the pages of ``root``; folder grouping, with private files,
+    unless given.
+    """
     options = {"group": "folder", **dict(flags)}
+    if options["group"] == "folder":
+        options.setdefault("private", True)
     return generate(
         build_index(IndexSettings(str(root))), ApidocOptions(str(out), **options)
     )
@@ -526,13 +532,19 @@ PRIVATE = {
         ("namespace", None, False),
         ("namespace", False, False),
         ("namespace", True, True),
-        ("folder", None, True),
+        ("folder", None, False),
         ("folder", True, True),
         ("folder", False, False),
     ],
 )
 def test_private_files_setting(group, private, listed):
-    pages = {p.docname: p for p in pages_of(ROOT, group=group, private=private)}
+    # Not pages_of: it lists private files in folder grouping by default.
+    if private is None:
+        options = ApidocOptions("out", group=group)
+    else:
+        options = ApidocOptions("out", group=group, private=private)
+    source_index = build_index(IndexSettings(str(ROOT)))
+    pages = {p.docname: p for p in build_pages(source_index, options)}
     refs = {
         ref
         for page in pages.values()
@@ -884,7 +896,7 @@ def test_case_variant_without_the_marker_is_kept(tmp_path, caplog_sphinx):
 def test_remove_old_after_files_are_excluded(tmp_path):
     out, docs = tmp_path / "out", tmp_path / "docs"
     assert main(["-q", "-c", conf_dir(docs, out, FOLDER)]) == 0
-    conf_dir(docs, out, f'{FOLDER}matlab_src_exclusion_patterns = ["alpha"]\n')
+    conf_dir(docs, out, f'{FOLDER}matlab_src_exclude_patterns = ["alpha"]\n')
     assert main(["-q", "-c", str(docs)]) == 0
     assert not (out / "alpha").exists()
     assert (out / "beta" / "index.rst").exists()
@@ -1081,7 +1093,7 @@ def test_summary_singular(tmp_path, capsys):
 def test_include_and_exclude(tmp_path):
     out = tmp_path / "out"
     conf = 'matlab_src_include_patterns = ["+nmpkg/**"]\n'
-    conf += 'matlab_src_exclusion_patterns = ["**/private"]\n'
+    conf += 'matlab_src_exclude_patterns = ["**/private"]\n'
     assert main(["-q", "-c", conf_dir(tmp_path / "docs", out, conf)]) == 0
     assert sorted(tree(out)) == ["index.rst", "nmpkg.rst"]
 
@@ -1194,13 +1206,12 @@ def test_cli_reports_renames(tmp_path, capsys):
 
 CONF = """\
 matlab_src_include_patterns = ["+nmpkg/**", "alpha/*"]
-matlab_src_exclusion_patterns = ["**/private"]
+matlab_src_exclude_patterns = ["**/private"]
 matlab_version = "R2025b"
 matlab_apidoc_output_dir = "api"
 matlab_apidoc_separate = True
 matlab_apidoc_maxdepth = 2
 matlab_apidoc_tocfile = "contents"
-matlab_apidoc_suffix = ".txt"
 """
 
 
@@ -1225,13 +1236,11 @@ def test_conf_gives_the_pages_of_the_python_api(tmp_path):
         matlab_version="R2025b",
     )
     out = tmp_path / "script"
-    options = ApidocOptions(
-        str(out), separate=True, maxdepth=2, tocfile="contents", suffix="txt"
-    )
+    options = ApidocOptions(str(out), separate=True, maxdepth=2, tocfile="contents")
     generate(build_index(settings), options)
     assert tree(docs / "api") == tree(out)
-    assert "+nmpkg/@NmCls/NmCls.m.txt" in tree(out)
-    assert "   :maxdepth: 2\n" in (out / "contents.txt").read_text()
+    assert "+nmpkg/@NmCls/NmCls.m.rst" in tree(out)
+    assert "   :maxdepth: 2\n" in (out / "contents.rst").read_text()
 
 
 def test_conf_remove_old_false_keeps_stale_pages(tmp_path):
@@ -1256,16 +1265,16 @@ def test_conf_paths_are_relative_to_the_conf_dir(tmp_path, monkeypatch):
     assert (docs / "out" / "api" / "root.rst").read_text() == f"{MARKER}\n\n./\n"
 
 
-def test_conf_namelengthmax_is_explicit(tmp_path):
-    conf = 'matlab_apidoc_output_dir = "api"\nmatlab_namelengthmax = 63\n'
+def test_conf_settings(tmp_path):
+    conf = 'matlab_apidoc_output_dir = "api"\n'
     docs = conf_project(tmp_path, f'{conf}matlab_version = "R2026a"\n')
     args = _cli.get_parser().parse_args(["-c", str(docs)])
     settings, options, suppress = _cli._settings(args)
     assert suppress == []
-    assert settings.namelengthmax == 63
+    assert settings.matlab_version == "R2026a"
     assert (options.maxdepth, options.tocfile, options.suffix) == (4, "index", "rst")
     assert (options.group, options.page_size) == ("namespace", 100)
-    assert options.private is None
+    assert options.private is False
     assert options.remove_old
 
 
@@ -1288,7 +1297,10 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
             'matlab_apidoc_tocfile = "a/b"',
             "matlab_apidoc_tocfile 'a/b' must be a file name",
         ),
-        ('matlab_apidoc_suffix = "."', "matlab_apidoc_suffix '' must be a file name"),
+        (
+            'matlab_apidoc_suffix = "."',
+            "matlab_apidoc_suffix is not a configuration value",
+        ),
         (
             "matlab_apidoc_output_dir = 3",
             "matlab_apidoc_output_dir must be str or None",
@@ -1310,8 +1322,8 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
             "leaves matlab_src_code_project_root",
         ),
         (
-            'matlab_src_exclusion_patterns = ["../x"]',
-            "matlab_src_exclusion_patterns: '../x' leaves",
+            'matlab_src_exclude_patterns = ["../x"]',
+            "matlab_src_exclude_patterns: '../x' leaves",
         ),
         ('matlab_src_encoding = "rot13"', "matlab_src_encoding 'rot13' is not a known"),
         ('matlab_version = "R2020a"', "error: matlab_version R2020a"),
@@ -1331,7 +1343,7 @@ def test_conf_namelengthmax_is_explicit(tmp_path):
         ),
         (
             'matlab_apidoc_private = "yes"',
-            "matlab_apidoc_private must be bool or None, not 'yes'",
+            "matlab_apidoc_private must be bool, not 'yes'",
         ),
         ('matlab_apidoc_templatedir = "missing"', "matlab_apidoc_templatedir '"),
         (
@@ -1526,10 +1538,8 @@ def test_build_of_the_generated_pages(make_app, project, separate, group):
     assert len(names) == len(set(names))
     expected = expected_objects(project)
     assert len(expected) == 25
-    if group == "namespace":
-        # Namespace grouping leaves private/ files out.
-        expected = [ref for ref in expected if "/private/" not in f"/{ref}"]
-        assert len(expected) == 22
+    expected = [ref for ref in expected if "/private/" not in f"/{ref}"]
+    assert len(expected) == 22
     assert set(expected) <= set(names)
     assert "@Bad/bad_fn.m" in names
     assert not any(name.startswith("@Bad/Other.m.") for name in names)

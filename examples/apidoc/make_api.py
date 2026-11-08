@@ -2,7 +2,7 @@
 
 ``sphinx-matlab-apidoc`` takes its settings from ``docs/conf.py``. A script
 sets them itself: these values give the pages of
-``sphinx-matlab-apidoc -c docs``; change them (or loop over several roots)
+``scmd apidoc --conf-dir docs``; change them (or loop over several roots)
 to get other pages. Run it from anywhere::
 
     python make_api.py [OUTPUT_DIR]

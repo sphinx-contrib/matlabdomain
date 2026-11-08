@@ -33,7 +33,6 @@ from sphinxcontrib.mat_naming import (
     not_callable_reason,
     parse_reference,
     path_reference,
-    resolve_namelengthmax,
     split_display,
     validate_matlab_version,
     validate_namelengthmax,
@@ -183,7 +182,7 @@ def test_validate_namelengthmax_values():
     assert validate_namelengthmax(63) == 63
     assert validate_namelengthmax(2048) == 2048
 
-    with pytest.raises(ValueError, match="matlab_namelengthmax"):
+    with pytest.raises(ValueError, match=r"^namelengthmax must"):
         validate_namelengthmax(64)
 
 
@@ -196,22 +195,23 @@ def test_identifier_validation_respects_namelengthmax():
     assert is_valid_identifier(name_64, 2048, allow_keywords=False)
 
 
-def test_ensure_configuration_validates_namelengthmax():
-    env = _config("R2026a", 64)
-
-    with pytest.raises(ConfigError, match="matlab_namelengthmax"):
-        matlab.ensure_configuration(None, env)
-
-
 def test_ensure_configuration_derives_namelengthmax_from_version():
-    env = _config("R2025a", None)
+    env = _config("R2025a")
     matlab.ensure_configuration(None, env)
-    assert env.matlab_namelengthmax == 2048
+    assert default_namelengthmax(env.matlab_version) == 2048
+
+
+@pytest.mark.parametrize("value", [True, False, "", "typo", 1, []])
+def test_auto_link_rejects_invalid_values(value):
+    config = _config()
+    config.matlab_auto_link = value
+    with pytest.raises(ConfigError, match="matlab_auto_link"):
+        matlab.ensure_configuration(None, config)
 
 
 @pytest.mark.parametrize("version", ["R2023b", "2026a", "R2026c", "r2026a", None])
 def test_ensure_configuration_rejects_bad_matlab_version(version):
-    env = _config(version, None)
+    env = _config(version)
     with pytest.raises(ConfigError, match="matlab_version"):
         matlab.ensure_configuration(None, env)
 
@@ -480,53 +480,40 @@ def test_form_matlab_name_both_length_limits(length):
             assert (out.pseudo_fullname if out else None) == want
 
 
-# --- matlab_version / matlab_namelengthmax -----------------------------------
+# --- matlab_version / namelengthmax ------------------------------------------
 
 
-def _config(version="R2026a", namelengthmax=None):
+def _config(version="R2026a"):
     return SimpleNamespace(
         matlab_short_links=None,
         matlab_keep_package_prefix=None,
         matlab_src_dir=None,
         matlab_src_code_project_root=None,
         matlab_src_include_patterns=["**/*"],
-        matlab_src_exclusion_patterns=[],
+        matlab_src_exclude_patterns=[],
         matlab_version=version,
-        matlab_namelengthmax=namelengthmax,
+        matlab_auto_link=None,
     )
 
 
 @pytest.mark.parametrize(
-    ("version", "explicit", "expected"),
-    [
-        ("R2024a", None, 63),
-        ("R2024b", None, 63),
-        ("R2024b", 2048, 2048),
-        ("R2025a", None, 2048),
-        ("R2026a", None, 2048),
-        ("R2026a", 63, 63),
-        ("R2025a", 63, 63),
-        ("R2025b", 2048, 2048),
-    ],
+    ("version", "expected"),
+    [("R2024a", 63), ("R2024b", 63), ("R2025a", 2048), ("R2026a", 2048)],
 )
-def test_namelengthmax_explicit_override_wins(version, explicit, expected):
-    assert resolve_namelengthmax(version, explicit) == expected
-    env = _config(version, explicit)
-    matlab.ensure_configuration(None, env)
-    assert env.matlab_namelengthmax == expected
+def test_namelengthmax_follows_version(version, expected):
+    assert default_namelengthmax(version) == expected
 
 
 @pytest.mark.parametrize("value", [0, 64, 2047, True, 63.0, "63"])
 def test_namelengthmax_rejects_other_values(value):
-    with pytest.raises(ConfigError, match="matlab_namelengthmax"):
-        matlab.ensure_configuration(None, _config(namelengthmax=value))
+    with pytest.raises(ValueError, match=r"^namelengthmax must"):
+        validate_namelengthmax(value)
 
 
 def test_version_rules_table_drives_defaults(monkeypatch):
     # Thresholds live only in MATLAB_VERSION_RULES.
     monkeypatch.setitem(MATLAB_VERSION_RULES, "namelengthmax_2048", "R2026a")
     assert default_namelengthmax("R2025b") == 63
-    assert resolve_namelengthmax("R2025b", 2048) == 2048
     assert has_matlab_behavior("class_subfolder_not_callable", "R2026a")
     assert not has_matlab_behavior("class_subfolder_not_callable", "R2025b")
     assert MATLAB_VERSION_FLOOR == "R2024a"

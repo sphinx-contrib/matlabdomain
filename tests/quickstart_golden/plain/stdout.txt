@@ -9,7 +9,7 @@ Creating file docs/_static/.gitkeep.
 Creating file docs/Makefile.
 Creating file docs/make.bat.
 Creating file docs/BUILDING_DOCS.md.
-Writing 12 API pages in docs/API.
+Writing 10 API pages in docs/API.
 Project:
   No MATLAB release is named in the CI files, matlab.toml or a README.
   matlab_version: R2026a (the default; none is named)
@@ -37,4 +37,4 @@ Next steps:
        make clean html SPHINXOPTS="-n -W"
   5. The help-text audit; every rule is a warning at first:
        make matlab-api-check
-6 files in docs, 12 API pages; 27 files indexed, 4 warnings, <T> s.
+6 files in docs, 10 API pages; 27 files indexed, 4 warnings, <T> s.

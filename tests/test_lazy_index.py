@@ -108,8 +108,7 @@ def test_member_lookup_by_file_name_does_not_parse_again(make_app, tmp_path, par
     assert app.warning.getvalue() == warnings
 
 
-@pytest.mark.parametrize("cache", [True, False])
-def test_source_text_cache(make_app, tmp_path, monkeypatch, parsed, cache):
+def test_source_text_cache(make_app, tmp_path, monkeypatch, parsed):
     opened = []
     real_open = open
 
@@ -119,12 +118,10 @@ def test_source_text_cache(make_app, tmp_path, monkeypatch, parsed, cache):
 
     monkeypatch.setattr(mat_types, "open", counting_open, raising=False)
     write(tmp_path, FILES, "Index\n=====\n\n.. mat:autofunction:: used\n")
-    app = make_app(srcdir=tmp_path, confoverrides={"matlab_src_cache_text": cache})
+    app = make_app(srcdir=tmp_path)
     app.build()
     assert parsed == [str(tmp_path / "used.m")]
-    # The index stage read the file; the parse reads it again only without
-    # the cache.
-    assert opened == ([] if cache else [str(tmp_path / "used.m")])
+    assert opened == []
     assert "USED HELP" in (app.outdir / "index.html").read_text()
 
 
@@ -145,12 +142,12 @@ def test_source_text_cache(make_app, tmp_path, monkeypatch, parsed, cache):
             ["+pkg/", "./"],
         ),
         (
-            {"matlab_src_exclusion_patterns": ["**/tests/**"]},
+            {"matlab_src_exclude_patterns": ["**/tests/**"]},
             sorted(set(FILES) - {"tests/test_x.m"}),
             ["+pkg/", "./", "src/", "src/lib/"],
         ),
         (
-            {"matlab_src_exclusion_patterns": ["**/lib", "**/Broken.m"]},
+            {"matlab_src_exclude_patterns": ["**/lib", "**/Broken.m"]},
             sorted(set(FILES) - {"src/lib/deep.m", "Broken.m"}),
             ["+pkg/", "./", "src/", "tests/"],
         ),
@@ -172,7 +169,7 @@ def test_source_patterns(
 
 def test_changing_patterns_reindexes(make_app, tmp_path, parsed):
     write(tmp_path, FILES, "Index\n=====\n\n.. mat:autofunction:: test_x\n")
-    exclude = {"matlab_src_exclusion_patterns": ["tests/**"]}
+    exclude = {"matlab_src_exclude_patterns": ["tests/**"]}
     app = make_app(srcdir=tmp_path, confoverrides=exclude)
     app.build()
     assert "tests/test_x.m" not in refs(app)
@@ -195,7 +192,7 @@ def test_excluded_files_are_not_found(make_app, tmp_path):
     )
     app = make_app(
         srcdir=tmp_path,
-        confoverrides={"matlab_src_exclusion_patterns": ["tests/**"]},
+        confoverrides={"matlab_src_exclude_patterns": ["tests/**"]},
     )
     app.build()
     warnings = app.warning.getvalue()
@@ -220,7 +217,7 @@ def test_excluded_files_are_not_found(make_app, tmp_path):
     ],
 )
 @pytest.mark.parametrize(
-    "option", ["matlab_src_include_patterns", "matlab_src_exclusion_patterns"]
+    "option", ["matlab_src_include_patterns", "matlab_src_exclude_patterns"]
 )
 def test_patterns_must_stay_below_the_root(make_app, tmp_path, option, pattern):
     write(tmp_path, FILES)
@@ -233,7 +230,7 @@ def test_patterns_must_stay_below_the_root(make_app, tmp_path, option, pattern):
     [
         {"matlab_src_include_patterns": ["src/**"]},
         {"matlab_src_include_patterns": []},
-        {"matlab_src_exclusion_patterns": ["tests/**"]},
+        {"matlab_src_exclude_patterns": ["tests/**"]},
     ],
 )
 def test_patterns_need_the_project_root(make_app, tmp_path, overrides):

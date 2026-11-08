@@ -76,7 +76,7 @@ def test_build_writes_the_state_and_the_settings(make_app, tmp_path):
 
 def test_livehtml_writes_the_server(make_app, tmp_path):
     root = project(tmp_path, '{"mode": "local", "local": "docs/_build/html"}')
-    build(make_app, root, matlab_simulink_server="http://127.0.0.1:8123")
+    build(make_app, root, matlab_simulink_autobuild_server="http://127.0.0.1:8123")
     assert state(root) == {"mode": "server", "server": "http://127.0.0.1:8123/"}
     # "local" kept its form; a blank html_baseurl leaves "published" alone.
     assert settings(root) == {
@@ -118,8 +118,13 @@ def test_projects_without_settings_get_nothing(make_app, tmp_path):
 
 def test_bad_server(make_app, tmp_path):
     root = project(tmp_path)
-    with pytest.raises(ConfigError, match="matlab_simulink_server must be None"):
-        make_app(srcdir=root / "docs", confoverrides={"matlab_simulink_server": "x"})
+    with pytest.raises(
+        ConfigError, match="matlab_simulink_autobuild_server must be None"
+    ):
+        make_app(
+            srcdir=root / "docs",
+            confoverrides={"matlab_simulink_autobuild_server": "x"},
+        )
 
 
 def test_output_outside_the_root(tmp_path, monkeypatch):

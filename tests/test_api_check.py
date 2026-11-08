@@ -203,22 +203,6 @@ def test_severities(make_app, root, rules, status, expected):
         assert logged == count
 
 
-def test_disabled(make_app, root):
-    app = build(make_app, root, matlab_api_check_enabled=False)
-    assert app.statuscode == 0
-    data = report(app)
-    assert data["findings"] == []
-    assert data["summary"]["enabled"] is False
-    assert data["summary"]["checked"] == dict.fromkeys(mat_api_check.KINDS, 0)
-    assert "api_check" not in app.warning.getvalue()
-    text = (app.outdir / "api-check.txt").read_text(encoding="utf-8")
-    assert text.splitlines()[:2] == [
-        "matlab_api_check_enabled is False: nothing was checked.",
-        "Checked: 0 functions, 0 classes, 0 methods, 0 properties, 0 events, "
-        "0 scripts, 0 apps, 0 sidecars",
-    ]
-
-
 @pytest.mark.parametrize(
     ("setting", "match"),
     [

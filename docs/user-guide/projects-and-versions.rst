@@ -72,10 +72,10 @@ Generate the pages and build each project into its own folder:
 
 .. code-block:: console
 
-  $ scmd apidoc --conf-dir docs/alpha
-   $ sphinx-build -b html docs/alpha docs/_build/alpha/html
-  $ scmd apidoc --conf-dir docs/beta
-   $ sphinx-build -b html docs/beta docs/_build/beta/html
+   $ uv run scmd apidoc --conf-dir docs/alpha
+   $ uv run sphinx-build -b html docs/alpha docs/_build/alpha/html
+   $ uv run scmd apidoc --conf-dir docs/beta
+   $ uv run sphinx-build -b html docs/beta docs/_build/beta/html
 
 The projects may use the same path references, MATLAB names, page names
 and sidecar image names: each build has its own index, environment,
@@ -236,7 +236,7 @@ Two ways work:
      $ cp docs/conf.py ../conf.py           # the conf.py the builds use
      $ git checkout --detach v1.0
      $ cp ../conf.py docs/conf.py           # generate with that conf.py
-    $ scmd apidoc --conf-dir docs
+     $ uv run scmd apidoc --conf-dir docs
      $ git checkout -- docs/conf.py         # keep the revision's version
      $ git add -f docs/api && git commit -m "API pages"
      $ git tag -f v1.0

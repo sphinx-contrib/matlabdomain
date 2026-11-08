@@ -66,7 +66,7 @@ variables such as ``matlab_root = ...`` (``_matlab_root``).
 
 If ``matlab_src_dir`` pointed at a folder with several projects,
 :confval:`matlab_src_include_patterns` can select some of them;
-:confval:`matlab_src_exclusion_patterns` leaves out tests or data
+:confval:`matlab_src_exclude_patterns` leaves out tests or data
 (:doc:`configuration`). A list of your own replaces the default exclusion
 patterns, so copy them into it to keep them. Patterns use ``/`` on every
 system; a ``\`` is a ``ConfigError``.

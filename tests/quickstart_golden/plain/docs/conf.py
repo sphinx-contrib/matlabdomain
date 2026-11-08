@@ -25,7 +25,7 @@ highlight_language = "matlab"
 # -- MATLAB domain -----------------------------------------------------------
 
 matlab_src_code_project_root = ".."
-matlab_src_exclusion_patterns = [
+matlab_src_exclude_patterns = [
     # The default list, which a project list replaces.
     "README.*",
     "CHANGES.*",

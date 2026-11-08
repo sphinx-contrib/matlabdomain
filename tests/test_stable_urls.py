@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+from sphinx.errors import ExtensionError
 from test_apidoc import FUNCTION, write
 from test_intersphinx import anchors, build_library, inventory, resolve, target
 
@@ -22,7 +24,7 @@ CHOICE = re.compile(
 
 def refs_map(outdir):
     text = (outdir / "mat/refs.js").read_text(encoding="utf-8")
-    prefix = "window.matStableRefs = "
+    prefix = f"{mat_urls.JS_MARKER}\nwindow.matStableRefs = "
     assert text.startswith(prefix)
     return json.loads(text[len(prefix) :].rstrip().removesuffix(";"))
 
@@ -45,7 +47,7 @@ def test_stable_addresses_follow_a_moved_object(make_app, tmp_path):
 
 
 def test_names_of_several_objects_and_members(make_app, tmp_path):
-    outdir = build_library(make_app, tmp_path / "lib")
+    outdir = build_library(make_app, tmp_path / "lib", private=True)
     chooser = (outdir / "mat/name/helper.html").read_text(encoding="utf-8")
     assert "url=" not in chooser
     # A page in the site's theme, which this extension still owns.
@@ -81,6 +83,46 @@ def test_names_of_several_objects_and_members(make_app, tmp_path):
 
 def mat_mark_and_theme(page):
     return mat_urls.MARKER in page and 'href="../../_static/' in page
+
+
+@pytest.mark.parametrize(
+    "conflict", ["mat/ref/one.m.html", "mat/refs.js", "_static/mat_urls.js"]
+)
+def test_unowned_stable_output_is_not_overwritten(make_app, tmp_path, conflict):
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
+    )
+    (tmp_path / "index.rst").write_text("Index\n=====\n\n.. mat:autofunction:: one\n")
+    (tmp_path / "one.m").write_text("function one\n% ONE Help.\nend\n")
+    app = make_app(srcdir=tmp_path)
+    target_path = Path(app.outdir) / conflict
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_path.write_text("user-owned content", encoding="utf-8")
+    with pytest.raises(ExtensionError, match="unowned file"):
+        if conflict.startswith("_static/"):
+            mat_urls.add_script(app)
+        else:
+            app.build()
+    assert target_path.read_text(encoding="utf-8") == "user-owned content"
+
+
+def test_unowned_chooser_is_not_overwritten(make_app, tmp_path):
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
+    )
+    (tmp_path / "index.rst").write_text(
+        "Index\n=====\n\n.. mat:autofunction:: a/helper.m\n\n"
+        ".. mat:autofunction:: b/helper.m\n"
+    )
+    write(tmp_path, {"a/helper.m": FUNCTION.format(name="helper")})
+    write(tmp_path, {"b/helper.m": FUNCTION.format(name="helper")})
+    app = make_app(srcdir=tmp_path)
+    target_path = Path(app.outdir) / "mat/name/helper.html"
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_path.write_text("user-owned content", encoding="utf-8")
+    with pytest.raises(ExtensionError, match="unowned file"):
+        app.build()
+    assert target_path.read_text(encoding="utf-8") == "user-owned content"
 
 
 def test_moved_object_script_and_not_found_page(make_app, tmp_path):
@@ -165,6 +207,54 @@ def test_script_that_cannot_be_written(tmp_path, monkeypatch):
     mat_urls.add_script(app)
     assert added == [mat_urls.SCRIPT]
     assert warnings == ["[sphinxcontrib-matlabdomain] cannot write %s: %s"]
+
+
+def test_legacy_files_without_js_marker_are_owned(tmp_path):
+    script = tmp_path / "_static" / mat_urls.SCRIPT
+    script.parent.mkdir()
+    first_line = mat_urls._JS.partition("\n")[0]
+    script.write_text(f"{first_line}\nolder body\n", encoding="utf-8")
+    assert mat_urls._is_ours(script)
+    script.write_text("user content", encoding="utf-8")
+    assert not mat_urls._is_ours(script)
+    refs = tmp_path / mat_urls.REFS
+    refs.parent.mkdir()
+    refs.write_text('window.matStableRefs = {"a.m": ""};\n', encoding="utf-8")
+    assert mat_urls._is_ours(refs)
+    other = tmp_path / "refs.js"
+    other.write_text('window.matStableRefs = {"a.m": ""};\n', encoding="utf-8")
+    assert not mat_urls._is_ours(other)
+
+
+def test_rebuild_over_legacy_output(make_app, tmp_path):
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
+    )
+    (tmp_path / "index.rst").write_text("Index\n=====\n\n.. mat:autofunction:: one\n")
+    (tmp_path / "one.m").write_text("function one\n% ONE Help.\nend\n")
+    outdir = tmp_path / "_build" / "html"
+    (outdir / mat_urls.ROOT).mkdir(parents=True)
+    (outdir / mat_urls.REFS).write_text("window.matStableRefs = {};\n")
+    (outdir / "_static").mkdir()
+    first_line = mat_urls._JS.partition("\n")[0]
+    (outdir / "_static" / mat_urls.SCRIPT).write_text(f"{first_line}\nold\n")
+    app = make_app(srcdir=tmp_path, builddir=tmp_path / "_build")
+    app.build()
+    assert refs_map(Path(app.outdir)) == {"one.m": ""}
+
+
+def test_unowned_refs_fail_before_pages_are_written(make_app, tmp_path):
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
+    )
+    (tmp_path / "index.rst").write_text("Index\n=====\n")
+    refs = tmp_path / "_build" / "html" / mat_urls.REFS
+    refs.parent.mkdir(parents=True)
+    refs.write_text("user-owned content", encoding="utf-8")
+    with pytest.raises(ExtensionError, match="unowned file"):
+        make_app(srcdir=tmp_path, builddir=tmp_path / "_build")
+    assert refs.read_text(encoding="utf-8") == "user-owned content"
+    assert not (refs.parents[1] / "index.html").exists()
 
 
 BOX = """\

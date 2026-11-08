@@ -15,7 +15,7 @@ From the MATLAB project's folder (here ``myproject``, with its code in
 
 .. code-block:: console
 
-   $ scmd quickstart
+   $ uv run scmd quickstart
 
 It reads the project first: the MATLAB release in its CI files or README,
 git submodules, a MATLAB project file, Markdown notes next to the code, the
@@ -122,7 +122,7 @@ MATLAB. The path below the project root (``times_two.m``) works too.
 
 .. code-block:: console
 
-   $ sphinx-build -M html docs docs/_build
+   $ uv run sphinx-build -M html docs docs/_build
 
 Open ``docs/_build/html/index.html``. The function looks like this:
 
@@ -134,7 +134,7 @@ builder name must come first:
 
 .. code-block:: console
 
-   $ sphinx-build -M html docs docs/_build -n -W
+   $ uv run sphinx-build -M html docs docs/_build -n -W
 
 The help text was read from the comment block after the ``function`` line,
 the block MATLAB's ``help times_two`` shows. Its ``:param x:`` lines are

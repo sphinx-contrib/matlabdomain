@@ -11,9 +11,7 @@ API reference
    +a/+b/index
    +for/index
    +nmpkg/index
-   +nmpkg/private/index
    alpha/index
    beta/index
    donn~C3~A9es/index
    my~20folder/index
-   private/index

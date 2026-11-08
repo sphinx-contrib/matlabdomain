@@ -108,7 +108,7 @@ Outside ``DOCS``, each only if the line is not there yet:
   MATLAB function that Help links of Simulink files call; rewritten on
   each run) and its settings ``simulinkDocumentationLinker.json`` (written
   once, then kept up to date by HTML builds,
-  :confval:`matlab_simulink_server`); ``conf.py`` excludes
+  :confval:`matlab_simulink_autobuild_server`); ``conf.py`` excludes
   ``+sphinxcontrib/``.
 
 Before it writes anything it checks ``git status`` of these three files and
@@ -157,16 +157,16 @@ Every setting comes from ``CONF_DIR/conf.py`` (:doc:`configuration`); no
 flag overrides one:
 
 The source settings are :confval:`matlab_src_code_project_root` (required),
-:confval:`matlab_src_include_patterns`, :confval:`matlab_src_exclusion_patterns`,
+:confval:`matlab_src_include_patterns`, :confval:`matlab_src_exclude_patterns`,
 :confval:`matlab_src_sidecar_suffixes`, :confval:`matlab_version`,
-:confval:`matlab_namelengthmax`, :confval:`matlab_src_encoding` and
+:confval:`matlab_src_encoding` and
 :confval:`matlab_simulink_doc_suffixes`.
 
 The command's own settings are :confval:`matlab_apidoc_output_dir` (required),
 :confval:`matlab_apidoc_group`, :confval:`matlab_apidoc_page_size`,
 :confval:`matlab_apidoc_private`, :confval:`matlab_apidoc_separate`,
 :confval:`matlab_apidoc_maxdepth`, :confval:`matlab_apidoc_tocfile`,
-:confval:`matlab_apidoc_suffix`, :confval:`matlab_apidoc_templatedir` and
+:confval:`matlab_apidoc_templatedir` and
 :confval:`matlab_apidoc_remove_old`.
 
 Paths in ``conf.py`` are relative to ``CONF_DIR``, which is taken to be
@@ -244,8 +244,7 @@ Output files
 ~~~~~~~~~~~~
 
 In the folder :confval:`matlab_apidoc_output_dir` (``OUTPUT_DIR``),
-created if needed, with the suffix :confval:`matlab_apidoc_suffix`
-(``SUFFIX``, default ``rst``):
+created if needed, with the suffix ``rst`` (``SUFFIX``):
 
 * In namespace grouping, the namespace ``a.b`` gets
   ``OUTPUT_DIR/a.b.SUFFIX`` (further pages ``a.b-2.SUFFIX``, ...) and the

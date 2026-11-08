@@ -827,13 +827,13 @@ def source_filter(config):
         config.matlab_src_include_patterns, "matlab_src_include_patterns"
     )
     exclude = pattern_list(
-        config.matlab_src_exclusion_patterns, "matlab_src_exclusion_patterns"
+        config.matlab_src_exclude_patterns, "matlab_src_exclude_patterns"
     )
     customized = list(config.matlab_src_include_patterns) != DEFAULT_INCLUDE_PATTERNS
     customized |= bool(exclude) and exclude != DEFAULT_EXCLUSION_PATTERNS
     if customized and config.matlab_src_code_project_root is None:
         raise ConfigError(
-            "matlab_src_include_patterns and matlab_src_exclusion_patterns need "
+            "matlab_src_include_patterns and matlab_src_exclude_patterns need "
             "matlab_src_code_project_root."
         )
     return SourceFilter(include, exclude)
@@ -881,8 +881,7 @@ class IndexSettings:
     """What the index stage reads (plan.md Section 2.8), without a Sphinx app.
 
     ``root`` is the absolute project root; ``include`` and ``exclude`` are
-    patterns normalized by ``_normalize_pattern``; ``namelengthmax=None``
-    derives it from ``matlab_version``. ``sidecar_suffixes`` selects the
+    patterns normalized by ``_normalize_pattern``. ``sidecar_suffixes`` selects the
     sidecar docs (plan.md Section 2.11); files with them below
     ``source_dir`` (the Sphinx source folder) are not sidecar docs when that
     folder is inside the root.
@@ -893,8 +892,6 @@ class IndexSettings:
     exclude: tuple[str, ...] = tuple(DEFAULT_EXCLUSION_PATTERNS)
     encoding: str | None = None
     matlab_version: str = mat_naming.DEFAULT_MATLAB_VERSION
-    namelengthmax: int | None = None
-    cache_text: bool = True
     sidecar_suffixes: tuple[str, ...] = ()
     source_dir: str | None = None
     #: suffixes of Simulink documentation files, in priority order
@@ -913,8 +910,6 @@ class IndexSettings:
             exclude=exclude,
             encoding=config.matlab_src_encoding,
             matlab_version=config.matlab_version,
-            namelengthmax=config.matlab_namelengthmax,
-            cache_text=config.matlab_src_cache_text,
             sidecar_suffixes=sidecar_suffix_list(config.matlab_src_sidecar_suffixes),
             source_dir=os.path.normpath(os.fspath(srcdir)),
             simulink_doc_suffixes=simulink_doc_suffix_list(
@@ -1007,7 +1002,6 @@ class _Indexer:
         self.old_index = old_index
         self.sources = SourceFilter(settings.include, settings.exclude)
         self.real_root = os.path.realpath(self.basedir)
-        self.cache_text = settings.cache_text
         self.encoding = settings.encoding
         self.pending = {}
         self.sidecars_only = sidecars_only
@@ -1164,7 +1158,7 @@ class _Indexer:
                 problems = [("parse_error", failure_message(err), None)]
             help_only = kind in (SCRIPT, FUNCTION) and text is not None
             help_only = help_only and is_help_only(cast(str, text))
-            if self.cache_text and text is not None:
+            if text is not None:
                 self.out.text_cache[key] = text
         self.out.index[path] = {
             "reference": ref,
@@ -1320,7 +1314,8 @@ def name_sources(source_index):
     """
     settings = source_index.settings
     version = settings.matlab_version
-    namelengthmax = mat_naming.resolve_namelengthmax(version, settings.namelengthmax)
+    mat_naming.validate_matlab_version(version)
+    namelengthmax = mat_naming.default_namelengthmax(version)
     matlab_names = source_index.matlab_names
     for path, record in source_index.index.items():
         ref = record["reference"]

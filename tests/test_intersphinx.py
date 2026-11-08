@@ -238,7 +238,7 @@ EXPECTED = {
 
 
 def test_consumer_links_to_the_library(make_app, tmp_path):
-    outdir = build_library(make_app, tmp_path / "lib")
+    outdir = build_library(make_app, tmp_path / "lib", private=True)
     mapping = {"lib": (BASE, str(outdir / "objects.inv"))}
     links, warnings = build_consumer(make_app, tmp_path / "app", mapping, REFERENCES)
     assert links == EXPECTED

@@ -20,31 +20,28 @@ APIDOC_CONFIG = {
     "matlab_apidoc_separate": (False, (bool,)),
     "matlab_apidoc_maxdepth": (4, (int,)),
     "matlab_apidoc_tocfile": ("index", (str,)),
-    "matlab_apidoc_suffix": ("rst", (str,)),
     "matlab_apidoc_templatedir": (None, (str, _NONE)),
     "matlab_apidoc_remove_old": (True, (bool,)),
     "matlab_apidoc_group": ("namespace", (str,)),
     "matlab_apidoc_page_size": (100, (int,)),
-    "matlab_apidoc_private": (None, (bool, _NONE)),
+    "matlab_apidoc_private": (False, (bool,)),
 }
 
 #: the build's values the CLI reads, with the defaults of ``setup()``
 SOURCE_CONFIG = {
     "matlab_src_code_project_root": None,
     "matlab_src_include_patterns": list(DEFAULT_INCLUDE_PATTERNS),
-    "matlab_src_exclusion_patterns": list(DEFAULT_EXCLUSION_PATTERNS),
+    "matlab_src_exclude_patterns": list(DEFAULT_EXCLUSION_PATTERNS),
     "matlab_src_sidecar_suffixes": [],
     "matlab_simulink_doc_suffixes": [".md", ".rst"],
     "matlab_src_encoding": None,
     "matlab_version": mat_naming.DEFAULT_MATLAB_VERSION,
-    "matlab_namelengthmax": None,
 }
 
 
 #: the build's other values, which the CLI accepts and ignores
 BUILD_ONLY_CONFIG = frozenset(
     {
-        "matlab_src_cache_text",
         "matlab_src_dir",
         "matlab_keep_package_prefix",
         "matlab_short_links",
@@ -57,8 +54,7 @@ BUILD_ONLY_CONFIG = frozenset(
         "matlab_stable_urls",
         "matlab_link_shadowed_files_to_chooser_pages",
         "matlab_simulink_metadata",
-        "matlab_simulink_server",
-        "matlab_api_check_enabled",
+        "matlab_simulink_autobuild_server",
         "matlab_api_check_rules",
         "matlab_api_check_ignore_patterns",
         "matlab_api_check_files",

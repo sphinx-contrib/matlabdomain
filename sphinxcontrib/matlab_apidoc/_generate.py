@@ -17,8 +17,8 @@ is parsed.
   folder's page is ``root``. The root page lists them flat, the root folder
   first, then by path. ``@`` folders and everything below
   them go on the page of the nearest folder above that is not an ``@``
-  folder; ``private/`` gets its own page (``private=False`` leaves its files
-  out). Pages split at ``page_size`` entries, as in namespace grouping.
+  folder; ``private=True`` includes private files on their folder pages.
+  Pages split at ``page_size`` entries, as in namespace grouping.
 - The function files of a class folder ``@X/`` whose ``X.m`` is a classdef
   are methods of that class and are not listed; every other ``@`` folder (an
   old-style class, a classdef named differently, no class file) is not a
@@ -118,8 +118,8 @@ class ApidocOptions:
     remove_old: bool = True
     group: str = "namespace"
     page_size: int = 100
-    #: list ``private/`` files; None: in folder grouping only
-    private: bool | None = None
+    #: list ``private/`` files
+    private: bool = False
 
 
 @dataclass
@@ -339,7 +339,7 @@ def _folder_key(folder):
 
 def _folder_pages(source_index, options):
     methods = class_folder_methods(source_index)
-    private = options.private is not False
+    private = options.private
     listed = {}
     for path, record in source_index.index.items():
         if record["reference"] in methods or (record.get("private") and not private):
@@ -501,7 +501,7 @@ def _namespace_docnames(namespaces, options, taken):
 
 def _namespace_pages(source_index, options):
     methods = class_folder_methods(source_index)
-    private = options.private is True
+    private = options.private
     groups = {}
     for path, record in source_index.index.items():
         if record["reference"] in methods or (record.get("private") and not private):

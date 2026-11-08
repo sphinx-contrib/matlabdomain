@@ -77,7 +77,7 @@ earlier" in the documentation.
   published site and writes it to ``html_baseurl`` in ``conf.py``. HTML
   builds keep the function's settings up to date, so Help links open the
   local build, the sphinx-autobuild server of ``make livehtml`` (new
-  :confval:`matlab_simulink_server`) or the published site.
+  :confval:`matlab_simulink_autobuild_server`) or the published site.
 * New :confval:`matlab_link_shadowed_files_to_chooser_pages`: names of several objects
   (two global ``helper.m``, ``foo.m`` and ``foo.slx``) link to the page
   that lists them, locally and through intersphinx, without
@@ -156,9 +156,8 @@ earlier" in the documentation.
   supported ``"R2024a"``). It selects version-dependent MATLAB naming rules.
   Scripts and functions in a subfolder of a class folder (``@C/sub/x.m``) are
   callable before R2026a only.
-* Added new configuration: ``matlab_namelengthmax`` (``63`` or ``2048``). The
-  default ``None`` derives it from ``matlab_version`` (2048 from R2025a on).
-  An explicit value always wins over the derived default.
+* Identifier length follows ``matlab_version``: 2048 from R2025a on,
+  63 before.
 * **Breaking:** objects are identified by path reference, the path relative
   to the project root with its extension (``target/+package/ClassBar.m``,
   members ``target/+package/ClassBar.m.myMethod``, folders
@@ -263,10 +262,10 @@ earlier" in the documentation.
   page needs it. Parses are cached by path, modification time and size;
   only pages that used a changed file are read again (when files are added,
   removed or change type, every page that looks up sources). Parallel builds
-  (``-j``) are supported. New ``matlab_src_cache_text`` (default ``True``)
-  keeps the text read by the index for the parse during a build.
+  (``-j``) are supported. The index keeps decoded text for parsing during a
+  build.
 * New configuration ``matlab_src_include_patterns`` (default ``["**/*"]``;
-  ``[]`` selects no files) and ``matlab_src_exclusion_patterns`` (default
+  ``[]`` selects no files) and ``matlab_src_exclude_patterns`` (default
   the root files ``README.*``, ``CHANGES.*``, ``CHANGELOG.*``,
   ``LICENSE.*``, ``CONTRIBUTING.*``, ``CODE_OF_CONDUCT.*`` and
   ``SECURITY.*``): globs relative to ``matlab_src_code_project_root``, matched like
@@ -389,7 +388,7 @@ earlier" in the documentation.
   ``arguments``-block comments), logs each finding as ``mat.api_check``,
   writes ``api-check.txt`` and ``api-check.json``, and exits with status 1
   when a rule with severity ``error`` finds something. New configuration:
-  ``matlab_api_check_rules``, ``matlab_api_check_enabled`` and
+  ``matlab_api_check_rules`` and
   ``matlab_api_check_ignore_patterns``. Cached environments from earlier
   versions are rebuilt.
 * ``matlab-api-check`` has three new rules that warn by default:
