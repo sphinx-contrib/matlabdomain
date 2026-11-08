@@ -62,6 +62,14 @@ table for a dependency group, but a `[project]` table must have `name` and
 - A git install reports a version like `0.1.devN`; that is 1.0 code. Check
   the installed copy from outside any matlabdomain checkout:
   `uv run python -c "import sphinxcontrib.matlab as m; print(m.__file__)"`.
+- Testing a commit from a local matlabdomain checkout: a non-editable
+  install of the folder or `uv build --wheel` reuses the checkout's
+  git-ignored `build/` folder. Left from an older build, it brings back the
+  removed `sphinxcontrib/__init__.py`, and every command then fails with
+  `No module named 'pkg_resources'` (raised in `sphinxcontrib/__init__.py`).
+  Delete `build/` in the checkout, or build with `uv build` (the source
+  archive first, then the wheel from it), or install from the git URL at
+  the SHA.
 
 ## 2. Dry run and report
 
@@ -175,13 +183,12 @@ pages it rebuilds. From `<src>`:
 
 ```console
 make clean html SPHINXOPTS="-n -w _build/warnings.txt"
-python <skills>/migrating-from-0x/scripts/group_warnings.py _build/warnings.txt --show 10
+python <skills>/setting-up-a-project/scripts/group_warnings.py _build/warnings.txt --show 10
 ```
 
 On Windows: `set SPHINXOPTS=-n -w _build/warnings.txt`, then `make clean`
-and `make html`. `group_warnings.py` comes from the migrating-from-0x
-skill; it groups by type and subtype, so all docutils warnings are one
-group: read them in the file.
+and `make html`. `group_warnings.py` groups by type and subtype, so all
+docutils warnings are one group: read them in the file.
 
 | Warning | Usual fix |
 |---|---|

@@ -29,6 +29,20 @@ def test_skills_in_the_package():
         assert 0 < len(description) <= 1024
 
 
+def test_skills_are_self_contained():
+    """A skill uses only its own scripts: each one can be installed alone.
+    Shared scripts are copies and stay identical.
+    """
+    for name in NAMES:
+        text = (PACKAGE / name / "SKILL.md").read_text("utf-8")
+        for other in NAMES:
+            if other != name:
+                assert f"{other}/scripts/" not in text
+    shared = "scripts/group_warnings.py"
+    copies = {(PACKAGE / name / shared).read_bytes() for name in NAMES}
+    assert len(copies) == 1
+
+
 def test_front_matter():
     text = "---\nname: a\nno colon\ndescription: x: y\n---\nbody: no\n"
     assert _cli._front_matter(text) == {"name": "a", "description": "x: y"}
@@ -83,7 +97,9 @@ def test_existing_folders_need_force(tmp_path, capsys):
     assert "Nothing copied; --force replaces these folders." in err
     assert os.listdir(tmp_path) == ["setting-up-a-project"]
     assert main(["install", "-d", str(tmp_path), "--force"]) == 0
-    assert files(tmp_path / "setting-up-a-project") == ["SKILL.md"]
+    assert files(tmp_path / "setting-up-a-project") == files(
+        PACKAGE / "setting-up-a-project"
+    )
 
 
 def test_force_replaces_a_file(tmp_path):

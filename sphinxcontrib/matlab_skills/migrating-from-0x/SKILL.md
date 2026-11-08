@@ -65,9 +65,13 @@ python scripts/compare_inventories.py _build/html/objects.inv
 - uv: a `pyproject.toml` with the docs dependencies (`package = false` for a
   project that is not a Python package), `uv sync`, `uv run sphinx-build`.
   pip: a requirements file and a fresh `python -m venv`.
-- Installing from a local checkout: use an editable install or build a wheel
-  (`uv build`); a plain install from the folder may pick up a stale
-  `build/` directory.
+- Installing from a local checkout: a non-editable install of the folder or
+  `uv build --wheel` reuses the checkout's git-ignored `build/` folder. Left
+  from an older build, it brings back the removed
+  `sphinxcontrib/__init__.py`, and every command then fails with
+  `No module named 'pkg_resources'` (raised in `sphinxcontrib/__init__.py`).
+  Delete `build/` in the checkout, use an editable install, or build with
+  `uv build` (the source archive first, then the wheel from it).
 
 ## 4. `conf.py`
 
