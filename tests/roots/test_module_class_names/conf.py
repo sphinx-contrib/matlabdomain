@@ -1,6 +1,6 @@
 project = "test_docs_automodule"
-copyright = "Jørgen Cederberg"
-author = "Jørgen Cederberg"
+copyright = "the sphinxcontrib-matlabdomain team (see AUTHORS)"
+author = "Mark Mikofski, Jørgen Cederberg, Jason H. Nicholson and contributors"
 matlab_src_code_project_root = "."
 extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 nitpicky = True

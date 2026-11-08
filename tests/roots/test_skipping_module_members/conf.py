@@ -1,5 +1,5 @@
-author = "Jørgen Cederberg"
-copyright = "Jørgen Cederberg"
+author = "Mark Mikofski, Jørgen Cederberg, Jason H. Nicholson and contributors"
+copyright = "the sphinxcontrib-matlabdomain team (see AUTHORS)"
 extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 matlab_src_code_project_root = "."
 primary_domain = "mat"
