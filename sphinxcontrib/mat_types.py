@@ -2117,6 +2117,12 @@ class MatSimulinkFile(MatObject):
         for name in ("__doc__", "__module__"):
             type.__setattr__(cls, name, MatSimulinkFile.__dict__[name])
 
+    #: object type: the directive and role
+    objtype = ""
+
+    def ref_role(self):
+        return self.objtype
+
     @property
     def __doc__(self):
         return self.docstring

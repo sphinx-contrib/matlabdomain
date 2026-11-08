@@ -43,7 +43,9 @@ earlier" in the documentation.
   documentation; in a library's, a section per block
   (:confval:`matlab_simulink_doc_suffixes`). ``:references:`` lists the
   model references, subsystem references and library links of a model or
-  subsystem file as links.
+  subsystem file as links. "See also" entries and
+  :confval:`matlab_auto_link` link to Simulink models, libraries and
+  subsystem files by MATLAB name.
   ``sphinx-matlab-apidoc`` lists Simulink files in sections Simulink
   Models, Simulink Libraries, Simulink Subsystem References and Simulink
   Library Blocks (it reads libraries for their masked blocks); templates

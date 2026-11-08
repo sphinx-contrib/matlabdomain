@@ -114,6 +114,14 @@ logger = getLogger("matlab-domain")
 # which the output drops, separates a link from the text around it.
 _MARKUP_BEFORE = frozenset("-:/'\"<([{")
 _MARKUP_AFTER = frozenset("-.,:;!?\\/'\")]}>")
+#: roles of files that "See also" and auto-links name (``ref_role``)
+_FILE_ROLES = (
+    "class",
+    "func",
+    "simulink_model",
+    "simulink_library",
+    "simulink_subsystem_reference",
+)
 
 
 def _inline(match, markup):
@@ -346,7 +354,7 @@ class MatlabDocumenter(PyDocumenter):
                             entries[k] = self._link("obj", entries[k], found[0])
                             continue
                         role = found[1].ref_role() if found is not None else None
-                        if found is not None and role in ["class", "func"]:
+                        if found is not None and role in _FILE_ROLES:
                             entries[k] = self._link(role, entries[k], found[0])
                             continue
 
@@ -436,7 +444,7 @@ class MatlabDocumenter(PyDocumenter):
             else:
                 ref, o = found[0]
                 role = o.ref_role()
-            if role in ["class", "func", "obj"]:
+            if role in (*_FILE_ROLES, "obj"):
                 if role == "class":
                     o = cast(MatClass, o)
                     # entity_name IS followed by .<property_or_method>

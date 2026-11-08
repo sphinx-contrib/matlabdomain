@@ -613,3 +613,34 @@ def test_reference_targets_that_are_not_names():
         "* ``B`` (model reference): :mat:simulink_model:`probeRef`",
         "* ``C D`` (subsystem reference): :mat:simulink_subsystem_reference:`sub`",
     ]
+
+
+# --- links from MATLAB help to Simulink files (S5e) -----------------------------
+
+USES = """\
+function uses
+% USES Runs probeSub through probeLib.
+%
+% See also probeModel, hid
+end
+"""
+
+
+@pytest.mark.parametrize("auto_link", ["basic", "all"])
+def test_help_links_to_simulink_files(make_app, tmp_path, auto_link):
+    write_docs(tmp_path, {"uses.m": USES})
+    index = (
+        ".. mat:autofunction:: uses\n\n"
+        ".. mat:autosimulink_model:: probeModel\n\n"
+        ".. mat:autosimulink_library:: probeLib\n\n"
+        ".. mat:autosimulink_library:: hid\n\n"
+        ".. mat:autosimulink_subsystem_reference:: probeSub\n"
+    )
+    conf = f"matlab_auto_link = {auto_link!r}\nnitpicky = True\n"
+    page, warnings = build(make_app, tmp_path, index, conf)
+    assert warnings == ""
+    help_ = page.split('id="mat-uses.m"')[1].split("Simulink model")[0]
+    assert 'href="#mat-probeModel.slx"' in help_
+    assert 'href="#mat-hid.mdl"' in help_
+    linked = 'href="#mat-probeSub.slx"' in help_, 'href="#mat-probeLib.slx"' in help_
+    assert linked == ((True, True) if auto_link == "all" else (False, False))
