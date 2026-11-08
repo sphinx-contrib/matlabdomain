@@ -44,9 +44,9 @@ dependencies = [
     # tree-sitter and tree-sitter-matlab do NOT follow SemVer: both ship breaking
     # changes (grammar/AST shape, Python binding API) WITHOUT a major-version bump.
     # e.g. tree-sitter-matlab 1.3.0 was a BREAKING `fix!` released as a minor bump.
-    # Pin upper bounds and evaluate EACH new release from its changelog/commits --
-    # never trust the version number alone.
-    "tree-sitter-matlab>=1.3.3,<1.3.4",
+    # Pin each dependency. Never trust the version number alone because it will break
+    # our consumers.
+    "tree-sitter-matlab==1.3.3",
     "tree-sitter==0.26.0"
 ]
 description = 'Sphinx "matlabdomain" extension'
