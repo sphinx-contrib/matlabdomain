@@ -3,14 +3,15 @@
 
 name: Test and publish Python 🐍 package 📦
 
-# Disabling all triggers accepted workflow_dispatch for now.
 on:
   # push:
-  # pull_request:
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
-  # schedule:
-  #   # Run on Mondays at 06:00 UTC
-  #   - cron:  '0 6 * * 1'
+  schedule:
+    # Run on the third day of the month at 06:00 UTC
+    - cron: '0 6 3 * *'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
