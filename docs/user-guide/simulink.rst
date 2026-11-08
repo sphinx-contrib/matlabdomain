@@ -61,7 +61,7 @@ adds a list, *Links to other blocks*, of its linked and sublibrary blocks,
 each a link. A block or library outside the project (a MathWorks library
 such as ``simulink/Sources/Sine Wave``) stays text without a warning.
 ``:references:`` lists what a model or subsystem file uses (model
-references, subsystem references, library links). ``sphinx-matlab-apidoc``
+references, subsystem references, library links). ``scmd apidoc``
 writes these directives for you (:doc:`apidoc`), with a section for each
 kind and one for the blocks of the libraries.
 
@@ -131,7 +131,7 @@ The Help button
 ---------------
 
 A model, subsystem file or library block can open its page from its Help
-button. ``sphinx-matlab-quickstart`` adds
+button. ``scmd quickstart`` adds
 ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` to a project
 with Simulink files, and asks for the address of the published site. The
 Help of an object calls it with the object's path reference:

@@ -237,7 +237,7 @@ not include class folders (``@X/``), ``private/`` or subfolders, and leaves
 out ``Contents.m`` and the other special files (:doc:`help-text`). The
 options apply to the members too: ``:members:`` on a folder also documents
 every member of its classes. For a whole project,
-``sphinx-matlab-apidoc`` writes one directive per file instead
+``scmd apidoc`` writes one directive per file instead
 (:doc:`apidoc`).
 
 Adding text

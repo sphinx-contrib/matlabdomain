@@ -1,7 +1,7 @@
-``sphinx-matlab-apidoc`` templates
-==================================
+``scmd apidoc`` templates
+=========================
 
-``sphinx-matlab-apidoc`` renders `Jinja <https://jinja.palletsprojects.com/>`_
+``scmd apidoc`` renders `Jinja <https://jinja.palletsprojects.com/>`_
 templates, which :confval:`matlab_apidoc_templatedir` can
 replace (:doc:`../user-guide/apidoc`). The
 defaults are in ``sphinxcontrib/matlab_apidoc/templates/``. They are

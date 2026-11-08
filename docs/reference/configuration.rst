@@ -7,9 +7,25 @@ every page again.
 
 Every name in ``conf.py`` that starts with ``matlab_`` must be one of the
 values below. Any other one (a typo, or a value this version does not have)
-is a ``ConfigError`` in the build and in ``sphinx-matlab-apidoc``, which
+is a ``ConfigError`` in the build and in ``scmd apidoc``, which
 suggests the closest value. Give helper variables another name, such as
 ``_matlab_root``.
+
+Reviewing settings
+------------------
+
+The sections below list every supported extension value with its type,
+default and effect. Most projects need only the source root, source
+selection and API output directory. Review the remaining values by purpose:
+
+* Source files and MATLAB semantics control indexing and name resolution.
+* Output values control presentation, linking and Simulink integration.
+* API-check values control audit rules and file selection.
+* Apidoc values control generated page layout and file management.
+
+Use the defaults unless a project needs different behavior. The list also
+includes removed values and the Sphinx settings read by this extension;
+those are separate from the supported ``matlab_*`` values.
 
 Source files
 ------------
@@ -241,7 +257,7 @@ Output
 
    The address of a sphinx-autobuild server of this site, such as
    ``"http://127.0.0.1:8000/"``; the ``livehtml`` target of the make files
-   that ``sphinx-matlab-quickstart`` writes sets it with ``-D``. In a
+   that ``scmd quickstart`` writes sets it with ``-D``. In a
    project with ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.json``
    below :confval:`matlab_src_code_project_root`, each HTML build writes
    ``mat/simulinkDocumentationLinker.json`` in its output folder: the mode
@@ -343,10 +359,10 @@ Changing these reads no page again.
    value that is not a dictionary of lists, an unknown section or a label
    that is not text is a ``ConfigError``.
 
-``sphinx-matlab-apidoc``
-------------------------
+``scmd apidoc``
+---------------
 
-Read by ``sphinx-matlab-apidoc`` (:doc:`cli`); the build ignores them,
+Read by ``scmd apidoc`` (:doc:`cli`); the build ignores them,
 so changing them reads no page again. No flag overrides them. Paths are
 relative to the folder of ``conf.py``.
 

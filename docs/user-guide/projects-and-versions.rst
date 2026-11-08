@@ -7,7 +7,7 @@ versions of one project, are several builds. This page shows how to set
 them up, link them, search them together, and what the two common helper
 extensions do and do not do.
 
-What was checked, with ``sphinx-matlab-apidoc`` pages, sidecar docs and
+What was checked, with ``scmd apidoc`` pages, sidecar docs and
 ``-n -W`` builds:
 
 .. list-table::
@@ -72,9 +72,9 @@ Generate the pages and build each project into its own folder:
 
 .. code-block:: console
 
-   $ sphinx-matlab-apidoc -c docs/alpha
+  $ scmd apidoc --conf-dir docs/alpha
    $ sphinx-build -b html docs/alpha docs/_build/alpha/html
-   $ sphinx-matlab-apidoc -c docs/beta
+  $ scmd apidoc --conf-dir docs/beta
    $ sphinx-build -b html docs/beta docs/_build/beta/html
 
 The projects may use the same path references, MATLAB names, page names
@@ -123,7 +123,7 @@ object has no attribute 'parent'``), and on Sphinx 8 the file must not set
 ``extensions`` and the other values Sphinx reads before extensions load,
 so it cannot also build on its own. Pass the values through its
 ``config`` option instead, taken from the project's ``conf.py``, which
-``sphinx-matlab-apidoc -c docs/<project>`` reads:
+``scmd apidoc --conf-dir docs/<project>`` reads:
 
 .. code-block:: python
 
@@ -222,12 +222,12 @@ API pages for each version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The API pages must be in the commit of each version. Running
-``sphinx-matlab-apidoc`` once before ``sphinx-multiversion`` does not
+``scmd apidoc`` once before ``sphinx-multiversion`` does not
 help: uncommitted pages are not copied, so no version gets API pages.
 Two ways work:
 
 * Commit the generated pages, and keep them current with
-  ``sphinx-matlab-apidoc --check`` in CI. Every tag then has its pages.
+  ``scmd apidoc --check`` in CI. Every tag then has its pages.
 * Keep them out of Git, and add them in a throwaway clone before building:
 
   .. code-block:: console
@@ -236,7 +236,7 @@ Two ways work:
      $ cp docs/conf.py ../conf.py           # the conf.py the builds use
      $ git checkout --detach v1.0
      $ cp ../conf.py docs/conf.py           # generate with that conf.py
-     $ sphinx-matlab-apidoc -c docs
+    $ scmd apidoc --conf-dir docs
      $ git checkout -- docs/conf.py         # keep the revision's version
      $ git add -f docs/api && git commit -m "API pages"
      $ git tag -f v1.0

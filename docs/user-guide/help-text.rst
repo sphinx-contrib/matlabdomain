@@ -57,7 +57,7 @@ MATLAB and Simulink read a few files by name: ``Contents.m`` (folder help),
 ``slblocks.m``, ``sl_customization.m``, ``pathdef.m``, ``matlabrc.m`` and
 ``rtwmakecfg.m`` (in any letter case). They are indexed and can be
 documented with an explicit directive, but ``mat:autofolder`` with
-``:members:`` and ``sphinx-matlab-apidoc`` leave them out, and they never
+``:members:`` and ``scmd apidoc`` leave them out, and they never
 get ``mat.invalid_matlab``, ``mat.empty_code_file`` or ``mat.not_callable``.
 
 Help text is reStructuredText

@@ -110,7 +110,7 @@ def test_warnings():
 def program_options(program):
     """Return the ``.. option::`` names after ``.. program:: <program>``."""
     text = (REFERENCE / "cli.rst").read_text(encoding="utf-8")
-    parts = re.split(r"^\.\. program:: (\S+)$", text, flags=re.MULTILINE)
+    parts = re.split(r"^\.\. program:: (.+)$", text, flags=re.MULTILINE)
     body = dict(zip(parts[1::2], parts[2::2], strict=True))[program]
     options = set()
     for line in re.findall(r"^\.\. option:: (.+)$", body, re.MULTILINE):
@@ -121,8 +121,8 @@ def program_options(program):
 @pytest.mark.parametrize(
     ("program", "parser"),
     [
-        ("sphinx-matlab-apidoc", get_parser),
-        ("sphinx-matlab-quickstart", get_quickstart_parser),
+        ("scmd apidoc", get_parser),
+        ("scmd quickstart", get_quickstart_parser),
     ],
 )
 def test_command_line_options(program, parser):

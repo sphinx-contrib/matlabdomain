@@ -5,7 +5,7 @@ Tutorials, design notes and READMEs often sit next to the MATLAB code they
 describe. With :confval:`matlab_src_sidecar_suffixes`, the extension indexes
 such ``.md`` and ``.rst`` files (sidecar docs) with the code, renders them
 into your documentation with ``mat:autosidecar``, links between them and the
-code, generates a page for each with ``sphinx-matlab-apidoc`` and checks
+code, generates a page for each with ``scmd apidoc`` and checks
 them with ``matlab-api-check``. It is off by default.
 
 Turning it on
@@ -69,7 +69,7 @@ where the directive stands; a document of its own needs nothing else:
 The sidecar doc's headings become sections and its first heading is the
 document's title. One without a heading gets its file name as title,
 with a ``mat.sidecar`` warning. ``:no-title:`` leaves out the first heading,
-so the rest continues the current section; ``sphinx-matlab-apidoc`` uses it
+so the rest continues the current section; ``scmd apidoc`` uses it
 for READMEs (below). This page renders ``+shapes/notes.rst`` from this
 documentation's sample project:
 
@@ -121,11 +121,11 @@ myst-parser's ``html_image`` extension (``myst_enable_extensions =
 ["html_image"]``); other raw HTML is copied as is, and its relative paths
 are not resolved.
 
-Sidecar docs with ``sphinx-matlab-apidoc``
-------------------------------------------
+Sidecar docs with ``scmd apidoc``
+---------------------------------
 
 With :confval:`matlab_src_sidecar_suffixes` in ``conf.py``,
-``sphinx-matlab-apidoc`` (:doc:`apidoc`) documents the sidecar docs too.
+``scmd apidoc`` (:doc:`apidoc`) documents the sidecar docs too.
 
 In namespace grouping (the default), each sidecar doc is rendered on the
 page of its namespace (or Global), in a "Sidecar docs" section after the

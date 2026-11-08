@@ -22,12 +22,12 @@ Publish from an empty output folder:
 .. code-block:: bash
 
    rm -rf docs/_build
-   sphinx-matlab-apidoc -c docs
+  scmd apidoc --conf-dir docs
    sphinx-build -b html docs docs/_build/html
 
 Sphinx never deletes a page it no longer builds. This extension removes
 the HTML page, and its copy in ``_sources``, of every page below
-:confval:`matlab_apidoc_output_dir` whose source ``sphinx-matlab-apidoc``
+:confval:`matlab_apidoc_output_dir` whose source ``scmd apidoc``
 removed (``global-2`` when it writes fewer pages). Other removed pages
 stay in an output folder kept from an earlier build, and in a site copied
 from it; a CI job that starts from a fresh checkout has an empty output
@@ -167,7 +167,7 @@ browser's address bar: these addresses stay the same when the pages split
 differently, and change only when the object is renamed, moved or removed
 (then the file is removed too). Characters that are not safe in a URL, and
 names that differ only by case, are escaped like the output names of
-``sphinx-matlab-apidoc``.
+``scmd apidoc``.
 
 The address in the browser's address bar after the redirect is the page's
 own, which does not follow the object. A small script on every page

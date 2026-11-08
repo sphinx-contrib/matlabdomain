@@ -15,7 +15,7 @@ objects of the 0.x and 1.0 builds.
 
 From 1.0.0 on, the project follows `semantic versioning
 <https://semver.org/>`_: breaking changes, including changes to link anchors
-and to the ``sphinx-matlab-apidoc`` template variables, come only in a new
+and to the ``scmd apidoc`` template variables, come only in a new
 major version.
 
 Requirements
@@ -27,8 +27,8 @@ A pin such as ``sphinxcontrib-matlabdomain==0.*`` in a requirements file
 or ``pyproject.toml`` keeps 0.x; change it to ``>=1,<2``. A virtual
 environment that is reused between builds (on a CI agent, or one that a
 script creates only when it is missing) keeps the old version and the old
-Sphinx until it is recreated or upgraded. ``sphinx-matlab-apidoc
---version`` works only with 1.0.
+Sphinx until it is recreated or upgraded. ``scmd --version`` works only
+with 1.0.
 
 Remove a ``sys.path`` entry in ``conf.py`` that points at a checkout of the
 extension (projects that started from the extension's own test docs have
@@ -224,7 +224,7 @@ Keep the 0.x build's ``objects.inv`` and compare the objects by kind
 (the old dotted names map to path references as in `Names`_). Besides
 the new objects above, expect:
 
-* ``sphinx-matlab-apidoc`` pages show public members; 0.x pages often had
+* ``scmd apidoc`` pages show public members; 0.x pages often had
   ``:private-members:``. To keep private members on every generated page,
   set ``autodoc_default_options = {"private-members": True}``.
 * The function files of a class folder are methods of the class, not also
@@ -238,7 +238,7 @@ the new objects above, expect:
 New tools
 ---------
 
-* ``sphinx-matlab-apidoc`` writes the pages for a whole project
+* ``scmd apidoc`` writes the pages for a whole project
   (:doc:`apidoc`); it may replace hand-written ``automodule`` pages and
   page generators.
 * The ``matlab-api-check`` builder checks help text (:doc:`api-check`).

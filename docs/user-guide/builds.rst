@@ -74,25 +74,25 @@ Large projects
   are not even listed.
 * Large generated data files (megabytes of numbers in a ``.m`` file) are
   slow to parse when a page documents them.
-* ``sphinx-matlab-apidoc`` writes only the pages whose text changed, so
+* ``scmd apidoc`` writes only the pages whose text changed, so
   regenerating before each build does not trigger a full rebuild.
 * The ``matlab-api-check`` builder parses every file on each run.
 
 For a sense of scale: the 14 open-source projects the extension is tested
 on (24,000 files, the largest 5,300 files) build with
-``sphinx-matlab-apidoc`` pages in 1 to 60 seconds each.
+``scmd apidoc`` pages in 1 to 60 seconds each.
 
 Working with other tools
 ------------------------
 
 * `sphinx-autobuild <https://github.com/sphinx-doc/sphinx-autobuild>`_:
   works; MATLAB files are not watched unless you add them. With
-  ``sphinx-matlab-apidoc`` pages, also run the generator before each
+  ``scmd apidoc`` pages, also run the generator before each
   build, so new and moved files get pages:
 
   .. code-block:: console
 
-     $ sphinx-autobuild docs docs/_build/html --watch src --pre-build "sphinx-matlab-apidoc -c docs -q"
+    $ sphinx-autobuild docs docs/_build/html --watch src --pre-build "scmd apidoc --conf-dir docs --quiet"
 
   A change that the generator turns into a page change triggers one more
   build. The ``--pre-build`` command is split like a POSIX shell line, so

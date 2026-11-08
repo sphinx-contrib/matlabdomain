@@ -163,7 +163,7 @@ Some files and folders are never indexed or need care:
   A helper's name must not start with ``matlab_`` (that prefix is kept for
   configuration values).
 
-``sphinx-matlab-apidoc`` reads the same root and patterns from
+``scmd apidoc`` reads the same root and patterns from
 ``conf.py``; no option overrides them (:doc:`apidoc`).
 
 The MATLAB release

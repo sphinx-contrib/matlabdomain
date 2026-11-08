@@ -1,13 +1,13 @@
 ---
 name: setting-up-a-project
-description: Set up Sphinx documentation for a MATLAB project with sphinxcontrib-matlabdomain 1.0 from scratch - decisions, the sphinx-matlab-quickstart command (dry run, report, answers file), exclusions, help-text fixes, warnings, the matlab-api-check audit, preview, guide and CI. Use when a MATLAB repository has no Sphinx docs yet, or when old docs are to be replaced rather than migrated (for a 0.x setup to keep, use migrating-from-0x).
+description: Set up Sphinx documentation for a MATLAB project with sphinxcontrib-matlabdomain 1.0 from scratch - decisions, the scmd quickstart command (dry run, report, answers file), exclusions, help-text fixes, warnings, the matlab-api-check audit, preview, guide and CI. Use when a MATLAB repository has no Sphinx docs yet, or when old docs are to be replaced rather than migrated (for a 0.x setup to keep, use migrating-from-0x).
 ---
 
 # Setting up documentation for a MATLAB project
 
 Work one step at a time, and write down the input you used, the decision,
 and who made it. Many steps need a decision from the project's maintainer:
-ask, and do not guess. The command `sphinx-matlab-quickstart` does the
+ask, and do not guess. The command `scmd quickstart` does the
 mechanical part (steps 2 and 3): it reads the project, writes the Sphinx
 source folder and prints a report. Its user guide is "Setting up a
 project" in the sphinxcontrib-matlabdomain docs
@@ -66,7 +66,7 @@ table for a dependency group, but a `[project]` table must have `name` and
 ## 2. Dry run and report
 
 ```console
-sphinx-matlab-quickstart <repo> -o <repo>/<src> -n
+scmd quickstart <repo> --output-dir <repo>/<src> --dry-run
 ```
 
 It writes nothing and prints the files it would write, the lines it would
@@ -105,7 +105,7 @@ the headings in the code instead.
 ## 3. Write the files
 
 ```console
-sphinx-matlab-quickstart <repo> -o <repo>/<src> --answers <file>
+scmd quickstart <repo> --output-dir <repo>/<src> --answers <file>
 ```
 
 It stops before writing anything if `pyproject.toml`, `.gitignore` or
@@ -226,8 +226,8 @@ choice. Raise rules to `"error"` as the help improves.
 - [ ] decisions of step 0 recorded
 - [ ] report read: namespaces, duplicates, MATLAB path, submodules, help headings, copyright blocks
 - [ ] `.python-version` committed; `uv sync --locked` works in a fresh clone; matlabdomain pinned to a SHA or release
-- [ ] `sphinx-matlab-quickstart` run with the answers file; `conf.py` reviewed
-- [ ] `sphinx-matlab-apidoc -c <src> --check` exits 0
+- [ ] `scmd quickstart` run with the answers file; `conf.py` reviewed
+- [ ] `scmd apidoc --conf-dir <src> --check` exits 0
 - [ ] clean `-n -W` build passes, or each remaining warning type explained
 - [ ] `matlab-api-check` runs; findings recorded
 - [ ] build guide and CI notes written

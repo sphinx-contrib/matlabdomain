@@ -37,7 +37,7 @@ matlab_src_exclusion_patterns = [
 ]
 matlab_version = "R2026a"
 
-# API pages: sphinx-matlab-apidoc -c docs (make apidoc)
+# API pages: scmd apidoc --conf-dir docs (make apidoc)
 matlab_apidoc_output_dir = "API"
 matlab_apidoc_group = "folder"
 matlab_apidoc_page_size = 100

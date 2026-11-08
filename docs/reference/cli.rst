@@ -1,22 +1,29 @@
 Command-line tools
 ==================
 
-Two commands come with the package. ``sphinx-matlab-quickstart`` sets up the
-documentation of a MATLAB project once; ``sphinx-matlab-apidoc`` writes its
-API pages, every time the files change.
+The package provides ``sphinxcontrib-matlabdomain``, with the short alias
+``scmd``. Use ``scmd quickstart`` once to set up a project and
+``scmd apidoc`` whenever its API pages need updating. Run ``scmd --help``
+or ``scmd SUBCOMMAND --help`` for the available commands and options.
 
-``sphinx-matlab-quickstart``
-----------------------------
+Every option has a short and a long spelling. Prefer long spellings in
+scripts and CI. Project settings belong in Sphinx's ``conf.py``; CLI
+options select the operation or control a single run.
 
-.. program:: sphinx-matlab-quickstart
+The previous ``sphinx-matlab-quickstart`` and ``sphinx-matlab-apidoc``
+entry points and their Python module invocations remain available.
+
+``scmd quickstart``
+-------------------
+
+.. program:: scmd quickstart
 
 Synopsis
 ~~~~~~~~
 
 .. code-block:: text
 
-   sphinx-matlab-quickstart [ROOT] [-o DOCS] [-q] [-n] [--answers FILE] [--force]
-   python -m sphinxcontrib.matlab_quickstart [OPTIONS]
+   scmd quickstart [ROOT] [--output-dir DOCS] [--quiet] [--dry-run] [--answers FILE] [--force]
 
 Sets up Sphinx documentation for the MATLAB project in ``ROOT``: the Sphinx
 source folder ``DOCS`` with its files and API pages, the docs dependencies,
@@ -53,20 +60,20 @@ Options
    it would add outside it and the report, then ask to save the answers
    (default yes). The answers file is the only file a dry run may write.
 
-.. option:: --answers FILE
+.. option:: -a FILE, --answers FILE
 
    Read answers from a TOML file and ask only for the others. The command
    offers to save one at the end (default ``ROOT/sphinx-matlab-quickstart.toml``);
    the keys are those of :ref:`quickstart-answers`.
 
-.. option:: --force
+.. option:: -f, --force
 
    When ``DOCS/conf.py`` exists, rewrite the files the command writes
    (``conf.py``, ``index.rst``, ``_static/.gitkeep``, ``Makefile``,
    ``make.bat``, ``BUILDING_DOCS.md`` and the API pages) and nothing else.
    Without it, an existing ``DOCS/conf.py`` stops the command.
 
-.. option:: --version
+.. option:: -V, --version
 
    Print the version and exit.
 
@@ -80,7 +87,7 @@ What it writes
 In ``DOCS``: ``conf.py``, ``index.rst``, ``_static/.gitkeep``,
 ``Makefile``, ``make.bat`` (CRLF line ends), ``BUILDING_DOCS.md`` (unless
 the answer ``guide`` is ``false``), and the API pages in ``DOCS/API``,
-written as :program:`sphinx-matlab-apidoc` would write them from that
+written as :program:`scmd apidoc` would write them from that
 ``conf.py``. The templates are in the package
 (``sphinxcontrib/matlab_quickstart/templates``).
 
@@ -125,18 +132,17 @@ is not a folder, ``DOCS`` is not inside ``ROOT`` or is in use with
 three files has uncommitted changes, or the answers file is missing or
 invalid.
 
-``sphinx-matlab-apidoc``
-------------------------
+``scmd apidoc``
+---------------
 
-.. program:: sphinx-matlab-apidoc
+.. program:: scmd apidoc
 
 Synopsis
 ~~~~~~~~
 
 .. code-block:: text
 
-   sphinx-matlab-apidoc [-c CONF_DIR] [-f] [-n] [--check] [-q]
-   python -m sphinxcontrib.matlab_apidoc [OPTIONS]
+   scmd apidoc [--conf-dir CONF_DIR] [--force] [--dry-run] [--check] [--quiet]
 
 Writes reST pages with ``mat:auto*`` directives for the MATLAB files below
 the project root: one page per namespace and one for the global namespace
@@ -150,17 +156,18 @@ Settings
 Every setting comes from ``CONF_DIR/conf.py`` (:doc:`configuration`); no
 flag overrides one:
 
-* the source settings of the build: :confval:`matlab_src_code_project_root`
-  (required), :confval:`matlab_src_include_patterns`,
-  :confval:`matlab_src_exclusion_patterns`,
-  :confval:`matlab_src_sidecar_suffixes`, :confval:`matlab_version`,
-  :confval:`matlab_namelengthmax` and :confval:`matlab_src_encoding`;
-* the command's own: :confval:`matlab_apidoc_output_dir` (required),
-  :confval:`matlab_apidoc_group`, :confval:`matlab_apidoc_page_size`,
-  :confval:`matlab_apidoc_separate`, :confval:`matlab_apidoc_maxdepth`,
-  :confval:`matlab_apidoc_tocfile`, :confval:`matlab_apidoc_suffix`,
-  :confval:`matlab_apidoc_templatedir` and
-  :confval:`matlab_apidoc_remove_old`.
+The source settings are :confval:`matlab_src_code_project_root` (required),
+:confval:`matlab_src_include_patterns`, :confval:`matlab_src_exclusion_patterns`,
+:confval:`matlab_src_sidecar_suffixes`, :confval:`matlab_version`,
+:confval:`matlab_namelengthmax`, :confval:`matlab_src_encoding` and
+:confval:`matlab_simulink_doc_suffixes`.
+
+The command's own settings are :confval:`matlab_apidoc_output_dir` (required),
+:confval:`matlab_apidoc_group`, :confval:`matlab_apidoc_page_size`,
+:confval:`matlab_apidoc_private`, :confval:`matlab_apidoc_separate`,
+:confval:`matlab_apidoc_maxdepth`, :confval:`matlab_apidoc_tocfile`,
+:confval:`matlab_apidoc_suffix`, :confval:`matlab_apidoc_templatedir` and
+:confval:`matlab_apidoc_remove_old`.
 
 Paths in ``conf.py`` are relative to ``CONF_DIR``, which is taken to be
 the Sphinx source folder. Errors name the config value that caused them.
@@ -204,7 +211,7 @@ Run-time options
 
    Write and remove nothing; list what would change.
 
-.. option:: --check
+.. option:: -k, --check
 
    A dry run that exits with 1 if a page would be created, rewritten,
    renamed or removed (kept files without the marker do not count).
@@ -213,7 +220,7 @@ Run-time options
 
    No output on stdout; warnings still go to stderr.
 
-.. option:: --version
+.. option:: -V, --version
 
    Print the version and exit.
 

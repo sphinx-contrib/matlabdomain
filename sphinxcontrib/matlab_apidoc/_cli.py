@@ -57,9 +57,9 @@ def _version():
         return "0.0.0"
 
 
-def get_parser():
+def get_parser(prog="sphinx-matlab-apidoc"):
     parser = argparse.ArgumentParser(
-        prog="sphinx-matlab-apidoc",
+        prog=prog,
         allow_abbrev=False,
         description=(
             "Write reST pages with sphinxcontrib-matlabdomain directives for the "
@@ -77,7 +77,9 @@ def get_parser():
             "the Python API (sphinxcontrib.matlab_apidoc.generate)."
         ),
     )
-    parser.add_argument("--version", action="version", version=f"%(prog)s {_version()}")
+    parser.add_argument(
+        "-V", "--version", action="version", version=f"%(prog)s {_version()}"
+    )
     parser.add_argument(
         "-c",
         "--conf-dir",
@@ -98,6 +100,7 @@ def get_parser():
         help="write and remove nothing; list what would change",
     )
     parser.add_argument(
+        "-k",
         "--check",
         action="store_true",
         help="a dry run that exits with 1 if a page would change",
@@ -281,14 +284,14 @@ def _count(number, noun):
     return f"{number} {noun}{'' if number == 1 else 's'}"
 
 
-def main(argv=None):
+def main(argv=None, *, prog="sphinx-matlab-apidoc"):
     """Run ``sphinx-matlab-apidoc``; return the exit status.
 
     0 on success, also with warnings; 1 if ``--check`` finds a page to
     change; 2 for usage or settings errors (argparse exits with 2 itself for
     usage errors).
     """
-    parser = get_parser()
+    parser = get_parser(prog)
     args = parser.parse_args(argv)
     try:
         settings, options, suppress = _settings(args)

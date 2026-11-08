@@ -71,9 +71,9 @@ class Stop(Exception):
         self.status = status
 
 
-def get_parser():
+def get_parser(prog="sphinx-matlab-quickstart"):
     parser = argparse.ArgumentParser(
-        prog="sphinx-matlab-quickstart",
+        prog=prog,
         allow_abbrev=False,
         description=(
             "Set up Sphinx documentation for the MATLAB project in ROOT: a Sphinx "
@@ -92,7 +92,9 @@ def get_parser():
             "its settings to ROOT, for Help links to the documentation."
         ),
     )
-    parser.add_argument("--version", action="version", version=f"%(prog)s {_version()}")
+    parser.add_argument(
+        "-V", "--version", action="version", version=f"%(prog)s {_version()}"
+    )
     parser.add_argument(
         "root",
         metavar="ROOT",
@@ -119,11 +121,13 @@ def get_parser():
         help="write nothing; print what would be written and the report",
     )
     parser.add_argument(
+        "-a",
         "--answers",
         metavar="FILE",
         help="the answers of a TOML file; ask only for the others",
     )
     parser.add_argument(
+        "-f",
         "--force",
         action="store_true",
         help="rewrite the files it writes when DOCS/conf.py exists",
@@ -629,7 +633,7 @@ def save_answers(args, root, answers):
     print(f"Saved the answers: --answers {path} reads them back.")
 
 
-def main(argv=None):
+def main(argv=None, *, prog="sphinx-matlab-quickstart"):
     """Run ``sphinx-matlab-quickstart``; return the exit status.
 
     0 on success, also with warnings; 1 when ``uv add`` fails or the run is
@@ -637,7 +641,7 @@ def main(argv=None):
     anything (an occupied DOCS with ``-q``, an existing ``DOCS/conf.py``,
     uncommitted changes, a bad answers file).
     """
-    parser = get_parser()
+    parser = get_parser(prog)
     args = parser.parse_args(argv)
     try:
         return run(args)

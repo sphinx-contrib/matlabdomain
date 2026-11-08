@@ -69,8 +69,10 @@ markdown = [
 ]
 
 [project.scripts]
+scmd = "sphinxcontrib.matlab_cli:main"
 sphinx-matlab-apidoc = "sphinxcontrib.matlab_apidoc:main"
 sphinx-matlab-quickstart = "sphinxcontrib.matlab_quickstart:main"
+sphinxcontrib-matlabdomain = "sphinxcontrib.matlab_cli:main"
 
 [project.urls]
 Download = "https://pypi.org/project/sphinxcontrib-matlabdomain/"
@@ -115,6 +117,7 @@ source_pkgs = [
     "sphinxcontrib.mat_urls",
     "sphinxcontrib.matlab",
     "sphinxcontrib.matlab_apidoc",
+    "sphinxcontrib.matlab_cli",
     "sphinxcontrib.matlab_quickstart"
 ]
 

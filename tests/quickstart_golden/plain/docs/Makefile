@@ -3,7 +3,7 @@
 
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
-APIDOC        ?= sphinx-matlab-apidoc
+APIDOC        ?= scmd apidoc
 SPHINXAUTOBUILD ?= sphinx-autobuild
 SOURCEDIR     = .
 BUILDDIR      = _build
@@ -17,18 +17,18 @@ help:
 
 # Write the API pages from conf.py (matlab_apidoc_*).
 apidoc:
-	$(APIDOC) -c "$(SOURCEDIR)"
+	$(APIDOC) --conf-dir "$(SOURCEDIR)"
 
 # Exit 1 when the API pages are out of date.
 apidoc-check:
-	$(APIDOC) -c "$(SOURCEDIR)" --check
+	$(APIDOC) --conf-dir "$(SOURCEDIR)" --check
 
 # Live rebuild on changes to the docs and the MATLAB code.
 livehtml:
-	$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" -d "$(BUILDDIR)/doctrees" --watch ".." --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "$(APIDOC) -c . -q" --port $(LIVEPORT) -D matlab_simulink_server=http://127.0.0.1:$(LIVEPORT)/ $(SPHINXOPTS) $(O)
+	$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" -d "$(BUILDDIR)/doctrees" --watch ".." --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "$(APIDOC) --conf-dir . --quiet" --port $(LIVEPORT) -D matlab_simulink_server=http://127.0.0.1:$(LIVEPORT)/ $(SPHINXOPTS) $(O)
 
 # Route all other targets to Sphinx's "make mode" (html, clean, ...), after
 # writing the API pages (they are not committed).
 %: Makefile
-	@$(APIDOC) -c "$(SOURCEDIR)" -q
+	@$(APIDOC) --conf-dir "$(SOURCEDIR)" --quiet
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

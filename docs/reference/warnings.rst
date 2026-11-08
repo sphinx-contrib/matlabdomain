@@ -3,7 +3,7 @@ Warnings
 
 Every warning of the extension has the type ``mat`` and one of these
 subtypes. Turn one off with ``suppress_warnings = ["mat.<subtype>"]``, or
-all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
+all with ``"mat"``; ``scmd apidoc`` reads the same setting.
 :doc:`../user-guide/warnings` explains each one.
 
 .. list-table::
@@ -57,8 +57,8 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
        than the Sphinx source folder
      - where the sidecar doc is rendered; the drive at start-up
    * - ``mat.apidoc``
-     - ``sphinx-matlab-apidoc``: an unreadable file, output names that
-       differ only by case, a path too long for Windows
+     - ``scmd apidoc``: an unreadable file, output names that differ only
+       by case, a path too long for Windows
      - when it runs
    * - ``mat.stable_url``
      - a stable address file (:confval:`matlab_stable_urls`) that cannot be

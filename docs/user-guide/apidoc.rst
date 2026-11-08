@@ -1,7 +1,7 @@
-Generating pages: ``sphinx-matlab-apidoc``
-==========================================
+Generating pages: ``scmd apidoc``
+=================================
 
-``sphinx-matlab-apidoc`` writes reST pages that document every MATLAB file
+``scmd apidoc`` writes reST pages that document every MATLAB file
 below a project root with the auto directives: by default one page per
 namespace, as MATLAB sees namespaces, or one page per folder. A large
 project then needs no hand-written directives, and new files appear in the
@@ -54,7 +54,7 @@ shown here is current.
 
 ``docs/conf.py`` points :confval:`matlab_src_code_project_root` at the
 project, turns on :doc:`sidecar docs <sidecars>` and tells
-``sphinx-matlab-apidoc`` where to write the pages and which templates to
+``scmd apidoc`` where to write the pages and which templates to
 use:
 
 .. literalinclude:: ../../examples/apidoc/docs/conf.py
@@ -66,7 +66,7 @@ folder with ``-c``, ``--conf-dir``):
 .. code-block:: console
 
    $ cd examples/apidoc/docs
-   $ sphinx-matlab-apidoc
+    $ scmd apidoc
 
 This writes one page per namespace into ``api/``, one for the files
 outside any namespace (``global``), and the root page that lists them:
@@ -296,14 +296,14 @@ finds the new pages as usual.
 A ``Makefile`` target (Sphinx's ``Makefile`` passes other targets to
 ``sphinx-build``; recipe lines start with a tab):
 
-.. code-block:: make
+.. code-block:: text
 
    .PHONY: apidoc
    html: apidoc
    	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-   apidoc:
-   	sphinx-matlab-apidoc -q -c "$(SOURCEDIR)"
+     apidoc:
+       scmd apidoc --quiet --conf-dir "$(SOURCEDIR)"
 
 Read the Docs: add a ``pre_build`` job to the ``build`` section of
 ``.readthedocs.yaml``:
@@ -313,14 +313,14 @@ Read the Docs: add a ``pre_build`` job to the ``build`` section of
    build:
      jobs:
        pre_build:
-         - sphinx-matlab-apidoc -c docs
+         - scmd apidoc --conf-dir docs
 
 To commit the generated pages, as the example does, check in CI that they
 are current:
 
 .. code-block:: console
 
-   $ sphinx-matlab-apidoc --check -c docs
+  $ scmd apidoc --check --conf-dir docs
 
 or in a `pre-commit <https://pre-commit.com/>`_ hook, an entry under
 ``repos:`` in ``.pre-commit-config.yaml``:
@@ -331,7 +331,7 @@ or in a `pre-commit <https://pre-commit.com/>`_ hook, an entry under
      hooks:
        - id: sphinx-matlab-apidoc
          name: API pages are current
-         entry: sphinx-matlab-apidoc --check -q -c docs
+         entry: scmd apidoc --check --quiet --conf-dir docs
          language: system
          pass_filenames: false
          always_run: true
@@ -378,7 +378,7 @@ Write your own
 For full control (several project roots, settings computed per folder,
 pages written next to other generated files), write a short script on the
 Python API that the command itself uses. The example's ``make_api.py``
-writes the same pages as ``sphinx-matlab-apidoc -c docs``; the test suite
+writes the same pages as ``scmd apidoc --conf-dir docs``; the test suite
 checks that it does:
 
 .. literalinclude:: ../../examples/apidoc/make_api.py

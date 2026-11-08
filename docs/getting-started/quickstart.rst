@@ -7,15 +7,15 @@ is new to you, its `tutorial
 <https://www.sphinx-doc.org/en/master/tutorial/index.html>`_ explains the
 basics.
 
-With ``sphinx-matlab-quickstart``
----------------------------------
+With ``scmd quickstart``
+------------------------
 
 From the MATLAB project's folder (here ``myproject``, with its code in
 ``src``), run:
 
 .. code-block:: console
 
-   $ sphinx-matlab-quickstart
+   $ scmd quickstart
 
 It reads the project first: the MATLAB release in its CI files or README,
 git submodules, a MATLAB project file, Markdown notes next to the code, the

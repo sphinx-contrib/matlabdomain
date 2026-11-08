@@ -14,7 +14,7 @@ if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=%UV% sphinx-build
 )
 if "%APIDOC%" == "" (
-	set APIDOC=%UV% sphinx-matlab-apidoc
+	set APIDOC=%UV% scmd apidoc
 )
 if "%SPHINXAUTOBUILD%" == "" (
 	set SPHINXAUTOBUILD=%UV% sphinx-autobuild
@@ -38,17 +38,17 @@ if errorlevel 9009 (
 if "%1" == "" goto help
 
 if "%1" == "apidoc" (
-	%APIDOC% -c %SOURCEDIR%
+	%APIDOC% --conf-dir %SOURCEDIR%
 	goto end
 )
 
 if "%1" == "apidoc-check" (
-	%APIDOC% -c %SOURCEDIR% --check
+	%APIDOC% --conf-dir %SOURCEDIR% --check
 	goto end
 )
 
 if "%1" == "livehtml" (
-	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html -d %BUILDDIR%/doctrees --watch ".." --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% -c . -q" --port %LIVEPORT% -D matlab_simulink_server=http://127.0.0.1:%LIVEPORT%/ %SPHINXOPTS% %O%
+	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html -d %BUILDDIR%/doctrees --watch ".." --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% --conf-dir . --quiet" --port %LIVEPORT% -D matlab_simulink_server=http://127.0.0.1:%LIVEPORT%/ %SPHINXOPTS% %O%
 	goto end
 )
 

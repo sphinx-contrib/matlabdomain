@@ -65,7 +65,7 @@ matlab_version = "R2024b"
 # Markdown notes next to the code become part of the API pages.
 matlab_src_sidecar_suffixes = [".md"]
 
-# API pages: sphinx-matlab-apidoc -c docs (make apidoc)
+# API pages: scmd apidoc --conf-dir docs (make apidoc)
 matlab_apidoc_output_dir = "API"
 matlab_apidoc_group = "namespace"
 matlab_apidoc_page_size = 100

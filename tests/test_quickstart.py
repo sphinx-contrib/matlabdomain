@@ -15,7 +15,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from sphinxcontrib import matlab_quickstart
+from sphinxcontrib import matlab_cli, matlab_quickstart
 from sphinxcontrib.mat_types import IndexSettings, build_index
 from sphinxcontrib.matlab_apidoc import main as apidoc_main
 from sphinxcontrib.matlab_quickstart import _cli, _detect, _report, _write
@@ -128,8 +128,8 @@ def run_uv_case(tmp_path):
     root = copy_root(QUICKSTART, tmp_path)
     (root / "pyproject.toml").write_text("[tool.uv]\npackage = false\n")
     git_init(root)
-    status = matlab_quickstart.main(
-        [str(root), "-q", "--answers", answers_file(tmp_path)]
+    status = matlab_cli.main(
+        ["quickstart", str(root), "--quiet", "--answers", answers_file(tmp_path)]
     )
     return root, status
 
@@ -183,7 +183,12 @@ def test_golden_uv_project(tmp_path, capsys, fixed, fake_uv):
             data = path.read_bytes()
             assert (b"\r\n" in data) == (path.name == "make.bat"), path
     # the generated conf.py gives the same API pages
-    assert apidoc_main(["-q", "--check", "-c", str(root / "docs")]) == 0
+    assert (
+        matlab_cli.main(
+            ["apidoc", "--quiet", "--check", "--conf-dir", str(root / "docs")]
+        )
+        == 0
+    )
     assert "uv.lock" not in os.listdir(root)
 
 
@@ -212,6 +217,23 @@ def test_golden_plain_project(tmp_path, capsys, fixed, no_git):
     assert not (root / ".gitignore").exists()
     assert not (root / ".gitattributes").exists()
     assert apidoc_main(["-q", "--check", "-c", str(root / "docs")]) == 0
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows batch file")
+def test_generated_batch_apidoc_check(tmp_path, fixed, no_git):
+    root, status = run_plain_case(tmp_path)
+    assert status == 0
+    env = os.environ.copy()
+    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
+    result = subprocess.run(
+        ["cmd.exe", "/c", "make.bat", "apidoc-check"],
+        cwd=root / "docs",
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_golden_dry_run(tmp_path, capsys, fixed, no_git):

@@ -58,7 +58,7 @@ python scripts/compare_inventories.py _build/html/objects.inv
   docs). An old checkout's `sphinxcontrib/__init__.py` breaks the
   `sphinxcontrib` namespace in a 1.0 build ("Could not import extension
   sphinxcontrib.applehelp (No module named 'pkg_resources')").
-- Check the environment: `sphinx-matlab-apidoc --version` exists only in
+- Check the environment: `scmd --version` exists only in
   1.0, and
   `python -c "import sphinxcontrib.matlab as m; print(m.__file__)"`
   shows the installed copy (it does not run `conf.py`).
@@ -173,15 +173,15 @@ the comment to a path reference or a MATLAB name. Find them with:
 grep -rnE ':(mat:)?(class|func|meth|attr|mod|obj):`[^`]*[+@]' --include=*.m <code root>
 ```
 
-## 8. Generated pages: `sphinx-matlab-apidoc`
+## 8. Generated pages: `scmd apidoc`
 
 Replace a page generator or folder-mirroring pages:
 
 - `matlab_apidoc_output_dir = "api"` (any folder below the docs folder) and
   the other `matlab_apidoc_*` values in `conf.py`;
-- `sphinx-matlab-apidoc -c docs`; add `api/index` to the root toctree;
+- `scmd apidoc --conf-dir docs`; add `api/index` to the root toctree;
 - either commit the pages and check them in CI
-  (`sphinx-matlab-apidoc --check -c docs`), or generate them before each
+  (`scmd apidoc --check --conf-dir docs`), or generate them before each
   build and do not commit them;
 - remove the old generator.
 
@@ -238,7 +238,7 @@ matlab_external_names = [*DEFAULT_EXTERNAL_NAMES, r"sltest\..+"]
 When only intended warnings remain, build with `-W --keep-going` and make
 that the CI build. If help-text fixes are deferred, CI builds with `-n`
 without `-W` meanwhile and tracks the warning count (`group_warnings.py`).
-`sphinx-matlab-apidoc` skips the warnings named in `suppress_warnings`; it
+`scmd apidoc` skips the warnings named in `suppress_warnings`; it
 still exits 0 after warnings.
 
 ## 10. Compare with the baseline
@@ -249,7 +249,7 @@ python scripts/compare_inventories.py old/objects.inv _build/html/objects.inv --
 
 If the old pages were generated, build them first after step 6 alone (in a
 scratch copy) and compare: 0.x with those (with `--root`), then those with
-the `sphinx-matlab-apidoc` pages (two 1.0 builds: without `--root`).
+the `scmd apidoc` pages (two 1.0 builds: without `--root`).
 Explain every object only one side has; group them and give counts.
 Expected:
 
@@ -329,14 +329,14 @@ for f in rows:
 ## 12. CI and local preview
 
 - CI: the environment (step 3); with committed apidoc pages,
-  `sphinx-matlab-apidoc --check -c docs` (or generate them first; nothing
+  `scmd apidoc --check --conf-dir docs` (or generate them first; nothing
   for hand-written pages); `sphinx-build -n -W --keep-going`; the
   api-check build (without `-W`, step 11). Any runner works: a Makefile
   target, Read the Docs (`build.jobs.pre_build`), or a stage in Jenkins or
   GitHub Actions running the same commands. CI steps that called the old
   wrapper (or a MATLAB build script) call these commands instead.
 - Live preview (install `sphinx-autobuild`):
-  `sphinx-autobuild docs docs/_build/html --watch <code folder> --pre-build "sphinx-matlab-apidoc -c docs -q"`
+  `sphinx-autobuild docs docs/_build/html --watch <code folder> --pre-build "scmd apidoc --conf-dir docs --quiet"`
   (on Windows, use `/` in paths inside `--pre-build`).
 
 ## Checklist
@@ -346,7 +346,7 @@ for f in rows:
 - [ ] `conf.py` builds without `ConfigError`
 - [ ] no old directives, roles or options remain
 - [ ] help-before-declaration files reviewed with the code owner
-- [ ] `sphinx-matlab-apidoc --check` exits 0 (if pages are committed)
+- [ ] `scmd apidoc --check` exits 0 (if pages are committed)
 - [ ] `-n -W` clean, or each remaining warning type explained
 - [ ] every object only one side has is explained
 - [ ] `matlab-api-check` runs; findings recorded

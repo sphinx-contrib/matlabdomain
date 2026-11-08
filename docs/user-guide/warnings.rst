@@ -19,7 +19,7 @@ Sphinx's ``suppress_warnings`` turns off warnings by type and subtype:
        "mat.empty_code_file",
    ]
 
-``"mat"`` turns off every warning of this extension. ``sphinx-matlab-apidoc``
+``"mat"`` turns off every warning of this extension. ``scmd apidoc``
 reads ``suppress_warnings`` from the same ``conf.py``. Warnings about help
 text that is not valid reStructuredText come from docutils and have the
 type ``docutils``, which covers every page, not only help text
@@ -101,7 +101,7 @@ What each warning means
    get it (:doc:`documenting`).
 
 ``mat.apidoc``
-   ``sphinx-matlab-apidoc``: a file that cannot be read was left out, two
+   ``scmd apidoc``: a file that cannot be read was left out, two
    output names differ only by letter case, or an output path is longer
    than Windows allows.
 

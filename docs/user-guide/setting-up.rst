@@ -1,13 +1,13 @@
-Setting up a project: ``sphinx-matlab-quickstart``
-==================================================
+Setting up a project: ``scmd quickstart``
+=========================================
 
-``sphinx-matlab-quickstart`` sets up Sphinx documentation for a MATLAB
+``scmd quickstart`` sets up Sphinx documentation for a MATLAB
 project that has none yet: a Sphinx source folder with ``conf.py``, a home
 page, make files, a build guide and the API pages, the docs dependencies,
 and a report of what it found in the project. It is the MATLAB counterpart
 of Sphinx's ``sphinx-quickstart``, and it uses the extension's own index,
 so its defaults are what the build will see. Run it once; afterwards
-``conf.py`` is yours, and ``sphinx-matlab-apidoc`` (:doc:`apidoc`) keeps the
+``conf.py`` is yours, and ``scmd apidoc`` (:doc:`apidoc`) keeps the
 API pages up to date. The options are in :doc:`../reference/cli`.
 
 A first look
@@ -18,7 +18,7 @@ prints what it would write, then the report:
 
 .. code-block:: console
 
-   $ sphinx-matlab-quickstart -n
+   $ scmd quickstart --dry-run
 
 The report lists:
 
@@ -41,7 +41,7 @@ them back:
 
 .. code-block:: console
 
-   $ sphinx-matlab-quickstart --answers sphinx-matlab-quickstart.toml
+   $ scmd quickstart --answers sphinx-matlab-quickstart.toml
 
 The questions
 -------------
@@ -204,7 +204,7 @@ inside the project):
    Git keeps no empty folder, and Sphinx warns about a missing
    ``_static``.
 ``API/``
-   The API pages, as ``sphinx-matlab-apidoc`` writes them from that
+   The API pages, as ``scmd apidoc`` writes them from that
    ``conf.py``.
 
 Outside it, it adds the docs dependencies to ``pyproject.toml`` in a uv
