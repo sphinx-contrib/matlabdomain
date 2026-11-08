@@ -32,16 +32,23 @@ The command reads ``conf.py`` instead (:doc:`../user-guide/apidoc`).
 Help text
 ---------
 
-* A mode that shows help as preformatted text instead of parsing it as
-  reStructuredText (:doc:`../user-guide/help-text`).
+* A mode that uses MATLAB markup instead of parsing help text as
+  reStructuredText (:doc:`../user-guide/help-text`). The
+  :doc:`specification <matlab-markup-spec>` and the
+  :doc:`plan <matlab-markup-plan>` are written; the work has not started.
 * A builder that writes the comments of ``arguments`` blocks into the
   inputs, outputs and name-value sections of the help text, so that
   MATLAB's ``help`` shows them and the two stay in step
   (:doc:`../user-guide/api-check`).
-* Checking which lines MATLAB itself treats as "See also" lines.
 
 MATLAB releases
 ---------------
 
 Releases before R2024a for :confval:`matlab_version`, each with the naming
 and callability rules MATLAB had then.
+
+.. toctree::
+   :hidden:
+
+   matlab-markup-spec
+   matlab-markup-plan
