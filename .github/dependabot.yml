@@ -8,7 +8,7 @@ updates:
     schedule:
         interval: quarterly
 
-    package-ecosystem: uv
+-   package-ecosystem: uv
     directory: /
     schedule:
         interval: quarterly
