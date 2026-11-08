@@ -222,7 +222,8 @@ with no signature (block names may hold parentheses). The page shows the
 description saved in the file or block (the mask description if it has
 none), the mask type, mask description and Help (a link when the Help is
 a URL, a ``web(...)`` call or a ``simulinkDocumentationLinker`` call for
-another object), the metadata of :confval:`matlab_simulink_metadata`, the
+another object; left out when it repeats the description), the metadata of
+:confval:`matlab_simulink_metadata`, the
 mask parameters (like a function's input arguments) and a table of the
 ports (columns that inherit everything are left out). The signature
 names the kind: *Simulink model* ``probeModel``, *Simulink library block*
