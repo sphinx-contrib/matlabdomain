@@ -34,6 +34,13 @@ earlier" in the documentation.
 * Drop support for Sphinx <=7.x.
 * Fix: a "See also" in the middle of a docstring line is prose and is no
   longer auto-linked; only a line starting with "See also" is.
+* Folders whose names start with ``_`` are documented like any other folder
+  (projects use the prefix to sort them; #337). Only hidden folders
+  (``.git``) and Sphinx output are skipped: the ``_build`` folder of the
+  Sphinx source folder, and folders with Sphinx's ``.buildinfo``,
+  ``environment.pickle`` or ``doctrees``. ``scmd apidoc`` pages and stable
+  addresses escape a folder's leading ``_`` (``_util/`` -> ``~5Futil/``),
+  so no output folder starts with ``_``.
 * Fix: a Sphinx warning about help text names the file and the line of the
   help in it (``<file>:docstring of <reference>:<line>``), not a made-up path
   and the index of the line in the help; for a Simulink file, the line within

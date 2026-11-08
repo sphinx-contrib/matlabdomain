@@ -135,8 +135,15 @@ def _simulink_docs_below(folder, suffixes):
     folder inside the project root), without the index stage.
     """
     found = []
+    build_dir = os.path.join(folder, mat_types.BUILD_FOLDER)
     for dirpath, dirnames, filenames in os.walk(folder):
-        dirnames[:] = [d for d in dirnames if not d.startswith((".", "_"))]
+        if dirpath != folder and (
+            dirpath == build_dir
+            or mat_types.sphinx_output(dirpath, dirnames + filenames)
+        ):
+            dirnames[:] = []
+            continue
+        dirnames[:] = [d for d in dirnames if not d.startswith(".")]
         stems = {
             os.path.splitext(name)[0]
             for name in filenames

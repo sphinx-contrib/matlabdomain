@@ -115,6 +115,38 @@ def test_settings_are_frozen(tmp_path):
         cast(Any, settings).root = "elsewhere"
 
 
+def test_underscore_folders_and_sphinx_output(tmp_path):
+    """Folders starting with ``_`` are searched (projects sort with them);
+    hidden folders and Sphinx output, which copies MATLAB files, are not.
+    """
+    write(
+        tmp_path,
+        {
+            "_01_intro/a.m": FUNCTION.format(name="a", help="A"),
+            "+pkg/_util/b.m": FUNCTION.format(name="b", help="B"),
+            ".hidden/c.m": FUNCTION.format(name="c", help="C"),
+            "docs/_build/d.m": FUNCTION.format(name="d", help="D"),
+            "docs/_static/e.m": FUNCTION.format(name="e", help="E"),
+            "build/html/.buildinfo": "",
+            "build/html/_downloads/f.m": FUNCTION.format(name="f", help="F"),
+            "out/.doctrees/environment.pickle": b"",
+            "out/g.m": FUNCTION.format(name="g", help="G"),
+            "make/doctrees/environment.pickle": b"",
+            "make/latex/h.m": FUNCTION.format(name="h", help="H"),
+        },
+    )
+    settings = IndexSettings(str(tmp_path), source_dir=str(tmp_path / "docs"))
+    source_index = build_index(settings)
+    assert refs(source_index) == ["+pkg/_util/b.m", "_01_intro/a.m", "docs/_static/e.m"]
+    assert "build/" in source_index.entities
+    assert "build/html/" not in source_index.entities
+    assert "out/" not in source_index.entities
+    assert "make/" not in source_index.entities
+    records = {r["reference"]: r for r in source_index.index.values()}
+    assert records["_01_intro/a.m"]["matlab_name"] == "a"
+    assert records["+pkg/_util/b.m"]["matlab_name"] == "b"
+
+
 @pytest.mark.parametrize(
     "confoverrides",
     [

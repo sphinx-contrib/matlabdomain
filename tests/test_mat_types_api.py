@@ -35,6 +35,7 @@ FILES = {
     ),
     "sub/g.m": "function g\n% G HELP\nend\n",
     "_build/h.m": "function h\nend\n",
+    "_build/doctrees/environment.pickle": b"",
     ".git/i.m": "function i\nend\n",
     "notes.txt": "not MATLAB\n",
 }

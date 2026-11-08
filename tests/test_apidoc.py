@@ -173,6 +173,7 @@ def project(tmp_path):
         ("auxiliary", "auxiliary"),
         ("x.", "x~2E"),
         ("nul.", "~6Eul~2E"),
+        ("_x.m", "_x.m"),
     ],
 )
 def test_escape_segment(segment, expected):
@@ -195,6 +196,18 @@ def test_docnames_mirror_the_folder_tree():
         "a/+p/Cls.m": "a/+p/Cls.m",
         "Top.m": "Top.m",
         "a/@C/sub/f.m": "a/@C/sub/f.m",
+    }
+    assert collisions == []
+
+
+def test_docnames_escape_a_leading_underscore_of_folders():
+    refs = ["_util/", "_util/_x.m", "a/__b/c.m", "_y.m"]
+    names, collisions = _names.docnames(refs)
+    assert names == {
+        "_util/": "~5Futil/index",
+        "_util/_x.m": "~5Futil/_x.m",
+        "a/__b/c.m": "a/~5F_b/c.m",
+        "_y.m": "_y.m",
     }
     assert collisions == []
 

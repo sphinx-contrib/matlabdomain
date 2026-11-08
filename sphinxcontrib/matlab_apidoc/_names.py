@@ -14,7 +14,9 @@ functions of path references: the same names on every OS.
   the mapping is injective.
 - Windows device names (``CON``, ``AUX``, ``COM1``, ... in any case, before
   the first ``.``) get their first character escaped; a trailing ``.`` is
-  escaped.
+  escaped. A folder's leading ``_`` is escaped (``_util/`` -> ``~5Futil/``):
+  output folders never start with ``_``, which Sphinx and static site hosts
+  treat as their own.
 - Siblings whose output names differ only by case get the uppercase letters
   of all of them escaped (``Utils`` -> ``~55tils``).
 - A folder named exactly like a sibling page file gets its last dot
@@ -105,6 +107,8 @@ def docnames(references, suffix="rst", tocfile="index"):
         by_name: dict[str, list[tuple[str, str] | None]] = {page.lower(): [None]}
         for kind, raw in sorted(kids):
             out = escape_segment(raw)
+            if kind == _DIR and out.startswith("_"):
+                out = _escape_char("_") + out[1:]
             # Exact only: case-only clashes keep their earlier names.
             if kind == _DIR and out in files:
                 clash = [(_FILE, file) for file in files[out]]

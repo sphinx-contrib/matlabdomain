@@ -175,7 +175,8 @@ class _DetachedEntityStore:
         parts = [] if ref == ROOT_REFERENCE else ref.rstrip("/").split("/")
         path = os.path.join(cast(str, MatObject.basedir), *parts)
         if ref.endswith("/"):
-            if not os.path.isdir(path) or (parts and parts[0][:1] in ("_", ".")):
+            top = os.path.join(cast(str, MatObject.basedir), parts[0]) if parts else ""
+            if not os.path.isdir(path) or (parts and skipped_folder(top, parts[0])):
                 return None
             return MatModule(os.path.basename(path), path, ref)
         handler = handler_for(path)
@@ -586,6 +587,38 @@ def file_like_folder(name):
         if len(lowered) > len(extension) and lowered.endswith(extension):
             return extension
     return None
+
+
+#: files Sphinx writes into its output folders: HTML builders and doctrees
+SPHINX_OUTPUT_MARKERS = frozenset((".buildinfo", "environment.pickle"))
+#: the build folder of the Makefile and make.bat of a Sphinx source folder
+BUILD_FOLDER = "_build"
+
+
+def sphinx_output(path, names):
+    """Return True if the folder ``path`` with the entries ``names`` is Sphinx
+    output, which holds copies of MATLAB files (``_downloads``): it has a
+    marker file, or a ``doctrees`` or ``.doctrees`` folder with one (the
+    output folder of any builder, ``_build`` of ``make``).
+    """
+    if not SPHINX_OUTPUT_MARKERS.isdisjoint(names):
+        return True
+    return any(
+        name in names and os.path.isfile(os.path.join(path, name, "environment.pickle"))
+        for name in ("doctrees", ".doctrees")
+    )
+
+
+def skipped_folder(path, name):
+    """Return True if the folder ``path`` (named ``name``) is never searched:
+    a hidden folder (``.git``) or Sphinx output.
+    """
+    if name.startswith("."):
+        return True
+    try:
+        return sphinx_output(path, os.listdir(path))
+    except OSError:
+        return False
 
 
 def _warn(subtype, message, location=None):
@@ -1015,6 +1048,12 @@ class _Indexer:
         ):
             docs = None
         self.docs = docs
+        # make's build folder (BUILDDIR = _build) exists before the first build
+        self.build_dir = None
+        if settings.source_dir is not None:
+            self.build_dir = os.path.normcase(
+                os.path.join(settings.source_dir, BUILD_FOLDER)
+            )
 
     def run(self):
         root = MatModule(os.path.basename(self.basedir), self.basedir, ROOT_REFERENCE)
@@ -1023,12 +1062,16 @@ class _Indexer:
         self.descend(root)
 
     def descend(self, mod):
-        for _, ref in mod.members:
+        kept = []
+        for name, ref in mod.members:
             if ref[-1:] == "/":
                 child = self.pending.pop(ref)
+                if not self.list(child):  # a Sphinx output folder
+                    continue
                 self.out.entities[ref] = child
-                self.list(child)
                 self.descend(child)
+            kept.append((name, ref))
+        mod.members = kept
 
     def outside(self, path, ref):
         real = os.path.realpath(path)
@@ -1042,6 +1085,9 @@ class _Indexer:
         return True
 
     def list(self, mod):
+        """List the folder ``mod`` into its members; return False, with no
+        members, if it is a Sphinx output folder.
+        """
         mod.members = []
         try:
             keys = os.listdir(mod.path)
@@ -1051,7 +1097,9 @@ class _Indexer:
                 f"{mod.ref} cannot be read ({err.strerror or err}); its contents "
                 "are not documented.",
             )
-            return
+            return True
+        if mod.ref != ROOT_REFERENCE and sphinx_output(mod.path, keys):
+            return False
         sidecars = bool(self.sidecar_suffixes) and not (
             self.docs is not None and _within(mod.path, self.docs)
         )
@@ -1071,14 +1119,14 @@ class _Indexer:
             try:
                 st = os.stat(path)
             except PermissionError as err:  # e.g. a folder listed but not entered
-                if not key.startswith((".", "_")):  # skipped folders stay quiet
+                if not key.startswith("."):  # skipped folders stay quiet
                     denied.append(err)
                 continue
             except OSError:  # e.g. a broken link
                 continue
             if stat.S_ISDIR(st.st_mode):
-                # "." (VCS and editors) and "_" (Sphinx build/temp folders)
-                if key.startswith((".", "_")):
+                # VCS and editors; Sphinx output (more in list())
+                if key.startswith(".") or os.path.normcase(path) == self.build_dir:
                     continue
                 ref += "/"
                 if not self.sources.walks(ref):
@@ -1134,6 +1182,7 @@ class _Indexer:
                 f"{mod.ref}: {len(denied)} entries cannot be accessed "
                 f"({denied[0].strerror or denied[0]}); they are not documented.",
             )
+        return True
 
     def index_file(self, handler, path, ref, st):
         key = (path, st.st_mtime_ns, st.st_size)
@@ -1729,7 +1778,7 @@ class MatModule(MatObject):
                 path = os.path.join(self.path, key)
                 ref = join_reference(self.ref, unicodedata.normalize("NFC", key))
                 if os.path.isdir(path):
-                    if not key.startswith((".", "_")) and not file_like_folder(key):
+                    if not skipped_folder(path, key) and not file_like_folder(key):
                         self.members.append((key, f"{ref}/"))
                 elif handler_for(path) is not None:
                     self.members.append((os.path.splitext(key)[0], ref))

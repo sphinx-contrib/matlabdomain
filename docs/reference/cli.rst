@@ -256,8 +256,10 @@ created if needed, with the suffix ``rst`` (``SUFFIX``):
 * Each path segment keeps ``A-Z a-z 0-9 _ . + @ -``; every other character
   becomes ``~XX`` per UTF-8 byte. Windows device names (``CON``, ``NUL``,
   ``COM1``, ...) and a trailing ``.`` get their first or last character
-  escaped. Siblings whose names differ only by case get their uppercase
-  letters escaped, with a ``mat.apidoc`` warning.
+  escaped, and a folder's leading ``_`` is escaped (``_util/`` ->
+  ``~5Futil/``), so no output folder starts with ``_``. Siblings whose
+  names differ only by case get their uppercase letters escaped, with a
+  ``mat.apidoc`` warning.
 * Files are UTF-8 with ``\n`` line ends on every system.
 * With :confval:`matlab_apidoc_remove_old` (default ``True``), files with
   ``SUFFIX`` below ``OUTPUT_DIR`` that start with the marker line ``..
