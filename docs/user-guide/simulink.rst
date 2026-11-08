@@ -103,6 +103,30 @@ the description; the description stays the short summary.
 * Relative links, images and includes work as in :doc:`sidecars`, but a
   documentation file is not a sidecar doc: it has no page of its own.
 
+Example
+-------
+
+The sample project of this documentation has a library,
+``simulink/shapeBlocks.slx``, with a documentation file
+``simulink/shapeBlocks.rst``, and a model, ``simulink/shapeAreas.slx``,
+that uses one of its blocks:
+
+.. code-block:: rst
+
+   .. mat:autosimulink_library:: shapeBlocks
+      :members:
+
+   .. mat:autosimulink_model:: shapeAreas
+      :references:
+
+gives:
+
+.. mat:autosimulink_library:: shapeBlocks
+   :members:
+
+.. mat:autosimulink_model:: shapeAreas
+   :references:
+
 The Help button
 ---------------
 

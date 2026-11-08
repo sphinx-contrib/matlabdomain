@@ -4,7 +4,9 @@ Tools that keep the Simulink reader (`sphinxcontrib/mat_simulink/`) and the
 formats page (`docs/developer-guide/simulink-file-formats.rst`) current.
 The fixtures and their oracle are written by
 `tests/simulink/make_fixtures.m`; the unit tests are
-`tests/test_mat_simulink.py` and `tests/test_simulink_index.py`.
+`tests/test_mat_simulink.py` and `tests/test_simulink_index.py`. The
+Simulink files of the documentation's sample project (`docs/src/simulink/`)
+are written by `tests/simulink/make_docs_sample.m`, in R2024a.
 
 | File | Purpose |
 |---|---|
