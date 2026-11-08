@@ -16,6 +16,8 @@ earlier" in the documentation.
   dependency groups (``dev``, which includes ``test`` and ``docs``);
   ``uv sync`` installs ``dev``. With pip: ``pip install -e . --group dev``
   (pip 25.1 or later). Only the ``markdown`` extra remains.
+* Jason H. Nicholson, author of the 1.0 rewrite, maintains the project;
+  Jørgen Cederberg is a former maintainer (``AUTHORS``).
 
 * The documentation is rewritten: getting started, a user guide, a reference
   of every configuration value, directive, role, option and warning, and a

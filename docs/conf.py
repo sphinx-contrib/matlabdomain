@@ -15,8 +15,8 @@
 # -- Project information -----------------------------------------------------
 
 project = "sphinxcontrib-matlabdomain"
-copyright = "Jørgen Cederberg and contributors"
-author = "Jørgen Cederberg and contributors"
+copyright = "the sphinxcontrib-matlabdomain team (see AUTHORS)"
+author = "Mark Mikofski, Jørgen Cederberg, Jason H. Nicholson and contributors"
 
 # The short X.Y version
 version = ""
@@ -102,7 +102,7 @@ latex_documents = [
         master_doc,
         "sphinxcontrib-matlabdomain.tex",
         "sphinxcontrib-matlabdomain Documentation",
-        "Jorgen Cederberg",
+        author,
         "manual",
     ),
 ]

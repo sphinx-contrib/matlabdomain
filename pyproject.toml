@@ -17,7 +17,6 @@ docs = [
     "sphinxcontrib-mermaid"
 ]
 test = [
-    "defusedxml>=0.7.1",
     "pytest>=9",
     "pytest-cov",
     "pytest-randomly"
@@ -25,7 +24,9 @@ test = [
 
 [project]
 authors = [
-    { name = "Jørgen Cederberg", email = "jorgen@cederberg.be" }
+    { name = "Mark Mikofski" },
+    { name = "Jørgen Cederberg" },
+    { name = "Jason H. Nicholson", email = "github@jasonhnicholson.com" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -52,6 +53,9 @@ dependencies = [
 description = 'Sphinx "matlabdomain" extension'
 dynamic = ["version"]
 license = "BSD-2-Clause"
+maintainers = [
+    { name = "Jason H. Nicholson", email = "github@jasonhnicholson.com" }
+]
 name = "sphinxcontrib-matlabdomain"
 readme = "README.rst"
 requires-python = ">=3.11"

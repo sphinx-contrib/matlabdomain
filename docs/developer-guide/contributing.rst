@@ -17,7 +17,7 @@ The project uses `uv <https://docs.astral.sh/uv/>`_ and a lock file
    $ uv run pre-commit install
 
 ``uv sync`` installs the ``dev`` dependency group: the ``test`` group
-(pytest, coverage, defusedxml), the ``docs`` group (the theme the
+(pytest, coverage), the ``docs`` group (the theme the
 documentation uses, `Furo <https://pradyunsg.me/furo/>`_, and Mermaid), and
 pre-commit, tox, Ruff, Pyright and sphinx-autobuild. ``--all-extras`` adds
 Markdown support (the ``markdown`` extra). Run
