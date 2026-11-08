@@ -11,9 +11,7 @@ from typing import Any, cast
 import tree_sitter as ts
 import tree_sitter_matlab as tsml
 
-SRC = (
-    Path(__file__).resolve().parents[2] / "gauntlet" / "repos" / "vhlab-toolbox-matlab"
-)
+SRC = Path(__file__).resolve().parents[2] / "repos" / "vhlab-toolbox-matlab"
 Q_IS_FUNCTION = r"""(source_file [(comment) "\n"]* (function_definition))"""
 Q_IS_CLASS = "(class_definition)"
 Q_FUN = r"""(function_definition

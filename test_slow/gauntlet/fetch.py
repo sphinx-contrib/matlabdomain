@@ -1,4 +1,4 @@
-"""Fetch or update the gauntlet's checkouts (repos/<name>) and write the lock file.
+"""Fetch or update the gauntlet's checkouts (../repos/<name>) and write the lock.
 
 Usage, from anywhere:
   python test_slow/gauntlet/fetch.py [NAME ...] [--update] [--reset] [--projects FILE]

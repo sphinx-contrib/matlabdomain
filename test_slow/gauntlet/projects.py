@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPOS = HERE / "repos"
+REPOS = HERE.parent / "repos"
 LIST = HERE / "projects.toml"
 _KEYS = {"url", "commit", "root", "submodules", "enabled", "parallel_may_differ"}
 # names are folder names and bare TOML keys; refs and URLs must not look like options

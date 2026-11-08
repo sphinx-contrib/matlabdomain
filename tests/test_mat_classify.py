@@ -227,10 +227,10 @@ def _corpus_path(fullpath):
             return Path(root, *matlab_tail.split("/"))
     if not sep:
         return Path(fullpath)
-    # The checkouts moved from artifacts/<name>/repo/ to gauntlet/repos/<name>/.
+    # The checkouts moved from artifacts/<name>/repo/ to repos/<name>/.
     parts = tail.split("/")
     if parts[0] == "artifacts" and parts[2:3] == ["repo"]:
-        parts = ["gauntlet", "repos", parts[1], *parts[3:]]
+        parts = ["repos", parts[1], *parts[3:]]
     return _REPO / "test_slow" / Path(*parts)
 
 

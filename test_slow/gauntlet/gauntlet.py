@@ -5,7 +5,7 @@ Usage, from anywhere (fetch.py first; this script fetches nothing):
       [--jobs] [--variant {all,api,conf}] [--projects FILE]
 
 For each enabled project in the list (NAME arguments keep the projects whose
-name contains one of them), on its checkout repos/<name>:
+name contains one of them), on its checkout test_slow/repos/<name>:
 - generates N times (default 3) into fresh folders, each with a conf.py
   (the checkout as the root, the folder as the output): exit code, wall
   time and the CLI summary; CLI warnings by subtype

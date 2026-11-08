@@ -1,5 +1,5 @@
 # The real-project gauntlet's projects. fetch.py checks each one out into
-# repos/<name>; gauntlet.py builds the enabled ones. In [projects.<name>],
+# ../repos/<name>; gauntlet.py builds the enabled ones. In [projects.<name>],
 # <name> is the checkout folder (letters, digits, - and _). Keys:
 # url: the Git remote (required).
 # commit: a SHA (best in full) or a tag. Without it, the default branch HEAD

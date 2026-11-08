@@ -7,7 +7,7 @@ from tree_sitter import Language, Parser
 
 FILE = str(
     Path(__file__).resolve().parents[2]
-    / "gauntlet/repos/vhlab-toolbox-matlab/+vlt/+plot/hist2d.m"
+    / "repos/vhlab-toolbox-matlab/+vlt/+plot/hist2d.m"
 )
 Q = r"""(function_definition
     _*

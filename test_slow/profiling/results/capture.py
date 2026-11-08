@@ -28,7 +28,7 @@ import time
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parents[2]
-FIXTURE = REPO / "test_slow" / "gauntlet" / "repos" / "vhlab-toolbox-matlab"
+FIXTURE = REPO / "test_slow" / "repos" / "vhlab-toolbox-matlab"
 
 
 def _git(*cmd):

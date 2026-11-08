@@ -4,7 +4,7 @@
 
 Use it on the models that ship with a new MATLAB release
 (``<matlabroot>/toolbox``) and on real projects (the gauntlet's
-``repos/``). Files are read once per content (SHA-256). It prints the
+``test_slow/repos/``). Files are read once per content (SHA-256). It prints the
 kinds and layouts, the mask forms, the average time to classify and to
 read a file, the slowest files and every error; ``--csv`` writes one row
 per file. Exit 1 if the reader crashed (an exception other than

@@ -16,5 +16,5 @@ htmlcov
 coverage.xml
 build/
 dist/
-test_slow/gauntlet/repos/
+test_slow/repos/
 test_slow/gauntlet/runs/

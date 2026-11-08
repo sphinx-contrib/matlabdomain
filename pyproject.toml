@@ -118,7 +118,7 @@ exclude = [
     "tests/test_data",
     "tests/test_docs",
     "tests/quickstart_golden",
-    "test_slow/gauntlet/repos",
+    "test_slow/repos",
     "test_slow/gauntlet/runs"
 ]
 include = ["sphinxcontrib", "tests", "docs", "examples", "skills", "test_slow"]
@@ -140,7 +140,7 @@ extend-exclude = [
     "tests/test_data",
     "tests/test_docs",
     "tests/quickstart_golden",
-    "test_slow/gauntlet/repos",
+    "test_slow/repos",
     "test_slow/gauntlet/runs"
 ]
 force-exclude = true

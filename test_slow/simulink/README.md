@@ -29,7 +29,7 @@ Then, in the project's environment (on Windows use `.venv\Scripts\python`):
 
 ```bash
 python test_slow/simulink/survey.py
-python test_slow/simulink/corpus.py <matlabroot>/toolbox test_slow/gauntlet/repos
+python test_slow/simulink/corpus.py <matlabroot>/toolbox test_slow/repos
 python -m pytest tests/test_mat_simulink.py tests/test_simulink_index.py
 ```
 

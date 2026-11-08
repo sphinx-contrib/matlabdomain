@@ -6,6 +6,7 @@ collect them.
 | Folder | Purpose |
 |---|---|
 | `gauntlet/` | The real-project gauntlet: `sphinx-matlab-apidoc` and `sphinx-build` on real MATLAB projects. Details: [gauntlet/README.md](gauntlet/README.md). |
+| `repos/` | The gauntlet's checkouts (`fetch.py` creates it; ignored by Git). |
 | `profiling/` | The profiling harness (a parse sweep and a `sphinx-build` of vhlab-toolbox-matlab, from the gauntlet's checkouts) and its recorded results. |
 | `naming/` | `compare_render.py`: snapshots the rendered anchors, links, inventories and warnings of the test roots and docs, and compares two code versions. |
 | `integrations/` | Probes with sphinx-multiproject, one search over several sites (Pagefind) and sphinx-multiversion. Details: [integrations/README.md](integrations/README.md). |
@@ -18,7 +19,7 @@ checkouts (about 5 GB for the 14 projects). Run from the `matlabdomain`
 repo root in the project's environment (`uv sync --all-extras`; on Windows
 use `.venv\Scripts\python` for `python`).
 
-1. Fetch the projects in `gauntlet/projects.toml` into `gauntlet/repos/`.
+1. Fetch the projects in `gauntlet/projects.toml` into `repos/`.
    Existing checkouts are reused; nothing is cloned twice.
 
    ```bash

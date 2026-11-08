@@ -8,12 +8,13 @@ differences. Added in Phase 8 (14 projects, about 24,000 `.m` files).
 |---|---|
 | `projects.toml` | The project list: name, Git URL, optional commit and options. Edit it to change what is tested. |
 | `projects.lock.toml` | Written by `fetch.py`: the commit of each checkout. Commit it so other machines and later runs use the same commits. |
-| `fetch.py` | Clones a missing project into `repos/<name>` and moves an existing checkout to its commit. |
+| `fetch.py` | Clones a missing project into `../repos/<name>` and moves an existing checkout to its commit. |
 | `gauntlet.py` | Runs the gauntlet on the checkouts and writes `results.json` (the summary) and `manifest.json`. Clones nothing. |
 | `compare.py` | Compares two runs, or a run and a saved summary. |
 | `summaries/` | Saved summaries (`results.json` files); the Phase 8 and Phase 9 Windows and Linux runs. |
 
-`repos/` (checkouts) and `runs/` (output) are ignored by Git.
+`test_slow/repos/` (checkouts, shared with the profiling and Simulink tools) and
+`runs/` (output) are ignored by Git.
 
 ## Run
 
@@ -71,8 +72,11 @@ Checkouts from before this folder existed (`test_slow/artifacts/<name>/repo`)
 can be moved instead of fetched again:
 
 ```bash
-for d in test_slow/artifacts/*/repo; do n=$(basename "$(dirname "$d")"); mv "$d" "test_slow/gauntlet/repos/$n"; done
+for d in test_slow/artifacts/*/repo; do n=$(basename "$(dirname "$d")"); mv "$d" "test_slow/repos/$n"; done
 ```
+
+Checkouts from before `test_slow/repos` existed (`test_slow/gauntlet/repos`) can
+be moved the same way: `mv test_slow/gauntlet/repos test_slow/repos`.
 
 ## Expected (Phase 9, `summaries/`)
 

@@ -52,7 +52,7 @@ def records(text):
 
 
 def normalize(record, name):
-    root = r"[^\s'\"]*?test_slow[\\/]+gauntlet[\\/]+repos[\\/]+" + re.escape(name)
+    root = r"[^\s'\"]*?test_slow[\\/]+(?:gauntlet[\\/]+)?repos[\\/]+" + re.escape(name)
     record = re.sub(root, "<ROOT>", record)
     record = re.sub(
         r"[^\s'\"]*?[\\/]" + re.escape(name) + r"[\\/]+trial0", "<DOCS>", record

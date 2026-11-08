@@ -19,7 +19,7 @@ Usage
     python test_slow/profiling/profile_build.py [SRC_DIR]
 
 Defaults ``SRC_DIR`` to the largest bundled fixture
-(``../gauntlet/repos/vhlab-toolbox-matlab``). Writes cProfile stats to
+(``../repos/vhlab-toolbox-matlab``). Writes cProfile stats to
 ``before.prof`` and prints top cumulative-time functions plus a parse-failure
 summary. Inspect interactively with::
 
@@ -78,7 +78,7 @@ from pathlib import Path
 from sphinxcontrib.mat_types import MatObject
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_SRC = HERE / ".." / "gauntlet" / "repos" / "vhlab-toolbox-matlab"
+DEFAULT_SRC = HERE / ".." / "repos" / "vhlab-toolbox-matlab"
 PROFILE_OUT = HERE / "before.prof"
 
 _failures: list[tuple[str, str]] = []

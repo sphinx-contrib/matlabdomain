@@ -16,7 +16,7 @@ extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
 
 # Largest bundled fixture: vhlab-toolbox-matlab (~1726 .m files).
 matlab_src_code_project_root = os.path.normpath(
-    os.path.join(_here, "..", "gauntlet", "repos", "vhlab-toolbox-matlab")
+    os.path.join(_here, "..", "repos", "vhlab-toolbox-matlab")
 )
 
 master_doc = "index"
