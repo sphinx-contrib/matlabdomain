@@ -1,0 +1,71 @@
+# master and tags: no tests (pull requests and the monthly run test). Each
+# push builds the sdist and wheel and smoke-tests the installed wheel; a
+# release tag of the upstream repository publishes those same files.
+name: Push master
+
+on:
+  push:
+    branches: [master]
+    tags: ["[0-9]*"]  # release tags are bare versions: 0.22.1
+  workflow_dispatch:
+
+concurrency:
+  group: push-master-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: read
+
+jobs:
+
+  build:
+    name: Build and smoke-test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 0  # setuptools_scm derives the version from git
+        persist-credentials: false
+    - name: The tag is on master
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        git fetch --no-tags origin master
+        git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+    - name: Build a wheel and source distribution
+      run: uv build
+    - name: Install the wheel without the checkout
+      run: |
+        # tree-sitter<0.23 has no wheels for the newest Python.
+        uv venv --python 3.12 "$RUNNER_TEMP/smoke"
+        uv pip install --python "$RUNNER_TEMP/smoke" dist/*.whl
+        cd "$RUNNER_TEMP"
+        smoke/bin/python -c "import sphinxcontrib.matlab"
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: dist
+        path: dist
+
+  publish:
+    name: Publish to PyPI and GitHub
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') && github.repository == 'sphinx-contrib/matlabdomain'
+    runs-on: ubuntu-latest
+    # Protection rules of the environment decide who and which tags may publish.
+    environment: pypi
+    permissions:
+      contents: write  # the GitHub release
+    steps:
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: dist
+        path: dist
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Release to GitHub
+      uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
+      with:
+        files: dist/*
