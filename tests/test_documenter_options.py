@@ -472,6 +472,30 @@ def test_auto_links_keep_the_markup_valid(make_app, tmp_path):
     assert "See also fsig{}" in text
 
 
+def test_auto_links_see_also_at_line_start(make_app, tmp_path):
+    # "See also" mid-line is prose; only a line starting with it is linked.
+    calls = (
+        "function calls\n% CALLS HELP\n%\n"
+        "% Calls sub. See also nosuchthing, fnone\n%\n"
+        "%   See also Sig\nend\n"
+    )
+    app = build(
+        make_app,
+        tmp_path,
+        page(".. mat:autofunction:: calls\n"),
+        files={**FILES, "calls.m": calls},
+        matlab_auto_link="all",
+        add_function_parentheses=False,
+    )
+    doctree = app.env.get_doctree("index")
+    targets = [n["reftarget"] for n in doctree.findall(addnodes.pending_xref)]
+    assert "Sig.m" in targets
+    # unknown names are literal only when a See also line parses them
+    literals = [n.astext() for n in doctree.findall(nodes.literal)]
+    assert "nosuchthing" not in literals
+    assert "Calls sub. See also nosuchthing, fnone" in doctree.astext()
+
+
 def test_auto_links_skip_names_in_markup(make_app, tmp_path):
     # A name in a "See also" literal (``Runner/go``) or between MATLAB's
     # ``|code|`` bars is not linked: a role inside would break the markup.

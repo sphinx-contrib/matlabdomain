@@ -317,7 +317,7 @@ class MatlabDocumenter(PyDocumenter):
 
     def auto_link_see_also(self, docstrings):
         # autolink known names in See also
-        see_also_re = re.compile(r"(See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
+        see_also_re = re.compile(r"^(\s*See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
         see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
         is_see_also_line = False
         for i in range(len(docstrings)):

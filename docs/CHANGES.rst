@@ -19,6 +19,8 @@ earlier" in the documentation.
 
 * Drop support for Python <=3.10.
 * Drop support for Sphinx <=7.x.
+* Fix: a "See also" in the middle of a docstring line is prose and is no
+  longer auto-linked; only a line starting with "See also" is.
 * **Breaking:** a folder named like a file the extension reads (``.m``,
   ``.mlapp``, ``.slx``, ``.mdl``, ``.xml``, ``.md``, ``.rst``, any case) is
   not documented and logs the error ``mat.folder_name``: references and
