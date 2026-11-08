@@ -166,6 +166,8 @@ when adding, removing or moving a maintained configuration file.
   Ruff applies safe fixes only. Run ``uv run pre-commit run --all-files``;
   inspect and rerun after automatic fixes. Pyright runs in tox/CI rather than
   once per staged file, since it needs the complete project environment.
+  ``mixed-line-ending`` runs last so one run also fixes the CRLF that the
+  TOML formatter writes on Windows.
 ``.github/codespell_ignore_words.txt``
   Hand-maintained project vocabulary for codespell, referenced by
   ``tool.codespell``. Add legitimate words, not misspellings; check with the
@@ -193,6 +195,8 @@ when adding, removing or moving a maintained configuration file.
   locally with the strict Sphinx build, then inspect the hosted build.
 ``.vscode/settings.json``
   Portable clone-level interpreter, workspace diagnostics and Ruff integration.
+  ``files.eol`` makes new files LF, as ``.gitattributes`` stores them, so
+  the line-ending hook has nothing to fix on Windows.
   Open the repository folder in VS Code, select its ``.venv`` interpreter and
   install Python/Pylance and Ruff. Pylance reads basic mode, Python 3.11 target
   and analysis scope from ``tool.pyright``; Ruff reads ``tool.ruff``. Parent

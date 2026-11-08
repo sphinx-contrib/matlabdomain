@@ -6,6 +6,13 @@ import sys
 
 from .matlab_apidoc import _cli as apidoc
 from .matlab_quickstart import _cli as quickstart
+from .matlab_skills import _cli as skills
+
+COMMANDS = {
+    "apidoc": (apidoc.main, "Generate API pages."),
+    "quickstart": (quickstart.main, "Set up documentation."),
+    "skills": (skills.main, "List or install the agent skills."),
+}
 
 
 def main(argv=None):
@@ -15,12 +22,10 @@ def main(argv=None):
         "-V", "--version", action="version", version=f"%(prog)s {apidoc._version()}"
     )
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("apidoc", add_help=False, help="Generate API pages.")
-    commands.add_parser("quickstart", add_help=False, help="Set up documentation.")
+    for name, (_, help_text) in COMMANDS.items():
+        commands.add_parser(name, add_help=False, help=help_text)
     args, remaining = parser.parse_known_args(argv)
-    return {"apidoc": apidoc.main, "quickstart": quickstart.main}[args.command](
-        remaining, prog=f"{prog} {args.command}"
-    )
+    return COMMANDS[args.command][0](remaining, prog=f"{prog} {args.command}")
 
 
 if __name__ == "__main__":

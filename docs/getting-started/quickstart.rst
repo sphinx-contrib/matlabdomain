@@ -150,7 +150,7 @@ Next steps
 * Link to functions and classes from your text: :doc:`../user-guide/referencing`.
 * Check that the help text describes every input and output:
   :doc:`../user-guide/api-check`.
-* Set up an existing MATLAB repository with an agent: the repository's
-  skill ``skills/setting-up-a-project/SKILL.md`` starts with
-  ``scmd quickstart`` and walks through the decisions and the
-  warnings step by step.
+* Set up an existing MATLAB repository with an agent:
+  ``scmd skills install setting-up-a-project`` copies the skill that
+  starts with ``scmd quickstart`` and walks through the decisions and the
+  warnings step by step (:program:`scmd skills install`).

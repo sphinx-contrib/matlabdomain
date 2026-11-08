@@ -8,7 +8,8 @@ instead of Python-style dotted module names, the project root replaces
 projects fail early with errors that name the replacement, so the changes
 below can be made one error at a time. :doc:`../CHANGES` lists every change.
 
-The repository's agent skill ``skills/migrating-from-0x/SKILL.md`` walks
+The agent skill ``migrating-from-0x`` (``scmd skills install
+migrating-from-0x``, :program:`scmd skills install`) walks
 through a migration step by step, with scripts that rewrite dotted names in
 pages, list files with comments above their declaration, and compare the
 objects of the 0.x and 1.0 builds.

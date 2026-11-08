@@ -3,8 +3,10 @@ Command-line tools
 
 The package provides one command, ``scmd`` (also installed as
 ``sphinxcontrib-matlabdomain``). Use ``scmd quickstart`` once to set up a project and
-``scmd apidoc`` whenever its API pages need updating. Run ``scmd --help``
-or ``scmd SUBCOMMAND --help`` for the available commands and options.
+``scmd apidoc`` whenever its API pages need updating; ``scmd skills``
+copies the agent skills that ship with the package into a project. Run
+``scmd --help`` or ``scmd SUBCOMMAND --help`` for the available commands
+and options.
 
 Every option has a short and a long spelling. Prefer long spellings in
 scripts and CI. Project settings belong in Sphinx's ``conf.py``; CLI
@@ -263,3 +265,80 @@ created if needed, with the suffix ``rst`` (``SUFFIX``):
   removed, with the folders this leaves empty. Files without the marker,
   files with other suffixes and folders whose names start with ``.`` or
   ``_`` are never touched.
+
+``scmd skills``
+---------------
+
+.. program:: scmd skills
+
+Synopsis
+~~~~~~~~
+
+.. code-block:: text
+
+   scmd skills list
+   scmd skills install [NAME ...] [--dest DIR] [--force]
+
+The package ships agent skills: folders with a ``SKILL.md`` (the `Agent
+Skills <https://agentskills.io/>`_ format) and the scripts it uses.
+``setting-up-a-project`` sets up documentation with ``scmd quickstart``;
+``migrating-from-0x`` migrates a 0.x project (:doc:`../user-guide/migration`).
+
+.. option:: COMMAND
+
+   ``list`` or ``install``.
+
+.. option:: -V, --version
+
+   Print the version and exit.
+
+.. option:: -h, --help
+
+   Print the help and exit.
+
+``scmd skills list``
+~~~~~~~~~~~~~~~~~~~~
+
+.. program:: scmd skills list
+
+Prints the name and description of each skill.
+
+.. option:: -h, --help
+
+   Print the help and exit.
+
+``scmd skills install``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. program:: scmd skills install
+
+Copies skill folders into the project's skill folder, each to
+``DIR/NAME``. Agent tools read a project's skills from their own folder:
+
+* GitHub Copilot (VS Code, Copilot CLI): ``.github/skills``, the default;
+* Claude: ``.claude/skills``;
+* OpenAI Codex: ``.agents/skills``.
+
+Run it from the project root and commit the folders to share them. Run it
+again with :option:`--force` after an upgrade of the package.
+
+.. option:: NAME
+
+   The skills to copy. Default: all.
+
+.. option:: -d DIR, --dest DIR
+
+   The project's skill folder. Default: ``.github/skills``.
+
+.. option:: -f, --force
+
+   Replace skill folders that exist. Without it, the command copies
+   nothing when one of the folders exists.
+
+.. option:: -h, --help
+
+   Print the help and exit.
+
+Exit status: 0 on success; 1 when a skill folder exists and
+:option:`--force` is not given; 2 for a usage error, such as an unknown
+skill name.

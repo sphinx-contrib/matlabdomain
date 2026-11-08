@@ -11,9 +11,6 @@ repos:
     -   id: check-toml
     -   id: check-yaml
     -   id: end-of-file-fixer
-    -   id: mixed-line-ending
-        args: [--fix=lf]
-        exclude: \.(bat|cmd)$
     -   id: trailing-whitespace
 
 -   repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
@@ -41,3 +38,11 @@ repos:
     rev: 0.12.5
     hooks:
     -   id: uv-lock
+
+# Last, so it also fixes the CRLF that pretty-format-toml writes on Windows.
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: \.(bat|cmd)$

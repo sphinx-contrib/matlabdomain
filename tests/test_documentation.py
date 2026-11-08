@@ -13,6 +13,7 @@ import pytest
 from sphinxcontrib.matlab import MATLABDomain
 from sphinxcontrib.matlab_apidoc._cli import get_parser
 from sphinxcontrib.matlab_quickstart._cli import get_parser as get_quickstart_parser
+from sphinxcontrib.matlab_skills._cli import get_parser as get_skills_parser
 
 REPO = Path(__file__).parents[1]
 REFERENCE = REPO / "docs" / "reference"
@@ -118,11 +119,22 @@ def program_options(program):
     return options
 
 
+def skills_subparser(name):
+    def parser():
+        action = get_skills_parser()._subparsers._group_actions[0]  # type: ignore[union-attr]
+        return action.choices[name]  # type: ignore[index]
+
+    return parser
+
+
 @pytest.mark.parametrize(
     ("program", "parser"),
     [
         ("scmd apidoc", get_parser),
         ("scmd quickstart", get_quickstart_parser),
+        ("scmd skills", get_skills_parser),
+        ("scmd skills list", skills_subparser("list")),
+        ("scmd skills install", skills_subparser("install")),
     ],
 )
 def test_command_line_options(program, parser):

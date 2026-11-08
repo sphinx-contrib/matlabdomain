@@ -46,6 +46,9 @@ Modules
        myst-parser renderer for Markdown sidecar docs and the link mapping.
    * - ``matlab_cli.py``
      - ``scmd``: the command and its subcommands.
+   * - ``matlab_skills/``
+     - ``scmd skills`` and the agent skills it copies, one folder with a
+       ``SKILL.md`` each.
    * - ``matlab_apidoc/``
      - ``scmd apidoc``: the command line, the page model, output
        names and the templates.
@@ -67,6 +70,7 @@ is imported). Most modules also use ``mat_naming.py`` and
      scmd(["scmd"]) --> cli["matlab_cli.py"]
      cli --> apidoc
      cli --> quickstart["matlab_quickstart/"]
+     cli --> skills["matlab_skills/"]
      quickstart --> apidoc
      matlab["matlab.py<br/>setup, MATLABDomain"] --> documenters["mat_documenters.py<br/>mat_directives.py"]
      matlab --> apicheck["mat_api_check.py"]

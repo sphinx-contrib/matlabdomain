@@ -9,8 +9,11 @@ versioning. It breaks with 0.x in many places: see "Migrating from 0.22 and
 earlier" in the documentation.
 
 * New command ``scmd`` (also installed as ``sphinxcontrib-matlabdomain``)
-  with the subcommands ``quickstart`` and ``apidoc``. All options have short
-  and long forms. Generated build scripts use ``scmd`` and long options.
+  with the subcommands ``quickstart``, ``apidoc`` and ``skills``. All
+  options have short and long forms. Generated build scripts use ``scmd``
+  and long options. ``scmd skills install`` copies the agent skills that
+  ship with the package (``setting-up-a-project``, ``migrating-from-0x``)
+  into a project, by default to ``.github/skills``.
 
 * Consolidate build, test and static-analysis policy in ``pyproject.toml``;
   document repository configuration and check its inventory. Add a shared

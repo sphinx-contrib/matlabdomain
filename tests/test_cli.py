@@ -10,6 +10,17 @@ import pytest
 from sphinxcontrib import matlab_cli
 from sphinxcontrib.matlab_apidoc import _cli as apidoc
 from sphinxcontrib.matlab_quickstart import _cli as quickstart
+from sphinxcontrib.matlab_skills import _cli as skills
+
+
+def parsers():
+    """Every parser of the subcommands, also those of ``scmd skills``."""
+    found = [apidoc.get_parser(), quickstart.get_parser()]
+    top = skills.get_parser()
+    found.append(top)
+    for action in top._subparsers._group_actions:  # type: ignore[union-attr]
+        found.extend(action.choices.values())  # type: ignore[union-attr]
+    return found
 
 
 @pytest.fixture(autouse=True)
@@ -22,15 +33,20 @@ def test_installed_entry_point(command):
     executable = Path(sys.executable).parent / (
         command + (".exe" if os.name == "nt" else "")
     )
-    for args in (["--version"], ["apidoc", "--help"], ["quickstart", "--help"]):
+    for args, expected in (
+        (["--version"], command),
+        (["apidoc", "--help"], command),
+        (["quickstart", "--help"], command),
+        (["skills", "list"], "setting-up-a-project"),
+    ):
         result = subprocess.run(
             [str(executable), *args], capture_output=True, text=True, check=False
         )
         assert result.returncode == 0, result.stderr
-        assert command in result.stdout
+        assert expected in result.stdout
 
 
-@pytest.mark.parametrize("command", ["apidoc", "quickstart"])
+@pytest.mark.parametrize("command", ["apidoc", "quickstart", "skills"])
 def test_subcommand_help(command, capsys):
     with pytest.raises(SystemExit) as exc:
         matlab_cli.main([command, "--help"])
@@ -44,7 +60,7 @@ def test_root_help_and_errors(capsys):
     with pytest.raises(SystemExit) as exc:
         matlab_cli.main(["--help"])
     assert exc.value.code == 0
-    assert "{apidoc,quickstart}" in capsys.readouterr().out
+    assert "{apidoc,quickstart,skills}" in capsys.readouterr().out
     for args in ([], ["unknown"], ["apidoc", "--unknown"]):
         with pytest.raises(SystemExit) as exc:
             matlab_cli.main(args)
@@ -52,7 +68,7 @@ def test_root_help_and_errors(capsys):
 
 
 def test_short_and_long_options():
-    for parser in (apidoc.get_parser(), quickstart.get_parser()):
+    for parser in parsers():
         for action in parser._actions:
             if action.option_strings:
                 assert any(option.startswith("--") for option in action.option_strings)
@@ -78,6 +94,9 @@ def test_short_and_long_options():
             "answers.toml",
         ]
     )
+    assert skills.get_parser().parse_args(
+        ["install", "-d", "x", "-f"]
+    ) == skills.get_parser().parse_args(["install", "--dest", "x", "--force"])
 
 
 def test_subcommands_run(tmp_path, capsys):
@@ -85,3 +104,5 @@ def test_subcommands_run(tmp_path, capsys):
     assert "scmd apidoc: error:" in capsys.readouterr().err
     assert matlab_cli.main(["quickstart", str(tmp_path / "missing"), "--quiet"]) == 2
     assert "scmd quickstart: error:" in capsys.readouterr().err
+    assert matlab_cli.main(["skills", "install", "missing"]) == 2
+    assert "scmd skills install: error:" in capsys.readouterr().err

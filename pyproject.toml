@@ -118,7 +118,8 @@ source_pkgs = [
     "sphinxcontrib.matlab",
     "sphinxcontrib.matlab_apidoc",
     "sphinxcontrib.matlab_cli",
-    "sphinxcontrib.matlab_quickstart"
+    "sphinxcontrib.matlab_quickstart",
+    "sphinxcontrib.matlab_skills"
 ]
 
 [tool.pyright]
@@ -134,7 +135,7 @@ exclude = [
     "test_slow/repos",
     "test_slow/gauntlet/runs"
 ]
-include = ["sphinxcontrib", "tests", "docs", "examples", "skills", "test_slow"]
+include = ["sphinxcontrib", "tests", "docs", "examples", "test_slow"]
 pythonVersion = "3.11"
 typeCheckingMode = "basic"
 
@@ -231,8 +232,11 @@ max-statements = 100
 "sphinxcontrib.mat_simulink" = ["matlab/+sphinxcontrib/+matlabdomain/*.m"]
 "sphinxcontrib.matlab_apidoc" = ["templates/*.jinja"]
 "sphinxcontrib.matlab_quickstart" = ["templates/*.jinja"]
+"sphinxcontrib.matlab_skills" = ["*/SKILL.md", "*/scripts/*.py"]
 
 [tool.setuptools.packages.find]
+# Skill folders are data: their names are not package names.
+exclude = ["sphinxcontrib.matlab_skills.*"]
 include = ["sphinxcontrib*"]
 
 [tool.setuptools_scm]
