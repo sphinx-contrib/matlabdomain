@@ -1,5 +1,4 @@
 {
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
     "python.analysis.diagnosticMode": "workspace",
     "ruff.configuration": "${workspaceFolder}/pyproject.toml",
     "ruff.importStrategy": "fromEnvironment",
