@@ -473,7 +473,7 @@ def _reporting_at(reporter, path):
     includes it).
     """
     original = reporter.get_source_and_line
-    reporter.get_source_and_line = lambda line: (path, line)
+    reporter.get_source_and_line = lambda line=None: (path, line)
     try:
         yield
     finally:

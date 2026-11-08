@@ -164,17 +164,41 @@ def process(app, what, name, obj, options, lines):
 """
 
 
-@pytest.mark.parametrize(("mode", "line"), [("replace", 4), ("insert", 2)])
-def test_processed_help_keeps_or_loses_its_lines(make_app, tmp_path, mode, line):
-    """Same number of lines: each keeps its file line; else every line has the
-    line the help starts on (here the second, after the summary line's).
-    """
+@pytest.mark.parametrize("mode", ["replace", "insert"])
+def test_processed_help_keeps_its_lines(make_app, tmp_path, mode):
+    """Lines a handler changes or adds leave the others at their file lines."""
     index = ".. mat:autofunction:: demo\n"
     found = build(
         make_app, tmp_path, {"demo.m": DEMO}, index, f'MODE = "{mode}"\n' + HANDLERS
     )
     src = tmp_path / "src" / "demo.m"
-    assert found[0].startswith(missing(src, f"docstring of demo.m:{line}", "noDemo"))
+    assert found[0].startswith(missing(src, "docstring of demo.m:4", "noDemo"))
+
+
+NAPOLEON = """\
+function napo(x)
+% NAPO Summary.
+%
+% Args:
+%     x: the input,
+%         on two lines
+%
+% Calls :mat:func:`noNapo` here.
+end
+"""
+
+
+def test_napoleon_sections_keep_the_lines_after_them(make_app, tmp_path):
+    index = ".. mat:autofunction:: napo\n"
+    found = build(
+        make_app,
+        tmp_path,
+        {"napo.m": NAPOLEON},
+        index,
+        'extensions = ["sphinxcontrib.matlab", "sphinx.ext.napoleon"]\n',
+    )
+    src = tmp_path / "src" / "napo.m"
+    assert found[0].startswith(missing(src, "docstring of napo.m:8", "noNapo"))
 
 
 def test_parsed_help_knows_its_file_line(tmp_path):

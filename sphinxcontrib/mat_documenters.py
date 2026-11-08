@@ -7,6 +7,7 @@ Extend autodoc directives to matlabdomain.
 :license: BSD, see LICENSE for details.
 """
 
+import difflib
 import json
 import re
 from typing import Any, cast
@@ -131,6 +132,26 @@ def _inline(match, markup):
     if end < len(text) and not (text[end].isspace() or text[end] in _MARKUP_AFTER):
         markup += "\\ "
     return markup
+
+
+def follow_lines(before, numbers, after, start):
+    """Return the line numbers of the lines ``after``, a changed copy of the
+    lines ``before`` numbered ``numbers``: a kept line keeps its number, a line
+    of a changed block has the number of the block's first line (or of its
+    own line if the block keeps its size), an added line that of the line
+    before it (``start`` at the beginning).
+    """
+    found, last = [], start
+    matcher = difflib.SequenceMatcher(None, before, after, autojunk=False)
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal" or (tag == "replace" and i2 - i1 == j2 - j1):
+            found += numbers[i1:i2]
+        elif tag == "replace":
+            found += [numbers[i1]] * (j2 - j1)
+        elif tag == "insert":
+            found += [last] * (j2 - j1)
+        last = found[-1] if found else start
+    return found
 
 
 class MatlabDocumenter(PyDocumenter):
@@ -265,15 +286,12 @@ class MatlabDocumenter(PyDocumenter):
             if self.env.config.matlab_auto_link:
                 docstrings = self.auto_link(docstrings)
             for docstring, lines in zip(docstrings, numbers, strict=True):
-                size = len(docstring)
+                before = list(docstring)
+                # ``autodoc-process-docstring`` handlers (napoleon) may change it
                 processed = list(self.process_doc([docstring]))
-                # Processing may add or remove lines: it leaves the line count
-                # (or one more, a trailing blank line) or all lines get the
-                # first help line, never a wrong one.
-                if not lines or len(processed) not in (size, size + 1):
-                    lines = lines[:1] or [self.help_start()]
-                for i, line in enumerate(processed):
-                    number = lines[min(i, len(lines) - 1)]
+                start = lines[0] if lines else self.help_start()
+                after = follow_lines(before, lines, processed, start)
+                for line, number in zip(processed, after, strict=True):
                     # ``add_line`` takes a zero-based offset; docutils adds one.
                     self.add_line(line, sourcename, number - 1)
 
@@ -305,29 +323,20 @@ class MatlabDocumenter(PyDocumenter):
 
     def help_line_numbers(self, docstrings):
         """For each line of ``docstrings`` (prepared help), its one-based line
-        in the file: the line of the next line of the object's help
-        (``help_sources``) that has the same words. A blank line, or one that
-        matches none (not help of the object itself), gets the line before.
+        in the file, found by comparing the words of the lines with the
+        object's help (``help_sources``; see ``follow_lines``).
         """
         raw = [
             ((first or 1) + i, " ".join(line.split()))
             for text, first in self.help_sources()
             for i, line in enumerate((text or "").split("\n"))
         ]
-        last, pos, numbers = raw[0][0] if raw else self.help_start(), 0, []
-        for lines in docstrings:
-            found = []
-            for line in lines:
-                words = " ".join(line.split())
-                if words:
-                    k = next(
-                        (k for k in range(pos, len(raw)) if raw[k][1] == words), None
-                    )
-                    if k is not None:
-                        last, pos = raw[k][0], k + 1
-                found.append(last)
-            numbers.append(found)
-        return numbers
+        words, lines = [w for _, w in raw], [n for n, _ in raw]
+        start = lines[0] if lines else self.help_start()
+        return [
+            follow_lines(words, lines, [" ".join(x.split()) for x in doc], start)
+            for doc in docstrings
+        ]
 
     def class_object(self) -> MatClass | None:
         # the associated MatClass object (for class, property and method documenters)
