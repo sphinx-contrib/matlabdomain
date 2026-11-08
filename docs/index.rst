@@ -9,7 +9,8 @@ directives, roles, domains and builders used in this documentation.
 adds a ``mat`` domain to Sphinx, with directives and roles for MATLAB
 functions, classes, scripts, apps and folders, and *auto* directives that
 read the help text from the ``.m`` and ``.mlapp`` files themselves, much like
-``sphinx.ext.autodoc`` does for Python.
+``sphinx.ext.autodoc`` does for Python. Simulink models and libraries are
+documented too (:doc:`user-guide/simulink`).
 
 It names objects the way MATLAB does: ``+pkg`` folders are namespaces,
 ``@Cls`` folders hold a class and its methods, and help text is found where
@@ -58,6 +59,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    user-guide/help-text
    user-guide/apidoc
    user-guide/sidecars
+   user-guide/simulink
    user-guide/api-check
    user-guide/warnings
    user-guide/builds
