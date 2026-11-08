@@ -47,6 +47,7 @@ from .mat_types import (
     MatEnumeration,
     MatEvent,
     MatFunction,
+    MatLibrary,
     MatMethod,
     MatModule,
     MatModuleAnalyzer,
@@ -688,6 +689,8 @@ class MatlabDocumenter(PyDocumenter):
                 full_mname = getattr(member, "ref", None) or mat_naming.join_reference(
                     self.ref, mname
                 )
+            elif isinstance(self.object, MatLibrary):
+                full_mname = f"{self.ref}/{mname}"
             else:
                 full_mname = f"{self.ref}.{mname}"
             documenter = classes[-1](self.directive, full_mname, self.indent)
@@ -1711,9 +1714,64 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
 
 
 class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
-    """Documenter of a Simulink library (its blocks: S5b)."""
+    """Documenter of a Simulink library. With ``:members:``, its documented
+    blocks follow in the library's order, then a list of its linked blocks
+    (each a link to its source block) and sublibrary blocks (each a link to
+    the library it opens).
+    """
 
     objtype = "simulink_library"
+    option_spec = {
+        **MatSimulinkDocumenter.option_spec,
+        "members": members_option,
+        "undoc-members": bool_option,
+        "exclude-members": exclude_members_option,
+    }
+
+    def _wanted(self, blocks, want_all):
+        """Return the blocks named by ``:members:`` (all if ``want_all``),
+        without those of ``:exclude-members:``.
+        """
+        excluded = self.options.exclude_members or ()
+        return [
+            block
+            for block in blocks
+            if (want_all or block.path in (self.options.members or ()))
+            and block.path not in excluded
+        ]
+
+    def get_object_members(self, want_all):
+        library = cast(MatLibrary, self.object)
+        blocks = library.diagram.library_blocks if library.diagram else ()
+        return False, [
+            (block.path, MatBlock(block, library))
+            for block in self._wanted(blocks, want_all)
+            if block.mask is not None
+        ]
+
+    def document_members(self, all_members=False):
+        MatlabDocumenter.document_members(self, all_members)
+        want_all = all_members or self.options.members is ALL
+        if not (want_all or self.options.members):
+            return
+        library = cast(MatLibrary, self.object)
+        blocks = library.diagram.library_blocks if library.diagram else ()
+        items = []
+        for block in self._wanted(blocks, want_all):
+            if block.link:
+                target = " ".join(block.link.split())
+                items.append((block.path, f":mat:simulink_library_block:`{target}`"))
+            elif block.opens:
+                items.append((block.path, f":mat:simulink_library:`{block.opens}`"))
+        if not items:
+            return
+        sourcename = self.get_sourcename()
+        self.add_line("", sourcename)
+        self.add_line(f".. rubric:: {_('Links to other blocks')}", sourcename)
+        self.add_line("", sourcename)
+        for path, link in items:
+            self.add_line(f"* {_literal(path)}: {link}", sourcename)
+        self.add_line("", sourcename)
 
 
 class MatSimulinkSubsystemDocumenter(MatSimulinkDocumenter):

@@ -46,6 +46,46 @@ HID = (
     + "  }\n}\n"
 )
 
+# Sublibrary blocks (an empty subsystem whose OpenFcn opens a library), a
+# masked block with an OpenFcn callback, and a linked block.
+TOP = """\
+Library {
+  System {
+    Block {
+      BlockType SubSystem
+      Name "Sub"
+      OpenFcn "hid"
+      MaskType "Folder"
+      System {
+      }
+    }
+    Block {
+      BlockType SubSystem
+      Name "Ext"
+      OpenFcn "open_system('dsplib');"
+    }
+    Block {
+      BlockType SubSystem
+      Name "Callback"
+      OpenFcn "myCallback"
+      MaskType "CB"
+      MaskDescription "Opens a dialog."
+      System {
+        Block {
+          BlockType Constant
+          Name "C"
+        }
+      }
+    }
+    Block {
+      BlockType Reference
+      Name "Lnk"
+      SourceBlock "hid/M"
+    }
+  }
+}
+"""
+
 
 def build(make_app, tmp_path, index, conf=""):
     """Build HTML of the R2026b fixtures and ``hid.mdl``; return the page and
@@ -56,6 +96,7 @@ def build(make_app, tmp_path, index, conf=""):
     for name in ("probeModel", "probeLib", "probeSub", "probeRef"):
         shutil.copyfile(SLX / f"{name}.slx", src / f"{name}.slx")
     (src / "hid.mdl").write_text(HID)
+    (src / "top.mdl").write_text(TOP)
     (tmp_path / "conf.py").write_text(
         'extensions = ["sphinxcontrib.matlab"]\n'
         f'matlab_src_code_project_root = "src"\n{conf}'
@@ -222,6 +263,66 @@ def test_wrong_kind_and_unreadable_file(make_app, tmp_path):
     # a description directive finds the file it names
     assert 'id="mat-probeModel.slx"' in page
     assert 'id="mat-nowhere"' in page
+
+
+LIBRARIES = """\
+.. mat:autosimulink_model:: probeModel
+
+.. mat:autosimulink_library:: hid
+   :members:
+   :undoc-members:
+
+.. mat:autosimulink_library:: top
+   :members:
+
+.. mat:autosimulink_library:: probeLib
+   :members:
+   :undoc-members:
+   :exclude-members: Gain Block
+"""
+
+
+def test_library_members_and_links(make_app, tmp_path):
+    page, warnings = build(make_app, tmp_path, LIBRARIES, "nitpicky = True\n")
+    assert warnings == ""
+    words = text(page)
+    top = words.split("Simulink library top")[1].split("Simulink library probeLib")[0]
+    # a callback OpenFcn on a block with contents: documented
+    assert 'id="mat-top.mdl/Callback"' in page
+    assert "Simulink library block top/ Callback Opens a dialog." in top
+    assert "Links to other blocks Sub: hid Ext: dsplib Lnk: hid/M" in top
+    assert 'href="#mat-hid.mdl"' in page
+    assert 'href="#mat-hid.mdl/M"' in page
+    assert 'id="mat-top.mdl/Sub"' not in page
+    lib = words.split("Simulink library probeLib")[1]
+    # in the library's order, undocumented blocks too, one excluded
+    assert 'id="mat-probeLib.slx/Gain~20Block"' not in page
+    assert 'id="mat-probeLib.slx/No~20Description"' in page
+    assert 'id="mat-probeLib.slx/Two~0ALines"' in page
+    assert "Simulink library block probeLib/ Two Lines" in lib
+    # a MathWorks library: text, without a warning
+    assert "Lib Doc: simulink/Model-Wide Utilities/DocBlock" in lib
+
+
+def test_named_library_members(make_app, tmp_path):
+    index = (
+        ".. mat:autosimulink_library:: probeLib\n"
+        "   :members: Gain Block, Lib Doc\n\n"
+        ".. mat:autosimulink_library:: hid\n\n"
+        "* :mat:simulink_library_block:`nowhere/x`\n"
+        "* :mat:simulink_library_block:`hid/Missing`\n"
+        "* :mat:simulink_model:`gone.slx`\n"
+    )
+    page, warnings = build(make_app, tmp_path, index, "nitpicky = True\n")
+    assert 'id="mat-probeLib.slx/Gain~20Block"' in page
+    assert 'id="mat-probeLib.slx/A~2F~2FB"' not in page
+    assert "Links to other blocks Lib Doc:" in text(page)
+    # hid has no members: no list
+    assert text(page).count("Links to other blocks") == 1
+    # outside the project: text; in it: "not found"
+    assert "nowhere/x" not in warnings
+    assert "target not found: hid/Missing" in warnings
+    assert "target not found: gone.slx" in warnings
 
 
 def test_reference_option_is_one_line():

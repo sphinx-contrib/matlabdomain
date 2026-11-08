@@ -65,7 +65,7 @@ class MatTypedField(TypedField):
         return node
 
 
-def keep_unresolved_references(app, env, node, contnode):  # noqa: ARG001
+def keep_unresolved_references(app, env, node, contnode):
     # Runs after intersphinx (priority 900), so other projects' names still link.
     if node.get("refdomain") != "mat":
         return None
@@ -74,9 +74,26 @@ def keep_unresolved_references(app, env, node, contnode):  # noqa: ARG001
         node.get("mat:type")
         or node.get("mat:ambiguous")
         or external.fullmatch(node.get("reftarget", ""))
+        or _outside_simulink_file(env, node)
     ):
         return contnode
     return None
+
+
+def _outside_simulink_file(env, node):
+    """Return True for a Simulink role whose target names no Simulink file of
+    the project (a MathWorks library such as ``simulink/Sources``).
+    """
+    if node.get("reftype") not in SIMULINK_LABELS:
+        return False
+    target = node.get("reftarget", "")
+    file, _ = mat_naming.parse_reference(target)
+    if file and mat_naming.is_block_container(file.rpartition("/")[2]):
+        return False  # a path reference
+    refs = env.get_domain("mat").data["matlab_names"].get(target.split("/", 1)[0], ())
+    return not any(
+        mat_naming.is_block_container(ref.rpartition("/")[2]) for ref in refs
+    )
 
 
 def check_inventories(app, env, node, contnode):

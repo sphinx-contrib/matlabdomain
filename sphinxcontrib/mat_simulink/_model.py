@@ -93,8 +93,9 @@ class Reference:
 
 @dataclass(frozen=True)
 class LibraryBlock:
-    """A block found by the library walk: documented (``mask`` set) or a
-    link to another library's block (``link`` set).
+    """A block found by the library walk: documented (``mask`` set), a
+    link to another library's block (``link`` set) or a sublibrary block
+    that opens another library (``opens`` set).
     """
 
     path: str
@@ -102,6 +103,7 @@ class LibraryBlock:
     mask: Mask | None
     link: str = ""
     ports: tuple[Port, ...] = ()
+    opens: str = ""
 
 
 @dataclass(frozen=True)
@@ -146,6 +148,10 @@ def _is_block_diagram(name: str) -> bool:
 
 
 _LINKER = "sphinxcontrib.matlabdomain.simulinkDocumentationLinker"
+# A sublibrary block's OpenFcn: the library name, or open_system('name').
+_OPENS = re.compile(
+    r"""\s*(?:open_system\(\s*["']?([A-Za-z]\w*)["']?\s*\)|([A-Za-z]\w*))\s*;?\s*"""
+)
 # The schemes of a Help URL (R2026b Mask Editor documentation).
 _SCHEMES = r"(?:https?|www|file|ftp|mailto):"
 _URL = re.compile(rf"{_SCHEMES}\S+")
@@ -424,7 +430,8 @@ class _Reader:
         return found
 
     def walk(self, system: Node, prefix: str) -> list[LibraryBlock]:
-        """Walk a library: a linked block is a link, a masked block is
+        """Walk a library: a linked block is a link, an empty subsystem whose
+        ``OpenFcn`` opens a library is a sublibrary block, a masked block is
         documented and not entered, an unmasked subsystem is entered.
         """
         found = []
@@ -432,10 +439,14 @@ class _Reader:
             path = _join(prefix, block.param("Name"))
             description = block.param("Description")
             inner = self.subsystem(block)
+            opens = _OPENS.fullmatch(block.param("OpenFcn"))
             if block.param("BlockType") == "Reference":
                 found.append(
                     LibraryBlock(path, description, None, block.param("SourceBlock"))
                 )
+            elif opens and (inner is None or not inner.findall("Block")):
+                name = opens.group(1) or opens.group(2)
+                found.append(LibraryBlock(path, description, None, opens=name))
             elif (mask := block_mask(block)) is not None:
                 ports = self.ports(inner) if inner is not None else ()
                 found.append(LibraryBlock(path, description, mask, "", ports))

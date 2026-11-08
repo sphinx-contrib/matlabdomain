@@ -492,6 +492,30 @@ def test_classic_errors(tmp_path, text, message):
         read_diagram(path)
 
 
+def test_sublibrary_blocks(tmp_path):
+    blocks = "".join(
+        f'    Block {{\n      BlockType SubSystem\n      Name "{name}"\n'
+        f"      OpenFcn {opens}\n{inner}    }}\n"
+        for name, opens, inner in [
+            ("Plain", '"libA"', ""),
+            ("Call", "\"open_system('libB');\"", "      System {\n      }\n"),
+            ("Quoted", '"open_system(libC)"', ""),
+            (
+                "Busy",
+                '"libD"',
+                '      System {\n        Block {\n          Name "x"\n'
+                "        }\n      }\n",
+            ),
+            ("Code", '"disp(1)"', ""),
+        ]
+    )
+    path = tmp_path / "lib.mdl"
+    path.write_text(f"Library {{\n  System {{\n{blocks}  }}\n}}\n")
+    found = {b.path: b.opens for b in read_diagram(path).library_blocks}
+    # a subsystem with contents is entered; "disp(1)" opens nothing
+    assert found == {"Plain": "libA", "Call": "libB", "Quoted": "libC"}
+
+
 def test_classic_object_mask_skips_other_objects(tmp_path):
     path = tmp_path / "lib.mdl"
     path.write_text(

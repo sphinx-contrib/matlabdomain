@@ -251,14 +251,35 @@ names the kind: *Simulink model* ``probeModel``, *Simulink library block*
 
 .. rst:directive:: .. mat:autosimulink_library:: name
 
-   A library. Its blocks are not listed yet.
+   A library.
+
+   .. rst:directive:option:: members
+      :type: no value, or a comma-separated list of block paths
+
+      Document the library's blocks in the library's order, or the named
+      ones (``Group/Gain``): the masked blocks at its top and below
+      unmasked subsystems, written as ``mat:simulink_library_block``. Then
+      a list, *Links to other blocks*, links each linked block to its
+      source block and each sublibrary block (an empty subsystem whose
+      ``OpenFcn`` opens a library) to that library. A block or library
+      outside the project (``simulink/Sources/Sine Wave``) stays text,
+      without a warning.
+
+   .. rst:directive:option:: undoc-members
+
+      Also document the blocks without a description.
+
+   .. rst:directive:option:: exclude-members
+      :type: comma-separated list of block paths
+
+      Leave these blocks out.
 
    .. rst:directive:option:: metadata
                              hidden-mask-parameters
                              noindex
                              no-index
 
-      As for ``mat:autosimulink_model``.
+      As for ``mat:autosimulink_model``; they apply to the blocks too.
 
 .. rst:directive:: .. mat:autosimulink_subsystem_reference:: name
 

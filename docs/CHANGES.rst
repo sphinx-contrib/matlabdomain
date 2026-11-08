@@ -37,7 +37,8 @@ earlier" in the documentation.
   and roles) document them: description, mask type, description and Help
   (a link for a URL or a ``web(...)`` call), metadata
   (:confval:`matlab_simulink_metadata`), mask parameters (hidden ones with
-  ``:hidden-mask-parameters:``) and ports. A library's blocks and
+  ``:hidden-mask-parameters:``) and ports. ``:members:`` of a library
+  documents its blocks and links its linked and sublibrary blocks.
   ``sphinx-matlab-apidoc`` pages for Simulink files are not in this release
   yet.
   ``matlab-api-check`` counts Simulink files as not
