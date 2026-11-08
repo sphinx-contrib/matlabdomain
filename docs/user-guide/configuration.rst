@@ -55,6 +55,8 @@ change that; both are relative to the root and use ``/``:
   (they matter for :doc:`sidecar docs <sidecars>`); your own list
   replaces it, so add them to it if you want to keep leaving them out.
 
+Exclude wins over include: a file that matches both lists is left out.
+
 Patterns match like Sphinx's ``exclude_patterns``: ``**`` matches across
 folders, ``*`` and ``?`` within one folder, and ``**/x`` also matches ``x``
 itself, so ``**/tests`` leaves out every ``tests`` folder with everything
