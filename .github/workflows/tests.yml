@@ -1,0 +1,104 @@
+# The test matrix and the combined coverage gate. pr-master.yml calls it;
+# the monthly run catches new Python, Sphinx and dependency releases.
+name: Tests
+
+on:
+  workflow_call:
+  schedule:
+    # The third day of each month at 06:00 UTC.
+    - cron: "0 6 3 * *"
+  workflow_dispatch:
+
+# A literal prefix: in a called workflow, github.workflow is the caller's name.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_COLOR: "1"
+
+jobs:
+
+  test:
+    name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }}
+    timeout-minutes: 15
+    runs-on: ${{ matrix.os }}
+    # Sphinx master may break at any time; it must not block.
+    continue-on-error: ${{ matrix.sphinx-version == 'dev' }}
+    env:
+      COVERAGE_FILE: .coverage.${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.sphinx-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        sphinx-version: ["latest"]
+        include:
+        -   description: oldest supported dependencies on oldest supported python
+            os: ubuntu-latest
+            python-version: "3.11"
+            sphinx-version: min
+        -   description: last Sphinx 8 release line
+            os: ubuntu-latest
+            python-version: "3.12"
+            sphinx-version: "82"
+        -   description: sphinx dev with latest python
+            # dev does not work with python <= 3.11 so only test with latest python
+            os: ubuntu-latest
+            python-version: "3.14"
+            sphinx-version: dev
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+    - name: Install tox
+      run: uv tool install 'tox>=4.60' --with=tox-uv
+    - name: Run with tox
+      run: tox -e "${{ matrix.python-version }}-sphinx${{ matrix.sphinx-version }}"
+    - name: Upload html coverage
+      if: success() || failure()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.sphinx-version }}_htmlcov
+        path: htmlcov
+    - name: Upload coverage data
+      if: (success() || failure()) && matrix.sphinx-version != 'dev'
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: coverage-data-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.sphinx-version }}
+        path: .coverage.*
+        include-hidden-files: true
+        if-no-files-found: ignore
+
+  coverage:
+    name: Combined coverage
+    needs: test
+    if: success() || failure()
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        pattern: coverage-data-*
+        merge-multiple: true
+    - name: Combine and check coverage
+      run: |
+        uvx coverage combine
+        uvx coverage html
+        uvx coverage report --show-missing --skip-covered --fail-under=100
+    - name: Upload combined html coverage
+      if: success() || failure()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: combined_htmlcov
+        path: htmlcov

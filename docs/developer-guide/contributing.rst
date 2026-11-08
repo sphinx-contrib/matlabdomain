@@ -58,7 +58,7 @@ Code style
 `pre-commit <https://pre-commit.com/>`_ runs on every commit: ruff (lint
 and format), codespell, TOML and YAML checks, trailing whitespace and line
 ends (LF), and ``uv lock``. Run it on demand with ``uv run pre-commit run
---files <files>``.
+--files <files>``. Pull requests run every hook on all files.
 
 * Python code follows ruff's configuration in ``pyproject.toml``.
 * Run ``uv run tox -e lint`` for non-mutating lint, format and basic type
@@ -107,7 +107,7 @@ Original author
   Mark Mikofski (`@mikofski <https://github.com/mikofski>`_).
 
 Releases are published from tags by
-``.github/workflows/python-package.yml``. The `PyPI project
+``.github/workflows/push-master.yml``. The `PyPI project
 <https://pypi.org/project/sphinxcontrib-matlabdomain/>`_ is owned by
 Jørgen Cederberg. Read the Docs project owner: to be confirmed.
 
@@ -177,17 +177,26 @@ when adding, removing or moving a maintained configuration file.
   path. Keep it in step with that list; GitHub flags unknown owners on the
   file's page.
 ``.github/dependabot.yml``
-  GitHub-required YAML for weekly Actions dependency updates. Python dependency
-  changes go through ``pyproject.toml`` and ``uv lock`` instead.
-``.github/workflows/pre-commit.yml``
-  GitHub Actions wrapper for all-file hook checks. Currently manual-only
-  (``workflow_dispatch``); check workflow syntax and run it after hook edits.
-``.github/workflows/python-package.yml``
-  GitHub Actions static checks, supported Python/OS/Sphinx matrix, combined
-  100% coverage gate and upstream tag publishing. Runs on pull requests to
-  ``master``, monthly and on demand; the
-  Sphinx-development job is non-blocking. Uses the shared tox environments;
-  local checks cannot substitute for the cross-platform coverage gate.
+  GitHub-required YAML for quarterly updates of the Actions pins and of
+  ``uv.lock``.
+``.github/workflows/pr-master.yml``
+  Pull requests to ``master`` (and on demand): all pre-commit hooks, static
+  checks and ``tests.yml``. Its ``PR checks`` job passes only when every
+  other job passed; the ``master`` ruleset requires that one check, so
+  renaming jobs never breaks the ruleset. Actions are pinned by commit SHA
+  with the version in a comment.
+``.github/workflows/tests.yml``
+  The supported Python/OS/Sphinx matrix and the combined 100% coverage gate,
+  called by ``pr-master.yml`` and run monthly (new Python, Sphinx and
+  dependency releases) and on demand. The Sphinx-development job is
+  non-blocking. Uses the shared tox environments; local checks cannot
+  substitute for the cross-platform coverage gate.
+``.github/workflows/push-master.yml``
+  Pushes to ``master`` and release tags (bare versions such as ``0.22.1``):
+  no tests. It builds the sdist and wheel and runs ``scmd`` from the
+  installed wheel. A tag of the upstream repository must be on ``master``;
+  the ``pypi`` environment then publishes those files to PyPI and a GitHub
+  release.
 ``readthedocs.yml``
   Read the Docs-required service file: build image, Python version, docs entry
   point, ``docs`` dependency group (installed with ``uv sync``) and warning
