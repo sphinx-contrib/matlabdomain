@@ -1,9 +1,33 @@
 ---
 # Documentation
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# One quarterly pull request updates every ecosystem together.
 version: 2
+multi-ecosystem-groups:
+    dependencies:
+        schedule:
+            interval: quarterly
+
 updates:
 -   package-ecosystem: github-actions
     directory: /
-    schedule:
-        interval: quarterly
+    patterns: ['*']
+    multi-ecosystem-group: dependencies
+    groups:
+        actions-security:
+            applies-to: security-updates
+            patterns: ['*']
+
+-   package-ecosystem: pre-commit
+    directory: /
+    patterns: ['*']
+    multi-ecosystem-group: dependencies
+
+-   package-ecosystem: uv
+    directory: /
+    patterns: ['*']
+    multi-ecosystem-group: dependencies
+    groups:
+        uv-security:
+            applies-to: security-updates
+            patterns: ['*']
