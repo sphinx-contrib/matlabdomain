@@ -70,6 +70,7 @@ Library {
       OpenFcn "myCallback"
       MaskType "CB"
       MaskDescription "Opens a dialog."
+      MaskHelp "Opens   a dialog."
       System {
         Block {
           BlockType Constant
@@ -290,6 +291,7 @@ def test_library_members_and_links(make_app, tmp_path):
     # a callback OpenFcn on a block with contents: documented
     assert 'id="mat-top.mdl/Callback"' in page
     assert "Simulink library block top/ Callback Opens a dialog." in top
+    assert "Help" not in top  # the same as the description
     assert "Links to other blocks Sub: hid Ext: dsplib Lnk: hid/M" in top
     assert 'href="#mat-hid.mdl"' in page
     assert 'href="#mat-hid.mdl/M"' in page

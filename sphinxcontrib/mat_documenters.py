@@ -1606,19 +1606,23 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
                 fields.append(f":{_('Mask type')}: {_literal(mask.type)}")
             if mask.description and mask.description != self.object.docstring:
                 fields += _block(f":{_('Mask description')}: ", mask.description, "   ")
-            fields += self.help_lines(mask.help)
+            fields += self.help_lines(mask)
         fields += self.metadata_lines(metadata)
         lines = ["", *fields, ""] if fields else [""]
         if mask is not None:
             lines += self.mask_parameter_lines(mask.parameters)
         return lines + self.port_lines(ports)
 
-    def help_lines(self, text):
+    def help_lines(self, mask):
         """Return the mask Help: a link for a URL, ``web(...)`` or a linker line
         to another object (one to this object is left out), else its text.
         """
+        text = mask.help
         if not text.strip():
             return []
+        shown = (self.object.docstring or "", mask.description)
+        if " ".join(text.split()) in {" ".join(t.split()) for t in shown}:
+            return []  # the same text as the description
         label = f":{_('Help')}: "
         target = mat_simulink.help_target(text)
         if target is None:
