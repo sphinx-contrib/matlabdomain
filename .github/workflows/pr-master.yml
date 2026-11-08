@@ -1,0 +1,48 @@
+# Checks of a pull request to master. Branch rulesets require one status
+# check only: "PR checks", which passes when every job here passed.
+name: PR master
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: pr-master-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_COLOR: "1"
+
+jobs:
+
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+    - run: uvx pre-commit run --all-files --show-diff-on-failure
+
+  tests:
+    name: Tests
+    uses: ./.github/workflows/tests.yml
+
+  pr-checks:
+    name: PR checks
+    if: always()
+    needs: [pre-commit, tests]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Every job passed
+      if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+      run: exit 1
