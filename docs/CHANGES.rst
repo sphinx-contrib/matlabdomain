@@ -12,6 +12,10 @@ earlier" in the documentation.
   document repository configuration and check its inventory. Add a shared
   Ruff/basic-Pyright gate and portable editor settings without changing the
   supported test matrix or manual-only CI triggers.
+* **Breaking (contributors):** the ``dev`` and ``rtd`` extras are now
+  dependency groups (``dev``, which includes ``test`` and ``docs``);
+  ``uv sync`` installs ``dev``. With pip: ``pip install -e . --group dev``
+  (pip 25.1 or later). Only the ``markdown`` extra remains.
 
 * The documentation is rewritten: getting started, a user guide, a reference
   of every configuration value, directive, role, option and warning, and a

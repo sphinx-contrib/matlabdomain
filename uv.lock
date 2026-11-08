@@ -1,6 +1,6 @@
 version = 1
 revision = 3
-requires-python = ">=3.11.0"
+requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.12'",
     "python_full_version >= '3.11.5' and python_full_version < '3.12'",
@@ -1029,8 +1029,14 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+markdown = [
+    { name = "myst-parser" },
+]
+
+[package.dev-dependencies]
 dev = [
     { name = "defusedxml" },
+    { name = "furo" },
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
@@ -1038,35 +1044,53 @@ dev = [
     { name = "pytest-randomly" },
     { name = "ruff" },
     { name = "sphinx-autobuild" },
+    { name = "sphinxcontrib-mermaid" },
     { name = "tox" },
 ]
-markdown = [
-    { name = "myst-parser" },
-]
-rtd = [
+docs = [
     { name = "furo" },
     { name = "sphinxcontrib-mermaid" },
+]
+test = [
+    { name = "defusedxml" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-randomly" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "defusedxml", marker = "extra == 'dev'", specifier = ">=0.7.1" },
-    { name = "furo", marker = "extra == 'rtd'" },
     { name = "myst-parser", marker = "extra == 'markdown'", specifier = ">=4,<6" },
-    { name = "pre-commit", marker = "extra == 'dev'" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.414" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-cov", marker = "extra == 'dev'" },
-    { name = "pytest-randomly", marker = "extra == 'dev'" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = "==0.17.3" },
     { name = "sphinx", specifier = ">=8.0.0" },
-    { name = "sphinx-autobuild", marker = "extra == 'dev'" },
-    { name = "sphinxcontrib-mermaid", marker = "extra == 'rtd'" },
-    { name = "tox", marker = "extra == 'dev'", specifier = ">=4.60" },
-    { name = "tree-sitter", specifier = "<=0.26.0,>=0.26.0" },
+    { name = "tree-sitter", specifier = "==0.26.0" },
     { name = "tree-sitter-matlab", specifier = ">=1.3.3,<1.3.4" },
 ]
-provides-extras = ["dev", "markdown", "rtd"]
+provides-extras = ["markdown"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "defusedxml", specifier = ">=0.7.1" },
+    { name = "furo" },
+    { name = "pre-commit" },
+    { name = "pyright", specifier = "==1.1.414" },
+    { name = "pytest", specifier = ">=9" },
+    { name = "pytest-cov" },
+    { name = "pytest-randomly" },
+    { name = "ruff", specifier = "==0.17.3" },
+    { name = "sphinx-autobuild" },
+    { name = "sphinxcontrib-mermaid" },
+    { name = "tox", specifier = ">=4.60" },
+]
+docs = [
+    { name = "furo" },
+    { name = "sphinxcontrib-mermaid" },
+]
+test = [
+    { name = "defusedxml", specifier = ">=0.7.1" },
+    { name = "pytest", specifier = ">=9" },
+    { name = "pytest-cov" },
+    { name = "pytest-randomly" },
+]
 
 [[package]]
 name = "sphinxcontrib-mermaid"

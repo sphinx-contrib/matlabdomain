@@ -16,19 +16,20 @@ The project uses `uv <https://docs.astral.sh/uv/>`_ and a lock file
    $ uv sync --all-extras
    $ uv run pre-commit install
 
-``--all-extras`` installs the ``dev`` tools (pytest, coverage, pre-commit,
-tox, Ruff, Pyright, sphinx-autobuild), Markdown support, and the theme the
-documentation uses (``rtd`` extra,
-`Furo <https://pradyunsg.me/furo/>`_). Run
+``uv sync`` installs the ``dev`` dependency group: the ``test`` group
+(pytest, coverage, defusedxml), the ``docs`` group (the theme the
+documentation uses, `Furo <https://pradyunsg.me/furo/>`_, and Mermaid), and
+pre-commit, tox, Ruff, Pyright and sphinx-autobuild. ``--all-extras`` adds
+Markdown support (the ``markdown`` extra). Run
 tools through the environment: ``uv run pytest``, or ``.venv/bin/python``
 (Linux, macOS) and ``.venv\Scripts\python`` (Windows).
 
-With plain ``pip``:
+With plain ``pip`` (25.1 or later, for ``--group``):
 
 .. code-block:: console
 
    $ python -m venv .venv
-   $ .venv/bin/python -m pip install -e ".[dev,rtd]"
+   $ .venv/bin/python -m pip install -e ".[markdown]" --group dev
 
 Writing documentation
 ---------------------
@@ -113,7 +114,8 @@ when adding, removing or moving a maintained configuration file.
 
 ``pyproject.toml``
   Hand-maintained package metadata, build backend and minimum backend version,
-  runtime dependencies, optional extras, console entry point, namespace-package
+  runtime dependencies, optional extras, dependency groups (``dev``,
+  ``test``, ``docs``), console entry point, namespace-package
   discovery and Jinja package data. Also owns pytest, coverage, codespell,
   Ruff, Pyright, native tox environments and uv's public package index.
   Check with ``uv build``, ``uv run pytest`` and ``uv run tox -e lint``.
@@ -153,7 +155,8 @@ when adding, removing or moving a maintained configuration file.
   local checks cannot substitute for the cross-platform coverage gate.
 ``readthedocs.yml``
   Read the Docs-required service file: build image, Python version, docs entry
-  point, ``rtd`` installation extra and warning policy. Validate documentation
+  point, ``docs`` dependency group (installed with ``uv sync``) and warning
+  policy. Validate documentation
   locally with the strict Sphinx build, then inspect the hosted build.
 ``.vscode/settings.json``
   Portable clone-level interpreter, workspace diagnostics and Ruff integration.

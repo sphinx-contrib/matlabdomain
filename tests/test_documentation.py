@@ -177,8 +177,8 @@ def test_ruff_hook_matches_dev_pin():
     project = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))
     pins = [
         d.removeprefix("ruff==")
-        for d in project["project"]["optional-dependencies"]["dev"]
-        if d.startswith("ruff==")
+        for d in project["dependency-groups"]["dev"]
+        if isinstance(d, str) and d.startswith("ruff==")
     ]
     hooks = (REPO / ".pre-commit-config.yaml").read_text(encoding="utf-8")
     hook = re.search(r"ruff-pre-commit\s+rev: v(\S+)", hooks)
