@@ -70,8 +70,11 @@ all with ``"mat"``; ``sphinx-matlab-apidoc`` reads the same setting.
      - at the end of an HTML build
    * - ``mat.simulink``
      - an unknown name in :confval:`matlab_simulink_metadata` or a
-       ``:metadata:`` option
-     - where the directive is
+       ``:metadata:`` option; a Simulink documentation file that is not
+       used, a heading in one of a library that names no masked block, or
+       masked blocks without a section
+       (:confval:`matlab_simulink_doc_suffixes`)
+     - where the directive is, or in the documentation file
    * - ``mat.api_check``
      - a ``matlab-api-check`` finding
      - when the builder runs

@@ -195,6 +195,27 @@ Output
    ``:metadata:`` option of a directive replaces it for one object. An
    unknown name is a ``mat.simulink`` warning.
 
+.. confval:: matlab_simulink_doc_suffixes
+   :type: ``list[str]``
+   :default: ``[".md", ".rst"]``
+
+   A file next to a Simulink file, with its exact name and one of these
+   suffixes (``probeLib.md`` next to ``probeLib.slx``), holds more
+   documentation for it; the autodoc directive puts its text after the
+   description. When there are several, the first suffix in the list wins
+   and the others get a ``mat.simulink`` warning. Its first heading is the
+   title and is dropped, and deeper headings become rubrics. A model or
+   subsystem file gets the whole text. For a library, each section whose
+   heading is a block path (``Group/Gain``; spaces and line breaks in
+   block names compare as one space) is that block's text, wherever the
+   block is documented, and the rest is the library's. Relative paths,
+   images and links work as in sidecar docs
+   (:confval:`matlab_src_sidecar_suffixes`).
+   Description directives written by hand read no such file. The file is
+   not a sidecar doc and not a page of its own. A ``.md`` file needs
+   ``myst_parser`` in ``extensions`` (else a ``ConfigError``); ``[]``
+   turns the files off.
+
 .. confval:: matlab_link_shadowed_files_to_chooser_pages
    :type: ``bool``
    :default: ``False``

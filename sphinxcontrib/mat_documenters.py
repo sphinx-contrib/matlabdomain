@@ -35,7 +35,7 @@ from sphinx.util.docstrings import prepare_docstring
 from sphinx.util.inspect import safe_getattr
 from sphinx.util.logging import getLogger
 
-from . import mat_naming, mat_simulink
+from . import mat_naming, mat_sidecars, mat_simulink
 from .mat_classify import is_hidden
 from .mat_sidecars import HELP_SOURCE
 from .mat_types import (
@@ -603,6 +603,8 @@ class MatlabDocumenter(PyDocumenter):
             isattr = False
 
             has_doc = bool(self.get_attr(member, "__doc__", None))
+            # a library block with a section in the documentation file
+            has_doc = has_doc or self.get_attr(member, "has_doc_section", False)
             # GetAccess applies when Access is not given; an event's is ListenAccess
             level = (
                 access_of(member, "Access")
@@ -1538,6 +1540,10 @@ def _block(first, text, indent):
     ]
 
 
+#: the comment that the Simulink directive replaces with the documentation file
+SIMULINK_DOC_PLACEHOLDER = "sphinxcontrib-matlabdomain: Simulink documentation file"
+
+
 class MatSimulinkDocumenter(MatModuleLevelDocumenter):
     """Documenter of a Simulink model; the base of the other Simulink
     documenters. Shows the description, the mask (type, help, parameters),
@@ -1582,8 +1588,15 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
         pass
 
     def add_content(self, more_content, no_docstring=False):
-        super().add_content(more_content, no_docstring)
+        super().add_content(None, no_docstring)
         sourcename = self.get_sourcename()
+        # The directive puts the Simulink documentation file here.
+        self.add_line("", sourcename)
+        self.add_line(f".. {SIMULINK_DOC_PLACEHOLDER}", sourcename)
+        self.add_line("", sourcename)
+        if more_content:
+            for line, src in zip(more_content.data, more_content.items, strict=False):
+                self.add_line(line, src[0], src[1])
         for line in self.simulink_lines():
             self.add_line(line, sourcename)
 
@@ -1747,11 +1760,14 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
     def get_object_members(self, want_all):
         library = cast(MatLibrary, self.object)
         blocks = library.diagram.library_blocks if library.diagram else ()
-        return False, [
-            (block.path, MatBlock(block, library))
-            for block in self._wanted(blocks, want_all)
-            if block.mask is not None
-        ]
+        sections = mat_sidecars.documented_blocks(self.env, self.ref)
+        members = []
+        for block in self._wanted(blocks, want_all):
+            if block.mask is not None:
+                member = MatBlock(block, library)
+                member.has_doc_section = " ".join(block.path.split()) in sections
+                members.append((block.path, member))
+        return False, members
 
     def document_members(self, all_members=False):
         MatlabDocumenter.document_members(self, all_members)

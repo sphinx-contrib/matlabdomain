@@ -531,6 +531,23 @@ class MatSimulinkObject(MatObject):
         signode += addnodes.desc_name(shown, shown)
         return ref, display
 
+    def transform_content(self, content_node):
+        """Put the Simulink documentation file where the autodoc directive's
+        placeholder comment is.
+        """
+        super().transform_content(content_node)
+        for node in content_node.children:
+            if (
+                isinstance(node, nodes.comment)
+                and node.astext() == doc.SIMULINK_DOC_PLACEHOLDER
+            ):
+                found = []
+                if self.names:  # pragma: no branch - autodoc gives a reference
+                    ref = self.names[0][0]
+                    found = mat_sidecars.simulink_documentation(self, ref)
+                content_node.replace(node, found)
+                return
+
     def get_index_text(self, folder, name_cls):
         return translation("%s (%s in %s)") % (
             name_cls[1],
@@ -884,6 +901,8 @@ class MATLABDomain(Domain):
         #                 matlab_name, private, scope}
         "index": {},
         "sidecars": {},  # sidecar doc path -> {reference, mtime, size}
+        # Simulink documentation file path -> {reference, mtime, size}
+        "simulink_docs": {},
         "parse_cache": {},  # (path, mtime_ns, size) -> parsed MatObject
         "parse_warnings": {},  # (path, mtime_ns, size) -> parse-stage warnings
         "entities_table": {},  # path reference -> MatObject (files and folders)
@@ -891,7 +910,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 26
+    data_version = 27
     indices = [
         MATLABFolderIndex,
     ]
@@ -1414,6 +1433,10 @@ def setup(app):
     # Metadata of Simulink files shown by default (directive option :metadata:).
     app.add_config_value(
         "matlab_simulink_metadata", ["release", "model_version"], "env", [list, tuple]
+    )
+    # Suffixes of documentation files next to Simulink files, by priority.
+    app.add_config_value(
+        "matlab_simulink_doc_suffixes", [".md", ".rst"], "env", [list, tuple]
     )
     # matlab-api-check: read by the builder only, so no page is read again.
     app.add_config_value("matlab_api_check_enabled", True, "", bool)

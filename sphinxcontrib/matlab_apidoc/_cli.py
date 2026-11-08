@@ -32,6 +32,7 @@ from ..mat_types import (
     project_root,
     sidecar_layout_error,
     sidecar_suffix_list,
+    simulink_doc_suffix_list,
 )
 from ._config import (
     APIDOC_CONFIG,
@@ -189,6 +190,9 @@ def _settings(args):
         namelengthmax=namelengthmax,
         sidecar_suffixes=sidecar_suffixes,
         source_dir=srcdir,
+        simulink_doc_suffixes=simulink_doc_suffix_list(
+            conf.matlab_simulink_doc_suffixes
+        ),
     )
     suffix = apidoc_value(conf, "matlab_apidoc_suffix").removeprefix(".")
     group = apidoc_value(conf, "matlab_apidoc_group")

@@ -88,7 +88,7 @@ def used_paths(srcdir, refs=USED):
 
 
 def test_initial_data_layout():
-    assert MATLABDomain.data_version == 26
+    assert MATLABDomain.data_version == 27
     assert set(MATLABDomain.initial_data) == {
         "objects",
         "folders",
@@ -98,6 +98,7 @@ def test_initial_data_layout():
         "xref_docs",
         "index",
         "sidecars",
+        "simulink_docs",
         "parse_cache",
         "parse_warnings",
         "entities_table",
@@ -395,6 +396,7 @@ def test_older_domain_data_version_drops_misdecoded_docstrings(
 SOURCE_STATE = (
     "index",
     "sidecars",
+    "simulink_docs",
     "parse_cache",
     "parse_warnings",
     "entities_table",

@@ -227,7 +227,9 @@ another object; left out when it repeats the description), the metadata of
 mask parameters (like a function's input arguments) and a table of the
 ports (columns that inherit everything are left out). The signature
 names the kind: *Simulink model* ``probeModel``, *Simulink library block*
-``probeLib/Gain``.
+``probeLib/Gain``. The auto directives add the text of the file's
+documentation file after the description
+(:confval:`matlab_simulink_doc_suffixes`).
 
 .. rst:directive:: .. mat:autosimulink_model:: name
 

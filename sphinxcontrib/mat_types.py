@@ -792,6 +792,22 @@ def sidecar_suffix_list(value, option="matlab_src_sidecar_suffixes"):
     return tuple(s for s in SIDECAR_SUFFIXES if s in value)
 
 
+def simulink_doc_suffix_list(value):
+    """Normalize ``matlab_simulink_doc_suffixes``, keeping its order: the
+    first suffix that exists wins (or raise ConfigError).
+    """
+    option = "matlab_simulink_doc_suffixes"
+    if isinstance(value, str) or not isinstance(value, (list, tuple)):
+        raise ConfigError(f"{option} must be a list of suffixes such as ['.md'].")
+    for suffix in value:
+        if suffix not in SIDECAR_SUFFIXES:
+            raise ConfigError(
+                f"{option}: {suffix!r} is not a documentation suffix; use "
+                f"{', '.join(map(repr, SIDECAR_SUFFIXES))}."
+            )
+    return tuple(dict.fromkeys(value))
+
+
 def sidecar_layout_error(root, srcdir):
     """ConfigError if sidecar docs cannot be told from the documentation: the
     project root is the Sphinx source folder.
@@ -881,6 +897,8 @@ class IndexSettings:
     cache_text: bool = True
     sidecar_suffixes: tuple[str, ...] = ()
     source_dir: str | None = None
+    #: suffixes of Simulink documentation files, in priority order
+    simulink_doc_suffixes: tuple[str, ...] = ()
 
     @classmethod
     def from_config(cls, config, srcdir):
@@ -899,6 +917,9 @@ class IndexSettings:
             cache_text=config.matlab_src_cache_text,
             sidecar_suffixes=sidecar_suffix_list(config.matlab_src_sidecar_suffixes),
             source_dir=os.path.normpath(os.fspath(srcdir)),
+            simulink_doc_suffixes=simulink_doc_suffix_list(
+                config.matlab_simulink_doc_suffixes
+            ),
         )
 
 
@@ -914,6 +935,9 @@ class SourceIndex:
     - ``sidecars``: sidecar doc path -> ``{reference, mtime, size}``, in walk
       order. Sidecar docs are not read, named or members of their folder, so
       they never shadow code (plan.md Section 2.11).
+    - ``simulink_docs``: Simulink documentation file path -> ``{reference,
+      mtime, size}``: a file with a suffix of ``simulink_doc_suffixes`` and
+      the exact name of a Simulink file next to it. It is not a sidecar doc.
     """
 
     settings: IndexSettings
@@ -922,6 +946,7 @@ class SourceIndex:
     matlab_names: dict = field(default_factory=dict)
     text_cache: dict = field(default_factory=dict)
     sidecars: dict = field(default_factory=dict)
+    simulink_docs: dict = field(default_factory=dict)
 
 
 def build_index(settings, old_index=None):
@@ -953,12 +978,18 @@ def sidecar_paths(settings):
     """Paths of the sidecar docs below the root, in walk order: the walk of
     ``build_index`` without reading files or warning.
     """
+    return list(_documentation_files(settings).sidecars)
+
+
+def _documentation_files(settings):
     out = SourceIndex(settings)
-    if settings.sidecar_suffixes and os.path.isdir(settings.root):
+    if (settings.sidecar_suffixes or settings.simulink_doc_suffixes) and (
+        os.path.isdir(settings.root)
+    ):
         # The index stage warns about the walk.
         with suppress_logging():
             _Indexer(out, {}, sidecars_only=True).run()
-    return list(out.sidecars)
+    return out
 
 
 class _Indexer:
@@ -981,6 +1012,7 @@ class _Indexer:
         self.pending = {}
         self.sidecars_only = sidecars_only
         self.sidecar_suffixes = frozenset(settings.sidecar_suffixes)
+        self.simulink_doc_suffixes = frozenset(settings.simulink_doc_suffixes)
         # The Sphinx source folder inside the root holds the documentation.
         docs = settings.source_dir
         if docs is not None and not (
@@ -1030,6 +1062,8 @@ class _Indexer:
             self.docs is not None and _within(mod.path, self.docs)
         )
         denied = []
+        # documentation file candidates, and the stems of Simulink files
+        loose, simulink_stems = [], set()
         for key in keys:
             if _undecodable(key):
                 _warn(
@@ -1072,24 +1106,34 @@ class _Indexer:
                 continue
             handler = handler_for(path)
             if handler is None:
-                if (
-                    sidecars
-                    and os.path.splitext(key)[1] in self.sidecar_suffixes
-                    and self.sources.includes(ref)
-                    and not (_is_link(path) and self.outside(path, ref))
-                ):
-                    self.out.sidecars[path] = {
-                        "reference": ref,
-                        "mtime": st.st_mtime_ns,
-                        "size": st.st_size,
-                    }
+                suffix = os.path.splitext(key)[1]
+                if suffix in self.sidecar_suffixes | self.simulink_doc_suffixes:
+                    loose.append((key, path, ref, st))
                 continue
+            if handler.blocks and self.sources.includes(ref):
+                simulink_stems.add(os.path.splitext(key)[0])
             if self.sidecars_only or not self.sources.includes(ref):
                 continue
             if _is_link(path) and self.outside(path, ref):
                 continue
             self.index_file(handler, path, ref, st)
             mod.members.append((os.path.splitext(key)[0], ref))
+        for key, path, ref, st in loose:
+            stem, suffix = os.path.splitext(key)
+            simulink_doc = (
+                suffix in self.simulink_doc_suffixes and stem in simulink_stems
+            )
+            if not (simulink_doc or (sidecars and suffix in self.sidecar_suffixes)):
+                continue
+            if not self.sources.includes(ref) or (
+                _is_link(path) and self.outside(path, ref)
+            ):
+                continue
+            record = {"reference": ref, "mtime": st.st_mtime_ns, "size": st.st_size}
+            if simulink_doc:
+                self.out.simulink_docs[path] = record
+            else:
+                self.out.sidecars[path] = record
         if denied:
             _warn(
                 "parse_error",
@@ -1136,11 +1180,12 @@ class _Indexer:
 
 
 def _index_shape(data):
-    """Return what names and lookups depend on: the folders, and each file's
-    reference and type.
+    """Return what names and lookups depend on: the folders, each file's
+    reference and type, and which Simulink documentation files exist.
     """
     files = {path: (r["reference"], r["type"]) for path, r in data["index"].items()}
-    return files, frozenset(r for r in data["entities_table"] if r[-1:] == "/")
+    folders = frozenset(r for r in data["entities_table"] if r[-1:] == "/")
+    return files, folders, frozenset(data["simulink_docs"])
 
 
 def analyze(app):
@@ -1161,6 +1206,7 @@ def analyze(app):
         data["parse_warnings"].clear()
     data["index"].clear()
     data["sidecars"].clear()
+    data["simulink_docs"].clear()
     data["matlab_names"].clear()
     dom.entities_table.clear()
     dom.reset_sources()
@@ -1177,6 +1223,14 @@ def analyze(app):
         source_index = build_index(settings, old_index)
         data["index"].update(source_index.index)
         data["sidecars"].update(source_index.sidecars)
+        data["simulink_docs"].update(source_index.simulink_docs)
+        if "myst_parser" not in app.extensions and any(
+            path.endswith(".md") for path in source_index.simulink_docs
+        ):
+            raise ConfigError(
+                "Simulink documentation files in Markdown (.md) need myst_parser in "
+                "extensions, or leave '.md' out of matlab_simulink_doc_suffixes."
+            )
         data["matlab_names"].update(source_index.matlab_names)
         dom.entities_table.update(source_index.entities)
         dom.text_cache.update(source_index.text_cache)
@@ -2110,6 +2164,8 @@ class MatBlock(MatObject):
         super().__init__(block.path)
         self.block = block
         self.library = library
+        #: it has a section in the library's documentation file
+        self.has_doc_section = False
         self.module = library.module
         self.docstring = block.description or (
             block.mask.description if block.mask else ""

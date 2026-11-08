@@ -39,6 +39,9 @@ earlier" in the documentation.
   (:confval:`matlab_simulink_metadata`), mask parameters (hidden ones with
   ``:hidden-mask-parameters:``) and ports. ``:members:`` of a library
   documents its blocks and links its linked and sublibrary blocks.
+  A ``.md`` or ``.rst`` file next to a Simulink file with its name adds
+  documentation; in a library's, a section per block
+  (:confval:`matlab_simulink_doc_suffixes`).
   ``sphinx-matlab-apidoc`` pages for Simulink files are not in this release
   yet.
   ``matlab-api-check`` counts Simulink files as not

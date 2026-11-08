@@ -88,7 +88,7 @@ Library {
 """
 
 
-def build(make_app, tmp_path, index, conf=""):
+def build(make_app, tmp_path, index, conf="", before_build=None):
     """Build HTML of the R2026b fixtures and ``hid.mdl``; return the page and
     the warnings.
     """
@@ -104,6 +104,8 @@ def build(make_app, tmp_path, index, conf=""):
     )
     (tmp_path / "index.rst").write_text(f"Index\n=====\n\n{index}")
     app = make_app(srcdir=tmp_path, freshenv=True)
+    if before_build is not None:
+        before_build()
     app.build(force_all=True)
     app.cleanup()
     page = (Path(app.outdir) / "index.html").read_text(encoding="utf-8")
@@ -345,3 +347,212 @@ def test_reference_option_is_one_line():
         "   :noindex:",
         '   :reference: "lib.slx/Two\\nLines \\"x\\""',
     ]
+
+
+# --- Simulink documentation files (S5c) ---------------------------------------
+
+HID_RST = """\
+Hid library
+===========
+
+Library intro.
+
+M
+-
+
+Block M text.
+
+Details
+~~~~~~~
+
+More M.
+
+Nothing
+-------
+
+Stray text.
+"""
+
+MYST = 'extensions = ["sphinxcontrib.matlab", "myst_parser"]\n'
+
+
+def write_docs(tmp_path, files):
+    src = tmp_path / "src"
+    src.mkdir(parents=True, exist_ok=True)
+    for name, content in files.items():
+        (src / name).write_text(content, encoding="utf-8")
+
+
+def test_library_documentation_file(make_app, tmp_path):
+    write_docs(tmp_path, {"hid.rst": HID_RST})
+    index = (
+        ".. mat:autosimulink_library:: hid\n   :members:\n\n"
+        ".. mat:autosimulink_library_block:: hid.mdl/M\n   :no-index:\n"
+    )
+    page, warnings = build(make_app, tmp_path, index)
+    words = text(page)
+    library = words.split("Simulink library hid")[1].split("Simulink library block")[0]
+    assert "Hid library" not in words
+    assert "Library intro. Nothing Stray text." in library
+    blocks = words.split("Simulink library block hid/ M")
+    assert len(blocks) == 3, warnings
+    for block in blocks[1:]:
+        assert block.lstrip().startswith("Block M text. Details More M.")
+    assert 'class="rubric" id="details"' in page
+    # without a description or a section: not documented
+    assert 'id="mat-hid.mdl/Self"' not in page
+    hid = str(tmp_path / "src" / "hid.rst")
+    assert (
+        f"{hid}:17: WARNING: [sphinxcontrib-matlabdomain] hid.rst: the heading "
+        "'Nothing' names no masked block of hid.mdl; its text goes with the "
+        "library. [mat.simulink]" in warnings
+    )
+    assert (
+        f"{hid}:1: WARNING: [sphinxcontrib-matlabdomain] hid.rst has no section for "
+        "the blocks 'Self', 'Other', 'Newline'. [mat.simulink]" in warnings
+    )
+    # the file is not a page of its own: no toctree warning
+    assert warnings.count("WARNING") == 2, warnings
+
+
+def test_markdown_documentation_file(make_app, tmp_path):
+    write_docs(
+        tmp_path,
+        {
+            "probeModel.md": "# Title\n\nModel *extra* text.\n\n## Usage\n\nUse it.\n",
+            "probeModel.rst": "Not used\n========\n\nRST text.\n",
+            "probeSub.rst": "Only text, no heading.\n",
+            "hid.md": "# Hid\n\n## Self ##\n\nSelf text.\n",
+        },
+    )
+    index = (
+        ".. mat:autosimulink_model:: probeModel\n\n"
+        ".. mat:autosimulink_subsystem_reference:: probeSub\n\n"
+        ".. mat:autosimulink_library:: hid\n   :members:\n\n"
+        ".. mat:simulink_model:: probeModel\n   :no-index:\n\n"
+        ".. mat:simulink_model:: nowhere\n\n"
+        "   .. sphinxcontrib-matlabdomain: Simulink documentation file\n"
+    )
+    page, warnings = build(make_app, tmp_path, index, MYST)
+    words = text(page)
+    assert (
+        "Model description line 1 line 2 Model extra text. Usage Use it. "
+        "Mask type: ModelMaskType" in words
+    )
+    assert "RST text" not in words
+    assert "Title" not in words
+    assert "Only text, no heading." in words
+    assert "Simulink library block hid/ Self Self text." in words
+    assert 'id="mat-hid.mdl/M"' not in page
+    # a description directive reads no file
+    assert words.count("Model extra text.") == 1
+    rst = str(tmp_path / "src" / "probeModel.rst")
+    assert (
+        f"{rst}:1: WARNING: [sphinxcontrib-matlabdomain] probeModel.rst is not used: "
+        "probeModel.md documents probeModel.slx (see matlab_simulink_doc_suffixes). "
+        "[mat.simulink]" in warnings
+    )
+    assert "hid.md has no section for the blocks 'M', 'Other', 'Newline'" in warnings
+    assert warnings.count("WARNING") == 2, warnings
+
+
+def test_markdown_documentation_file_needs_myst(make_app, tmp_path):
+    from sphinx.errors import ConfigError
+
+    write_docs(tmp_path, {"probeModel.md": "# Title\n"})
+    with pytest.raises(ConfigError, match="need myst_parser"):
+        build(make_app, tmp_path, "")
+    # without .md in the suffixes, it is a plain file (other tests' myst-parser
+    # leaves ".md" in the default source_suffix)
+    write_docs(tmp_path / "b", {"probeModel.md": "# Title\n"})
+    _page, warnings = build(
+        make_app,
+        tmp_path / "b",
+        INDEX,
+        "matlab_simulink_doc_suffixes = ['.rst']\nsource_suffix = ['.rst']\n",
+    )
+    assert warnings == ""
+
+
+def test_unreadable_documentation_file(make_app, tmp_path):
+    # removed after the index stage found it
+    write_docs(tmp_path, {"hid.rst": HID_RST})
+    index = (
+        ".. mat:autosimulink_library:: hid\n   :members:\n\n"
+        ".. mat:autosimulink_library:: hid\n   :no-index:\n"
+    )
+    _page, warnings = build(
+        make_app, tmp_path, index, before_build=(tmp_path / "src" / "hid.rst").unlink
+    )
+    assert warnings.count("hid.rst cannot be read") == 1, warnings
+
+
+def test_documentation_file_is_not_a_sidecar_doc(make_app, tmp_path):
+    from sphinxcontrib import mat_types
+
+    root = tmp_path / "proj"
+    docs = root / "docs"
+    docs.mkdir(parents=True)
+    shutil.copyfile(SLX / "probeModel.slx", root / "probeModel.slx")
+    (root / "probeModel.rst").write_text("Doc\n===\n\nModel doc.\n")
+    (root / "other.rst").write_text("Other\n=====\n")
+    # a Simulink file in the Sphinx source folder, with its documentation
+    shutil.copyfile(SLX / "probeSub.slx", docs / "probeSub.slx")
+    (docs / "probeSub.rst").write_text("Sub doc.\n")
+    (docs / "_skip").mkdir()
+    (docs / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\n'
+        'matlab_src_code_project_root = ".."\n'
+        'matlab_src_sidecar_suffixes = [".rst"]\n'
+    )
+    (docs / "index.rst").write_text(
+        "Index\n=====\n\n.. mat:autosimulink_model:: probeModel\n\n"
+        ".. mat:autosimulink_subsystem_reference:: docs/probeSub.slx\n\n"
+        ".. mat:autosidecar:: other.rst\n"
+    )
+    app = make_app(srcdir=docs, freshenv=True)
+    app.build(force_all=True)
+    page = (Path(app.outdir) / "index.html").read_text(encoding="utf-8")
+    assert "Model doc." in page
+    assert "Sub doc." in page
+    data = app.env.domaindata["mat"]
+    assert sorted(r["reference"] for r in data["sidecars"].values()) == ["other.rst"]
+    assert sorted(r["reference"] for r in data["simulink_docs"].values()) == [
+        "docs/probeSub.rst",
+        "probeModel.rst",
+    ]
+    assert app.warning.getvalue() == ""
+    assert "probeSub.rst" in app.config.exclude_patterns
+    settings = mat_types.IndexSettings(str(root), simulink_doc_suffixes=(".rst",))
+    assert mat_types.sidecar_paths(settings) == []
+
+
+def test_every_block_has_a_section_and_directive_content(make_app, tmp_path):
+    sections = "".join(
+        f"{name}\n{'-' * len(name)}\n\n{name} text.\n\n"
+        for name in ("M", "Self", "Other", "Newline")
+    )
+    write_docs(tmp_path, {"hid.rst": f"Hid\n===\n\n{sections}"})
+    index = (
+        ".. mat:autosimulink_library:: hid\n   :members:\n\n"
+        "   Content of the directive.\n"
+    )
+    page, warnings = build(make_app, tmp_path, index)
+    assert warnings == ""
+    assert "Content of the directive." in text(page)
+    assert "Newline text." in text(page)
+
+
+def test_suffix_errors_and_another_drive(make_app, tmp_path, monkeypatch):
+    from sphinx.errors import ConfigError
+
+    from sphinxcontrib import mat_sidecars, mat_types
+
+    with pytest.raises(ConfigError, match="must be a list"):
+        mat_types.simulink_doc_suffix_list(".md")
+    with pytest.raises(ConfigError, match=r"'\.txt' is not a documentation suffix"):
+        mat_types.simulink_doc_suffix_list([".txt"])
+    # Simulink documentation files only: no warning about another drive
+    monkeypatch.setattr(mat_sidecars, "same_drive", lambda *_: False)
+    _page, warnings = build(make_app, tmp_path, "")
+    assert warnings == ""

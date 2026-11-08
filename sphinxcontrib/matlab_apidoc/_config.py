@@ -34,6 +34,7 @@ SOURCE_CONFIG = {
     "matlab_src_include_patterns": list(DEFAULT_INCLUDE_PATTERNS),
     "matlab_src_exclusion_patterns": list(DEFAULT_EXCLUSION_PATTERNS),
     "matlab_src_sidecar_suffixes": [],
+    "matlab_simulink_doc_suffixes": [".md", ".rst"],
     "matlab_src_encoding": None,
     "matlab_version": mat_naming.DEFAULT_MATLAB_VERSION,
     "matlab_namelengthmax": None,
