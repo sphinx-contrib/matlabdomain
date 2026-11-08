@@ -557,3 +557,59 @@ def test_suffix_errors_and_another_drive(make_app, tmp_path, monkeypatch):
     monkeypatch.setattr(mat_sidecars, "same_drive", lambda *_: False)
     _page, warnings = build(make_app, tmp_path, "")
     assert warnings == ""
+
+
+# --- References (S5d) ---------------------------------------------------------
+
+REFERENCES = (
+    "References Doc Text (library link): simulink/Model-Wide Utilities/DocBlock "
+    "Linked Gain (library link): probeLib/Gain Block MdlRef (model reference): "
+    "probeRef SubRef (subsystem reference): probeSub"
+)
+
+
+@pytest.mark.parametrize(
+    ("conf", "option", "shown"),
+    [
+        ("", "", False),
+        ("", ":references:", True),
+        ("autodoc_default_options = {'references': True}\n", "", True),
+        ("autodoc_default_options = {'references': True}\n", ":no-references:", False),
+    ],
+)
+def test_references_list(make_app, tmp_path, conf, option, shown):
+    index = (
+        f".. mat:autosimulink_model:: probeModel\n   {option}\n\n"
+        ".. mat:autosimulink_model:: probeRef\n   :references:\n\n"
+        ".. mat:autosimulink_subsystem_reference:: probeSub\n\n"
+        ".. mat:autosimulink_library_block:: probeLib.slx/Gain Block\n"
+    )
+    page, warnings = build(make_app, tmp_path, index, f"nitpicky = True\n{conf}")
+    assert warnings == ""
+    assert (REFERENCES in text(page)) is shown
+    # links to the project's files; a MathWorks library stays text
+    assert ('href="#mat-probeRef.slx"' in page) is shown
+    assert ('href="#mat-probeSub.slx"' in page) is shown
+    assert ('href="#mat-probeLib.slx/Gain~20Block"' in page) is shown
+    # probeRef uses nothing: no list
+    assert text(page).count("References") == shown
+
+
+def test_reference_targets_that_are_not_names():
+    from sphinxcontrib.mat_simulink import Reference
+
+    references = (
+        Reference("model", "A", "<Enter Model Name>"),
+        Reference("model", "B", "probeRef.slx"),
+        Reference("subsystem", "C\nD", "sub.mdl"),
+    )
+    fake = SimpleNamespace(
+        object=SimpleNamespace(diagram=SimpleNamespace(references=references)),
+        options={"references": True},
+    )
+    lines = cast(Any, mat_documenters.MatSimulinkDocumenter).reference_lines(fake)
+    assert lines[2:5] == [
+        "* ``A`` (model reference): ``<Enter Model Name>``",
+        "* ``B`` (model reference): :mat:simulink_model:`probeRef`",
+        "* ``C D`` (subsystem reference): :mat:simulink_subsystem_reference:`sub`",
+    ]

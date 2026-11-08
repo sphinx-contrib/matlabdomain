@@ -41,7 +41,9 @@ earlier" in the documentation.
   documents its blocks and links its linked and sublibrary blocks.
   A ``.md`` or ``.rst`` file next to a Simulink file with its name adds
   documentation; in a library's, a section per block
-  (:confval:`matlab_simulink_doc_suffixes`).
+  (:confval:`matlab_simulink_doc_suffixes`). ``:references:`` lists the
+  model references, subsystem references and library links of a model or
+  subsystem file as links.
   ``sphinx-matlab-apidoc`` pages for Simulink files are not in this release
   yet.
   ``matlab-api-check`` counts Simulink files as not

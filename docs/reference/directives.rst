@@ -247,6 +247,15 @@ documentation file after the description
       like ``:private-members:`` for classes. ``autodoc_default_options``
       may set it; ``:no-hidden-mask-parameters:`` turns it off again.
 
+   .. rst:directive:option:: references
+
+      Add a list, *References*, of what the file uses: each model
+      reference, subsystem reference and library link with its block
+      path, as a link to the model, subsystem file or library block. One
+      outside the project (``simulink/Sources/Sine Wave``) stays text,
+      without a warning. Off by default; ``autodoc_default_options`` may
+      set it; ``:no-references:`` turns it off again.
+
    .. rst:directive:option:: noindex
                              no-index
 
@@ -290,6 +299,7 @@ documentation file after the description
 
    .. rst:directive:option:: metadata
                              hidden-mask-parameters
+                             references
                              noindex
                              no-index
 

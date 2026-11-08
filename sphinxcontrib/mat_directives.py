@@ -23,7 +23,7 @@ logger = getLogger("matlab-domain")
 
 #: options of this extension that ``autodoc_default_options`` may set (autodoc
 #: itself merges only its own); ``:no-<option>:`` turns one off
-DEFAULT_OPTIONS = ("hidden-mask-parameters",)
+DEFAULT_OPTIONS = ("hidden-mask-parameters", "references")
 
 
 class MatlabAutodocDirective(AutodocDirective):

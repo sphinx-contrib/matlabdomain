@@ -1543,6 +1543,20 @@ def _block(first, text, indent):
 #: the comment that the Simulink directive replaces with the documentation file
 SIMULINK_DOC_PLACEHOLDER = "sphinxcontrib-matlabdomain: Simulink documentation file"
 
+#: options of every Simulink documenter
+_SIMULINK_OPTIONS = {
+    **MatlabDocumenter.option_spec,
+    "hidden-mask-parameters": bool_option,
+    "metadata": metadata_option,
+}
+#: reference kind -> (label, role)
+_REFERENCE_KINDS = {
+    "model": (_("model reference"), "simulink_model"),
+    "subsystem": (_("subsystem reference"), "simulink_subsystem_reference"),
+    "library": (_("library link"), "simulink_library_block"),
+}
+_SIMULINK_NAME = re.compile(r"[A-Za-z]\w*")
+
 
 class MatSimulinkDocumenter(MatModuleLevelDocumenter):
     """Documenter of a Simulink model; the base of the other Simulink
@@ -1554,9 +1568,8 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
     # The argument is the whole name: block names may hold parentheses.
     name_pattern = re.compile(r"\s*(.+?)\s*((?!))?((?!))?\Z", re.DOTALL)
     option_spec = {
-        **MatlabDocumenter.option_spec,
-        "hidden-mask-parameters": bool_option,
-        "metadata": metadata_option,
+        **_SIMULINK_OPTIONS,
+        "references": bool_option,
     }
 
     def __init_subclass__(cls, **kwargs):
@@ -1624,7 +1637,31 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
         lines = ["", *fields, ""] if fields else [""]
         if mask is not None:
             lines += self.mask_parameter_lines(mask.parameters)
-        return lines + self.port_lines(ports)
+        return lines + self.port_lines(ports) + self.reference_lines()
+
+    def reference_lines(self):
+        """Return the list of the model references, subsystem references and
+        library links of the file (``:references:``), each a link to its
+        target; one outside the project stays text.
+        """
+        diagram = getattr(self.object, "diagram", None)
+        if not self.options.get("references") or diagram is None:
+            return []
+        lines = []
+        for ref in diagram.references:
+            label, role = _REFERENCE_KINDS[ref.kind]
+            target = " ".join(ref.target.split())
+            if ref.kind != "library":
+                target = re.sub(r"\.(slx|mdl)$", "", target)
+            if ref.kind == "library" or _SIMULINK_NAME.fullmatch(target):
+                link = f":mat:{role}:`{target}`"
+            else:  # not set, or a variable name in the dialog
+                link = _literal(target)
+            block = _literal(" ".join(ref.block.split()))
+            lines.append(f"* {block} ({label}): {link}")
+        if not lines:
+            return []
+        return [f".. rubric:: {_('References')}", "", *lines, ""]
 
     def help_lines(self, mask):
         """Return the mask Help: a link for a URL, ``web(...)`` or a linker line
@@ -1739,7 +1776,7 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
 
     objtype = "simulink_library"
     option_spec = {
-        **MatSimulinkDocumenter.option_spec,
+        **_SIMULINK_OPTIONS,
         "members": members_option,
         "undoc-members": bool_option,
         "exclude-members": exclude_members_option,
@@ -1804,6 +1841,7 @@ class MatSimulinkBlockDocumenter(MatSimulinkDocumenter):
     """Documenter of a block of a Simulink library."""
 
     objtype = "simulink_library_block"
+    option_spec = _SIMULINK_OPTIONS
 
 
 MatSimulinkDocumenter.accepts = staticmethod(
