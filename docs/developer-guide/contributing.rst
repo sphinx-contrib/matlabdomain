@@ -117,7 +117,7 @@ Versions and compatibility
 * The project follows `semantic versioning <https://semver.org/>`_ from
   1.0.0. The public interface includes the configuration values,
   directives, roles and options, path references and link anchors
-  (:doc:`../user-guide/referencing`), the ``sphinx-matlab-apidoc``
+  (:doc:`../user-guide/referencing`), the ``scmd apidoc``
   options and template variables, and the ``matlab-api-check`` rules and
   report format.
 * Supported: Python 3.11 to 3.14, Sphinx 8.0 and newer, on Linux, Windows

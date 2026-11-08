@@ -1,5 +1,5 @@
 # Makefile for Sphinx documentation
-# Written by sphinx-matlab-quickstart (sphinxcontrib-matlabdomain).
+# Written by scmd quickstart (sphinxcontrib-matlabdomain).
 
 SPHINXOPTS    ?=
 # The commands run in the project's uv environment, as locked in uv.lock.

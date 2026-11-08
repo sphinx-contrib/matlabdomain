@@ -1,7 +1,7 @@
 """sphinxcontrib.matlab_quickstart._cli.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Command line of ``sphinx-matlab-quickstart`` (plan.md Section 2.13): the
+Command line of ``scmd quickstart`` (plan.md Section 2.13): the
 prompts with detected defaults, the answers file, the dry run, the writes
 and the report.
 """
@@ -36,7 +36,7 @@ FAILED = 1
 #: exit status for usage errors and for stops before anything is written
 USAGE_ERROR = 2
 #: the default name of a saved answers file, in the project root
-ANSWERS_FILE = "sphinx-matlab-quickstart.toml"
+ANSWERS_FILE = "scmd-quickstart.toml"
 #: the keys of an answers file, in prompt order
 KEYS = (
     "project",
@@ -71,14 +71,14 @@ class Stop(Exception):
         self.status = status
 
 
-def get_parser(prog="sphinx-matlab-quickstart"):
+def get_parser(prog="scmd quickstart"):
     parser = argparse.ArgumentParser(
         prog=prog,
         allow_abbrev=False,
         description=(
             "Set up Sphinx documentation for the MATLAB project in ROOT: a Sphinx "
             "source folder (conf.py, index.rst, make files, a build guide and the "
-            "API pages of sphinx-matlab-apidoc), the docs dependencies (uv add "
+            "API pages of scmd apidoc), the docs dependencies (uv add "
             "--frozen --group docs) and lines in .gitignore and .gitattributes. It "
             "asks one question per choice, with the detected answer as the "
             "default, and prints a report of the project."
@@ -225,7 +225,7 @@ def _toml(value, inline=False):
 
 def dumps(answers):
     """Return the TOML text of ``answers``."""
-    lines = ["# Answers of sphinx-matlab-quickstart: --answers FILE reads them back."]
+    lines = ["# Answers of scmd quickstart: --answers FILE reads them back."]
     lines += [f"{key} = {_toml(answers[key])}" for key in KEYS]
     return "\n".join(lines) + "\n"
 
@@ -330,7 +330,7 @@ def docs_folder(args, root):
     if os.path.isfile(os.path.join(docs, "conf.py")) and not args.force:
         raise Stop(
             f"{_relative(docs, root)}/conf.py exists, so nothing is written "
-            "(--force rewrites the files sphinx-matlab-quickstart writes)."
+            "(--force rewrites the files scmd quickstart writes)."
         )
     return docs
 
@@ -484,7 +484,7 @@ def _git_stop(args, dirty):
     stop = (
         f"{', '.join(dirty)} {'has' if len(dirty) == 1 else 'have'} uncommitted "
         "changes: commit or stash them first, so that git restore undoes exactly "
-        "the edits of sphinx-matlab-quickstart."
+        "the edits of scmd quickstart."
     )
     if not args.dry_run:
         raise Stop(stop)
@@ -633,8 +633,8 @@ def save_answers(args, root, answers):
     print(f"Saved the answers: --answers {path} reads them back.")
 
 
-def main(argv=None, *, prog="sphinx-matlab-quickstart"):
-    """Run ``sphinx-matlab-quickstart``; return the exit status.
+def main(argv=None, *, prog="scmd quickstart"):
+    """Run ``scmd quickstart``; return the exit status.
 
     0 on success, also with warnings; 1 when ``uv add`` fails or the run is
     interrupted; 2 for usage errors and when it stops before writing

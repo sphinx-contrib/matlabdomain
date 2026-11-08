@@ -12,7 +12,7 @@ tree-sitter):
    ``sphinx-build -b html docs docs/_build/html``.
 ``Python: Debug current test file``
    pytest on the open test file.
-``Debug sphinx-matlab-apidoc (CLI)``
+``Debug scmd apidoc (CLI)``
    A dry run (``-n``) of the command on the worked example
    (``examples/apidoc/docs``); drop ``-n`` to write the pages.
 ``Debug matlab-api-check``

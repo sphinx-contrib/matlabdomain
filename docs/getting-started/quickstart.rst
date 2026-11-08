@@ -152,5 +152,5 @@ Next steps
   :doc:`../user-guide/api-check`.
 * Set up an existing MATLAB repository with an agent: the repository's
   skill ``skills/setting-up-a-project/SKILL.md`` starts with
-  ``sphinx-matlab-quickstart`` and walks through the decisions and the
+  ``scmd quickstart`` and walks through the decisions and the
   warnings step by step.

@@ -312,7 +312,7 @@ def test_apidoc_lists_simulink_files(tmp_path, warnings):
     assert any("broken.slx: its blocks cannot be read" in m for m in messages)
     # one warning for the library, none for its blocks
     assert [m for m in messages if "probeLib" in m] == [
-        "[sphinx-matlab-apidoc] probeLib is defined by several files in Global: "
+        "[scmd apidoc] probeLib is defined by several files in Global: "
         "mdl/probeLib.mdl, probeLib.slx; they are listed by path."
     ]
     folder = build_pages(source_index, ApidocOptions("out", group="folder"))

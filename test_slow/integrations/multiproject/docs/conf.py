@@ -1,7 +1,7 @@
 """sphinx-multiproject root configuration: ``PROJECT=alpha`` or ``beta``.
 
 ``alpha/conf.py`` and ``beta/conf.py`` also build on their own (the
-supported recipe) and are what ``sphinx-matlab-apidoc -c docs/<project>``
+supported recipe) and are what ``scmd apidoc -c docs/<project>``
 reads. sphinx-multiproject 1.0.0 cannot read them on Sphinx 9
 (``PROBE_MULTIPROJECT_MODE=file`` shows the failure; on Sphinx 8 it warns
 that they set ``extensions``), so by default this file passes their values

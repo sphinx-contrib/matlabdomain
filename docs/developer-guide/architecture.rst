@@ -44,11 +44,13 @@ Modules
    * - ``mat_sidecars.py``
      - Sidecar docs: the configuration check, ``mat:autosidecar``, the
        myst-parser renderer for Markdown sidecar docs and the link mapping.
+   * - ``matlab_cli.py``
+     - ``scmd``: the command and its subcommands.
    * - ``matlab_apidoc/``
-     - ``sphinx-matlab-apidoc``: the command line, the page model, output
+     - ``scmd apidoc``: the command line, the page model, output
        names and the templates.
    * - ``matlab_quickstart/``
-     - ``sphinx-matlab-quickstart``: the project facts (``_detect.py``), the
+     - ``scmd quickstart``: the project facts (``_detect.py``), the
        Sphinx source folder from its templates and the edits outside it
        (``_write.py``), the prompts and answers file (``_cli.py``), the
        report (``_report.py``). It builds the index and calls the
@@ -62,8 +64,9 @@ is imported). Most modules also use ``mat_naming.py`` and
 
    flowchart TB
      sphinx(["sphinx-build"]) --> matlab
-     cli(["sphinx-matlab-apidoc"]) --> apidoc
-     qs(["sphinx-matlab-quickstart"]) --> quickstart["matlab_quickstart/"]
+     scmd(["scmd"]) --> cli["matlab_cli.py"]
+     cli --> apidoc
+     cli --> quickstart["matlab_quickstart/"]
      quickstart --> apidoc
      matlab["matlab.py<br/>setup, MATLABDomain"] --> documenters["mat_documenters.py<br/>mat_directives.py"]
      matlab --> apicheck["mat_api_check.py"]
@@ -100,7 +103,7 @@ Reading and classifying text is cheap; tree-sitter parses are not.
    ``parse_cache`` by ``(path, mtime, size)``. A class folder is parsed as
    one unit. Lookups decide from the index records whenever they can.
 
-``build_index`` needs no Sphinx application, so ``sphinx-matlab-apidoc``
+``build_index`` needs no Sphinx application, so ``scmd apidoc``
 shares the index stage: it agrees with the build on files, references,
 types, names and warnings, and never parses.
 
@@ -156,7 +159,7 @@ Names and references
 
 ``mat_naming.py`` is the only place that turns paths into references,
 anchors and MATLAB names, so directives, documenters, roles,
-``sphinx-matlab-apidoc`` and ``matlab-api-check`` agree. The reference
+``scmd apidoc`` and ``matlab-api-check`` agree. The reference
 scheme and the anchors are a public contract
 (:doc:`../user-guide/referencing`). Cross-reference resolution is
 ``MATLABDomain.find_obj``: exact reference, then relative to the current

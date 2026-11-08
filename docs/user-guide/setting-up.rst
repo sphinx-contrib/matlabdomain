@@ -41,7 +41,7 @@ them back:
 
 .. code-block:: console
 
-   $ uv run scmd quickstart --answers sphinx-matlab-quickstart.toml
+   $ uv run scmd quickstart --answers scmd-quickstart.toml
 
 The questions
 -------------

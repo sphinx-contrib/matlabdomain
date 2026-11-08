@@ -53,11 +53,12 @@
         },
         // A dry run on the worked example (its conf.py); drop -n to write.
         {
-            "name": "Debug sphinx-matlab-apidoc (CLI)",
+            "name": "Debug scmd apidoc (CLI)",
             "type": "debugpy",
             "request": "launch",
-            "module": "sphinxcontrib.matlab_apidoc",
+            "module": "sphinxcontrib.matlab_cli",
             "args": [
+                "apidoc",
                 "-n",
                 "-c", "${workspaceFolder}/examples/apidoc/docs"
             ],

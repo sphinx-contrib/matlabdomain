@@ -1,4 +1,4 @@
-"""Real-project gauntlet: sphinx-matlab-apidoc and sphinx-build on each checkout.
+"""Real-project gauntlet: scmd apidoc and sphinx-build on each checkout.
 
 Usage, from anywhere (fetch.py first; this script fetches nothing):
   python test_slow/gauntlet/gauntlet.py [NAME ...] [--out DIR] [--trials N]
@@ -21,7 +21,7 @@ name contains one of them), on its checkout test_slow/repos/<name>:
   codes, the bytes of every *.html and objects.inv (the api-check reports),
   and the warnings (Windows has no fork, so -j runs serially there).
 
-With --quickstart, instead: runs sphinx-matlab-quickstart -q on a temporary
+With --quickstart, instead: runs scmd quickstart -q on a temporary
 git worktree of each checkout (the Sphinx source folder ``docs``, or
 ``sphinx-docs`` when ``docs`` exists), then a sphinx-build -E -n of what it
 wrote; the worktree is removed and the checkout stays as it was. Records
@@ -119,7 +119,7 @@ def run(*args):
 
 
 def apidoc(docs, *flags):
-    proc, wall = run("sphinxcontrib.matlab_apidoc", *flags, "-c", str(docs))
+    proc, wall = run("sphinxcontrib.matlab_cli", "apidoc", *flags, "-c", str(docs))
     m = SUMMARY.search(proc.stdout)
     return proc, wall, m.groups() if m else None
 
@@ -309,10 +309,19 @@ def check_commit(project, lock, row):
 
 
 def quickstart(root, name, folder):
-    """Run sphinx-matlab-quickstart -q in ``root``; return its row."""
+    """Run scmd quickstart -q in ``root``; return its row."""
     start = time.perf_counter()
     proc = subprocess.run(
-        [PY, "-m", "sphinxcontrib.matlab_quickstart", str(root), "-q", "-o", name],
+        [
+            PY,
+            "-m",
+            "sphinxcontrib.matlab_cli",
+            "quickstart",
+            str(root),
+            "-q",
+            "-o",
+            name,
+        ],
         cwd=root,
         capture_output=True,
         text=True,
@@ -335,7 +344,7 @@ def quickstart(root, name, folder):
 
 
 def run_quickstart(project, lock, out):
-    """Run sphinx-matlab-quickstart -q and a -n build of its output on a
+    """Run scmd quickstart -q and a -n build of its output on a
     temporary worktree; return the row, None (no manifest) and the problems.
     """
     row = {"commit": None, "changed_files": None, "root": project.root}
@@ -411,7 +420,7 @@ def main():
     parser.add_argument(
         "--quickstart",
         action="store_true",
-        help="sphinx-matlab-quickstart and a -n build on a temporary worktree",
+        help="scmd quickstart and a -n build on a temporary worktree",
     )
     parser.add_argument(
         "--projects", default=P.LIST, help="the project list (default: %(default)s)"

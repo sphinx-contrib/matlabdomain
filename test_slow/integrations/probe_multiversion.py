@@ -5,7 +5,7 @@ Builds a disposable Git repository from ``multiversion/rev1`` (tag
 runs sphinx-multiversion in these scenarios:
 
 ``naive``
-    ``sphinx-matlab-apidoc`` once in the working tree, then
+    ``scmd apidoc`` once in the working tree, then
     sphinx-multiversion: the pages are not in Git, so no version has them.
 ``snapshot``
     The supported recipe: in a disposable clone, generate and commit each
@@ -97,7 +97,15 @@ class Probe:
 
     def apidoc(self, repo):
         return self.run(
-            [sys.executable, "-m", "sphinxcontrib.matlab_apidoc", "-c", "docs", "-q"],
+            [
+                sys.executable,
+                "-m",
+                "sphinxcontrib.matlab_cli",
+                "apidoc",
+                "-c",
+                "docs",
+                "-q",
+            ],
             cwd=repo,
         )
 

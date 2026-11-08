@@ -1,7 +1,7 @@
 """sphinxcontrib.matlab_apidoc._cli.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Command line of ``sphinx-matlab-apidoc`` (plan.md Section 2.8). The
+Command line of ``scmd apidoc`` (plan.md Section 2.8). The
 settings come from ``conf.py`` in ``-c DIR`` (default: the working folder)
 only; the flags are run-time options.
 """
@@ -57,7 +57,7 @@ def _version():
         return "0.0.0"
 
 
-def get_parser(prog="sphinx-matlab-apidoc"):
+def get_parser(prog="scmd apidoc"):
     parser = argparse.ArgumentParser(
         prog=prog,
         allow_abbrev=False,
@@ -281,8 +281,8 @@ def _count(number, noun):
     return f"{number} {noun}{'' if number == 1 else 's'}"
 
 
-def main(argv=None, *, prog="sphinx-matlab-apidoc"):
-    """Run ``sphinx-matlab-apidoc``; return the exit status.
+def main(argv=None, *, prog="scmd apidoc"):
+    """Run ``scmd apidoc``; return the exit status.
 
     0 on success, also with warnings; 1 if ``--check`` finds a page to
     change; 2 for usage or settings errors (argparse exits with 2 itself for

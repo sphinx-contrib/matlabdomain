@@ -10,10 +10,10 @@ folders), and help text is found where MATLAB's ``help`` finds it.
 
 It also ships:
 
-* ``sphinx-matlab-quickstart``, which sets up the documentation of a
+* ``scmd quickstart``, which sets up the documentation of a
   MATLAB project: ``conf.py``, make files and API pages, with defaults read
   from the project;
-* ``sphinx-matlab-apidoc``, which writes pages for every file of a project;
+* ``scmd apidoc``, which writes pages for every file of a project;
 * the ``matlab-api-check`` builder, which checks that help text describes
   every function, class, method, input and output, for example in CI;
 * sidecar docs: tutorials and notes as ``.md`` and ``.rst`` files
@@ -42,7 +42,7 @@ From a MATLAB project's folder:
 
 .. code-block:: console
 
-   $ sphinx-matlab-quickstart
+   $ scmd quickstart
 
 Or by hand, ``conf.py``:
 
@@ -50,7 +50,7 @@ Or by hand, ``conf.py``:
 
    extensions = ["sphinxcontrib.matlab"]
    matlab_src_code_project_root = "../src"  # relative to conf.py's folder
-   matlab_apidoc_output_dir = "api"  # where sphinx-matlab-apidoc writes
+   matlab_apidoc_output_dir = "api"  # where scmd apidoc writes
 
 A page:
 
@@ -65,7 +65,7 @@ Pages for a whole project, and a check of its help text:
 
 .. code-block:: console
 
-   $ sphinx-matlab-apidoc -c docs
+   $ scmd apidoc -c docs
    $ sphinx-build -b matlab-api-check docs docs/_build/api-check
 
 Documentation

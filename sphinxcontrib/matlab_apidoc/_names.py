@@ -1,7 +1,7 @@
 """sphinxcontrib.matlab_apidoc._names.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Output file names of ``sphinx-matlab-apidoc`` (plan.md Section 2.8). Pure
+Output file names of ``scmd apidoc`` (plan.md Section 2.8). Pure
 functions of path references: the same names on every OS.
 
 - The output tree mirrors the folder tree: the page of folder ``a/+p/`` is

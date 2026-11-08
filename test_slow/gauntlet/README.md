@@ -1,6 +1,6 @@
 # Real-project gauntlet
 
-Runs `sphinx-matlab-apidoc` and `sphinx-build` on real MATLAB projects and
+Runs `scmd apidoc` and `sphinx-build` on real MATLAB projects and
 reports crashes, warnings by subtype, timings, and serial vs `-j`
 differences. Added in Phase 8 (14 projects, about 24,000 `.m` files).
 
@@ -42,7 +42,7 @@ exit code (`api`: 1 with findings of severity `error`, else 0), a
 traceback, a duplicate object, a rerun that changes pages, or a
 serial vs `-j` difference (unless `parallel_may_differ`).
 
-`--quickstart` runs `sphinx-matlab-quickstart -q` instead, on a temporary
+`--quickstart` runs `scmd quickstart -q` instead, on a temporary
 `git worktree` of each checkout (Sphinx source folder `docs`, or
 `sphinx-docs` when `docs` exists), then `sphinx-build -E -n` of what it
 wrote, and removes the worktree. A problem: a nonzero exit code, a

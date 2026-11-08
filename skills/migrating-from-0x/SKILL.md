@@ -1,6 +1,6 @@
 ---
 name: migrating-from-0x
-description: Migrate a Sphinx project that documents MATLAB code with sphinxcontrib-matlabdomain 0.x (0.22 and earlier) to 1.0. Use when a conf.py sets matlab_src_dir or matlab_keep_package_prefix, pages use dotted MATLAB names or module/automodule directives, a 1.0 build fails with a ConfigError about removed values, or a project wants sphinx-matlab-apidoc pages and the matlab-api-check builder instead of a 0.x page generator or doc-check script.
+description: Migrate a Sphinx project that documents MATLAB code with sphinxcontrib-matlabdomain 0.x (0.22 and earlier) to 1.0. Use when a conf.py sets matlab_src_dir or matlab_keep_package_prefix, pages use dotted MATLAB names or module/automodule directives, a 1.0 build fails with a ConfigError about removed values, or a project wants scmd apidoc pages and the matlab-api-check builder instead of a 0.x page generator or doc-check script.
 ---
 
 # Migrating a project from matlabdomain 0.x to 1.0

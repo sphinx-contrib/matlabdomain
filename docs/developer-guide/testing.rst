@@ -43,11 +43,11 @@ Layout
    and naming (``test_mat_classify.py``, ``test_mat_naming.py``), the index
    and incremental builds (``test_build_index.py``, ``test_lazy_index.py``,
    ``test_domain_lifecycle.py``), fault tolerance, directives and options,
-   ``sphinx-matlab-apidoc`` (``test_apidoc.py``), links from another
+   ``scmd apidoc`` (``test_apidoc.py``), links from another
    project through its inventory and page splitting
    (``test_intersphinx.py``), stable addresses (``test_stable_urls.py``),
    ``matlab-api-check``
-   (``test_api_check.py``), ``sphinx-matlab-quickstart``
+   (``test_api_check.py``), ``scmd quickstart``
    (``test_quickstart.py``) and this documentation
    (``test_documentation.py``).
 ``tests/roots/test_<name>/``
@@ -56,11 +56,11 @@ Layout
 ``tests/test_data/``
    MATLAB files for parser tests.
 ``tests/apidoc_golden/``
-   The expected output of ``sphinx-matlab-apidoc`` for the
+   The expected output of ``scmd apidoc`` for the
    ``test_apidoc_basics`` root: namespace grouping (``default``,
    ``separate``) and folder grouping (``folder``, ``folder-separate``).
 ``tests/quickstart_golden/``
-   The expected output of ``sphinx-matlab-quickstart``: the Sphinx source
+   The expected output of ``scmd quickstart``: the Sphinx source
    folder and the printed lines for the ``test_quickstart`` root as a uv
    project in git (``uv``), for ``test_apidoc_basics`` outside git
    (``plain``), and a dry run (``dry-run.txt``). The copyright year is
@@ -111,7 +111,7 @@ except the Sphinx ``dev`` job and fails below 100%:
 The real-project gauntlet
 -------------------------
 
-``test_slow/gauntlet`` runs ``sphinx-matlab-apidoc``, ``sphinx-build`` and
+``test_slow/gauntlet`` runs ``scmd apidoc``, ``sphinx-build`` and
 ``matlab-api-check`` on 14 open-source MATLAB projects (about 24,000 files)
 and checks that nothing crashes, reruns are identical, serial and ``-j``
 builds agree, and Windows and Linux give the same output. Run it before
@@ -124,7 +124,7 @@ explains how:
    $ python test_slow/gauntlet/gauntlet.py --jobs
    $ python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase9-linux.json test_slow/gauntlet/runs/latest
 
-With ``--quickstart`` it runs ``sphinx-matlab-quickstart -q`` on a
+With ``--quickstart`` it runs ``scmd quickstart -q`` on a
 temporary ``git worktree`` of each project instead, then a ``-n`` build of
 what the command wrote; the checkouts stay unchanged.
 

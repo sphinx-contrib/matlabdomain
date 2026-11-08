@@ -12,7 +12,7 @@ function url = simulinkDocumentationLinker(reference)
 %       web(sphinxcontrib.matlabdomain.simulinkDocumentationLinker("src/lib.slx/Gain"))
 %
 %   simulinkDocumentationLinker.json, next to this file, names the sites;
-%   sphinx-matlab-quickstart writes it and HTML builds keep "local",
+%   scmd quickstart writes it and HTML builds keep "local",
 %   "server" and "published" up to date:
 %
 %       {"mode": "local",
@@ -51,7 +51,7 @@ projectRoot = fileparts(fileparts(folder));
 file = fullfile(folder, "simulinkDocumentationLinker.json");
 if ~isfile(file)
     error("sphinxcontrib:matlabdomain:noSettings", ...
-        "No settings file %s; sphinx-matlab-quickstart writes it.", file);
+        "No settings file %s; scmd quickstart writes it.", file);
 end
 settings = jsondecode(fileread(file));
 modes = ["local", "server", "published"];
@@ -154,7 +154,7 @@ end
 end
 
 function out = stablePath(reference)
-% The rule of sphinx-matlab-apidoc's output names (_names.docnames).
+% The rule of scmd apidoc's output names (_names.docnames).
 if reference == "./"
     out = "index";
     return

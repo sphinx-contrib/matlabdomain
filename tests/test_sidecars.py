@@ -1,6 +1,6 @@
 """Sidecar docs (plan.md Section 2.11, Phase 12): the index, the
 ``mat:autosidecar`` directive, links, the ``:mat:sidecar:`` role, the layouts,
-incremental and parallel builds, ``sphinx-matlab-apidoc`` and
+incremental and parallel builds, ``scmd apidoc`` and
 ``matlab-api-check``.
 """
 
@@ -790,7 +790,7 @@ def test_source_folder_inside_the_root(make_app, tmp_path):
     assert warnings(app) == []
 
 
-# --- sphinx-matlab-apidoc ----------------------------------------------------
+# --- scmd apidoc ----------------------------------------------------
 
 
 def apidoc_pages(root, **options):

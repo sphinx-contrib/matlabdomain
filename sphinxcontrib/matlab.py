@@ -1445,7 +1445,7 @@ def setup(app):
     app.add_config_value("matlab_api_check_ignore_unmatched", False, "", bool)
     # Section -> the labels it accepts, replacing the built-in ones.
     app.add_config_value("matlab_api_check_section_labels", {}, "", dict)
-    # Read by sphinx-matlab-apidoc only.
+    # Read by scmd apidoc only.
     apidoc_config.add_config_values(app)
 
     app.registry.add_documenter("mat:folder", doc.MatFolderDocumenter)

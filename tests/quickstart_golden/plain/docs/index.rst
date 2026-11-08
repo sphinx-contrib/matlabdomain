@@ -1,7 +1,7 @@
 Quickstart test
 ===============
 
-.. Written by sphinx-matlab-quickstart: replace this comment with an
+.. Written by scmd quickstart: replace this comment with an
    introduction to Quickstart test.
 
 .. toctree::

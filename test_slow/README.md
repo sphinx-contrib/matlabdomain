@@ -5,7 +5,7 @@ collect them.
 
 | Folder | Purpose |
 |---|---|
-| `gauntlet/` | The real-project gauntlet: `sphinx-matlab-apidoc` and `sphinx-build` on real MATLAB projects. Details: [gauntlet/README.md](gauntlet/README.md). |
+| `gauntlet/` | The real-project gauntlet: `scmd apidoc` and `sphinx-build` on real MATLAB projects. Details: [gauntlet/README.md](gauntlet/README.md). |
 | `repos/` | The gauntlet's checkouts (`fetch.py` creates it; ignored by Git). |
 | `profiling/` | The profiling harness (a parse sweep and a `sphinx-build` of vhlab-toolbox-matlab, from the gauntlet's checkouts) and its recorded results. |
 | `naming/` | `compare_render.py`: snapshots the rendered anchors, links, inventories and warnings of the test roots and docs, and compares two code versions. |

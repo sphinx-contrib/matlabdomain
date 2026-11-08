@@ -1,5 +1,5 @@
-sphinx-matlab-apidoc example
-============================
+scmd apidoc example
+===================
 
 The pages below ``api/`` are generated from ``../src`` with the
 templates in ``../templates``; see ``README.rst``.

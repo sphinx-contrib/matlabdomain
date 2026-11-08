@@ -75,7 +75,15 @@ class Probe:
 
     def apidoc(self, confdir):
         return self.run(
-            [sys.executable, "-m", "sphinxcontrib.matlab_apidoc", "-c", confdir, "-q"]
+            [
+                sys.executable,
+                "-m",
+                "sphinxcontrib.matlab_cli",
+                "apidoc",
+                "-c",
+                confdir,
+                "-q",
+            ]
         )
 
     def build(self, srcdir, name, env=None, strict=True, fresh=False):

@@ -2,7 +2,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``matlab_apidoc_*`` config values (plan.md Section 2.8): read from
-``conf.py`` by ``sphinx-matlab-apidoc``; the build only registers them.
+``conf.py`` by ``scmd apidoc``; the build only registers them.
 """
 
 from __future__ import annotations

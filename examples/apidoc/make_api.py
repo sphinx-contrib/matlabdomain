@@ -1,6 +1,6 @@
-"""Write the example's API pages with the Python API of sphinx-matlab-apidoc.
+"""Write the example's API pages with the Python API of scmd apidoc.
 
-``sphinx-matlab-apidoc`` takes its settings from ``docs/conf.py``. A script
+``scmd apidoc`` takes its settings from ``docs/conf.py``. A script
 sets them itself: these values give the pages of
 ``scmd apidoc --conf-dir docs``; change them (or loop over several roots)
 to get other pages. Run it from anywhere::

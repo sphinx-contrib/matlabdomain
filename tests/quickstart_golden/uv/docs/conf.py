@@ -1,5 +1,5 @@
 # Sphinx configuration of the Quickstart test documentation.
-# Written by sphinx-matlab-quickstart (sphinxcontrib-matlabdomain); edit freely.
+# Written by scmd quickstart (sphinxcontrib-matlabdomain); edit freely.
 # Configuration values: https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import configparser

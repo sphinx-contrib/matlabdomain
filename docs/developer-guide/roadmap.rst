@@ -17,8 +17,8 @@ file types. Simulink models, libraries and subsystem files are supported
 One handler owns one extension, as for ``.slx``, ``.mdl`` and exported
 Simulink ``.xml`` files.
 
-``sphinx-matlab-apidoc``
-------------------------
+``scmd apidoc``
+---------------
 
 * ``Contents.m`` as the description of its folder, as MATLAB's ``help
   folder`` shows it (before the README introduction of

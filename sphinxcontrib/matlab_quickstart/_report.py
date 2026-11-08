@@ -1,7 +1,7 @@
 """sphinxcontrib.matlab_quickstart._report.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The report of ``sphinx-matlab-quickstart`` (plan.md Section 2.13): the
+The report of ``scmd quickstart`` (plan.md Section 2.13): the
 project facts, the inventory of the index, the help headings, the
 copyright blocks that run into help, and the next steps.
 """

@@ -1,4 +1,4 @@
-"""Intersphinx between a library built with sphinx-matlab-apidoc and a
+"""Intersphinx between a library built with scmd apidoc and a
 consumer project: MATLAB-name, path and named-inventory references, and what
 survives when an object moves to another API page (plan.md Section 2.3). The
 library's inventory points to the stable addresses (``mat/ref/``).
@@ -52,7 +52,7 @@ def build_library(
     make_app, root, group="folder", page_size=100, extra=(), conf="", **apidoc_conf
 ):
     """Generate the API pages of the library ``root`` with
-    sphinx-matlab-apidoc (other ``matlab_apidoc_*`` values in
+    scmd apidoc (other ``matlab_apidoc_*`` values in
     ``apidoc_conf``, other ``conf.py`` lines in ``conf``) and build its HTML
     from scratch; return the output folder.
     """

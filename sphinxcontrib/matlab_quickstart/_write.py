@@ -1,7 +1,7 @@
 """sphinxcontrib.matlab_quickstart._write.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-What ``sphinx-matlab-quickstart`` writes (plan.md Section 2.13): the
+What ``scmd quickstart`` writes (plan.md Section 2.13): the
 files of the Sphinx source folder from the templates, and the edits
 outside it: the docs dependency group through ``uv add --frozen``, lines in
 ``.gitignore`` and ``.gitattributes``, and, for a project with Simulink

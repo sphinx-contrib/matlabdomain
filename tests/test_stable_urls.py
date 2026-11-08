@@ -376,7 +376,7 @@ def test_incremental_builds_remove_stale_pages_and_relink(make_app, tmp_path):
     assert 'href="api/util/index-2.html#mat-util/scale.m"' in links.read_text()
     assert (outdir / "404.html").read_text().count(mat_urls.MARKER) == 1
 
-    # Fewer pages: those whose source sphinx-matlab-apidoc removed go too;
+    # Fewer pages: those whose source scmd apidoc removed go too;
     # the page of a removed hand-written source stays.
     removed = ["api/util/index-3.html", "_sources/api/util/index-3.rst.txt"]
     assert all((outdir / p).is_file() for p in removed)

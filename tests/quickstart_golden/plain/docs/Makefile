@@ -1,5 +1,5 @@
 # Makefile for Sphinx documentation
-# Written by sphinx-matlab-quickstart (sphinxcontrib-matlabdomain).
+# Written by scmd quickstart (sphinxcontrib-matlabdomain).
 
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build

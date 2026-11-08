@@ -1,6 +1,6 @@
 # Building the documentation
 
-<!-- Written by sphinx-matlab-quickstart (sphinxcontrib-matlabdomain); edit
+<!-- Written by scmd quickstart (sphinxcontrib-matlabdomain); edit
 freely. -->
 
 The documentation is built with [Sphinx](https://www.sphinx-doc.org/) and

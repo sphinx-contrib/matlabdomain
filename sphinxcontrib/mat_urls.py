@@ -17,7 +17,7 @@ The "¶" link of an object points to its stable address: by MATLAB name if
 it is unique, else by path reference; the ``mat`` entries of ``objects.inv``
 point to the address by path reference, so another project's links follow an
 object even with an old inventory. File names are escaped like the pages
-of ``sphinx-matlab-apidoc``. Only files this extension wrote (``MARKER``,
+of ``scmd apidoc``. Only files this extension wrote (``MARKER``,
 ``JS_MARKER``) are rewritten or removed; any other file at one of these
 addresses fails the build.
 
@@ -25,7 +25,7 @@ A page opened at the anchor of an object that is no longer on it (an
 address copied from the browser), and the site's ``404.html``, send the
 browser to the object's stable address (``SCRIPT``, ``mat/refs.js``).
 
-Incremental builds: pages whose ``sphinx-matlab-apidoc`` source is gone are
+Incremental builds: pages whose ``scmd apidoc`` source is gone are
 removed, and when objects moved, every page that links to a MATLAB object is
 written again.
 """

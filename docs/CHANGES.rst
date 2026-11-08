@@ -8,10 +8,9 @@ The first stable release; from here on the project follows semantic
 versioning. It breaks with 0.x in many places: see "Migrating from 0.22 and
 earlier" in the documentation.
 
-* Add ``sphinxcontrib-matlabdomain`` and its alias ``scmd`` with
-  ``quickstart`` and ``apidoc`` subcommands. All options have short and
-  long forms. The existing command names remain available. Generated build
-  scripts use ``scmd`` and long options.
+* New command ``scmd`` (also installed as ``sphinxcontrib-matlabdomain``)
+  with the subcommands ``quickstart`` and ``apidoc``. All options have short
+  and long forms. Generated build scripts use ``scmd`` and long options.
 
 * Consolidate build, test and static-analysis policy in ``pyproject.toml``;
   document repository configuration and check its inventory. Add a shared
@@ -63,12 +62,12 @@ earlier" in the documentation.
   subsystem file as links. "See also" entries and
   :confval:`matlab_auto_link` link to Simulink models, libraries and
   subsystem files by MATLAB name.
-  ``sphinx-matlab-apidoc`` lists Simulink files in sections Simulink
+  ``scmd apidoc`` lists Simulink files in sections Simulink
   Models, Simulink Libraries, Simulink Subsystem References and Simulink
   Library Blocks (it reads libraries for their masked blocks); templates
   get a new entry key ``argument``.
   ``matlab-api-check`` counts Simulink files as not
-  checked (``simulink_files``). ``sphinx-matlab-quickstart`` adds
+  checked (``simulink_files``). ``scmd quickstart`` adds
   ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` to a
   project with Simulink files: Help fields call it to open the page of a
   model, subsystem file or library block, on the local or the published
@@ -205,7 +204,7 @@ earlier" in the documentation.
   longer has the object, or a page that is gone (``404.html``), opens the
   object's stable address. New ``matlab_stable_urls`` (default
   ``True``) turns it off.
-* Incremental HTML builds remove the pages whose ``sphinx-matlab-apidoc``
+* Incremental HTML builds remove the pages whose ``scmd apidoc``
   source is gone, and write again every page with a link to a MATLAB
   object when objects were added, removed or moved to other pages.
 * Requires ``tree-sitter-matlab`` 1.3.3 (was 1.3.0 to 1.3.1). It parses a
@@ -278,8 +277,7 @@ earlier" in the documentation.
   build use, once per build; a file no page uses is not parsed. Index
   warnings (``mat.encoding``, ``mat.empty_code_file``, ``mat.not_callable``,
   unreadable files and folders) still appear on every build.
-* New command ``sphinx-matlab-apidoc`` (also ``python -m
-  sphinxcontrib.matlab_apidoc``): writes reST pages with ``mat:auto*``
+* New subcommand ``scmd apidoc``: writes reST pages with ``mat:auto*``
   directives for the MATLAB files of a project, from Jinja templates that
   can be replaced (``matlab_apidoc_templatedir``). By default
   (``matlab_apidoc_group = "namespace"``) it writes one page per namespace,
@@ -293,7 +291,7 @@ earlier" in the documentation.
   flat on the root page (the root folder's page first, named ``root``).
   Its template context is a public
   interface: renaming or removing a key is a breaking change. See
-  ``examples/apidoc``. ``sphinx-matlab-apidoc -c DIR`` (default: the
+  ``examples/apidoc``. ``scmd apidoc -c DIR`` (default: the
   current folder) reads every setting from ``DIR/conf.py``: the source
   settings of the build and the new ``matlab_apidoc_*`` values (output
   folder, grouping, page size, one page per file, toctree depth, root
@@ -313,8 +311,8 @@ earlier" in the documentation.
 * **Breaking:** a ``matlab_*`` name in ``conf.py`` that is not a
   configuration value (a typo, a value this version does not have, a helper
   variable) is a ``ConfigError`` in the build and in
-  ``sphinx-matlab-apidoc``, with the closest value as a suggestion; Sphinx
-  ignores such names silently. ``sphinx-matlab-apidoc`` also rejects
+  ``scmd apidoc``, with the closest value as a suggestion; Sphinx
+  ignores such names silently. ``scmd apidoc`` also rejects
   abbreviated options.
 * The function files of a class folder ``@X/`` are methods only if ``X.m`` is
   a classdef. In any other ``@`` folder (an old-style class, a classdef named
@@ -435,7 +433,7 @@ earlier" in the documentation.
   exclusion patterns. The new directive ``mat:autosidecar`` renders one into
   a document, with relative images, downloads, includes and Markdown links
   (to sidecar docs, code and files) resolved from its folder; the new role
-  ``:mat:sidecar:`` links to one. ``sphinx-matlab-apidoc -c`` writes a page
+  ``:mat:sidecar:`` links to one. ``scmd apidoc -c`` writes a page
   for each (``guide.md`` -> ``guide-md.rst``, new template
   ``sidecar.rst.jinja``), lists them on their folder's page and uses a
   folder's README as its introduction (new template keys ``sidecars`` and
@@ -457,8 +455,7 @@ earlier" in the documentation.
   (``handle``, ``matlab.*``, ``Simulink.*``, ``double``, ``datetime``,
   ``containers.Map``, ...), so "Bases: handle" no longer needs a
   ``nitpick_ignore``.
-* New command ``sphinx-matlab-quickstart`` (also ``python -m
-  sphinxcontrib.matlab_quickstart``): sets up Sphinx documentation for a
+* New subcommand ``scmd quickstart``: sets up Sphinx documentation for a
   MATLAB project. It asks one question per choice, with defaults read from
   the project (the MATLAB release in its CI files and README, git
   submodules, the MATLAB project path, uv, Markdown notes next to the code,

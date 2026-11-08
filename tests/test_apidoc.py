@@ -1,4 +1,4 @@
-"""sphinx-matlab-apidoc: output names, pages, templates, writing, the CLI and
+"""scmd apidoc: output names, pages, templates, writing, the CLI and
 builds of its output (plan.md Section 2.8, Phase 7).
 """
 
@@ -8,7 +8,6 @@ import runpy
 import shutil
 import subprocess
 import sys
-import sysconfig
 from pathlib import Path
 from typing import Any, cast
 
@@ -990,14 +989,14 @@ def test_usage_errors_exit_2(capsys, monkeypatch, argv):
     with pytest.raises(SystemExit) as exc:
         main(argv)
     assert exc.value.code == 2
-    assert "usage: sphinx-matlab-apidoc" in capsys.readouterr().err
+    assert "usage: scmd apidoc" in capsys.readouterr().err
 
 
 def test_version(capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--version"])
     assert exc.value.code == 0
-    assert capsys.readouterr().out.startswith("sphinx-matlab-apidoc ")
+    assert capsys.readouterr().out.startswith("scmd apidoc ")
 
 
 def test_version_without_package_metadata(capsys, monkeypatch):
@@ -1007,15 +1006,7 @@ def test_version_without_package_metadata(capsys, monkeypatch):
     monkeypatch.setattr(importlib.metadata, "version", missing)
     with pytest.raises(SystemExit):
         main(["--version"])
-    assert capsys.readouterr().out == "sphinx-matlab-apidoc 0.0.0\n"
-
-
-def test_python_m_runs_main(capsys, monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["sphinx-matlab-apidoc", "--version"])
-    with pytest.raises(SystemExit) as exc:
-        runpy.run_module("sphinxcontrib.matlab_apidoc", run_name="__main__")
-    assert exc.value.code == 0
-    assert capsys.readouterr().out.startswith("sphinx-matlab-apidoc ")
+    assert capsys.readouterr().out == "scmd apidoc 0.0.0\n"
 
 
 def test_output_and_warnings(tmp_path, capsys):
@@ -1116,25 +1107,11 @@ def test_logging_is_restored(tmp_path):
     assert (logger.handlers, logger.propagate, logger.level) == before
 
 
-def _console_script():
-    scripts = Path(sysconfig.get_path("scripts"))
-    for name in ("sphinx-matlab-apidoc", "sphinx-matlab-apidoc.exe"):
-        if (scripts / name).exists():
-            return scripts / name
-    return shutil.which("sphinx-matlab-apidoc")
-
-
-def test_console_script_and_module(tmp_path):
-    script = _console_script()
-    assert script is not None, "reinstall the package to get the console script"
-    proc = subprocess.run(
-        [str(script), "--version"], capture_output=True, text=True, check=True
-    )
-    assert proc.stdout.startswith("sphinx-matlab-apidoc ")
+def test_command_in_a_subprocess(tmp_path):
     out = tmp_path / "out"
     # -c defaults to the working folder.
     proc = subprocess.run(
-        [sys.executable, "-m", "sphinxcontrib.matlab_apidoc"],
+        [sys.executable, "-m", "sphinxcontrib.matlab_cli", "apidoc"],
         cwd=conf_dir(tmp_path / "docs", out),
         capture_output=True,
         text=True,

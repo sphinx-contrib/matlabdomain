@@ -16,10 +16,10 @@ It names objects the way MATLAB does: ``+pkg`` folders are namespaces,
 ``@Cls`` folders hold a class and its methods, and help text is found where
 MATLAB's ``help`` finds it. Three tools come with it:
 
-* ``sphinx-matlab-quickstart`` sets up the documentation of a MATLAB
+* ``scmd quickstart`` sets up the documentation of a MATLAB
   project: ``conf.py``, the make files and the API pages, with defaults
   read from the project;
-* ``sphinx-matlab-apidoc`` writes pages for every file of a project, so a
+* ``scmd apidoc`` writes pages for every file of a project, so a
   large project needs no hand-written directives;
 * the ``matlab-api-check`` builder checks that functions, classes and
   methods have help text, and that it describes their inputs, outputs and

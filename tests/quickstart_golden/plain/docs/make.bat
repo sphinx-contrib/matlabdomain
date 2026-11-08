@@ -4,7 +4,7 @@ setlocal
 pushd %~dp0
 
 REM Command file for Sphinx documentation
-REM Written by sphinx-matlab-quickstart (sphinxcontrib-matlabdomain).
+REM Written by scmd quickstart (sphinxcontrib-matlabdomain).
 
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build

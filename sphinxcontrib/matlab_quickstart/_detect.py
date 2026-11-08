@@ -1,7 +1,7 @@
 """sphinxcontrib.matlab_quickstart._detect.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The project facts ``sphinx-matlab-quickstart`` reads (plan.md Section
+The project facts ``scmd quickstart`` reads (plan.md Section
 2.13): uv, the MATLAB release, the git submodules, the MATLAB project path,
 sidecar doc candidates, how matlabdomain itself is installed, and, from the
 index, the inventory, the help headings and the copyright blocks that run

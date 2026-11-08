@@ -4,7 +4,7 @@ setlocal
 pushd %~dp0
 
 REM Command file for Sphinx documentation
-REM Written by sphinx-matlab-quickstart (sphinxcontrib-matlabdomain).
+REM Written by scmd quickstart (sphinxcontrib-matlabdomain).
 REM The commands run in the project's uv environment, as locked in uv.lock.
 
 if "%UV%" == "" (

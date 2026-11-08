@@ -21,3 +21,7 @@ def main(argv=None):
     return {"apidoc": apidoc.main, "quickstart": quickstart.main}[args.command](
         remaining, prog=f"{prog} {args.command}"
     )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,4 +1,4 @@
-"""sphinx-matlab-quickstart: detection, the files it writes, the edits
+"""scmd quickstart: detection, the files it writes, the edits
 outside the Sphinx source folder, the command line and the report
 (plan.md Section 2.13, Phase 16).
 """
@@ -6,7 +6,6 @@ outside the Sphinx source folder, the command line and the report
 import json
 import os
 import re
-import runpy
 import shutil
 import subprocess
 import sys
@@ -304,15 +303,7 @@ def test_simulink_project_gets_the_help_linker(tmp_path, capsys, fixed, no_git):
 def test_help_and_version(capsys):
     with pytest.raises(SystemExit):
         matlab_quickstart.main(["--version"])
-    assert "sphinx-matlab-quickstart" in capsys.readouterr().out
-
-
-def test_python_m_runs_main(tmp_path, capsys, monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["x", str(tmp_path / "missing")])
-    with pytest.raises(SystemExit) as exc:
-        runpy.run_module("sphinxcontrib.matlab_quickstart", run_name="__main__")
-    assert exc.value.code == 2
-    assert "is not a folder" in capsys.readouterr().err
+    assert "scmd quickstart" in capsys.readouterr().out
 
 
 # --- the Sphinx source folder ------------------------------------------------

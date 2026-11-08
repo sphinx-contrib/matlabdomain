@@ -72,8 +72,6 @@ markdown = [
 
 [project.scripts]
 scmd = "sphinxcontrib.matlab_cli:main"
-sphinx-matlab-apidoc = "sphinxcontrib.matlab_apidoc:main"
-sphinx-matlab-quickstart = "sphinxcontrib.matlab_quickstart:main"
 sphinxcontrib-matlabdomain = "sphinxcontrib.matlab_cli:main"
 
 [project.urls]
