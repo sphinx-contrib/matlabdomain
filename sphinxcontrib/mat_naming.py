@@ -38,8 +38,6 @@ from pathlib import Path
 
 from . import mat_handlers
 
-VALID_MATLAB_NAMELENGTHMAX = {63, 2048}
-
 # Path reference of the project root folder.
 ROOT_REFERENCE = "./"
 
@@ -98,19 +96,6 @@ class MatlabName:
     is_private: bool = False
 
 
-def validate_namelengthmax(namelengthmax: int) -> int:
-    if (
-        not isinstance(namelengthmax, int)
-        or isinstance(namelengthmax, bool)
-        or namelengthmax not in VALID_MATLAB_NAMELENGTHMAX
-    ):
-        raise ValueError(
-            "namelengthmax must be one of "
-            f"{VALID_MATLAB_NAMELENGTHMAX}; got {namelengthmax}."
-        )
-    return namelengthmax
-
-
 def _release_key(release: str) -> tuple[int, str]:
     match = _MATLAB_RELEASE.match(release) if isinstance(release, str) else None
     if match is None:
@@ -139,7 +124,6 @@ def default_namelengthmax(matlab_version: str) -> int:
 
 
 def _identifier_pattern(namelengthmax: int) -> re.Pattern[str]:
-    validate_namelengthmax(namelengthmax)
     return re.compile(rf"^[A-Za-z][A-Za-z0-9_]{{0,{namelengthmax - 1}}}$")
 
 
@@ -475,7 +459,6 @@ def form_matlab_name(
     Pure string/path function; returns None for non-callable/invalid entries.
     ``matlab_version`` selects version-dependent rules (MATLAB_VERSION_RULES).
     """
-    validate_namelengthmax(namelengthmax)
     validate_matlab_version(matlab_version)
 
     folder_parts = _split_folder(folder)
@@ -545,7 +528,6 @@ def form_model_name(
     release (``.m`` files in ``@C/sub/`` are not callable from R2026a,
     models there still load).
     """
-    validate_namelengthmax(namelengthmax)
     validate_matlab_version(matlab_version)
     parts = _split_folder(folder)
     if not parts or _model_folder_problem(parts) is not None:

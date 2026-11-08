@@ -35,7 +35,6 @@ from sphinxcontrib.mat_naming import (
     path_reference,
     split_display,
     validate_matlab_version,
-    validate_namelengthmax,
 )
 
 
@@ -176,14 +175,6 @@ def test_form_matlab_name_keyword_top_package_invalid():
 def test_form_matlab_name_keyword_nested_package_valid():
     out = form_matlab_name("/tmp/+pkg/+for", "demo.m", False, namelengthmax=63)
     assert out == _native(MatlabName("demo", "pkg.for", "pkg.for.demo", "/tmp"))
-
-
-def test_validate_namelengthmax_values():
-    assert validate_namelengthmax(63) == 63
-    assert validate_namelengthmax(2048) == 2048
-
-    with pytest.raises(ValueError, match=r"^namelengthmax must"):
-        validate_namelengthmax(64)
 
 
 def test_identifier_validation_respects_namelengthmax():
@@ -502,12 +493,6 @@ def _config(version="R2026a"):
 )
 def test_namelengthmax_follows_version(version, expected):
     assert default_namelengthmax(version) == expected
-
-
-@pytest.mark.parametrize("value", [0, 64, 2047, True, 63.0, "63"])
-def test_namelengthmax_rejects_other_values(value):
-    with pytest.raises(ValueError, match=r"^namelengthmax must"):
-        validate_namelengthmax(value)
 
 
 def test_version_rules_table_drives_defaults(monkeypatch):
