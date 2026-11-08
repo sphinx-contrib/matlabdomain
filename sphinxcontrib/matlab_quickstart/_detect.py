@@ -404,6 +404,23 @@ class Headings:
     unused: list
 
 
+#: lowercase words that make a colon-ended help line a sentence, not a heading
+_PROSE_WORDS = frozenset(
+    {
+        "a", "an", "the", "of", "to", "for", "in", "on", "at", "by", "with",
+        "is", "are", "be", "this", "that", "these", "those", "which", "it",
+    }
+)  # fmt: skip
+
+
+def _prose(spelling):
+    """Return True if a heading ``spelling`` reads as a sentence: over three words,
+    or a lowercase function word.
+    """
+    words = spelling.split()
+    return len(words) > 3 or any(w in _PROSE_WORDS for w in words)
+
+
 def napoleon_headings(found, threshold=SECTION_FILES):
     """Return the ``Headings`` of a ``Survey``: a heading in ``threshold`` or more
     files becomes a section (parameter-like headings ``params_style``); its
@@ -427,7 +444,7 @@ def napoleon_headings(found, threshold=SECTION_FILES):
             params = _PARAMS.fullmatch(key)
             out.entries.append((row[0], "params_style") if params else row[0])
             out.used.append(row)
-        else:
+        elif not _prose(row[0]):
             out.unused.append(row)
     # An alias follows its section: napoleon looks the section up when it reads it.
     out.entries.extend(aliases)

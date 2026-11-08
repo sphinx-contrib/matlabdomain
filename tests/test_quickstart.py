@@ -860,6 +860,31 @@ def test_survey_and_headings(tmp_path):
     assert rare.unused == [("Option", 23), ("Inputs", 10), ("Input", 2)]
 
 
+def test_headings_unused_skips_prose():
+    found = _detect.Survey(
+        spellings={
+            "desirable properties of x": {"Desirable properties of X": 1},
+            "inputs and outputs": {"Inputs and outputs": 1},
+            "name-value arguments": {"Name-Value Arguments": 1},
+            "see it": {"See it": 1},
+            "algorithm": {"Algorithm": 1},
+        },
+        files={
+            "desirable properties of x": {1},
+            "inputs and outputs": {1},
+            "name-value arguments": {1},
+            "see it": {1},
+            "algorithm": {1},
+        },
+        legal=[],
+    )
+    headings = _detect.napoleon_headings(found)
+    assert headings.unused == [
+        ("Algorithm", 1),
+        ("Inputs and outputs", 1),
+    ]
+
+
 def test_headings_singular_section_plural_alias():
     found = _detect.Survey(
         spellings={
