@@ -7,7 +7,6 @@ Extend autodoc directives to matlabdomain.
 :license: BSD, see LICENSE for details.
 """
 
-import inspect
 import re
 import traceback
 
@@ -435,9 +434,33 @@ class MatlabDocumenter(PyDocumenter):
                         self.fullname,
                     )
         elif self.options.inherited_members:
-            # safe_getmembers() uses dir() which pulls in members from all
-            # base classes
-            members = inspect.get_members(self.object, attr_getter=self.get_attr)
+            # Collect members from the class and all base classes. inspect has
+            # no get_members function, so walk the __bases__ chain manually
+            # using the MATLAB-aware get_attr. Members defined on the class
+            # itself take precedence over inherited ones.
+            seen = {}
+            # (class, is_documented_class) pairs; the documented class is first
+            classes_to_walk = [(self.object, True)]
+            while classes_to_walk:
+                cls, is_root = classes_to_walk.pop(0)
+                # Constructors of base classes must not appear in the
+                # documented class's constructor block, so skip the method
+                # named after each superclass.
+                ctor_name = self.get_attr(cls, "__name__", None)
+                try:
+                    cls_dict = self.get_attr(cls, "__dict__")
+                except AttributeError:
+                    cls_dict = {}
+                for mname, mval in cls_dict.items():
+                    if not is_root and mname == ctor_name:
+                        continue
+                    if mname not in seen:
+                        seen[mname] = mval
+                bases = self.get_attr(cls, "__bases__", {}).values()
+                classes_to_walk.extend(
+                    (base_obj, False) for base_obj in bases if base_obj is not None
+                )
+            members = list(seen.items())
         else:
             # __dict__ contains only the members directly defined in
             # the class (but get them via getattr anyway, to e.g. get
@@ -1324,6 +1347,8 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     def import_object(self):
         ret = MatClassLevelDocumenter.import_object(self)
+        if self.object is None:
+            return False
         if self.object.attrs.get("Static"):
             self.directivetype = "staticmethod"
             # document class and static members before ordinary ones
