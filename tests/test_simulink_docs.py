@@ -416,6 +416,7 @@ def test_library_documentation_file(make_app, tmp_path):
 
 
 def test_markdown_documentation_file(make_app, tmp_path):
+    pytest.importorskip("myst_parser")  # not in the Sphinx dev job
     write_docs(
         tmp_path,
         {
