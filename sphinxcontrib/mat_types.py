@@ -1469,6 +1469,9 @@ class MatObject:
     source_warnings: list[tuple[str, str, int | None]] | tuple = ()
     #: the file could not be read (an empty placeholder that is not cached)
     unreadable = False
+    #: one-based file line of the first line of the help in a code file (None:
+    #: no help, or help that is not on a file line)
+    docstring_line: int | None = None
     ref: str
     matlab_name: str
     private: bool
@@ -1622,6 +1625,7 @@ class MatObject:
             # a help file of a MEX function: its comments are the help
             func = placeholder("function", name, modname)
             func.docstring = obj.docstring
+            func.docstring_line = obj.docstring_line
             obj, parsed = func, "function"
         obj.source_type = source_type
         obj.parsed_type = parsed
@@ -1812,6 +1816,7 @@ class MatFunction(MatObject):
         self.module = modname
         #: docstring
         self.docstring = parsed_function.docstring
+        self.docstring_line = parsed_function.docstring_line
         #: output args
         self.retv = parsed_function.retv
         #: input args
@@ -1868,6 +1873,7 @@ class MatClass(MatObject):
         self.bases = parsed_class.supers
         #: docstring
         self.docstring = parsed_class.docstring
+        self.docstring_line = parsed_class.docstring_line
         #: line of the declaration (one-based)
         self.line = parsed_class.line
         #: dictionary of class properties
@@ -1956,6 +1962,7 @@ class MatProperty(MatObject):
         self.attrs = attrs["attrs"]
         self.default = attrs["default"]
         self.docstring = attrs["docstring"]
+        self.docstring_line = attrs.get("docstring_line")
         self.size = attrs["size"]
         self.type = attrs["type"]
         self.validators = attrs["validators"]
@@ -1978,6 +1985,7 @@ class MatEnumeration(MatObject):
         super().__init__(name)
         self.cls = cls
         self.docstring = attrs["docstring"]
+        self.docstring_line = attrs.get("docstring_line")
         #: constructor arguments (``Red (1, 0, 0)``), or None
         self.args = attrs.get("args")
 
@@ -2000,6 +2008,7 @@ class MatEvent(MatObject):
         self.cls = cls
         self.attrs = attrs["attrs"]
         self.docstring = attrs["docstring"]
+        self.docstring_line = attrs.get("docstring_line")
 
     def ref_role(self):
         """Return the role used for references and automatic links"""
@@ -2023,6 +2032,7 @@ class MatMethod(MatFunction):
         self.module = modname
         #: docstring
         self.docstring = parsed_function.docstring
+        self.docstring_line = parsed_function.docstring_line
         #: output args
         self.retv = parsed_function.retv
         #: input args
@@ -2055,6 +2065,7 @@ class MatScript(MatObject):
         self.tokens = tks
         #: docstring
         self.docstring = parsed_script.docstring
+        self.docstring_line = parsed_script.docstring_line
 
     @property
     def __doc__(self):

@@ -333,8 +333,23 @@ def relative_includes(env, current):
             env.relfn2path = outer
 
 
-#: source of the lines of help text (``MatlabDocumenter.add_content``)
+#: source of the lines of help text (``MatlabDocumenter.add_content``), after
+#: the path of its file (``<file>:docstring of <reference>``, as in Python)
 HELP_SOURCE = "docstring of "
+
+
+def help_source(ref, path=None):
+    """Return the source of the help lines of the object ``ref`` in ``path``."""
+    return f"{path}:{HELP_SOURCE}{ref}" if path else f"{HELP_SOURCE}{ref}"
+
+
+def help_reference(source):
+    """Return the reference of the object whose help has the ``source``, or None."""
+    source = source or ""
+    if source.startswith(HELP_SOURCE):
+        return source[len(HELP_SOURCE) :]
+    head, found, ref = source.rpartition(f":{HELP_SOURCE}")
+    return ref if head and found else None
 
 
 class HelpPaths:
@@ -353,9 +368,8 @@ class HelpPaths:
 
     def at(self, source):
         """Return the ``_Relative`` of the help text with ``source``, or None."""
-        if not (source or "").startswith(HELP_SOURCE):
+        if (ref := help_reference(source)) is None:
             return None
-        ref = source[len(HELP_SOURCE) :]
         folder = os.path.normpath(
             os.path.join(cast(str, self.root), *mat_naming.folder_of(ref).split("/"))
         )
@@ -452,6 +466,20 @@ def _renderer_class():
     return SidecarRenderer
 
 
+@contextmanager
+def _reporting_at(reporter, path):
+    """Make the roles and warnings of the sidecar doc ``path`` being parsed
+    name its file and line (the reporter looks lines up in the document that
+    includes it).
+    """
+    original = reporter.get_source_and_line
+    reporter.get_source_and_line = lambda line: (path, line)
+    try:
+        yield
+    finally:
+        reporter.get_source_and_line = original
+
+
 def parse_file(directive, path, ref):
     """Parse the ``.md`` or ``.rst`` file ``path`` (path reference ``ref``)
     in the document of ``directive``, with its relative paths resolved from
@@ -464,7 +492,10 @@ def parse_file(directive, path, ref):
     sidecar = _Sidecar(ref, path, srcdir, env.get_domain("mat"))
     container = nodes.Element()
     container.document = directive.state.document
-    with relative_includes(env, lambda: sidecar):
+    with (
+        relative_includes(env, lambda: sidecar),
+        _reporting_at(directive.state.document.reporter, path),
+    ):
         if path.endswith(MARKDOWN):
             parser = _markdown_parser(env)
             parser.options["document"] = directive.state.document

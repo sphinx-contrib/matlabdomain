@@ -378,6 +378,7 @@ def test_PropTypeOld(dir_test_data):
     assert obj.properties == {
         "link_name": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": "'none'",
             "size": None,
@@ -387,6 +388,7 @@ def test_PropTypeOld(dir_test_data):
         },  # 'type': ['char']
         "pos": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": "zeros(3,1)",
             "size": (":", "1"),
@@ -396,6 +398,7 @@ def test_PropTypeOld(dir_test_data):
         },  # 'type': ['double', 'vector'],
         "rotm": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": "zeros(3,3)",
             "size": (":", ":"),
@@ -405,6 +408,7 @@ def test_PropTypeOld(dir_test_data):
         },  # 'type': ['double', 'matrix'],
         "idx": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": "0",
             "size": ("1", "1"),
@@ -721,6 +725,7 @@ def test_ClassWithGetterSetter(dir_test_data):
     assert obj.properties == {
         "a": {
             "docstring": "A nice property",
+            "docstring_line": 4,
             "attrs": {},
             "default": None,
             "size": None,
@@ -742,6 +747,7 @@ def test_ClassWithDoubleQuotedString(dir_test_data):
     assert obj.properties == {
         "Property1": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": None,
             "size": None,
@@ -1200,6 +1206,7 @@ def test_classes(mod):
             "attrs": {},
             "default": None,
             "docstring": "a property",
+            "docstring_line": 8,
             "size": None,
             "type": None,
             "validators": None,
@@ -1223,6 +1230,7 @@ def test_abstract_class(mod):
         "y": {
             "default": None,
             "docstring": "y variable",
+            "docstring_line": 11,
             "attrs": {"GetAccess": "private", "SetAccess": "private"},
             "size": None,
             "type": None,
@@ -1232,6 +1240,7 @@ def test_abstract_class(mod):
         "version": {
             "default": "'0.1.1-beta'",
             "docstring": "version",
+            "docstring_line": 8,
             "attrs": {"Constant": True},
             "size": None,
             "type": None,
@@ -1314,6 +1323,7 @@ def test_folder_class(mod):
             "attrs": {},
             "default": None,
             "docstring": "a property of a class folder",
+            "docstring_line": 5,
             "size": None,
             "type": None,
             "validators": None,

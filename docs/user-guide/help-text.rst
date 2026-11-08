@@ -101,8 +101,10 @@ lists of class help (``Shape Properties:``), set ``matlab_auto_link =
 What to expect on an existing project:
 
 * Documentation is built for every file, even when its help is not valid
-  reST. The warnings name the file and the line in its help (``docstring of
-  ...``); the text is still shown, sometimes with odd line breaks.
+  reST. The warnings name the file and the line of the help in it
+  (``<file>:docstring of <reference>:<line>``; for a Simulink file, the line
+  within its description); the text is still shown, sometimes with odd line
+  breaks.
 * Large projects written for MATLAB alone can produce many such warnings
   (thousands in projects with thousands of files). They do not stop a
   build unless ``-W`` turns warnings into errors.

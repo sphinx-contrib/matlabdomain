@@ -356,20 +356,22 @@ def leading_comment(root_node, decl):
 
 
 def trailing_docstring(node, prev, encoding):
-    """Return the docstring of the comment ``node`` after a declaration.
+    """Return ``(docstring, line)`` of the comment ``node`` after a declaration.
 
     ``prev`` is the node before it. A comment on the declaration line is not
     help; if nothing follows it in its block, the next comment block is
-    (MATLAB R2026a ``help``).
+    (MATLAB R2026a ``help``). ``line`` is the one-based file line of the first
+    line of the docstring.
     """
     docstring = help_text(node.text, encoding)
+    row = get_row(node.start_point) + 1
     if get_row(node.start_point) != get_row(prev.end_point):
-        return docstring
+        return docstring, row
     docstring = help_text(node.text, encoding, skip_first_line=True)
     after = node.next_named_sibling
     if not docstring and after is not None and after.type == "comment":
-        return help_text(after.text, encoding)
-    return docstring
+        return help_text(after.text, encoding), get_row(after.start_point) + 1
+    return docstring, row + 1
 
 
 def help_text(text, encoding, skip_first_line=False):
@@ -393,6 +395,19 @@ def process_text_into_docstring(text, encoding):
     """Take a text bytestring and decode it into a docstring."""
     docstring = text.decode(encoding, errors="backslashreplace")
     return re.sub(re_percent_remove, "", docstring)
+
+
+def comment_help(node, encoding, *, first_line_only=False, skip_first_line=False):
+    """Return ``(help, line)`` of the comment ``node`` of a member: all its
+    lines, the first, or all but the first (that one is the previous member's).
+    ``line`` is the one-based file line of the first line of the help.
+    """
+    lines = process_text_into_docstring(node.text, encoding).split("\n")
+    if first_line_only:
+        lines = lines[:1]
+    elif skip_first_line:
+        lines = lines[1:]
+    return "\n".join(lines), get_row(node.start_point) + 1 + skip_first_line
 
 
 def process_default(node, encoding):
@@ -422,6 +437,8 @@ class MatScriptParser:
     def __init__(self, root_node, encoding):
         """Parse a MATLAB script"""
         self.encoding = encoding
+        #: one-based file line of the first line of the docstring
+        self.docstring_line = None
         script_matches = list(QueryCursor(q_script).matches(root_node))
         if script_matches:
             script_match = QueryCursor(q_script).captures(root_node)
@@ -433,6 +450,7 @@ class MatScriptParser:
                 self.docstring = process_text_into_docstring(
                     docstring_node.text, self.encoding
                 )
+                self.docstring_line = get_row(docstring_node.start_point) + 1
             else:
                 self.docstring = None
         else:
@@ -477,17 +495,21 @@ class MatFunctionParser:
         docstring_nodes = get_nodes(fun_match, "docstring")
         docstring_node = docstring_nodes[0] if docstring_nodes else None
         docstring = ""
+        doc_line = None
         if docstring_node is not None:
-            docstring = trailing_docstring(
+            docstring, doc_line = trailing_docstring(
                 docstring_node, docstring_node.prev_named_sibling, self.encoding
             )
         leading = leading_comment(root_node, fun_node)
         if leading is not None:
             docstring = help_text(leading.text, self.encoding)
+            doc_line = get_row(leading.start_point) + 1
 
         if not docstring:
             docstring = None
         self.docstring = docstring
+        #: one-based file line of the first line of the docstring
+        self.docstring_line = doc_line
 
     def _parse_argument_section(self, argblock_node):
         argblock_match = QueryCursor(q_argblock).captures(argblock_node)
@@ -645,32 +667,33 @@ class MatFunctionParser:
 
 
 def member_help(node, encoding):
-    """Return the help of a one-line class member (an abstract method
+    """Return ``(help, line)`` of a one-line class member (an abstract method
     signature, an event) as for a property: a comment on its line, or a
-    comment block right above or below it; None if it has none.
+    comment block right above or below it; ``(None, None)`` if it has none.
+    ``line`` is the one-based file line of the first line of the help.
     """
-    docstring = ""
+    docstring, doc_line = "", None
     after = node.next_named_sibling
     if after is not None and after.type == "comment":
         gap = get_row(after.start_point) - get_row(node.end_point)
         if gap == 0:
-            docstring = process_text_into_docstring(after.text, encoding)
-            docstring = docstring.split("\n")[0]
+            docstring, doc_line = comment_help(after, encoding, first_line_only=True)
         elif gap == 1:
-            docstring = process_text_into_docstring(after.text, encoding)
+            docstring, doc_line = comment_help(after, encoding)
     before = node.prev_named_sibling
     if (
         before is not None
         and before.type == "comment"
         and get_row(node.start_point) - get_row(before.end_point) <= 1
     ):
-        ds = process_text_into_docstring(before.text, encoding)
         prev = before.prev_named_sibling
-        if prev is not None and get_row(before.start_point) == get_row(prev.end_point):
-            ds = "\n".join(ds.split("\n")[1:])
+        skip = prev is not None and get_row(before.start_point) == get_row(
+            prev.end_point
+        )
+        ds, ds_line = comment_help(before, encoding, skip_first_line=skip)
         if ds:
-            docstring = ds
-    return docstring if docstring.strip() else None
+            docstring, doc_line = ds, ds_line
+    return (docstring, doc_line) if docstring.strip() else (None, None)
 
 
 class MatSignature:
@@ -695,7 +718,7 @@ class MatSignature:
                 self.retv = {text(n): {} for n in outs}
             elif child.type == "function_arguments":
                 self.args = {text(n): {} for n in child.named_children}
-        self.docstring = member_help(node, cls.encoding)
+        self.docstring, self.docstring_line = member_help(node, cls.encoding)
 
 
 class MatClassParser:
@@ -745,14 +768,18 @@ class MatClassParser:
         # get docstring (same rule as MatFunctionParser)
         docstring_node = get_node(class_match, "docstring")
         docstring = ""
+        doc_line = None
         if docstring_node is not None:
-            docstring = trailing_docstring(
+            docstring, doc_line = trailing_docstring(
                 docstring_node, docstring_node.prev_named_sibling, self.encoding
             )
         leading = leading_comment(root_node, self.cls)
         if leading is not None:
             docstring = help_text(leading.text, self.encoding)
+            doc_line = get_row(leading.start_point) + 1
         self.docstring = docstring
+        #: one-based file line of the first line of the docstring
+        self.docstring_line = doc_line
 
         prop_matches = list(QueryCursor(q_properties).matches(self.cls))
         method_matches = list(QueryCursor(q_methods).matches(self.cls))
@@ -769,9 +796,11 @@ class MatClassParser:
             attrs = self._parse_attributes(event_match.get("attrs"))
             for event in event_match.get("events", ()):
                 name = node_text(event).decode(self.encoding, errors="backslashreplace")
+                docstring, doc_line = member_help(event, self.encoding)
                 self.events[name] = {
                     "attrs": attrs,
-                    "docstring": member_help(event, self.encoding),
+                    "docstring": docstring,
+                    "docstring_line": doc_line,
                     "line": get_row(event.start_point) + 1,
                 }
 
@@ -839,7 +868,7 @@ class MatClassParser:
             docstring_node = None
             if prop_node.next_sibling and prop_node.next_sibling.type == "comment":
                 docstring_node = prop_node.next_sibling
-            docstring = ""
+            docstring, doc_line = "", None
             if docstring_node is not None:
                 # tree-sitter-matlab combines inline comments with following
                 # comments which means this requires some relatively ugly
@@ -847,18 +876,15 @@ class MatClassParser:
                 prev_sib = cast(Node, docstring_node.prev_named_sibling)
                 if get_row(docstring_node.start_point) == get_row(prev_sib.end_point):
                     # Keep only inline help on the declaration line.
-                    docstring = process_text_into_docstring(
-                        docstring_node.text, self.encoding
+                    docstring, doc_line = comment_help(
+                        docstring_node, self.encoding, first_line_only=True
                     )
-                    docstring = docstring.split("\n")[0]
                 elif (
                     get_row(docstring_node.start_point) - get_row(prev_sib.end_point)
                     <= 1
                 ):
                     # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(
-                        docstring_node.text, self.encoding
-                    )
+                    docstring, doc_line = comment_help(docstring_node, self.encoding)
 
             # extract inline or following docstring if there _is_ a semicolon.
             # Only try this if no docstring was found above.
@@ -869,15 +895,12 @@ class MatClassParser:
             elif next_node.type == "comment":
                 if get_row(next_node.start_point) == get_row(prop.end_point):
                     # Keep only inline help on the declaration line.
-                    docstring = process_text_into_docstring(
-                        next_node.text, self.encoding
+                    docstring, doc_line = comment_help(
+                        next_node, self.encoding, first_line_only=True
                     )
-                    docstring = docstring.split("\n")[0]
                 elif get_row(next_node.start_point) - get_row(prop.end_point) <= 1:
                     # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(
-                        next_node.text, self.encoding
-                    )
+                    docstring, doc_line = comment_help(next_node, self.encoding)
 
             # override docstring with prior if exists
             prev_node = prop.prev_named_sibling
@@ -889,13 +912,17 @@ class MatClassParser:
                 and prev_node.type == "comment"
                 and get_row(prop.start_point) - get_row(prev_node.end_point) <= 1
             ):
-                ds = process_text_into_docstring(prev_node.text, self.encoding)
                 prev_prop = prev_node.prev_named_sibling
-                if prev_prop is not None and prev_prop.type == "property":
-                    if get_row(prev_node.start_point) == get_row(prev_prop.end_point):
-                        ds = "\n".join(ds.split("\n")[1:])
+                skip = (
+                    prev_prop is not None
+                    and prev_prop.type == "property"
+                    and get_row(prev_node.start_point) == get_row(prev_prop.end_point)
+                )
+                ds, ds_line = comment_help(
+                    prev_node, self.encoding, skip_first_line=skip
+                )
                 if ds:
-                    docstring = ds
+                    docstring, doc_line = ds, ds_line
             # After all that if our docstring is empty then we have none
             if not docstring.strip():
                 docstring = None
@@ -907,6 +934,7 @@ class MatClassParser:
                 "validators": vfs,
                 "default": default,
                 "docstring": docstring,
+                "docstring_line": doc_line,
                 "line": get_row(prop.start_point) + 1,
             }
 
@@ -954,21 +982,18 @@ class MatClassParser:
             else:
                 args = None
 
-            docstring = ""
+            docstring, doc_line = "", None
             # look forward for docstring
             next_node = enum.next_named_sibling
             if next_node is not None and next_node.type == "comment":
                 if get_row(next_node.start_point) == get_row(enum.end_point):
                     # Keep only inline help on the declaration line.
-                    docstring = process_text_into_docstring(
-                        next_node.text, self.encoding
+                    docstring, doc_line = comment_help(
+                        next_node, self.encoding, first_line_only=True
                     )
-                    docstring = docstring.split("\n")[0]
                 elif get_row(next_node.start_point) - get_row(enum.end_point) <= 1:
                     # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(
-                        next_node.text, self.encoding
-                    )
+                    docstring, doc_line = comment_help(next_node, self.encoding)
 
             # override docstring with prior if exists
             prev_node = enum.prev_named_sibling
@@ -980,18 +1005,26 @@ class MatClassParser:
                 and prev_node.type == "comment"
                 and get_row(enum.start_point) - get_row(prev_node.end_point) <= 1
             ):
-                ds = process_text_into_docstring(prev_node.text, self.encoding)
                 prev_enum = prev_node.prev_named_sibling
-                if prev_enum is not None and prev_enum.type == "enum":
-                    if get_row(prev_node.start_point) == get_row(prev_enum.end_point):
-                        ds = "\n".join(ds.split("\n")[1:])
+                skip = (
+                    prev_enum is not None
+                    and prev_enum.type == "enum"
+                    and get_row(prev_node.start_point) == get_row(prev_enum.end_point)
+                )
+                ds, ds_line = comment_help(
+                    prev_node, self.encoding, skip_first_line=skip
+                )
                 if ds:
-                    docstring = ds
+                    docstring, doc_line = ds, ds_line
             # After all that if our docstring is empty then we have none
             if docstring.strip() == "":
                 docstring = None
 
-            self.enumerations[name] = {"args": args, "docstring": docstring}
+            self.enumerations[name] = {
+                "args": args,
+                "docstring": docstring,
+                "docstring_line": doc_line,
+            }
 
     def _parse_attributes(self, attrs_nodes):
         attrs = {}

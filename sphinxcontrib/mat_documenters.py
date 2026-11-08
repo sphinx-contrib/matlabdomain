@@ -37,7 +37,6 @@ from sphinx.util.logging import getLogger
 
 from . import mat_naming, mat_sidecars, mat_simulink
 from .mat_classify import is_hidden
-from .mat_sidecars import HELP_SOURCE
 from .mat_types import (
     SIMULINK_CLASSES,
     MatApplication,
@@ -251,7 +250,7 @@ class MatlabDocumenter(PyDocumenter):
 
     def add_content(self, more_content, no_docstring=False):
         """Add content from docstrings, attribute documentation and user."""
-        sourcename = f"{HELP_SOURCE}{self.fullname}"
+        sourcename = self.help_source()
 
         # add content from docstrings (autodoc API: this extension never
         # passes no_docstring)
@@ -262,15 +261,73 @@ class MatlabDocumenter(PyDocumenter):
                 # autodoc-process-docstring is fired and can add some
                 # content if desired
                 docstrings.append([])
+            numbers = self.help_line_numbers(docstrings)
             if self.env.config.matlab_auto_link:
                 docstrings = self.auto_link(docstrings)
-            for i, line in enumerate(self.process_doc(docstrings)):
-                self.add_line(line, sourcename, i)
+            for docstring, lines in zip(docstrings, numbers, strict=True):
+                size = len(docstring)
+                processed = list(self.process_doc([docstring]))
+                # Processing may add or remove lines: it leaves the line count
+                # (or one more, a trailing blank line) or all lines get the
+                # first help line, never a wrong one.
+                if not lines or len(processed) not in (size, size + 1):
+                    lines = lines[:1] or [self.help_start()]
+                for i, line in enumerate(processed):
+                    number = lines[min(i, len(lines) - 1)]
+                    # ``add_line`` takes a zero-based offset; docutils adds one.
+                    self.add_line(line, sourcename, number - 1)
 
         # add additional content (e.g. from document), if present
         if more_content:
             for line, src in zip(more_content.data, more_content.items, strict=False):
                 self.add_line(line, src[0], src[1])
+
+    def help_source(self):
+        """Source of the help lines: ``<file>:docstring of <reference>``, as
+        Python's autodoc names it (the file only without an index).
+        """
+        file = mat_naming.parse_reference(self.ref)[0]
+        path = cast(Any, self.env.get_domain("mat")).source_paths().get(file)
+        return mat_sidecars.help_source(self.fullname, path)
+
+    def help_sources(self):
+        """``(help, line)`` of each help text of the object, in order: the help
+        and the one-based file line it starts on (None: there are no file
+        lines, as in a Simulink file, so the lines of the help count).
+        """
+        obj = self.object
+        return [(getattr(obj, "docstring", None), getattr(obj, "docstring_line", None))]
+
+    def help_start(self):
+        """One-based line the help of the object starts on, or 1."""
+        obj = self.object
+        return getattr(obj, "docstring_line", None) or getattr(obj, "line", None) or 1
+
+    def help_line_numbers(self, docstrings):
+        """For each line of ``docstrings`` (prepared help), its one-based line
+        in the file: the line of the next line of the object's help
+        (``help_sources``) that has the same words. A blank line, or one that
+        matches none (not help of the object itself), gets the line before.
+        """
+        raw = [
+            ((first or 1) + i, " ".join(line.split()))
+            for text, first in self.help_sources()
+            for i, line in enumerate((text or "").split("\n"))
+        ]
+        last, pos, numbers = raw[0][0] if raw else self.help_start(), 0, []
+        for lines in docstrings:
+            found = []
+            for line in lines:
+                words = " ".join(line.split())
+                if words:
+                    k = next(
+                        (k for k in range(pos, len(raw)) if raw[k][1] == words), None
+                    )
+                    if k is not None:
+                        last, pos = raw[k][0], k + 1
+                found.append(last)
+            numbers.append(found)
+        return numbers
 
     def class_object(self) -> MatClass | None:
         # the associated MatClass object (for class, property and method documenters)
@@ -1037,6 +1094,13 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         doc = [prepare_docstring(x) for x in docstrings]
 
         return doc
+
+    def help_sources(self):
+        sources = super().help_sources()
+        # ``autoclass_content`` may add the constructor's help
+        if (ctor := self._constructor()) is not None:
+            sources.append((ctor.docstring, ctor.docstring_line))
+        return sources
 
     def class_object(self):
         # the associated MatClass object
