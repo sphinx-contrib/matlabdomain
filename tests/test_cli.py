@@ -12,6 +12,11 @@ from sphinxcontrib.matlab_apidoc import _cli as apidoc
 from sphinxcontrib.matlab_quickstart import _cli as quickstart
 
 
+@pytest.fixture(autouse=True)
+def _plain_help(monkeypatch):
+    monkeypatch.setenv("PYTHON_COLORS", "0")  # argparse colors help from Python 3.14
+
+
 @pytest.mark.parametrize("command", ["scmd", "sphinxcontrib-matlabdomain"])
 def test_installed_entry_point(command):
     executable = Path(sys.executable).parent / (
