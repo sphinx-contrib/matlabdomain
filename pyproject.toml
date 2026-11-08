@@ -75,6 +75,7 @@ scmd = "sphinxcontrib.matlab_cli:main"
 sphinxcontrib-matlabdomain = "sphinxcontrib.matlab_cli:main"
 
 [project.urls]
+Documentation = "https://sphinxcontrib-matlabdomain.readthedocs.io/"
 Download = "https://pypi.org/project/sphinxcontrib-matlabdomain/"
 Homepage = "https://github.com/sphinx-contrib/matlabdomain"
 
