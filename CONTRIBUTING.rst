@@ -1,7 +1,8 @@
-Developing sphinxcontrib-matlabdomain
-=====================================
+Contributing to sphinxcontrib-matlabdomain
+==========================================
 
-The developer guide is part of the documentation: ``docs/developer-guide/``
+The developer guide is part of the documentation:
+`docs/developer-guide/ <docs/developer-guide/contributing.rst>`_
 (contributing, testing, architecture, debugging and profiling, roadmap).
 Build it with:
 

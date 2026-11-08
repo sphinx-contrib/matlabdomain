@@ -177,8 +177,9 @@ when adding, removing or moving a maintained configuration file.
   path. Keep it in step with that list; GitHub flags unknown owners on the
   file's page.
 ``.github/dependabot.yml``
-  GitHub-required YAML for quarterly updates of the Actions pins and of
-  ``uv.lock``.
+  GitHub-required YAML. One quarterly pull request updates the Actions pins,
+  the pre-commit hook revisions and ``uv.lock`` together; security updates are
+  grouped per ecosystem.
 ``.github/workflows/pr-master.yml``
   Pull requests to ``master`` (and on demand): all pre-commit hooks, static
   checks and ``tests.yml``. Its ``PR checks`` job passes only when every
@@ -246,9 +247,10 @@ when adding, removing or moving a maintained configuration file.
   Generated fetched commit IDs. ``fetch.py`` updates it; review URL/commit
   changes with the project declarations. Separate from ``uv.lock`` because it
   locks MATLAB input repositories, not Python dependencies.
-``DEVELOPMENT.rst``
-  Root discoverability pointer and quick-start commands. The root guide points
-  to the maintained guide at ``docs/developer-guide/``.
+``CONTRIBUTING.rst``
+  Root discoverability pointer and quick-start commands; GitHub links it from
+  new issues and pull requests. It points to the maintained guide at
+  ``docs/developer-guide/``.
 
 Ruff and basic Pyright analyze ``sphinxcontrib``, tests, documentation config,
 examples, skill scripts and slow-test tools. They exclude ``tests/roots``,

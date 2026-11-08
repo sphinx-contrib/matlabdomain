@@ -156,7 +156,7 @@ def repository_configuration(root):
         "Makefile",
         "make.bat",
         "conf.py",
-        "DEVELOPMENT.rst",
+        "CONTRIBUTING.rst",
         "codespell_ignore_words.txt",
         "CODEOWNERS",
     }
