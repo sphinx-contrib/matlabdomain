@@ -14,7 +14,7 @@
 {%- endmacro -%}
 
 {%- macro autodoc(entry) -%}
-.. {{ entry.directive }}:: {{ entry.ref }}
+.. {{ entry.directive }}:: {{ entry.argument }}
 {%- for name, value in entry.options.items() %}
    :{{ name }}:{% if value %} {{ value }}{% endif %}
 {%- endfor %}

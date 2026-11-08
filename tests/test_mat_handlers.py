@@ -38,8 +38,12 @@ def test_document_directives():
     ]
     assert mlapp.document("application") == "mat:autoapplication"
     assert m.document("application") is None
-    # no Simulink directives yet
-    assert slx.document("model") is None
+    assert [slx.document(k) for k in ("model", "library", "subsystem")] == [
+        "mat:autosimulink_model",
+        "mat:autosimulink_library",
+        "mat:autosimulink_subsystem_reference",
+    ]
+    assert slx.document("function") is None
 
 
 def test_extension_has_one_handler():

@@ -80,6 +80,7 @@ ENTRY_KEYS = {
     "ref",
     "kind",
     "directive",
+    "argument",
     "options",
     "title",
     "display",

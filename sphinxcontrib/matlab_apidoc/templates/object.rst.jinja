@@ -4,7 +4,7 @@
     keys of one entry, listed in the documentation. -#}
 {{ title | e | heading }}
 
-.. {{ directive }}:: {{ ref }}
+.. {{ directive }}:: {{ argument }}
 {%- for name, value in options.items() %}
    :{{ name }}:{% if value %} {{ value }}{% endif %}
 {%- endfor %}

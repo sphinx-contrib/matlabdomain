@@ -45,6 +45,13 @@ import os
 
 from . import mat_classify, mat_simulink
 
+#: Simulink index type -> its auto directive
+SIMULINK_DIRECTIVES = {
+    "model": "mat:autosimulink_model",
+    "library": "mat:autosimulink_library",
+    "subsystem": "mat:autosimulink_subsystem_reference",
+}
+
 
 class Handler:
     """Base handler: claims every existing file with its extension."""
@@ -154,8 +161,8 @@ class SimulinkHandler(Handler):
 
         return MatObject.parse_simulink(path, stem, folder)
 
-    def document(self, kind):  # noqa: ARG002
-        return None
+    def document(self, kind):
+        return SIMULINK_DIRECTIVES.get(kind)
 
 
 class SlxHandler(SimulinkHandler):

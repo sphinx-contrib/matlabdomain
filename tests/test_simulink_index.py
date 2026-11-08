@@ -6,6 +6,7 @@ import json
 import logging
 import pickle
 import shutil
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -26,7 +27,7 @@ from sphinxcontrib.mat_types import (
     MatSubsystemFile,
     build_index,
 )
-from sphinxcontrib.matlab_apidoc import ApidocOptions
+from sphinxcontrib.matlab_apidoc import ApidocOptions, generate
 from sphinxcontrib.matlab_apidoc._generate import build_pages
 from sphinxcontrib.matlab_apidoc._names import docnames
 
@@ -270,20 +271,82 @@ def test_folders_named_like_files_are_errors(tmp_path, warnings, name):
     assert folder.member_refs() == [("ok.d", "ok.d/")]
 
 
-def test_apidoc_leaves_simulink_files_out(tmp_path, warnings):
+def test_apidoc_lists_simulink_files(tmp_path, warnings):
     root = project(tmp_path / "src")
+    core = (
+        '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/'
+        '2006/metadata/core-properties"><cp:category>library</cp:category>'
+        "</cp:coreProperties>"
+    )
+    with zipfile.ZipFile(root / "broken.slx", "w") as z:
+        z.writestr("metadata/coreProperties.xml", core)
     source_index = build_index(IndexSettings(str(root)))
     warnings.clear()
-    pages = build_pages(source_index, ApidocOptions("out", group="folder"))
-    listed = [
-        entry["ref"]
+    pages = build_pages(source_index, ApidocOptions("out", group="namespace"))
+    sections = {
+        (page.docname, title): [(e["title"], e["argument"]) for e in entries]
         for page in pages
-        for _, entries in page.context.get("sections", ())
-        for entry in entries
+        for title, entries in page.context.get("sections", ())
+    }
+    assert [title for docname, title in sections if docname == "global"] == [
+        "Functions",
+        "Classes",
+        "Simulink Models",
+        "Simulink Libraries",
+        "Simulink Library Blocks",
     ]
-    assert "same.m" in listed
-    assert not [ref for ref in listed if ref.endswith((".slx", ".mdl", ".xml"))]
-    assert [m for _, m in warnings if "no directive" in m] == []
+    assert sections["pk", "Simulink Subsystem References"] == [
+        ("+pk/probeSub.slx", "+pk/probeSub.slx")
+    ]
+    assert sections["global", "Simulink Libraries"] == [
+        ("broken", "broken.slx"),
+        ("export.xml", "export.xml"),
+        ("mdl/probeLib.mdl", "mdl/probeLib.mdl"),
+        ("probeLib.slx", "probeLib.slx"),
+    ]
+    blocks = sections["global", "Simulink Library Blocks"]
+    assert ("probeLib.slx/Two Lines", "probeLib.slx/Two\n   Lines") in blocks
+    assert ("export.xml/Group/Inner Masked", "export.xml/Group/Inner Masked") in blocks
+    assert len(blocks) == 24
+    messages = [m for _, m in warnings]
+    assert any("broken.slx: its blocks cannot be read" in m for m in messages)
+    # one warning for the library, none for its blocks
+    assert [m for m in messages if "probeLib" in m] == [
+        "[sphinx-matlab-apidoc] probeLib is defined by several files in Global: "
+        "mdl/probeLib.mdl, probeLib.slx; they are listed by path."
+    ]
+    folder = build_pages(source_index, ApidocOptions("out", group="folder"))
+    root_page = next(p for p in folder if p.docname == "root")
+    titles = [t for t, _ in root_page.context["sections"]]
+    assert titles[-3:] == [
+        "Simulink Models",
+        "Simulink Libraries",
+        "Simulink Library Blocks",
+    ]
+
+
+def test_apidoc_pages_build(tmp_path, make_app):
+    root = tmp_path / "src"
+    copy(SLX / "probeModel.slx", root / "probeModel.slx")
+    copy(SLX / "probeLib.slx", root / "probeLib.slx")
+    copy(SLX / "probeSub.slx", root / "probeSub.slx")
+    copy(SLX / "probeRef.slx", root / "probeRef.slx")
+    generate(
+        build_index(IndexSettings(str(root))),
+        ApidocOptions(str(tmp_path / "api"), separate=True),
+    )
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\n'
+        'matlab_src_code_project_root = "src"\nnitpicky = True\n'
+    )
+    (tmp_path / "index.rst").write_text(
+        "Index\n=====\n\n.. toctree::\n\n   api/index\n"
+    )
+    app = make_app(srcdir=tmp_path, freshenv=True)
+    app.build(force_all=True)
+    assert app.warning.getvalue() == ""
+    page = next((Path(app.outdir) / "api").glob("probeLib.slx~2FTwo*.html"))
+    assert 'id="mat-probeLib.slx/Two~0ALines"' in page.read_text(encoding="utf-8")
 
 
 def test_objects(tmp_path):

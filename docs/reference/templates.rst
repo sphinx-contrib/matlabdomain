@@ -113,14 +113,20 @@ In folder grouping, one page of a folder with files or sidecar docs.
 Entries
 ~~~~~~~
 
-Each entry describes one file (both groupings):
+Each entry describes one file, or one block of a Simulink library (both
+groupings):
 
 ``ref``
-   The file's path reference.
+   The path reference of the file or block (``lib.slx/Group/Gain``).
 ``kind``
-   ``"class"``, ``"function"``, ``"script"`` or ``"application"``.
+   ``"class"``, ``"function"``, ``"script"``, ``"application"``,
+   ``"model"``, ``"library"``, ``"subsystem"`` (a subsystem file) or
+   ``"library_block"``.
 ``directive``
    The auto directive, such as ``"mat:autoclass"``.
+``argument``
+   The directive's argument: ``ref``, with each line break of a block name
+   followed by the indentation that continues it.
 ``options``
    A dictionary of directive options; ``{"members": "", "undoc-members":
    "", "show-inheritance": ""}`` for classes, else empty.
@@ -131,7 +137,8 @@ Each entry describes one file (both groupings):
 ``display``
    The name signatures show (the same as ``title``).
 ``matlab_name``
-   The MATLAB name, or ``None`` if MATLAB cannot call the file.
+   The MATLAB name, or ``None`` if MATLAB cannot call the file. A library
+   block's is the library's MATLAB name and its block path.
 ``callable``
    ``matlab_name is not None``.
 ``private``
