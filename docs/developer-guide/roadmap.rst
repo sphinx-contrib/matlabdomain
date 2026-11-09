@@ -47,8 +47,20 @@ MATLAB releases
 Releases before R2024a for :confval:`matlab_version`, each with the naming
 and callability rules MATLAB had then.
 
+MATLAB documentation window
+---------------------------
+
+A ``matlab-help`` builder that writes the site as MATLAB custom
+documentation (``info.xml``, ``helptoc.xml``), so that it shows under
+Supplemental Software in MATLAB's documentation, with its own search there.
+One search over MathWorks pages and the site's pages is not possible. The
+:doc:`specification <matlab-help-spec>` and the
+:doc:`plan <matlab-help-plan>` are written; the work has not started.
+
 .. toctree::
    :hidden:
 
    matlab-markup-spec
    matlab-markup-plan
+   matlab-help-spec
+   matlab-help-plan
