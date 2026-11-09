@@ -1,7 +1,7 @@
 Configuration values
 ====================
 
-The values the extension adds to ``conf.py``. :doc:`../user-guide/configuration`
+The values the :term:`extension` adds to ``conf.py``. :doc:`../user-guide/configuration`
 explains how to use them. Unless noted, changing a value makes Sphinx read
 every page again.
 
@@ -16,7 +16,7 @@ Reviewing settings
 
 The sections below list every supported extension value with its type,
 default and effect. Most projects need only the source root, source
-selection and API output directory. Review the remaining values by purpose:
+selection and :term:`API` output directory. Review the remaining values by purpose:
 
 * Source files and MATLAB semantics control indexing and name resolution.
 * Output values control presentation, linking and Simulink integration.
@@ -35,7 +35,8 @@ Source files
    :default: ``None``
 
    The folder all MATLAB source lives below. Every path reference is
-   relative to it. A relative path is relative to the Sphinx source folder.
+   relative to it. A relative path is relative to the Sphinx
+   :term:`source folder <source directory>`.
    ``None`` indexes no files. Required when
    :confval:`matlab_src_include_patterns` differs from its default,
    :confval:`matlab_src_exclude_patterns` is set to a list other than

@@ -6,9 +6,8 @@ to build these pages. This guide starts with the operating system's command
 line, then shows how Sphinx and this extension document MATLAB code.
 
 For short definitions, use the :doc:`glossary <../reference/glossary>`.
-Dotted-underlined terms such as :term:`builder` link to their definitions.
-This site also previews linked content in tooltips when JavaScript is available.
-You can select a link to read its destination without the preview.
+Terms such as :term:`builder` link to their definitions; hover over a link
+to preview it.
 
 The tools and their jobs
 ------------------------
@@ -40,12 +39,17 @@ use relative paths start there.
 
 Copy only the command text, not a prompt such as ``$``, ``>``, or
 ``PS C:\...>``. The prompt shows that the shell is ready for a command.
-Click in the terminal and paste, then press Enter. In Windows Terminal,
-``Ctrl+Shift+V`` or the context menu normally pastes. In a separate CMD or
-PowerShell window, right-click may paste, depending on its settings. In Git
-Bash, use ``Shift+Insert`` or the right-click menu. Paste shortcuts depend on
-the terminal application; ``Ctrl+V`` is not universal. Do not paste commands
-you do not understand.
+Click in the terminal and paste, then press Enter. The paste key depends on
+the terminal application:
+
+* **Windows Terminal** (PowerShell or CMD): ``Ctrl+V``, or right-click.
+* **Git Bash**: ``Shift+Insert``, or right-click and choose Paste.
+  ``Ctrl+V`` does not paste there.
+* **macOS Terminal**: ``Cmd+V``.
+* **Linux terminals**: usually ``Ctrl+Shift+V``, or right-click and choose
+  Paste.
+
+Do not paste commands you do not understand.
 
 Choose your project folder
 --------------------------
@@ -86,36 +90,88 @@ cannot find a file may have started in the wrong folder.
 Install and build
 -----------------
 
-Install Python 3.11 or newer and `uv <https://docs.astral.sh/uv/>`_ using
-their official installation instructions. Open a new terminal if an installer
+Install `Python 3.11 or newer <https://www.python.org/downloads/>`_ and
+`uv <https://docs.astral.sh/uv/getting-started/installation/>`_ using their
+installation instructions. Open a new terminal if an installer
 asks you to, and check that ``uv --version`` runs. If the shell cannot find
-``uv``, follow its installer's instructions for adding it to your path.
+``uv``, follow its installer's instructions for adding it to :term:`PATH`.
 
 In the project folder, create a uv project only if it does not already have
 ``pyproject.toml``:
 
 .. code-block:: console
 
-   uv init
+   uv init --bare --vcs none
 
-Then add this extension and start the interactive setup:
+This creates Python project metadata without starter code or a new Git
+repository. It leaves any existing Git repository in place. Add this extension:
 
 .. code-block:: console
 
    uv add sphinxcontrib-matlabdomain
+
+``uv`` manages the :term:`Python environment <virtual environment>` and
+installs Sphinx as a dependency.
+
+If your project uses Git
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Git records file history in a repository. A commit saves reviewed changes
+locally; it does not publish them. Quickstart refuses to change project
+metadata that already has uncommitted edits, so record the dependency setup
+before running it.
+
+Check the project's Git status:
+
+.. code-block:: console
+
+   git status --short
+
+If the terminal cannot find Git, or Git reports that this is not a repository,
+skip this section. Git is not required to build documentation.
+
+Otherwise, open ``pyproject.toml`` and ``uv.lock`` in a text editor and review
+the setup changes. If either file also contains earlier work, finish that
+work separately first. Select these two files and record the setup:
+
+.. code-block:: console
+
+   git add -- pyproject.toml uv.lock
+   git commit -m "Prepare Python documentation tools"
+
+``git add`` selects the files for the commit. It does not select unrelated
+files. If Git asks for an author identity, replace the examples below with
+your name and email address, then repeat the commit command:
+
+.. code-block:: console
+
+   git config user.name "Your Name"
+   git config user.email "you@example.org"
+
+These settings apply only to this repository. Quickstart also checks
+``.gitignore`` and ``.gitattributes``; finish any pending edits to those files
+before proceeding.
+
+Run quickstart and build
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Start the interactive setup from the project folder:
+
+.. code-block:: console
+
    uv run scmd quickstart
 
-Run each line separately. ``uv`` manages the Python environment and installs
-Sphinx as a dependency. Quickstart asks questions and writes ``docs/conf.py``
+Run each command separately. Quickstart asks questions and writes ``docs/conf.py``
 and source pages. Review its output and follow its next steps. It can also
 detect existing project settings; see :doc:`quickstart` before accepting its
 defaults for an existing documentation project.
 
-From the project folder, build the HTML site:
+From the project folder, build the HTML site. Quickstart puts Sphinx and the
+site's theme in the ``docs`` dependency group, so ask ``uv`` for that group:
 
 .. code-block:: console
 
-   uv run sphinx-build -M html docs docs/_build
+   uv run --group docs sphinx-build -M html docs docs/_build
 
 Open ``docs/_build/html/index.html`` in a browser. Edit the sources and run
 the build again to update the pages. The :doc:`installation` page covers

@@ -83,12 +83,11 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "snippets"]
 # it brings its own light and dark Pygments styles.
 html_theme = "furo"
 html_title = project
-html_static_path = ["_static"]
-html_css_files = ["glossary.css"]
-tippy_enable_wikitips = False
-tippy_enable_doitips = False
+# Link previews only in the page body, not in Furo's navigation.
+tippy_anchor_parent_selector = "div.content"
 
 
+# sphinx-tippy keeps tips only for pages written in this build.
 def _write_tippy_pages(app, env):
     if app.builder.name == "html":
         return sorted(env.found_docs)

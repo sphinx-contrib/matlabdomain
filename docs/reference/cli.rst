@@ -3,7 +3,7 @@ Command-line tools
 
 The package provides one command, ``scmd`` (also installed as
 ``sphinxcontrib-matlabdomain``). Use ``scmd quickstart`` once to set up a project and
-``scmd apidoc`` whenever its API pages need updating; ``scmd skills``
+``scmd apidoc`` whenever its :term:`API` pages need updating; ``scmd skills``
 copies the agent skills that ship with the package into a project. Run
 ``scmd --help`` or ``scmd SUBCOMMAND --help`` for the available commands
 and options.
@@ -25,7 +25,8 @@ Synopsis
    scmd quickstart [ROOT] [--output-dir DOCS] [--quiet] [--dry-run] [--answers FILE] [--force]
 
 Sets up Sphinx documentation for the MATLAB project in ``ROOT``: the Sphinx
-source folder ``DOCS`` with its files and API pages, the docs dependencies,
+:term:`source folder <source directory>` ``DOCS`` with its files and API pages,
+the docs dependencies,
 and two lines for git. It asks one question per choice, with the answer it
 detected as the default, and prints a report of the project.
 :doc:`../user-guide/setting-up` is the tutorial.

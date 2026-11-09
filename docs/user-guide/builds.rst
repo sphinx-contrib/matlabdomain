@@ -1,7 +1,7 @@
 Builds and performance
 ======================
 
-The extension is built for projects with thousands of files: a build reads
+The :term:`extension` is built for projects with thousands of files: a build reads
 each file once, parses only what the pages use, and an unchanged file is
 never read or parsed again.
 
@@ -17,7 +17,7 @@ What a build does
    needs its contents: to document it, to show a base class, or to link a
    name in help text. A project of 2,000 files whose pages document 30 of
    them parses about 30 files.
-3. **Cache.** Parsed files are kept in Sphinx's environment, keyed by the
+3. **Cache.** Parsed files are kept in Sphinx's :term:`environment`, keyed by the
    file's path, modification time and size. The next build reuses them while
    none of these change; a file whose size or time changed is parsed again.
 
@@ -37,7 +37,7 @@ Changing a ``matlab_*`` setting (other than the ``matlab_api_check_*`` ones)
 reads every page again and drops the
 cached parses. Upgrading the extension may do the same.
 
-Pages that only *link* to an object (with a role) are not read again when
+Pages that only *link* to an :term:`object` with a :term:`role` are not read again when
 the object's file changes; this is Sphinx's usual behavior for
 cross-references.
 

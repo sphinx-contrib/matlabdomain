@@ -2,14 +2,15 @@ Linking between projects
 ========================
 
 Sphinx's ``sphinx.ext.intersphinx`` links the pages of one project to the
-objects that another project documents. This page sets up a MATLAB library
+:term:`objects <object>` that another project documents. This page sets up a MATLAB library
 (the *producer*) and a project that links to it (the *consumer*), and
 explains which links follow the library's objects when its pages change.
 
 The library
 -----------
 
-The library needs no setting. Every HTML build writes ``objects.inv`` next
+The library needs no setting. Every HTML build writes the :term:`inventory`,
+``objects.inv``, next
 to the pages: one entry per documented object, named by its path reference,
 with its MATLAB name, type and stable address (``mat/ref/util/scale.m.html``,
 :ref:`stable-addresses`). Publish the
@@ -25,7 +26,7 @@ Publish from an empty output folder:
    uv run scmd apidoc --conf-dir docs
    uv run sphinx-build -b html docs docs/_build/html
 
-Sphinx never deletes a page it no longer builds. This extension removes
+Sphinx never deletes a page it no longer builds. This :term:`extension` removes
 the HTML page, and its copy in ``_sources``, of every page below
 :confval:`matlab_apidoc_output_dir` whose source ``scmd apidoc``
 removed (``global-2`` when it writes fewer pages). Other removed pages
@@ -36,7 +37,7 @@ folder.
 The consumer
 ------------
 
-Load this extension, which provides the ``mat`` roles, and intersphinx,
+Load this extension, which provides the ``mat`` :term:`roles <role>`, and intersphinx,
 and name the library's site:
 
 .. code-block:: python

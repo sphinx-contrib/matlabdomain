@@ -5,7 +5,7 @@ One build documents one project: everything below one
 :confval:`matlab_src_code_project_root`. Several projects, or several
 versions of one project, are several builds. This page shows how to set
 them up, link them, search them together, and what the two common helper
-extensions do and do not do.
+:term:`extensions <extension>` do and do not do.
 
 What was checked, with ``scmd apidoc`` pages, sidecar docs and
 ``-n -W`` builds:
@@ -31,7 +31,7 @@ What was checked, with ``scmd apidoc`` pages, sidecar docs and
      - Not from Sphinx or either extension; Pagefind works (below).
    * - `sphinx-multiversion`_ 0.2.5 on Sphinx 8.2
      - works
-     - When each version's commit holds its API pages (below).
+     - When each version's commit holds its :term:`API` pages (below).
    * - sphinx-multiversion on Sphinx 9
      - fails
      - In the extension (``Config.read()``); not yet fixed there.
@@ -41,7 +41,7 @@ These were tried on Windows; Linux and macOS were not tried.
 Several projects
 ----------------
 
-Give each project its own Sphinx source folder with its own ``conf.py``;
+Give each project its own Sphinx :term:`source folder <source directory>` with its own ``conf.py``;
 settings they share can live in a module the ``conf.py`` files import:
 
 .. code-block:: text
@@ -78,9 +78,9 @@ Generate the pages and build each project into its own folder:
    $ uv run sphinx-build -b html docs/beta docs/_build/beta/html
 
 The projects may use the same path references, MATLAB names, page names
-and sidecar image names: each build has its own index, environment,
-inventory and images. Rebuilding one project does not touch the other.
-Do not build two projects into one output or doctree folder: each build
+and sidecar image names: each build has its own index, :term:`environment`,
+:term:`inventory` and images. Rebuilding one project does not touch the other.
+Do not build two projects into one output or :term:`doctree` folder: each build
 then starts from scratch, and a page only the first project has stays in
 the output.
 

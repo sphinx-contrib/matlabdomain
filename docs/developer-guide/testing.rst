@@ -30,7 +30,7 @@ tox runs the suite against each supported Sphinx line, as CI does:
    $ uv run tox -e lint                 # Ruff, format check, basic Pyright
 
 Each tox run also builds ``tests/test_docs`` with Sphinx.
-The ``lint`` environment instead checks maintained Python without modifying it.
+The ``lint`` :term:`environment <virtual environment>` instead checks maintained Python without modifying it.
 Repository configuration and its documented inventory are checked by
 ``test_documentation.py``; see :ref:`repository-configuration`.
 
@@ -42,9 +42,9 @@ Layout
    ``test_parse_contract.py``, ``test_parser_details.py``), classification
    and naming (``test_mat_classify.py``, ``test_mat_naming.py``), the index
    and incremental builds (``test_build_index.py``, ``test_lazy_index.py``,
-   ``test_domain_lifecycle.py``), fault tolerance, directives and options,
+   ``test_domain_lifecycle.py``), fault tolerance, :term:`directives <directive>` and options,
    ``scmd apidoc`` (``test_apidoc.py``), links from another
-   project through its inventory and page splitting
+   project through its :term:`inventory` and page splitting
    (``test_intersphinx.py``), stable addresses (``test_stable_urls.py``),
    ``matlab-api-check``
    (``test_api_check.py``), ``scmd quickstart``
@@ -60,8 +60,9 @@ Layout
    ``test_apidoc_basics`` root: namespace grouping (``default``,
    ``separate``) and folder grouping (``folder``, ``folder-separate``).
 ``tests/quickstart_golden/``
-   The expected output of ``scmd quickstart``: the Sphinx source
-   folder and the printed lines for the ``test_quickstart`` root as a uv
+   The expected output of ``scmd quickstart``: the Sphinx
+   :term:`source folder <source directory>` and the printed lines for the
+   ``test_quickstart`` root as a uv
    project in git (``uv``), for ``test_apidoc_basics`` outside git
    (``plain``), and a dry run (``dry-run.txt``). The copyright year is
    ``<YEAR>``, run times ``<T>``.
@@ -70,7 +71,7 @@ Layout
    compared with fresh output, and the project is built with ``-W``.
 ``docs/``
    The documentation is built with ``-n``, and every configuration value,
-   directive, option, role, warning and command-line option must appear in
+   directive, option, :term:`role`, warning and command-line option must appear in
    its reference pages.
 
 Writing tests
@@ -79,8 +80,8 @@ Writing tests
 * Use ``make_app`` (from ``sphinx.testing``, loaded in ``conftest.py``) to
   build a project. Tests that change files write the project into
   ``tmp_path`` or copy a root there first, so roots stay unchanged.
-* Check behavior through what users see: the doctree, the HTML, the
-  inventory, warnings (``app.warning.getvalue()``), the domain data.
+* Check behavior through what users see: the :term:`doctree`, the HTML, the
+  inventory, warnings (``app.warning.getvalue()``), the :term:`domain` data.
 * When a test documents MATLAB behavior (what ``help`` shows, which file
   MATLAB calls), check it in MATLAB and name the release in the test.
 * After changing the generator or the example, regenerate the golden output

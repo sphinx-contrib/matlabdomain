@@ -15,7 +15,7 @@ or with ``pip``:
    $ pip install sphinxcontrib-matlabdomain
 
 Examples use ``uv run``. With another environment manager, run the same
-commands without that prefix when the installed tools are on ``PATH``.
+commands without that prefix when the installed tools are on :term:`PATH`.
 
 This installs Sphinx, `tree-sitter <https://tree-sitter.github.io/>`_ and the
 MATLAB grammar for tree-sitter, which the extension uses to read MATLAB code.
@@ -49,13 +49,13 @@ differ only by letter case are handled on a best-effort basis.
 What gets installed
 -------------------
 
-* The Sphinx extension ``sphinxcontrib.matlab``: add it to ``extensions`` in
+* The Sphinx :term:`extension` ``sphinxcontrib.matlab``: add it to ``extensions`` in
   ``conf.py`` (see :doc:`quickstart`). It also loads ``sphinx.ext.autodoc``,
   whose configuration values the auto directives read.
-* The ``matlab-api-check`` builder, which comes with the extension:
+* The ``matlab-api-check`` :term:`builder`, which comes with the extension:
   ``sphinx-build -b matlab-api-check`` (see :doc:`../user-guide/api-check`).
 * The command ``scmd`` (also ``sphinxcontrib-matlabdomain``), with
-  ``apidoc`` to write API pages and ``quickstart`` to set up documentation
+  ``apidoc`` to write :term:`API` pages and ``quickstart`` to set up documentation
   (see :doc:`../reference/cli`).
 
 To work on the extension itself, see :doc:`../developer-guide/contributing`.

@@ -16,7 +16,7 @@ tree-sitter):
    A dry run (``-n``) of the command on the worked example
    (``examples/apidoc/docs``); drop ``-n`` to write the pages.
 ``Debug matlab-api-check``
-   The builder on the ``test_api_check`` root, which has known gaps, so it
+   The :term:`builder` on the ``test_api_check`` root, which has known gaps, so it
    exits with status 1.
 ``sphinxcontrib-matlabdomain: Debug profiling harness build`` and ``sphinxcontrib-matlabdomain: Profile harness (cProfile)``
    The profiling harness (below).
@@ -26,8 +26,8 @@ tree-sitter):
 Logging
 -------
 
-Run ``sphinx-build`` with ``-vv`` to see the extension's debug messages,
-such as the reST each auto directive generates. ``-T`` prints the
+Run ``sphinx-build`` with ``-vv`` to see the :term:`extension`'s debug messages,
+such as the :term:`reST` each auto :term:`directive` generates. ``-T`` prints the
 full traceback of an exception. Breakpoints in the documenters see the
 generated lines in ``self.directive.result``.
 

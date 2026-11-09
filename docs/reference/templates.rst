@@ -6,7 +6,7 @@ templates, which :confval:`matlab_apidoc_templatedir` can
 replace (:doc:`../user-guide/apidoc`). The
 defaults are in ``sphinxcontrib/matlab_apidoc/templates/``. They are
 rendered with Sphinx's ``ReSTRenderer``, which adds the filters ``e``
-(escape reST) and ``heading`` (underline a title; ``heading(2)`` for the
+(escape :term:`reST`) and ``heading`` (underline a title; ``heading(2)`` for the
 second level).
 
 The variables below are a public interface: new ones may be added in any
@@ -46,7 +46,7 @@ In namespace grouping, one page of a namespace or of the global namespace.
 ``separate``
    True with :confval:`matlab_apidoc_separate`.
 ``maxdepth``
-   The ``:maxdepth:`` of the toctrees (:confval:`matlab_apidoc_maxdepth`).
+   The ``:maxdepth:`` of the :term:`toctrees <toctree>` (:confval:`matlab_apidoc_maxdepth`).
 
 ``root.rst.jinja``
 ------------------

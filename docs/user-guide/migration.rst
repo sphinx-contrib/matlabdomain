@@ -2,7 +2,7 @@ Migrating from 0.22 and earlier
 ===============================
 
 Version 1.0.0 is the first stable release, and it breaks with the 0.x
-series on purpose: objects are named by path and by their MATLAB names
+series on purpose: :term:`objects <object>` are named by path and by their MATLAB names
 instead of Python-style dotted module names, the project root replaces
 ``matlab_src_dir``, and Python-only features are gone. Builds of old
 projects fail early with errors that name the replacement, so the changes
@@ -25,14 +25,14 @@ Requirements
 Python 3.11 or newer and Sphinx 8.0 or newer (:doc:`../getting-started/installation`).
 
 A pin such as ``sphinxcontrib-matlabdomain==0.*`` in a requirements file
-or ``pyproject.toml`` keeps 0.x; change it to ``>=1,<2``. A virtual
-environment that is reused between builds (on a CI agent, or one that a
+or ``pyproject.toml`` keeps 0.x; change it to ``>=1,<2``. A :term:`virtual
+environment` that is reused between builds (on a CI agent, or one that a
 script creates only when it is missing) keeps the old version and the old
 Sphinx until it is recreated or upgraded. ``scmd --version`` works only
 with 1.0.
 
 Remove a ``sys.path`` entry in ``conf.py`` that points at a checkout of the
-extension (projects that started from the extension's own test docs have
+:term:`extension` (projects that started from the extension's own test docs have
 one): the old checkout's ``sphinxcontrib/__init__.py`` breaks the
 ``sphinxcontrib`` namespace, and the build stops with "Could not import
 extension sphinxcontrib.applehelp (exception: No module named
@@ -51,11 +51,12 @@ extension sphinxcontrib.applehelp (exception: No module named
        ``conf.py`` (an absolute path works too)
    * - ``matlab_keep_package_prefix``
      - remove it: references are paths (which keep the ``+``), and
-       signatures show MATLAB names (without the ``+``)
+       :term:`signatures <signature>` show MATLAB names (without the ``+``)
    * - ``matlab_short_links``
      - remove it: signatures show MATLAB names
    * - ``add_module_names = False``
-     - ``matlab_add_namespace_names = False`` (the MATLAB domain no longer
+     - ``matlab_add_namespace_names = False`` (the MATLAB :term:`domain`
+       no longer
        reads ``add_module_names``)
    * - ``extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]``
      - ``sphinx.ext.autodoc`` is optional: the extension loads it

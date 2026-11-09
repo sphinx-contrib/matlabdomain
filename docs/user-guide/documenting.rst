@@ -1,15 +1,16 @@
 Documenting MATLAB code
 =======================
 
-The *auto* :term:`directives <directive>` read a MATLAB file and write its documentation: the
-signature, the help text and, for classes, the members. This page shows
+The *auto* :term:`directives <directive>` read a MATLAB file and write its
+documentation: the :term:`signature`, the help text and, for classes, the
+members. This page shows
 them on a small sample project, rendered by this documentation's own build.
 :doc:`../reference/directives` lists every directive and option.
 
 Auto and description directives
 -------------------------------
 
-Every kind of object has two directives: an auto directive
+Every kind of :term:`object` has two directives: an auto directive
 (``mat:autofunction``) and a description directive (``mat:function``).
 
 .. list-table::

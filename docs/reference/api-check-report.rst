@@ -1,7 +1,7 @@
 ``matlab-api-check`` reports
 ============================
 
-The ``matlab-api-check`` builder (:doc:`../user-guide/api-check`) writes two
+The ``matlab-api-check`` :term:`builder` (:doc:`../user-guide/api-check`) writes two
 files to its output folder, before it logs the findings, so ``-W`` cannot
 lose them.
 
@@ -15,7 +15,7 @@ One line per finding, in the order of the path references::
 ``<file>`` is the absolute path of the source file; ``:<line>`` is left out
 for apps and for sidecar findings without a line. Sidecar docs have no
 MATLAB name,
-so ``(<MATLAB name>)`` is left out for them. Then a summary: the objects
+so ``(<MATLAB name>)`` is left out for them. Then a summary: the :term:`objects <object>`
 checked per kind, the objects not
 checked per reason, and the findings per rule and severity.
 

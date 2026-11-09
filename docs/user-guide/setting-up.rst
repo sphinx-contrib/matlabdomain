@@ -2,10 +2,11 @@ Setting up a project: ``scmd quickstart``
 =========================================
 
 ``scmd quickstart`` sets up Sphinx documentation for a MATLAB
-project that has none yet: a Sphinx source folder with ``conf.py``, a home
-page, make files, a build guide and the API pages, the docs dependencies,
+project that has none yet: a Sphinx :term:`source folder <source directory>`
+with ``conf.py``, a home page, make files, a build guide and the :term:`API`
+pages, the docs dependencies,
 and a report of what it found in the project. It is the MATLAB counterpart
-of Sphinx's ``sphinx-quickstart``, and it uses the extension's own index,
+of Sphinx's ``sphinx-quickstart``, and it uses the :term:`extension`'s own index,
 so its defaults are what the build will see. Run it once; afterwards
 ``conf.py`` is yours, and ``scmd apidoc`` (:doc:`apidoc`) keeps the
 API pages up to date. The options are in :doc:`../reference/cli`.

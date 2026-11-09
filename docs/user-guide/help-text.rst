@@ -1,7 +1,7 @@
 Help text
 =========
 
-The documentation of a MATLAB object is its help text: the comment block
+The documentation of a MATLAB :term:`object` is its help text: the comment block
 that MATLAB's ``help`` command shows. This page explains which comments are
 used, how they are turned into documentation, and how to write help that
 reads well in both MATLAB and HTML.
@@ -56,7 +56,7 @@ this type and the parser disagree (for example a ``classdef`` without its
 MATLAB and Simulink read a few files by name: ``Contents.m`` (folder help),
 ``slblocks.m``, ``sl_customization.m``, ``pathdef.m``, ``matlabrc.m`` and
 ``rtwmakecfg.m`` (in any letter case). They are indexed and can be
-documented with an explicit directive, but ``mat:autofolder`` with
+documented with an explicit :term:`directive`, but ``mat:autofolder`` with
 ``:members:`` and ``scmd apidoc`` leave them out, and they never
 get ``mat.invalid_matlab``, ``mat.empty_code_file`` or ``mat.not_callable``.
 
@@ -64,17 +64,18 @@ Help text is reStructuredText
 -----------------------------
 
 The help text, without the ``%`` and the common indentation, is parsed as
-`reStructuredText
+:term:`reStructuredText`, also called reST, like a Python docstring. The
+`Sphinx reStructuredText guide
 <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_
-(reST), like a Python docstring. MATLAB help is plain text, and plain text
-is usually valid reST, but not always:
+describes the syntax. MATLAB help is plain text, and plain text is usually
+valid reST, but not always:
 
 * Lines with the same indentation run together into one paragraph, so a
   list of ``name - description`` lines becomes one line.
 * Indentation starts a block quote or a definition list. A change in
   indentation without a blank line gives warnings such as "Unexpected
   indentation" or "Definition list ends without a blank line".
-* ``*``, ``_``, ``|`` and backquotes are markup: ``x*y`` or ``name_`` can
+* ``*``, ``_``, ``|`` and backquotes are :term:`markup`: ``x*y`` or ``name_`` can
   give "Inline emphasis start-string without end-string" or "Unknown target
   name".
 

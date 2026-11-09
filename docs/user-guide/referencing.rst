@@ -2,7 +2,7 @@ Names, references and links
 ===========================
 
 MATLAB names things differently from Python, and this :term:`extension` follows
-MATLAB. This page explains how objects are named, how to link to them, and
+MATLAB. This page explains how :term:`objects <object>` are named, how to link to them, and
 what their link anchors look like.
 
 How MATLAB names files
@@ -19,8 +19,8 @@ How MATLAB names files
   it.
 
 The extension computes the MATLAB name of every file this way, for the
-release in :confval:`matlab_version`. Signatures, the index and the
-inventory show it.
+release in :confval:`matlab_version`. :term:`Signatures <signature>`, the
+index and the :term:`inventory` show it.
 
 Path references
 ---------------

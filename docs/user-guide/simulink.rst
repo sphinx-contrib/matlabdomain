@@ -1,7 +1,7 @@
 Simulink files
 ==============
 
-The extension reads Simulink models, libraries and subsystem files
+The :term:`extension` reads Simulink models, libraries and subsystem files
 (``.slx``, ``.mdl`` and ``.xml`` exported by ``save_system``) without
 MATLAB, from every release since R2006a, and documents them next to the
 code: description, mask, ports, metadata and a documentation file of your
@@ -18,8 +18,8 @@ What is documented
   blocks at the top of a library, and those below subsystems without a
   mask. A linked block (a copy of another library's block) and a
   sublibrary block (an empty subsystem whose ``OpenFcn`` opens a library)
-  are links, not objects of their own. Blocks inside models and subsystem
-  files are not documented: the file is the object.
+  are links, not :term:`objects <object>` of their own. Blocks inside
+  models and subsystem files are not documented: the file is the object.
 
 Each page shows the description saved in the file or block (the mask
 description if it has none), then the documentation file, the mask type,
@@ -39,7 +39,7 @@ only from the global namespace, and not directly from a ``private/`` or
 A block follows its file with its path in the library:
 ``lib.slx/Group/Gain`` or, by MATLAB name, ``lib/Group/Gain``. A ``/`` in a
 block name is doubled (``lib.slx/A//B``); a line break in a block name is a
-space in a role's target (``lib/Two Lines``).
+space in a :term:`role`'s target (``lib/Two Lines``).
 
 ``plant.slx`` and ``plant.m`` share a MATLAB name, like two ``plant.m`` in
 different folders: give the path reference, or see
@@ -62,7 +62,7 @@ each a link. A block or library outside the project (a MathWorks library
 such as ``simulink/Sources/Sine Wave``) stays text without a warning.
 ``:references:`` lists what a model or subsystem file uses (model
 references, subsystem references, library links). ``scmd apidoc``
-writes these directives for you (:doc:`apidoc`), with a section for each
+writes these :term:`directives <directive>` for you (:doc:`apidoc`), with a section for each
 kind and one for the blocks of the libraries.
 
 "See also" entries and :confval:`matlab_auto_link` link names of models,

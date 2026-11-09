@@ -75,6 +75,13 @@ def test_docs_build_without_warnings(make_app, tmp_path):
     output = Path(app.outdir)
     primer = (output / "getting-started/sphinx-primer.html").read_text(encoding="utf-8")
     assert 'href="../reference/glossary.html#term-builder"' in primer
+    for name in (
+        "getting-started/installation",
+        "user-guide/configuration",
+        "reference/cli",
+        "developer-guide/contributing",
+    ):
+        assert "std-term" in (output / f"{name}.html").read_text(encoding="utf-8"), name
     scripts = list(
         (output / "_static/tippy/getting-started").glob("sphinx-primer.*.js")
     )

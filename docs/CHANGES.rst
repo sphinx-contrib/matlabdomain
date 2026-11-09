@@ -25,7 +25,9 @@ Highlights
   every configuration value, directive, role, option and warning, and a
   developer guide. Examples are rendered by the documentation's own build.
   It also covers several projects and versions (sphinx-multiversion,
-  sphinx-multiproject) and one search over several sites.
+  sphinx-multiproject) and one search over several sites. A Sphinx primer
+  for MATLAB users and a glossary explain the command line and Sphinx's
+  terms; glossary links show their definitions on hover (sphinx-tippy).
 
 Requirements
 ^^^^^^^^^^^^

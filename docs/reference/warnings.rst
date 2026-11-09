@@ -1,7 +1,7 @@
 Warnings
 ========
 
-Every warning of the extension has the type ``mat`` and one of these
+Every warning of the :term:`extension` has the type ``mat`` and one of these
 subtypes. Turn one off with ``suppress_warnings = ["mat.<subtype>"]``, or
 all with ``"mat"``; ``scmd apidoc`` reads the same setting.
 :doc:`../user-guide/warnings` explains each one.
@@ -46,15 +46,15 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
      - a link below the project root that points outside it
      - every build
    * - ``mat.ambiguous``
-     - a name that matches several objects
+     - a name that matches several :term:`objects <object>`
      - where the name is used
    * - ``mat.not_found``
-     - an auto directive whose argument matches no object
+     - an auto :term:`directive` whose argument matches no object
      - where the directive is
    * - ``mat.sidecar``
      - a sidecar doc without a heading, a ``mat:autosidecar`` reference
        that is not an indexed sidecar doc, a project root on another drive
-       than the Sphinx source folder
+       than the Sphinx :term:`source folder <source directory>`
      - where the sidecar doc is rendered; the drive at start-up
    * - ``mat.apidoc``
      - ``scmd apidoc``: an unreadable file, output names that differ only

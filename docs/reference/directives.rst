@@ -1,7 +1,7 @@
 Directives, roles and indices
 =============================
 
-Every directive and role is in the ``mat`` domain. With
+Every :term:`directive` and :term:`role` is in the ``mat`` :term:`domain`. With
 ``primary_domain = "mat"`` the ``mat:`` prefix may be left out.
 :doc:`../user-guide/documenting` and :doc:`../user-guide/referencing` show
 them in use.
@@ -11,11 +11,11 @@ Auto directives
 
 An auto directive takes one argument: a MATLAB name, a path reference, or a
 name relative to the current folder (:doc:`../user-guide/referencing`),
-optionally followed by a signature, ``(a, b)``, that replaces the one read
+optionally followed by a :term:`signature`, ``(a, b)``, that replaces the one read
 from the file. It reads the file and writes the matching description directive
 (below) with the help text. Content below the directive is added after the
 help text. ``autodoc_default_options`` supplies default options. If no
-object matches the argument, the build warns (``mat.not_found``, "don't
+:term:`object` matches the argument, the build warns (``mat.not_found``, "don't
 know which object to document") and the directive writes nothing.
 
 .. rst:directive:: .. mat:autofunction:: name

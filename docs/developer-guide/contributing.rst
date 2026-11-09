@@ -17,11 +17,12 @@ The project uses `uv <https://docs.astral.sh/uv/>`_ and a lock file
    $ uv run pre-commit install
 
 ``uv sync`` installs the ``dev`` dependency group: the ``test`` group
-(pytest, coverage), the ``docs`` group (the theme the
-documentation uses, `Furo <https://pradyunsg.me/furo/>`_, and Mermaid), and
+(pytest, coverage), the ``docs`` group (the :term:`theme` the
+documentation uses, `Furo <https://pradyunsg.me/furo/>`_, Mermaid and
+sphinx-tippy), and
 pre-commit, tox, Ruff, Pyright and sphinx-autobuild. ``--all-extras`` adds
 Markdown support (the ``markdown`` extra). Run
-tools through the environment: ``uv run pytest``, or ``.venv/bin/python``
+tools through the :term:`virtual environment`: ``uv run pytest``, or ``.venv/bin/python``
 (Linux, macOS) and ``.venv\Scripts\python`` (Windows).
 
 With plain ``pip`` (25.1 or later, for ``--group``):
@@ -45,12 +46,20 @@ http://127.0.0.1:8000:
    $ make livehtml        # Linux, macOS
    $ make.bat livehtml    # Windows
 
-It runs ``sphinx-autobuild``. Changes to the extension's own code need a
+It runs ``sphinx-autobuild``. Changes to the :term:`extension`'s own code need a
 restart. Check the final text with a full strict build:
 
 .. code-block:: console
 
    $ uv run sphinx-build -M html docs docs/_build -E -n -W
+
+Link the first use of a Sphinx term on each page with the ``term``
+:term:`role`, for example ``:term:`builder```. Definitions live in
+:doc:`../reference/glossary`. Keep command examples and API names literal.
+
+sphinx-tippy adds the link previews. It builds them only from the pages
+written in a build, so ``conf.py`` makes HTML builds write every page. The
+previews load their JavaScript from unpkg.com; the links work without it.
 
 Code style
 ----------

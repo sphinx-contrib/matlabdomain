@@ -1,7 +1,7 @@
 Checking help text: ``matlab-api-check``
 ========================================
 
-The ``matlab-api-check`` builder checks the help text of a MATLAB project:
+The ``matlab-api-check`` :term:`builder` checks the help text of a MATLAB project:
 that every function, class and public method has a description, that the
 help describes its inputs, outputs and name-value arguments, and that it
 has an example; and that every public property has a description. It
@@ -11,7 +11,7 @@ problem, so it can guard help text in CI.
 Running it
 ----------
 
-It is a Sphinx builder; the extension adds it. Run it on the Sphinx project
+It is a Sphinx builder; the :term:`extension` adds it. Run it on the Sphinx project
 of your docs:
 
 .. code-block:: console
@@ -46,13 +46,13 @@ sections.
 What is checked
 ---------------
 
-Every indexed object below the project root, minus
+Every indexed :term:`object` below the project root, minus
 :confval:`matlab_api_check_ignore_patterns` (or only the objects of the
 files :confval:`matlab_api_check_files` selects, see
 `Checking selected files`_):
 
 * functions, classes, scripts and apps (``.mlapp``); a class with the
-  ``Hidden`` attribute is not public API and is not checked, nor are its
+  ``Hidden`` attribute is not public :term:`API` and is not checked, nor are its
   members;
 * public methods: methods without ``Access = private``, ``protected`` or an
   access list, and not ``Hidden``, including static methods and
@@ -71,7 +71,7 @@ files that cannot be parsed are counted as not checked, as are Simulink
 models, libraries and subsystem files (no rule checks them yet). The
 function files of a class folder ``@X/`` whose ``X.m`` is a ``classdef``
 are methods, with
-the attributes of their signature in a ``methods`` block of ``X.m``
+the attributes of their :term:`signature` in a ``methods`` block of ``X.m``
 (``Access``, ``Hidden``, ``Static``); in an
 old-style class folder they are functions (old-style classes are not
 supported, see :doc:`documenting`).

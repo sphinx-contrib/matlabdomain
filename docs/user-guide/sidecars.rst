@@ -2,7 +2,7 @@ Sidecar docs
 ============
 
 Tutorials, design notes and READMEs often sit next to the MATLAB code they
-describe. With :confval:`matlab_src_sidecar_suffixes`, the extension indexes
+describe. With :confval:`matlab_src_sidecar_suffixes`, the :term:`extension` indexes
 such ``.md`` and ``.rst`` files (sidecar docs) with the code, renders them
 into your documentation with ``mat:autosidecar``, links between them and the
 code, generates a page for each with ``scmd apidoc`` and checks
@@ -39,7 +39,8 @@ Which files are sidecar docs
 * A sidecar doc has a path reference (``+demo/guide.md``) but no MATLAB
   name, so ``guide.md`` next to ``guide.m`` is fine: names find the code.
 
-The Sphinx source folder and the project root may be arranged three ways:
+The Sphinx :term:`source folder <source directory>` and the project root may be
+arranged three ways:
 
 * **Apart** (``docs/`` and ``src/``): nothing to consider.
 * **The source folder inside the root** (root ``repo/``, docs in
@@ -60,7 +61,7 @@ Rendering a sidecar doc
 -----------------------
 
 ``mat:autosidecar`` takes the sidecar doc's path reference and renders it
-where the directive stands; a document of its own needs nothing else:
+where the :term:`directive` stands; a document of its own needs nothing else:
 
 .. code-block:: rst
 
@@ -79,8 +80,8 @@ documentation's sample project:
 
 .. mat:autosidecar:: +shapes/notes.rst
 
-In reST documents, ``mat:autosidecar`` supports both sidecar formats.
-Markdown sidecars also work directly in MyST documents. For a reST sidecar
+In :term:`reST` documents, ``mat:autosidecar`` supports both sidecar formats.
+Markdown sidecars also work directly in :term:`MyST` documents. For a reST sidecar
 in a MyST document, use an ``eval-rst`` block; otherwise MyST reads the
 sidecar's contents as Markdown:
 

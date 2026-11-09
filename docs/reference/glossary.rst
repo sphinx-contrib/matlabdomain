@@ -6,12 +6,15 @@ the `Sphinx glossary <https://www.sphinx-doc.org/en/master/glossary.html>`_
 in different words and adds a few terms useful to MATLAB users. The Sphinx
 glossary is authoritative; consult it when these descriptions differ.
 
-The dotted underline marks a link to a definition. On this HTML site, a
-tooltip can preview the definition. Select the link to read the full entry,
-including when tooltips are unavailable.
+Terms used on other pages link here. Hover over such a link to preview the
+definition.
 
 .. glossary::
    :sorted:
+
+   API
+      The functions, classes and other public interfaces a project provides.
+      API reference pages describe how to call them and what they return.
 
    builder
       The part of Sphinx that produces an output or performs a check. The
@@ -55,6 +58,14 @@ including when tooltips are unavailable.
       A Python package or module that changes or adds Sphinx behavior. This
       package adds the ``mat`` domain; ``sphinx-tippy`` adds link previews.
 
+   inventory
+      The ``objects.inv`` file that lists a site's documented targets and
+      their addresses. Other Sphinx projects use it to create links to them.
+
+   markup
+      Text notation for structure and formatting, such as heading underlines
+      and link syntax. A parser turns the notation into document elements.
+
    master document
    root document
       The top-level source document, usually ``index.rst``. It contains the
@@ -68,12 +79,19 @@ including when tooltips are unavailable.
       A documented item, such as a MATLAB function or class. A description
       directive creates an entry that a role can link to.
 
+   PATH
+      The operating system's list of folders to search for executable
+      commands. This is separate from MATLAB's search path.
+
+   RemovedInSphinxXXWarning
    RemoveInSphinxXXXWarning
       A warning about a Sphinx feature scheduled for removal in a future
-      version. Check the warning message and the named Sphinx version when
-      updating Sphinx or an extension.
+      version, such as ``RemovedInSphinx10Warning``. Check the warning
+      message and the named Sphinx version when updating Sphinx or an
+      extension. The Sphinx glossary spells it ``RemoveInSphinxXXXWarning``.
 
    reStructuredText
+   reST
       A plain-text markup format used by Sphinx. Files commonly end in
       ``.rst`` and contain headings, links, directives and roles.
 
@@ -81,10 +99,22 @@ including when tooltips are unavailable.
       Inline markup within text. For example, ``:mat:func:`times_two``` links
       to the documentation of the MATLAB function ``times_two``.
 
+   signature
+      An object's call or declaration syntax, such as a function name with
+      its arguments. Sphinx displays it above the object's description.
+
    source directory
       The folder containing a Sphinx project's source documents and their
       subfolders. Its location is an argument to ``sphinx-build``.
 
+   theme
+      The appearance and navigation layout of the generated HTML site.
+      This documentation uses the Furo theme.
+
    toctree
       A directive that connects pages into a table of contents. It controls
       the document hierarchy and, in many themes, the navigation sidebar.
+
+   virtual environment
+      A separate Python interpreter and set of installed packages for a
+      project. uv normally keeps it in the project's ``.venv`` folder.

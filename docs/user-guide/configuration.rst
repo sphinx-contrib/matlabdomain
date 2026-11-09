@@ -15,17 +15,17 @@ below:
 
    matlab_src_code_project_root = "../src"
 
-* A relative path is relative to the Sphinx source folder (the folder with
+* A relative path is relative to the Sphinx :term:`source folder <source directory>` (the folder with
   ``index.rst`` that you pass to ``sphinx-build``; usually ``conf.py`` is
   there too), so the docs build the same from any working
   folder and with `sphinx-multiversion
   <https://github.com/sphinx-contrib/multiversion>`_. An absolute path works
   too, except with sphinx-multiversion: every version would document the
   code of the checkout (:doc:`projects-and-versions`).
-* Every object is identified by its path below this folder, its *path
+* Every :term:`object` is identified by its path below this folder, its *path
   reference* (``+shapes/Circle.m``, see :doc:`referencing`). Choose the root
-  once: moving it changes every reference, link anchor and inventory entry.
-* Without it, no file is indexed and the auto directives (``mat:autoclass``
+  once: moving it changes every reference, link anchor and :term:`inventory` entry.
+* Without it, no file is indexed and the auto :term:`directives <directive>` (``mat:autoclass``
   and the others) find nothing; each one warns. Description directives
   (``.. mat:function:: f(x)``, :doc:`documenting`) never read a file, so
   they work the same with or without it.

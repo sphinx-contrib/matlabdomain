@@ -1,7 +1,7 @@
 Warnings
 ========
 
-The extension never stops a build because of one bad file: the file gets a
+The :term:`extension` never stops a build because of one bad file: the file gets a
 warning, and everything else is documented as usual. Each warning has the
 type ``mat`` and a subtype, starts with the path reference of the file, and
 gives ``file:line`` where a line is known. :doc:`../reference/warnings`
@@ -21,7 +21,7 @@ Sphinx's ``suppress_warnings`` turns off warnings by type and subtype:
 
 ``"mat"`` turns off every warning of this extension. ``scmd apidoc``
 reads ``suppress_warnings`` from the same ``conf.py``. Warnings about help
-text that is not valid reStructuredText come from docutils and have the
+text that is not valid :term:`reStructuredText` come from :term:`docutils <Docutils>` and have the
 type ``docutils``, which covers every page, not only help text
 (:doc:`help-text`).
 
@@ -81,9 +81,10 @@ What each warning means
    is not followed (:doc:`configuration`).
 
 ``mat.ambiguous``
-   A name in a directive, role, "See also" line or auto-link matches
-   several objects, or a reference matches objects in several intersphinx
-   inventories (:doc:`linking-projects`). The warning lists their path
+   A name in a :term:`directive`, :term:`role`, "See also" line or auto-link
+   matches several :term:`objects <object>`, or a reference matches objects in
+   several intersphinx :term:`inventories <inventory>` (:doc:`linking-projects`).
+   The warning lists their path
    references; use one of them. Copies of files (vendored code, symbolic
    links) are a common cause; exclude them with
    :confval:`matlab_src_exclude_patterns`. When the copies are intended,

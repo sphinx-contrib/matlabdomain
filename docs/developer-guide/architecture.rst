@@ -1,7 +1,7 @@
 Architecture
 ============
 
-How the extension fits into Sphinx, for contributors. The modules are in
+How the :term:`extension` fits into Sphinx, for contributors. The modules are in
 ``sphinxcontrib/``.
 
 Modules
@@ -14,9 +14,10 @@ Modules
    * - Module
      - Role
    * - ``matlab.py``
-     - ``setup()``: configuration values, events, the builder, the auto
-       directives. ``MATLABDomain``: directives, roles, cross-reference
-       resolution, the folder index and the domain data.
+     - ``setup()``: configuration values, events, the :term:`builder`, the
+       auto :term:`directives <directive>`. ``MATLABDomain``: directives,
+       :term:`roles <role>`, :term:`cross-reference` resolution, the folder
+       index and the :term:`domain` data.
    * - ``mat_types.py``
      - The index stage (``IndexSettings``, ``build_index``, ``SourceIndex``,
        ``analyze``), the lazy parse (``resolve``), incremental-build hooks,
@@ -36,7 +37,8 @@ Modules
      - The Simulink file reader: layouts, limits, parsers and the
        format-neutral content (see :doc:`simulink-file-formats`).
    * - ``mat_tree_sitter_parser.py``
-     - tree-sitter queries: signatures, members, arguments and help text.
+     - tree-sitter queries: :term:`signatures <signature>`, members,
+       arguments and help text.
    * - ``mat_documenters.py``, ``mat_directives.py``
      - The autodoc documenters behind ``mat:auto*``.
    * - ``mat_api_check.py``
@@ -54,7 +56,8 @@ Modules
        names and the templates.
    * - ``matlab_quickstart/``
      - ``scmd quickstart``: the project facts (``_detect.py``), the
-       Sphinx source folder from its templates and the edits outside it
+       Sphinx :term:`source folder <source directory>` from its templates
+       and the edits outside it
        (``_write.py``), the prompts and answers file (``_cli.py``), the
        report (``_report.py``). It builds the index and calls the
        generator of ``matlab_apidoc/``.

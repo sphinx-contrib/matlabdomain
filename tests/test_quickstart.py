@@ -402,6 +402,26 @@ def test_uncommitted_changes_stop(tmp_path, capsys, fixed, name):
 
 
 @pytest.mark.skipif(not HAS_GIT, reason="needs git")
+def test_primer_git_checkpoint(tmp_path, fixed, fake_uv):
+    root = copy_root(QUICKSTART, tmp_path)
+    git_init(root)
+    (root / "pyproject.toml").write_text("[tool.uv]\npackage = false\n")
+    (root / "uv.lock").write_text("version = 1\n")
+    assert _write.git_dirty(root) == ["pyproject.toml"]
+    subprocess.run(
+        [*GIT, "add", "--", "pyproject.toml", "uv.lock"], cwd=root, check=True
+    )
+    subprocess.run(
+        [*GIT, "commit", "-qm", "Prepare Python documentation tools"],
+        cwd=root,
+        check=True,
+    )
+    assert _write.git_dirty(root) == []
+    assert matlab_quickstart.main([str(root), "--quiet"]) == 0
+    assert (root / "docs" / "conf.py").is_file()
+
+
+@pytest.mark.skipif(not HAS_GIT, reason="needs git")
 def test_git_edits_keep_line_ends_and_skip_present_lines(tmp_path, capsys, fixed):
     root = copy_root(QUICKSTART, tmp_path)
     (root / ".gitignore").write_bytes(b"*.asv\r\ndocs/_build/")

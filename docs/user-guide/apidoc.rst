@@ -1,14 +1,14 @@
 Generating pages: ``scmd apidoc``
 =================================
 
-``scmd apidoc`` writes reST pages that document every MATLAB file
-below a project root with the auto directives: by default one page per
+``scmd apidoc`` writes :term:`reST` pages that document every MATLAB file
+below a project root with the auto :term:`directives <directive>`: by default one page per
 namespace, as MATLAB sees namespaces, or one page per folder. A large
 project then needs no hand-written directives, and new files appear in the
 docs when you run it again. It is the MATLAB counterpart of Sphinx's
 ``sphinx-apidoc``, with a deliberately small surface: its settings come
 from ``conf.py``, and its flags only control a run. For different output,
-edit its templates or write your own script on its Python API
+edit its templates or write your own script on its Python :term:`API`
 (:ref:`apidoc-write-your-own`); that makes sense when you want
 fine-grained control over the generated output.
 
@@ -78,7 +78,7 @@ outside any namespace (``global``), and the root page that lists them:
        demo.rst                  namespace demo
        demo.geometry.rst         namespace demo.geometry
 
-Add the root page to a toctree, here in ``docs/index.rst``:
+Add the root page to a :term:`toctree`, here in ``docs/index.rst``:
 
 .. literalinclude:: ../../examples/apidoc/docs/index.rst
    :language: rst
