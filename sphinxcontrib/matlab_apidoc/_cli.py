@@ -136,10 +136,9 @@ def _folder(conf, name, srcdir):
     return None if value is None else os.path.join(srcdir, value)
 
 
-def _file_name(conf, name, value=None):
+def _file_name(conf, name):
     """Return a file-name value of conf.py, or ConfigError."""
-    if value is None:
-        value = apidoc_value(conf, name)
+    value = apidoc_value(conf, name)
     if not value or any(sep in value for sep in "/\\"):
         raise ConfigError(f"{name} {value!r} must be a file name.")
     return value

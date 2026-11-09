@@ -716,11 +716,10 @@ def _text_report(summary, findings):
         f"{n} {_PLURALS[kind]}" for kind, n in summary["checked"].items()
     )
     lines.append(f"Checked: {checked}")
-    if summary["not_checked"]:
-        skipped = ", ".join(
-            f"{n} {why.replace('_', ' ')}" for why, n in summary["not_checked"].items()
-        )
-        lines.append(f"Not checked: {skipped}")
+    skipped = ", ".join(
+        f"{n} {why.replace('_', ' ')}" for why, n in summary["not_checked"].items()
+    )
+    lines.append(f"Not checked: {skipped}")
     lines.append(
         f"Findings: {summary['errors']} errors, {summary['warnings']} warnings"
     )

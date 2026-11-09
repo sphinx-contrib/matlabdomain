@@ -10,7 +10,12 @@ from typing import Any, cast
 import pytest
 
 from sphinxcontrib import mat_handlers
-from sphinxcontrib.mat_types import IndexSettings, SourceIndex, build_index
+from sphinxcontrib.mat_types import (
+    IndexSettings,
+    SourceIndex,
+    build_index,
+    skipped_folder,
+)
 
 CONF = (
     'extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]\n'
@@ -145,6 +150,11 @@ def test_underscore_folders_and_sphinx_output(tmp_path):
     records = {r["reference"]: r for r in source_index.index.values()}
     assert records["_01_intro/a.m"]["matlab_name"] == "a"
     assert records["+pkg/_util/b.m"]["matlab_name"] == "b"
+
+
+def test_unreadable_folder_is_searched(tmp_path):
+    """A folder that cannot be listed is not taken for Sphinx output."""
+    assert skipped_folder(str(tmp_path / "gone"), "gone") is False
 
 
 @pytest.mark.parametrize(
