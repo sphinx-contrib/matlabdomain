@@ -1,0 +1,5 @@
+a.reference.internal .std-term {
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 0.15em;
+}

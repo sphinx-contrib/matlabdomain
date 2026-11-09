@@ -38,6 +38,7 @@ extensions = [
     "sphinxcontrib.matlab",
     "sphinx.ext.napoleon",
     "sphinxcontrib.mermaid",
+    "sphinx_tippy",
 ]
 # The sample project rendered in the user guide.
 matlab_src_code_project_root = "src"
@@ -82,6 +83,20 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "snippets"]
 # it brings its own light and dark Pygments styles.
 html_theme = "furo"
 html_title = project
+html_static_path = ["_static"]
+html_css_files = ["glossary.css"]
+tippy_enable_wikitips = False
+tippy_enable_doitips = False
+
+
+def _write_tippy_pages(app, env):
+    if app.builder.name == "html":
+        return sorted(env.found_docs)
+    return []
+
+
+def setup(app):
+    app.connect("env-get-updated", _write_tippy_pages)
 
 
 # -- Options for HTMLHelp output ---------------------------------------------

@@ -1,9 +1,9 @@
 sphinxcontrib-matlabdomain
 ==========================
 
-If Sphinx is new to you, its `glossary
-<https://www.sphinx-doc.org/en/master/glossary.html>`_ explains terms such as
-directives, roles, domains and builders used in this documentation.
+New to Sphinx? Start with the :doc:`getting-started/sphinx-primer` and
+:doc:`reference/glossary`. Terms such as :term:`directive`, :term:`role`,
+:term:`domain` and :term:`builder` link to definitions.
 
 **sphinxcontrib-matlabdomain** is a `Sphinx`_ extension for `MATLAB`_ code. It
 adds a ``mat`` domain to Sphinx, with directives and roles for MATLAB
@@ -46,6 +46,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
 
    getting-started/installation
    getting-started/quickstart
+   getting-started/sphinx-primer
 
 .. toctree::
    :maxdepth: 2
@@ -71,6 +72,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    :caption: Reference
 
    reference/configuration
+   reference/glossary
    reference/directives
    reference/cli
    reference/templates

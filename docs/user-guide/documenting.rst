@@ -1,7 +1,7 @@
 Documenting MATLAB code
 =======================
 
-The *auto* directives read a MATLAB file and write its documentation: the
+The *auto* :term:`directives <directive>` read a MATLAB file and write its documentation: the
 signature, the help text and, for classes, the members. This page shows
 them on a small sample project, rendered by this documentation's own build.
 :doc:`../reference/directives` lists every directive and option.

@@ -14,7 +14,8 @@ dev = [
 ]
 docs = [
     "furo",
-    "sphinxcontrib-mermaid"
+    "sphinxcontrib-mermaid",
+    "sphinx-tippy"
 ]
 test = [
     "pytest>=9",

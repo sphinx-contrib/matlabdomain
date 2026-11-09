@@ -1,7 +1,7 @@
 Names, references and links
 ===========================
 
-MATLAB names things differently from Python, and this extension follows
+MATLAB names things differently from Python, and this :term:`extension` follows
 MATLAB. This page explains how objects are named, how to link to them, and
 what their link anchors look like.
 

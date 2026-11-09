@@ -3,9 +3,8 @@ Quickstart
 
 This page sets up the documentation of a MATLAB project with one command,
 then shows what that command does by hand for a single function. If Sphinx
-is new to you, its `tutorial
-<https://www.sphinx-doc.org/en/master/tutorial/index.html>`_ explains the
-basics.
+is new to you, start with the :doc:`sphinx-primer` for shell commands and
+the :doc:`../reference/glossary` for terminology.
 
 With ``scmd quickstart``
 ------------------------
@@ -109,7 +108,7 @@ settings.
 4. Document the function
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Add an auto directive to ``docs/index.rst``:
+Add an auto :term:`directive` to ``docs/index.rst``:
 
 .. literalinclude:: ../snippets/quickstart.rst
    :language: rst

@@ -72,6 +72,16 @@ def test_docs_build_without_warnings(make_app, tmp_path):
     app.build(force_all=True)
     assert app.config.nitpicky
     assert app.warning.getvalue() == ""
+    output = Path(app.outdir)
+    primer = (output / "getting-started/sphinx-primer.html").read_text(encoding="utf-8")
+    assert 'href="../reference/glossary.html#term-builder"' in primer
+    scripts = list(
+        (output / "_static/tippy/getting-started").glob("sphinx-primer.*.js")
+    )
+    assert len(scripts) == 1
+    assert "The part of Sphinx" in scripts[0].read_text(encoding="utf-8")
+    updated = app.emit("env-get-updated", app.env)
+    assert set(app.env.found_docs) in [set(result) for result in updated if result]
 
 
 def test_configuration_values(bare_app):
