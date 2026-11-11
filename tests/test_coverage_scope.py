@@ -3,8 +3,6 @@
 import tomllib
 from pathlib import Path
 
-import sphinxcontrib
-
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -15,9 +13,9 @@ def test_source_pkgs_lists_every_module():
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     listed = set(pyproject["tool"]["coverage"]["run"]["source_pkgs"])
 
+    # The checkout's folder, whatever install the tests import (tox tests
+    # the installed wheel): pyproject.toml and the folder are compared.
     package = ROOT / "sphinxcontrib"
-    # Guard against checking some other install of the namespace.
-    assert any(Path(p).resolve() == package for p in sphinxcontrib.__path__)
     on_disk = {
         f"sphinxcontrib.{entry.stem}"
         for entry in package.iterdir()
