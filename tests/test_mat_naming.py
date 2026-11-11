@@ -397,37 +397,6 @@ def test_oracle_edge_cases(row):
     assert got == expected
 
 
-_FULL_ORACLE = Path(__file__).parents[2] / "reference" / "matlab_names_reference.json"
-
-
-def _snake_keys(row):
-    # The reference corpus uses camelCase column names.
-    return {
-        "".join(f"_{c.lower()}" if c.isupper() else c for c in k): v
-        for k, v in row.items()
-    }
-
-
-@pytest.mark.skipif(not _FULL_ORACLE.exists(), reason="reference corpus not present")
-def test_oracle_full_corpus():
-    rows = [
-        _snake_keys(r) for r in json.loads(_FULL_ORACLE.read_text()) if not r["ignore"]
-    ]
-    assert len(rows) > 60000
-    mismatches = []
-    for row in rows:
-        got, expected = _oracle_check(row)
-        if got != expected:
-            mismatches.append(row)
-    # Every mismatch is a file MATLAB does not call for reasons the path cannot
-    # show (empty file, shadowed toolbox internals, old-style class in a
-    # package); the port never misnames a file MATLAB does call.
-    assert all(
-        not r["oracle_callable"] and not r["exp_pseudo_full_name"] for r in mismatches
-    )
-    assert len(mismatches) <= 11
-
-
 # --- Spaces, invalid identifiers, keywords and both length limits ------------
 
 

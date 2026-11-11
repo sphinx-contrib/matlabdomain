@@ -17,8 +17,7 @@ for a quiet run, override them:
 
 The suite takes about a minute. A few tests are skipped on some systems:
 those that need POSIX permissions, non-UTF-8 file names (Linux) or Windows
-device names, and the two oracle tests that need the MATLAB reference corpus
-(``../reference/matlab_names_reference.json``, outside the repository).
+device names.
 
 tox runs the suite against each supported Sphinx line, as CI does:
 

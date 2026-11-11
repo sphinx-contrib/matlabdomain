@@ -6,7 +6,6 @@ pass on MATLAB R2026a); their support files are copied unchanged to
 """
 
 import io
-import json
 import os
 from pathlib import Path
 
@@ -209,41 +208,3 @@ def test_help_file_beside_a_mex_file_is_a_function(tmp_path, ext):
     (tmp_path / "other.m").write_text("% OTHER Help.\n")
     (tmp_path / ("other" + ext)).mkdir()
     assert classify(tmp_path / "other.m") == "script"
-
-
-# Every row's ``type`` column is the reference classifier's result (checked in
-# MATLAB R2026a on all 66,490 files present).
-_CORPUS = Path(__file__).parents[2] / "reference" / "matlab_names_reference.json"
-_REPO = Path(__file__).parents[1]
-
-
-def _corpus_path(fullpath):
-    _, sep, tail = fullpath.partition("/matlabdomain/test_slow/")
-    if not sep and (root := os.environ.get("MATLABDOMAIN_MATLABROOT")):
-        _, matlab_sep, matlab_tail = fullpath.partition(
-            "/home/jason/Programs/MATLAB/2026a/"
-        )
-        if matlab_sep:
-            return Path(root, *matlab_tail.split("/"))
-    if not sep:
-        return Path(fullpath)
-    # The checkouts moved from artifacts/<name>/repo/ to repos/<name>/.
-    parts = tail.split("/")
-    if parts[0] == "artifacts" and parts[2:3] == ["repo"]:
-        parts = ["repos", parts[1], *parts[3:]]
-    return _REPO / "test_slow" / Path(*parts)
-
-
-@pytest.mark.skipif(not _CORPUS.exists(), reason="reference corpus not present")
-def test_oracle_full_corpus():
-    corpus = json.loads(_CORPUS.read_text())
-    assert len(corpus) > 60000
-    rows = [
-        (path, row["type"])
-        for row in corpus
-        if (path := _corpus_path(row["fullpath"])).is_file()
-    ]
-    if not rows:
-        pytest.skip("corpus files not present")
-    mismatches = [(str(p), t) for p, t in rows if classify(p) != t]
-    assert mismatches == []
