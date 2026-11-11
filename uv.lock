@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -1143,6 +1143,7 @@ markdown = [
 [package.dev-dependencies]
 dev = [
     { name = "furo" },
+    { name = "myst-parser" },
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
@@ -1160,6 +1161,7 @@ docs = [
     { name = "sphinxcontrib-mermaid" },
 ]
 test = [
+    { name = "myst-parser" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-randomly" },
@@ -1177,6 +1179,7 @@ provides-extras = ["markdown"]
 [package.metadata.requires-dev]
 dev = [
     { name = "furo" },
+    { name = "myst-parser", specifier = ">=4,<6" },
     { name = "pre-commit" },
     { name = "pyright", specifier = "==1.1.414" },
     { name = "pytest", specifier = ">=9" },
@@ -1194,6 +1197,7 @@ docs = [
     { name = "sphinxcontrib-mermaid" },
 ]
 test = [
+    { name = "myst-parser", specifier = ">=4,<6" },
     { name = "pytest", specifier = ">=9" },
     { name = "pytest-cov" },
     { name = "pytest-randomly" },

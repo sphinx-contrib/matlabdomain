@@ -20,7 +20,10 @@ docs = [
 test = [
     "pytest>=9",
     "pytest-cov",
-    "pytest-randomly"
+    "pytest-randomly",
+    # The Markdown tests need the renderer; keep the cap in step with the
+    # `markdown` extra.
+    "myst-parser>=4,<6"
 ]
 
 [project]
