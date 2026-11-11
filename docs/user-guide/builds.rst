@@ -82,6 +82,30 @@ For a sense of scale: the 14 open-source projects the extension is tested
 on (24,000 files, the largest 5,300 files) build with
 ``scmd apidoc`` pages in 1 to 60 seconds each.
 
+What a build trusts
+-------------------
+
+A build runs ``conf.py``, like every Sphinx build, so whoever can change the
+project can run code in the build. It trusts the files it reads in the same
+way:
+
+* Every file below :confval:`matlab_src_code_project_root` that
+  :confval:`matlab_src_include_patterns` and
+  :confval:`matlab_src_exclude_patterns` select. Help text, Simulink mask
+  descriptions, :doc:`sidecar docs <sidecars>` and Simulink documentation
+  files are read as reStructuredText with all its directives (``include``,
+  ``raw``, ``literalinclude``), exactly like your pages.
+* Code from elsewhere below the root (vendored toolboxes, submodules,
+  downloaded dependencies) the same way, unless a pattern excludes it, for
+  example ``matlab_src_exclude_patterns = ["README.*", "vendor/"]``.
+* The readers of ``.m``, ``.mlapp``, ``.slx``, ``.mdl`` and ``.xml`` files
+  never run MATLAB and never execute the files. Their limits on size and
+  nesting protect a build from a corrupt or huge file; they are not a
+  security boundary.
+
+A build writes only to its output folder and its doctree folder.
+``scmd apidoc`` and ``scmd quickstart`` write where you point them.
+
 Working with other tools
 ------------------------
 
