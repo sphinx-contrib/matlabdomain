@@ -367,6 +367,15 @@ def _named(dom, name):
     The longest known prefix of ``name`` is the file or folder; the rest are
     members (``pkg.Cls.method``).
     """
+    # A block by the MATLAB name of its library: lib/Group/Gain.
+    head, slash, block = name.partition("/")
+    if slash:
+        refs = dom.data["matlab_names"].get(head, ())
+        return [
+            (f"{ref}/{block}", ref)
+            for ref in refs
+            if mat_naming.is_block_container(ref.rpartition("/")[2])
+        ]
     parts = name.split(".")
     for i in range(len(parts), 0, -1):
         refs = dom.data["matlab_names"].get(".".join(parts[:i]))
@@ -432,7 +441,17 @@ def _match(dom, ref, accept):
             exists = file in dom.source_paths()
         return (ref, None) if exists and (file[-1:] == "/") == folders else None
     obj = _member(resolve(dom, file), members)
-    return (ref, obj) if obj is not None and accept(obj) else None
+    if obj is None or not accept(obj):
+        return None
+    # A block named with spaces for its line breaks: its own reference.
+    return (getattr(obj, "ref", ref) if isinstance(obj, MatBlock) else ref), obj
+
+
+def same_block(path, name):
+    """Return True if ``name`` is the block path ``path``, any run of
+    whitespace (a line break in a block name) written as a space.
+    """
+    return " ".join(path.split()) == " ".join(name.split())
 
 
 def _resolved(dom, matches):
@@ -2157,9 +2176,11 @@ class MatLibrary(MatSimulinkFile):
 
     def getter(self, name, *defargs) -> Any:
         blocks = self.diagram.library_blocks if self.diagram is not None else ()
-        for block in blocks:
-            if block.path == name:
-                return MatBlock(block, self)
+        # The exact path first; else a space for a line break, as in a role.
+        for same in (lambda path: path == name, lambda path: same_block(path, name)):
+            for block in blocks:
+                if same(block.path):
+                    return MatBlock(block, self)
         return super().getter(name, *defargs)
 
 

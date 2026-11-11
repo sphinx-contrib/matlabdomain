@@ -68,8 +68,10 @@ extension gives it no MATLAB name: reference it by path
 
 A block follows its file with its path in the library:
 ``lib.slx/Group/Gain`` or, by MATLAB name, ``lib/Group/Gain``. A ``/`` in a
-block name is doubled (``lib.slx/A//B``); a line break in a block name is a
-space in a :term:`role`'s target (``lib/Two Lines``).
+block name is doubled (``lib.slx/A//B``); a line break in a block name is
+written as a space (``lib/Two Lines``) in a :term:`role`'s target, an auto
+directive's argument, ``:members:`` and ``:exclude-members:``. A name in
+``:members:`` that is no documented block gets ``mat.not_found``.
 
 ``plant.slx`` and ``plant.m`` share a MATLAB name, like two ``plant.m`` in
 different folders: give the path reference, or see

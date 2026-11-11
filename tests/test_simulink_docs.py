@@ -320,6 +320,34 @@ def test_library_members_and_links(make_app, tmp_path):
     assert "Lib Doc: simulink/Model-Wide Utilities/DocBlock" in lib
 
 
+def test_line_break_in_a_block_name_is_a_space(make_app, tmp_path):
+    # As in a role's target: "Two Lines" names the block "Two\nLines", and
+    # the anchor stays the block's own.
+    anchor = 'id="mat-probeLib.slx/Two~0ALines"'
+    page, warnings = build(
+        make_app,
+        tmp_path,
+        ".. mat:autosimulink_library:: probeLib\n"
+        "   :members: Two Lines, No Such Block\n",
+    )
+    assert page.count(anchor) == 1
+    assert "No Such Block" in warnings and "[mat.not_found]" in warnings
+
+    page, _ = build(
+        make_app,
+        tmp_path,
+        ".. mat:autosimulink_library:: probeLib\n"
+        "   :members:\n   :exclude-members: Two Lines\n",
+    )
+    assert anchor not in page and 'id="mat-probeLib.slx/v1.2"' in page
+
+    page, warnings = build(
+        make_app, tmp_path, ".. mat:autosimulink_library_block:: probeLib/Two Lines\n"
+    )
+    assert 'id="mat-probeLib.slx/Two~0ALines"' in page
+    assert "not_found" not in warnings
+
+
 def test_named_library_members(make_app, tmp_path):
     index = (
         ".. mat:autosimulink_library:: probeLib\n"

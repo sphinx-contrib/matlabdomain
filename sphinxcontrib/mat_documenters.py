@@ -61,6 +61,7 @@ from .mat_types import (
     is_source_object,
     lookup_reference,
     resolve,
+    same_block,
     simulink_accepts,
     warn_ambiguous,
 )
@@ -1871,12 +1872,26 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
         """Return the blocks named by ``:members:`` (all if ``want_all``),
         without those of ``:exclude-members:``.
         """
+        named = [] if want_all else list(self.options.members or ())
         excluded = self.options.exclude_members or ()
+
+        def among(block, names):
+            return any(same_block(block.path, name) for name in names)
+
+        for name in named:
+            if not any(same_block(block.path, name) for block in blocks):
+                logger.warning(
+                    "[sphinxcontrib-matlabdomain] %s has no documented block %r",
+                    self.ref,
+                    name,
+                    type="mat",
+                    subtype="not_found",
+                    location=(self.env.docname, self.directive.lineno),
+                )
         return [
             block
             for block in blocks
-            if (want_all or block.path in (self.options.members or ()))
-            and block.path not in excluded
+            if (want_all or among(block, named)) and not among(block, excluded)
         ]
 
     def get_object_members(self, want_all):
