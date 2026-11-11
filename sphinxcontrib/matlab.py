@@ -1050,12 +1050,15 @@ class MATLABDomain(Domain):
     def _by_display(self, name):
         if self._displays is None:
             self._displays = {}
-            # a block with a line break in its name, by its reference with spaces
+            # a block with a line break in its name, by its reference with
+            # spaces; the first of those that collapse to one form (in sorted
+            # order) has it
             self._spaced = {}
             for ref, (_, _, display) in self.data["objects"].items():
                 self._displays.setdefault(display, []).append(ref)
-                if "\n" in ref:
-                    self._spaced[" ".join(ref.split())] = ref
+            for ref in sorted(self.data["objects"]):
+                if mat_naming.has_line_break(ref):
+                    self._spaced.setdefault(mat_naming.collapse_space(ref), ref)
         return self._displays.get(name, [])
 
     def _documented(self, ref):
@@ -1259,10 +1262,27 @@ class MATLABDomain(Domain):
             return None
         return next(iter(found), (None, None))[1]
 
+    def inventory_name(self, ref):
+        """Return the name of ``ref`` in ``objects.inv``, or None when it has
+        none. That is ``ref``, but with spaces for the line breaks of a block's
+        name (one line of the file per entry): the form a role's target has.
+        When that form is another object's reference or the form of an earlier
+        block, the block has no entry.
+        """
+        if not mat_naming.has_line_break(ref):
+            return ref
+        name = mat_naming.collapse_space(ref)
+        return name if self._documented(name) == ref else None
+
     def get_objects(self):
         for ref, (docname, objtype, display) in self.data["objects"].items():
+            name = self.inventory_name(ref)
+            if name is None:
+                continue
+            if mat_naming.has_line_break(display):
+                display = mat_naming.collapse_space(display)
             yield (
-                ref,
+                name,
                 display,
                 objtype,
                 docname,

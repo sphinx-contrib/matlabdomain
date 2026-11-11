@@ -141,6 +141,18 @@ def is_valid_identifier(
     return name not in MATLAB_KEYWORDS
 
 
+def has_line_break(text: str) -> bool:
+    """Tell whether ``text`` has a line break an ``objects.inv`` line cannot."""
+    return "\n" in text or "\r" in text
+
+
+def collapse_space(text: str) -> str:
+    """Return ``text`` with each run of white space as one space, as a role
+    writes a target (a block name with a line break has this form there).
+    """
+    return " ".join(text.split())
+
+
 def make_target_id(reference: str) -> str:
     """Anchor for a path reference (see the module docstring)."""
     out = ["mat-"]

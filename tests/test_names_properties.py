@@ -94,27 +94,37 @@ def test_inventory_holds_the_objects_of_awkward_names(make_app, tmp_path, stable
 # with any other such character in a name does not parse at all, so only
 # these two (written as MDL escapes) reach the inventory.
 BREAKS = ["\\n", "\\r"]
-XFAIL = "G4-T4: a line break in a block name splits its objects.inv entry"
 
 
 @pytest.mark.parametrize(
     "sep",
-    [
-        pytest.param(s, marks=pytest.mark.xfail(strict=True, reason=XFAIL))
-        for s in BREAKS
-    ],
+    BREAKS,
     ids=[repr(s.encode().decode("unicode_escape")) for s in BREAKS],
 )
 def test_inventory_names_survive_a_line_break(make_app, tmp_path, sep):
     outdir, objects, _, _ = _build(make_app, tmp_path, [f"Two{sep}Lines", "Plain"])
     names = {o[0] for o in objects}
-    assert len(names) == 3
+    assert names == {"odd.mdl", "odd.mdl/Two Lines", "odd.mdl/Plain"}
     inv = inventory(outdir)
     assert set(inv) == names
+    uri, shown = inv["odd.mdl/Two Lines"]
+    assert uri.startswith("mat/ref/")
+    assert (outdir / unquote(uri)).is_file()
+    assert "\n" not in shown and "\r" not in shown
     assert not [n for n in inv if _control(n)]
 
 
-@pytest.mark.xfail(strict=True, reason=XFAIL)
+@pytest.mark.parametrize("names", [["A\\nB", "A B"], ["A B", "A\\nB"]])
+def test_blocks_that_collapse_to_one_name_keep_the_plain_one(make_app, tmp_path, names):
+    # "A\nB" and "A B" are both written "odd.mdl/A B" by a role: the block
+    # that has that name keeps the entry, the other has none (whatever the
+    # order); every reference keeps its anchor.
+    outdir, objects, _, _ = _build(make_app, tmp_path, names)
+    assert sorted(o[0] for o in objects) == ["odd.mdl", "odd.mdl/A B"]
+    uri, _ = inventory(outdir)["odd.mdl/A B"]
+    assert uri == "mat/ref/odd.mdl~2FA~20B.html"  # not the other block's
+
+
 def test_inventory_of_the_fixture_library_with_a_line_break(make_app, tmp_path):
     # probeLib.slx has the block "Two\nLines" (as in test_simulink_docs.py).
     outdir, objects, _, _ = _build(make_app, tmp_path, ["Plain"], with_probe_lib=True)

@@ -308,7 +308,7 @@ def chooser_pages(app):
 
 def rewrite_inventory(path, uris, choosers=()):
     """Point the ``mat`` entries of the ``objects.inv`` at ``path`` whose
-    name is in ``uris`` (reference -> URI) to that URI, and add the
+    name is in ``uris`` (inventory name -> URI) to that URI, and add the
     ``choosers`` entries ``(MATLAB name, objtype, URI)``.
     """
     if not os.path.isfile(path):
@@ -427,7 +427,11 @@ def write_redirects(app, exception):
                 os.remove(path)
         if folder != root and not os.listdir(folder):
             os.rmdir(folder)
-    uris = {ref: quote(stub) for ref, stub in by_ref.items() if stub not in failed}
+    uris = {}
+    for ref, stub in by_ref.items():
+        name = dom.inventory_name(ref)
+        if name is not None and stub not in failed:
+            uris[name] = quote(stub)
     choosers = [
         (name, objtype, quote(by_name[name]))
         for name, refs in sorted(names.items())

@@ -258,6 +258,24 @@ def test_consumer_links_to_the_library(make_app, tmp_path):
             assert url.partition("#")[2] in anchors(outdir, url)
 
 
+def test_consumer_links_to_a_block_with_a_line_break(make_app, tmp_path):
+    # The library's objects.inv names the block as a role writes its target
+    # (spaces for the line break); the consumer resolves it to its stable page.
+    from test_names_properties import _build
+
+    outdir, _, _, _ = _build(make_app, tmp_path / "lib", ["Two\\nLines", "Plain"])
+    mapping = {"lib": (BASE, str(outdir / "objects.inv"))}
+    role = ":mat:simulink_library_block:`odd.mdl/Two Lines`"
+    links, warnings = build_consumer(
+        make_app, tmp_path / "app", mapping, {"block": role}
+    )
+    assert warnings == ""
+    href, text = links["block"]
+    assert href == f"{BASE}mat/ref/odd.mdl~2FTwo~0ALines.html"
+    assert (outdir / unquote(href.removeprefix(BASE))).is_file()
+    assert text == "odd/Two Lines"
+
+
 def test_names_in_several_inventories(make_app, tmp_path):
     entries = {
         "one": [

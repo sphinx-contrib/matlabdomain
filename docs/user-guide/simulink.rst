@@ -70,7 +70,8 @@ A block follows its file with its path in the library:
 ``lib.slx/Group/Gain`` or, by MATLAB name, ``lib/Group/Gain``. A ``/`` in a
 block name is doubled (``lib.slx/A//B``); a line break in a block name is
 written as a space (``lib/Two Lines``) in a :term:`role`'s target, an auto
-directive's argument, ``:members:`` and ``:exclude-members:``. A name in
+directive's argument, ``:members:`` and ``:exclude-members:``; the block's entry in ``objects.inv`` has that form,
+so another project links to it with the same text. A name in
 ``:members:`` that is no documented block gets ``mat.not_found``.
 
 ``plant.slx`` and ``plant.m`` share a MATLAB name, like two ``plant.m`` in
