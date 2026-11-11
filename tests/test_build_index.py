@@ -17,6 +17,7 @@ from sphinxcontrib.mat_types import (
     SourceIndex,
     build_index,
     check_pattern_folders,
+    sidecar_paths,
     skipped_folder,
 )
 
@@ -364,32 +365,40 @@ def test_roles_in_either_form_resolve(make_app, tmp_path, form):
     assert stable.is_file()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="G4-T7: two names differing only by Unicode form share a reference silently",
+# The first in the order of the names on disk wins: NFD ("e" + U+0301)
+# sorts before NFC (U+00E9).
+TWIN_WARNING = (
+    "[sphinxcontrib-matlabdomain] {ref}: the names '{pre}cafe\\u0301{ext}' and "
+    "'{pre}caf\\xe9{ext}' in its folder differ only by Unicode form; "
+    "'{pre}caf\\xe9{ext}' is not documented."
 )
+
+
 def test_names_differing_only_by_unicode_form_warn(tmp_path, warnings):
     write(
         tmp_path,
         {
             f"{NFC}.m": FUNCTION.format(name="x", help="NFC"),
             f"{NFD}.m": FUNCTION.format(name="x", help="NFD"),
+            f"sub/{NFC}.rst": "NFC\n===\n",
+            f"sub/{NFD}.rst": "NFD\n===\n",
         },
     )
     two_entries(tmp_path, f"{NFC}.m", f"{NFD}.m")
-    source_index = build_index(IndexSettings(str(tmp_path)))
-    # Today: two records with one reference and no warning; the file listed
-    # last wins wherever the reference is resolved.
-    assert len(source_index.index) == 2
-    assert [m for s, m in warnings if s != "not_callable" and f"{NFC}.m" in m]
+    settings = IndexSettings(str(tmp_path), sidecar_suffixes=(".rst",))
+    source_index = build_index(settings)
+    assert list(source_index.index) == [str(tmp_path / f"{NFD}.m")]
+    assert refs(source_index) == [f"{NFC}.m"]
+    assert list(source_index.sidecars) == [str(tmp_path / "sub" / f"{NFD}.rst")]
+    assert [m for s, m in warnings if s == "parse_error"] == [
+        TWIN_WARNING.format(ref=f"{NFC}.m", pre="", ext=".m"),
+        TWIN_WARNING.format(ref=f"sub/{NFC}.rst", pre="", ext=".rst"),
+    ]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=KeyError,
-    reason="G4-T7: two folders whose names differ only by Unicode form stop the build",
-)
-def test_folders_differing_only_by_unicode_form_do_not_stop_the_index(tmp_path):
+def test_folders_differing_only_by_unicode_form_do_not_stop_the_index(
+    tmp_path, warnings
+):
     write(
         tmp_path,
         {
@@ -398,19 +407,32 @@ def test_folders_differing_only_by_unicode_form_do_not_stop_the_index(tmp_path):
         },
     )
     two_entries(tmp_path, f"+{NFC}", f"+{NFD}")
-    build_index(IndexSettings(str(tmp_path)))
+    source_index = build_index(IndexSettings(str(tmp_path)))
+    assert refs(source_index) == [f"+{NFC}/b.m"]
+    assert source_index.entities[f"+{NFC}/"].path == str(tmp_path / f"+{NFD}")
+    assert [m for s, m in warnings if s == "parse_error"] == [
+        TWIN_WARNING.format(ref=f"+{NFC}/", pre="+", ext="")
+    ]
+    # The quiet walk of the sidecar docs does not stop either.
+    sidecars = IndexSettings(str(tmp_path), sidecar_suffixes=(".rst",))
+    assert sidecar_paths(sidecars) == []
 
 
-def _nfd_pattern(tree, pattern, kind):
-    return pytest.param(
-        tree,
-        pattern,
-        kind,
-        marks=pytest.mark.xfail(
-            strict=True,
-            reason="G4-T7: a pattern typed in NFD matches no file, in either form",
-        ),
+def test_folder_members_are_in_the_order_of_the_names_on_disk(tmp_path, monkeypatch):
+    write(
+        tmp_path,
+        {name: FUNCTION.format(name="x", help="X") for name in ("b.m", "a.m", "C.m")},
     )
+    (tmp_path / "B").mkdir()
+    listdir = os.listdir
+    monkeypatch.setattr(os, "listdir", lambda path: listdir(path)[::-1])
+    source_index = build_index(IndexSettings(str(tmp_path)))
+    assert source_index.entities["./"].members == [
+        ("B", "B/"),
+        ("C", "C.m"),
+        ("a", "a.m"),
+        ("b", "b.m"),
+    ]
 
 
 @pytest.mark.parametrize(
@@ -420,10 +442,10 @@ def _nfd_pattern(tree, pattern, kind):
         ("nfd", "nfc", "include"),
         ("nfc", "nfc", "exclude"),
         ("nfd", "nfc", "exclude"),
-        _nfd_pattern("nfc", "nfd", "include"),
-        _nfd_pattern("nfd", "nfd", "include"),
-        _nfd_pattern("nfc", "nfd", "exclude"),
-        _nfd_pattern("nfd", "nfd", "exclude"),
+        ("nfc", "nfd", "include"),
+        ("nfd", "nfd", "include"),
+        ("nfc", "nfd", "exclude"),
+        ("nfd", "nfd", "exclude"),
     ],
 )
 def test_patterns_match_either_unicode_form(tmp_path, tree, pattern, kind):

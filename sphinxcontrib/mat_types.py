@@ -671,11 +671,13 @@ _GLOB_CHARS = frozenset("*?[")
 
 
 def _normalize_pattern(pattern, option):
-    """``pattern`` relative to the project root, ``..`` resolved; a
-    ConfigError for a pattern that is not relative or leaves the root.
+    """``pattern`` relative to the project root, ``..`` resolved, in Unicode
+    NFC form like the references it matches; a ConfigError for a pattern that
+    is not relative or leaves the root.
     """
     if not isinstance(pattern, str) or not pattern:
         raise ConfigError(f"{option}: {pattern!r} is not a glob pattern.")
+    pattern = unicodedata.normalize("NFC", pattern)
     if "\\" in pattern:
         raise ConfigError(f"{option}: {pattern!r} must use '/' as the separator.")
     if pattern.startswith("/") or ntpath.splitdrive(pattern)[0]:
@@ -719,10 +721,13 @@ def _literal_folder(pattern):
 class SourceFilter:
     """Include and exclusion patterns below the project root (plan.md Section
     2.4), matched like Sphinx's ``exclude_patterns`` against path references
-    (case-sensitive on every OS).
+    (case-sensitive on every OS). Patterns are taken in Unicode NFC form, like
+    the references.
     """
 
     def __init__(self, include, exclude):
+        include = [unicodedata.normalize("NFC", p) for p in include]
+        exclude = [unicodedata.normalize("NFC", p) for p in exclude]
         #: the normalized ``(include, exclude)`` patterns
         self.patterns = (tuple(include), tuple(exclude))
         self.include = Matcher(include)
@@ -1085,14 +1090,31 @@ class _Indexer:
             return None
         return (*chain, normal)
 
+    @staticmethod
+    def twin(seen, key, ref):
+        """Return True, with a warning, if an entry listed before ``key`` in
+        its folder has the reference ``ref``: the names differ only by Unicode
+        form, so the second is not documented.
+        """
+        first = seen.setdefault(ref, key)
+        if first == key:
+            return False
+        _warn(
+            "parse_error",
+            f"{ref}: the names {first!a} and {key!a} in its folder "
+            f"differ only by Unicode form; {key!a} is not documented.",
+        )
+        return True
+
     def list(self, mod, chain):
-        """List the folder ``mod`` into its members; return False, with no
-        members, if it is a Sphinx output folder. ``chain`` holds the real
-        paths of ``mod`` and the folders above it on the walk.
+        """List the folder ``mod`` into its members, in the order of the names
+        on disk; return False, with no members, if it is a Sphinx output
+        folder. ``chain`` holds the real paths of ``mod`` and the folders above
+        it on the walk.
         """
         mod.members = []
         try:
-            keys = os.listdir(mod.path)
+            keys = sorted(os.listdir(mod.path))
         except OSError as err:  # one bad folder must not stop the build
             _warn(
                 "parse_error",
@@ -1106,6 +1128,7 @@ class _Indexer:
             self.docs is not None and _within(mod.path, self.docs)
         )
         denied = []
+        seen = {}  # reference: the first name on disk that has it
         # documentation file candidates, and the stems of Simulink files
         loose, simulink_stems = [], set()
         for key in keys:
@@ -1144,7 +1167,7 @@ class _Indexer:
                     )
                     continue
                 child_chain = self.folder_chain(path, ref, key, chain)
-                if child_chain is None:
+                if child_chain is None or self.twin(seen, key, ref):
                     continue
                 self.pending[ref] = (MatModule(key, path, ref), child_chain)
                 mod.members.append((key, ref))
@@ -1159,7 +1182,9 @@ class _Indexer:
                 simulink_stems.add(os.path.splitext(key)[0])
             if self.sidecars_only or not self.sources.includes(ref):
                 continue
-            if _is_link(path) and self.outside(path, ref):
+            if (_is_link(path) and self.outside(path, ref)) or self.twin(
+                seen, key, ref
+            ):
                 continue
             self.index_file(handler, path, ref, st)
             mod.members.append((os.path.splitext(key)[0], ref))
@@ -1170,8 +1195,10 @@ class _Indexer:
             )
             if not (simulink_doc or (sidecars and suffix in self.sidecar_suffixes)):
                 continue
-            if not self.sources.includes(ref) or (
-                _is_link(path) and self.outside(path, ref)
+            if (
+                not self.sources.includes(ref)
+                or (_is_link(path) and self.outside(path, ref))
+                or self.twin(seen, key, ref)
             ):
                 continue
             record = {"reference": ref, "mtime": st.st_mtime_ns, "size": st.st_size}
@@ -1755,7 +1782,7 @@ class MatModule(MatObject):
         self.package = package
         self.ref = package
         #: ``(name, reference)`` of its files (name without extension) and
-        #: folders in listing order, set by the index stage
+        #: folders in the order of their names on disk, set by the index stage
         self.members = None
 
     def ref_role(self):

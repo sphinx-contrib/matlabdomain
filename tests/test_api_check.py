@@ -703,6 +703,20 @@ def test_selected_files(make_app, root, files, entries, selected):
     ) in text_lines(app)
 
 
+def test_patterns_are_taken_in_nfc_form(tmp_path):
+    # "e" + U+0301 (NFD), as macOS or a pasted name may give it, selects the
+    # NFC references of the index.
+    listing = tmp_path / "files.txt"
+    listing.write_text("+cafe\u0301/b.m\n", encoding="utf-8")
+    config = SimpleNamespace(
+        matlab_api_check_ignore_patterns=["cafe\u0301.m"],
+        matlab_api_check_files=["+cafe\u0301/a.m"],
+        matlab_api_check_files_from=str(listing),
+    )
+    assert mat_api_check.ignore_patterns(config) == ["caf\xe9.m"]
+    assert mat_api_check.selected_files(config) == ["+caf\xe9/a.m", "+caf\xe9/b.m"]
+
+
 def test_selected_file_members(make_app, root):
     app = build(
         make_app,

@@ -50,7 +50,8 @@ Source files
    the files to index. A file is indexed if its path reference matches one
    of them; ``[]`` selects no files. Patterns use ``/``, match like
    ``exclude_patterns`` (``**`` crosses folders, ``**/x`` also matches
-   ``x``) and are case-sensitive. A file that also matches
+   ``x``) and are case-sensitive; they are compared in Unicode NFC form. A
+   file that also matches
    :confval:`matlab_src_exclude_patterns` is left out: exclude wins over
    include. An absolute pattern, a drive, a ``\``, an
    empty pattern, or ``..`` that leaves the root or follows a wildcard is a

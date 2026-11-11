@@ -33,10 +33,15 @@ What each warning means
    ``.mlapp`` file is not a valid App Designer file, a ``.slx`` or ``.mdl``
    file is not a Simulink model, library or subsystem file (or is a Git
    LFS pointer, or exceeds the size limits), a folder could not be listed
-   or entered, or a file name is not valid UTF-8. The file is still
-   indexed and documented, without content, so links to it work; a file
-   that cannot be read is tried again on every build. Where the parser
-   found a syntax error, the warning gives its line and column.
+   or entered, or a file name is not valid UTF-8. A file that cannot be
+   read or parsed is still indexed and documented, without content, so
+   links to it work; it is tried again on every build. Where the parser
+   found a syntax error, the warning gives its line and column. Two names
+   in one folder that differ only by Unicode form (``é`` as one character
+   and as ``e`` and an accent) have the same path reference: the first in
+   the order of the names on disk is documented, the other is left out, and
+   the warning shows both names with escapes (``'caf\xe9.m'``,
+   ``'cafe\u0301.m'``). Rename one of them.
 
 ``mat.folder_name``
    An error, which ``suppress_warnings`` does not hide: a folder is named

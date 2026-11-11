@@ -238,6 +238,12 @@ Source files:
   folder above it (a cycle, which repeated the tree up to the operating
   system's link limit, or without end for two such links) is skipped with
   a ``mat.link_cycle`` warning.
+* Names and patterns are compared in Unicode NFC form: a pattern typed in
+  NFD matches. Two names in one folder that differ only by Unicode form
+  share one reference; the first in name order is indexed and the other
+  gets a ``mat.parse_error`` warning (two such folders stopped the build
+  with a ``KeyError``, two such files documented the one listed last).
+  A folder's entries are walked in the order of their names on disk.
 * Folders whose names start with ``_`` are documented like any other
   folder (#337). Hidden folders (``.git``) and Sphinx output are skipped:
   the ``_build`` folder of the Sphinx source folder, and folders with

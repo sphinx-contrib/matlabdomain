@@ -17,7 +17,8 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
      - a file or folder that cannot be read, an invalid ``.mlapp``, a
        ``.slx`` or ``.mdl`` file that is not a readable Simulink file (a Git
        LFS pointer, too large), a parser failure, a file name that is not
-       valid UTF-8, a page that cannot be read
+       valid UTF-8, two names in one folder that differ only by Unicode
+       form, a page that cannot be read
      - every build (reading); parse failures when a page uses the file
    * - ``mat.folder_name``
      - an error, not a warning (``suppress_warnings`` does not hide it): a
