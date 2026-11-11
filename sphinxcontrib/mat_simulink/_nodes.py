@@ -57,8 +57,9 @@ def parse_xml(data: bytes, what: str) -> Node:
         raise SimulinkFileError(f"has a DTD or entity declaration in {what}.")
     try:
         root = ET.fromstring(data)
-    # LookupError: the XML declaration names an unknown or non-text encoding.
-    except (ET.ParseError, LookupError) as err:
+    # LookupError: the XML declaration names an unknown or non-text encoding;
+    # ValueError: a multi-byte one (utf-7) or one that cannot decode (idna).
+    except (ET.ParseError, LookupError, ValueError) as err:
         raise SimulinkFileError(f"has invalid XML in {what} ({err}).") from err
     return _from_element(root, 0, what)
 

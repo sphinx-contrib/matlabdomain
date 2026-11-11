@@ -550,14 +550,8 @@ def test_classic_depth_limit(monkeypatch):
     [
         b'<?xml version="1.0" encoding="utf-O"?><a/>',  # unknown codec (fuzzing)
         b'<?xml version="1.0" encoding="rot13"?><a/>',  # not a text codec
-        pytest.param(
-            b'<?xml version="1.0" encoding="utf-7"?><a/>',  # a multi-byte codec
-            marks=pytest.mark.xfail(strict=True, reason="G4-T5a: a ValueError escapes"),
-        ),
-        pytest.param(
-            b'<?xml version="1.0" encoding="idna"?><a/>',  # a codec without "replace"
-            marks=pytest.mark.xfail(strict=True, reason="G4-T5a: a ValueError escapes"),
-        ),
+        b'<?xml version="1.0" encoding="utf-7"?><a/>',  # a multi-byte codec
+        b'<?xml version="1.0" encoding="idna"?><a/>',  # a codec without "replace"
     ],
 )
 def test_xml_with_a_bad_encoding_declaration(data):

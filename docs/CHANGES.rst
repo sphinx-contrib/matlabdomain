@@ -411,6 +411,9 @@ Fixes
   build goes on: the reader has the size limits, the refusal of a DTD or
   entity declaration and the nesting limit of the Simulink reader (a
   300 MiB member took 1.2 GiB of memory before).
+* A Simulink XML part whose declaration names the encoding ``utf-7`` or
+  ``idna`` crashed the reader with a ``ValueError``; it is a
+  ``mat.parse_error`` now.
 * The package metadata names the license in ``LICENSE``, BSD-2-Clause (it
   said BSD-3-Clause).
 
