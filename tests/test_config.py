@@ -1,6 +1,7 @@
 """Project root, source patterns and removed options."""
 
 import importlib.metadata
+import logging
 
 import pytest
 from sphinx.cmd.build import build_main
@@ -126,5 +127,12 @@ def test_project_root_is_relative_to_srcdir_not_confdir(project, tmp_path):
         conf.write('matlab_src_code_project_root = "code"\n')
     out = tmp_path / "out"
     args = ["-q", "-W", "-c", str(confdir), str(project), str(out)]
-    assert build_main(args) == 0
+    try:
+        assert build_main(args) == 0
+    finally:
+        # Sphinx 8.0 raises on a warning as long as the -W handlers of this
+        # build are on its logger, and a later test may log without an app.
+        sphinx_logger = logging.getLogger("sphinx")
+        for handler in sphinx_logger.handlers[:]:
+            sphinx_logger.removeHandler(handler)
     assert "F doc" in (out / "index.html").read_text(encoding="utf-8")
