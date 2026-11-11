@@ -331,7 +331,7 @@ def test_named_library_members(make_app, tmp_path):
     )
     page, warnings = build(make_app, tmp_path, index, "nitpicky = True\n")
     assert 'id="mat-probeLib.slx/Gain~20Block"' in page
-    assert 'id="mat-probeLib.slx/A~2F~2FB"' not in page
+    assert 'id="mat-probeLib.slx/A//B"' not in page  # not named in :members:
     assert "Links to other blocks Lib Doc:" in text(page)
     # hid has no members: no list
     assert text(page).count("Links to other blocks") == 1
