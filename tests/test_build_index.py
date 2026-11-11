@@ -520,10 +520,6 @@ def test_include_pattern_folder_case_is_exact_on_case_insensitive_systems(tmp_pa
 # --- Sphinx output inside the root (G4-T7) -----------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="G4-T7: a copy of HTML output without .buildinfo is indexed",
-)
 def test_copied_html_output_without_buildinfo_is_skipped(tmp_path):
     # What `cp -r build/html/* public/` leaves: no .buildinfo, no doctrees.
     write(
@@ -542,3 +538,16 @@ def test_copied_html_output_without_buildinfo_is_skipped(tmp_path):
     )
     source_index = build_index(IndexSettings(str(tmp_path)))
     assert refs(source_index) == ["src/foo.m"]
+
+
+@pytest.mark.parametrize("marker", ["objects.inv", "searchindex.js"])
+def test_one_html_output_file_alone_is_not_output(tmp_path, marker):
+    # A project may ship one of the two names; only both mark HTML output.
+    write(
+        tmp_path,
+        {
+            f"data/{marker}": "x\n",
+            "data/load.m": FUNCTION.format(name="load", help="LOAD"),
+        },
+    )
+    assert refs(build_index(IndexSettings(str(tmp_path)))) == ["data/load.m"]

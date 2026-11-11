@@ -134,11 +134,13 @@ Some files and folders are never indexed or need care:
 
 * Folders whose names start with ``.`` are never searched (``.git``), nor
   is Sphinx output: the ``_build`` folder of the Sphinx source folder, and
-  any folder with a ``.buildinfo`` or ``environment.pickle`` file or with
-  a ``doctrees`` folder that has one (the output of another layout, such as
-  ``build/``). Folders whose names start with ``_`` are searched like
-  any other; exclude those without MATLAB code (``**/_assets/**``) when
-  they are large.
+  any folder with a ``.buildinfo`` or ``environment.pickle`` file, with
+  both ``objects.inv`` and ``searchindex.js`` (HTML output, also a copy
+  made with ``cp -r html/* public/``, which leaves out ``.buildinfo``), or
+  with a ``doctrees`` folder that has ``environment.pickle`` (the output of
+  another layout, such as ``build/``). Folders whose names start with
+  ``_`` are searched like any other; exclude those without MATLAB code
+  (``**/_assets/**``) when they are large.
 * A link or Windows junction below the root that points outside it is left
   out, with one ``mat.outside_root`` warning. Links that stay inside the
   root are followed, and the files they lead to are documented at both

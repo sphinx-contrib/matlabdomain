@@ -565,6 +565,9 @@ def file_like_folder(name):
 
 #: files Sphinx writes into its output folders: HTML builders and doctrees
 SPHINX_OUTPUT_MARKERS = frozenset((".buildinfo", "environment.pickle"))
+#: files an HTML output folder holds together, also in a copy without
+#: ``.buildinfo`` (``cp -r html/* public/`` skips dot files)
+SPHINX_HTML_FILES = frozenset(("objects.inv", "searchindex.js"))
 #: the build folder of the Makefile and make.bat of a Sphinx source folder
 BUILD_FOLDER = "_build"
 
@@ -572,10 +575,14 @@ BUILD_FOLDER = "_build"
 def sphinx_output(path, names):
     """Return True if the folder ``path`` with the entries ``names`` is Sphinx
     output, which holds copies of MATLAB files (``_downloads``): it has a
-    marker file, or a ``doctrees`` or ``.doctrees`` folder with one (the
-    output folder of any builder, ``_build`` of ``make``).
+    marker file, both ``objects.inv`` and ``searchindex.js`` (HTML output,
+    also copied without its ``.buildinfo``), or a ``doctrees`` or
+    ``.doctrees`` folder with ``environment.pickle`` (the output folder of
+    any builder, ``_build`` of ``make``).
     """
     if not SPHINX_OUTPUT_MARKERS.isdisjoint(names):
+        return True
+    if SPHINX_HTML_FILES.issubset(names):
         return True
     return any(
         name in names and os.path.isfile(os.path.join(path, name, "environment.pickle"))

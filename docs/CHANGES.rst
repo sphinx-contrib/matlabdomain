@@ -247,7 +247,9 @@ Source files:
 * Folders whose names start with ``_`` are documented like any other
   folder (#337). Hidden folders (``.git``) and Sphinx output are skipped:
   the ``_build`` folder of the Sphinx source folder, and folders with
-  Sphinx's ``.buildinfo``, ``environment.pickle`` or ``doctrees``.
+  Sphinx's ``.buildinfo``, ``environment.pickle`` or ``doctrees``, or with
+  both ``objects.inv`` and ``searchindex.js`` (a copy of HTML output
+  without ``.buildinfo``, whose ``_downloads`` made names ambiguous).
 * :confval:`matlab_version` (default ``"R2026a"``, oldest supported
   ``"R2024a"``) selects version-dependent MATLAB naming rules: scripts and
   functions in a subfolder of a class folder (``@C/sub/x.m``) are callable
