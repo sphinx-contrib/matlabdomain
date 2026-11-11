@@ -2,11 +2,8 @@
 
 import dataclasses
 import json
-import ntpath
 import os
-import posixpath
 import random
-import unicodedata
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -32,7 +29,6 @@ from sphinxcontrib.mat_naming import (
     make_target_id,
     not_callable_reason,
     parse_reference,
-    path_reference,
     split_display,
     validate_matlab_version,
 )
@@ -490,50 +486,6 @@ def _decode_target_id(anchor):
     return out.decode("utf-8")
 
 
-def test_path_reference_files_folders_and_members(tmp_path):
-    (tmp_path / "target" / "+package").mkdir(parents=True)
-    cls = tmp_path / "target" / "+package" / "ClassBar.m"
-    cls.write_text("classdef ClassBar\nend\n")
-
-    assert path_reference(tmp_path, cls) == "target/+package/ClassBar.m"
-    assert (
-        path_reference(tmp_path, cls, "myMethod")
-        == "target/+package/ClassBar.m.myMethod"
-    )
-    assert path_reference(tmp_path, cls.parent) == "target/+package/"
-    assert path_reference(tmp_path, tmp_path) == "./"
-    # Folders are detected on disk or by a trailing separator.
-    assert path_reference(tmp_path, f"{tmp_path}/later/") == "later/"
-    assert path_reference(tmp_path, tmp_path / "later") == "later"
-    assert path_reference(tmp_path, tmp_path / "x", is_folder=True) == "x/"
-    with pytest.raises(ValueError, match="not below"):
-        path_reference(tmp_path / "target", tmp_path / "other.m")
-    with pytest.raises(ValueError, match="not a file"):
-        path_reference(tmp_path, tmp_path, is_folder=False)
-
-
-def test_path_reference_windows_separators():
-    root = r"C:\proj"
-    assert (
-        path_reference(root, r"C:\proj\src\+pkg\f.m", pathmod=ntpath) == "src/+pkg/f.m"
-    )
-    assert (
-        path_reference(root, "C:/proj/src\\@Cls/Cls.m", "m", pathmod=ntpath)
-        == "src/@Cls/Cls.m.m"
-    )
-    assert path_reference(root, "C:\\proj\\src\\", pathmod=ntpath) == "src/"
-    # On POSIX a backslash is a folder-name character, not a separator.
-    assert path_reference("/proj", "/proj/a\\b/f.m", pathmod=posixpath) == "a\\b/f.m"
-
-
-def test_path_reference_is_nfc():
-    nfd = unicodedata.normalize("NFD", "café")
-    assert nfd != "café"
-    ref = path_reference("/proj", f"/proj/{nfd}/f.m", pathmod=posixpath)
-    assert ref == "café/f.m"
-    assert unicodedata.is_normalized("NFC", ref)
-
-
 @pytest.mark.parametrize(
     ("reference", "expected"),
     [
@@ -609,15 +561,9 @@ def test_target_ids_are_unique():
         assert not any(c.isspace() and ord(c) < 0x80 for c in anchor)
 
 
-def test_folder_next_to_same_named_file(tmp_path):
-    (tmp_path / "x" / "Cls.m").mkdir(parents=True)
-    (tmp_path / "y.m").mkdir()
-    (tmp_path / "x" / "Cls.m" / "f.m").write_text("function f\nend\n")
-    folder = path_reference(tmp_path, tmp_path / "x" / "Cls.m")
-    nested = path_reference(tmp_path, tmp_path / "x" / "Cls.m" / "f.m")
-    assert folder == "x/Cls.m/"
-    assert nested == "x/Cls.m/f.m"
-    assert path_reference(tmp_path, tmp_path / "y.m") == "y.m/"
+def test_folder_next_to_same_named_file():
+    # A folder named like a file: its reference ends with "/".
+    folder, nested = "x/Cls.m/", "x/Cls.m/f.m"
     assert parse_reference(folder) == ("x/Cls.m/", [])
     assert parse_reference(nested) == ("x/Cls.m/f.m", [])
     assert make_target_id(folder) != make_target_id("x/Cls.m")

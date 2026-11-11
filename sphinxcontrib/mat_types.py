@@ -44,7 +44,6 @@ from .mat_classify import (
     UNKNOWN,
     classify,
     decode_source,
-    first_line_of_code,
     has_mex_file,
     is_help_only,
     is_hidden,
@@ -80,65 +79,6 @@ __all__ = [
     "MatSubsystemFile",
 ]
 
-
-# MATLAB attribute type dictionaries.
-
-# From:
-#  - http://www.mathworks.com/help/matlab/matlab_oop/class-attributes.html
-MATLAB_CLASS_ATTRIBUTE_TYPES = {
-    "Abstract": bool,
-    "AllowedSubclasses": list,
-    "ConstructOnLoad": bool,
-    "HandleCompatible": bool,
-    "Hidden": bool,
-    "InferiorClasses": list,
-    "Sealed": bool,
-    "SharedTestFixtures": list,
-    "TestTags": list,
-}
-
-# From:
-#  - https://mathworks.com/help/matlab/matlab_oop/property-attributes.html
-#  - https://mathworks.com/help/matlab/matlab_prog/define-property-attributes-1.htm
-#  - https://mathworks.com/help/matlab/ref/matlab.unittest.testcase-class.html
-MATLAB_PROPERTY_ATTRIBUTE_TYPES = {
-    "AbortSet": bool,
-    "Abstract": bool,
-    "Access": list,
-    "ClassSetupParameter": bool,
-    "Constant": bool,
-    "Dependent": bool,
-    "DiscreteState": bool,
-    "GetAccess": list,
-    "GetObservable": bool,
-    "Hidden": bool,
-    "MethodSetupParameter": bool,
-    "NonCopyable": bool,
-    "Nontunable": bool,
-    "PartialMatchPriority": bool,
-    "SetAccess": list,
-    "SetObservable": bool,
-    "TestParameter": bool,
-    "Transient": bool,
-}
-
-# From
-#  - https://mathworks.com/help/matlab/matlab_oop/method-attributes.html
-#  - https://mathworks.com/help/matlab/ref/matlab.unittest.testcase-class.html
-MATLAB_METHOD_ATTRIBUTE_TYPES = {
-    "Abstract": bool,
-    "Access": list,
-    "Hidden": bool,
-    "ParameterCombination": bool,
-    "Sealed": list,
-    "Static": bool,
-    "Test": bool,
-    "TestClassSetup": bool,
-    "TestClassTeardown": bool,
-    "TestMethodSetup": bool,
-    "TestMethodTeardown": bool,
-    "TestTags": list,
-}
 
 # The parsed-source model lives in ``env.domaindata['mat']`` and is pickled
 # with the environment (plan.md Sections 2.1 and 2.2):
@@ -1456,10 +1396,10 @@ def placeholder(kind, name, folder) -> Any:
     obj.line = None
     if cls is MatClass:
         obj.attrs, obj.bases, obj.properties = {}, [], {}
-        obj.methods, obj.enumerations, obj.rem_tks = {}, {}, None
+        obj.methods, obj.enumerations = {}, {}
         obj.declarations, obj.events = {}, {}
     elif cls is MatFunction:
-        obj.retv, obj.args, obj.rem_tks = {}, {}, None
+        obj.retv, obj.args = {}, {}
         obj.name_value = {}
     else:
         obj.tokens = None
@@ -1503,11 +1443,10 @@ class MatObject:
     encoding = None
     sphinx_env = None
     sphinx_app: Any = None
-    #: index type (the handler's ``classify()``), tree-sitter's type (``.m``
-    #: only) and whether the file has code
+    #: index type (the handler's ``classify()``) and tree-sitter's type (``.m``
+    #: only)
     source_type: str | None = None
     parsed_type: str | None = None
-    has_code = True
     #: ``(subtype, message, row or None)`` found while parsing; the build
     #: warns them through ``parse_warnings``
     source_warnings: list[tuple[str, str, int | None]] | tuple = ()
@@ -1673,7 +1612,6 @@ class MatObject:
             obj, parsed = func, "function"
         obj.source_type = source_type
         obj.parsed_type = parsed
-        obj.has_code = source_type != "script" or bool(first_line_of_code(text))
         obj.source_warnings = warnings
         return obj
 
@@ -1869,8 +1807,6 @@ class MatFunction(MatObject):
         self.name_value = parsed_function.name_value
         #: line of the declaration (one-based)
         self.line = parsed_function.line
-        #: remaining tokens after main function is parsed
-        self.rem_tks = None
 
     def ref_role(self):
         """Return the role used for references and automatic links"""
@@ -1933,8 +1869,6 @@ class MatClass(MatObject):
         self.enumerations = parsed_class.enumerations
         #: ``{name: {"attrs", "docstring", "line"}}`` of the events
         self.events = parsed_class.events
-        #: remaining tokens after main class definition is parsed
-        self.rem_tks = None
 
     def ref_role(self):
         """Return the role used for references and automatic links"""
