@@ -68,10 +68,10 @@ What each warning means
    MATLAB cannot call the file for :confval:`matlab_version`, so it has no
    MATLAB name; it is documented and linked by path (:doc:`referencing`).
    The warning says why (an invalid name such as ``my-file``, a keyword,
-   a subfolder of a class folder, ...). Simulink runs and references
-   models, libraries and subsystem files only from the global namespace,
-   and does not load one directly in ``private/`` or a class folder, even
-   by its path, so these have no name. Their subfolders are plain folders
+   a subfolder of a class folder, ...). Simulink cannot reference a model,
+   library or subsystem file in a namespace folder by name
+   (:ref:`simulink-namespaces`), and does not load one directly in
+   ``private/`` or a class folder, even by its path, so these have no name. Their subfolders are plain folders
    for Simulink: a model in ``@C/sub/`` loads in every release, though
    ``.m`` files there are not callable from R2026a.
    Rename or move the file, or suppress the warning if that is intended.

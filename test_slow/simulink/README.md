@@ -13,6 +13,7 @@ are written by `tests/simulink/make_docs_sample.m`, in R2024a.
 | `survey.py` | Where each fixture keeps each fact (layout, parts, probe texts, mask forms), and what changes from one release to the next. |
 | `corpus.py` | Reads every `.slx` and `.mdl` below some folders: kinds, layouts, mask forms, times, errors. |
 | `naming_probe.m` | MATLAB probe of how Simulink loads files by name (namespace, `private/` and class folders, `.slx` vs `.mdl` vs `.m`, name length). Its results are the rules of `mat_naming.form_model_name`. |
+| `simulink_namespace_probe.m`, `simulink_namespace_call_probe.m` | What works for Simulink files in `+namespace` folders (loading, `sim`, Model and Subsystem Reference blocks, library links, the name as an expression). Its results are the "Simulink files in namespace folders" section of `docs/user-guide/simulink.rst`. |
 
 ## For each new MATLAB release
 
@@ -23,6 +24,9 @@ make_fixtures("sources", "tests/simulink/fixtures")
 make_fixtures("export", "tests/simulink/fixtures")   % if the release changed the format
 make_fixtures("oracle", "tests/simulink/fixtures")
 naming_probe(fullfile(tempdir, "naming-probe"))
+addpath("test_slow/simulink")
+simulink_namespace_probe()        % writes below tempdir
+simulink_namespace_call_probe()
 ```
 
 Then, in the project's environment (on Windows use `.venv\Scripts\python`):

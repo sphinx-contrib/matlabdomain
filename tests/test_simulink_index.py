@@ -142,8 +142,8 @@ def test_form_model_name(folder, filename, version, name):
         ("root/a*b", "m.slx", "R2026a", "with * in their names"),
         ("root", "end.slx", "R2026a", "its name 'end' is a MATLAB keyword"),
         ("root", "L" + "x" * 63 + ".slx", "R2024a", "longer than 63 characters"),
-        ("root/+pk", "m.slx", "R2026b", "only from the global namespace"),
-        ("root/+for", "m.slx", "R2026a", "only from the global namespace"),
+        ("root/+pk", "m.slx", "R2026b", "cannot reference it by name"),
+        ("root/+for", "m.slx", "R2026a", "cannot reference it by name"),
     ],
 )
 def test_model_not_callable_reason(folder, filename, version, reason):

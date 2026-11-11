@@ -534,4 +534,8 @@ def model_not_callable_reason(
     stem = Path(filename).stem
     if not is_valid_identifier(stem, namelengthmax, allow_keywords=False):
         return f"its name {stem!r} {_name_problem(stem, namelengthmax)}"
-    return "Simulink runs and references models only from the global namespace"
+    return (
+        "in a namespace folder, Simulink cannot reference it by name and loads "
+        "it reliably only by its full path; keep Simulink files in the global "
+        "namespace"
+    )

@@ -30,11 +30,39 @@ table of the ports. :doc:`../reference/directives` lists the options.
 Names
 -----
 
-A Simulink file is named the way Simulink runs it. Simulink loads models
-only from the global namespace, and not directly from a ``private/`` or
-``@`` class folder, so a file there has no MATLAB name (a
-``mat.not_callable`` warning) and is documented by its path reference
-(``+pkg/plant.slx``). Exported ``.xml`` files have no MATLAB name either.
+A Simulink file is named the way Simulink runs it. A file in a namespace
+folder (``+pkg/``), directly in ``private/`` or in an ``@`` class folder has
+no MATLAB name (a ``mat.not_callable`` warning) and is documented by its
+path reference (``+pkg/plant.slx``). Exported ``.xml`` files have no MATLAB
+name either.
+
+.. _simulink-namespaces:
+
+Simulink files in namespace folders
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Keep Simulink files in the global namespace. Simulink's support for
+``.slx`` and ``.mdl`` files in ``+pkg/`` folders is partial and changes
+between releases (observed in R2024a, R2024b, R2026a and R2026b, the same
+for ``.slx`` and ``.mdl``):
+
+* **Works in every release:** ``load_system``, ``sim`` and ``save_system``
+  with the full path; ``sim(pkg.plant)`` written as an expression without
+  quotes (MATLAB resolves ``pkg.plant`` like a function call and passes the
+  model handle), also for ``pkg.inner.plant``.
+* **Works from R2026a:** ``load_system("pkg.plant")``. The model is loaded
+  under its short name ``plant``, so it can clash with a global model of
+  the same name.
+* **Never works:** ``sim("pkg.plant")``; a namespace name in a Model block,
+  Subsystem Reference block or library link; finding the file by its short
+  name, even after ``cd`` into ``+pkg``; ``load_system("pkg.inner.plant")``.
+* **Only when the target is loaded first:** a Model or Subsystem Reference
+  block that gives the short name ``plant``. Library links into ``+pkg/``
+  work that way in R2024a and R2024b and fail in R2026a and R2026b.
+
+Because a namespaced Simulink file cannot be used by name in a model, the
+extension gives it no MATLAB name: reference it by path
+(``:mat:simulink_model:`+pkg/plant.slx```).
 
 A block follows its file with its path in the library:
 ``lib.slx/Group/Gain`` or, by MATLAB name, ``lib/Group/Gain``. A ``/`` in a
