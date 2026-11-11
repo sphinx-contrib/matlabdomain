@@ -279,14 +279,6 @@ re_assign_remove = re.compile(r"^=[ \t]*")
 _SIZE_TYPES = {b"scalar": ("1", "1"), b"vector": (":", "1"), b"matrix": (":", ":")}
 
 
-def get_row(point):
-    """Get the zero-based row from a tree-sitter point (a ``(row, column)`` tuple)."""
-    # Index instead of ``point.row``: in tree-sitter 0.26.0 the ``Point.row`` getter
-    # returns a borrowed reference, corrupting the heap and causing SIGSEGV.
-    # Fixed upstream in py-tree-sitter afb3836 (unreleased as of 0.26.0).
-    return point[0]
-
-
 _PARSED_TYPES = {"class_definition": "class", "function_definition": "function"}
 
 
@@ -325,7 +317,7 @@ def first_error(root_node):
     if node.is_error and _wraps_file(root_node, node):
         return None
     point = node.start_point
-    return get_row(point), point[1]
+    return point.row, point.column
 
 
 def _wraps_file(root_node, node):
@@ -364,13 +356,13 @@ def trailing_docstring(node, prev, encoding):
     line of the docstring.
     """
     docstring = help_text(node.text, encoding)
-    row = get_row(node.start_point) + 1
-    if get_row(node.start_point) != get_row(prev.end_point):
+    row = node.start_point.row + 1
+    if node.start_point.row != prev.end_point.row:
         return docstring, row
     docstring = help_text(node.text, encoding, skip_first_line=True)
     after = node.next_named_sibling
     if not docstring and after is not None and after.type == "comment":
-        return help_text(after.text, encoding), get_row(after.start_point) + 1
+        return help_text(after.text, encoding), after.start_point.row + 1
     return docstring, row + 1
 
 
@@ -407,7 +399,7 @@ def comment_help(node, encoding, *, first_line_only=False, skip_first_line=False
         lines = lines[:1]
     elif skip_first_line:
         lines = lines[1:]
-    return "\n".join(lines), get_row(node.start_point) + 1 + skip_first_line
+    return "\n".join(lines), node.start_point.row + 1 + skip_first_line
 
 
 def process_default(node, encoding):
@@ -450,7 +442,7 @@ class MatScriptParser:
                 self.docstring = process_text_into_docstring(
                     docstring_node.text, self.encoding
                 )
-                self.docstring_line = get_row(docstring_node.start_point) + 1
+                self.docstring_line = docstring_node.start_point.row + 1
             else:
                 self.docstring = None
         else:
@@ -471,7 +463,7 @@ class MatFunctionParser:
             self.encoding, errors="backslashreplace"
         )
         #: one-based line of the ``function`` keyword
-        self.line = get_row(fun_node.start_point) + 1
+        self.line = fun_node.start_point.row + 1
         #: ``opts.Name`` -> help of each name-value argument (None: no comment)
         self.name_value = {}
 
@@ -503,7 +495,7 @@ class MatFunctionParser:
         leading = leading_comment(root_node, fun_node)
         if leading is not None:
             docstring = help_text(leading.text, self.encoding)
-            doc_line = get_row(leading.start_point) + 1
+            doc_line = leading.start_point.row + 1
 
         if not docstring:
             docstring = None
@@ -584,16 +576,13 @@ class MatFunctionParser:
                 # comments which means this requires some relatively ugly
                 # processing, but worth it for the ease of the rest of it.
                 prev_sib = cast(Node, docstring_node.prev_named_sibling)
-                if get_row(docstring_node.start_point) == get_row(prev_sib.end_point):
+                if docstring_node.start_point.row == prev_sib.end_point.row:
                     # Keep only inline help on the declaration line.
                     docstring = process_text_into_docstring(
                         docstring_node.text, self.encoding
                     )
                     docstring = docstring.split("\n")[0]
-                elif (
-                    get_row(docstring_node.start_point) - get_row(prev_sib.end_point)
-                    <= 1
-                ):
+                elif docstring_node.start_point.row - prev_sib.end_point.row <= 1:
                     # Otherwise take the whole docstring
                     docstring = process_text_into_docstring(
                         docstring_node.text, self.encoding
@@ -606,13 +595,13 @@ class MatFunctionParser:
                 # Nothing to be done.
                 pass
             elif next_node.type == "comment":
-                if get_row(next_node.start_point) == get_row(arg.end_point):
+                if next_node.start_point.row == arg.end_point.row:
                     # Keep only inline help on the declaration line.
                     docstring = process_text_into_docstring(
                         next_node.text, self.encoding
                     )
                     docstring = docstring.split("\n")[0]
-                elif get_row(next_node.start_point) - get_row(arg.end_point) <= 1:
+                elif next_node.start_point.row - arg.end_point.row <= 1:
                     # Otherwise take the whole docstring
                     docstring = process_text_into_docstring(
                         next_node.text, self.encoding
@@ -626,12 +615,12 @@ class MatFunctionParser:
             if (
                 prev_node is not None
                 and prev_node.type == "comment"
-                and get_row(arg.start_point) - get_row(prev_node.end_point) <= 1
+                and arg.start_point.row - prev_node.end_point.row <= 1
             ):
                 ds = process_text_into_docstring(prev_node.text, self.encoding)
                 prev_arg = prev_node.prev_named_sibling
                 if prev_arg is not None and prev_arg.type == "property":
-                    if get_row(prev_node.start_point) == get_row(prev_arg.end_point):
+                    if prev_node.start_point.row == prev_arg.end_point.row:
                         ds = "\n".join(ds.split("\n")[1:])
                 if ds:
                     docstring = ds
@@ -675,7 +664,7 @@ def member_help(node, encoding):
     docstring, doc_line = "", None
     after = node.next_named_sibling
     if after is not None and after.type == "comment":
-        gap = get_row(after.start_point) - get_row(node.end_point)
+        gap = after.start_point.row - node.end_point.row
         if gap == 0:
             docstring, doc_line = comment_help(after, encoding, first_line_only=True)
         elif gap == 1:
@@ -684,12 +673,10 @@ def member_help(node, encoding):
     if (
         before is not None
         and before.type == "comment"
-        and get_row(node.start_point) - get_row(before.end_point) <= 1
+        and node.start_point.row - before.end_point.row <= 1
     ):
         prev = before.prev_named_sibling
-        skip = prev is not None and get_row(before.start_point) == get_row(
-            prev.end_point
-        )
+        skip = prev is not None and before.start_point.row == prev.end_point.row
         ds, ds_line = comment_help(before, encoding, skip_first_line=skip)
         if ds:
             docstring, doc_line = ds, ds_line
@@ -705,7 +692,7 @@ class MatSignature:
 
         self.name = name
         self.attrs = attrs
-        self.line = get_row(node.start_point) + 1
+        self.line = node.start_point.row + 1
         self.name_value = {}
         self.retv = {}
         self.args = {}
@@ -749,7 +736,7 @@ class MatClassParser:
         self.cls = required_node(class_match, "class")
         self.name = get_node(class_match, "name")
         #: one-based line of the ``classdef`` keyword
-        self.line = get_row(self.cls.start_point) + 1
+        self.line = self.cls.start_point.row + 1
 
         # Parse class attrs and supers
         attrs_nodes = class_match.get("attrs")
@@ -776,7 +763,7 @@ class MatClassParser:
         leading = leading_comment(root_node, self.cls)
         if leading is not None:
             docstring = help_text(leading.text, self.encoding)
-            doc_line = get_row(leading.start_point) + 1
+            doc_line = leading.start_point.row + 1
         self.docstring = docstring
         #: one-based file line of the first line of the docstring
         self.docstring_line = doc_line
@@ -801,7 +788,7 @@ class MatClassParser:
                     "attrs": attrs,
                     "docstring": docstring,
                     "docstring_line": doc_line,
-                    "line": get_row(event.start_point) + 1,
+                    "line": event.start_point.row + 1,
                 }
 
     def _parse_property_section(self, props_match):
@@ -874,15 +861,12 @@ class MatClassParser:
                 # comments which means this requires some relatively ugly
                 # processing, but worth it for the ease of the rest of it.
                 prev_sib = cast(Node, docstring_node.prev_named_sibling)
-                if get_row(docstring_node.start_point) == get_row(prev_sib.end_point):
+                if docstring_node.start_point.row == prev_sib.end_point.row:
                     # Keep only inline help on the declaration line.
                     docstring, doc_line = comment_help(
                         docstring_node, self.encoding, first_line_only=True
                     )
-                elif (
-                    get_row(docstring_node.start_point) - get_row(prev_sib.end_point)
-                    <= 1
-                ):
+                elif docstring_node.start_point.row - prev_sib.end_point.row <= 1:
                     # Otherwise take the whole docstring
                     docstring, doc_line = comment_help(docstring_node, self.encoding)
 
@@ -893,12 +877,12 @@ class MatClassParser:
                 # Nothing to be done.
                 pass
             elif next_node.type == "comment":
-                if get_row(next_node.start_point) == get_row(prop.end_point):
+                if next_node.start_point.row == prop.end_point.row:
                     # Keep only inline help on the declaration line.
                     docstring, doc_line = comment_help(
                         next_node, self.encoding, first_line_only=True
                     )
-                elif get_row(next_node.start_point) - get_row(prop.end_point) <= 1:
+                elif next_node.start_point.row - prop.end_point.row <= 1:
                     # Otherwise take the whole docstring
                     docstring, doc_line = comment_help(next_node, self.encoding)
 
@@ -910,13 +894,13 @@ class MatClassParser:
             if (
                 prev_node is not None
                 and prev_node.type == "comment"
-                and get_row(prop.start_point) - get_row(prev_node.end_point) <= 1
+                and prop.start_point.row - prev_node.end_point.row <= 1
             ):
                 prev_prop = prev_node.prev_named_sibling
                 skip = (
                     prev_prop is not None
                     and prev_prop.type == "property"
-                    and get_row(prev_node.start_point) == get_row(prev_prop.end_point)
+                    and prev_node.start_point.row == prev_prop.end_point.row
                 )
                 ds, ds_line = comment_help(
                     prev_node, self.encoding, skip_first_line=skip
@@ -935,7 +919,7 @@ class MatClassParser:
                 "default": default,
                 "docstring": docstring,
                 "docstring_line": doc_line,
-                "line": get_row(prop.start_point) + 1,
+                "line": prop.start_point.row + 1,
             }
 
     def _parse_method_section(self, methods_match):
@@ -986,12 +970,12 @@ class MatClassParser:
             # look forward for docstring
             next_node = enum.next_named_sibling
             if next_node is not None and next_node.type == "comment":
-                if get_row(next_node.start_point) == get_row(enum.end_point):
+                if next_node.start_point.row == enum.end_point.row:
                     # Keep only inline help on the declaration line.
                     docstring, doc_line = comment_help(
                         next_node, self.encoding, first_line_only=True
                     )
-                elif get_row(next_node.start_point) - get_row(enum.end_point) <= 1:
+                elif next_node.start_point.row - enum.end_point.row <= 1:
                     # Otherwise take the whole docstring
                     docstring, doc_line = comment_help(next_node, self.encoding)
 
@@ -1003,13 +987,13 @@ class MatClassParser:
             if (
                 prev_node is not None
                 and prev_node.type == "comment"
-                and get_row(enum.start_point) - get_row(prev_node.end_point) <= 1
+                and enum.start_point.row - prev_node.end_point.row <= 1
             ):
                 prev_enum = prev_node.prev_named_sibling
                 skip = (
                     prev_enum is not None
                     and prev_enum.type == "enum"
-                    and get_row(prev_node.start_point) == get_row(prev_enum.end_point)
+                    and prev_node.start_point.row == prev_enum.end_point.row
                 )
                 ds, ds_line = comment_help(
                     prev_node, self.encoding, skip_first_line=skip

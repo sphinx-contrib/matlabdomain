@@ -37,7 +37,7 @@ Requirements
 * Python 3.11 to 3.14 (the standard builds; free-threaded Python is not
   supported yet).
 * Sphinx 8.0 or newer.
-* ``tree-sitter`` 0.26.0 and ``tree-sitter-matlab`` 1.3.3. These
+* ``tree-sitter`` 0.26.1 and ``tree-sitter-matlab`` 1.3.3. These
   are pinned exactly, because both projects change their output in minor
   releases; each new release is checked before the pins move.
 

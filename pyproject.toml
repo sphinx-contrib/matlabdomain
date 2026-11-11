@@ -52,7 +52,7 @@ dependencies = [
     # Pin each dependency. Never trust the version number alone because it will break
     # our consumers.
     "tree-sitter-matlab==1.3.3",
-    "tree-sitter==0.26.0"
+    "tree-sitter==0.26.1"
 ]
 description = 'Sphinx "matlabdomain" extension'
 dynamic = ["version"]
@@ -282,7 +282,7 @@ commands = [
 dependency_groups = ["test", "docs"]
 deps = [
     { replace = "if", condition = "not factor.sphinxdev", then = ["myst-parser"], else = [], extend = true },
-    { replace = "if", condition = "factor.sphinxmin", then = ["myst-parser==4.0.*", "Sphinx==8.0.*", "tree-sitter==0.26.0", "tree-sitter-matlab==1.3.3"], else = [], extend = true },
+    { replace = "if", condition = "factor.sphinxmin", then = ["myst-parser==4.0.*", "Sphinx==8.0.*", "tree-sitter==0.26.1", "tree-sitter-matlab==1.3.3"], else = [], extend = true },
     { replace = "if", condition = "factor.sphinx82", then = ["Sphinx==8.2.*"], else = [], extend = true },
     { replace = "if", condition = "factor.sphinxlatest", then = ["Sphinx"], else = [], extend = true },
     { replace = "if", condition = "factor.sphinxdev", then = ["https://github.com/sphinx-doc/sphinx/archive/refs/heads/master.zip"], else = [], extend = true }

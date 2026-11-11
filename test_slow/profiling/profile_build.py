@@ -11,9 +11,6 @@ failures tallied instead of stopping the sweep. Writes cProfile stats to
 time; inspect with ``uvx snakeviz test_slow/profiling/parse.prof``.
 
 The Phase 1 baseline and its findings are in ``plan-history.md`` (Phase 1).
-``point_repro.py`` beside this file reproduces the tree-sitter ``Point.row``
-crash behind the ``get_row`` workaround; run it on a new py-tree-sitter
-release before dropping the workaround.
 """
 
 from __future__ import annotations

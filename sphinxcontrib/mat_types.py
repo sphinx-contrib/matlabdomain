@@ -33,7 +33,6 @@ from sphinxcontrib.mat_tree_sitter_parser import (
     MatScriptParser,
     declaration,
     first_error,
-    get_row,
     parsed_type,
 )
 
@@ -1634,7 +1633,7 @@ class MatObject:
                         f"{cast(bytes, decl_name.text).decode('utf-8', 'replace')}; "
                         "MATLAB allows dotted names only in a classdef file. It is "
                         "documented under its file name.",
-                        get_row(decl_name.start_point),
+                        decl_name.start_point.row,
                     )
                 )
             parsed = parsed or "script"
