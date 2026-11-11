@@ -28,6 +28,8 @@ _USED = (
     "simulink/modelmask.xml",
 )
 PORT_TYPES = ("Inport", "Outport", "PMIOPort")
+# Listed by type after the numbered ports, with no number or data type.
+CONTROL_PORT_TYPES = ("EnablePort", "TriggerPort", "ActionPort")
 # Simulink's defaults, for files that do not save them (bddefaults.json).
 PORT_DEFAULTS = {
     "Port": "1",
@@ -374,9 +376,13 @@ class _Reader:
         return PORT_DEFAULTS.get(name, "")
 
     def ports(self, system: Node) -> tuple[Port, ...]:
+        """Return the port blocks of ``system``: by type, then by port number
+        (the elements of a bus port in file order), then the control ports.
+        """
         ports = []
         blocks = system.findall("Block")
-        for block_type in PORT_TYPES:
+        for block_type in (*PORT_TYPES, *CONTROL_PORT_TYPES):
+            of_type = []
             for block in blocks:
                 if block.param("BlockType") != block_type:
                     continue
@@ -386,7 +392,8 @@ class _Reader:
                         return block.param(name)
                     return self.default(block_type, name)
 
-                signal = block_type != "PMIOPort"
+                numbered = block_type in PORT_TYPES
+                signal = block_type in ("Inport", "Outport")
                 interface = next(
                     (
                         n
@@ -395,11 +402,11 @@ class _Reader:
                     ),
                     block,
                 )
-                ports.append(
+                of_type.append(
                     Port(
                         block_type=block_type,
                         name=block.param("Name"),
-                        number=value("Port"),
+                        number=value("Port") if numbered else "",
                         data_type=value("OutDataTypeStr") if signal else "",
                         dimensions=value("PortDimensions") if signal else "",
                         unit=value("Unit") if signal else "",
@@ -408,6 +415,8 @@ class _Reader:
                         element=interface.param("Element"),
                     )
                 )
+            # sorted() is stable: the elements of a bus port keep their order.
+            ports += sorted(of_type, key=_port_number)
         return tuple(ports)
 
     def references(self, system: Node, prefix: str) -> list[Reference]:
@@ -453,6 +462,11 @@ class _Reader:
             elif inner is not None:
                 found.extend(self.walk(inner, path))
         return found
+
+
+def _port_number(port: Port) -> int:
+    """Sort key: the port number; an unnumbered or odd one goes last."""
+    return int(port.number) if port.number.isdigit() else 1 << 30
 
 
 def _join(prefix: str, name: str) -> str:

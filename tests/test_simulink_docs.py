@@ -226,6 +226,18 @@ def test_hidden_mask_parameters_on_request(make_app, tmp_path, conf, option, sho
     assert ("<strong>b</strong>" in page) is shown
 
 
+def test_ports_in_number_order_then_control_ports(make_app, tmp_path):
+    from test_mat_simulink import PORTS_OUT_OF_ORDER
+
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "ports.mdl").write_text(PORTS_OUT_OF_ORDER)
+    page, _ = build(make_app, tmp_path, ".. mat:autosimulink_model:: ports\n")
+    assert (
+        "Ports Port Name input 1 first input 2 second output 1 y "
+        "enable Enable trigger Trigger"
+    ) in text(page)
+
+
 def test_metadata_settings(make_app, tmp_path):
     index = (
         ".. mat:autosimulink_model:: probeRef\n\n"

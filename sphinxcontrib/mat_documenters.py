@@ -1584,6 +1584,9 @@ _PORT_KINDS = {
     "Inport": _("input"),
     "Outport": _("output"),
     "PMIOPort": _("connection"),
+    "EnablePort": _("enable"),
+    "TriggerPort": _("trigger"),
+    "ActionPort": _("action"),
 }
 # Port settings Simulink leaves to inheritance: shown as empty cells.
 _PORT_UNSET = {"data_type": "Inherit: auto", "dimensions": "-1", "unit": "inherit"}
@@ -1838,7 +1841,7 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
             # a bus element port: port.element
             name = ".".join(filter(None, (port.port_name, port.element))) or port.name
             kind = _PORT_KINDS.get(port.block_type, port.block_type)
-            lines.append(f"   * - {kind} {port.number}")
+            lines.append(f"   * - {kind} {port.number}".rstrip())
             lines.append(f"     - {_literal(name)}")
             for key, _title in columns:
                 text = value(port, key)

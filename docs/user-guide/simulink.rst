@@ -25,7 +25,9 @@ Each page shows the description saved in the file or block (the mask
 description if it has none), then the documentation file, the mask type,
 description and Help, the metadata of :confval:`matlab_simulink_metadata`,
 the mask parameters (hidden ones with ``:hidden-mask-parameters:``) and a
-table of the ports. :doc:`../reference/directives` lists the options.
+table of the ports: inputs, outputs and physical connections by port
+number, then the enable, trigger and action ports.
+:doc:`../reference/directives` lists the options.
 
 Names
 -----

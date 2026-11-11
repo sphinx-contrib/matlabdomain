@@ -565,6 +565,52 @@ def test_classic_without_system(tmp_path):
     assert diagram.release == ""
 
 
+PORTS_OUT_OF_ORDER = """\
+Model {
+  Name "ports"
+  System {
+    Block {
+      BlockType Outport
+      Name "y"
+    }
+    Block {
+      BlockType EnablePort
+      Name "Enable"
+    }
+    Block {
+      BlockType Inport
+      Name "second"
+      Port "2"
+    }
+    Block {
+      BlockType TriggerPort
+      Name "Trigger"
+    }
+    Block {
+      BlockType Inport
+      Name "first"
+    }
+  }
+}
+"""
+
+
+def test_ports_sorted_by_number_with_control_ports(tmp_path):
+    # Spec 4.4: sorted by port number; Enable/Trigger/Action ports listed by
+    # type, without a data type.
+    path = tmp_path / "ports.mdl"
+    path.write_text(PORTS_OUT_OF_ORDER)
+    ports = read_diagram(path).ports
+    assert [(p.block_type, p.number, p.name) for p in ports] == [
+        ("Inport", "1", "first"),
+        ("Inport", "2", "second"),
+        ("Outport", "1", "y"),
+        ("EnablePort", "", "Enable"),
+        ("TriggerPort", "", "Trigger"),
+    ]
+    assert ports[3].data_type == ports[3].dimensions == ""
+
+
 def test_decode_mdl():
     assert _nodes.decode_mdl(
         'A {\n  SavedCharacterEncoding "utf-8"\n  N "Gr\u00f6\u00dfe"\n}'.encode()
