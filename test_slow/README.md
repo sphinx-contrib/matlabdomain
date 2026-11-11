@@ -7,7 +7,7 @@ collect them.
 |---|---|
 | `gauntlet/` | The real-project gauntlet: `scmd apidoc` and `sphinx-build` on real MATLAB projects. Details: [gauntlet/README.md](gauntlet/README.md). |
 | `repos/` | The gauntlet's checkouts (`fetch.py` creates it; ignored by Git). |
-| `profiling/` | The profiling harness (a parse sweep and a `sphinx-build` of vhlab-toolbox-matlab, from the gauntlet's checkouts) and its recorded results. |
+| `profiling/` | The profiling harness (a parse sweep and a `sphinx-build` of vhlab-toolbox-matlab, from the gauntlet's checkouts) and `point_repro.py`, the tree-sitter crash check behind the `get_row` workaround. |
 | `naming/` | `compare_render.py`: snapshots the rendered anchors, links, inventories and warnings of the test roots and docs, and compares two code versions. |
 | `integrations/` | Probes with sphinx-multiproject, one search over several sites (Pagefind) and sphinx-multiversion. Details: [integrations/README.md](integrations/README.md). |
 | `simulink/` | The Simulink file survey, corpus check and naming probe, run for each new MATLAB release. Details: [simulink/README.md](simulink/README.md). |
@@ -41,7 +41,7 @@ use `.venv\Scripts\python` for `python`).
 3. Compare with a saved summary (or another run folder):
 
    ```bash
-   python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase8-linux.json test_slow/gauntlet/runs/latest
+   python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase9-linux.json test_slow/gauntlet/runs/latest
    ```
 
    It lists, per project, changes in the commit, pages, exit codes and
@@ -52,4 +52,5 @@ To test other projects, edit `gauntlet/projects.toml` (a project without
 `commit` stays on the commit of its first fetch, recorded in
 `gauntlet/projects.lock.toml`; `fetch.py --update` moves it to the newest)
 and run `fetch.py` again. To keep a run's summary, copy its `results.json`
-to `gauntlet/summaries/`.
+to `gauntlet/summaries/`, replacing the older summary of that platform:
+keep one per platform.

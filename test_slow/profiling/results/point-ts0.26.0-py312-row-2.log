@@ -1,6 +1,0 @@
-Fatal Python error: Segmentation fault
-
-Current thread 0x00007d3a4262c740 (most recent call first):
-  File "/home/jason/Desktop/sphinx_workspace/matlabdomain/test_slow/profiling/results/point_repro.py", line 14 in <module>
-
-Extension modules: tree_sitter_matlab._binding (total: 1)

@@ -1,9 +1,0 @@
-before point access
-Traceback (most recent call last):
-  File "<string>", line 9, in <module>
-Fatal Python error: Segmentation fault
-
-Current thread 0x0000776d5830a740 (most recent call first):
-  <no Python frame>
-
-Extension modules: tree_sitter_matlab._binding (total: 1)

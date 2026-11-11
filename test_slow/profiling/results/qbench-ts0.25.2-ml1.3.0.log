@@ -1,3 +1,0 @@
-{"python": "3.14.6", "gil_disabled": false, "tree_sitter": "0.25.2", "tree_sitter_matlab": "1.3.0", "lang_abi": 15, "compile_ms": {"is_function": 4.833, "is_class": 1.172, "q_fun": 419.035, "function_definition_at_f": 1.169}, "parse_all_s": 0.658, "match_isfunc_isclass_all_s": 0.367, "n_function": 1436, "n_class": 277, "metadata_version_x1726_s": 0.711, "n_files": 1726}
-/home/jason/Desktop/sphinx_workspace/matlabdomain/test_slow/profiling/results/qbench.py:43: DeprecationWarning: version is deprecated. Use abi_version instead.
-  "lang_abi": getattr(lang, "abi_version", getattr(lang, "version", None)),

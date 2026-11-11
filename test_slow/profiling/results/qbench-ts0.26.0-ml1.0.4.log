@@ -1,3 +1,0 @@
-{"python": "3.14.6", "gil_disabled": false, "tree_sitter": "0.26.0", "tree_sitter_matlab": "1.0.4", "lang_abi": 14, "compile_ms": {"is_function": 1.359, "is_class": 0.405, "q_fun": 8.886, "function_definition_at_f": 0.412}, "parse_all_s": 0.397, "match_isfunc_isclass_all_s": 0.289, "n_function": 1436, "n_class": 277, "metadata_version_x1726_s": 0.7, "n_files": 1726}
-/home/jason/Desktop/sphinx_workspace/matlabdomain/test_slow/profiling/results/qbench.py:21: DeprecationWarning: int argument support is deprecated
-  lang = ts.Language(tsml.language())

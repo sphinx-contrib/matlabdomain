@@ -18,3 +18,4 @@ build/
 dist/
 test_slow/repos/
 test_slow/gauntlet/runs/
+test_slow/profiling/*.prof

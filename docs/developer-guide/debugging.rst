@@ -41,6 +41,7 @@ Profiling a build
 
 ``test_slow/profiling`` is a profiling harness: a Sphinx project over the
 gauntlet's ``vhlab-toolbox-matlab`` checkout (1,726 files; fetch it with
-``test_slow/gauntlet/fetch.py``), with ``profile_build.py`` and the
-recorded results of earlier phases. A cold harness build takes about half a
+``test_slow/gauntlet/fetch.py``), with ``profile_build.py`` (a parse sweep
+that writes ``parse.prof``) and ``point_repro.py`` (the tree-sitter crash
+check behind the ``get_row`` workaround). A cold harness build takes about half a
 second on Linux.
