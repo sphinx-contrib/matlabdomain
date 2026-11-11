@@ -407,6 +407,10 @@ Fixes
   it, like a property.
 * An invalid option of a ``mat:auto*`` directive is reported at the right
   file.
+* A corrupt or huge ``.mlapp`` file gives one ``mat.parse_error`` and the
+  build goes on: the reader has the size limits, the refusal of a DTD or
+  entity declaration and the nesting limit of the Simulink reader (a
+  300 MiB member took 1.2 GiB of memory before).
 * The package metadata names the license in ``LICENSE``, BSD-2-Clause (it
   said BSD-3-Clause).
 

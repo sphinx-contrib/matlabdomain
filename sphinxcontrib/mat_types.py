@@ -14,10 +14,9 @@ import os
 import stat
 import sys
 import unicodedata
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, cast
-from zipfile import ZipFile
 
 from sphinx.environment import CONFIG_OK
 from sphinx.errors import ConfigError
@@ -58,6 +57,8 @@ from .mat_naming import (
     split_folder,
 )
 from .mat_simulink import read_diagram
+from .mat_simulink._nodes import parse_xml
+from .mat_simulink._parts import read_members
 
 logger = getLogger("matlab-domain")
 
@@ -1650,9 +1651,9 @@ class MatObject:
 
     @staticmethod
     def parse_mlappfile(mlappfile, name, path):
-        """Use ZipFile to read the metadata/appMetadata.xml file and
+        """Read the metadata/appMetadata.xml file and
         the metadata/coreProperties.xml file description tags.
-        Parses XML content using ElementTree.
+        Parses the XML with the guards of the Simulink reader.
 
         :param mlappfile: Full path of ``.mlapp`` file.
         :type mlappfile: str
@@ -1661,32 +1662,27 @@ class MatObject:
         :param path: Folder reference of the folder containing :class:`MatApplication`.
         :type path: str
         :returns: :class:`MatApplication` representing the application.
+        :raises SimulinkFileError: for a file or member over a size limit, or XML
+            with a DTD or nested too deep.
         """
         # Read contents of meta-data file
         # This might change in different Matlab versions
         # Note: `code` is a verbatim copy of the MATLAB source inside the App
         #       Variable `codeText` will contain the source.
-        with ZipFile(mlappfile, "r") as mlapp:
-            meta = ET.fromstring(mlapp.read("metadata/appMetadata.xml"))
-            core = ET.fromstring(mlapp.read("metadata/coreProperties.xml"))
+        # The size limits, the DTD refusal and the nesting limit of the
+        # Simulink reader; a violation is a SimulinkFileError.
+        meta_part, core_part = "metadata/appMetadata.xml", "metadata/coreProperties.xml"
+        meta_data, core_data = read_members(Path(mlappfile), (meta_part, core_part))
+        meta = parse_xml(meta_data, meta_part)
+        core = parse_xml(core_data, core_part)
 
-        metaNs = {"ns": "http://schemas.mathworks.com/appDesigner/app/2017/appMetadata"}
-        coreNs = {
-            "cp": "http://schemas.openxmlformats.org/package/2006/metadata/core-properties",
-            "dc": "http://purl.org/dc/elements/1.1/",
-            "dcmitype": "http://purl.org/dc/dcmitype/",
-            "dcterms": "http://purl.org/dc/terms/",
-            "xsi": "http://www.w3.org/2001/XMLSchema-instance",
-        }
-
-        coreDesc = core.find("dc:description", coreNs)
-        metaDesc = meta.find("ns:description", metaNs)
-
-        doc = []
-        if coreDesc is not None and coreDesc.text is not None:
-            doc.append(coreDesc.text)
-        if metaDesc is not None and metaDesc.text is not None:
-            doc.append(metaDesc.text)
+        # Names without namespaces: appMetadata's ``description`` and the
+        # Dublin Core ``dc:description`` of coreProperties.
+        doc = [
+            text
+            for text in (core.child_text("description"), meta.child_text("description"))
+            if text
+        ]
         docstring = "\n\n".join(doc)
 
         modname = path  # folder reference

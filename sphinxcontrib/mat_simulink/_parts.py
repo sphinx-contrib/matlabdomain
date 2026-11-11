@@ -122,6 +122,18 @@ def _read_entry(z: zipfile.ZipFile, info: zipfile.ZipInfo) -> bytes:
     return z.read(info)
 
 
+def read_members(path: Path, names: tuple[str, ...]) -> list[bytes]:
+    """Read the members ``names`` of a zip file within the size limits. Other
+    members are not read. A zip or lookup error is raised as it is (for
+    ``.mlapp`` files).
+    """
+    check_size(path)
+    with zipfile.ZipFile(path) as z:
+        if len(z.infolist()) > MAX_ENTRIES:
+            raise SimulinkFileError(f"has more than {MAX_ENTRIES} entries.")
+        return [_read_entry(z, z.getinfo(name)) for name in names]
+
+
 def opc_text_parts(path: Path, wanted: Callable[[str], bool]) -> Parts:
     """Read the parts of an ``.mdl`` file in the OPC text form: each part
     follows a ``__MWOPC_PART_BEGIN__ /name`` line; `` BASE64`` marks

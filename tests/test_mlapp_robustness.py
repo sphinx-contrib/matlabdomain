@@ -50,10 +50,6 @@ def test_a_valid_app_is_read(tmp_path):
     assert obj.docstring == "Summary of app\n\nDescription of app"
 
 
-XFAIL = pytest.mark.xfail(strict=True, reason="G4-T5a: the .mlapp reader has no guard")
-
-
-@XFAIL
 def test_a_part_over_the_limit_is_refused(tmp_path, monkeypatch):
     monkeypatch.setattr(_parts, "MAX_PART_BYTES", 100)
     obj = parse(make_app(tmp_path))
@@ -67,7 +63,6 @@ def test_a_part_over_the_limit_is_refused(tmp_path, monkeypatch):
     assert obj.docstring == ""
 
 
-@XFAIL
 def test_a_file_over_the_limit_is_refused(tmp_path, monkeypatch):
     monkeypatch.setattr(_parts, "MAX_FILE_BYTES", 100)
     obj = parse(make_app(tmp_path))
@@ -76,7 +71,6 @@ def test_a_file_over_the_limit_is_refused(tmp_path, monkeypatch):
     )
 
 
-@XFAIL
 def test_too_many_entries_are_refused(tmp_path, monkeypatch):
     monkeypatch.setattr(_parts, "MAX_ENTRIES", 2)
     obj = parse(make_app(tmp_path, extra=("a.txt",)))
@@ -85,7 +79,6 @@ def test_too_many_entries_are_refused(tmp_path, monkeypatch):
     )
 
 
-@XFAIL
 @pytest.mark.parametrize(
     "declaration", ["<!DOCTYPE x>", '<!DOCTYPE x [<!ENTITY a "b">]>']
 )
@@ -95,16 +88,15 @@ def test_a_dtd_is_refused(tmp_path, declaration):
         (
             "parse_error",
             "cannot be parsed (SimulinkFileError: has a DTD or entity declaration in "
-            "metadata/coreProperties.xml); it is documented without content.",
+            "metadata/coreProperties.xml.); it is documented without content.",
         )
     ]
 
 
-@XFAIL
 def test_deep_nesting_is_refused(tmp_path):
     depth = _nodes.MAX_DEPTH + 2
     obj = parse(make_app(tmp_path, meta="<a>" * depth + "</a>" * depth))
     assert warnings_of(obj)[0][1].startswith(
         "cannot be parsed (SimulinkFileError: is nested deeper than "
-        f"{_nodes.MAX_DEPTH} in metadata/appMetadata.xml)"
+        f"{_nodes.MAX_DEPTH} in metadata/appMetadata.xml.)"
     )
