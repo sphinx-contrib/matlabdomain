@@ -1,5 +1,4 @@
-"""Keep the settings of ``simulinkDocumentationLinker.m`` in step with the
-HTML build.
+"""Give ``simulinkDocumentationLinker.m`` the state of the HTML build.
 
 The linker (``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m``
 below the project root) gives the Help links of Simulink files the address
@@ -15,11 +14,15 @@ of a site. It reads two files:
   ``livehtml`` target of the make files sets it for sphinx-autobuild).
   So the last build chooses between the local files and the server.
 
-The build also writes ``local`` (its output folder, when it is inside the
-project root and not a sphinx-multiversion build), ``server`` and
-``published`` (``html_baseurl``, when set) into the committed settings, but
-only when they differ, so the file changes only with the build setup.
-Nothing is written for a project without the settings file.
+The build never writes the committed file: a build writes only to its output
+and doctree folders, and where they are is the user's choice (the output
+folder is often inside the project root, and a CI checkout has another one).
+``scmd quickstart`` writes the committed file once. The build compares it
+with its own ``local`` (its output folder, when it is inside the project root
+and not a sphinx-multiversion build), ``server`` and ``published``
+(``html_baseurl``, when set), and when they differ it logs one ``info`` line
+that names them, so the user can edit the file. Nothing is compared or
+written for a project without the settings file.
 """
 
 from __future__ import annotations
@@ -70,7 +73,9 @@ def _below(path, root):
 
 
 def write_settings(app, exception):
-    """``build-finished``: write the build state and update the settings."""
+    """``build-finished``: write the build state, and say when the committed
+    settings differ from this build.
+    """
     if exception is not None or not mat_urls.enabled(app):
         return
     root = mat_types.project_root(app.config, app.srcdir)
@@ -95,13 +100,12 @@ def write_settings(app, exception):
     except (OSError, ValueError) as err:
         settings = err
     if not isinstance(settings, dict):
-        logger.warning(
+        # Not the build's file, and the build does not change it: no warning.
+        logger.info(
             "[sphinxcontrib-matlabdomain] %s is not a JSON object (%s); it is not "
-            "updated.",
+            "compared with this build.",
             shown,
             settings,
-            type="mat",
-            subtype="simulink_documentation_linker_json",
         )
         return
     wanted = {}
@@ -112,18 +116,17 @@ def write_settings(app, exception):
         wanted["server"] = _slash(server)
     if app.config.html_baseurl:
         wanted["published"] = _slash(app.config.html_baseurl)
-    changed = [
-        key
+    differ = [
+        f"{key} is {settings[key]!r}, this build has {value!r}"
+        if isinstance(settings.get(key), str)
+        else f"{key} is not set, this build has {value!r}"
         for key, value in wanted.items()
         if not isinstance(settings.get(key), str) or _slash(settings[key]) != value
     ]
-    if not changed:
-        return
-    settings.update((key, wanted[key]) for key in changed)
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(json.dumps(settings, indent=1) + "\n")
-    logger.info(
-        "[sphinxcontrib-matlabdomain] updated %s (%s); commit it with the project.",
-        shown,
-        ", ".join(changed),
-    )
+    if differ:
+        logger.info(
+            "[sphinxcontrib-matlabdomain] %s differs from this build: %s; the build "
+            "does not change it, edit it if this is the setup to use.",
+            shown,
+            "; ".join(differ),
+        )

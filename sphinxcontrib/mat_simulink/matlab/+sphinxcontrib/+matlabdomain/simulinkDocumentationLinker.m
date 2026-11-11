@@ -12,8 +12,8 @@ function url = simulinkDocumentationLinker(reference)
 %       web(sphinxcontrib.matlabdomain.simulinkDocumentationLinker("src/lib.slx/Gain"))
 %
 %   simulinkDocumentationLinker.json, next to this file, names the sites;
-%   scmd quickstart writes it and HTML builds keep "local",
-%   "server" and "published" up to date:
+%   scmd quickstart writes it; edit "local", "server" and "published" when
+%   the setup changes (an HTML build says when they differ from the build):
 %
 %       {"mode": "local",
 %        "local": "docs/_build/html/",

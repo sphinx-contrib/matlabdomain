@@ -107,8 +107,8 @@ Outside ``DOCS``, each only if the line is not there yet:
   ``ROOT/+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` (the
   MATLAB function that Help links of Simulink files call; rewritten on
   each run) and its settings ``simulinkDocumentationLinker.json`` (written
-  once, then kept up to date by HTML builds,
-  :confval:`matlab_simulink_autobuild_server`); ``conf.py`` excludes
+  once; HTML builds do not change it, they only log when it differs from
+  the build, :confval:`matlab_simulink_autobuild_server`); ``conf.py`` excludes
   ``+sphinxcontrib/``.
 
 Before it writes anything it checks ``git status`` of these three files and

@@ -251,11 +251,13 @@ Output
    ``mat/simulinkDocumentationLinker.json`` in its output folder: the mode
    ``"server"`` and this address when it is set, else ``"local"``. So the
    Help links of Simulink files open the site of the last build. The build
-   also writes its output folder (``"local"``, when it is inside the
-   project root and not a sphinx-multiversion build), this address
-   (``"server"``) and ``html_baseurl`` (``"published"``, when set) into
-   that settings file, only when they changed; commit it. Any other value
-   than ``None`` or an ``http://`` or ``https://`` address is a
+   never writes the settings file itself, because a build writes only to
+   its output and doctree folders. When its output folder (``"local"``,
+   when it is inside the project root and not a sphinx-multiversion
+   build), this address (``"server"``) or ``html_baseurl``
+   (``"published"``, when set) differs from the file, it logs one
+   ``info`` line that names the values; edit the file by hand. Any other
+   value than ``None`` or an ``http://`` or ``https://`` address is a
    ``ConfigError``.
 
 ``matlab-api-check``

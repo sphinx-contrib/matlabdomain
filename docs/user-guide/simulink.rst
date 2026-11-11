@@ -178,6 +178,18 @@ published site; ``help sphinxcontrib.matlabdomain.simulinkDocumentationLinker``
 describes the choice. The documentation shows such a Help as a link to the
 page.
 
+The settings file ``simulinkDocumentationLinker.json`` next to it names the
+folder of the local build, the server and the published site. ``scmd
+quickstart`` writes it once; a build never changes it, because a build
+writes only to its output folder and its doctree folder. When the output
+folder, the server or ``html_baseurl`` of a build differs from the file,
+the build logs one ``info`` line (not a warning, so ``-W`` builds and CI
+builds with another output folder are not affected) that names the values:
+edit ``local``, ``server`` or ``published`` by hand and commit the file.
+Each HTML build writes ``mat/simulinkDocumentationLinker.json`` in its
+output folder, which tells the function whether the last build was local or
+for a server.
+
 ``sphinxcontrib.matlabdomain.setSimulinkHelp`` writes these Help lines for
 every documented object of a file. It ships with this package; add its
 folder to the MATLAB path first:

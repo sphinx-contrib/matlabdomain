@@ -357,6 +357,11 @@ Simulink files:
   model or block on the local build, the sphinx-autobuild server
   (:confval:`matlab_simulink_autobuild_server`) or the published site;
   ``sphinxcontrib.matlabdomain.setSimulinkHelp`` writes those Help fields.
+  A build writes only to its output and doctree folders: it records its
+  state in ``mat/simulinkDocumentationLinker.json`` there, never changes
+  the committed ``simulinkDocumentationLinker.json`` (written once by
+  ``scmd quickstart``), and logs one ``info`` line when ``local``,
+  ``server`` or ``published`` of that file differ from the build.
 
 Sidecar docs:
 

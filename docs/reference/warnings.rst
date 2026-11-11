@@ -74,10 +74,6 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
      - a stable address file (:confval:`matlab_stable_urls`) that cannot be
        written, for example a path too long for Windows
      - at the end of an HTML build
-   * - ``mat.simulink_documentation_linker_json``
-     - ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.json``
-       is not a JSON object, so the build cannot update it
-     - at the end of an HTML build
    * - ``mat.simulink``
      - an unknown name in :confval:`matlab_simulink_metadata` or a
        ``:metadata:`` option; a Simulink documentation file that is not

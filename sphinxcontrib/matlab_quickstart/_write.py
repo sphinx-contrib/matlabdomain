@@ -201,7 +201,7 @@ LIVE_SERVER = "http://127.0.0.1:8000/"
 def linker_files(root, docs_rel, published=""):
     """Return ``{name: bytes}`` below ``root``: the function behind the Help
     links of Simulink files, and its settings unless they exist (the user
-    may have set the published site; HTML builds keep them up to date).
+    may have set the published site; builds never change them).
     """
     source = MATLAB_TOOLS / "+sphinxcontrib" / "+matlabdomain" / f"{LINKER}.m"
     files = {f"{LINKER_FOLDER}/{LINKER}.m": source.read_bytes()}

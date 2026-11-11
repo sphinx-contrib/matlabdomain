@@ -235,8 +235,10 @@ the project root, with its settings ``simulinkDocumentationLinker.json``:
 Help fields of Simulink files call this function to open their page;
 ``conf.py`` excludes it from the documentation. Commit both files. The
 function is rewritten on each run, the settings only written when
-missing. HTML builds keep the settings up to date (the output folder,
-``html_baseurl`` as ``"published"``) and record which site they made:
+missing. HTML builds never change the settings (a build writes only to its output
+and doctree folders); when the output folder, the server or
+``html_baseurl`` (``"published"``) differs from them, a build logs one
+``info`` line, and you edit the file. They record which site they made:
 after ``make html`` the Help links open the local files, after ``make
 livehtml`` the sphinx-autobuild server (:confval:`matlab_simulink_autobuild_server`;
 the local files once it stops). Without a local build they open the

@@ -1,5 +1,5 @@
-"""The HTML build keeps the settings of simulinkDocumentationLinker.m up to
-date (``mat_simulink/_linker.py``).
+"""The HTML build writes the state of simulinkDocumentationLinker.m and leaves
+the committed settings alone (``mat_simulink/_linker.py``).
 """
 
 import json
@@ -51,59 +51,64 @@ def state(root):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def test_build_writes_the_state_and_the_settings(make_app, tmp_path):
+def test_build_writes_the_state_and_says_what_differs(make_app, tmp_path):
     root = project(tmp_path, conf='html_baseurl = "https://example.org/docs"\n')
-    app = build(make_app, root)
-    assert state(root) == {"mode": "local"}
-    assert settings(root) == {
-        "mode": "local",
-        "local": "docs/_build/html/",
-        "published": "https://example.org/docs/",
-    }
-    assert (
-        "updated +sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.json "
-        "(local, published); commit it" in app.status.getvalue()
-    )
-    assert app.warning.getvalue() == ""
     path = root / "+sphinxcontrib" / "+matlabdomain" / _linker.NAME
     before = path.read_bytes()
-    assert b"\r" not in before
-    # Nothing changed: the settings are not written again.
     app = build(make_app, root)
+    assert state(root) == {"mode": "local"}
     assert path.read_bytes() == before
-    assert "updated" not in app.status.getvalue()
+    log = app.status.getvalue()
+    assert (
+        "+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.json differs "
+        "from this build: local is 'old/', this build has 'docs/_build/html/'; "
+        "published is not set, this build has 'https://example.org/docs/'; the "
+        "build does not change it" in log
+    )
+    assert app.warning.getvalue() == ""
 
 
-def test_livehtml_writes_the_server(make_app, tmp_path):
+def test_matching_settings_say_nothing(make_app, tmp_path):
+    # A form without the trailing slash is the same address.
+    text = '{"local": "docs/_build/html", "published": "https://example.org/docs/"}'
+    root = project(tmp_path, text, conf='html_baseurl = "https://example.org/docs"\n')
+    app = build(make_app, root)
+    assert "differs" not in app.status.getvalue()
+    assert settings(root) == json.loads(text)
+
+
+def test_livehtml_writes_the_server_state_only(make_app, tmp_path):
     root = project(tmp_path, '{"mode": "local", "local": "docs/_build/html"}')
-    build(make_app, root, matlab_simulink_autobuild_server="http://127.0.0.1:8123")
+    app = build(
+        make_app, root, matlab_simulink_autobuild_server="http://127.0.0.1:8123"
+    )
     assert state(root) == {"mode": "server", "server": "http://127.0.0.1:8123/"}
-    # "local" kept its form; a blank html_baseurl leaves "published" alone.
-    assert settings(root) == {
-        "mode": "local",
-        "local": "docs/_build/html",
-        "server": "http://127.0.0.1:8123/",
-    }
+    assert settings(root) == {"mode": "local", "local": "docs/_build/html"}
+    assert "server is not set, this build has 'http://127.0.0.1:8123/'" in (
+        app.status.getvalue()
+    )
     build(make_app, root)
     assert state(root) == {"mode": "local"}
 
 
-def test_multiversion_build_keeps_local(make_app, tmp_path):
+def test_multiversion_build_does_not_compare_local(make_app, tmp_path):
     conf = (
         'def setup(app):\n    app.add_config_value("smv_current_version", "", "html")\n'
     )
     root = project(tmp_path, conf=conf)
-    build(make_app, root, smv_current_version="v1")
+    app = build(make_app, root, smv_current_version="v1")
     assert settings(root) == {"mode": "local", "local": "old/"}
     assert state(root) == {"mode": "local"}
+    assert "differs" not in app.status.getvalue()
 
 
 @pytest.mark.parametrize("text", ["[1, 2]", "{"])
-def test_bad_settings_are_not_updated(make_app, tmp_path, text):
+def test_bad_settings_are_not_compared(make_app, tmp_path, text):
     root = project(tmp_path, text)
     app = build(make_app, root)
-    assert "is not a JSON object" in app.warning.getvalue()
-    assert "[mat.simulink_documentation_linker_json]" in app.warning.getvalue()
+    assert "is not a JSON object" in app.status.getvalue()
+    assert "it is not compared with this build" in app.status.getvalue()
+    assert app.warning.getvalue() == ""
     path = root / "+sphinxcontrib" / "+matlabdomain" / _linker.NAME
     assert path.read_text() == text
     assert state(root) == {"mode": "local"}

@@ -99,10 +99,6 @@ def build_all(make_app, top, srcdir):
     return changed(before, snapshot(top, {build}))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="G4-T6: write_settings rewrites the committed linker settings",
-)
 def test_synthetic_project_writes_nothing_outside(make_app, tmp_path):
     root, docs = synthetic_project(tmp_path)
     assert build_all(make_app, root, docs) == []
@@ -116,10 +112,6 @@ def test_repository_projects_write_nothing_outside(make_app, tmp_path, name):
 
 
 @pytest.mark.skipif(not CAN_MAKE_READ_ONLY, reason="needs POSIX permissions")
-@pytest.mark.xfail(
-    strict=True,
-    reason="G4-T6: write_settings fails with PermissionError in a read-only checkout",
-)
 def test_read_only_project_root_builds(make_app, tmp_path):
     root, docs = synthetic_project(tmp_path)
     (docs / "_build").mkdir()
