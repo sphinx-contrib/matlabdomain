@@ -33,9 +33,11 @@ function url = simulinkDocumentationLinker(reference)
 %   built), then the published site. The files are read on every call,
 %   so switching sites changes no model.
 %
-%   The address is the object's stable address (mat/ref/...). It does not
-%   know about files whose names differ only by case; their pages get
-%   other addresses.
+%   The address is the object's stable address (mat/ref/...). It cannot
+%   know the other files of the project, so it does not follow the rules
+%   that depend on siblings: names that differ only by case (files,
+%   folders, blocks, class members) and a folder named like the page file
+%   of a sibling (guide-md.rst/); those pages get other addresses.
 %
 %   See also web, sphinxcontrib.matlabdomain.setSimulinkHelp, setpref.
 
@@ -161,7 +163,7 @@ if reference == "./"
 end
 if endsWith(reference, "/")
     parts = split(extractBefore(reference, strlength(reference)), "/")';
-    out = strjoin([escapeAll(parts), "index"], "/");
+    out = strjoin([escapeFolders(parts), "index"], "/");
     return
 end
 parts = split(reference, "/")';
@@ -174,17 +176,21 @@ for i = 1:numel(parts) - 1
         break
     end
 end
-out = strjoin(escapeAll(parts(1:last)), "/");
+out = strjoin([escapeFolders(parts(1:last-1)), escapeSegment(parts(last))], "/");
 end
 
 function tf = isBlockContainer(name)
 tf = any(endsWith(name, [".slx", ".mdl", ".xml"])) && strlength(name) > 4;
 end
 
-function out = escapeAll(parts)
+function out = escapeFolders(parts)
+% A folder's leading _ is escaped too (files keep theirs).
 out = strings(size(parts));
 for k = 1:numel(parts)
     out(k) = escapeSegment(parts(k));
+    if startsWith(out(k), "_")
+        out(k) = "~5F" + extractAfter(out(k), 1);
+    end
 end
 end
 

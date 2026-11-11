@@ -357,6 +357,9 @@ Simulink files:
   model or block on the local build, the sphinx-autobuild server
   (:confval:`matlab_simulink_autobuild_server`) or the published site;
   ``sphinxcontrib.matlabdomain.setSimulinkHelp`` writes those Help fields.
+  The linker gives the address by the rules of the output names, including
+  the escaped leading ``_`` of a folder, except those that need the sibling
+  files (names that differ only by case, a folder named like a page file).
   A build writes only to its output and doctree folders: it records its
   state in ``mat/simulinkDocumentationLinker.json`` there, never changes
   the committed ``simulinkDocumentationLinker.json`` (written once by

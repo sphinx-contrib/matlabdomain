@@ -244,13 +244,3 @@ def _moved(base, extra, suffix="html"):
 )
 def test_which_sibling_moves_an_address(base, extra, moved):
     assert {r: new for r, (_, new) in _moved(base, extra).items()} == moved
-
-
-@pytest.mark.xfail(
-    strict=True, reason="G4-T4: the linker (.m) does not escape a leading _ of a folder"
-)
-def test_a_leading_underscore_folder_is_escaped_like_the_linker_expects():
-    # simulinkDocumentationLinker.m run in MATLAB R2025b (no sibling involved):
-    #   '_u/lib.slx/G'  ->  mat/ref/_u/lib.slx~2FG.html
-    names, _ = docnames(["_u/lib.slx/G"], "html")
-    assert names["_u/lib.slx/G"] == "_u/lib.slx~2FG"

@@ -444,7 +444,7 @@ def test_linker_addresses_match_stable_addresses():
     (``linker.json`` is written by ``make_fixtures("linker", ...)``).
     """
     cases = json.loads((FIXTURES.parent / "linker.json").read_text("utf-8"))["cases"]
-    assert len(cases) == 20
+    assert len(cases) == 28
     for case in cases:
         ref = case["reference"]
         names, _ = docnames([ref], "html")
