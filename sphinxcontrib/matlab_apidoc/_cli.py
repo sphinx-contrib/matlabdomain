@@ -14,31 +14,19 @@ import logging
 import os
 import sys
 import time
+from typing import cast
 
 from sphinx.config import Config
 from sphinx.errors import ConfigError
 from sphinx.util.logging import is_suppressed_warning
 from sphinx.util.tags import Tags
 
-from .. import mat_naming
+from ..mat_config import CONFIG, add_config_values, check_sources, typed_value
 from ..mat_types import (
     IndexSettings,
-    SourceFilter,
     build_index,
     check_config_names,
-    check_pattern_folders,
-    check_text_encoding,
-    pattern_list,
     project_root,
-    sidecar_layout_error,
-    sidecar_suffix_list,
-    simulink_doc_suffix_list,
-)
-from ._config import (
-    APIDOC_CONFIG,
-    BUILD_ONLY_CONFIG,
-    SOURCE_CONFIG,
-    apidoc_value,
 )
 from ._generate import GROUPS, ApidocOptions, generate
 
@@ -121,24 +109,20 @@ def read_conf(confdir):
     if not os.path.isfile(os.path.join(confdir, "conf.py")):
         raise ConfigError(f"-c {confdir!r} has no conf.py.")
     config = Config.read(os.path.abspath(confdir), overrides={}, tags=Tags())
-    known = {*SOURCE_CONFIG, *APIDOC_CONFIG, *BUILD_ONLY_CONFIG}
-    check_config_names(config._raw_config, known)
-    for name, default in SOURCE_CONFIG.items():
-        config.add(name, default, "env", ())
-    for name, (default, types) in APIDOC_CONFIG.items():
-        config.add(name, default, "", types)
+    check_config_names(config._raw_config, CONFIG)
+    add_config_values(config.add)
     return config
 
 
 def _folder(conf, name, srcdir):
     """Return a path value of conf.py (relative to the source folder) or None."""
-    value = apidoc_value(conf, name)
+    value = typed_value(conf, name)
     return None if value is None else os.path.join(srcdir, value)
 
 
 def _file_name(conf, name):
     """Return a file-name value of conf.py, or ConfigError."""
-    value = apidoc_value(conf, name)
+    value = typed_value(conf, name)
     if not value or any(sep in value for sep in "/\\"):
         raise ConfigError(f"{name} {value!r} must be a file name.")
     return value
@@ -157,20 +141,8 @@ def _settings(args):
     if not os.path.isdir(root):
         raise ConfigError(f"matlab_src_code_project_root {root!r} is not a folder.")
 
-    include_name = "matlab_src_include_patterns"
-    include = pattern_list(conf.matlab_src_include_patterns, include_name)
-    exclude = pattern_list(
-        conf.matlab_src_exclude_patterns, "matlab_src_exclude_patterns"
-    )
-    check_pattern_folders(SourceFilter(include, exclude), root, include_name)
-
-    encoding = conf.matlab_src_encoding
-    check_text_encoding(encoding, "matlab_src_encoding")
-    version = conf.matlab_version
-    try:
-        mat_naming.validate_matlab_version(version)
-    except ValueError as err:
-        raise ConfigError(str(err)) from err
+    check_sources(conf, srcdir)
+    settings = cast(IndexSettings, IndexSettings.from_config(conf, srcdir))
 
     output_dir = _folder(conf, "matlab_apidoc_output_dir", srcdir)
     if output_dir is None:
@@ -180,28 +152,13 @@ def _settings(args):
     templatedir = _folder(conf, "matlab_apidoc_templatedir", srcdir)
     if templatedir is not None and not os.path.isdir(templatedir):
         raise ConfigError(f"matlab_apidoc_templatedir {templatedir!r} is not a folder.")
-    sidecar_suffixes = sidecar_suffix_list(conf.matlab_src_sidecar_suffixes)
-    if sidecar_suffixes:
-        sidecar_layout_error(root, srcdir)
-    settings = IndexSettings(
-        root=root,
-        include=tuple(include),
-        exclude=tuple(exclude),
-        encoding=encoding,
-        matlab_version=version,
-        sidecar_suffixes=sidecar_suffixes,
-        source_dir=srcdir,
-        simulink_doc_suffixes=simulink_doc_suffix_list(
-            conf.matlab_simulink_doc_suffixes
-        ),
-    )
-    group = apidoc_value(conf, "matlab_apidoc_group")
+    group = typed_value(conf, "matlab_apidoc_group")
     if group not in GROUPS:
         raise ConfigError(
             f"matlab_apidoc_group must be {' or '.join(map(repr, GROUPS))}, "
             f"not {group!r}."
         )
-    page_size = apidoc_value(conf, "matlab_apidoc_page_size")
+    page_size = typed_value(conf, "matlab_apidoc_page_size")
     if page_size < 1:
         raise ConfigError(
             f"matlab_apidoc_page_size must be 1 or more, not {page_size}."
@@ -210,14 +167,14 @@ def _settings(args):
         output_dir=output_dir,
         force=args.force,
         dry_run=args.dry_run or args.check,
-        separate=apidoc_value(conf, "matlab_apidoc_separate"),
-        maxdepth=apidoc_value(conf, "matlab_apidoc_maxdepth"),
+        separate=typed_value(conf, "matlab_apidoc_separate"),
+        maxdepth=typed_value(conf, "matlab_apidoc_maxdepth"),
         tocfile=_file_name(conf, "matlab_apidoc_tocfile"),
         templatedir=templatedir,
-        remove_old=apidoc_value(conf, "matlab_apidoc_remove_old"),
+        remove_old=typed_value(conf, "matlab_apidoc_remove_old"),
         group=group,
         page_size=page_size,
-        private=apidoc_value(conf, "matlab_apidoc_private"),
+        private=typed_value(conf, "matlab_apidoc_private"),
     )
     suppress = conf.suppress_warnings
     if isinstance(suppress, str) or not isinstance(suppress, (list, tuple, set)):

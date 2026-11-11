@@ -95,8 +95,6 @@ def check_config(app, config):
     if root is None or not (suffixes or simulink):
         return
     srcdir = os.path.normpath(os.fspath(app.srcdir))
-    if suffixes:
-        mat_types.sidecar_layout_error(root, srcdir)
     if not same_drive(root, srcdir):
         if suffixes:
             _warn(

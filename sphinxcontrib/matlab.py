@@ -28,6 +28,7 @@ from sphinx.util.nodes import make_refnode
 
 from . import (
     mat_api_check,
+    mat_config,
     mat_directives,
     mat_naming,
     mat_sidecars,
@@ -35,8 +36,10 @@ from . import (
     mat_urls,
 )
 from . import mat_documenters as doc
+
+# Public: a conf.py extends it (matlab_external_names = [*DEFAULT_EXTERNAL_NAMES, ...]).
+from .mat_config import DEFAULT_EXTERNAL_NAMES as DEFAULT_EXTERNAL_NAMES
 from .mat_simulink import _linker as simulink_linker
-from .matlab_apidoc import _config as apidoc_config
 
 logger = getLogger("matlab-domain")
 
@@ -167,16 +170,6 @@ def _check_inventories(env, node, contnode):
     node["mat:ambiguous"] = True
     mat_types.warn_ambiguous(target, [prefix + ref for ref in refs], node)
     return contnode
-
-
-#: MATLAB's own classes and namespaces, never documented in a project
-DEFAULT_EXTERNAL_NAMES = [
-    r"handle|dynamicprops",
-    r"(matlab|Simulink|event|meta)\..+",
-    r"double|single|u?int(8|16|32|64)|logical|char|string|cell|struct",
-    r"function_handle|table|timetable|datetime|duration|calendarDuration",
-    r"categorical|containers\.Map|dictionary|MException|missing|timeseries",
-]
 
 
 @functools.cache
@@ -1273,20 +1266,6 @@ def analyze(app):
     mat_types.analyze(app)
 
 
-_REMOVED_OPTIONS = {
-    "matlab_src_dir": (
-        "use matlab_src_code_project_root (relative to the Sphinx source "
-        "directory) and, to select files, matlab_src_include_patterns and "
-        "matlab_src_exclude_patterns"
-    ),
-    "matlab_keep_package_prefix": (
-        "objects are referenced by path (which keeps '+') and signatures show "
-        "MATLAB names (without '+')"
-    ),
-    "matlab_short_links": "signatures show MATLAB names by default",
-}
-
-
 def check_config_names(app, config):  # noqa: ARG001
     # vars(config): names another extension set earlier (sphinx-multiproject).
     names = {*config._raw_config, *vars(config)}
@@ -1294,31 +1273,9 @@ def check_config_names(app, config):  # noqa: ARG001
 
 
 def ensure_configuration(app, config):
-    removed = [
-        f"{name} was removed: {reason}."
-        for name, reason in _REMOVED_OPTIONS.items()
-        if getattr(config, name) is not None
-    ]
-    if removed:
-        them = "it" if len(removed) == 1 else "them"
-        raise ConfigError(" ".join(removed) + f" Remove {them} from conf.py.")
-
+    mat_config.check_sources(config, app.srcdir)
     if config.matlab_auto_link not in (None, "basic", "all"):
         raise ConfigError("matlab_auto_link must be None, 'basic', or 'all'.")
-
-    sources = mat_types.source_filter(config)
-    if config.matlab_src_code_project_root is not None:
-        root = mat_types.project_root(config, app.srcdir)
-        mat_types.check_pattern_folders(sources, root)
-
-    try:
-        mat_naming.validate_matlab_version(config.matlab_version)
-    except ValueError as err:
-        raise ConfigError(str(err)) from err
-
-
-def check_encoding(app, config):  # noqa: ARG001
-    mat_types.check_text_encoding(config.matlab_src_encoding, "matlab_src_encoding")
 
 
 def _get_version():
@@ -1335,7 +1292,6 @@ def setup(app):
     app.setup_extension("sphinx.ext.autodoc")
     app.connect("config-inited", check_config_names)
     app.connect("config-inited", ensure_configuration)
-    app.connect("config-inited", check_encoding)
     app.connect("config-inited", check_external_names)
     app.connect("config-inited", mat_sidecars.check_config)
     app.connect("config-inited", mat_api_check.check_config)
@@ -1359,71 +1315,7 @@ def setup(app):
 
     app.add_domain(MATLABDomain)
     app.add_builder(mat_api_check.MatlabApiCheckBuilder)
-    # autodoc
-    # Relative paths are relative to the Sphinx source directory.
-    app.add_config_value("matlab_src_code_project_root", None, "env")
-    # Globs relative to matlab_src_code_project_root; [] selects no files.
-    app.add_config_value(
-        "matlab_src_include_patterns",
-        list(mat_types.DEFAULT_INCLUDE_PATTERNS),
-        "env",
-        [list, tuple],
-    )
-    app.add_config_value(
-        "matlab_src_exclude_patterns",
-        list(mat_types.DEFAULT_EXCLUSION_PATTERNS),
-        "env",
-        [list, tuple],
-    )
-    # Sidecar docs: [] is off; e.g. [".md", ".rst"] (plan.md 2.11).
-    app.add_config_value("matlab_src_sidecar_suffixes", [], "env", [list, tuple])
-    # Removed: setting it raises ConfigError.
-    app.add_config_value("matlab_src_dir", None, "env")
-    app.add_config_value("matlab_src_encoding", None, "env")
-    # Removed: setting it raises ConfigError.
-    app.add_config_value("matlab_keep_package_prefix", None, "env")
-    app.add_config_value("matlab_show_property_default_value", True, "env")
-    app.add_config_value("matlab_show_property_specs", True, "env")
-    # Removed: setting it raises ConfigError.
-    app.add_config_value("matlab_short_links", None, "env")
-    app.add_config_value("matlab_auto_link", None, "env")
-    app.add_config_value("matlab_class_signature", False, "env")
-    app.add_config_value("matlab_add_namespace_names", True, "env", bool)
-    # Regexes of names references to which are text, without a warning.
-    app.add_config_value(
-        "matlab_external_names", list(DEFAULT_EXTERNAL_NAMES), "html", [list, tuple]
-    )
-    app.add_config_value("matlab_version", mat_naming.DEFAULT_MATLAB_VERSION, "env")
-    # Stable addresses (mat/ref/, mat/name/) and "¶" links to them.
-    app.add_config_value("matlab_stable_urls", True, "html", bool)
-    # Several objects of one MATLAB name are intended: link to their chooser
-    # page, without mat.ambiguous.
-    app.add_config_value(
-        "matlab_link_shadowed_files_to_chooser_pages", False, "env", bool
-    )
-    # The sphinx-autobuild address for Simulink Help links (make livehtml).
-    app.add_config_value("matlab_simulink_autobuild_server", None, "")
-    # Metadata of Simulink files shown by default (directive option :metadata:).
-    app.add_config_value(
-        "matlab_simulink_metadata", ["release", "model_version"], "env", [list, tuple]
-    )
-    # Suffixes of documentation files next to Simulink files, by priority.
-    app.add_config_value(
-        "matlab_simulink_doc_suffixes", [".md", ".rst"], "env", [list, tuple]
-    )
-    # matlab-api-check: read by the builder only, so no page is read again.
-    # Rule -> severity, merged over mat_api_check.DEFAULT_RULES.
-    app.add_config_value("matlab_api_check_rules", {}, "", dict)
-    app.add_config_value("matlab_api_check_ignore_patterns", [], "", [list, tuple])
-    # None checks every file; a list (or, from -D, a comma-separated str) selects.
-    app.add_config_value("matlab_api_check_files", None, "")
-    # A text file of selection entries, one per line.
-    app.add_config_value("matlab_api_check_files_from", None, "")
-    app.add_config_value("matlab_api_check_ignore_unmatched", False, "", bool)
-    # Section -> the labels it accepts, replacing the built-in ones.
-    app.add_config_value("matlab_api_check_section_labels", {}, "", dict)
-    # Read by scmd apidoc only.
-    apidoc_config.add_config_values(app)
+    mat_config.add_config_values(app.add_config_value)
 
     app.registry.add_documenter("mat:folder", doc.MatFolderDocumenter)
     app.add_directive_to_domain(

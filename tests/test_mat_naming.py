@@ -184,7 +184,7 @@ def test_identifier_validation_respects_namelengthmax():
 
 def test_ensure_configuration_derives_namelengthmax_from_version():
     env = _config("R2025a")
-    matlab.ensure_configuration(None, env)
+    matlab.ensure_configuration(_APP, env)
     assert default_namelengthmax(env.matlab_version) == 2048
 
 
@@ -193,14 +193,14 @@ def test_auto_link_rejects_invalid_values(value):
     config = _config()
     config.matlab_auto_link = value
     with pytest.raises(ConfigError, match="matlab_auto_link"):
-        matlab.ensure_configuration(None, config)
+        matlab.ensure_configuration(_APP, config)
 
 
 @pytest.mark.parametrize("version", ["R2023b", "2026a", "R2026c", "r2026a", None])
 def test_ensure_configuration_rejects_bad_matlab_version(version):
     env = _config(version)
     with pytest.raises(ConfigError, match="matlab_version"):
-        matlab.ensure_configuration(None, env)
+        matlab.ensure_configuration(_APP, env)
 
 
 @pytest.mark.parametrize("name", ["matlab_keep_package_prefix", "matlab_short_links"])
@@ -209,7 +209,7 @@ def test_ensure_configuration_rejects_removed_options(name, value):
     env = _config()
     setattr(env, name, value)
     with pytest.raises(ConfigError, match=f"{name} was removed"):
-        matlab.ensure_configuration(None, env)
+        matlab.ensure_configuration(_APP, env)
 
 
 def test_matlab_version_rules():
@@ -439,6 +439,9 @@ def test_form_matlab_name_both_length_limits(length):
 # --- matlab_version / namelengthmax ------------------------------------------
 
 
+_APP = SimpleNamespace(srcdir=".")
+
+
 def _config(version="R2026a"):
     return SimpleNamespace(
         matlab_short_links=None,
@@ -447,6 +450,8 @@ def _config(version="R2026a"):
         matlab_src_code_project_root=None,
         matlab_src_include_patterns=["**/*"],
         matlab_src_exclude_patterns=[],
+        matlab_src_sidecar_suffixes=[],
+        matlab_src_encoding=None,
         matlab_version=version,
         matlab_auto_link=None,
     )

@@ -16,6 +16,7 @@ from sphinx.util.inventory import InventoryFile
 
 from sphinxcontrib import mat_handlers, mat_types
 from sphinxcontrib.mat_classify import is_hidden
+from sphinxcontrib.mat_config import CONFIG
 from sphinxcontrib.mat_types import IndexSettings, build_index
 from sphinxcontrib.matlab_apidoc import (
     ApidocOptions,
@@ -24,11 +25,6 @@ from sphinxcontrib.matlab_apidoc import (
     _names,
     generate,
     main,
-)
-from sphinxcontrib.matlab_apidoc._config import (
-    APIDOC_CONFIG,
-    BUILD_ONLY_CONFIG,
-    SOURCE_CONFIG,
 )
 from sphinxcontrib.matlab_apidoc._generate import MARKER, build_pages, render
 
@@ -1400,14 +1396,16 @@ def test_conf_dir_needs_conf_py(tmp_path, capsys, monkeypatch):
 
 
 def test_cli_defaults_match_the_build(make_app, project):
-    app = make_app(srcdir=project)
-    options = app.config._options
-    for name, default in SOURCE_CONFIG.items():
-        assert options[name].default == default, name
-    for name, (default, _) in APIDOC_CONFIG.items():
-        assert (options[name].default, options[name].rebuild) == (default, ""), name
-    ours = {name for name in options if name.startswith("matlab_")}
-    assert ours == {*SOURCE_CONFIG, *APIDOC_CONFIG, *BUILD_ONLY_CONFIG}
+    def ours(options):
+        return {
+            name: (opt.default, opt.rebuild)
+            for name, opt in options.items()
+            if name.startswith("matlab_")
+        }
+
+    build = ours(make_app(srcdir=project).config._options)
+    assert build == ours(_cli.read_conf(str(project))._options)
+    assert set(build) == set(CONFIG)
 
 
 # --- POSIX-only names -------------------------------------------------------
