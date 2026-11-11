@@ -46,10 +46,10 @@ def write(root, files, rst=None):
         if isinstance(content, bytes):
             target.write_bytes(content)
         else:
-            target.write_text(content)
+            target.write_text(content, encoding="utf-8")
     if rst is not None:
-        (root / "conf.py").write_text(CONF)
-        (root / "index.rst").write_text(rst)
+        (root / "conf.py").write_text(CONF, encoding="utf-8")
+        (root / "index.rst").write_text(rst, encoding="utf-8")
 
 
 def refs(source_index):

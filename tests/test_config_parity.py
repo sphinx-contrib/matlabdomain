@@ -319,7 +319,9 @@ def _build_html(root, tmp_path):
         sys.path[:] = saved
         sys.modules.pop("t11mod", None)
     pages = {
-        str(p.relative_to(tmp_path / "out")): p.read_text(errors="replace")
+        p.relative_to(tmp_path / "out").as_posix(): p.read_text(
+            encoding="utf-8", errors="replace"
+        )
         for p in sorted((tmp_path / "out").rglob("*.html"))
         if "_static" not in p.parts
     }

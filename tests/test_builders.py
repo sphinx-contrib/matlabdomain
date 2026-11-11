@@ -127,7 +127,7 @@ def test_json_redirects_point_at_files_that_exist(make_app, tmp_path):
     ]
     assert redirects
     for redirect in redirects:
-        url = re.search(r'url=([^"#]*)', redirect.read_text()).group(1)  # type: ignore[union-attr]
+        url = re.search(r'url=([^"#]*)', redirect.read_text(encoding="utf-8")).group(1)  # type: ignore[union-attr]
         target = (redirect.parent / url).resolve()
         if url.endswith("/"):
             target = target / "index.html"

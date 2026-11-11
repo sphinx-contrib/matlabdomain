@@ -350,7 +350,7 @@ def test_link_to_a_moved_object_after_another_builder(make_app, tmp_path, check)
         _write(root, "c.rst", "C\n=\n\n.. mat:function:: manual\n")
 
     outdir = html_edit_html(make_app, tmp_path, move, check)
-    assert 'href="c.html#mat-manual"' in (outdir / "b.html").read_text()
+    assert 'href="c.html#mat-manual"' in (outdir / "b.html").read_text(encoding="utf-8")
 
 
 @with_and_without_check(
@@ -371,7 +371,7 @@ def test_changed_help_after_another_builder(make_app, tmp_path, check):
         _write(root, "src/alpha.m", "function alpha()\n% alpha new help.\nend\n")
 
     outdir = html_edit_html(make_app, tmp_path, edit, check)
-    assert "alpha new help." in (outdir / "index.html").read_text()
+    assert "alpha new help." in (outdir / "index.html").read_text(encoding="utf-8")
 
 
 @with_and_without_check(
