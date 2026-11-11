@@ -12,7 +12,8 @@ import zlib
 from collections.abc import Callable
 from pathlib import Path
 
-# Model files are untrusted input: bound everything that is read.
+# Model files may be corrupt or huge (project files are trusted): bound
+# everything that is read.
 MAX_FILE_BYTES = 1024 * 1024 * 1024
 MAX_ENTRIES = 100_000
 MAX_PART_BYTES = 256 * 1024 * 1024
