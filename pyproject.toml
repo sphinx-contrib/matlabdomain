@@ -111,6 +111,7 @@ relative_files = true
 source_pkgs = [
     "sphinxcontrib.mat_api_check",
     "sphinxcontrib.mat_classify",
+    "sphinxcontrib.mat_config",
     "sphinxcontrib.mat_directives",
     "sphinxcontrib.mat_documenters",
     "sphinxcontrib.mat_handlers",
