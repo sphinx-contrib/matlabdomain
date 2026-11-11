@@ -472,6 +472,7 @@ def test_folder_directive_and_roles(make_app, tmp_path):
     app.build()
     warnings = app.warning.getvalue()
     assert "@C/ is a class folder; document its class instead" in warnings
+    assert "[mat.directive]" in warnings
     objects = app.env.domaindata["mat"]["objects"]
     assert objects["a/"] == ("index", "folder", "a/")
     assert objects["+pk/"] == ("index", "folder", "pk")

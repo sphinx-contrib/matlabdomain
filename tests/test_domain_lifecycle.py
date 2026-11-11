@@ -507,7 +507,9 @@ def test_note_object(make_app, srcdir):
     assert app.warning.getvalue() == warnings_before
 
     dom.note_object("some/Thing.m", "class", "Thing", location=("index_first", 3))
-    assert "duplicate object description of some/Thing.m" in app.warning.getvalue()
+    warning = app.warning.getvalue()
+    assert "duplicate object description of some/Thing.m" in warning
+    assert "[mat.duplicate]" in warning
     assert dom.data["objects"]["some/Thing.m"] == ("index_first", "class", "Thing")
 
 

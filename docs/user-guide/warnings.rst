@@ -99,7 +99,18 @@ What each warning means
    of the directive. Check the name, the current folder
    (:doc:`referencing`) and :confval:`matlab_src_code_project_root`.
    Description directives (``mat:function``) never read a file and never
-   get it (:doc:`documenting`).
+   get it (:doc:`documenting`). A name in ``:members:`` that the object
+   does not have gets it too.
+
+``mat.directive``
+   A directive got an argument of the wrong kind: ``mat:folder`` names a
+   class folder (document the class instead), or ``mat:autofolder`` has
+   arguments or a return annotation (a folder has neither).
+
+``mat.duplicate``
+   The same object is described twice (add ``:no-index:`` to one of the
+   descriptions), or two objects would get the same anchor, so the second
+   cannot be linked.
 
 ``mat.apidoc``
    ``scmd apidoc``: a file that cannot be read was left out, two
@@ -129,6 +140,6 @@ When warnings appear
 Other warnings
 --------------
 
-A few messages have no subtype: an unknown directive option, a folder
-directive given a class folder, and duplicate object descriptions. Fix the
-directive; they cannot be suppressed by subtype.
+Messages from docutils and Sphinx themselves, such as an unknown directive
+option, have no ``mat`` type. Fix the directive; ``suppress_warnings`` with
+``mat`` does not hide them.

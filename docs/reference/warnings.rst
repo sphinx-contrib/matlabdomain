@@ -49,8 +49,18 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
      - a name that matches several :term:`objects <object>`
      - where the name is used
    * - ``mat.not_found``
-     - an auto :term:`directive` whose argument matches no object
+     - an auto :term:`directive` whose argument matches no object; a name
+       in ``:members:`` that is not a member
      - where the directive is
+   * - ``mat.directive``
+     - a directive argument of the wrong kind: a class folder given to
+       ``mat:folder``, arguments or a return annotation given to
+       ``mat:autofolder``
+     - where the directive is
+   * - ``mat.duplicate``
+     - an object described twice, or two objects that would get the same
+       anchor
+     - where the second description is
    * - ``mat.sidecar``
      - a sidecar doc without a heading, a ``mat:autosidecar`` reference
        that is not an indexed sidecar doc, a project root on another drive

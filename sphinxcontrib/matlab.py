@@ -430,6 +430,8 @@ class MatObject(ObjectDescription):
                 ", ".join(self.state.document.ids[target_id]["names"]) or "?",
                 target_id,
                 ref,
+                type="mat",
+                subtype="duplicate",
                 location=(self.env.docname, self.lineno),
             )
 
@@ -657,6 +659,8 @@ class MatFolder(MatObject):
                 "[sphinxcontrib-matlabdomain] %s is a class folder; "
                 "document its class instead",
                 ref,
+                type="mat",
+                subtype="directive",
                 location=(self.env.docname, self.lineno),
             )
             raise ValueError
@@ -973,10 +977,12 @@ class MATLABDomain(Domain):
         objects = self.data["objects"]
         if name in objects and location is not None:
             logger.warning(
-                "duplicate object description of %s, other instance in %s, "
-                "use :noindex: for one of them",
+                "[sphinxcontrib-matlabdomain] duplicate object description of %s, "
+                "other instance in %s, use :no-index: for one of them",
                 name,
                 self.env.doc2path(objects[name][0]),
+                type="mat",
+                subtype="duplicate",
                 location=location,
             )
         objects[name] = (self.env.docname, objtype, display or name)

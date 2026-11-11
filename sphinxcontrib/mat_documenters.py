@@ -182,6 +182,8 @@ class MatlabDocumenter(PyDocumenter):
                 "[sphinxcontrib-matlabdomain] Invalid signature for mat:auto%s (%r)",
                 self.objtype,
                 self.name,
+                type="mat",
+                subtype="directive",
             )
             return False
         target, args, retann = match.groups()
@@ -604,6 +606,8 @@ class MatlabDocumenter(PyDocumenter):
                         ),
                         mname,
                         self.fullname,
+                        type="mat",
+                        subtype="not_found",
                     )
         else:
             # __dict__ contains only the members directly defined in
@@ -860,6 +864,8 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
                     "signature arguments or return annotation given for autofolder %s"
                 ),
                 self.fullname,
+                type="mat",
+                subtype="directive",
             )
         return ret
 
@@ -904,6 +910,8 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
                     " in :members: or __all__: folder %s, attribute %s",
                     safe_getattr(self.object, "__name__", "???"),
                     mname,
+                    type="mat",
+                    subtype="not_found",
                 )
         return False, ret
 
