@@ -364,28 +364,28 @@ LINK_CYCLES = {
 MAX_LISTED_FOLDERS = 50
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="G4-T7: a link cycle in the root repeats the tree (two: exponentially)",
-)
-@pytest.mark.parametrize("kind", LINK_KINDS)
-@pytest.mark.parametrize("cycle", sorted(LINK_CYCLES))
-def test_link_cycle_is_walked_once(tmp_path, monkeypatch, cycle, kind):
-    root = tmp_path / "root"
+def _cycle_tree(root, cycle, kind):
     for path in ("top.m", "a/fa.m", "b/fb.m"):
         (root / path).parent.mkdir(parents=True, exist_ok=True)
         stem = path.rpartition("/")[2][:-2]
         (root / path).write_text(FUNCTION.format(name=stem, help="HELP"))
     for link, target in LINK_CYCLES[cycle]:
         _link(root / target, root / link, kind)
+
+
+@pytest.mark.parametrize("kind", LINK_KINDS)
+@pytest.mark.parametrize("cycle", sorted(LINK_CYCLES))
+def test_link_cycle_is_walked_once(tmp_path, monkeypatch, cycle, kind):
+    root = tmp_path / "root"
+    _cycle_tree(root, cycle, kind)
     listed = [0]
     original = mat_types._Indexer.list
 
-    def bounded(self, mod):
+    def bounded(self, mod, *args):
         listed[0] += 1
         if listed[0] > MAX_LISTED_FOLDERS:
             raise AssertionError(f"the walk repeats the tree: {mod.ref[:80]}...")
-        return original(self, mod)
+        return original(self, mod, *args)
 
     monkeypatch.setattr(mat_types._Indexer, "list", bounded)
     source_index = mat_types.build_index(mat_types.IndexSettings(str(root)))
@@ -397,6 +397,88 @@ def test_link_cycle_is_walked_once(tmp_path, monkeypatch, cycle, kind):
             for n in range(len(parts) + 1)
         ]
         assert len(set(chain)) == len(chain), record["reference"]
+
+
+# What the walk indexes and warns for each cycle: a link to the folder it is
+# in or to a folder above it (up to the root) is not followed.
+CYCLE_RESULTS = {
+    "to-parent": (["a/fa.m", "b/fb.m", "top.m"], ["a/loop/"]),
+    "to-itself": (["a/fa.m", "b/fb.m", "top.m"], ["a/self/"]),
+    "two-to-parent": (["a/fa.m", "b/fb.m", "top.m"], ["a/loop1/", "a/loop2/"]),
+    # Each link is followed once, from the other folder; the second link on
+    # that path leads back.
+    "mutual": (
+        ["a/fa.m", "a/x/fb.m", "b/fb.m", "b/y/fa.m", "top.m"],
+        ["a/x/y/", "b/y/x/"],
+    ),
+}
+
+
+@pytest.mark.parametrize("kind", LINK_KINDS)
+@pytest.mark.parametrize("cycle", sorted(CYCLE_RESULTS))
+def test_link_cycle_warns_once_per_link(tmp_path, cycle, kind):
+    root = tmp_path / "root"
+    _cycle_tree(root, cycle, kind)
+    logged = []
+
+    def warn(subtype, message, location=None):
+        logged.append((subtype, message))
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(mat_types, "_warn", warn)
+        source_index = mat_types.build_index(mat_types.IndexSettings(str(root)))
+    indexed, links = CYCLE_RESULTS[cycle]
+    assert sorted(r["reference"] for r in source_index.index.values()) == indexed
+    assert sorted(m.split(" ")[0] for s, m in logged) == links
+    assert {s for s, _ in logged} == {"link_cycle"}
+    target = {
+        "a/loop/": root,
+        "a/loop1/": root,
+        "a/loop2/": root,
+        "a/self/": root / "a",
+        "a/x/y/": root / "a",
+        "b/y/x/": root / "b",
+    }
+    for _, message in logged:
+        ref = message.split(" ")[0]
+        real = os.path.realpath(target[ref])
+        assert message == (
+            f"{ref} links to {real}, a folder that contains it; the link is not "
+            "followed."
+        )
+
+
+def test_link_cycle_through_the_root_in_a_build(make_app, tmp_path):
+    root = tmp_path / "root"
+    files = {
+        "top.m": FUNCTION.format(name="top", help="TOP HELP"),
+        "a/fa.m": FUNCTION.format(name="fa", help="FA HELP"),
+        "doc.rst": "Doc\n===\n",
+    }
+    write(root, files)
+    write(root / "docs", {}, conf=CONF.replace('"."', '".."'))
+    _link(root, root / "a" / "up", "symlink")
+    app = make_app(
+        srcdir=root / "docs",
+        confoverrides={"matlab_src_sidecar_suffixes": [".rst"]},
+    )
+    app.build()
+    assert sorted(refs(app)) == ["a/fa.m", "top.m"]
+    assert "a/up/" not in folders(app)
+    warnings = app.warning.getvalue()
+    # The quiet walk of the sidecar docs skips the cycle too, without a
+    # second warning.
+    assert warnings.count("[mat.link_cycle]") == 1, warnings
+    assert "a/up/ links to " in warnings
+
+
+def test_link_cycle_in_the_sidecar_walk(tmp_path):
+    root = tmp_path / "root"
+    (root / "a").mkdir(parents=True)
+    (root / "a" / "doc.rst").write_text("Doc\n===\n")
+    _link(root, root / "a" / "up", "symlink")
+    settings = mat_types.IndexSettings(str(root), sidecar_suffixes=(".rst",))
+    assert mat_types.sidecar_paths(settings) == [str(root / "a" / "doc.rst")]
 
 
 # --- parallel reads ----------------------------------------------------------

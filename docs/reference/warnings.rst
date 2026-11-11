@@ -45,6 +45,10 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
    * - ``mat.outside_root``
      - a link below the project root that points outside it
      - every build
+   * - ``mat.link_cycle``
+     - a link that points to the folder it is in or a folder above it (a
+       cycle); it is not followed
+     - every build
    * - ``mat.ambiguous``
      - a name that matches several :term:`objects <object>`
      - where the name is used

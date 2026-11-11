@@ -234,7 +234,10 @@ Source files:
   ``CODE_OF_CONDUCT.*`` and ``SECURITY.*``) select the files: globs
   relative to the project root, matched like ``exclude_patterns``,
   case-sensitive (#271). A link below the root that leaves it is skipped
-  with a ``mat.outside_root`` warning.
+  with a ``mat.outside_root`` warning; a link to the folder it is in or a
+  folder above it (a cycle, which repeated the tree up to the operating
+  system's link limit, or without end for two such links) is skipped with
+  a ``mat.link_cycle`` warning.
 * Folders whose names start with ``_`` are documented like any other
   folder (#337). Hidden folders (``.git``) and Sphinx output are skipped:
   the ``_build`` folder of the Sphinx source folder, and folders with

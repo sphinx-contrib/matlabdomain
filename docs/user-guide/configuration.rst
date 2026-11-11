@@ -138,7 +138,10 @@ Some files and folders are never indexed or need care:
   they are large.
 * A link or Windows junction below the root that points outside it is left
   out, with one ``mat.outside_root`` warning. Links that stay inside the
-  root are followed.
+  root are followed, and the files they lead to are documented at both
+  paths, except a link to the folder it is in or to a folder above it (up
+  to the root): it would repeat that folder without end, so it is not
+  followed, with one ``mat.link_cycle`` warning.
 * Generated data files can be large and slow to parse; exclude them
   (``**/data/**``) when they need no documentation.
 * Git submodules below the root are indexed like any folder when they are

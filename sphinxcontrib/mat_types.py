@@ -1032,23 +1032,28 @@ class _Indexer:
     def run(self):
         root = MatModule(os.path.basename(self.basedir), self.basedir, ROOT_REFERENCE)
         self.out.entities[ROOT_REFERENCE] = root
-        self.list(root)
+        chain = (os.path.normcase(self.real_root),)
+        self.list(root, chain)
         self.descend(root)
 
     def descend(self, mod):
         kept = []
         for name, ref in mod.members:
             if ref[-1:] == "/":
-                child = self.pending.pop(ref)
-                if not self.list(child):  # a Sphinx output folder
+                child, chain = self.pending.pop(ref)
+                if not self.list(child, chain):  # a Sphinx output folder
                     continue
                 self.out.entities[ref] = child
                 self.descend(child)
             kept.append((name, ref))
         mod.members = kept
 
-    def outside(self, path, ref):
-        real = os.path.realpath(path)
+    def outside(self, path, ref, real=None):
+        """Return True, with a warning, if the link ``path`` (real path
+        ``real``) leads out of the root.
+        """
+        if real is None:
+            real = os.path.realpath(path)
         if _within(real, self.real_root):
             return False
         _warn(
@@ -1058,9 +1063,32 @@ class _Indexer:
         )
         return True
 
-    def list(self, mod):
+    def folder_chain(self, path, ref, key, chain):
+        """Return the real paths (``normcase``) of the folder ``path`` and the
+        folders above it on the walk, up to the root; None, with a warning, for
+        a link that leaves the root or leads back to one of those folders (a
+        cycle).
+        """
+        if not _is_link(path):
+            # The real path of a folder that is not a link: no system call.
+            return (*chain, os.path.join(chain[-1], os.path.normcase(key)))
+        real = os.path.realpath(path)
+        if self.outside(path, ref, real):
+            return None
+        normal = os.path.normcase(real)
+        if normal in chain:
+            _warn(
+                "link_cycle",
+                f"{ref} links to {real}, a folder that contains it; the link is "
+                "not followed.",
+            )
+            return None
+        return (*chain, normal)
+
+    def list(self, mod, chain):
         """List the folder ``mod`` into its members; return False, with no
-        members, if it is a Sphinx output folder.
+        members, if it is a Sphinx output folder. ``chain`` holds the real
+        paths of ``mod`` and the folders above it on the walk.
         """
         mod.members = []
         try:
@@ -1115,9 +1143,10 @@ class _Indexer:
                         subtype="folder_name",
                     )
                     continue
-                if _is_link(path) and self.outside(path, ref):
+                child_chain = self.folder_chain(path, ref, key, chain)
+                if child_chain is None:
                     continue
-                self.pending[ref] = MatModule(key, path, ref)
+                self.pending[ref] = (MatModule(key, path, ref), child_chain)
                 mod.members.append((key, ref))
                 continue
             handler = handler_for(path)

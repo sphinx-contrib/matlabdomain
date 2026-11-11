@@ -80,6 +80,12 @@ What each warning means
    A link or Windows junction below the project root points outside it; it
    is not followed (:doc:`configuration`).
 
+``mat.link_cycle``
+   A link or Windows junction points to the folder it is in or to a folder
+   above it, up to the project root, so following it would list the same
+   files again and again. It is not followed; its folder is documented
+   once, at its own path (:doc:`configuration`).
+
 ``mat.ambiguous``
    A name in a :term:`directive`, :term:`role`, "See also" line or auto-link
    matches several :term:`objects <object>`, or a reference matches objects in
@@ -130,8 +136,8 @@ When warnings appear
 
 * On every build, for every indexed file: ``mat.encoding``,
   ``mat.empty_code_file``, ``mat.not_callable``, ``mat.outside_root``,
-  ``mat.invalid_matlab`` for NUL bytes, and ``mat.parse_error`` for a file
-  or folder that cannot be read.
+  ``mat.link_cycle``, ``mat.invalid_matlab`` for NUL bytes, and
+  ``mat.parse_error`` for a file or folder that cannot be read.
 * Once per build, for the files that the pages read in that build use:
   ``mat.invalid_matlab`` and ``mat.parse_error`` found while parsing. A file
   that no page uses is not parsed, so it does not get these (the
