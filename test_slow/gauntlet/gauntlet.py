@@ -1,8 +1,9 @@
 """Real-project gauntlet: scmd apidoc and sphinx-build on each checkout.
 
-Usage, from anywhere (fetch.py first; this script fetches nothing):
-  python test_slow/gauntlet/gauntlet.py [NAME ...] [--out DIR] [--trials N]
-      [--jobs] [--variant {all,api,conf}] [--projects FILE]
+Usage, from anywhere (--fetch runs fetch.py first; without it, nothing is
+cloned and a missing checkout is a problem):
+  python test_slow/gauntlet/gauntlet.py [NAME ...] [--fetch] [--out DIR]
+      [--trials N] [--jobs] [--variant {all,api,conf}] [--projects FILE]
 
 For each enabled project in the list (NAME arguments keep the projects whose
 name contains one of them), on its checkout test_slow/repos/<name>:
@@ -412,6 +413,11 @@ def main():
         default=P.HERE / "runs" / "latest",
         help="default: %(default)s",
     )
+    parser.add_argument(
+        "--fetch",
+        action="store_true",
+        help="run fetch.py for these projects first (clones what is missing)",
+    )
     parser.add_argument("--trials", type=int, default=3)
     parser.add_argument(
         "--jobs", action="store_true", help="compare each build with -j auto"
@@ -426,6 +432,10 @@ def main():
         "--projects", default=P.LIST, help="the project list (default: %(default)s)"
     )
     args = parser.parse_args()
+    if args.fetch:
+        fetch = [sys.executable, str(P.HERE / "fetch.py"), *args.names]
+        if subprocess.run([*fetch, "--projects", str(args.projects)]).returncode:
+            sys.exit("fetch.py failed; nothing was run")
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
 
@@ -459,6 +469,13 @@ def main():
     for name, items in bad.items():
         for item in items:
             print(f"  {name}: {item}")
+    platform = {"win32": "windows", "darwin": "macos"}.get(sys.platform, sys.platform)
+    baseline = P.HERE / "summaries" / f"{platform}.json"
+    if baseline.is_file() and not args.quickstart:
+        print(
+            f"Compare with the saved baseline:\n  python {P.HERE / 'compare.py'}"
+            f" {baseline} {out}"
+        )
     sys.exit(1 if bad else 0)
 
 

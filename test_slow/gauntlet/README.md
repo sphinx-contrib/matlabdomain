@@ -11,7 +11,7 @@ differences. Added in Phase 8 (14 projects, about 24,000 `.m` files).
 | `fetch.py` | Clones a missing project into `../repos/<name>` and moves an existing checkout to its commit. |
 | `gauntlet.py` | Runs the gauntlet on the checkouts and writes `results.json` (the summary) and `manifest.json`. Clones nothing. |
 | `compare.py` | Compares two runs, or a run and a saved summary. |
-| `summaries/` | Saved summaries (`results.json` files); the Phase 8 and Phase 9 Windows and Linux runs. |
+| `summaries/` | The baseline per platform (`linux.json`, `windows.json`: the `results.json` of the Phase 9 runs). |
 
 `test_slow/repos/` (checkouts, shared with the profiling and Simulink tools) and
 `runs/` (output) are ignored by Git.
@@ -22,10 +22,10 @@ From the `matlabdomain` repo root, with the project's environment
 (`uv sync --all-extras`; on Windows use `.venv\Scripts\python`):
 
 ```bash
-python test_slow/gauntlet/fetch.py               # once, then after editing the list
+python test_slow/gauntlet/fetch.py               # or gauntlet.py --fetch
 python test_slow/gauntlet/gauntlet.py --jobs     # all projects -> runs/latest
 python test_slow/gauntlet/gauntlet.py matpower --trials 1 --out test_slow/gauntlet/runs/mp
-python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase9-linux.json test_slow/gauntlet/runs/latest
+python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/linux.json test_slow/gauntlet/runs/latest
 ```
 
 NAME arguments keep the projects whose name contains one of them. For each
@@ -53,7 +53,7 @@ table of API pages, indexed files, warnings and times per project.
 python test_slow/gauntlet/gauntlet.py --quickstart --out test_slow/gauntlet/runs/quickstart
 ```
 
-To save a summary, copy `runs/<name>/results.json` to `summaries/<name>.json`.
+To update a baseline, copy `runs/<name>/results.json` to `summaries/<platform>.json`.
 
 ## Repeatable commits
 

@@ -120,9 +120,11 @@ explains how:
 
 .. code-block:: console
 
-   $ python test_slow/gauntlet/fetch.py
-   $ python test_slow/gauntlet/gauntlet.py --jobs
-   $ python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase9-linux.json test_slow/gauntlet/runs/latest
+   $ uv run python test_slow/gauntlet/gauntlet.py --fetch --jobs
+   $ uv run python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/linux.json test_slow/gauntlet/runs/latest
+
+It needs Git, network access the first time and about 4 GB of disk, and
+takes about 20 minutes on Linux.
 
 With ``--quickstart`` it runs ``scmd quickstart -q`` on a
 temporary ``git worktree`` of each project instead, then a ``-n`` build of

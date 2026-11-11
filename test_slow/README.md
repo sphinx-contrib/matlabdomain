@@ -14,43 +14,36 @@ collect them.
 
 ## Run the gauntlet
 
-Needs Git, network access for the first fetch, and disk space for the
-checkouts (about 5 GB for the 14 projects). Run from the `matlabdomain`
-repo root in the project's environment (`uv sync --all-extras`; on Windows
-use `.venv\Scripts\python` for `python`).
+**Needs:** Git; network access the first time (it clones 14 open-source
+MATLAB projects at pinned commits); about 4 GB of disk for the checkouts in
+`repos/`; the project's environment (`uv sync`). No MATLAB.
 
-1. Fetch the projects in `gauntlet/projects.toml` into `repos/`.
-   Existing checkouts are reused; nothing is cloned twice.
+**One command**, from the `matlabdomain` repo root:
 
-   ```bash
-   python test_slow/gauntlet/fetch.py
-   ```
+```bash
+uv run python test_slow/gauntlet/gauntlet.py --fetch --jobs
+```
 
-2. Run the gauntlet. Output goes to `gauntlet/runs/latest` (`--out` picks
-   another folder); NAME arguments limit the projects.
+`--fetch` clones the missing projects and moves each checkout to the commit
+in `gauntlet/projects.lock.toml` (later runs reuse the checkouts). `--jobs`
+also builds each project with `-j auto` and compares. NAME arguments limit
+the projects (`... gauntlet.py matpower chebfun --trials 1`).
 
-   ```bash
-   python test_slow/gauntlet/gauntlet.py --jobs
-   python test_slow/gauntlet/gauntlet.py matpower chebfun --trials 1
-   ```
+**Time:** about 20 minutes on Linux and 10 on Windows (the saved
+baselines), plus the first clone. Output: `gauntlet/runs/latest`.
 
-   Exit 0: no crash, traceback, duplicate object, changed rerun, serial vs
-   `-j` difference, or checkout off its commit. Otherwise the problems are
-   listed at the end.
+**Reading the result:** exit 0 means no crash, traceback, duplicate object,
+rerun that changes pages, serial vs `-j` difference (except matpower,
+expected), or checkout off its commit. Exit 1 lists each problem at the end,
+as `project: problem`. Then compare with the saved baseline for your
+platform; the run prints the command:
 
-3. Compare with a saved summary (or another run folder):
+```bash
+uv run python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/linux.json test_slow/gauntlet/runs/latest
+```
 
-   ```bash
-   python test_slow/gauntlet/compare.py test_slow/gauntlet/summaries/phase9-linux.json test_slow/gauntlet/runs/latest
-   ```
-
-   It lists, per project, changes in the commit, pages, exit codes and
-   warnings by subtype; for two run folders also the generated pages and
-   the warnings themselves.
-
-To test other projects, edit `gauntlet/projects.toml` (a project without
-`commit` stays on the commit of its first fetch, recorded in
-`gauntlet/projects.lock.toml`; `fetch.py --update` moves it to the newest)
-and run `fetch.py` again. To keep a run's summary, copy its `results.json`
-to `gauntlet/summaries/`, replacing the older summary of that platform:
-keep one per platform.
+It lists, per project, changes in pages, exit codes and warnings by
+subtype. A change is not a failure: decide whether it is intended. When
+it is, replace `summaries/<platform>.json` with the run's `results.json`
+(one baseline per platform). More options and what is expected:
+[gauntlet/README.md](gauntlet/README.md).
