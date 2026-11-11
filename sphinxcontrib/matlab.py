@@ -253,7 +253,7 @@ def _pseudo_parse_arglist(signode, arglist):
         signode += paramlist
 
 
-class MatObject(ObjectDescription):
+class MatObjectDirective(ObjectDescription):
     """Description of a general MATLAB object."""
 
     option_spec = {
@@ -453,7 +453,7 @@ class MatObject(ObjectDescription):
         self.env.temp_data["mat:objfolder"] = self.previous_objfolder
 
 
-class MatModulelevel(MatObject):
+class MatModulelevel(MatObjectDirective):
     """Description of an object on folder level (functions, data, application)."""
 
     def needs_arglist(self):
@@ -470,14 +470,14 @@ class MatModulelevel(MatObject):
             return ""
 
 
-class MatSimulinkObject(MatObject):
+class MatSimulinkObject(MatObjectDirective):
     """Description of a Simulink model, library, subsystem file or library
     block. The signature is its name as Simulink shows it, without
     arguments; a ``:reference:`` with a newline is written as JSON text.
     """
 
     doc_field_types = [
-        *MatObject.doc_field_types,
+        *MatObjectDirective.doc_field_types,
         TypedField(
             "maskparameter",
             label=translation("Mask parameters"),
@@ -550,11 +550,14 @@ SIMULINK_LABELS = {
 }
 
 
-class MatClasslike(MatObject):
+class MatClasslike(MatObjectDirective):
     """Description of a class."""
 
     flags = ("abstract", "sealed")
-    option_spec = {**MatObject.option_spec, **dict.fromkeys(flags, directives.flag)}
+    option_spec = {
+        **MatObjectDirective.option_spec,
+        **dict.fromkeys(flags, directives.flag),
+    }
 
     def _object_hierarchy_parts(self, sig):
         """Return a tuple of strings, one entry for each part of the object's \
@@ -579,14 +582,14 @@ class MatClasslike(MatObject):
         return translation("%s (class in %s)") % (name_cls[1], folder)
 
     def before_content(self):
-        MatObject.before_content(self)
+        MatObjectDirective.before_content(self)
         # A class signature always parses (mat_sig_re matches any line).
         if self.names:  # pragma: no branch
             self.env.temp_data["mat:class"] = self.names[0]
             self.clsname_set = True
 
 
-class MatClassmember(MatObject):
+class MatClassmember(MatObjectDirective):
     """Description of a class member (methods, attributes)."""
 
     def needs_arglist(self):
@@ -610,7 +613,7 @@ class MatClassmember(MatObject):
         return kind % (member, clsname)
 
     def before_content(self):
-        MatObject.before_content(self)
+        MatObjectDirective.before_content(self)
         if self.names and not self.env.temp_data.get("mat:class"):
             ref, display = self.names[-1]
             if "." in display:
@@ -623,17 +626,23 @@ class MatMethodlike(MatClassmember):
     """Description of a method."""
 
     flags = ("abstract", "sealed")
-    option_spec = {**MatObject.option_spec, **dict.fromkeys(flags, directives.flag)}
+    option_spec = {
+        **MatObjectDirective.option_spec,
+        **dict.fromkeys(flags, directives.flag),
+    }
 
 
 class MatAttributelike(MatClassmember):
     """Description of a property or enumeration value."""
 
     flags = ("abstract", "constant", "dependent", "read-only")
-    option_spec = {**MatObject.option_spec, **dict.fromkeys(flags, directives.flag)}
+    option_spec = {
+        **MatObjectDirective.option_spec,
+        **dict.fromkeys(flags, directives.flag),
+    }
 
 
-class MatFolder(MatObject):
+class MatFolder(MatObjectDirective):
     """Description of a folder.
 
     A valid ``+`` folder shows ``namespace <MATLAB name>``; any other folder
