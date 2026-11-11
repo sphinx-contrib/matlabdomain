@@ -1766,9 +1766,10 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
         kind, value = target
         if kind == "url":
             return [f"{label}`{value} <{value}>`__"]
-        if value == self.ref or "\n" in value:
+        if same_block(value, self.ref):
             return []
-        return [f"{label}:mat:obj:`{value}`"]
+        # A role's target writes a line break in a block name as a space.
+        return [f"{label}:mat:obj:`{' '.join(value.split())}`"]
 
     def metadata_lines(self, metadata):
         keys = self.options.metadata

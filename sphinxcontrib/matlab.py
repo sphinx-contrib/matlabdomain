@@ -915,6 +915,7 @@ class MATLABDomain(Domain):
         super().__init__(env)
         # display name -> references of documented objects (built lazily)
         self._displays = None
+        self._spaced: dict[str, str] = {}  # built with _displays
         # mat_urls.addresses (built lazily)
         self._stable_urls = None
         # sidecar reference -> the first document that renders it (built lazily)
@@ -1049,9 +1050,22 @@ class MATLABDomain(Domain):
     def _by_display(self, name):
         if self._displays is None:
             self._displays = {}
+            # a block with a line break in its name, by its reference with spaces
+            self._spaced = {}
             for ref, (_, _, display) in self.data["objects"].items():
                 self._displays.setdefault(display, []).append(ref)
+                if "\n" in ref:
+                    self._spaced[" ".join(ref.split())] = ref
         return self._displays.get(name, [])
+
+    def _documented(self, ref):
+        """Return the documented reference ``ref`` names: itself, or the block
+        it names with spaces for line breaks (as a role's target writes it).
+        """
+        if ref in self.data["objects"]:
+            return ref
+        self._by_display("")
+        return self._spaced.get(ref, ref)
 
     def _scope(self, reference):
         # Folder a documented object's MATLAB name is visible from.
@@ -1085,6 +1099,7 @@ class MATLABDomain(Domain):
             exact.append(f"{cls}.{name}")
         if folder:
             exact.append(mat_naming.join_reference(folder, name))
+        exact = [self._documented(r) for r in exact]
         # (candidates, first only): exact references are tried in order.
         steps = [([r for r in exact if r in objects], True)]
         if folder:

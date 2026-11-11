@@ -39,7 +39,9 @@ HID = (
             (
                 "Newline",
                 '""',
-                '"' + LINKER.format('\\"hid.mdl/Two\\" + newline + \\"Lines\\"') + '"',
+                '"'
+                + LINKER.format('\\"probeLib.slx/Two\\" + newline + \\"Lines\\"')
+                + '"',
             ),
         ]
     )
@@ -191,14 +193,17 @@ def test_help_links_and_hidden_parameters(make_app, tmp_path):
         f".. mat:autosimulink_library_block:: hid.mdl/{name}\n\n"
         for name in ("M", "Self", "Other", "Newline")
     )
-    index += ".. mat:autosimulink_model:: probeModel\n"
+    index += ".. mat:autosimulink_model:: probeModel\n\n"
+    index += ".. mat:autosimulink_library_block:: probeLib.slx/Two Lines\n"
     page, warnings = build(make_app, tmp_path, index)
     assert warnings == ""
     blocks = text(page).split("Simulink library block")[1:]
     assert 'href="https://example.org/help"' in page
     assert "Help" not in blocks[1]  # its own page
     assert 'href="#mat-probeModel.slx"' in page
-    assert "Help" not in blocks[3].split("Simulink model")[0]  # a newline in it
+    # a line break in the target: a link all the same
+    assert "Help: probeLib.slx/Two Lines" in blocks[3]
+    assert 'href="#mat-probeLib.slx/Two~0ALines"' in page
     assert "Mask type: a`b" in blocks[2]
     assert "Mask type" not in blocks[1]
     # hidden and unnamed parameters are left out; a value with ` is escaped
