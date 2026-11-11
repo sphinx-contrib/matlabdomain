@@ -569,7 +569,7 @@ def test_folder_paths_and_ambiguous_names(make_app, tmp_path):
     links = html(app).split("Links:")[1].split("</p>")[0]
     assert object_hrefs(links) == ["mat-+pk/", "mat-pk/"]  # :any:`f` unlinked
     warnings = app.warning.getvalue()
-    assert "'ns' matches several folders: a/+ns/, b/+ns/" in warnings
+    assert "'ns' matches several objects: a/+ns/, b/+ns/" in warnings
     assert "'k' matches several objects: a/k.m, b/k.m" in warnings
     assert "'f' matches several objects: a/f.m, b/f.m" in warnings
     assert "more than one target found" not in warnings

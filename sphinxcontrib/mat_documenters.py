@@ -62,6 +62,7 @@ from .mat_types import (
     lookup_reference,
     resolve,
     simulink_accepts,
+    warn_ambiguous,
 )
 
 mat_ext_sig_re = re.compile(
@@ -199,15 +200,7 @@ class MatlabDocumenter(PyDocumenter):
         if len(found) != 1:
             location = (self.env.docname, self.directive.lineno)
             if found:
-                logger.warning(
-                    "[sphinxcontrib-matlabdomain] %r matches several objects: %s; "
-                    "use a path reference",
-                    target,
-                    ", ".join(sorted(ref for ref, _ in found)),
-                    type="mat",
-                    subtype="ambiguous",
-                    location=location,
-                )
+                warn_ambiguous(target, [ref for ref, _ in found], location)
             else:
                 logger.warning(
                     "[sphinxcontrib-matlabdomain] don't know which object to "

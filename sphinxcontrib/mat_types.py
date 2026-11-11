@@ -480,24 +480,37 @@ def find_source(dom, target, folder=None, accept=is_source_object):
     return []
 
 
+def warn_ambiguous(target, labels, location, hint="use a path reference"):
+    """Warn ``mat.ambiguous``: ``target`` matches every one of ``labels``."""
+    logger.warning(
+        "[sphinxcontrib-matlabdomain] %r matches several objects: %s; %s",
+        target,
+        ", ".join(sorted(labels)),
+        hint,
+        type="mat",
+        subtype="ambiguous",
+        location=location,
+    )
+
+
+def find_one(dom, target, folder=None, accept=is_source_object, location=None):
+    """``find_source``'s only ``(reference, object)``, or None: nothing
+    matches, or several do (then after a ``mat.ambiguous`` warning).
+    """
+    found = find_source(dom, target, folder, accept)
+    if len(found) > 1:
+        warn_ambiguous(target, [ref for ref, _ in found], location)
+    return found[0] if len(found) == 1 else None
+
+
 def folder_reference(dom, target, location=None):
     """Folder reference for a folder argument (path or namespace name)."""
     target = target.strip()
     if target in (".", ROOT_REFERENCE):
         return ROOT_REFERENCE
-    found = find_source(dom, target, accept=is_folder_object)
-    if len(found) == 1:
-        return found[0][0]
+    found = find_one(dom, target, accept=is_folder_object, location=location)
     if found:
-        logger.warning(
-            "[sphinxcontrib-matlabdomain] %r matches several folders: %s; "
-            "use a path reference",
-            target,
-            ", ".join(sorted(ref for ref, _ in found)),
-            type="mat",
-            subtype="ambiguous",
-            location=location,
-        )
+        return found[0]
     return target if target.endswith("/") else f"{target}/"
 
 

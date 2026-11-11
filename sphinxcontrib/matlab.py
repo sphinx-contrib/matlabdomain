@@ -143,8 +143,8 @@ def _check_inventories(env, node, contnode):
                 found.setdefault(getattr(item, "uri", None) or item[2], name)
     if len(found) > 1:
         node["mat:ambiguous"] = True
-        labels = [(f"{name}:{target}",) for name in found.values()]
-        MATLABDomain._warn_ambiguous(target, labels, node, "write one of them")
+        labels = [f"{name}:{target}" for name in found.values()]
+        mat_types.warn_ambiguous(target, labels, node, "write one of them")
         return contnode
     if not found:
         return None
@@ -165,7 +165,7 @@ def _check_inventories(env, node, contnode):
     }
     prefix = "" if len(names) == 1 else f"{found_in}:"
     node["mat:ambiguous"] = True
-    MATLABDomain._warn_ambiguous(target, [(prefix + ref,) for ref in refs], node)
+    mat_types.warn_ambiguous(target, [prefix + ref for ref in refs], node)
     return contnode
 
 
@@ -402,20 +402,10 @@ class MatObject(ObjectDescription):
         # A directive written by hand: use the source file it names, if any.
         dom = self.env.get_domain("mat")
         folder = self.env.temp_data.get("mat:folder")
-        found = mat_types.find_source(dom, name, folder, accept)
-        if len(found) == 1:
-            ref = found[0][0]
-            return ref, mat_types.display_name(dom, ref)
+        location = (self.env.docname, self.lineno)
+        found = mat_types.find_one(dom, name, folder, accept, location)
         if found:
-            logger.warning(
-                "[sphinxcontrib-matlabdomain] %r matches several objects: %s; "
-                "use a path reference",
-                name,
-                ", ".join(sorted(ref for ref, _ in found)),
-                type="mat",
-                subtype="ambiguous",
-                location=(self.env.docname, self.lineno),
-            )
+            return found[0], mat_types.display_name(dom, found[0])
         return (mat_naming.join_reference(folder, name) if folder else name), name
 
     def get_index_text(self, folder, name_cls):  # pragma: no cover - abstract
@@ -1161,7 +1151,7 @@ class MATLABDomain(Domain):
             if self._shadowed(matches):
                 refs = [ref for ref, _ in matches]
                 return mat_urls.chooser_link(self, builder, fromdocname, refs, contnode)
-            self._warn_ambiguous(target, matches, node)
+            mat_types.warn_ambiguous(target, [m[0] for m in matches], node)
             # Unlinked, without a second "target not found" warning.
             return contnode
         ref, entry = matches[0]
@@ -1183,18 +1173,6 @@ class MATLABDomain(Domain):
         if anchor in slugs:
             anchor = slugs[anchor][1]
         return make_refnode(builder, fromdocname, docname, anchor, contnode)
-
-    @staticmethod
-    def _warn_ambiguous(target, matches, node, hint="use a path reference"):
-        logger.warning(
-            "[sphinxcontrib-matlabdomain] %r matches several objects: %s; %s",
-            target,
-            ", ".join(sorted(match[0] for match in matches)),
-            hint,
-            type="mat",
-            subtype="ambiguous",
-            location=node,
-        )
 
     def _shadowed(self, matches):
         """Return True for objects of one MATLAB name that the project accepts
@@ -1253,9 +1231,8 @@ class MATLABDomain(Domain):
                 len({name for name, _ in found}) == 1
             ):
                 return None
-            labels = [(label,) for label in found.values()]
             hint = "write one of them" if len(names) > 1 else "use a path reference"
-            self._warn_ambiguous(target, labels, node, hint)
+            mat_types.warn_ambiguous(target, found.values(), node, hint)
             return None
         return next(iter(found), (None, None))[1]
 
@@ -1281,7 +1258,7 @@ class MATLABDomain(Domain):
                 refs = [ref for ref, _ in matches]
                 link = mat_urls.chooser_link(self, builder, fromdocname, refs, contnode)
                 return [(f"mat:{role}", link)]
-            self._warn_ambiguous(target, matches, node)
+            mat_types.warn_ambiguous(target, [m[0] for m in matches], node)
             return [(f"mat:{role}", contnode)]
         return [
             (
