@@ -12,6 +12,7 @@ from sphinxcontrib.mat_types import (
     MatObject,
     MatProperty,
     MatScript,
+    parse_warnings,
     project_root,
 )
 
@@ -544,25 +545,16 @@ def test_ClassWithBuiltinProperties(dir_test_data):
     assert obj.properties["beta"]["docstring"] == ("another overloaded property")
 
 
-# Fails when running with other test files. Warnings are already logged.
-@pytest.mark.xfail
-def test_f_with_name_mismatch(dir_test_data, caplog):
-    from logging import WARNING
-
-    caplog.clear()
+def test_f_with_name_mismatch(dir_test_data):
+    # As in MATLAB, the file name wins over the function name, silently.
     mfile = dir_test_data / "f_with_name_mismatch.m"
 
-    MatObject.parse_mfile(mfile, "f_with_name_mismatch", "test_data")
+    obj = MatObject.parse_mfile(mfile, "f_with_name_mismatch", "test_data")
 
-    records = caplog.record_tuples
-    assert records == [
-        (
-            "sphinx.matlab-domain",
-            WARNING,
-            '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch".'
-            ' Expected "f_with_name_mismatch"in module "test_data".',
-        ),
-    ]
+    assert isinstance(obj, MatFunction)
+    assert obj.name == "f_with_name_mismatch"
+    assert obj.source_warnings == []
+    assert parse_warnings(mfile, "test_data.f_with_name_mismatch", obj) == []
 
 
 def test_f_with_dummy_argument(dir_test_data):
@@ -602,22 +594,19 @@ def test_f_inputargs_error(dir_test_data):
     MatObject.parse_mfile(mfile, "f_inputargs_error", "test_data")
 
 
-# Fails when running with other test files. Warnings are already logged.
-@pytest.mark.xfail
-def test_ClassWithErrors(dir_test_data, caplog):
-    from logging import WARNING
-
-    caplog.clear()
+def test_ClassWithErrors(dir_test_data):
+    # The first line of code says class, tree-sitter parses a script:
+    # one mat.invalid_matlab warning, emitted when a page uses the file.
     mfile = dir_test_data / "ClassWithErrors.m"
 
-    MatObject.parse_mfile(mfile, "ClassWithErrors", "test_data")
+    obj = MatObject.parse_mfile(mfile, "ClassWithErrors", "test_data")
 
-    records = caplog.record_tuples
-    assert records == [
+    assert parse_warnings(mfile, "test_data.ClassWithErrors", obj) == [
         (
-            "sphinx.matlab-domain",
-            WARNING,
-            "[sphinxcontrib-matlabdomain] Parsing failed in test_data.ClassWithErrors. Check if valid MATLAB code.",
+            "invalid_matlab",
+            "test_data.ClassWithErrors: its first line of code makes it a class, "
+            "but tree-sitter parsed a script; the file may be invalid MATLAB.",
+            None,
         ),
     ]
 
@@ -631,26 +620,16 @@ def test_ClassWithLineContinuation(dir_test_data):
     assert obj.name == "ClassWithLineContinuation"
 
 
-# Fails when running with other test files. Warnings are already logged.
-@pytest.mark.xfail
-def test_ClassWithNameMismatch(dir_test_data, caplog):
-    from logging import WARNING
-
-    caplog.clear()
+def test_ClassWithNameMismatch(dir_test_data):
+    # The file name wins over the class name, silently.
     mfile = dir_test_data / "ClassWithNameMismatch.m"
 
     obj = MatObject.parse_mfile(mfile, "ClassWithNameMismatch", "test_data")
 
     assert isinstance(obj, MatClass)
-    records = caplog.record_tuples
-    assert records == [
-        (
-            "sphinx.matlab-domain",
-            WARNING,
-            '[sphinxcontrib-matlabdomain] Unexpected class name: "ClassWithMismatch". '
-            'Expected "ClassWithNameMismatch" in "test_data.ClassWithNameMismatch".',
-        ),
-    ]
+    assert obj.name == "ClassWithNameMismatch"
+    assert list(obj.methods.keys()) == ["ClassWithNameMismatch"]
+    assert parse_warnings(mfile, "test_data.ClassWithNameMismatch", obj) == []
 
 
 def test_ClassWithAttributes(dir_test_data):
@@ -663,27 +642,18 @@ def test_ClassWithAttributes(dir_test_data):
     assert obj.attrs == {"Sealed": True}
 
 
-# Fails when running with other test files. Warnings are already logged.
-@pytest.mark.xfail
-def test_ClassWithUnknownAttributes(dir_test_data, caplog):
-    from logging import WARNING
-
-    caplog.clear()
+def test_ClassWithUnknownAttributes(dir_test_data):
+    # Upstream #280: an attribute the parser does not know is kept and does
+    # not warn (there is no mat subtype for it).
     mfile = dir_test_data / "ClassWithUnknownAttributes.m"
 
     obj = MatObject.parse_mfile(mfile, "ClassWithUnknownAttributes", "test_data")
 
     assert isinstance(obj, MatClass)
     assert obj.name == "ClassWithUnknownAttributes"
+    assert obj.attrs == {"Unknown": None}
     assert list(obj.methods.keys()) == ["ClassWithUnknownAttributes"]
-    records = caplog.record_tuples
-    assert records == [
-        (
-            "sphinx.matlab-domain",
-            WARNING,
-            '[sphinxcontrib-matlabdomain] Unexpected class attribute: "Unknown". In "test_data.ClassWithUnknownAttributes".',
-        ),
-    ]
+    assert parse_warnings(mfile, "test_data.ClassWithUnknownAttributes", obj) == []
 
 
 def test_ClassWithEnumMethod(dir_test_data):
