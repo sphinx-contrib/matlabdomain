@@ -352,6 +352,53 @@ def test_pattern_through_a_link_out_of_the_root_raises(make_app, linked, kind):
         )
 
 
+# Links that make a cycle inside the root: (link, target) below the root.
+LINK_CYCLES = {
+    "to-parent": [("a/loop", "")],
+    "to-itself": [("a/self", "a")],
+    "two-to-parent": [("a/loop1", ""), ("a/loop2", "")],
+    "mutual": [("a/x", "b"), ("b/y", "a")],
+}
+# Unbounded, the walk lists each folder once per path the OS resolves (about
+# 40 links on Linux): 41 copies for one cycle, 2**41 - 1 for two.
+MAX_LISTED_FOLDERS = 50
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="G4-T7: a link cycle in the root repeats the tree (two: exponentially)",
+)
+@pytest.mark.parametrize("kind", LINK_KINDS)
+@pytest.mark.parametrize("cycle", sorted(LINK_CYCLES))
+def test_link_cycle_is_walked_once(tmp_path, monkeypatch, cycle, kind):
+    root = tmp_path / "root"
+    for path in ("top.m", "a/fa.m", "b/fb.m"):
+        (root / path).parent.mkdir(parents=True, exist_ok=True)
+        stem = path.rpartition("/")[2][:-2]
+        (root / path).write_text(FUNCTION.format(name=stem, help="HELP"))
+    for link, target in LINK_CYCLES[cycle]:
+        _link(root / target, root / link, kind)
+    listed = [0]
+    original = mat_types._Indexer.list
+
+    def bounded(self, mod):
+        listed[0] += 1
+        if listed[0] > MAX_LISTED_FOLDERS:
+            raise AssertionError(f"the walk repeats the tree: {mod.ref[:80]}...")
+        return original(self, mod)
+
+    monkeypatch.setattr(mat_types._Indexer, "list", bounded)
+    source_index = mat_types.build_index(mat_types.IndexSettings(str(root)))
+    # No path passes through the same real folder twice.
+    for record in source_index.index.values():
+        parts = record["reference"].split("/")[:-1]
+        chain = [
+            os.path.realpath(os.path.join(root, *parts[:n]))
+            for n in range(len(parts) + 1)
+        ]
+        assert len(set(chain)) == len(chain), record["reference"]
+
+
 # --- parallel reads ----------------------------------------------------------
 
 

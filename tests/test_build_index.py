@@ -5,15 +5,18 @@
 import dataclasses
 import logging
 import os
+import sys
 from typing import Any, cast
 
 import pytest
 
-from sphinxcontrib import mat_handlers
+from sphinxcontrib import mat_handlers, mat_naming
 from sphinxcontrib.mat_types import (
     IndexSettings,
+    SourceFilter,
     SourceIndex,
     build_index,
+    check_pattern_folders,
     skipped_folder,
 )
 
@@ -302,3 +305,218 @@ def test_build_index_of_a_missing_root(tmp_path):
     assert source_index.index == {}
     assert source_index.entities == {}
     assert source_index.matlab_names == {}
+
+
+# --- Unicode forms and letter case of names (G4-T7) --------------------------
+
+NFC = "café"
+NFD = "café"
+FORMS = {"nfc": NFC, "nfd": NFD}
+
+
+def unicode_files(form):
+    return {
+        f"{form}.m": FUNCTION.format(name="x", help="ROOT"),
+        f"+{form}/{form}.m": FUNCTION.format(name="x", help="PKG"),
+        "ok.m": FUNCTION.format(name="ok", help="OK"),
+    }
+
+
+def two_entries(folder, *names):
+    """Skip unless the file system keeps ``names`` as separate entries
+    (macOS treats the two Unicode forms, and the two cases, as one name).
+    """
+    listed = set(os.listdir(folder))
+    if not set(names) <= listed:
+        pytest.skip("this file system merges the two names")
+
+
+def test_nfd_names_index_like_their_nfc_twin(tmp_path):
+    out = {}
+    for label, form in FORMS.items():
+        write(tmp_path / label, unicode_files(form))
+        out[label] = build_index(IndexSettings(str(tmp_path / label)))
+    expected = sorted(["ok.m", f"{NFC}.m", f"+{NFC}/{NFC}.m"])
+    assert refs(out["nfc"]) == refs(out["nfd"]) == expected
+    assert sorted(out["nfc"].entities) == sorted(out["nfd"].entities)
+    assert [mat_naming.make_target_id(r) for r in refs(out["nfd"])] == [
+        mat_naming.make_target_id(r) for r in expected
+    ]
+
+
+@pytest.mark.parametrize("form", sorted(FORMS))
+def test_roles_in_either_form_resolve(make_app, tmp_path, form):
+    name = FORMS[form]
+    rst = (
+        "Index\n=====\n\n"
+        f".. mat:autofunction:: {name}.m\n\n"
+        f"A :mat:func:`{NFC}.m` B :mat:func:`{NFD}.m`\n"
+    )
+    write(tmp_path, unicode_files(name), rst=rst)
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    warnings = [w for w in app.warning.getvalue().splitlines() if "WARNING" in w]
+    assert all("[mat.not_callable]" in w for w in warnings), warnings
+    page = (app.outdir / "index.html").read_text(encoding="utf-8")
+    assert f'id="mat-{NFC}.m"' in page
+    assert page.count(f'href="#mat-{NFC}.m"') >= 2
+    stable = app.outdir / "mat" / "ref" / "caf~C3~A9.m.html"
+    assert stable.is_file()
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="G4-T7: two names differing only by Unicode form share a reference silently",
+)
+def test_names_differing_only_by_unicode_form_warn(tmp_path, warnings):
+    write(
+        tmp_path,
+        {
+            f"{NFC}.m": FUNCTION.format(name="x", help="NFC"),
+            f"{NFD}.m": FUNCTION.format(name="x", help="NFD"),
+        },
+    )
+    two_entries(tmp_path, f"{NFC}.m", f"{NFD}.m")
+    source_index = build_index(IndexSettings(str(tmp_path)))
+    # Today: two records with one reference and no warning; the file listed
+    # last wins wherever the reference is resolved.
+    assert len(source_index.index) == 2
+    assert [m for s, m in warnings if s != "not_callable" and f"{NFC}.m" in m]
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=KeyError,
+    reason="G4-T7: two folders whose names differ only by Unicode form stop the build",
+)
+def test_folders_differing_only_by_unicode_form_do_not_stop_the_index(tmp_path):
+    write(
+        tmp_path,
+        {
+            f"+{NFC}/a.m": FUNCTION.format(name="a", help="A"),
+            f"+{NFD}/b.m": FUNCTION.format(name="b", help="B"),
+        },
+    )
+    two_entries(tmp_path, f"+{NFC}", f"+{NFD}")
+    build_index(IndexSettings(str(tmp_path)))
+
+
+def _nfd_pattern(tree, pattern, kind):
+    return pytest.param(
+        tree,
+        pattern,
+        kind,
+        marks=pytest.mark.xfail(
+            strict=True,
+            reason="G4-T7: a pattern typed in NFD matches no file, in either form",
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("tree", "pattern", "kind"),
+    [
+        ("nfc", "nfc", "include"),
+        ("nfd", "nfc", "include"),
+        ("nfc", "nfc", "exclude"),
+        ("nfd", "nfc", "exclude"),
+        _nfd_pattern("nfc", "nfd", "include"),
+        _nfd_pattern("nfd", "nfd", "include"),
+        _nfd_pattern("nfc", "nfd", "exclude"),
+        _nfd_pattern("nfd", "nfd", "exclude"),
+    ],
+)
+def test_patterns_match_either_unicode_form(tmp_path, tree, pattern, kind):
+    write(tmp_path, unicode_files(FORMS[tree]))
+    typed = FORMS[pattern]
+    package = f"+{NFC}/{NFC}.m"
+    if kind == "include":
+        settings = IndexSettings(str(tmp_path), include=(f"+{typed}/**",))
+        assert refs(build_index(settings)) == [package]
+    else:
+        settings = IndexSettings(str(tmp_path), exclude=(f"+{typed}/**",))
+        assert refs(build_index(settings)) == sorted([f"{NFC}.m", "ok.m"])
+
+
+def _case_sensitive(folder):
+    probe = folder / "case_probe"
+    probe.write_text("")
+    try:
+        return not (folder / "CASE_PROBE").exists()
+    finally:
+        probe.unlink()
+
+
+def test_names_differing_only_by_case_are_indexed_apart(tmp_path):
+    write(
+        tmp_path,
+        {
+            "Foo.m": FUNCTION.format(name="Foo", help="UPPER"),
+            "foo.m": FUNCTION.format(name="foo", help="LOWER"),
+        },
+    )
+    two_entries(tmp_path, "Foo.m", "foo.m")
+    source_index = build_index(IndexSettings(str(tmp_path)))
+    assert refs(source_index) == ["Foo.m", "foo.m"]
+    assert source_index.matlab_names == {"Foo": ["Foo.m"], "foo": ["foo.m"]}
+
+
+CASE_FILES = {"src/s.m": FUNCTION.format(name="s", help="S")}
+
+
+@pytest.mark.skipif(
+    sys.platform in ("win32", "darwin"), reason="the Windows and macOS twin below"
+)
+def test_include_pattern_folder_case_is_exact(tmp_path):
+    write(tmp_path, CASE_FILES)
+    if not _case_sensitive(tmp_path):
+        pytest.skip("case-insensitive file system")
+    sources = SourceFilter(["Src/**"], [])
+    check_pattern_folders(sources, str(tmp_path))
+    assert refs(build_index(IndexSettings(str(tmp_path), include=("Src/**",)))) == []
+
+
+@pytest.mark.skipif(
+    sys.platform not in ("win32", "darwin"),
+    reason="G4-T7: case-insensitive file systems (Windows, macOS); not run on Linux",
+)
+def test_include_pattern_folder_case_is_exact_on_case_insensitive_systems(tmp_path):
+    # Matching is case-sensitive on every OS (plan.md Section 2.4), also where
+    # the file system finds Src/ for src/.
+    write(tmp_path, CASE_FILES)
+    if _case_sensitive(tmp_path):
+        pytest.skip("case-sensitive file system")
+    assert (tmp_path / "Src").is_dir()
+    sources = SourceFilter(["Src/**"], [])
+    check_pattern_folders(sources, str(tmp_path))
+    assert refs(build_index(IndexSettings(str(tmp_path), include=("Src/**",)))) == []
+    assert refs(build_index(IndexSettings(str(tmp_path), include=("src/**",)))) == [
+        "src/s.m"
+    ]
+
+
+# --- Sphinx output inside the root (G4-T7) -----------------------------------
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="G4-T7: a copy of HTML output without .buildinfo is indexed",
+)
+def test_copied_html_output_without_buildinfo_is_skipped(tmp_path):
+    # What `cp -r build/html/* public/` leaves: no .buildinfo, no doctrees.
+    write(
+        tmp_path,
+        {
+            "src/foo.m": FUNCTION.format(name="foo", help="FOO"),
+            "public/index.html": "<html></html>\n",
+            "public/objects.inv": b"# Sphinx inventory version 2\n",
+            "public/searchindex.js": "Search.setIndex({})\n",
+            "public/_static/basic.css": "\n",
+            "public/_sources/index.rst.txt": "Index\n",
+            "public/_downloads/20b02e12b279cbe647f3f91bad6204d9/foo.m": FUNCTION.format(
+                name="foo", help="FOO"
+            ),
+        },
+    )
+    source_index = build_index(IndexSettings(str(tmp_path)))
+    assert refs(source_index) == ["src/foo.m"]
