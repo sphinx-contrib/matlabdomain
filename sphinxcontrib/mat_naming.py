@@ -203,6 +203,16 @@ def is_block_container(name: str, block_extensions=None) -> bool:
     return any(len(name) > len(ext) and name.endswith(ext) for ext in block_extensions)
 
 
+def split_folder(folder: str) -> list[str]:
+    """Split a folder reference: ``"a/b/"`` -> ``["a", "b"]``, ``"./"`` -> ``[]``."""
+    return [] if folder == ROOT_REFERENCE else folder.rstrip("/").split("/")
+
+
+def join_folder(parts) -> str:
+    """Join folder names into a folder reference (the inverse of ``split_folder``)."""
+    return "/".join(parts) + "/" if parts else ROOT_REFERENCE
+
+
 def join_reference(folder: str, relative: str) -> str:
     """Return the reference of ``relative`` below the folder reference ``folder``."""
     return relative if folder == ROOT_REFERENCE else f"{folder}{relative}"

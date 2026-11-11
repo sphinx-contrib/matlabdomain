@@ -53,8 +53,10 @@ from .mat_naming import (
     ROOT_REFERENCE,
     folder_of,
     is_private_reference,
+    join_folder,
     join_reference,
     parse_reference,
+    split_folder,
 )
 from .mat_simulink import read_diagram
 
@@ -112,7 +114,7 @@ class _DetachedEntityStore:
         return {}
 
     def resolve(self, ref):
-        parts = [] if ref == ROOT_REFERENCE else ref.rstrip("/").split("/")
+        parts = split_folder(ref)
         path = os.path.join(cast(str, MatObject.basedir), *parts)
         if ref.endswith("/"):
             top = os.path.join(cast(str, MatObject.basedir), parts[0]) if parts else ""
@@ -1274,14 +1276,14 @@ def _scope(folder):
     The folder above its ``@class`` and ``+namespace`` folders; for
     ``private/`` the folder holding it.
     """
-    parts = [] if folder == ROOT_REFERENCE else folder.rstrip("/").split("/")
+    parts = split_folder(folder)
     if parts and parts[-1] == "private":
         parts.pop()
     else:
         parts = parts[: next((i for i, p in enumerate(parts) if p[:1] == "@"), None)]
         while parts and parts[-1][:1] == "+":
             parts.pop()
-    return "/".join(parts) + "/" if parts else ROOT_REFERENCE
+    return join_folder(parts)
 
 
 # Stands in for the project root (a plain folder), so folders above the root

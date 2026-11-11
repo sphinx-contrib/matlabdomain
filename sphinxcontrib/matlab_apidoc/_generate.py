@@ -49,7 +49,7 @@ from sphinx.util.template import ReSTRenderer
 from .. import mat_simulink
 from ..mat_classify import UNKNOWN, is_hidden
 from ..mat_handlers import handler_by_extension
-from ..mat_naming import ROOT_REFERENCE, folder_of
+from ..mat_naming import ROOT_REFERENCE, folder_of, join_folder, split_folder
 from ..mat_types import class_file_reference
 from ._names import WINDOWS_MAX_PATH, docnames, escape_segment, escape_upper, too_long
 
@@ -158,21 +158,13 @@ def _warn(message):
     logger.warning("[scmd apidoc] %s", message, type="mat", subtype="apidoc")
 
 
-def _segments(folder):
-    return [] if folder == ROOT_REFERENCE else folder.rstrip("/").split("/")
-
-
-def _join(parts):
-    return "/".join(parts) + "/" if parts else ROOT_REFERENCE
-
-
 def page_folder(reference):
     """Folder reference of the page that lists a file: its folder, or the
     folder above its first ``@`` folder.
     """
-    parts = _segments(folder_of(reference))
+    parts = split_folder(folder_of(reference))
     cut = next((i for i, part in enumerate(parts) if part[:1] == "@"), len(parts))
-    return _join(parts[:cut])
+    return join_folder(parts[:cut])
 
 
 def class_folder_methods(source_index):
@@ -334,7 +326,11 @@ def build_pages(source_index, options):
 
 def _folder_key(folder):
     """Root folder first, then by path, ignoring case."""
-    return folder != ROOT_REFERENCE, [s.casefold() for s in _segments(folder)], folder
+    return (
+        folder != ROOT_REFERENCE,
+        [s.casefold() for s in split_folder(folder)],
+        folder,
+    )
 
 
 def _folder_pages(source_index, options):
@@ -449,10 +445,10 @@ def _group_of(source_index, folder):
     None for the global namespace. A sidecar doc in ``private/`` goes with
     the folder above it.
     """
-    parts = _segments(folder)
+    parts = split_folder(folder)
     while parts and parts[-1] == "private":
         parts.pop()
-    return _namespace(source_index, _join(parts))
+    return _namespace(source_index, join_folder(parts))
 
 
 def _untangle_titles(entries, namespace):

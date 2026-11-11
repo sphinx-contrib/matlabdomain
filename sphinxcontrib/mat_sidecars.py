@@ -54,14 +54,7 @@ MARKDOWN = ".md"
 LINK, IMAGE = "link", "image"
 
 
-def _warn(subtype, message, location=None):
-    logger.warning(
-        "[sphinxcontrib-matlabdomain] %s",
-        message,
-        type="mat",
-        subtype=subtype,
-        location=location,
-    )
+_warn = mat_types._warn
 
 
 def same_drive(a, b):
