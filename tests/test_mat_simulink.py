@@ -559,6 +559,17 @@ def test_xml_with_a_bad_encoding_declaration(data):
         _nodes.parse_xml(data, "x")
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="G4-T5b: the DOCTYPE refusal looks for ASCII bytes, so a UTF-16 part "
+    "with a DTD is parsed with its entities",
+)
+def test_a_utf16_dtd_is_refused():
+    text = '<?xml version="1.0" encoding="utf-16"?><!DOCTYPE a [<!ENTITY b "c">]><a/>'
+    with pytest.raises(SimulinkFileError, match="DTD or entity declaration"):
+        _nodes.parse_xml(text.encode("utf-16"), "x")
+
+
 def test_classic_without_system(tmp_path):
     path = tmp_path / "x.mdl"
     path.write_text('Model {\n  Name "x"\n}\n')
