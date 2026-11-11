@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
+import sphinx
 from sphinx.util.inventory import InventoryFile
 from test_apidoc import FUNCTION
 
@@ -183,8 +184,17 @@ def snapshot(outdir):
         if rel == "objects.inv":
             with open(path, "rb") as f:
                 inv = InventoryFile.load(cast(Any, f), "", lambda _base, uri: uri)
+            # Sphinx before 8.2 gives tuples (project, version, uri, display).
             out[rel] = sorted(
-                (kind, name, item.uri, item.display_name)
+                (
+                    kind,
+                    name,
+                    *(
+                        item[2:4]
+                        if isinstance(item, tuple)
+                        else (item.uri, item.display_name)
+                    ),
+                )
                 for kind, items in inv.items()
                 for name, item in items.items()
             )
@@ -240,16 +250,27 @@ def test_two_clean_builds_are_equal(make_app, tmp_path):
     assert differences(a, b) == []
 
 
-SHARED_D = pytest.mark.xfail(
-    strict=True,
-    reason="G4-T3: after another builder read the edit on the same -d, the "
-    "HTML build does not rewrite the pages it changed",
+SHARED_D_REASON = (
+    "G4-T3: after another builder read the edit on the same -d, the HTML "
+    "build does not rewrite the pages it changed"
 )
+# In these cells only the toctree parent and the search index differ, and
+# Sphinx 8.0 writes them equal (CI, the minimum job); 8.2 and later do not.
+# Sphinx 8.1 is not tested, so the mark is not strict below 8.2.
+EQUAL_ON_SPHINX_80 = {"function_to_classdef", "add_mex", "remove_mex"}
+SPHINX_VERSION: tuple[int, ...] = sphinx.version_info[:2]
+
+
+def _shared_d_mark(edit):
+    strict = edit not in EQUAL_ON_SPHINX_80 or SPHINX_VERSION >= (8, 2)
+    return pytest.mark.xfail(strict=strict, reason=SHARED_D_REASON)
+
+
 CELLS = [
     pytest.param(
         edit,
         other,
-        marks=[SHARED_D] if other and edit != "no_edit" else [],
+        marks=[_shared_d_mark(edit)] if other and edit != "no_edit" else [],
         id=f"{edit}-{'shared_d' if other else 'html'}",
     )
     for other in (False, True)

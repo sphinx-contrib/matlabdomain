@@ -538,8 +538,9 @@ def _merge_in_order(make_app, srcdir, workers, order):
     for docname in order:
         dom.merge_domaindata({docname}, workers[docname])
     dom.check_consistency()
+    # "<SRC>/doc.rst" on every OS (Windows writes the paths with "\").
     warnings = [
-        line.replace(str(srcdir), "<SRC>")
+        line.replace(str(srcdir), "<SRC>").replace("<SRC>\\", "<SRC>/")
         for line in strip_escape_sequences(app.warning.getvalue()).splitlines()
         if "[mat.duplicate]" in line
     ]
