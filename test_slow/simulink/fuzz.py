@@ -102,10 +102,16 @@ def truncate(rng: random.Random, data: bytes) -> bytes:
 
 
 def entity(rng: random.Random, data: bytes) -> bytes:
-    """Insert an entity or DTD declaration at a ``<`` of the text."""
+    """Insert an entity or DTD declaration at a ``<`` of the text, now and
+    then in a UTF-16 document.
+    """
     spots = [m.start() for m in re.finditer(rb"<", data)] or [0]
     at = rng.choice(spots)
-    return data[:at] + rng.choice(ENTITIES) + data[at:]
+    declaration = rng.choice(ENTITIES)
+    if rng.random() < 0.3:  # the same, in a UTF-16 document
+        text = (data[:at] + declaration + data[at:]).decode("utf-8", "replace")
+        return text.encode(rng.choice(["utf-16", "utf-16-le", "utf-16-be"]))
+    return data[:at] + declaration + data[at:]
 
 
 def nesting(rng: random.Random, data: bytes) -> bytes:

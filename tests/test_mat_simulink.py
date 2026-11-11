@@ -6,6 +6,7 @@ format changes, plus exported XML. ``tests/simulink/oracle.json`` holds what
 the Simulink API reports for each fixture; the reader must agree.
 """
 
+import codecs
 import json
 import pickle
 import zipfile
@@ -559,15 +560,56 @@ def test_xml_with_a_bad_encoding_declaration(data):
         _nodes.parse_xml(data, "x")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="G4-T5b: the DOCTYPE refusal looks for ASCII bytes, so a UTF-16 part "
-    "with a DTD is parsed with its entities",
+# Every encoding the XML parser accepts: ASCII-compatible ones (including a
+# byte-order mark) and UTF-16. UTF-32 and EBCDIC are invalid XML for it.
+_XML_ENCODINGS = [
+    ("utf-8", "utf-8", b""),
+    ("utf-8", None, b""),
+    ("utf-8", "utf-8", codecs.BOM_UTF8),
+    ("windows-1252", "windows-1252", b""),
+    ("latin-1", "iso-8859-1", b""),
+    ("shift_jis", None, b""),
+    ("utf-16-le", "utf-16", codecs.BOM_UTF16_LE),
+    ("utf-16-be", "utf-16", codecs.BOM_UTF16_BE),
+    ("utf-16-le", None, codecs.BOM_UTF16_LE),
+    ("utf-16-be", None, codecs.BOM_UTF16_BE),
+    ("utf-16-le", "utf-16", b""),
+    ("utf-16-be", "utf-16", b""),
+    ("utf-16-le", None, b""),
+    ("utf-16-be", None, b""),
+]
+
+
+def _xml_document(encoding, declared, bom, body):
+    declaration = f'<?xml version="1.0" encoding="{declared}"?>' if declared else ""
+    return bom + (declaration + body).encode(encoding)
+
+
+@pytest.mark.parametrize(("encoding", "declared", "bom"), _XML_ENCODINGS)
+@pytest.mark.parametrize(
+    "dtd",
+    [
+        '<!DOCTYPE a [<!ENTITY b "c">]><a>&b;</a>',
+        "<!DOCTYPE a><a/>",
+        '<a><!ENTITY b "c"></a>',
+    ],
 )
-def test_a_utf16_dtd_is_refused():
-    text = '<?xml version="1.0" encoding="utf-16"?><!DOCTYPE a [<!ENTITY b "c">]><a/>'
+def test_a_dtd_is_refused_in_every_encoding(encoding, declared, bom, dtd):
+    data = _xml_document(encoding, declared, bom, dtd)
     with pytest.raises(SimulinkFileError, match="DTD or entity declaration"):
-        _nodes.parse_xml(text.encode("utf-16"), "x")
+        _nodes.parse_xml(data, "x")
+
+
+@pytest.mark.parametrize(("encoding", "declared", "bom"), _XML_ENCODINGS)
+def test_the_same_document_without_a_dtd_parses_in_every_encoding(
+    encoding, declared, bom
+):
+    body = '<a k="v"><!-- c --><P Name="n">t</P><b/></a>'
+    node = _nodes.parse_xml(_xml_document(encoding, declared, bom, body), "x")
+    assert node.tag == "a"
+    assert node.attrs == {"k": "v"}
+    assert node.params == {"n": ["t"]}
+    assert [c.tag for c in node.children] == ["b"]
 
 
 def test_classic_without_system(tmp_path):

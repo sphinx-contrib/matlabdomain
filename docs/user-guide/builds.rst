@@ -102,6 +102,9 @@ way:
   never run MATLAB and never execute the files. Their limits on size and
   nesting protect a build from a corrupt or huge file; they are not a
   security boundary.
+* The doctree folder (``-d``). Sphinx loads ``environment.pickle`` from it,
+  and loading a pickle can run code, so ``-d`` must not point at a folder
+  that someone else can write.
 
 A build writes only to its output folder and its doctree folder.
 ``scmd apidoc`` and ``scmd quickstart`` write where you point them.

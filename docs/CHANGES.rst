@@ -427,6 +427,9 @@ Fixes
 * A Simulink XML part whose declaration names the encoding ``utf-7`` or
   ``idna`` crashed the reader with a ``ValueError``; it is a
   ``mat.parse_error`` now.
+* The refusal of a DTD or entity declaration in a Simulink XML part or an
+  ``.mlapp`` metadata part also holds for a UTF-16 part (it was parsed with
+  its entities before).
 * The package metadata names the license in ``LICENSE``, BSD-2-Clause (it
   said BSD-3-Clause).
 
