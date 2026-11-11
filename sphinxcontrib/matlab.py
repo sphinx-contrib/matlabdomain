@@ -8,6 +8,7 @@ The MATLAB domain.
 """
 
 import functools
+import itertools
 import json
 import re
 import unicodedata
@@ -920,6 +921,9 @@ class MATLABDomain(Domain):
         self._stable_urls = None
         # sidecar reference -> the first document that renders it (built lazily)
         self._sidecar_docs = None
+        # reference -> documents of parallel-read workers that describe it,
+        # noted by merge_domaindata and warned by check_consistency
+        self._duplicates = {}
         # Documents read in this build (``env-before-read-docs``).
         self.read_docnames = ()
         # Objects and removed documents before this build read (mat_urls).
@@ -986,17 +990,20 @@ class MATLABDomain(Domain):
         """
         objects = self.data["objects"]
         if name in objects and location is not None:
-            logger.warning(
-                "[sphinxcontrib-matlabdomain] duplicate object description of %s, "
-                "other instance in %s, use :no-index: for one of them",
-                name,
-                self.env.doc2path(objects[name][0]),
-                type="mat",
-                subtype="duplicate",
-                location=location,
-            )
+            self._warn_duplicate(name, objects[name][0], location)
         objects[name] = (self.env.docname, objtype, display or name)
         self._displays = self._stable_urls = None
+
+    def _warn_duplicate(self, name, other, location):
+        logger.warning(
+            "[sphinxcontrib-matlabdomain] duplicate object description of %s, "
+            "other instance in %s, use :no-index: for one of them",
+            name,
+            self.env.doc2path(other),
+            type="mat",
+            subtype="duplicate",
+            location=location,
+        )
 
     def clear_doc(self, docname):
         for ref, (fn, _, _) in list(self.data["objects"].items()):
@@ -1026,12 +1033,23 @@ class MATLABDomain(Domain):
         # Merge per-document registrations from a parallel-read worker, and
         # the files it parsed, so the next build need not parse them again.
         # The index and the entities are built in the main process.
-        for ref, data in otherdata["objects"].items():
-            if data[0] in docnames:
-                self.data["objects"][ref] = data
-        for ref, data in otherdata["folders"].items():
-            if data[0] in docnames:
-                self.data["folders"][ref] = data
+        # An object or folder that another worker described too: the later in
+        # reading order wins, as in a serial build, whatever the merge order.
+        order = {docname: i for i, docname in enumerate(self.read_docnames)}
+        for name in ("objects", "folders"):
+            ours = self.data[name]
+            for ref, data in otherdata[name].items():
+                if data[0] not in docnames:
+                    continue
+                old = ours.get(ref)
+                if old is not None and old[0] in order and data[0] in order:
+                    # a folder description warns in neither build (note_object)
+                    if name == "objects" and data[1] != "folder":
+                        self._duplicates.setdefault(ref, set()).update(
+                            (old[0], data[0])
+                        )
+                    data = max(old, data, key=lambda entry: order[entry[0]])
+                ours[ref] = data
         for name in ("doc_sources", "sidecar_docs", "sidecar_issues", "xref_docs"):
             for docname, value in otherdata[name].items():
                 if docname in docnames:
@@ -1047,6 +1065,16 @@ class MATLABDomain(Domain):
         self._displays = self._stable_urls = None
         self._sidecar_docs = None
 
+    def check_consistency(self):
+        # Duplicates that parallel-read workers could not see: warn as a serial
+        # build does, each description about the one read before it.
+        order = {docname: i for i, docname in enumerate(self.read_docnames)}
+        for ref, docs in sorted(self._duplicates.items()):
+            pairs = itertools.pairwise(sorted(docs, key=order.__getitem__))
+            for earlier, later in pairs:
+                self._warn_duplicate(ref, earlier, (later, None))
+        self._duplicates = {}
+
     def _by_display(self, name):
         if self._displays is None:
             self._displays = {}
@@ -1054,7 +1082,8 @@ class MATLABDomain(Domain):
             # spaces; the first of those that collapse to one form (in sorted
             # order) has it
             self._spaced = {}
-            for ref, (_, _, display) in self.data["objects"].items():
+            # by reference: the merge order of a parallel read does not matter
+            for ref, (_, _, display) in sorted(self.data["objects"].items()):
                 self._displays.setdefault(display, []).append(ref)
             for ref in sorted(self.data["objects"]):
                 if mat_naming.has_line_break(ref):
@@ -1134,13 +1163,13 @@ class MATLABDomain(Domain):
                 if refs:
                     return [(r, objects[r]) for r in refs]
         if searchmode == 1:
-            return [
+            return sorted(
                 (ref, entry)
                 for ref, entry in objects.items()
                 if entry[2].endswith(f".{name}")
                 and (objtypes is None or entry[1] in objtypes)
                 and not mat_naming.is_private_reference(ref)
-            ]
+            )
         return []
 
     def _refnode(self, builder, fromdocname, ref, entry, contnode):

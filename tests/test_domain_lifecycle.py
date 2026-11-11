@@ -13,13 +13,17 @@ import os
 import pickle
 import shutil
 import time
+from typing import Any, cast
 
 import pytest
 from sphinx.environment import CONFIG_OK
+from sphinx.util import console
 from tree_sitter import Node, Parser, Tree
 
 from sphinxcontrib import mat_types
 from sphinxcontrib.matlab import MATLABDomain
+
+strip_escape_sequences = cast(Any, console).strip_escape_sequences
 
 
 @pytest.fixture
@@ -536,16 +540,12 @@ def _merge_in_order(make_app, srcdir, workers, order):
     dom.check_consistency()
     warnings = [
         line.replace(str(srcdir), "<SRC>")
-        for line in app.warning.getvalue().splitlines()
+        for line in strip_escape_sequences(app.warning.getvalue()).splitlines()
         if "[mat.duplicate]" in line
     ]
     return dom, sorted(warnings)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="G4-T2: -j: the winner of a duplicate depends on merge order, no warning",
-)
 def test_merge_duplicate_object_like_serial(make_app, srcdir):
     # A serial build reads doc_a, doc_b, doc_c in this order: the last one
     # wins and each later description warns about the one before it.
@@ -565,9 +565,6 @@ def test_merge_duplicate_object_like_serial(make_app, srcdir):
         assert warnings == expected, order
 
 
-@pytest.mark.xfail(
-    strict=True, reason="G4-T2: -j: the page of a folder depends on merge order"
-)
 def test_merge_duplicate_folder_like_serial(make_app, srcdir):
     # A folder may be described twice without a warning; the last one wins.
     workers = {
@@ -585,10 +582,6 @@ def test_merge_duplicate_folder_like_serial(make_app, srcdir):
         assert warnings == [], order
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="G4-T2: -j: the order of objects of one name depends on merge order",
-)
 def test_merge_order_does_not_change_matches(make_app, srcdir):
     # ``:any:`dup``` takes its role (a CSS class of a chooser link) from the
     # first match.

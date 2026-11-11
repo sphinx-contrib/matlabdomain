@@ -256,7 +256,9 @@ Builds:
   and parses a file with tree-sitter only when a page needs it. Parses are
   cached in the Sphinx environment by path, modification time and size;
   only pages that used a changed file are read again (#282). Parallel
-  builds (``-j``) are supported (#147).
+  builds (``-j``) are supported (#147); an object or folder described on
+  two pages links to the same page as in a serial build, with the same
+  ``mat.duplicate`` warning.
 * One bad source file no longer stops the build. A file that cannot be
   read or parsed (permissions, a corrupt ``.mlapp``, a parser error) gets
   one suppressible ``mat.parse_error`` warning, with the line of the
