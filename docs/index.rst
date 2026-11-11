@@ -66,6 +66,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    user-guide/builds
    user-guide/projects-and-versions
    user-guide/migration
+   user-guide/FAQ
 
 .. toctree::
    :maxdepth: 2

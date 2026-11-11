@@ -11,12 +11,14 @@ problem, so it can guard help text in CI.
 Running it
 ----------
 
-It is a Sphinx builder; the :term:`extension` adds it. Run it on the Sphinx project
-of your docs:
+It is a Sphinx builder; the :term:`extension` adds it. From your project
+root, run it on the Sphinx project of your docs:
 
 .. code-block:: console
 
    $ uv run sphinx-build -b matlab-api-check docs docs/_build/api-check
+
+For paths to use from inside ``docs``, see :doc:`FAQ`.
 
 It reads the pages like any builder; give it the ``-d`` folder of the HTML
 build (``-d docs/_build/doctrees``) to avoid reading them twice. (If the two
