@@ -545,6 +545,18 @@ def test_classic_depth_limit(monkeypatch):
         _nodes.parse_xml(b"<a><b><c><d/></c></b></a>", "x")
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        b'<?xml version="1.0" encoding="utf-O"?><a/>',  # unknown codec (fuzzing)
+        b'<?xml version="1.0" encoding="rot13"?><a/>',  # not a text codec
+    ],
+)
+def test_xml_with_a_bad_encoding_declaration(data):
+    with pytest.raises(SimulinkFileError, match="invalid XML in x"):
+        _nodes.parse_xml(data, "x")
+
+
 def test_classic_without_system(tmp_path):
     path = tmp_path / "x.mdl"
     path.write_text('Model {\n  Name "x"\n}\n')
