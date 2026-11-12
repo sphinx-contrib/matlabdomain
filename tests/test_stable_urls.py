@@ -403,12 +403,13 @@ def test_stale_pages_outside_or_at_the_source_folder(tmp_path):
     removed = tmp_path / "out" / "a.html"
     sources = tmp_path / "out" / "_sources"
     sources.mkdir(parents=True)
-    removed.write_text("")
-    (sources / "a.txt").write_text("")
-    (sources / "a.rst.txt").write_text("")
+    removed.write_text("", encoding="utf-8")
+    (sources / "a.txt").write_text("", encoding="utf-8")
+    (sources / "a.rst.txt").write_text("", encoding="utf-8")
+    key = ("html", "out")
+    dom = SimpleNamespace(data={"api_pages": {key: {"a", "b"}}})
 
-    def run(output_dir):
-        dom = SimpleNamespace(removed_docs={"a", "b"})
+    def run(output_dir, found):
         builder = SimpleNamespace(
             format="html",
             out_suffix=".html",
@@ -422,14 +423,19 @@ def test_stale_pages_outside_or_at_the_source_folder(tmp_path):
             html_sourcelink_suffix=".txt",
         )
         app = SimpleNamespace(
-            env=SimpleNamespace(get_domain=lambda _: dom),
+            env=SimpleNamespace(found_docs=found),
             config=config,
             builder=builder,
             srcdir=tmp_path / "src",
         )
-        mat_urls.remove_stale_pages(app, None)
+        mat_urls.remove_stale_pages(app, dom, key)
 
-    run("../out")  # not below the source folder: nothing removed
+    # Not below the source folder: no page is noted.
+    run("../out", {"a", "b"})
     assert removed.is_file()
-    run(".")  # the source folder itself
+    assert dom.data["api_pages"][key] == set()
+    run(".", {"a", "b"})  # the source folder itself: every document
+    assert dom.data["api_pages"][key] == {"a", "b"}
+    run(".", {"b"})
     assert list((tmp_path / "out").iterdir()) == []
+    assert dom.data["api_pages"][key] == {"b"}

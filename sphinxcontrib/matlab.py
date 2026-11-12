@@ -904,10 +904,18 @@ class MATLABDomain(Domain):
         "parse_warnings": {},  # (path, mtime_ns, size) -> parse-stage warnings
         "entities_table": {},  # path reference -> MatObject (files and folders)
         "matlab_names": {},  # MATLAB name -> path references
+        # Build state of the outputs that share this environment (one doctree
+        # folder), by (builder name, normalized absolute output folder);
+        # main process only (``mat_urls.pages_to_write``).
+        # the outputs that have written everything the environment holds
+        "in_step": set(),
+        # HTML outputs -> documents below matlab_apidoc_output_dir they have
+        # pages for
+        "api_pages": {},
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 28
+    data_version = 29
     indices = [
         MATLABFolderIndex,
     ]
@@ -926,7 +934,8 @@ class MATLABDomain(Domain):
         self._duplicates = {}
         # Documents read in this build (``env-before-read-docs``).
         self.read_docnames = ()
-        # Objects and removed documents before this build read (mat_urls).
+        # Objects and removed documents before this build read
+        # (``mat_urls.note_pages``).
         self.objects_before = {}
         self.removed_docs = set()
         self.reset_sources()
@@ -1032,7 +1041,8 @@ class MATLABDomain(Domain):
     def merge_domaindata(self, docnames, otherdata):
         # Merge per-document registrations from a parallel-read worker, and
         # the files it parsed, so the next build need not parse them again.
-        # The index and the entities are built in the main process.
+        # The index and the entities are built in the main process, and the
+        # build state ("in_step", "api_pages") is kept there.
         # An object or folder that another worker described too: the later in
         # reading order wins, as in a serial build, whatever the merge order.
         order = {docname: i for i, docname in enumerate(self.read_docnames)}
@@ -1387,9 +1397,8 @@ def setup(app):
     app.connect("html-collect-pages", mat_urls.chooser_pages)
     app.connect("builder-inited", mat_urls.add_script)
     app.connect("env-get-outdated", mat_urls.note_pages)
-    app.connect("env-get-updated", mat_urls.relink)
+    app.connect("env-get-updated", mat_urls.pages_to_write)
     app.connect("build-finished", mat_urls.write_redirects)
-    app.connect("build-finished", mat_urls.remove_stale_pages)
     app.connect("build-finished", simulink_linker.write_settings)
 
     app.add_domain(MATLABDomain)

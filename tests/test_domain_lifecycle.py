@@ -93,7 +93,7 @@ def used_paths(srcdir, refs=USED):
 
 
 def test_initial_data_layout():
-    assert MATLABDomain.data_version == 28
+    assert MATLABDomain.data_version == 29
     assert set(MATLABDomain.initial_data) == {
         "objects",
         "folders",
@@ -108,6 +108,8 @@ def test_initial_data_layout():
         "parse_warnings",
         "entities_table",
         "matlab_names",
+        "in_step",
+        "api_pages",
     }
 
 

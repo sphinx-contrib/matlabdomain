@@ -25,9 +25,10 @@ A page opened at the anchor of an object that is no longer on it (an
 address copied from the browser), and the site's ``404.html``, send the
 browser to the object's stable address (``SCRIPT``, ``mat/refs.js``).
 
-Incremental builds: pages whose ``scmd apidoc`` source is gone are
-removed, and when objects moved, every page that links to a MATLAB object is
-written again.
+Incremental builds (``pages_to_write``): pages whose ``scmd apidoc`` source
+is gone are removed; when objects moved, every page that links to a MATLAB
+object is written again; and an output that another builder on the same
+doctree folder got out of step with writes every page once.
 """
 
 from __future__ import annotations
@@ -484,6 +485,13 @@ def add_script(app):
             )
 
 
+def builder_key(builder):
+    """Return the output a build writes: its builder and output folder.
+    ``html`` and ``dirhtml``, or two output folders, are different outputs.
+    """
+    return (builder.name, os.path.normcase(os.path.abspath(str(builder.outdir))))
+
+
 def note_pages(app, env, added, changed, removed):  # noqa: ARG001
     """``env-get-outdated``: remember where each object was, and the removed
     documents, before this build reads anything.
@@ -494,37 +502,71 @@ def note_pages(app, env, added, changed, removed):  # noqa: ARG001
     return []
 
 
-def relink(app, env):  # noqa: ARG001
-    """``env-get-updated``: if objects were added, removed or moved to other
-    pages, write again every page that links to a MATLAB object (Sphinx writes
-    only the pages it read).
+def pages_to_write(app, env):
+    """``env-get-updated``: the pages this build writes besides those Sphinx
+    writes anyway (the pages it read and those whose source is newer).
+
+    Builders can share one doctree folder (``-d``) and so one environment.
+    ``in_step`` (pickled) holds the outputs that have written everything the
+    environment holds. A build that read or removed documents leaves only its
+    own output in step. A build whose output is not in step writes every page
+    once, without reading again: another builder read the changes it has not
+    written. A build in step writes, when objects were added, removed or moved
+    to other pages, every page that links to a MATLAB object.
+
+    Runs in the main process, after reading and before Sphinx pickles the
+    environment (only when some page is to be written).
     """
     dom = env.get_domain("mat")
-    if dom.objects_before == dom.data["objects"]:
-        return []
-    return sorted(dom.data["xref_docs"])
+    data = dom.data
+    key = builder_key(app.builder)
+    remove_stale_pages(app, dom, key)
+    if key not in data["in_step"]:
+        docnames = sorted(env.found_docs)
+    elif dom.objects_before != data["objects"]:
+        docnames = sorted(data["xref_docs"])
+    else:
+        docnames = []
+    if dom.read_docnames or dom.removed_docs:
+        data["in_step"].clear()
+    data["in_step"].add(key)
+    return docnames
 
 
-def remove_stale_pages(app, exception):
-    """``build-finished``: remove the HTML page (and its copied source) of each
-    removed document below ``matlab_apidoc_output_dir``, which Sphinx keeps.
+def _api_prefix(app):
+    """Return the docname prefix of ``matlab_apidoc_output_dir`` (``""`` for the
+    source folder itself), or None when there is none below the source folder.
     """
-    dom = app.env.get_domain("mat")
     output_dir = app.config.matlab_apidoc_output_dir
-    if exception is not None or not _html(app) or not output_dir:
-        return
+    if not output_dir:
+        return None
     srcdir = Path(app.srcdir).resolve()
     api = (srcdir / output_dir).resolve()
     if not api.is_relative_to(srcdir):
-        return
+        return None
     prefix = api.relative_to(srcdir).as_posix()
-    prefix = "" if prefix == "." else prefix + "/"
+    return "" if prefix == "." else prefix + "/"
+
+
+def remove_stale_pages(app, dom, key):
+    """Remove the HTML page (and its copied source) of each document below
+    ``matlab_apidoc_output_dir`` that the output ``key`` has a page for and
+    that is gone, which Sphinx keeps; then note the documents it has pages
+    for now (``api_pages``, pickled).
+
+    Another builder on the same doctree folder may have seen the removal, so
+    this compares with the documents of the output's last build, not with
+    the documents removed in this build. Only pages of documents this
+    output's builds wrote are removed.
+    """
+    if not _html(app):
+        return
+    pages = dom.data["api_pages"]
+    found = app.env.found_docs
     builder = app.builder
     outdir = str(builder.outdir)
     link_suffix = app.config.html_sourcelink_suffix
-    for docname in sorted(dom.removed_docs):
-        if not docname.startswith(prefix):
-            continue
+    for docname in sorted(pages.get(key, set()) - found):
         paths = [str(builder.get_outfilename(docname))]
         for suffix in app.config.source_suffix:
             name = docname + suffix
@@ -541,3 +583,5 @@ def remove_stale_pages(app, exception):
             ) and not os.listdir(folder):
                 os.rmdir(folder)
                 folder = os.path.dirname(folder)
+    prefix = _api_prefix(app)
+    pages[key] = set() if prefix is None else {d for d in found if d.startswith(prefix)}
