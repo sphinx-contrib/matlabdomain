@@ -327,6 +327,22 @@ def test_metadata_part_limit_is_smaller(tmp_path, monkeypatch):
     assert read_diagram(ok).kind == "model"
 
 
+def test_a_model_part_over_the_part_limit_is_refused(tmp_path, monkeypatch):
+    monkeypatch.setattr(_parts, "MAX_PART_BYTES", 300)
+    path = _write_zip(
+        tmp_path / "m.slx",
+        {
+            "metadata/coreProperties.xml": CORE.format("model"),
+            "simulink/systems/system_root.xml": "<System/>" + " " * 400,
+        },
+    )
+    with pytest.raises(
+        SimulinkFileError,
+        match=r"has a part larger than 300 bytes: simulink/systems/system_root\.xml",
+    ):
+        read_diagram(path)
+
+
 def test_metadata_limit_does_not_exceed_the_part_limit(tmp_path, monkeypatch):
     monkeypatch.setattr(_parts, "MAX_PART_BYTES", 10)
     path = _write_zip(tmp_path / "m.slx", {"metadata/coreProperties.xml": "x" * 50})

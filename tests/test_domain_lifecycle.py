@@ -1039,3 +1039,23 @@ def test_shared_folder_description_reads_only_the_changed_page(make_app, tmp_pat
         for name in ("objects", "folders"):
             assert app.env.domaindata["mat"][name] == expected[name], page
         assert _duplicate_warnings(app, root) == []
+
+
+def test_nested_auto_directive_reports_the_line_of_the_outer_one(make_app, tmp_path):
+    # The help of f holds an auto directive of its own: what that describes
+    # is on the page at the line of the directive written there.
+    for path, text in {
+        "conf.py": DUPLICATE_CONF,
+        "src/f.m": "function y = f(x)\n% F help\n%\n% .. mat:autofunction:: h\n"
+        "y = x;\nend\n",
+        "src/h.m": DUPLICATE_SOURCES["src/h.m"],
+        "index.rst": "Index\n=====\n\n.. toctree::\n\n   a\n   b\n",
+        "a.rst": "A\n=\n\n.. mat:autofunction:: h\n",
+        "b.rst": "B\n=\n\nText.\n\nMore.\n\n.. mat:autofunction:: f\n",
+    }.items():
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text(text, encoding="utf-8")
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    assert _duplicate_warnings(app, tmp_path) == [_dup("b", 8, "h.m", "a")]
+    assert app.env.get_domain("mat").data["objects"]["h.m"][0] == "b"
