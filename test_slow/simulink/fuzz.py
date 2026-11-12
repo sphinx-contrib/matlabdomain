@@ -215,6 +215,15 @@ def run_case(path: Path) -> str:
     return "ok"
 
 
+def keep_case(keep: Path | None, seed: int, n: int, suffix: str, data: bytes) -> Path:
+    """Write an escaping case into the folder, made on the first call."""
+    if keep is None:
+        keep = Path(tempfile.mkdtemp(prefix=f"fuzz-seed{seed}-"))
+    keep.mkdir(parents=True, exist_ok=True)
+    (keep / f"case{n}{suffix}").write_bytes(data)
+    return keep
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
     parser.add_argument("--seed", type=int, default=0)
@@ -226,9 +235,11 @@ def main(argv: list[str] | None = None) -> int:
     rng = random.Random(args.seed)
     pool = seeds()
     mlapp = MLAPP.read_bytes()
-    keep = args.keep or Path(tempfile.mkdtemp(prefix=f"fuzz-seed{args.seed}-"))
+    # Created when the first escaping case is written: no escape, no folder.
+    keep = args.keep
     results: collections.Counter[tuple[str, str]] = collections.Counter()
     escapes: list[tuple[int, str, str]] = []
+    kept: dict[int, Path] = {}
     slowest = (0.0, -1)
     start = time.perf_counter()
     with tempfile.TemporaryDirectory() as tmp:
@@ -246,15 +257,15 @@ def main(argv: list[str] | None = None) -> int:
             except Exception as err:  # the point of the run
                 outcome = f"ESCAPE {type(err).__name__}"
                 escapes.append((n, suffix, f"{type(err).__name__}: {err}"[:200]))
-                keep.mkdir(parents=True, exist_ok=True)
-                (keep / f"case{n}{suffix}").write_bytes(data)
+                keep = keep_case(keep, args.seed, n, suffix, data)
+                kept[n] = keep / f"case{n}{suffix}"
             took = time.perf_counter() - began
             slowest = max(slowest, (took, n))
             if took > SLOW and not outcome.startswith("ESCAPE"):
                 outcome = "ESCAPE slow"
                 escapes.append((n, suffix, f"took {took:.1f} s"))
-                keep.mkdir(parents=True, exist_ok=True)
-                (keep / f"case{n}{suffix}").write_bytes(data)
+                keep = keep_case(keep, args.seed, n, suffix, data)
+                kept[n] = keep / f"case{n}{suffix}"
             results[(suffix, outcome)] += 1
     elapsed = time.perf_counter() - start
 
@@ -263,7 +274,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {suffix:7} {outcome:28} {count}")
     print(f"  slowest case: {slowest[0]:.2f} s (case {slowest[1]})")
     for n, suffix, message in escapes:
-        print(f"ESCAPE case {n} ({suffix}): {message}  -> {keep}/case{n}{suffix}")
+        print(f"ESCAPE case {n} ({suffix}): {message}  -> {kept[n]}")
     return 1 if escapes else 0
 
 
