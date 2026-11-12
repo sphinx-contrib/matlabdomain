@@ -7,10 +7,11 @@
 
 # -- Path setup --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+import sys
+from pathlib import Path
+
+# _ext/ holds extensions of these docs only, not part of the package.
+sys.path.insert(0, str(Path(__file__).parent / "_ext"))
 
 # -- Project information -----------------------------------------------------
 
@@ -38,7 +39,8 @@ extensions = [
     "sphinxcontrib.matlab",
     "sphinx.ext.napoleon",
     "sphinxcontrib.mermaid",
-    "sphinx_tippy",
+    # Hover tips for links to glossary terms.
+    "glossary_tips",
 ]
 # The sample project rendered in the user guide.
 matlab_src_code_project_root = "src"
@@ -83,19 +85,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "snippets"]
 # it brings its own light and dark Pygments styles.
 html_theme = "furo"
 html_title = project
-# Link previews only in the page body, not in Furo's navigation.
-tippy_anchor_parent_selector = "div.content"
-
-
-# sphinx-tippy keeps tips only for pages written in this build.
-def _write_tippy_pages(app, env):
-    if app.builder.name == "html":
-        return sorted(env.found_docs)
-    return []
-
-
-def setup(app):
-    app.connect("env-get-updated", _write_tippy_pages)
 
 
 # -- Options for HTMLHelp output ---------------------------------------------

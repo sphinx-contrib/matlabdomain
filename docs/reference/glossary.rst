@@ -6,8 +6,8 @@ the `Sphinx glossary <https://www.sphinx-doc.org/en/master/glossary.html>`_
 in different words and adds a few terms useful to MATLAB users. The Sphinx
 glossary is authoritative; consult it when these descriptions differ.
 
-Terms used on other pages link here. Hover over such a link to preview the
-definition.
+Terms used on other pages link here. Hover over such a link, or move the
+keyboard focus to it, to preview the definition; Escape closes the preview.
 
 .. glossary::
    :sorted:
@@ -56,7 +56,7 @@ definition.
 
    extension
       A Python package or module that changes or adds Sphinx behavior. This
-      package adds the ``mat`` domain; ``sphinx-tippy`` adds link previews.
+      package adds the ``mat`` domain; ``sphinxcontrib-mermaid`` adds diagrams.
 
    inventory
       The ``objects.inv`` file that lists a site's documented targets and

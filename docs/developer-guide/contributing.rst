@@ -18,8 +18,7 @@ The project uses `uv <https://docs.astral.sh/uv/>`_ and a lock file
 
 ``uv sync`` installs the ``dev`` dependency group: the ``test`` group
 (pytest, coverage), the ``docs`` group (the :term:`theme` the
-documentation uses, `Furo <https://pradyunsg.me/furo/>`_, Mermaid and
-sphinx-tippy), and
+documentation uses, `Furo <https://pradyunsg.me/furo/>`_, and Mermaid), and
 pre-commit, tox, Ruff, Pyright and sphinx-autobuild. ``--all-extras`` adds
 Markdown support (the ``markdown`` extra). Run
 tools through the :term:`virtual environment`: ``uv run pytest``, or ``.venv/bin/python``
@@ -57,9 +56,13 @@ Link the first use of a Sphinx term on each page with the ``term``
 :term:`role`, for example ``:term:`builder```. Definitions live in
 :doc:`../reference/glossary`. Keep command examples and API names literal.
 
-sphinx-tippy adds the link previews. It builds them only from the pages
-written in a build, so ``conf.py`` makes HTML builds write every page. The
-previews load their JavaScript from unpkg.com; the links work without it.
+The previews of glossary terms come from an extension of these docs only,
+``docs/_ext/glossary_tips.py``; it is not part of the package. Before the
+pages are written, it renders every glossary definition as text into one
+``_static/glossary-tips.js``. So a parallel build (``-j``) writes the same
+files as a serial one, the same sources give the same bytes, and the
+previews need no network. Its script and stylesheet are in ``docs/_ext/``;
+the stylesheet uses Furo's colors, which follow the light and dark themes.
 
 Code style
 ----------

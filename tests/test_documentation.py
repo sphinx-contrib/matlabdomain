@@ -3,6 +3,7 @@ warnings, and its reference pages list every configuration value, directive,
 directive option, role, warning and command-line option, and nothing else.
 """
 
+import json
 import re
 import shutil
 import tomllib
@@ -82,13 +83,64 @@ def test_docs_build_without_warnings(make_app, tmp_path):
         "developer-guide/contributing",
     ):
         assert "std-term" in (output / f"{name}.html").read_text(encoding="utf-8"), name
-    scripts = list(
-        (output / "_static/tippy/getting-started").glob("sphinx-primer.*.js")
-    )
-    assert len(scripts) == 1
-    assert "The part of Sphinx" in scripts[0].read_text(encoding="utf-8")
-    updated = app.emit("env-get-updated", app.env)
-    assert set(app.env.found_docs) in [set(result) for result in updated if result]
+    # Hover tips of glossary terms (docs/_ext/glossary_tips.py).
+    assert '<script defer="defer" src="../_static/glossary-tips.js?v=' in primer
+    assert 'href="../_static/glossary-tips.css?v=' in primer
+    tips = glossary_tips(output)
+    assert "The part of Sphinx" in tips["reference/glossary.html#term-builder"]
+    assert not (output / "_static/tippy").exists()
+
+
+def glossary_tips(output):
+    """Return the tips of ``_static/glossary-tips.js``, by link target."""
+    script = (output / "_static/glossary-tips.js").read_text(encoding="utf-8")
+    data = script.rsplit("\nglossaryTips(", 1)[1]
+    assert data.endswith(");\n")
+    return json.loads(data.removesuffix(");\n"))
+
+
+TIPS_PROJECT = {
+    "conf.py": (
+        f"import sys\nsys.path.insert(0, {str(REPO / 'docs' / '_ext')!r})\n"
+        'extensions = ["glossary_tips"]\nnitpicky = True\n'
+    ),
+    "index.rst": "Index\n=====\n\n.. toctree::\n\n   terms\n   guide/page\n",
+    "terms.rst": (
+        "Terms\n=====\n\n.. glossary::\n\n"
+        "   domain\n      Groups :term:`builder` objects.\n\n"
+        "   builder\n      Writes ``html``; see :doc:`guide/page` and\n"
+        "      `Sphinx <https://www.sphinx-doc.org>`_.\n\n"
+        "      .. index:: builder\n"
+    ),
+    "guide/page.rst": "Page\n====\n\nA :term:`builder` in a :term:`domain`.\n",
+}
+
+
+def test_glossary_tips(make_app, tmp_path):
+    scripts = []
+    for parallel in (0, 2):
+        root = tmp_path / f"j{parallel}"
+        for name, text in TIPS_PROJECT.items():
+            (root / name).parent.mkdir(parents=True, exist_ok=True)
+            (root / name).write_text(text, encoding="utf-8")
+        app = make_app("html", srcdir=root, parallel=parallel)
+        app.build()
+        app.cleanup()
+        assert app.warning.getvalue() == ""
+        scripts.append((Path(app.outdir) / "_static/glossary-tips.js").read_bytes())
+    # One file, written in the main process: -j gives the same bytes.
+    assert scripts[0] == scripts[1]
+    tips = glossary_tips(Path(app.outdir))
+    assert list(tips) == ["terms.html#term-builder", "terms.html#term-domain"]
+    builder = tips["terms.html#term-builder"]
+    assert builder.startswith('<p class="glossary-tip-term">builder</p>')
+    assert '<code class="docutils literal notranslate">' in builder
+    assert "Page" in builder and "Sphinx" in builder
+    # Text only: no links or ids that would clash with the page's own.
+    assert "<a " not in builder and " id=" not in builder
+    assert "builder" in tips["terms.html#term-domain"]
+    page = (Path(app.outdir) / "guide/page.html").read_text(encoding="utf-8")
+    assert "../_static/glossary-tips.js?v=" in page
 
 
 def test_configuration_values(bare_app):
