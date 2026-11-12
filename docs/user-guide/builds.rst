@@ -91,7 +91,10 @@ Large projects
   copies) with :confval:`matlab_src_exclude_patterns`; excluded folders
   are not even listed.
 * Large generated data files (megabytes of numbers in a ``.m`` file) are
-  slow to parse when a page documents them.
+  slow to parse when a page documents them, and the parser needs about 70
+  times their size in memory meanwhile (a 20 MB file: about 1.5 GB). The
+  ``.m`` reader has no size limit, so exclude such a file if it needs no
+  documentation.
 * ``scmd apidoc`` writes only the pages whose text changed, so
   regenerating before each build does not trigger a full rebuild.
 * The ``matlab-api-check`` builder parses every file on each run.
