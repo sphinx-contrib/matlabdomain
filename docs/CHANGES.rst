@@ -327,8 +327,9 @@ Linking:
   and its entry in ``objects.inv`` point to it, so links survive page
   splitting. A copied address that no longer has the object, or a page
   that is gone (``404.html``), opens the object's stable address.
-  ``matlab_stable_urls`` (default ``True``) turns it off. Incremental HTML
-  builds remove the pages whose ``scmd apidoc`` source is gone.
+  ``matlab_stable_urls`` (default ``True``) turns it off. Builders that do
+  not write ``.html`` pages (EPUB, ``json``, ``pickle``) get none.
+  Incremental HTML builds remove the pages whose ``scmd apidoc`` source is gone.
 * :confval:`matlab_link_shadowed_files_to_chooser_pages`: a name of
   several objects (two global ``helper.m``, ``foo.m`` and ``foo.slx``)
   links to a page that lists them, locally and through intersphinx.

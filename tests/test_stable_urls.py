@@ -201,7 +201,9 @@ def test_script_that_cannot_be_written(tmp_path, monkeypatch):
     added = []
     app = SimpleNamespace(
         config=SimpleNamespace(matlab_stable_urls=True),
-        builder=SimpleNamespace(format="html", name="html", outdir=tmp_path),
+        builder=SimpleNamespace(
+            format="html", out_suffix=".html", name="html", outdir=tmp_path
+        ),
         add_js_file=added.append,
     )
     mat_urls.add_script(app)
@@ -409,6 +411,7 @@ def test_stale_pages_outside_or_at_the_source_folder(tmp_path):
         dom = SimpleNamespace(removed_docs={"a", "b"})
         builder = SimpleNamespace(
             format="html",
+            out_suffix=".html",
             name="html",
             outdir=tmp_path / "out",
             get_outfilename=lambda doc: tmp_path / "out" / f"{doc}.html",

@@ -188,7 +188,8 @@ Output
    ``404.html`` send an address of a page that no longer has the object to
    it. ``False`` writes no such files and keeps "¶" and the inventory on
    the page (:ref:`library-changes`). This option applies only to HTML
-   builders other than EPUB; other output formats use their normal links.
+   builders that write ``.html`` pages, so not to EPUB, ``json`` or
+   ``pickle``; other output formats use their normal links.
    Disable it when the additional redirect files or their browser redirects
    are unsuitable for the host. A collision with an unowned stable-output
    file fails the build instead of overwriting it.

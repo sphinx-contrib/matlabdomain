@@ -186,6 +186,7 @@ def test_no_chooser_page_lists_the_matches():
     builder = SimpleNamespace(
         config=SimpleNamespace(matlab_stable_urls=True),
         format="html",
+        out_suffix=".html",
         name="html",
         get_target_uri=lambda docname: f"{docname}.html",
     )

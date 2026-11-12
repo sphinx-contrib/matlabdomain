@@ -5,11 +5,12 @@ The project sets what a builder needs to be quiet (``version``, ``copyright``,
 ``man_pages``), so a warning here is the extension's.
 """
 
-import re
 import shutil
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
+from sphinx.util.inventory import InventoryFile
 
 SLX = Path(__file__).parent / "simulink" / "fixtures" / "R2026b" / "slx"
 BUILDERS = (
@@ -22,6 +23,7 @@ BUILDERS = (
     "man",
     "xml",
     "json",
+    "pickle",
     "linkcheck",
     "matlab-api-check",
 )
@@ -114,21 +116,25 @@ def test_builder_finishes_a_tiny_project_without_warning(make_app, tmp_path, bui
     assert "Traceback" not in warnings
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="G4-T10: json writes mat/ redirects to <page>/ but the page is <page>.fjson",
-)
-def test_json_redirects_point_at_files_that_exist(make_app, tmp_path):
-    app, _, _ = build(make_app, tiny_project(tmp_path), "json")
+@pytest.mark.parametrize("builder", ["json", "pickle"])
+def test_builders_without_html_pages_get_no_stable_addresses(
+    make_app, tmp_path, builder
+):
+    """Stable addresses are for builders that write ``.html`` pages (G4-F9)."""
+    app, status, warnings = build(make_app, tiny_project(tmp_path), builder)
     out = Path(app.outdir)
-    redirects = [
-        *(out / "mat" / "name").glob("*.html"),
-        *(out / "mat" / "ref").glob("*.html"),
-    ]
-    assert redirects
-    for redirect in redirects:
-        url = re.search(r'url=([^"#]*)', redirect.read_text(encoding="utf-8")).group(1)  # type: ignore[union-attr]
-        target = (redirect.parent / url).resolve()
-        if url.endswith("/"):
-            target = target / "index.html"
-        assert target.is_file(), (redirect.name, url)
+    suffix = {"json": ".fjson", "pickle": ".fpickle"}[builder]
+    assert status == 0
+    assert warnings == ""
+    assert not (out / "mat").exists()
+    assert not (out / "404.html").exists()
+    assert not (out / "_static" / "mat_urls.js").exists()
+    with (out / "objects.inv").open("rb") as f:
+        inventory = InventoryFile.load(cast(Any, f), "", lambda _base, uri: uri)
+    entries = inventory["mat:function"]
+    assert entries
+    for _, _, uri, _ in entries.values():
+        assert "mat/" not in uri
+        # The one page is the root document, whose address is the page itself.
+        assert uri.startswith("#mat-"), uri
+    assert (out / f"index{suffix}").is_file()

@@ -128,8 +128,13 @@ def _html(app):
 
 
 def _html_builder(builder):
-    return getattr(builder, "format", "") == "html" and not builder.name.startswith(
-        "epub"
+    """Stable addresses are for builders that write ``<page>.html`` pages: not
+    epub, and not ``json`` or ``pickle`` (``.fjson``, ``.fpickle``).
+    """
+    return (
+        getattr(builder, "format", "") == "html"
+        and getattr(builder, "out_suffix", None) == ".html"
+        and not builder.name.startswith("epub")
     )
 
 

@@ -146,7 +146,8 @@ with an old inventory links to the object's old page.
 Stable addresses
 ~~~~~~~~~~~~~~~~
 
-Every HTML build also writes a small file for each documented object
+Every HTML build also (not EPUB, ``json`` or ``pickle``, which write no
+``.html`` pages) writes a small file for each documented object
 that sends the browser to the page the object is on now
 (:confval:`matlab_stable_urls`):
 
