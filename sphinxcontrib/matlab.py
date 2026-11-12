@@ -716,12 +716,15 @@ class MatFolder(MatObjectDirective):
         # Like the former module directive, a folder may be described on
         # several pages without a duplicate warning; the last one wins.
         dom = cast(MATLABDomain, self.env.get_domain("mat"))
-        dom.note_object(ref, self.objtype, display)
-        dom.data["folders"][ref] = (
-            self.env.docname,
-            self.options.get("synopsis", ""),
-            self.options.get("platform", ""),
-            "deprecated" in self.options,
+        dom.note_object(
+            ref,
+            self.objtype,
+            display,
+            folder=(
+                self.options.get("synopsis", ""),
+                self.options.get("platform", ""),
+                "deprecated" in self.options,
+            ),
         )
         entry = ("single", self.get_index_text(ref, name_cls), target_id, "", None)
         self.indexnode["entries"].append(entry)
@@ -897,9 +900,11 @@ class MATLABDomain(Domain):
         "sidecar_issues": {},
         # docname -> True: it has a reference to a MATLAB object
         "xref_docs": {},
-        # docname -> {reference: line} of the object descriptions that can
-        # warn as duplicates (the line of the directive on the page), for the
-        # duplicates of a parallel read (``check_consistency``)
+        # docname -> {reference: (line, objtype, display, folder)}: the objects
+        # and folders the document describes, from which "objects" and
+        # "folders" are derived (``reconcile``): the line of the directive on
+        # the page (None for a folder, which never warns as a duplicate) and,
+        # for a folder, its "folders" data (synopsis, platform, deprecated)
         "described": {},
         # Shared source state, rebuilt by ``mat_types.analyze`` each build;
         # files are parsed lazily (see ``mat_types``).
@@ -945,6 +950,11 @@ class MATLABDomain(Domain):
         # Documents this process described objects in during this build
         # (reset with ``read_docnames``).
         self.described_here = set()
+        # reference -> documents that describe it (built lazily from
+        # "described")
+        self._pages_of = None
+        # references whose descriptions changed in this build (``reconcile``)
+        self._touched = set()
         # Documents read in this build (``env-before-read-docs``).
         self.read_docnames = ()
         # Objects and removed documents before this build read
@@ -1005,26 +1015,84 @@ class MATLABDomain(Domain):
     def entities_table(self):
         return self.data["entities_table"]
 
-    def note_object(self, name, objtype, display=None, location=None):
-        """Register a documented object (``name`` is its path reference).
+    def note_object(self, name, objtype, display=None, location=None, folder=None):
+        """Register a documented object (``name`` is its path reference); a
+        folder description passes its ``folders`` data as ``folder``.
 
-        Warns on duplicates only when ``location`` is given, about a
-        description in this process or in a document not read in this build.
+        Warns on duplicates only when ``location`` is given, about the
+        description before it in a fresh build's reading order (sorted
+        documents) if that one is in this process or in a document not read
+        in this build; ``reconcile`` and ``check_consistency`` warn the rest.
         """
-        objects = self.data["objects"]
-        self.described_here.add(self.env.docname)
-        if location is not None:
+        docname = self.env.docname
+        display = display or name
+        self.described_here.add(docname)
+        pages = self._pages()
+        described = self.data["described"].setdefault(docname, {})
+        old = described.get(name)
+        if location is not None and (old is None or old[0] is None):
+            earlier = [d for d in pages.get(name, ()) if d < docname]
+            other = max(earlier) if earlier else None
             # A description in a document that another process read in this
             # build (a parallel-read worker forked after another chunk was
             # merged) is check_consistency's to warn about.
-            other = objects[name][0] if name in objects else None
             if other is not None and (
                 other in self.described_here or other not in self.read_docnames
             ):
                 self._warn_duplicate(name, other, location)
-            described = self.data["described"].setdefault(self.env.docname, {})
-            described.setdefault(name, location[1])
-        objects[name] = (self.env.docname, objtype, display or name)
+        line = old[0] if old is not None and old[0] is not None else None
+        if line is None and location is not None:
+            line = location[1]
+        described[name] = (line, objtype, display, folder)
+        pages.setdefault(name, set()).add(docname)
+        self._touched.add(name)
+        self.data["objects"][name] = (docname, objtype, display)
+        if folder is not None:
+            self.data["folders"][name] = (docname, *folder)
+        self._displays = self._stable_urls = None
+
+    def _pages(self):
+        """Return the documents that describe each reference."""
+        if self._pages_of is None:
+            self._pages_of = {}
+            for docname, refs in self.data["described"].items():
+                for ref in refs:
+                    self._pages_of.setdefault(ref, set()).add(docname)
+        return self._pages_of
+
+    def reconcile(self):
+        """``env-updated``, after all reading and merging: each reference
+        described or cleared in this build gets the entry of the last document
+        that describes it in sorted order (a fresh build's reading order), or
+        none. Warns a document not read in this build about the one before it
+        that was read (a fresh build reads the later one later).
+        """
+        touched, self._touched = self._touched, set()
+        if not touched:
+            return
+        data = self.data
+        described = data["described"]
+        pages = self._pages()
+        read = set(self.read_docnames)
+        for ref in sorted(touched):
+            docs = sorted(pages.get(ref, ()))
+            if not docs:
+                data["objects"].pop(ref, None)
+                data["folders"].pop(ref, None)
+                continue
+            for earlier, later in itertools.pairwise(docs):
+                line = described[later][ref][0]
+                if earlier in read and later not in read and line is not None:
+                    self._warn_duplicate(ref, earlier, (later, line))
+            winner = docs[-1]
+            _, objtype, display, _ = described[winner][ref]
+            data["objects"][ref] = (winner, objtype, display)
+            folder_docs = [d for d in docs if described[d][ref][3] is not None]
+            if folder_docs:
+                winner = folder_docs[-1]
+                data["folders"][ref] = (winner, *described[winner][ref][3])
+            else:
+                data["folders"].pop(ref, None)
         self._displays = self._stable_urls = None
 
     def _warn_duplicate(self, name, other, location):
@@ -1042,9 +1110,16 @@ class MATLABDomain(Domain):
         for ref, (fn, _, _) in list(self.data["objects"].items()):
             if fn == docname:
                 del self.data["objects"][ref]
+                self._touched.add(ref)
         for ref, (fn, _, _, _) in list(self.data["folders"].items()):
             if fn == docname:
                 del self.data["folders"][ref]
+                self._touched.add(ref)
+        # Another document that describes them may win now (``reconcile``).
+        for ref in self.data["described"].get(docname, ()):
+            self._touched.add(ref)
+            if self._pages_of is not None:
+                self._pages_of.get(ref, set()).discard(docname)
         self.data["doc_sources"].pop(docname, None)
         self.data["sidecar_docs"].pop(docname, None)
         self.data["sidecar_issues"].pop(docname, None)
@@ -1094,6 +1169,11 @@ class MATLABDomain(Domain):
             for docname, value in otherdata[name].items():
                 if docname in docnames:
                     self.data[name][docname] = value
+        for docname in docnames:
+            for ref in otherdata["described"].get(docname, ()):
+                self._touched.add(ref)
+                if self._pages_of is not None:
+                    self._pages_of.setdefault(ref, set()).add(docname)
         index = self.data["index"]
         for name in ("parse_cache", "parse_warnings"):
             ours = self.data[name]
@@ -1107,27 +1187,31 @@ class MATLABDomain(Domain):
 
     def check_consistency(self):
         # Duplicates that parallel-read workers could not see: as a serial
-        # build does, each description of a document read in this build warns
-        # about the one read before it, at the line of its directive; a worker
-        # warned the pairs within its chunk. Known difference from serial: in
-        # an incremental -j build, an unchanged page that describes the object
-        # is in every worker's data, so two changed pages in different chunks
-        # both warn about it (one warning more than serial).
+        # build does, each description warns about the one before it in
+        # sorted order, at the line of its directive, where the two were read
+        # in different chunks; a worker warned the pairs within its chunk
+        # (chunks are runs of sorted documents). Known difference from serial:
+        # in an incremental -j build, an unchanged page that describes the
+        # object is in every worker's data, so two changed pages in different
+        # chunks both warn about it (one warning more than serial).
         chunks = self._chunks
         self._chunks = {}
         self._chunk_count = 0
         if not chunks:
             return
         described = self.data["described"]
-        docs_of = {}
-        for docname in self.read_docnames:
-            for ref in described.get(docname, ()):
-                docs_of.setdefault(ref, []).append(docname)
-        for ref, docs in sorted(docs_of.items()):
-            for earlier, later in itertools.pairwise(docs):
-                if chunks.get(earlier) != chunks.get(later):
-                    location = (later, described[later][ref])
-                    self._warn_duplicate(ref, earlier, location)
+        refs = {ref for docname in chunks for ref in described.get(docname, ())}
+        pages = self._pages()
+        for ref in sorted(refs):
+            for earlier, later in itertools.pairwise(sorted(pages[ref])):
+                line = described[later][ref][0]
+                if (
+                    line is not None
+                    and earlier in chunks
+                    and later in chunks
+                    and chunks[earlier] != chunks[later]
+                ):
+                    self._warn_duplicate(ref, earlier, (later, line))
 
     def _by_display(self, name):
         if self._displays is None:
@@ -1420,6 +1504,14 @@ def _get_version():
         return "0.0.0"
 
 
+def reconcile_objects(app, env):  # noqa: ARG001
+    """``env-updated`` (main process, before the environment is pickled and
+    before ``env-get-updated``): derive "objects" and "folders" of the
+    references described or cleared in this build (``MATLABDomain.reconcile``).
+    """
+    cast(MATLABDomain, env.get_domain("mat")).reconcile()
+
+
 def setup(app):
     # The mat:auto* directives read autodoc's config values.
     app.setup_extension("sphinx.ext.autodoc")
@@ -1432,6 +1524,7 @@ def setup(app):
     app.connect("builder-inited", analyze)
     app.connect("env-get-outdated", mat_types.outdated_docs)
     app.connect("env-before-read-docs", mat_types.note_read_docs)
+    app.connect("env-updated", reconcile_objects, priority=400)
     app.connect("env-updated", mat_types.warn_parsed_sources)
     app.connect("build-finished", mat_api_check.set_status)
     app.connect("missing-reference", check_inventories, priority=400)

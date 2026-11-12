@@ -275,7 +275,9 @@ Builds:
   two pages links to the same page as in a serial build, with the same
   ``mat.duplicate`` warnings, at the same lines. A ``mat.duplicate``
   warning for an object from an auto directive points at the line of that
-  directive on the page.
+  directive on the page. An object or folder described on several pages
+  belongs to the same page after an incremental build as after a fresh
+  one, also when that page changes, drops the description or is removed.
 * One bad source file no longer stops the build. A file that cannot be
   read or parsed (permissions, a corrupt ``.mlapp``, a parser error) gets
   one suppressible ``mat.parse_error`` warning, with the line of the
