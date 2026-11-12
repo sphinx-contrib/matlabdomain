@@ -29,10 +29,18 @@ Incremental builds (``pages_to_write``): pages whose ``scmd apidoc`` source
 is gone are removed; when objects moved, every page that links to a MATLAB
 object is written again; and an output that another builder on the same
 doctree folder got out of step with writes every page once.
+
+Chooser pages are rendered only when they may differ from the files on disk
+(``chooser_pages``): when the build writes a document page (the navigation or
+the theme may have changed), when the chooser data differs from ``STATE``
+(written at the end of the build that rendered them), or when a chooser file
+is missing. ``STATE`` is removed before any page or chooser page is written,
+so a build that fails leaves none and the next build renders them all.
 """
 
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 import os
@@ -41,6 +49,7 @@ import zlib
 from pathlib import Path
 from urllib.parse import quote, urlsplit
 
+import sphinx
 from docutils import nodes
 from sphinx.errors import ExtensionError
 from sphinx.util.logging import getLogger
@@ -56,6 +65,8 @@ MARKER = "<!-- sphinxcontrib-matlabdomain stable address -->"
 JS_MARKER = "/* sphinxcontrib-matlabdomain stable address */"
 SCRIPT = "mat_urls.js"
 REFS = f"{ROOT}/refs.js"
+# The chooser data the chooser pages on disk were rendered from.
+STATE = f"{ROOT}/choosers.json"
 _FRAGMENT_SAFE = "/+-._~:@!$()*,="
 _PERMALINK = re.compile(r'(<a class="headerlink" href=")#(mat-[^"]*)(")')
 # An objects.inv line: name, domain:type, priority, URI, display name.
@@ -211,8 +222,13 @@ def is_chooser_uri(uri):
 
 def rewrite_permalinks(app, pagename, templatename, context, doctree):  # noqa: ARG001
     """``html-page-context``: point the "¶" links of objects to their stable
-    addresses.
+    addresses. A document's page (one with a doctree; generated pages have
+    none) also means that this build renders the chooser pages again.
     """
+    if doctree is not None and not getattr(app.builder, "mat_wrote_page", False):
+        # Main process: with -j, Sphinx writes the first page itself.
+        app.builder.mat_wrote_page = True
+        _remove_state(app.builder)
     body = context.get("body")
     if not body or not enabled(app):
         return
@@ -284,32 +300,110 @@ def _entries(builder, dom, stub, refs):
     return [(ref, objects[ref][1], _target(builder, dom, stub, ref)) for ref in refs]
 
 
+def _themed(app):
+    """Return True when this build writes the chooser pages in the site's
+    theme: builders that write ``<page>.html`` for page ``<page>``.
+    """
+    builder = app.builder
+    probe = f"{ROOT}/name/x"
+    return bool(
+        enabled(app)
+        and builder.get_target_uri(probe) == f"{probe}.html"
+        and os.path.normcase(builder.get_outfilename(probe))
+        == os.path.normcase(os.path.join(builder.outdir, ROOT, "name", "x.html"))
+    )
+
+
+def _choosers(app):
+    """Return ``(choosers, state)``: ``(name, stub, entries)`` of each chooser
+    page and the text of ``STATE`` for them. The state holds nothing that
+    differs between an incremental and a clean build.
+    """
+    builder = app.builder
+    dom = app.env.get_domain("mat")
+    _, by_name, names, _ = addresses(dom)
+    choosers = [
+        (name, stub, _entries(builder, dom, stub, names[name]))
+        for name, stub in sorted(by_name.items())
+        if len(names[name]) > 1
+    ]
+    data = json.dumps(choosers, ensure_ascii=False, separators=(",", ":"))
+    from .matlab import _get_version
+
+    state = {
+        "marker": MARKER,
+        "builder": builder.name,
+        "matlabdomain": _get_version(),
+        "sphinx": sphinx.__display_version__,
+        "pages": len(choosers),
+        "sha256": hashlib.sha256(data.encode("utf-8")).hexdigest(),
+    }
+    return choosers, json.dumps(state, indent=1, sort_keys=True) + "\n"
+
+
+def _cached(builder, choosers, state):
+    """Return True when ``STATE`` is ``state`` and every chooser file exists."""
+    outdir = str(builder.outdir)
+    try:
+        with open(os.path.join(outdir, *STATE.split("/")), "rb") as f:
+            if f.read() != state.encode("utf-8"):
+                return False
+    except OSError:
+        return False
+    return all(
+        os.path.isfile(os.path.join(outdir, *stub.split("/")))
+        for _, stub, _ in choosers
+    )
+
+
+def _remove_state(builder):
+    path = os.path.join(str(builder.outdir), *STATE.split("/"))
+    if os.path.isfile(path) and _is_ours(path):
+        os.remove(path)
+
+
 def chooser_pages(app):
     """``html-collect-pages``: the pages that list the objects of a MATLAB
     name several objects have, in the site's theme. Only builders that write
     ``<page>.html`` for page ``<page>``; ``write_redirects`` writes the others.
+
+    None when this build wrote no document page and the pages on disk are
+    those of the same chooser data (``_cached``).
     """
     builder = app.builder
     builder.mat_chooser_pages = set()
-    probe = f"{ROOT}/name/x"
-    if not enabled(app) or (
-        builder.get_target_uri(probe) != f"{probe}.html"
-        or os.path.normcase(builder.get_outfilename(probe))
-        != os.path.normcase(os.path.join(builder.outdir, ROOT, "name", "x.html"))
+    builder.mat_chooser_state = None
+    if not _themed(app):
+        return []
+    choosers, state = _choosers(app)
+    builder.mat_chooser_pages = {stub for _, stub, _ in choosers}
+    builder.mat_chooser_state = state
+    if not getattr(builder, "mat_wrote_page", True) and _cached(
+        builder, choosers, state
     ):
         return []
-    dom = app.env.get_domain("mat")
-    _, by_name, names, _ = addresses(dom)
+    _remove_state(builder)
     pages = []
-    for name, stub in sorted(by_name.items()):
-        if len(names[name]) > 1:
-            _check_owned(os.path.join(str(builder.outdir), *stub.split("/")))
-            body = _chooser_body(name, _entries(builder, dom, stub, names[name]))
-            pages.append(
-                (stub.removesuffix(".html"), {"title": name, "body": body}, "page.html")
-            )
-            builder.mat_chooser_pages.add(stub)
+    for name, stub, entries in choosers:
+        _check_owned(os.path.join(str(builder.outdir), *stub.split("/")))
+        body = _chooser_body(name, entries)
+        pages.append(
+            (stub.removesuffix(".html"), {"title": name, "body": body}, "page.html")
+        )
     return pages
+
+
+def _kept_choosers(app):
+    """Return the themed chooser stubs and ``STATE`` of a build that did not
+    collect pages (Sphinx < 8.2 skips that when it writes nothing): those on
+    disk if they are current, else none (``write_redirects`` writes plain
+    ones).
+    """
+    if _themed(app):
+        choosers, state = _choosers(app)
+        if _cached(app.builder, choosers, state):
+            return {stub for _, stub, _ in choosers}, state
+    return set(), None
 
 
 def rewrite_inventory(path, uris, choosers=()):
@@ -360,6 +454,13 @@ def _is_ours(path):
     folder, name = os.path.split(os.path.normpath(path))
     if name == SCRIPT:
         return text.startswith(_JS.partition("\n")[0])
+    if name == os.path.basename(STATE) and os.path.basename(folder) == ROOT:
+        # A state cut short (empty, not JSON) is this extension's too.
+        try:
+            json.loads(text)
+        except ValueError:
+            return True
+        return False
     return (
         name == os.path.basename(REFS)
         and os.path.basename(folder) == ROOT
@@ -384,7 +485,10 @@ def write_redirects(app, exception):
     dom = app.env.get_domain("mat")
     by_ref, by_name, names, _ = addresses(dom)
     objects = dom.data["objects"]
-    themed = getattr(builder, "mat_chooser_pages", set())
+    themed = getattr(builder, "mat_chooser_pages", None)
+    state = getattr(builder, "mat_chooser_state", None)
+    if themed is None:
+        themed, state = _kept_choosers(app)
     files = {}
     for ref, stub in by_ref.items():
         files[stub] = _redirect(objects[ref][2], _target(builder, dom, stub, ref))
@@ -402,6 +506,8 @@ def write_redirects(app, exception):
     files[REFS] = (
         f"{JS_MARKER}\nwindow.matStableRefs = {json.dumps(refs_map, sort_keys=True)};\n"
     )
+    if state is not None:
+        files[STATE] = state
     outdir = str(builder.outdir)
     not_found = os.path.join(outdir, "404.html")
     if not os.path.exists(not_found) or _is_ours(not_found):
@@ -470,7 +576,8 @@ def add_script(app):
         app.add_js_file(SCRIPT)
         outdir = str(app.builder.outdir)
         # Fail before any page is written; the other stubs are checked later.
-        _check_owned(os.path.join(outdir, *REFS.split("/")))
+        for stub in (REFS, STATE):
+            _check_owned(os.path.join(outdir, *stub.split("/")))
         path = os.path.join(outdir, "_static", SCRIPT)
         _check_owned(path)
         try:
@@ -499,6 +606,9 @@ def note_pages(app, env, added, changed, removed):  # noqa: ARG001
     dom = env.get_domain("mat")
     dom.objects_before = dict(dom.data["objects"])
     dom.removed_docs = set(removed)
+    builder = app.builder
+    builder.mat_wrote_page = False  # rewrite_permalinks
+    builder.mat_chooser_pages = builder.mat_chooser_state = None  # chooser_pages
     return []
 
 
@@ -512,7 +622,10 @@ def pages_to_write(app, env):
     own output in step. A build whose output is not in step writes every page
     once, without reading again: another builder read the changes it has not
     written. A build in step writes, when objects were added, removed or moved
-    to other pages, every page that links to a MATLAB object.
+    to other pages, every page that links to a MATLAB object. A build whose
+    chooser pages on disk are not current writes the root document too, so
+    that Sphinx < 8.2, which skips collecting pages when it writes nothing,
+    renders them.
 
     Runs in the main process, after reading and before Sphinx pickles the
     environment (only when some page is to be written).
@@ -527,6 +640,13 @@ def pages_to_write(app, env):
         docnames = sorted(data["xref_docs"])
     else:
         docnames = []
+    root = app.config.root_doc
+    if (
+        root in env.found_docs
+        and _themed(app)
+        and not _cached(app.builder, *_choosers(app))
+    ):
+        docnames = sorted({*docnames, root})
     if dom.read_docnames or dom.removed_docs:
         data["in_step"].clear()
     data["in_step"].add(key)
