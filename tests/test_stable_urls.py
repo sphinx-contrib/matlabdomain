@@ -348,8 +348,11 @@ def test_names_differing_by_case_and_removed_objects(make_app, tmp_path):
 
 
 def test_a_case_only_sibling_moves_the_address_of_the_existing_file(make_app, tmp_path):
-    # Pinned as it is: both names get the escaped form once Foo.m has a sibling.
+    # Pinned as it is: the uppercase letters of Foo.m are escaped once it has
+    # a sibling that differs only by case; foo.m keeps its plain name.
     (tmp_path / "Foo.m").write_text("function Foo\n% Foo Help.\nend\n")
+    if (tmp_path / "foo.m").exists():
+        pytest.skip("needs a case-sensitive file system")
     (tmp_path / "conf.py").write_text(
         'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
     )
