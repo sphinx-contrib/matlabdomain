@@ -941,6 +941,10 @@ class MATLABDomain(Domain):
         # docname -> number of the parallel-read chunk that read it (one
         # merge_domaindata call per chunk); empty after a serial read
         self._chunks = {}
+        self._chunk_count = 0
+        # Documents this process described objects in during this build
+        # (reset with ``read_docnames``).
+        self.described_here = set()
         # Documents read in this build (``env-before-read-docs``).
         self.read_docnames = ()
         # Objects and removed documents before this build read
@@ -1004,12 +1008,20 @@ class MATLABDomain(Domain):
     def note_object(self, name, objtype, display=None, location=None):
         """Register a documented object (``name`` is its path reference).
 
-        Warns on duplicates only when ``location`` is given.
+        Warns on duplicates only when ``location`` is given, about a
+        description in this process or in a document not read in this build.
         """
         objects = self.data["objects"]
+        self.described_here.add(self.env.docname)
         if location is not None:
-            if name in objects:
-                self._warn_duplicate(name, objects[name][0], location)
+            # A description in a document that another process read in this
+            # build (a parallel-read worker forked after another chunk was
+            # merged) is check_consistency's to warn about.
+            other = objects[name][0] if name in objects else None
+            if other is not None and (
+                other in self.described_here or other not in self.read_docnames
+            ):
+                self._warn_duplicate(name, other, location)
             described = self.data["described"].setdefault(self.env.docname, {})
             described.setdefault(name, location[1])
         objects[name] = (self.env.docname, objtype, display or name)
@@ -1059,9 +1071,9 @@ class MATLABDomain(Domain):
         # An object or folder that another worker described too: the later in
         # reading order wins, as in a serial build, whatever the merge order.
         # The duplicate warnings across workers are check_consistency's.
-        chunk = len(set(self._chunks.values()))
         for docname in docnames:
-            self._chunks[docname] = chunk
+            self._chunks[docname] = self._chunk_count
+        self._chunk_count += 1
         order = {docname: i for i, docname in enumerate(self.read_docnames)}
         for name in ("objects", "folders"):
             ours = self.data[name]
@@ -1103,6 +1115,7 @@ class MATLABDomain(Domain):
         # both warn about it (one warning more than serial).
         chunks = self._chunks
         self._chunks = {}
+        self._chunk_count = 0
         if not chunks:
             return
         described = self.data["described"]

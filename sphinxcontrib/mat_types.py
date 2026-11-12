@@ -1346,7 +1346,9 @@ def outdated_docs(app, env, added, changed, removed):  # noqa: ARG001
 
 def note_read_docs(app, env, docnames):  # noqa: ARG001
     """``env-before-read-docs``: remember the documents this build reads."""
-    env.get_domain("mat").read_docnames = list(docnames)
+    dom = env.get_domain("mat")
+    dom.read_docnames = list(docnames)
+    dom.described_here = set()
 
 
 def warn_parsed_sources(app, env):  # noqa: ARG001

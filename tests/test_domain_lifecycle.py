@@ -629,9 +629,10 @@ DUPLICATE_SOURCES = {
     "src/K.m": "classdef K\n% K help\nmethods\nfunction m(o)\n% M help\nend\n"
     "end\nend\n",
 }
-# Sorted, as Sphinx reads them: -j 2 reads a1-a6 in one chunk and b1-b5 and
-# index in the other (12 documents, more than the 5 below which Sphinx 8.0
-# reads serially).
+# Sorted, as Sphinx reads them: -j 2 reads a1-a6, then b1-b5 and index, then
+# zz (13 documents, more than the 5 below which Sphinx 8.0 reads serially).
+# Two processes read three chunks: the third is forked after one of the
+# others was merged, so its copy of the domain data holds that chunk.
 DUPLICATE_PAGES = {
     # (1) a hand-written directive in both chunks
     "a1.rst": "A1\n==\n\n.. mat:function:: g(x)\n\n   G.\n",
@@ -646,16 +647,46 @@ DUPLICATE_PAGES = {
     # (4) a class with its members in both chunks
     "a4.rst": "A4\n==\n\n.. mat:autoclass:: K\n   :members:\n",
     "b5.rst": "B5\n==\n\nText.\n\n.. mat:autoclass:: K\n   :members:\n",
+    # (5) its third description, in the third chunk
+    "zz.rst": "ZZ\n==\n\nOne.\n\nTwo.\n\n.. mat:autoclass:: K\n   :members:\n",
     "a5.rst": "A5\n==\n\nText.\n",
     "a6.rst": "A6\n==\n\nText.\n",
     "index.rst": "Index\n=====\n\n.. toctree::\n\n"
     + "".join(f"   {doc}\n" for doc in ("a1", "a2", "a3", "a4", "a5", "a6"))
-    + "".join(f"   {doc}\n" for doc in ("b1", "b2", "b3", "b4", "b5")),
+    + "".join(f"   {doc}\n" for doc in ("b1", "b2", "b3", "b4", "b5", "zz")),
 }
 CHUNKS = [
     ["a1", "a2", "a3", "a4", "a5", "a6"],
     ["b1", "b2", "b3", "b4", "b5", "index"],
+    ["zz"],
 ]
+
+
+def test_worker_leaves_pages_of_other_processes_to_check_consistency(make_app, srcdir):
+    # A worker forked after another chunk was merged sees that chunk's
+    # objects: it warns neither about them (check_consistency does) nor less
+    # about its own pages and unchanged pages of an earlier build.
+    app = build(make_app, srcdir)
+    dom = app.env.get_domain("mat")
+    old = next(iter(dom.data["objects"].values()))[0]  # not read again
+    dom.read_docnames = ["doc_a", "doc_b", "doc_c"]
+    dom.described_here = set()
+    dom.data["objects"]["x/Obj.m"] = ("doc_a", "class", "Obj")  # merged chunk
+    dom.data["objects"]["x/Old.m"] = (old, "class", "Old")
+    app.env.temp_data["docname"] = "doc_b"
+    app.warning.truncate(0)
+    app.warning.seek(0)
+
+    dom.note_object("x/Obj.m", "class", "Obj", location=("doc_b", 4))
+    assert "[mat.duplicate]" not in app.warning.getvalue()
+    assert dom.data["objects"]["x/Obj.m"] == ("doc_b", "class", "Obj")
+
+    dom.note_object("x/Old.m", "class", "Old", location=("doc_b", 6))
+    assert "of x/Old.m, other instance in" in app.warning.getvalue()
+
+    app.env.temp_data["docname"] = "doc_c"
+    dom.note_object("x/Obj.m", "class", "Obj", location=("doc_c", 8))
+    assert "of x/Obj.m, other instance in" in app.warning.getvalue()
 
 
 def _duplicate_warnings(app, root):
@@ -701,6 +732,8 @@ def test_duplicate_warnings_of_parallel_build_equal_serial(
             # the members of an autoclass: the line of the autoclass
             _dup("b5", 6, "K.m", "a4"),
             _dup("b5", 6, "K.m.m", "a4"),
+            _dup("zz", 8, "K.m", "b5"),
+            _dup("zz", 8, "K.m.m", "b5"),
         ]
     )
     assert _duplicate_warnings(serial, roots["serial"]) == expected
@@ -716,5 +749,6 @@ def test_duplicate_warnings_of_parallel_build_equal_serial(
     parallel = make_app(srcdir=roots["parallel"], parallel=2)
     parallel.build()
     if sphinx.util.parallel.parallel_available:
+        assert len(merged) == 3
         assert sorted(merged) == CHUNKS
     assert _duplicate_warnings(parallel, roots["parallel"]) == expected
