@@ -240,6 +240,12 @@ version or encoding, a missing ``conf.py`` or required value, an error in
 typo; :doc:`configuration`). Unknown and abbreviated options (``--dry``
 for ``--dry-run``) are usage errors.
 
+The command checks the values it uses: the source values
+(``matlab_src_*``, :confval:`matlab_version`) and the ``matlab_apidoc_*``
+values. It does not check the values that only the build or
+``matlab-api-check`` use, so it runs on a project that is not ready for
+those yet; they check their own values when they run.
+
 Output files
 ~~~~~~~~~~~~
 

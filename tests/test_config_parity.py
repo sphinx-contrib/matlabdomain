@@ -90,10 +90,12 @@ BAD_FORMAT = {
 }
 
 #: (row, "type" or "format") -> who refuses it: "build" or "command". Both
-#: refusing, or both accepting, is not listed. The command reads the rows
-#: of ``matlab_src_*``, ``matlab_version`` and ``matlab_apidoc_*`` only; the
-#: build checks the value of the others (and, for ``matlab_apidoc_*``, only
-#: the type, as a warning).
+#: refusing, or both accepting, is not listed. Each tool checks only the
+#: values it uses (decided 2026-11-11), so ``scmd apidoc`` can run on a
+#: project that is not ready for a build or a check yet. The command reads
+#: the rows of ``matlab_src_*``, ``matlab_version`` and ``matlab_apidoc_*``
+#: only; the build checks the value of the others (and, for
+#: ``matlab_apidoc_*``, only the type, as a warning).
 ONE_SIDED = {
     ("matlab_auto_link", "format"): "build",
     ("matlab_external_names", "type"): "build",
@@ -190,65 +192,6 @@ def test_build_and_command_refuse_alike(name, kind, value, project, tmp_path, ca
     else:
         assert (build is None) == (command is None), (build, command)
         assert build == command  # the same words, naming the same value
-
-
-#: a bad value that the command refuses and the build lets through, or the
-#: other way round, although both read the one ``conf.py``
-GAPS = [
-    pytest.param(
-        "matlab_apidoc_group",
-        "bogus",
-        marks=pytest.mark.xfail(
-            strict=True,
-            reason="G4-T11: build accepts a bad apidoc_group, scmd refuses",
-        ),
-        id="build-accepts-apidoc-group",
-    ),
-    pytest.param(
-        "matlab_apidoc_page_size",
-        0,
-        marks=pytest.mark.xfail(
-            strict=True,
-            reason="G4-T11: build accepts apidoc_page_size 0, scmd refuses",
-        ),
-        id="build-accepts-apidoc-page-size",
-    ),
-    pytest.param(
-        "matlab_apidoc_separate",
-        12345,
-        marks=pytest.mark.xfail(
-            strict=True,
-            reason="G4-T11: build accepts an int for a bool apidoc value, scmd refuses",
-        ),
-        id="build-accepts-apidoc-bool",
-    ),
-    pytest.param(
-        "matlab_auto_link",
-        "bogus",
-        marks=pytest.mark.xfail(
-            strict=True,
-            reason="G4-T11: scmd apidoc accepts a bad matlab_auto_link, build refuses",
-        ),
-        id="command-accepts-auto-link",
-    ),
-    pytest.param(
-        "matlab_external_names",
-        ["(unclosed"],
-        marks=pytest.mark.xfail(
-            strict=True,
-            reason="G4-T11: scmd accepts a bad external_names regex, build refuses",
-        ),
-        id="command-accepts-external-names",
-    ),
-]
-
-
-@pytest.mark.parametrize(("name", "value"), GAPS)
-def test_one_conf_py_is_accepted_or_refused_by_both(
-    name, value, project, tmp_path, capsys
-):
-    build, command = outcomes(project, f"{name} = {value!r}", tmp_path, capsys)
-    assert (build is None) == (command is None), (build, command)
 
 
 # -- the order of the extensions ----------------------------------------------
