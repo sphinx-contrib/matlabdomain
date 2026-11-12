@@ -21,12 +21,10 @@ root, run it on the Sphinx project of your docs:
 For paths to use from inside ``docs``, see :doc:`FAQ`.
 
 It reads the pages like any builder; give it the ``-d`` folder of the HTML
-build (``-d docs/_build/doctrees``) to avoid reading them twice. Run the HTML
-build first. A check that runs between an edit and the HTML build reads the
-changed pages itself, and the next HTML build does not write them again: those
-HTML pages stay as they were until an HTML build with ``-a`` (pages of removed
-documents stay until the output folder is deleted). A check with a ``-d``
-folder of its own never has this effect. (If the two
+build (``-d docs/_build/doctrees``) to avoid reading them twice, in either
+order. When the check runs between an edit and the HTML build, it reads the
+changed pages itself, and the next HTML build writes every page once without
+reading them again (see :ref:`builds-shared-doctrees`). (If the two
 builds use different options, such as ``-n`` for HTML only, Sphinx says the
 configuration changed and reads the pages again; that is harmless.) Then it
 checks every file the project indexes, whether a page documents it or not,

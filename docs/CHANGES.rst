@@ -266,7 +266,10 @@ Builds:
 * Each build indexes the source files (reads and classifies each file once)
   and parses a file with tree-sitter only when a page needs it. Parses are
   cached in the Sphinx environment by path, modification time and size;
-  only pages that used a changed file are read again (#282). Parallel
+  only pages that used a changed file are read again (#282). Builders
+  can share one doctree folder (``-d``) in any order: an output that did
+  not see another builder's reading of changed pages writes every page once
+  at its next build. Parallel
   builds (``-j``) are supported (#147); an object or folder described on
   two pages links to the same page as in a serial build, with the same
   ``mat.duplicate`` warning.
@@ -329,7 +332,9 @@ Linking:
   that is gone (``404.html``), opens the object's stable address.
   ``matlab_stable_urls`` (default ``True``) turns it off. Builders that do
   not write ``.html`` pages (EPUB, ``json``, ``pickle``) get none.
-  Incremental HTML builds remove the pages whose ``scmd apidoc`` source is gone.
+  Incremental HTML builds remove the pages whose ``scmd apidoc`` source is
+  gone, also when another builder on the same doctree folder (``-d``) saw
+  it go.
 * :confval:`matlab_link_shadowed_files_to_chooser_pages`: a name of
   several objects (two global ``helper.m``, ``foo.m`` and ``foo.slx``)
   links to a page that lists them, locally and through intersphinx.
