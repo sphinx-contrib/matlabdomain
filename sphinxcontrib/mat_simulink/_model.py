@@ -1,5 +1,5 @@
 """The format-neutral content of a Simulink file and the readers that
-build it from SLX, OPC text ``.mdl``, classic ``.mdl`` and exported XML.
+build it from SLX, OPC text ``.mdl`` and classic ``.mdl``.
 """
 
 from __future__ import annotations
@@ -181,23 +181,12 @@ def help_target(text: str) -> tuple[str, str] | None:
     return None
 
 
-def is_exported_xml(path) -> bool:
-    """Return True if ``path`` (an ``.xml`` file) is an exported Simulink
-    file (root ``ModelInformation``).
-    """
-    path = Path(path)
-    try:
-        return sniff(path, read_head(path)) == "xml"
-    except SimulinkFileError:
-        return False
-
-
 def classify(path) -> str:
     """Return ``model``, ``library``, ``subsystem`` or ``unknown``, reading
     as little as possible.
     """
     path = Path(path)
-    layout = sniff(path, read_head(path))
+    layout = sniff(read_head(path))
     if layout == "zip":
         kind = _core_kind(zip_parts(path, _is_core))
         if kind == "unknown":
@@ -212,14 +201,6 @@ def classify(path) -> str:
         head = read_head(path).decode("latin-1")
         word = re.search(r"(Model|Library|Subsystem)\s*\{", head)
         return word.group(1).lower() if word else "unknown"
-    if layout == "xml":
-        check_size(path)
-        tag = re.search(
-            r"<ModelInformation[^>]*>\s*<(\w+)",
-            read_head(path).decode("utf-8", "replace"),
-        )
-        kind = tag.group(1).lower() if tag else ""
-        return kind if kind in KINDS else "unknown"
     return "unknown"
 
 
@@ -245,7 +226,7 @@ def read_diagram(path) -> Diagram:
     that is not a readable Simulink file.
     """
     path = Path(path)
-    layout = sniff(path, read_head(path))
+    layout = sniff(read_head(path))
     if layout == "zip":
         return _Reader(path, "slx", zip_parts(path, _used)).from_package()
     if layout == "opc":
@@ -257,12 +238,6 @@ def read_diagram(path) -> Diagram:
         if root is None:
             raise SimulinkFileError("has no Model, Library or Subsystem section.")
         return _Reader(path, "mdl-classic", None).from_root(root)
-    if layout == "xml":
-        check_size(path)
-        info = parse_xml(path.read_bytes(), path.name)
-        if not info.children:
-            raise SimulinkFileError("has an empty ModelInformation element.")
-        return _Reader(path, "xml", None).from_root(info.children[0])
     raise SimulinkFileError("is not a Simulink model, library or subsystem file.")
 
 
@@ -519,7 +494,7 @@ def _element_mask(mask: Node) -> Mask:
 
 
 def _object_mask(obj: Node) -> Mask:
-    """``Simulink.Mask`` object (SLX before R2017b, classic MDL, XML)."""
+    """``Simulink.Mask`` object (SLX before R2017b, classic MDL)."""
     parameters = []
     for array in obj.findall("Array"):
         if array.param("PropName") != "Parameters":

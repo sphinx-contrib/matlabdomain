@@ -1,5 +1,5 @@
-"""Read Simulink model files (``.slx``, ``.mdl``, exported ``.xml``)
-without MATLAB.
+"""Read Simulink model files (``.slx``, ``.mdl``) without
+MATLAB.
 
 ``classify`` gives the kind of a file cheaply (index stage);
 ``read_diagram`` reads what the documentation needs (parse stage). The
@@ -20,7 +20,6 @@ from ._model import (
     Reference,
     classify,
     help_target,
-    is_exported_xml,
     read_diagram,
     simulink_release,
 )
@@ -40,7 +39,6 @@ __all__ = [
     "SimulinkFileError",
     "classify",
     "help_target",
-    "is_exported_xml",
     "read_diagram",
     "simulink_release",
 ]

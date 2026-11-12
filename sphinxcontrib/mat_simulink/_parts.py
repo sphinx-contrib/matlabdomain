@@ -36,9 +36,9 @@ def read_head(path: Path) -> bytes:
         return f.read(HEAD_BYTES)
 
 
-def sniff(path: Path, head: bytes) -> str:
-    """Return the layout of a file: ``zip``, ``opc``, ``classic``, ``xml``
-    or ``unknown``. A Git LFS pointer is a :class:`SimulinkFileError`.
+def sniff(head: bytes) -> str:
+    """Return the layout of a file: ``zip``, ``opc``, ``classic`` or
+    ``unknown``. A Git LFS pointer is a :class:`SimulinkFileError`.
     """
     if head.startswith(LFS_POINTER):
         raise SimulinkFileError("is a Git LFS pointer, not the model file.")
@@ -47,10 +47,6 @@ def sniff(path: Path, head: bytes) -> str:
     text = head.removeprefix(b"\xef\xbb\xbf").lstrip()
     if text.startswith(OPC_TEXT):
         return "opc"
-    if path.suffix.lower() == ".xml":
-        if re.match(rb"(?:<\?xml[^>]*\?>\s*)?<ModelInformation\b", text):
-            return "xml"
-        return "unknown"
     if _CLASSIC.match(text):
         return "classic"
     return "unknown"

@@ -136,7 +136,7 @@ def test_inventory_of_the_fixture_library_with_a_line_break(make_app, tmp_path):
 LETTERS = list("aZ_-9")
 ODD = [*"~%#+@./ \n", "//", "\u00e9", "\u2028", "\x00", "\U0001f600", "e\u0301"]
 SEGMENTS = [*"aB+p@C", "x y", "~", "%", "#", "a.b", "é", "é", "a\nb", "1"]
-EXTENSIONS = [".m", ".mlapp", ".slx", ".mdl", ".xml"]
+EXTENSIONS = [".m", ".mlapp", ".slx", ".mdl"]
 MEMBERS = ["m", "get", "x1", "a b", "é", "~", "#", "a\nb"]
 
 
@@ -177,7 +177,7 @@ def test_parse_reference_round_trips():
         folders = [rng.choice(SEGMENTS) for _ in range(rng.randint(0, 3))]
         ext = rng.choice(EXTENSIONS)
         file = "/".join([*folders, rng.choice(SEGMENTS) + ext])
-        if ext in (".slx", ".mdl", ".xml") and rng.random() < 0.7:
+        if ext in (".slx", ".mdl") and rng.random() < 0.7:
             parts = [rng.choice(SEGMENTS) for _ in range(rng.randint(1, 3))]
             block = "/".join(p.replace("/", "//") for p in parts)
             ref, expected = f"{file}/{block}", (file, [block])

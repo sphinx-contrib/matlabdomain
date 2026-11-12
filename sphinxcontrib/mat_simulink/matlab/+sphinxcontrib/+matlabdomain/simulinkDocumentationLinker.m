@@ -180,7 +180,7 @@ out = strjoin([escapeFolders(parts(1:last-1)), escapeSegment(parts(last))], "/")
 end
 
 function tf = isBlockContainer(name)
-tf = any(endsWith(name, [".slx", ".mdl", ".xml"])) && strlength(name) > 4;
+tf = any(endsWith(name, [".slx", ".mdl"])) && strlength(name) > 4;
 end
 
 function out = escapeFolders(parts)

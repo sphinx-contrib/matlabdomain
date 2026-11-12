@@ -10,8 +10,8 @@ from sphinxcontrib.mat_types import MatApplication
 
 
 def test_registered_handlers(tmp_path):
-    assert mat_handlers.extensions() == (".m", ".mlapp", ".slx", ".mdl", ".xml")
-    assert mat_handlers.block_extensions() == (".slx", ".mdl", ".xml")
+    assert mat_handlers.extensions() == (".m", ".mlapp", ".slx", ".mdl")
+    assert mat_handlers.block_extensions() == (".slx", ".mdl")
     (tmp_path / "f.m").write_text("function f\nend\n")
     (tmp_path / "app.mlapp").write_bytes(b"")
     (tmp_path / "x.txt").write_text("")

@@ -2,8 +2,11 @@
 names, lookups and incremental builds (S4 of the Simulink plan).
 """
 
+import builtins
+import io
 import json
 import logging
+import os
 import pickle
 import shutil
 import zipfile
@@ -39,6 +42,17 @@ CONF = (
     'primary_domain = "mat"\n'
 )
 LFS = b"version https://git-lfs.github.com/spec/v1\noid sha256:00\nsize 1\n"
+# The head of a Simulink library saved with ``ExportToXML``: a file type
+# that is not read.
+EXPORT_XML = (
+    '<?xml version="1.0" encoding="utf-8"?>\n'
+    '<ModelInformation Version="1.0">\n'
+    '  <Library Name="probeLib">\n'
+    '    <P Name="Description">Library description</P>\n'
+    '    <System><Block BlockType="SubSystem" Name="Group"/></System>\n'
+    "  </Library>\n"
+    "</ModelInformation>\n"
+)
 
 
 @pytest.fixture
@@ -72,7 +86,7 @@ def project(root):
     copy(SLX / "probeRef.slx", root / "@Cls" / "inClass.slx")
     copy(SLX / "probeRef.slx", root / "@Cls" / "sub" / "inSub.slx")
     copy(FIXTURES / "R2026a" / "mdl" / "probeLib.mdl", root / "mdl" / "probeLib.mdl")
-    copy(FIXTURES / "R2024a-native" / "xml" / "probeLib.xml", root / "export.xml")
+    (root / "export.xml").write_text(EXPORT_XML, encoding="utf-8")
     (root / "@Cls" / "Cls.m").write_text("classdef Cls\nend\n")
     (root / "other.xml").write_text("<root/>\n")
     (root / "lfs.slx").write_bytes(LFS)
@@ -91,7 +105,10 @@ def test_block_references():
     )
     assert parse_reference("probeLib.slx/A//B") == ("probeLib.slx", ["A//B"])
     assert parse_reference("a/lib.mdl/Two\nLines") == ("a/lib.mdl", ["Two\nLines"])
-    assert parse_reference("a/lib.xml/v1.2") == ("a/lib.xml", ["v1.2"])
+    # .xml is no file type: lib.xml is a folder, v1.2 no file
+    assert parse_reference("a/lib.xml/f.m") == ("a/lib.xml/f.m", [])
+    assert parse_reference("a/lib.xml/v1.2") == (None, [])
+    assert not is_block_container("lib.xml")
     assert parse_reference("a/lib.slx") == ("a/lib.slx", [])
     assert parse_reference("a/lib.slx/") == ("a/lib.slx/", [])
     # ".slx" alone is no file name
@@ -179,24 +196,55 @@ def test_handlers(tmp_path):
         slx.read(tmp_path / "missing.slx")
     mdl = mat_handlers.handler_for(tmp_path / "mdl" / "probeLib.mdl")
     assert isinstance(mdl, mat_handlers.MdlHandler)
-    xml = mat_handlers.handler_for(tmp_path / "export.xml")
-    assert isinstance(xml, mat_handlers.SimulinkXmlHandler)
-    assert xml.classify(tmp_path / "export.xml") == "library"
-    assert mat_handlers.handler_for(tmp_path / "other.xml") is None
-    assert mat_handlers.handler_for(tmp_path / "missing.xml") is None
-    (tmp_path / "lfs.xml").write_bytes(LFS)
-    assert mat_handlers.handler_for(tmp_path / "lfs.xml") is None
-    assert [slx.naming, mdl.naming, xml.naming] == ["model", "model", None]
+    assert mdl is not None
+    assert [slx.naming, mdl.naming] == ["model", "model"]
+    # no handler owns .xml, not even for a Simulink export
+    assert mat_handlers.handler_by_extension("a.xml") is None
+    assert mat_handlers.handler_for("a.xml") is None
+    assert mat_handlers.handler_for(tmp_path / "export.xml") is None
 
 
-def test_xml_discover_unreadable(tmp_path, monkeypatch):
-    (tmp_path / "x.xml").write_text("<ModelInformation/>")
+def test_xml_files_are_not_opened(tmp_path, warnings, monkeypatch):
+    """A Simulink export and the XML files of a MATLAB project are neither
+    indexed nor opened, and give no warning; a folder ``x.xml/`` is an
+    ordinary folder.
+    """
+    root = tmp_path / "src"
+    root.mkdir()
+    (root / "f.m").write_text("function f\nend\n", encoding="utf-8")
+    (root / "export.xml").write_text(EXPORT_XML, encoding="utf-8")
+    project_files = root / "resources" / "project"
+    for name in ("Project.xml", "Root.type.Files/f.m.type.File.xml"):
+        (project_files / name).parent.mkdir(parents=True, exist_ok=True)
+        (project_files / name).write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>\n<Info/>\n', encoding="utf-8"
+        )
+    (root / "x.xml").mkdir()
+    (root / "x.xml" / "g.m").write_text("function g\nend\n", encoding="utf-8")
+    opened = []
 
-    def denied(path):
-        raise PermissionError(13, "denied")
+    def recorder(real):
+        def wrapper(file, *args, **kwargs):
+            opened.append(os.fspath(file) if not isinstance(file, int) else "")
+            return real(file, *args, **kwargs)
 
-    monkeypatch.setattr(mat_simulink, "is_exported_xml", denied)
-    assert mat_handlers.handler_for(tmp_path / "x.xml") is None
+        return wrapper
+
+    # Record each file the index stage opens, through the built-in open,
+    # io.open (used by pathlib) or os.open.
+    monkeypatch.setattr(builtins, "open", recorder(builtins.open))
+    monkeypatch.setattr(io, "open", recorder(io.open))
+    monkeypatch.setattr(os, "open", recorder(os.open))
+    source_index = build_index(IndexSettings(str(root)))
+    monkeypatch.undo()
+    refs = sorted(r["reference"] for r in source_index.index.values())
+    assert refs == ["f.m", "x.xml/g.m"]
+    assert any(p.endswith("f.m") for p in opened)  # the wrappers see reads
+    assert [p for p in opened if p.lower().endswith(".xml")] == []
+    assert warnings == []
+    assert "x.xml/" in source_index.entities
+    folder = mat_types.MatModule("src", str(root), "./")
+    assert ("x.xml", "x.xml/") in folder.member_refs()
 
 
 def test_index(tmp_path, warnings):
@@ -208,7 +256,6 @@ def test_index(tmp_path, warnings):
         "@Cls/Cls.m": "class",
         "@Cls/inClass.slx": "model",
         "@Cls/sub/inSub.slx": "model",
-        "export.xml": "library",
         "lfs.slx": "unknown",
         "mdl/probeLib.mdl": "library",
         "notes.slx": "unknown",
@@ -225,10 +272,8 @@ def test_index(tmp_path, warnings):
     assert names["@Cls/inClass.slx"] is None
     # R2026a: .m files there are not callable, models still load.
     assert names["@Cls/sub/inSub.slx"] == "inSub"
-    assert names["export.xml"] is None
     assert names["lfs.slx"] is None
     assert names["notes.slx"] is None
-    assert records["export.xml"]["scope"] is None
     assert sorted(source_index.matlab_names["same"]) == ["same.m", "same.slx"]
     assert sorted(source_index.matlab_names["probeLib"]) == [
         "mdl/probeLib.mdl",
@@ -255,7 +300,7 @@ def test_index(tmp_path, warnings):
     assert any("lfs.slx is a Git LFS pointer" in m for _, m in messages)
 
 
-@pytest.mark.parametrize("name", ["x.m", "x.MLAPP", "x.mdl", "x.xml", "x.md", "x.rst"])
+@pytest.mark.parametrize("name", ["x.m", "x.MLAPP", "x.mdl", "x.md", "x.rst"])
 def test_folders_named_like_files_are_errors(tmp_path, warnings, name):
     root = tmp_path / "src"
     (root / name).mkdir(parents=True)
@@ -300,14 +345,12 @@ def test_apidoc_lists_simulink_files(tmp_path, warnings):
     ]
     assert sections["global", "Simulink Libraries"] == [
         ("broken", "broken.slx"),
-        ("export.xml", "export.xml"),
         ("mdl/probeLib.mdl", "mdl/probeLib.mdl"),
         ("probeLib.slx", "probeLib.slx"),
     ]
     blocks = sections["global", "Simulink Library Blocks"]
     assert ("probeLib.slx/Two Lines", "probeLib.slx/Two\n   Lines") in blocks
-    assert ("export.xml/Group/Inner Masked", "export.xml/Group/Inner Masked") in blocks
-    assert len(blocks) == 24
+    assert len(blocks) == 16
     messages = [m for _, m in warnings]
     assert any("broken.slx: its blocks cannot be read" in m for m in messages)
     # one warning for the library, none for its blocks
@@ -411,7 +454,7 @@ def test_build_lookups_and_incremental(make_app, tmp_path):
     }
     assert mat_types.display_name(dom, "+pk/probeSub.slx") == "+pk/probeSub.slx"
     assert mat_types.display_name(dom, "probeLib.slx") == "probeLib"
-    assert mat_types.display_name(dom, "export.xml") == "export.xml"
+    assert mat_types.resolve(dom, "export.xml") is None
     broken = mat_types.resolve(dom, "notes.slx")
     assert isinstance(broken, mat_types.MatScript)
 
@@ -425,26 +468,12 @@ def test_build_lookups_and_incremental(make_app, tmp_path):
     assert app2.env.get_domain("mat").read_docnames == ["index"]
 
 
-@pytest.mark.parametrize("name", ["probeModel", "probeLib", "probeSub", "probeRef"])
-def test_exported_xml_is_like_its_slx_twin(name):
-    native = FIXTURES / "R2024a-native"
-    xml = mat_types.MatObject.parse_simulink(native / "xml" / f"{name}.xml", name, "./")
-    slx = mat_types.MatObject.parse_simulink(native / "slx" / f"{name}.slx", name, "./")
-    assert type(xml) is type(slx)
-    assert xml.__doc__ == slx.__doc__
-    # the export drops the model mask (formats page, "Exported XML")
-    assert xml.diagram.system_mask is None
-    fields = ("name", "kind", "ports", "references", "library_blocks")
-    for field in fields:
-        assert getattr(xml.diagram, field) == getattr(slx.diagram, field), field
-
-
 def test_linker_addresses_match_stable_addresses():
     """``simulinkDocumentationLinker.m`` gives the addresses of ``mat_urls``
     (``linker.json`` is written by ``make_fixtures("linker", ...)``).
     """
     cases = json.loads((FIXTURES.parent / "linker.json").read_text("utf-8"))["cases"]
-    assert len(cases) == 28
+    assert len(cases) == 27
     for case in cases:
         ref = case["reference"]
         names, _ = docnames([ref], "html")

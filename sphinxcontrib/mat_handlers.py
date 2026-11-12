@@ -24,16 +24,15 @@ handler provides:
   None for an index type that has no directive yet (apidoc leaves it out);
 - ``blocks``: True if references continue into the file's blocks with
   ``/`` (``mat_naming.parse_reference``);
-- ``naming``: how MATLAB names the file: ``"code"`` (``form_matlab_name``),
-  ``"model"`` (``form_model_name``) or None (not by name).
+- ``naming``: how MATLAB names the file: ``"code"`` (``form_matlab_name``)
+  or ``"model"`` (``form_model_name``).
 
 Registration order is lookup order: a name without extension tries ``.m``
 before ``.mlapp``.
 
 Simulink files: models, libraries and subsystem files (``.slx``, a zip
-container; ``.mdl``, text; exported ``.xml``), read by
-``sphinxcontrib.mat_simulink``. The ``.xml`` handler claims only Simulink
-exports. Planned: Simscape components (``.ssc``, text).
+container; ``.mdl``, text), read by ``sphinxcontrib.mat_simulink``.
+Planned: Simscape components (``.ssc``, text).
 
 ``mat_naming`` imports this module, so it must not import the parser or
 ``mat_types`` at import time; handlers import them when they parse.
@@ -60,7 +59,7 @@ class Handler:
     #: index types this handler's ``classify`` returns (besides ``unknown``)
     kinds: tuple[str, ...] = ()
     blocks = False
-    naming: str | None = "code"
+    naming = "code"
 
     def discover(self, path) -> bool:
         return os.path.isfile(path)
@@ -173,23 +172,6 @@ class MdlHandler(SimulinkHandler):
     extension = ".mdl"
 
 
-class SimulinkXmlHandler(SimulinkHandler):
-    """Simulink files exported as XML (``save_system`` ``ExportToXML``);
-    MATLAB does not load them by name.
-    """
-
-    extension = ".xml"
-    naming = None
-
-    def discover(self, path) -> bool:
-        if not super().discover(path):
-            return False
-        try:
-            return mat_simulink.is_exported_xml(path)
-        except OSError:
-            return False
-
-
 _HANDLERS: dict[str, Handler] = {}
 
 
@@ -232,4 +214,3 @@ register(MFileHandler())
 register(MlappHandler())
 register(SlxHandler())
 register(MdlHandler())
-register(SimulinkXmlHandler())

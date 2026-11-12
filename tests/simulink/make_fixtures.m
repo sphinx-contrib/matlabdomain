@@ -8,10 +8,8 @@ function make_fixtures(step, outDir)
 %   release to every release in FIXTURE_RELEASES, as .slx (from R2012a)
 %   and .mdl, below outDir/<release>/{slx,mdl}.
 %
-%   make_fixtures("xml", outDir) builds the sources in the running release
-%   (R2026a or older; R2026b has no XML export), saves them in
-%   outDir/<release>-native/slx and writes them with ExportToXML to
-%   outDir/<release>-native/xml.
+%   make_fixtures("native", outDir) builds the sources in the running
+%   release and saves them in outDir/<release>-native/slx.
 %
 %   make_fixtures("oracle", outDir) loads every fixture below outDir and
 %   writes what the Simulink API reports to outDir/../oracle.json.
@@ -20,12 +18,12 @@ function make_fixtures(step, outDir)
 %   sphinxcontrib.matlabdomain.simulinkDocumentationLinker gives for some
 %   path references to outDir/../linker.json (any release).
 %
-%   Run "sources", "export" and "oracle" in R2026b, and "xml" in R2024a.
+%   Run "sources", "export" and "oracle" in R2026b, and "native" in R2024a.
 %   Creator and modifier are set to "matlabdomain", so no user name is
 %   saved in the files.
 
 arguments
-    step (1,1) string {mustBeMember(step, ["sources", "export", "xml", "oracle", "linker"])}
+    step (1,1) string {mustBeMember(step, ["sources", "export", "native", "oracle", "linker"])}
     outDir (1,1) string
 end
 
@@ -34,10 +32,8 @@ switch step
         makeSources(fullfile(outDir, currentRelease(), "slx"), ".slx");
     case "export"
         exportAll(fullfile(outDir, currentRelease(), "slx"), outDir);
-    case "xml"
-        nativeDir = fullfile(outDir, currentRelease() + "-native");
-        makeSources(fullfile(nativeDir, "slx"), ".slx");
-        exportXml(fullfile(nativeDir, "slx"), fullfile(nativeDir, "xml"));
+    case "native"
+        makeSources(fullfile(outDir, currentRelease() + "-native", "slx"), ".slx");
     case "oracle"
         writeOracle(outDir);
     case "linker"
@@ -49,7 +45,7 @@ function writeLinker(outDir)
 references = ["./", "src/", "src/+pkg/@Cls/", "src/f.m", "src/+pkg/Cls.m.method", ...
     "my folder/données.m", "CON.m", "aux/Lpt1.txt.m", "src/trail.", "src/a~b.m", ...
     "src/lib.slx", "src/lib.slx/Group/Inner Masked", "src/lib.slx/A//B", ...
-    "src/lib.slx/Two" + newline + "Lines", "src/lib.mdl/Größe", "src/lib.xml/v1.2", ...
+    "src/lib.slx/Two" + newline + "Lines", "src/lib.mdl/Größe", ...
     "lib.slx/x", "src/x.slx.d/f.m", "src/M.SLX/x.m", "src/.slx/f.m", ...
     "_u/lib.slx/G", "src/_pkg/_inner/f.m", "src/_x/lib.slx/Group/Gain", "_u/", ...
     "src/_u/", "_f.m", "src/_f.m", "_u/_f.m"];
@@ -225,18 +221,6 @@ for name = diagramNames()
             evalc("saveSanitized(name, target, ""ExportToVersion"", release)");
         end
     end
-    close_system(name, 0);
-end
-end
-
-function exportXml(srcDir, xmlDir)
-if ~isfolder(xmlDir), mkdir(xmlDir); end
-addpath(srcDir);
-restorePath = onCleanup(@() rmpath(srcDir));
-bdclose("all");
-for name = diagramNames()
-    load_system(fullfile(srcDir, name + ".slx"));
-    evalc("saveSanitized(name, fullfile(xmlDir, name + "".xml""), ""ExportToXML"", true)");
     close_system(name, 0);
 end
 end

@@ -2,7 +2,7 @@
 
 The fixtures in ``tests/simulink/fixtures`` were written by
 ``tests/simulink/make_fixtures.m``: one set per release where the file
-format changes, plus exported XML. ``tests/simulink/oracle.json`` holds what
+format changes. ``tests/simulink/oracle.json`` holds what
 the Simulink API reports for each fixture; the reader must agree.
 """
 
@@ -111,20 +111,6 @@ def test_oracle_covers_every_layout():
     assert layouts == {"slx", "mdl-opc", "mdl-classic"}
 
 
-@pytest.mark.parametrize("name", ["probeLib", "probeModel", "probeRef", "probeSub"])
-def test_exported_xml_matches_its_slx_twin(name):
-    native = FIXTURES / "R2024a-native"
-    xml = read_diagram(native / "xml" / f"{name}.xml")
-    slx = read_diagram(native / "slx" / f"{name}.slx")
-    assert classify(native / "xml" / f"{name}.xml") == slx.kind
-    assert xml.layout == "xml"
-    # The export drops the system mask (spec: exported XML).
-    assert xml.system_mask is None
-    for field in ("name", "kind", "description", "ports", "references"):
-        assert getattr(xml, field) == getattr(slx, field), field
-    assert xml.library_blocks == slx.library_blocks
-
-
 def test_library_blocks_and_metadata():
     lib = read_diagram(FIXTURES / "R2026b" / "slx" / "probeLib.slx")
     by_path = {b.path: b for b in lib.library_blocks}
@@ -208,8 +194,8 @@ def test_lfs_pointer(tmp_path):
 
 
 def test_not_simulink(tmp_path):
-    other = tmp_path / "data.xml"
-    other.write_text('<?xml version="1.0"?>\n<config/>\n')
+    other = tmp_path / "data.mdl"
+    other.write_text('<?xml version="1.0"?>\n<config/>\n', encoding="utf-8")
     text = tmp_path / "notes.mdl"
     text.write_text("hello\n")
     for path in (other, text):
@@ -688,17 +674,6 @@ def test_decode_mdl_limit(monkeypatch):
 
 def test_unescape():
     assert _nodes.unescape(r"a\nb\t\"c\\d\q") == 'a\nb\t"c\\d\\q'
-
-
-def test_xml_export_errors(tmp_path):
-    empty = tmp_path / "e.xml"
-    empty.write_text('<?xml version="1.0"?>\n<ModelInformation Version="1.0"/>\n')
-    assert classify(empty) == "unknown"
-    with pytest.raises(SimulinkFileError, match="empty ModelInformation"):
-        read_diagram(empty)
-    other = tmp_path / "o.xml"
-    other.write_text("<ModelInformation><Chart/></ModelInformation>")
-    assert classify(other) == "unknown"
 
 
 def test_classic_unknown_head(tmp_path, monkeypatch):

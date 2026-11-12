@@ -1407,7 +1407,7 @@ def name_sources(source_index):
         ref = record["reference"]
         naming = getattr(handler_by_extension(path), "naming", "code")
         # a .slx that is no Simulink file (an LFS pointer) is nothing to call
-        if naming is None or (naming == "model" and record["type"] == UNKNOWN):
+        if naming == "model" and record["type"] == UNKNOWN:
             record.update(matlab_name=None, private=False, scope=None)
             continue
         filename = os.path.basename(path)
@@ -1754,7 +1754,7 @@ class MatObject:
 
     @staticmethod
     def parse_simulink(path, name, folder) -> Any:
-        """Read a Simulink file (``.slx``, ``.mdl``, exported ``.xml``).
+        """Read a Simulink file (``.slx`` or ``.mdl``).
 
         :returns: :class:`MatModel`, :class:`MatLibrary` or
             :class:`MatSubsystemFile`.
