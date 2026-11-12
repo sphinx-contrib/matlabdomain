@@ -50,10 +50,15 @@ def synthetic_project(tmp_path):
 
 
 def copied_project(tmp_path, name):
-    """Copy ``docs/`` and ``examples/apidoc``, which include each other."""
+    """Copy ``docs/`` and ``examples/apidoc``, which include each other,
+    without build output and bytecode caches (a cache that is already there
+    would hide that a build writes one).
+    """
     for folder in ("docs", "examples/apidoc"):
         shutil.copytree(
-            REPO / folder, tmp_path / folder, ignore=shutil.ignore_patterns("_build")
+            REPO / folder,
+            tmp_path / folder,
+            ignore=shutil.ignore_patterns("_build", "__pycache__"),
         )
     return tmp_path, tmp_path / name
 

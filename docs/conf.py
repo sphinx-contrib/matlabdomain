@@ -7,11 +7,18 @@
 
 # -- Path setup --------------------------------------------------------------
 
+import importlib
 import sys
 from pathlib import Path
 
 # _ext/ holds extensions of these docs only, not part of the package.
 sys.path.insert(0, str(Path(__file__).parent / "_ext"))
+# Imported here without a bytecode cache: a build writes only to its output
+# and doctree folders, so not to docs/_ext/__pycache__ either.
+_dont_write_bytecode = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+importlib.import_module("glossary_tips")
+sys.dont_write_bytecode = _dont_write_bytecode
 
 # -- Project information -----------------------------------------------------
 
