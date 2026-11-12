@@ -752,3 +752,29 @@ def test_duplicate_warnings_of_parallel_build_equal_serial(
         assert len(merged) == 3
         assert sorted(merged) == CHUNKS
     assert _duplicate_warnings(parallel, roots["parallel"]) == expected
+
+
+def test_removed_duplicate_gives_no_warning_in_the_next_build(make_app, tmp_path):
+    # b no longer describes g, and a is read again in the same build: a is
+    # read first and must not warn about the description b had before.
+    for path, text in {
+        "conf.py": DUPLICATE_CONF,
+        "src/f.m": DUPLICATE_SOURCES["src/f.m"],
+        "index.rst": "Index\n=====\n\n.. toctree::\n\n   a\n   b\n",
+        "a.rst": "A\n=\n\n.. mat:function:: g(x)\n\n   G.\n",
+        "b.rst": "B\n=\n\n.. mat:function:: g(x)\n\n   G again.\n",
+    }.items():
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text(text, encoding="utf-8")
+    first = make_app(srcdir=tmp_path)
+    first.build()
+    assert _duplicate_warnings(first, tmp_path) == [_dup("b", 4, "g", "a")]
+
+    (tmp_path / "b.rst").write_text("B\n=\n\nNothing.\n", encoding="utf-8")
+    later = time.time_ns() + 2_000_000_000
+    for name in ("a.rst", "b.rst"):
+        os.utime(tmp_path / name, ns=(later, later))
+    second = make_app(srcdir=tmp_path)
+    second.build()
+    assert sorted(second.env.get_domain("mat").read_docnames) == ["a", "b"]
+    assert _duplicate_warnings(second, tmp_path) == []
