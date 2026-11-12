@@ -29,6 +29,14 @@ tox runs the suite against each supported Sphinx line, as CI does:
    $ uv run tox -e lint                 # Ruff, format check, basic Pyright
 
 Each tox run also builds ``tests/test_docs`` with Sphinx.
+
+The suite fails on a deprecation warning that Python attributes to this
+package's own modules (``filterwarnings`` in ``pyproject.toml``); warnings
+from other packages, such as ``myst_parser``, do not. This is the signal that
+a Sphinx, docutils or Python release now deprecates something the package
+uses, for example the autodoc ``Documenter`` classes. Read the warning, then
+move the code off the deprecated interface; only if that cannot happen yet,
+add a temporary ``ignore`` entry for that exact message, with a comment.
 The ``lint`` :term:`environment <virtual environment>` instead checks maintained Python without modifying it.
 Repository configuration and its documented inventory are checked by
 ``test_documentation.py``; see :ref:`repository-configuration`.

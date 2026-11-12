@@ -148,6 +148,22 @@ typeCheckingMode = "basic"
 [tool.pytest]
 addopts = ["-ra", "--strict-config", "--strict-markers", "--show-capture=all", "--showlocals", "-s", "-vv"]
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS"]
+# Deprecation tripwire (G4-F10): the extension builds on autodoc's Documenter
+# classes, which Sphinx keeps only for backwards compatibility. A deprecation
+# warning attributed to this package's own modules fails the suite. The module
+# field is a regular expression matched from the start of the module name, so
+# it ends with (\.|$) to exclude e.g. sphinxcontrib.matlabfoo. Warnings
+# attributed to other packages (myst_parser, sphinx, ...) are untouched.
+# Python attributes a warning to the frame that `stacklevel` selects, so only
+# warnings raised with that frame in our code are caught. Sphinx's
+# RemovedInSphinxNNWarning classes derive from DeprecationWarning (10) or
+# PendingDeprecationWarning (11); both are listed. When one fires, fix the
+# code or add a precise temporary "ignore" entry for that message after these
+# (later entries win).
+filterwarnings = [
+    "error::DeprecationWarning:sphinxcontrib\\.(matlab|mat_\\w+|matlab_\\w+)(\\.|$)",
+    "error::PendingDeprecationWarning:sphinxcontrib\\.(matlab|mat_\\w+|matlab_\\w+)(\\.|$)"
+]
 junit_family = "xunit2"
 log_cli_level = "INFO"
 minversion = "9.0"
