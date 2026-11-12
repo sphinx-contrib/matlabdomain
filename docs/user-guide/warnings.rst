@@ -125,7 +125,10 @@ What each warning means
 ``mat.duplicate``
    The same object is described twice (add ``:no-index:`` to one of the
    descriptions), or two objects would get the same anchor, so the second
-   cannot be linked.
+   cannot be linked. It points at the second description: the line of its
+   directive on the page, or of the auto directive that generated it (a
+   method from ``:members:`` points at the ``mat:autoclass`` line). A
+   parallel build (``-j``) gives the same warnings as a serial one.
 
 ``mat.apidoc``
    ``scmd apidoc``: a file that cannot be read was left out, two

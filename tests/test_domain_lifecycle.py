@@ -16,6 +16,7 @@ import time
 from typing import Any, cast
 
 import pytest
+import sphinx.util.parallel
 from sphinx.environment import CONFIG_OK
 from sphinx.util import console
 from tree_sitter import Node, Parser, Tree
@@ -101,6 +102,7 @@ def test_initial_data_layout():
         "sidecar_docs",
         "sidecar_issues",
         "xref_docs",
+        "described",
         "index",
         "sidecars",
         "simulink_docs",
@@ -467,6 +469,7 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
         "sidecar_docs": {"doc_a": {"a/guide.md": "A"}, "doc_b": {"b/guide.md": "B"}},
         "sidecar_issues": {"doc_a": [], "doc_b": [("b/guide.md", "link", "x", 1)]},
         "xref_docs": {"doc_a": True, "doc_b": True},
+        "described": {"doc_a": {"a/Obj.m": 3}, "doc_b": {"b/Obj.m": 5}},
         "index": {"/elsewhere/x.m": {}},
         "sidecars": {"/elsewhere/guide.md": {}},
         "parse_cache": {
@@ -491,6 +494,8 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
     assert data["sidecar_issues"] == {"doc_a": []}
     assert "doc_a" in data["xref_docs"]
     assert "doc_b" not in data["xref_docs"]
+    assert data["described"]["doc_a"] == {"a/Obj.m": 3}
+    assert "doc_b" not in data["described"]
     assert dom.sidecar_doc("a/guide.md") == "doc_a"
     assert dom.sidecar_doc("b/guide.md") is None
     # Parses of current files that we lack are adopted; ours are kept.
@@ -508,6 +513,8 @@ def test_note_object(make_app, srcdir):
 
     dom.note_object("some/Thing.m", "class", "Thing")
     assert dom.data["objects"]["some/Thing.m"] == ("index_first", "class", "Thing")
+    # Only a description that can warn is noted for parallel reads.
+    assert "some/Thing.m" not in dom.data["described"].get("index_first", {})
 
     warnings_before = app.warning.getvalue()
     dom.note_object("some/Thing.m", "function", "Thing")
@@ -517,20 +524,27 @@ def test_note_object(make_app, srcdir):
     warning = app.warning.getvalue()
     assert "duplicate object description of some/Thing.m" in warning
     assert "[mat.duplicate]" in warning
+    assert dom.data["described"]["index_first"]["some/Thing.m"] == 3
     assert dom.data["objects"]["some/Thing.m"] == ("index_first", "class", "Thing")
 
 
-def _worker(docname, objects=(), folders=()):
-    """Domain data of a parallel-read worker that read ``docname``."""
+def _worker(docname, objects=(), folders=(), line=7):
+    """Domain data of a parallel-read worker that read ``docname``; its object
+    descriptions (not folders) are at ``line``.
+    """
     data = {name: {} for name in MATLABDomain.initial_data}
     data["objects"] = {ref: (docname, *entry) for ref, *entry in objects}
     data["folders"] = {ref: (docname, *entry) for ref, *entry in folders}
+    data["described"] = {
+        docname: {ref: line for ref, _, *_ in objects if ref[-1:] != "/"}
+    }
     return data
 
 
 def _merge_in_order(make_app, srcdir, workers, order):
-    """Merge ``workers`` (docname -> data) in ``order``, after a build that
-    read them in name order, as Sphinx does after clearing them.
+    """Merge ``workers`` (docname -> data) in ``order``, each as one chunk,
+    after a build that read them in name order, as Sphinx does after clearing
+    them.
     """
     app = build(make_app, srcdir)
     dom = app.env.get_domain("mat")
@@ -557,7 +571,7 @@ def test_merge_duplicate_object_like_serial(make_app, srcdir):
         for doc in ("doc_a", "doc_b", "doc_c")
     }
     expected = [
-        f"<SRC>/{later}.rst: WARNING: [sphinxcontrib-matlabdomain] duplicate "
+        f"<SRC>/{later}.rst:7: WARNING: [sphinxcontrib-matlabdomain] duplicate "
         f"object description of x/Obj.m, other instance in <SRC>/{earlier}.rst, "
         "use :no-index: for one of them [mat.duplicate]"
         for earlier, later in (("doc_a", "doc_b"), ("doc_b", "doc_c"))
@@ -600,3 +614,107 @@ def test_merge_order_does_not_change_matches(make_app, srcdir):
 
 if __name__ == "__main__":
     pytest.main([os.path.abspath(__file__)])
+
+
+# --- duplicate warnings of real serial and -j builds ---------------------------
+
+DUPLICATE_CONF = (
+    'extensions = ["sphinxcontrib.matlab"]\n'
+    'matlab_src_code_project_root = "src"\n'
+    'project = "dup"\n'
+)
+DUPLICATE_SOURCES = {
+    "src/f.m": "function y = f(x)\n% F help\ny = x;\nend\n",
+    "src/h.m": "function y = h(x)\n% H help\ny = x;\nend\n",
+    "src/K.m": "classdef K\n% K help\nmethods\nfunction m(o)\n% M help\nend\n"
+    "end\nend\n",
+}
+# Sorted, as Sphinx reads them: -j 2 reads a1-a6 in one chunk and b1-b5 and
+# index in the other (12 documents, more than the 5 below which Sphinx 8.0
+# reads serially).
+DUPLICATE_PAGES = {
+    # (1) a hand-written directive in both chunks
+    "a1.rst": "A1\n==\n\n.. mat:function:: g(x)\n\n   G.\n",
+    "b1.rst": "B1\n==\n\nText.\n\n.. mat:function:: g(x)\n\n   G again.\n",
+    # (2) an auto directive in both chunks
+    "a2.rst": "A2\n==\n\n.. mat:autofunction:: f\n",
+    "b2.rst": "B2\n==\n\nSome text.\n\nMore text.\n\n.. mat:autofunction:: f\n",
+    # (3) three descriptions, two of them in one chunk
+    "a3.rst": "A3\n==\n\n.. mat:autofunction:: h\n",
+    "b3.rst": "B3\n==\n\nText.\n\n.. mat:autofunction:: h\n",
+    "b4.rst": "B4\n==\n\nOne.\n\nTwo.\n\n.. mat:function:: h(x)\n\n   H again.\n",
+    # (4) a class with its members in both chunks
+    "a4.rst": "A4\n==\n\n.. mat:autoclass:: K\n   :members:\n",
+    "b5.rst": "B5\n==\n\nText.\n\n.. mat:autoclass:: K\n   :members:\n",
+    "a5.rst": "A5\n==\n\nText.\n",
+    "a6.rst": "A6\n==\n\nText.\n",
+    "index.rst": "Index\n=====\n\n.. toctree::\n\n"
+    + "".join(f"   {doc}\n" for doc in ("a1", "a2", "a3", "a4", "a5", "a6"))
+    + "".join(f"   {doc}\n" for doc in ("b1", "b2", "b3", "b4", "b5")),
+}
+CHUNKS = [
+    ["a1", "a2", "a3", "a4", "a5", "a6"],
+    ["b1", "b2", "b3", "b4", "b5", "index"],
+]
+
+
+def _duplicate_warnings(app, root):
+    text = strip_escape_sequences(app.warning.getvalue())
+    return sorted(
+        line.replace(str(root), "<SRC>").replace("<SRC>\\", "<SRC>/")
+        for line in text.splitlines()
+        if "[mat.duplicate]" in line
+    )
+
+
+def _dup(later, line, ref, earlier):
+    return (
+        f"<SRC>/{later}.rst:{line}: WARNING: [sphinxcontrib-matlabdomain] duplicate "
+        f"object description of {ref}, other instance in <SRC>/{earlier}.rst, use "
+        ":no-index: for one of them [mat.duplicate]"
+    )
+
+
+def test_duplicate_warnings_of_parallel_build_equal_serial(
+    make_app, tmp_path, monkeypatch
+):
+    roots = {}
+    for name in ("serial", "parallel"):
+        root = roots[name] = tmp_path / name
+        for path, text in {
+            "conf.py": DUPLICATE_CONF,
+            **DUPLICATE_SOURCES,
+            **DUPLICATE_PAGES,
+        }.items():
+            (root / path).parent.mkdir(parents=True, exist_ok=True)
+            (root / path).write_text(text, encoding="utf-8")
+
+    serial = make_app(srcdir=roots["serial"])
+    serial.build()
+    expected = sorted(
+        [
+            _dup("b1", 6, "g", "a1"),
+            # an auto directive: the line of the directive on the page
+            _dup("b2", 8, "f.m", "a2"),
+            _dup("b3", 6, "h.m", "a3"),
+            _dup("b4", 8, "h.m", "b3"),
+            # the members of an autoclass: the line of the autoclass
+            _dup("b5", 6, "K.m", "a4"),
+            _dup("b5", 6, "K.m.m", "a4"),
+        ]
+    )
+    assert _duplicate_warnings(serial, roots["serial"]) == expected
+
+    merged = []
+    original = MATLABDomain.merge_domaindata
+
+    def recording(self, docnames, otherdata):
+        merged.append(sorted(docnames))
+        return original(self, docnames, otherdata)
+
+    monkeypatch.setattr(MATLABDomain, "merge_domaindata", recording)
+    parallel = make_app(srcdir=roots["parallel"], parallel=2)
+    parallel.build()
+    if sphinx.util.parallel.parallel_available:
+        assert sorted(merged) == CHUNKS
+    assert _duplicate_warnings(parallel, roots["parallel"]) == expected

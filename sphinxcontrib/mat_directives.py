@@ -24,6 +24,9 @@ logger = getLogger("matlab-domain")
 #: options of this extension that ``autodoc_default_options`` may set (autodoc
 #: itself merges only its own); ``:no-<option>:`` turns one off
 DEFAULT_OPTIONS = ("hidden-mask-parameters", "references")
+#: ``env.temp_data`` key: the line of the outermost auto directive on the page
+#: while its generated content is parsed
+PAGE_LINE = "mat:page_line"
 
 
 class MatlabAutodocDirective(AutodocDirective):
@@ -43,7 +46,6 @@ class MatlabAutodocDirective(AutodocDirective):
     final_argument_whitespace = True
 
     def run(self):
-        reporter = self.state.document.reporter
         source, lineno = self.get_source_info()
         logger.debug(
             "[sphinxcontrib-matlabdomain] Input at %s:%s\n\n%s\n",
@@ -85,7 +87,21 @@ class MatlabAutodocDirective(AutodocDirective):
             )
             return []
 
-        # generate the output
+        # Objects described in the generated content are on the page at the
+        # line of the outermost auto directive (``self.lineno`` counts lines of
+        # the generated text in there).
+        temp_data = self.env.temp_data
+        outer = temp_data.get(PAGE_LINE)
+        if outer is None:
+            temp_data[PAGE_LINE] = self.lineno
+        try:
+            return self._generate(doccls, documenter_options, source, lineno)
+        finally:
+            if outer is None:
+                temp_data.pop(PAGE_LINE, None)
+
+    def _generate(self, doccls, documenter_options, source, lineno):
+        reporter = self.state.document.reporter
         params = DocumenterBridge(
             self.env, reporter, documenter_options, lineno, self.state
         )

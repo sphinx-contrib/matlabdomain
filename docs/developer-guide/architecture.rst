@@ -132,8 +132,10 @@ All state that outlives a build is in the domain's data
 
 * per page: ``objects`` (documented objects), ``folders``,
   ``doc_sources`` (the source files each page used, with time and size),
-  ``sidecar_docs`` (the sidecar docs it renders) and ``sidecar_issues``
-  (their broken links and missing images, for ``matlab-api-check``);
+  ``sidecar_docs`` (the sidecar docs it renders), ``sidecar_issues``
+  (their broken links and missing images, for ``matlab-api-check``),
+  ``xref_docs`` and ``described`` (the line of each description that can
+  warn as a duplicate, for the duplicates of a parallel read);
 * rebuilt by each index stage: ``index``, ``sidecars``, ``entities_table``
   (path reference to object), ``matlab_names`` (MATLAB name to
   references);

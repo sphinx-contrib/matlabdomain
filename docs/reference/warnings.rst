@@ -65,7 +65,8 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
    * - ``mat.duplicate``
      - an object described twice, or two objects that would get the same
        anchor
-     - where the second description is
+     - where the second description is (the line of the auto directive
+       for generated content)
    * - ``mat.sidecar``
      - a sidecar doc without a heading, a ``mat:autosidecar`` reference
        that is not an indexed sidecar doc, a project root on another drive

@@ -414,6 +414,11 @@ class MatObjectDirective(ObjectDescription):
         ref, display = name_cls
         target_id = mat_naming.make_target_id(ref)
 
+        # the page and the line of the directive written there
+        location = (
+            self.env.docname,
+            self.env.temp_data.get(mat_directives.PAGE_LINE, self.lineno),
+        )
         # note target
         if target_id not in self.state.document.ids:
             signode["names"].append(ref)
@@ -421,7 +426,7 @@ class MatObjectDirective(ObjectDescription):
             signode["first"] = not self.names
             self.state.document.note_explicit_target(signode)
             cast(MATLABDomain, self.env.get_domain("mat")).note_object(
-                ref, self.objtype, display, location=(self.env.docname, self.lineno)
+                ref, self.objtype, display, location=location
             )
         elif not self._is_same_object(self.state.document.ids[target_id], ref):
             logger.warning(
@@ -433,7 +438,7 @@ class MatObjectDirective(ObjectDescription):
                 ref,
                 type="mat",
                 subtype="duplicate",
-                location=(self.env.docname, self.lineno),
+                location=location,
             )
 
         if indextext := self.get_index_text(mat_naming.folder_of(ref), name_cls):
@@ -892,6 +897,10 @@ class MATLABDomain(Domain):
         "sidecar_issues": {},
         # docname -> True: it has a reference to a MATLAB object
         "xref_docs": {},
+        # docname -> {reference: line} of the object descriptions that can
+        # warn as duplicates (the line of the directive on the page), for the
+        # duplicates of a parallel read (``check_consistency``)
+        "described": {},
         # Shared source state, rebuilt by ``mat_types.analyze`` each build;
         # files are parsed lazily (see ``mat_types``).
         # source path -> {reference, type, mtime, size, warnings, unreadable,
@@ -929,9 +938,9 @@ class MATLABDomain(Domain):
         self._stable_urls = None
         # sidecar reference -> the first document that renders it (built lazily)
         self._sidecar_docs = None
-        # reference -> documents of parallel-read workers that describe it,
-        # noted by merge_domaindata and warned by check_consistency
-        self._duplicates = {}
+        # docname -> number of the parallel-read chunk that read it (one
+        # merge_domaindata call per chunk); empty after a serial read
+        self._chunks = {}
         # Documents read in this build (``env-before-read-docs``).
         self.read_docnames = ()
         # Objects and removed documents before this build read
@@ -998,8 +1007,11 @@ class MATLABDomain(Domain):
         Warns on duplicates only when ``location`` is given.
         """
         objects = self.data["objects"]
-        if name in objects and location is not None:
-            self._warn_duplicate(name, objects[name][0], location)
+        if location is not None:
+            if name in objects:
+                self._warn_duplicate(name, objects[name][0], location)
+            described = self.data["described"].setdefault(self.env.docname, {})
+            described.setdefault(name, location[1])
         objects[name] = (self.env.docname, objtype, display or name)
         self._displays = self._stable_urls = None
 
@@ -1025,6 +1037,7 @@ class MATLABDomain(Domain):
         self.data["sidecar_docs"].pop(docname, None)
         self.data["sidecar_issues"].pop(docname, None)
         self.data["xref_docs"].pop(docname, None)
+        self.data["described"].pop(docname, None)
         self._displays = self._stable_urls = None
         self._sidecar_docs = None
 
@@ -1045,6 +1058,10 @@ class MATLABDomain(Domain):
         # build state ("in_step", "api_pages") is kept there.
         # An object or folder that another worker described too: the later in
         # reading order wins, as in a serial build, whatever the merge order.
+        # The duplicate warnings across workers are check_consistency's.
+        chunk = len(set(self._chunks.values()))
+        for docname in docnames:
+            self._chunks[docname] = chunk
         order = {docname: i for i, docname in enumerate(self.read_docnames)}
         for name in ("objects", "folders"):
             ours = self.data[name]
@@ -1053,14 +1070,15 @@ class MATLABDomain(Domain):
                     continue
                 old = ours.get(ref)
                 if old is not None and old[0] in order and data[0] in order:
-                    # a folder description warns in neither build (note_object)
-                    if name == "objects" and data[1] != "folder":
-                        self._duplicates.setdefault(ref, set()).update(
-                            (old[0], data[0])
-                        )
                     data = max(old, data, key=lambda entry: order[entry[0]])
                 ours[ref] = data
-        for name in ("doc_sources", "sidecar_docs", "sidecar_issues", "xref_docs"):
+        for name in (
+            "doc_sources",
+            "sidecar_docs",
+            "sidecar_issues",
+            "xref_docs",
+            "described",
+        ):
             for docname, value in otherdata[name].items():
                 if docname in docnames:
                     self.data[name][docname] = value
@@ -1076,14 +1094,27 @@ class MATLABDomain(Domain):
         self._sidecar_docs = None
 
     def check_consistency(self):
-        # Duplicates that parallel-read workers could not see: warn as a serial
-        # build does, each description about the one read before it.
-        order = {docname: i for i, docname in enumerate(self.read_docnames)}
-        for ref, docs in sorted(self._duplicates.items()):
-            pairs = itertools.pairwise(sorted(docs, key=order.__getitem__))
-            for earlier, later in pairs:
-                self._warn_duplicate(ref, earlier, (later, None))
-        self._duplicates = {}
+        # Duplicates that parallel-read workers could not see: as a serial
+        # build does, each description of a document read in this build warns
+        # about the one read before it, at the line of its directive; a worker
+        # warned the pairs within its chunk. Known difference from serial: in
+        # an incremental -j build, an unchanged page that describes the object
+        # is in every worker's data, so two changed pages in different chunks
+        # both warn about it (one warning more than serial).
+        chunks = self._chunks
+        self._chunks = {}
+        if not chunks:
+            return
+        described = self.data["described"]
+        docs_of = {}
+        for docname in self.read_docnames:
+            for ref in described.get(docname, ()):
+                docs_of.setdefault(ref, []).append(docname)
+        for ref, docs in sorted(docs_of.items()):
+            for earlier, later in itertools.pairwise(docs):
+                if chunks.get(earlier) != chunks.get(later):
+                    location = (later, described[later][ref])
+                    self._warn_duplicate(ref, earlier, location)
 
     def _by_display(self, name):
         if self._displays is None:
