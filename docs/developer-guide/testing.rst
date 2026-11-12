@@ -52,7 +52,7 @@ Layout
    ``test_domain_lifecycle.py``), fault tolerance, :term:`directives <directive>` and options,
    ``scmd apidoc`` (``test_apidoc.py``), links from another
    project through its :term:`inventory` and page splitting
-   (``test_intersphinx.py``), stable addresses (``test_stable_urls.py``),
+   (``test_intersphinx.py``), stable addresses (``test_stable_urls.py``, ``test_chooser_cache.py``),
    ``matlab-api-check``
    (``test_api_check.py``), ``scmd quickstart``
    (``test_quickstart.py``) and this documentation
