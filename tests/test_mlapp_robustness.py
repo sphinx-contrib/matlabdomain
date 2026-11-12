@@ -56,11 +56,31 @@ def test_a_part_over_the_limit_is_refused(tmp_path, monkeypatch):
     assert warnings_of(obj) == [
         (
             "parse_error",
-            "cannot be parsed (SimulinkFileError: has a part larger than 100 bytes: "
-            "metadata/appMetadata.xml.); it is documented without content.",
+            "cannot be parsed (SimulinkFileError: has a metadata part larger than "
+            "100 bytes: metadata/appMetadata.xml.); it is documented without "
+            "content.",
         )
     ]
     assert obj.docstring == ""
+
+
+def test_a_metadata_part_over_its_smaller_limit_is_refused(tmp_path, monkeypatch):
+    monkeypatch.setattr(_parts, "MAX_METADATA_PART_BYTES", len(META) + 10)
+    obj = parse(make_app(tmp_path, core=CORE + " " * 100))
+    assert warnings_of(obj) == [
+        (
+            "parse_error",
+            "cannot be parsed (SimulinkFileError: has a metadata part larger than "
+            f"{len(META) + 10} bytes: metadata/coreProperties.xml.); it is documented "
+            "without content.",
+        )
+    ]
+    assert obj.docstring == ""
+
+
+def test_normal_metadata_is_read_with_the_smaller_limit(tmp_path):
+    obj = parse(make_app(tmp_path))
+    assert not obj.source_warnings
 
 
 def test_a_file_over_the_limit_is_refused(tmp_path, monkeypatch):

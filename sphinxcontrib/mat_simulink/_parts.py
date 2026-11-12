@@ -18,6 +18,8 @@ MAX_FILE_BYTES = 1024 * 1024 * 1024
 MAX_ENTRIES = 100_000
 MAX_PART_BYTES = 256 * 1024 * 1024
 MAX_TOTAL_BYTES = 512 * 1024 * 1024
+# The parts below metadata/ are a few kilobytes in real files.
+MAX_METADATA_PART_BYTES = 16 * 1024 * 1024
 HEAD_BYTES = 4096
 
 LFS_POINTER = b"version https://git-lfs.github.com/spec/v1"
@@ -110,12 +112,25 @@ def _zip_parts(f, wanted: Callable[[str], bool]) -> Parts:
     return Parts(parts)
 
 
+def _check_part_size(name: str, size: int) -> None:
+    """Refuse a part larger than its limit: the smaller one below
+    ``metadata/``.
+    """
+    if name.lstrip("/").lower().startswith("metadata/"):
+        if size > min(MAX_PART_BYTES, MAX_METADATA_PART_BYTES):
+            limit = min(MAX_PART_BYTES, MAX_METADATA_PART_BYTES)
+            raise SimulinkFileError(
+                f"has a metadata part larger than {limit} bytes: {name}."
+            )
+    elif size > MAX_PART_BYTES:
+        raise SimulinkFileError(
+            f"has a part larger than {MAX_PART_BYTES} bytes: {name}."
+        )
+
+
 def _read_entry(z: zipfile.ZipFile, info: zipfile.ZipInfo) -> bytes:
     # zipfile stops at the declared size, so checking it bounds the read.
-    if info.file_size > MAX_PART_BYTES:
-        raise SimulinkFileError(
-            f"has a part larger than {MAX_PART_BYTES} bytes: {info.filename}."
-        )
+    _check_part_size(info.filename, info.file_size)
     return z.read(info)
 
 
@@ -160,10 +175,7 @@ def opc_text_parts(path: Path, wanted: Callable[[str], bool]) -> Parts:
                 raise SimulinkFileError(f"has a bad base64 part {name}.") from err
         else:
             data = body.encode("utf-8")
-        if len(data) > MAX_PART_BYTES:
-            raise SimulinkFileError(
-                f"has a part larger than {MAX_PART_BYTES} bytes: {name}."
-            )
+        _check_part_size(name, len(data))
         total += len(data)
         if total > MAX_TOTAL_BYTES or len(parts) >= MAX_ENTRIES:
             raise SimulinkFileError("has too many or too large parts.")

@@ -436,6 +436,10 @@ Fixes
 * The refusal of a DTD or entity declaration in a Simulink XML part or an
   ``.mlapp`` metadata part also holds for a UTF-16 part (it was parsed with
   its entities before).
+* The parts below ``metadata/`` of a ``.slx``, ``.mdl`` or ``.mlapp`` file
+  have a size limit of 16 MiB instead of 256 MiB (a 255 MiB
+  ``metadata/coreProperties.xml`` was accepted without a warning and took
+  about 1 GiB of memory to parse); the real ones are a few kilobytes.
 * The package metadata names the license in ``LICENSE``, BSD-2-Clause (it
   said BSD-3-Clause).
 

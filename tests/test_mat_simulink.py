@@ -300,6 +300,51 @@ def test_zip_limits(tmp_path, monkeypatch):
         read_diagram(path)
 
 
+def test_metadata_part_limit_is_smaller(tmp_path, monkeypatch):
+    # Same size, same file: refused below metadata/, accepted elsewhere.
+    monkeypatch.setattr(_parts, "MAX_METADATA_PART_BYTES", 300)
+    core = CORE.format("model")
+    pad = " " * 400
+    big = _write_zip(
+        tmp_path / "big.slx",
+        {
+            "metadata/coreProperties.xml": core + pad,
+            "simulink/systems/system_root.xml": "<System/>",
+        },
+    )
+    with pytest.raises(
+        SimulinkFileError,
+        match=r"metadata part larger than 300 bytes: metadata/coreProperties\.xml",
+    ):
+        read_diagram(big)
+    ok = _write_zip(
+        tmp_path / "ok.slx",
+        {
+            "metadata/coreProperties.xml": core,
+            "simulink/systems/system_root.xml": "<System/>" + pad,
+        },
+    )
+    assert read_diagram(ok).kind == "model"
+
+
+def test_metadata_limit_does_not_exceed_the_part_limit(tmp_path, monkeypatch):
+    monkeypatch.setattr(_parts, "MAX_PART_BYTES", 10)
+    path = _write_zip(tmp_path / "m.slx", {"metadata/coreProperties.xml": "x" * 50})
+    with pytest.raises(SimulinkFileError, match="part larger than 10 bytes"):
+        read_diagram(path)
+
+
+def test_normal_metadata_is_unchanged_by_the_limit(tmp_path):
+    path = _write_zip(
+        tmp_path / "m.slx",
+        {
+            "metadata/coreProperties.xml": CORE.format("model"),
+            "simulink/systems/system_root.xml": "<System/>",
+        },
+    )
+    assert read_diagram(path).kind == "model"
+
+
 def test_unused_parts_are_not_read(tmp_path, monkeypatch):
     path = _write_zip(
         tmp_path / "m.slx",
@@ -367,6 +412,26 @@ def test_opc_text_errors(tmp_path, monkeypatch):
     monkeypatch.setattr(_parts, "MAX_TOTAL_BYTES", 5)
     with pytest.raises(SimulinkFileError, match="too many or too large"):
         read_diagram(path)
+
+
+def test_opc_text_metadata_part_limit(tmp_path, monkeypatch):
+    monkeypatch.setattr(_parts, "MAX_METADATA_PART_BYTES", 300)
+    pad = " " * 400
+    core = CORE.format("model")
+    path = tmp_path / "m.mdl"
+    path.write_text(_opc(("/metadata/coreProperties.xml", core + pad)))
+    with pytest.raises(
+        SimulinkFileError,
+        match=r"metadata part larger than 300 bytes: /metadata/coreProperties\.xml",
+    ):
+        read_diagram(path)
+    path.write_text(
+        _opc(
+            ("/metadata/coreProperties.xml", core),
+            ("/simulink/systems/system_root.xml", "<System/>" + pad),
+        )
+    )
+    assert read_diagram(path).kind == "model"
 
 
 def test_opc_text_kind_from_block_diagram(tmp_path):

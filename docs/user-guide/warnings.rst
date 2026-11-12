@@ -32,7 +32,8 @@ What each warning means
    A file could not be read (no permission, for example) or parsed, an
    ``.mlapp`` file is not a valid App Designer file, a ``.slx`` or ``.mdl``
    file is not a Simulink model, library or subsystem file (or is a Git
-   LFS pointer, or exceeds the size limits), a folder could not be listed
+   LFS pointer, or exceeds the size limits, which are smaller for the
+   parts below ``metadata/``), a folder could not be listed
    or entered, or a file name is not valid UTF-8. A file that cannot be
    read or parsed is still indexed and documented, without content, so
    links to it work; it is tried again on every build. Where the parser
