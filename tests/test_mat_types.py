@@ -621,7 +621,8 @@ def test_ClassWithLineContinuation(dir_test_data):
 
 
 def test_ClassWithNameMismatch(dir_test_data):
-    # The file name wins over the class name, silently.
+    # The file name wins over the class name, with a warning (MATLAB refuses
+    # the file).
     mfile = dir_test_data / "ClassWithNameMismatch.m"
 
     obj = MatObject.parse_mfile(mfile, "ClassWithNameMismatch", "test_data")
@@ -629,7 +630,15 @@ def test_ClassWithNameMismatch(dir_test_data):
     assert isinstance(obj, MatClass)
     assert obj.name == "ClassWithNameMismatch"
     assert list(obj.methods.keys()) == ["ClassWithNameMismatch"]
-    assert parse_warnings(mfile, "test_data.ClassWithNameMismatch", obj) == []
+    assert parse_warnings(mfile, "ClassWithNameMismatch.m", obj) == [
+        (
+            "invalid_matlab",
+            "ClassWithNameMismatch.m declares the class ClassWithMismatch, but its "
+            "file is ClassWithNameMismatch.m; MATLAB requires a classdef file to be "
+            "named after its class. It is documented under its file name.",
+            f"{mfile}:1",
+        )
+    ]
 
 
 def test_ClassWithAttributes(dir_test_data):

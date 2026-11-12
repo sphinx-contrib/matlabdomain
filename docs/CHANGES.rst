@@ -285,7 +285,9 @@ Builds:
   ``mat.not_callable``) on every build.
 * New warnings: ``mat.invalid_matlab`` when the type of a ``.m`` file and
   its parse disagree, for a ``function`` with a dotted name (documented
-  under its file name, as MATLAB names it) and for a file with NUL bytes;
+  under its file name, as MATLAB names it), for a ``classdef`` named
+  unlike its file (also documented under its file name) and for a file
+  with NUL bytes;
   ``mat.empty_code_file`` for empty files, which are documented as
   scripts. A help file (comments only) is documented as a script, or as a
   function when a MEX file of the same name is next to it.

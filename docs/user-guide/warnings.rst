@@ -61,9 +61,12 @@ What each warning means
    The file is probably not valid MATLAB: its first line of code says one
    type and the parser found another (a ``classdef`` without its ``end``,
    ``function = 1;``), a ``function`` has a dotted name (``function y =
-   pkg.f(x)``, which MATLAB refuses to run outside a ``classdef``), or a
-   ``.m`` file contains NUL bytes (probably a binary file). It is
-   documented as far as it could be parsed.
+   pkg.f(x)``, which MATLAB refuses to run outside a ``classdef``), a
+   ``classdef`` names a class other than its file (``classdef Other`` in
+   ``Shape.m``, which MATLAB refuses; letter case counts), or a ``.m``
+   file contains NUL bytes (probably a binary file). It is documented as
+   far as it could be parsed. A dotted function or a misnamed class is
+   documented under its file name.
 
 ``mat.empty_code_file``
    The file is empty, or has only blank lines. It is documented as a

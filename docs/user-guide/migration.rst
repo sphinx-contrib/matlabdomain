@@ -234,8 +234,10 @@ the new objects above, expect:
   left out; with ``matlab_apidoc_group = "folder"`` they get pages.
 * One page per namespace (and Global), like many 0.x page generators; a
   0.x page per class folder is now the class on its namespace's page.
-* Fewer warnings: 0.x parser messages ("Expected property", "Unexpected
-  class name") are gone.
+* Fewer warnings: 0.x parser messages ("Expected property") are gone.
+  "Unexpected class name" for a ``classdef`` named unlike its file is now
+  ``mat.invalid_matlab``; the class is still documented under its file
+  name.
 
 New tools
 ---------

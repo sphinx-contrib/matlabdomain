@@ -31,7 +31,8 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
      - every build; pages when they are rendered
    * - ``mat.invalid_matlab``
      - a file whose first line of code and parse disagree, a dotted
-       ``function`` name, a ``.m`` file with NUL bytes
+       ``function`` name, a ``classdef`` named unlike its file, a ``.m``
+       file with NUL bytes
      - when a page uses the file (NUL bytes: every build)
    * - ``mat.empty_code_file``
      - an empty file (nothing but blank lines)

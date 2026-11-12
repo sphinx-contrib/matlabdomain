@@ -230,6 +230,31 @@ def test_dotted_function_name_is_named_by_file(tmp_path):
 
 
 @pytest.mark.parametrize(
+    ("file", "text"),
+    [
+        ("ft_case.m", "classdef ft_Case\nend\n"),
+        ("ft_lead.m", "% help\n\nclassdef (Abstract) ft_other < handle\nend\n"),
+    ],
+)
+def test_classdef_named_unlike_its_file_warns(tmp_path, file, text):
+    # MATLAB refuses the file; the exact (case-sensitive) file name wins.
+    obj = parse(tmp_path, file, text)
+    assert isinstance(obj, mat_types.MatClass)
+    assert obj.name == file[:-2]
+    ((subtype, message, row),) = obj.source_warnings
+    assert subtype == "invalid_matlab"
+    assert row == text.count("\n", 0, text.index("classdef"))
+    assert f"but its file is {file};" in message
+    assert "It is documented under its file name." in message
+
+
+def test_function_named_unlike_its_file_is_valid(tmp_path):
+    obj = parse(tmp_path, "ft_main.m", FUNCTION.format(name="other", help="H"))
+    assert isinstance(obj, mat_types.MatFunction)
+    assert obj.source_warnings == []
+
+
+@pytest.mark.parametrize(
     "header",
     [
         "classdef ...\n    (Abstract) Cont < handle",
@@ -335,12 +360,14 @@ MALFORMED = {
     "ft_corrupt.mlapp": b"this is not a zip file",
     "ft_nometa.mlapp": zip_bytes({"foo.txt": "x"}),
     "+ftpkg/ft_dotted.m": HIST2D,
+    "ft_misnamed.m": "% MISNAMED HELP\nclassdef FtOther\nend\n",
 }
 EXPECTED = [
     ("encoding", "ft_binary.m"),
     ("encoding", "ft_latin1.m"),
     ("invalid_matlab", "+ftpkg/ft_dotted.m"),
     ("invalid_matlab", "ft_binary.m"),
+    ("invalid_matlab", "ft_misnamed.m"),
     ("invalid_matlab", "ft_trunc_class.m"),
     ("empty_code_file", "ft_empty.m"),
     ("parse_error", "ft_corrupt.mlapp"),
@@ -370,6 +397,8 @@ RST = """Index
 .. mat:autoscript:: ft_trunc_class.m
 
 .. mat:autoscript:: ft_empty.m
+
+.. mat:autoclass:: ft_misnamed
 
 See :mat:app:`ft_nometa.mlapp`.
 """
@@ -436,6 +465,13 @@ def test_malformed_files_warn_and_the_build_completes(make_app, malformed, parse
         f"{binary}:1: WARNING: [sphinxcontrib-matlabdomain] ft_binary.m contains "
         "NUL bytes; it may be a binary file, not MATLAB code. [mat.invalid_matlab]"
     ) in warnings
+    misnamed = srcdir / "ft_misnamed.m"
+    assert (
+        f"{misnamed}:2: WARNING: [sphinxcontrib-matlabdomain] ft_misnamed.m declares "
+        "the class FtOther, but its file is ft_misnamed.m; MATLAB requires a "
+        "classdef file to be named after its class. It is documented under its "
+        "file name. [mat.invalid_matlab]"
+    ) in warnings
     if CAN_MAKE_UNREADABLE:
         assert (
             "ft_unreadable.m cannot be read (Permission denied); it is documented "
@@ -452,6 +488,7 @@ def test_malformed_files_warn_and_the_build_completes(make_app, malformed, parse
         "UNCLOSED HELP",
         "LATIN1 HELP café",
         "2 Dimensional Histogram",
+        "MISNAMED HELP",
     ):
         assert text in html
     # Failed files are placeholders: documented and referenceable.
@@ -506,6 +543,16 @@ def test_file_warnings_are_suppressible(make_app, malformed):
     )
     app.build()
     assert {sub for sub, _ in warnings_of(app)} == {"invalid_matlab", "empty_code_file"}
+
+
+def test_misnamed_classdef_warning_is_suppressible(make_app, malformed):
+    srcdir, _ = malformed
+    app = make_app(
+        srcdir=srcdir, confoverrides={"suppress_warnings": ["mat.invalid_matlab"]}
+    )
+    app.build()
+    assert "ft_misnamed.m" not in app.warning.getvalue()
+    assert "MISNAMED HELP" in (app.outdir / "index.html").read_text(encoding="utf-8")
 
 
 def test_configured_encoding_is_applied(make_app, tmp_path):
