@@ -160,8 +160,7 @@ In both:
 * Simulink libraries are read for their masked blocks (the only files
   apidoc reads): each gets an entry in Simulink Library Blocks, titled
   ``library/Group/Block``. A library that cannot be read gets a
-  ``mat.apidoc`` warning and no block entries. Exported ``.xml`` files
-  have no MATLAB name and are titled by path.
+  ``mat.apidoc`` warning and no block entries.
 * Each file gets a heading, its MATLAB name (or its path when MATLAB cannot
   call it), and an auto directive with its full path reference:
   ``mat:autoclass`` with ``:members:``, ``:undoc-members:`` and

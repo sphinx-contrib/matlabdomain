@@ -2,7 +2,7 @@
 
     python test_slow/simulink/survey.py [FIXTURES] [--out survey.json]
 
-FIXTURES defaults to ``tests/simulink/fixtures`` (``<release>/<slx|mdl|xml>/``,
+FIXTURES defaults to ``tests/simulink/fixtures`` (``<release>/<slx|mdl>/``,
 as ``tests/simulink/make_fixtures.m`` writes them). For each file it records
 the layout, the part names and where each probe text is stored, and prints,
 per diagram and variant, what changes from one release to the next. Use it
@@ -83,8 +83,7 @@ def survey_file(path: Path) -> dict:
     elif data.lstrip().startswith(b"# MathWorks OPC Text Package"):
         parts, layout = opc_parts(data.decode("utf-8", "replace")), "opc-text"
     else:
-        parts = {"<file>": data}
-        layout = "xml" if path.suffix == ".xml" else "classic"
+        parts, layout = {"<file>": data}, "classic"
     found = {
         key: sorted(
             {
@@ -115,7 +114,7 @@ def release_key(release: str) -> tuple[int, str, str]:
 def survey(root: Path) -> list[dict]:
     rows = []
     for path in sorted(root.glob("*/*/*")):
-        if path.suffix in (".slx", ".mdl", ".xml"):
+        if path.suffix in (".slx", ".mdl"):
             release, variant = path.parts[-3], path.parts[-2]
             rows.append(
                 {"release": release, "variant": variant, "diagram": path.stem}

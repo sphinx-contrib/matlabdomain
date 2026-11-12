@@ -98,8 +98,8 @@ way:
 * Code from elsewhere below the root (vendored toolboxes, submodules,
   downloaded dependencies) the same way, unless a pattern excludes it, for
   example ``matlab_src_exclude_patterns = ["README.*", "vendor/"]``.
-* The readers of ``.m``, ``.mlapp``, ``.slx``, ``.mdl`` and ``.xml`` files
-  never run MATLAB and never execute the files. Their limits on size and
+* The readers of ``.m``, ``.mlapp``, ``.slx`` and ``.mdl`` files never
+  run MATLAB and never execute the files. Their limits on size and
   nesting protect a build from a corrupt or huge file; they are not a
   security boundary.
 * The doctree folder (``-d``). Sphinx loads ``environment.pickle`` from it,

@@ -36,7 +36,7 @@ Modules
        the special files.
    * - ``mat_handlers.py``
      - The file-type registry: one handler per extension (``.m``,
-       ``.mlapp``, ``.slx``, ``.mdl``, exported Simulink ``.xml``).
+       ``.mlapp``, ``.slx``, ``.mdl``).
    * - ``mat_simulink/``
      - The Simulink file reader: layouts, limits, parsers and the
        format-neutral content (see :doc:`simulink-file-formats`).

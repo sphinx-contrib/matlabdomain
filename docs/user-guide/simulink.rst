@@ -2,10 +2,9 @@ Simulink files
 ==============
 
 The :term:`extension` reads Simulink models, libraries and subsystem files
-(``.slx``, ``.mdl`` and ``.xml`` exported by ``save_system``) without
-MATLAB, from every release since R2006a, and documents them next to the
-code: description, mask, ports, metadata and a documentation file of your
-own. :doc:`../developer-guide/simulink-file-formats` describes the formats.
+(``.slx`` and ``.mdl``) without MATLAB, from every release since R2006a,
+and documents them next to the code: description, mask, ports, metadata
+and a documentation file of your own. :doc:`../developer-guide/simulink-file-formats` describes the formats.
 
 What is documented
 ------------------
@@ -35,8 +34,7 @@ Names
 A Simulink file is named the way Simulink runs it. A file in a namespace
 folder (``+pkg/``), directly in ``private/`` or in an ``@`` class folder has
 no MATLAB name (a ``mat.not_callable`` warning) and is documented by its
-path reference (``+pkg/plant.slx``). Exported ``.xml`` files have no MATLAB
-name either.
+path reference (``+pkg/plant.slx``).
 
 .. _simulink-namespaces:
 

@@ -14,8 +14,7 @@ file types. Simulink models, libraries and subsystem files are supported
 * live scripts (``.mlx``): first a check of what they would add next to
   ``.m`` files and apps (``.mlapp``).
 
-One handler owns one extension, as for ``.slx``, ``.mdl`` and exported
-Simulink ``.xml`` files.
+One handler owns one extension, as for ``.slx`` and ``.mdl`` files.
 
 ``scmd apidoc``
 ---------------

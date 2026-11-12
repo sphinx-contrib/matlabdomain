@@ -74,8 +74,8 @@ Names and references:
   documented by path with one ``mat.not_callable`` warning each that says
   why; files below ``private/`` never warn.
 * A folder named like a file the extension reads (``.m``, ``.mlapp``,
-  ``.slx``, ``.mdl``, ``.xml``, ``.md``, ``.rst``, any case) is not
-  documented and logs the error ``mat.folder_name``.
+  ``.slx``, ``.mdl``, ``.md``, ``.rst``, any case) is not documented and
+  logs the error ``mat.folder_name``.
 
 Configuration:
 
@@ -349,8 +349,7 @@ Linking:
 Simulink files:
 
 * The index reads Simulink models, libraries and subsystem files
-  (``.slx``, ``.mdl`` and ``.xml`` exported by ``save_system``) without
-  MATLAB, from every release since R2006a. They get MATLAB names as
+  (``.slx`` and ``.mdl``) without MATLAB, from every release since R2006a. They get MATLAB names as
   Simulink runs them, and a block of a library is referenced by its
   Simulink path after the file (``lib.slx/Group/Gain``).
 * New directives ``mat:autosimulink_model``, ``mat:autosimulink_library``,

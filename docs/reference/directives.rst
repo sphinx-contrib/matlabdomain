@@ -214,8 +214,8 @@ know which object to document") and the directive writes nothing.
 Simulink files
 --------------
 
-Models, libraries and subsystem files (``.slx``, ``.mdl``, ``.xml``
-exported by ``save_system``) and the blocks of a library. The argument is a
+Models, libraries and subsystem files (``.slx``, ``.mdl``) and the blocks
+of a library. The argument is a
 MATLAB name or a path reference; a block follows the file with its
 Simulink path (``lib.slx/Group/Gain``, a ``/`` in a block name doubled),
 with no signature (block names may hold parentheses). The page shows the

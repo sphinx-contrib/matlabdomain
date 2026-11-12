@@ -2,10 +2,10 @@
 
     python test_slow/simulink/fuzz.py [--seed N] [--cases N] [--keep DIR]
 
-Mutates the files of ``tests/simulink/fixtures/`` (``.slx``, ``.mdl``,
-``.xml``) and ``tests/test_data/Application.mlapp``: bit flips, truncation,
-rewritten zip members, an entity declaration, deep nesting and odd encodings
-in the XML declaration. Each case calls ``mat_simulink.classify`` and
+Mutates the files of ``tests/simulink/fixtures/`` (``.slx``, ``.mdl``) and
+``tests/test_data/Application.mlapp``: bit flips, truncation, rewritten zip
+members, an entity declaration, deep nesting and odd encodings in the XML
+declaration. Each case calls ``mat_simulink.classify`` and
 ``read_diagram`` (Simulink files) or ``MatObject.parse_mlappfile`` (``.mlapp``).
 The run is deterministic for a ``--seed``.
 
@@ -81,7 +81,7 @@ def seeds() -> list[tuple[str, bytes]]:
     out = [
         (path.suffix, path.read_bytes())
         for path in sorted(FIXTURES.rglob("*"))
-        if path.suffix in (".slx", ".mdl", ".xml")
+        if path.suffix in (".slx", ".mdl")
     ]
     return out
 

@@ -23,8 +23,7 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
    * - ``mat.folder_name``
      - an error, not a warning (``suppress_warnings`` does not hide it): a
        folder named like a supported file (``.m``, ``.mlapp``, ``.slx``,
-       ``.mdl``, ``.xml``, ``.md``, ``.rst``, any case); it is not
-       documented
+       ``.mdl``, ``.md``, ``.rst``, any case); it is not documented
      - every build
    * - ``mat.encoding``
      - a file decoded with the fallback encoding or with replaced bytes; a

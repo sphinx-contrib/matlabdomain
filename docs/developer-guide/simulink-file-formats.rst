@@ -1,8 +1,8 @@
 Simulink file formats
 =====================
 
-What Simulink saves in ``.slx``, ``.mdl`` and exported ``.xml`` files,
-release by release, as far as this project reads them. MathWorks does not
+What Simulink saves in ``.slx`` and ``.mdl`` files, release by release, as
+far as this project reads them. MathWorks does not
 publish these formats; everything here was observed in files and checked
 against what the Simulink API reports for the same files. The reader is
 ``sphinxcontrib.mat_simulink``. This page grows with every MATLAB release
@@ -11,7 +11,7 @@ against what the Simulink API reports for the same files. The reader is
 Layouts
 -------
 
-Four layouts carry the same content, plus the exported XML:
+Four layouts carry the same content:
 
 .. list-table::
    :header-rows: 1
@@ -32,9 +32,9 @@ Four layouts carry the same content, plus the exported XML:
    * - ``.slx``, JSON diagram
      - a zip file with ``simulink/blockDiagram.json``; the systems stay XML
      - R2026b
-   * - Exported ``.xml``
-     - XML whose root element is ``<ModelInformation>``
-     - written by ``save_system(..., "ExportToXML", true)`` up to R2026a
+
+Simulink's XML export (``save_system`` with ``ExportToXML``) is not read:
+no ``.xml`` file is opened.
 
 An ``.slx`` file is an Open Packaging Conventions (OPC) zip package, like
 an App Designer ``.mlapp`` file. The text ``.mdl`` from R2021b holds the same
@@ -119,21 +119,6 @@ and R2026b store the model text uncompressed by default; files exported to
 older releases deflate it whatever ``SLXCompressionType`` says. The reader
 reads both.
 
-The exported XML
-----------------
-
-One UTF-8 file, checked in R2024a and R2026a (R2026a warns that
-``ExportToXML`` is no longer supported; R2026b no longer has it):
-
-* ``<ModelInformation>`` then ``<Model Name=...>``, ``<Library Name=...>`` or
-  ``<Subsystem Name=...>``: the element gives the kind;
-* the description is a ``Description`` parameter of that element (there is
-  no ``coreProperties.xml``);
-* every system is inline, as in ``.slx`` before R2020a;
-* masks are ``Simulink.Mask`` objects, the pre-R2017b form;
-* the system mask is not exported;
-* lines name their blocks (``SrcBlock``, ``DstBlock``) instead of using SIDs.
-
 Where each fact is
 ------------------
 
@@ -145,12 +130,12 @@ Where each fact is
      - Where it is saved
    * - Kind
      - ``cp:category`` in ``coreProperties.xml`` (``.slx``, text ``.mdl``);
-       the root section (classic ``.mdl``) or element (``.xml``). The
+       the root section (classic ``.mdl``). The
        ``blockdiagram.xml`` root element (``<Model>``, ``<Library>``,
        ``<Subsystem>``) is a fallback; ``blockDiagram.json`` does not say.
    * - Description
      - ``dc:description`` in ``coreProperties.xml``; ``Description`` of the
-       root section (classic) or element (``.xml``).
+       root section (classic).
    * - Release
      - ``matlabRelease`` in ``metadata/mwcoreProperties.xml``; ``Version`` in
        classic files (``8.6`` is R2015b; from R2023b the version is the
@@ -200,8 +185,8 @@ Where each fact is
      - ``UserData`` of the DocBlock: ``.mxarray`` parts and classic
        ``MatData`` records hold the same bytes (8 bytes
        ``00 01 49 4D 00 00 00 00``, then MAT-file level 5 elements; in
-       ``MatData`` uuencoded); the exported XML writes the value as XML. A
-       ``string`` value is saved as an opaque object.
+       ``MatData`` uuencoded). A ``string`` value is saved as an opaque
+       object.
 
 Exports drop what the target release cannot hold: a bus element port
 becomes a plain ``Inport`` before R2017a, the system mask is lost before
@@ -214,11 +199,11 @@ How this was verified
 ``tests/simulink/make_fixtures.m`` builds a small model, referenced model,
 library and subsystem file in R2026b and exports them to one release per
 change point above, as ``.slx`` and ``.mdl``; it also builds them natively
-in R2024a and exports them as XML. It then loads every file in R2026b and
+in R2024a as ``.slx``. It then loads every file in R2026b and
 writes what the Simulink API reports (kind, description, release, system
 mask, ports, references, library blocks) to ``tests/simulink/oracle.json``.
 ``tests/test_mat_simulink.py`` requires the reader to agree with it for
-every fixture, and every XML export to agree with its ``.slx`` twin.
+every fixture.
 
 Exports show what R2026b writes for an old release. Files saved natively by
 R2024a match the R2024a exports in every fact the reader uses. The reader

@@ -54,8 +54,8 @@ python test_slow/simulink/fuzz.py --seed 1 --cases 3000
 ```
 
 `fuzz.py` (standard library only; run it in the project's environment)
-mutates the files of `tests/simulink/fixtures/` (`.slx`, `.mdl`, `.xml`)
-and `tests/test_data/Application.mlapp`: bit flips, truncation, rewritten,
+mutates the files of `tests/simulink/fixtures/` (`.slx`, `.mdl`) and
+`tests/test_data/Application.mlapp`: bit flips, truncation, rewritten,
 dropped or duplicated zip members, entity declarations, deep nesting and odd
 encodings in the XML declaration. It calls `mat_simulink.classify` and
 `read_diagram`, or `MatObject.parse_mlappfile`, and prints how many cases

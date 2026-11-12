@@ -46,7 +46,7 @@ What each warning means
 ``mat.folder_name``
    An error, which ``suppress_warnings`` does not hide: a folder is named
    like a file the extension reads (``.m``, ``.mlapp``, ``.slx``, ``.mdl``,
-   ``.xml``, ``.md``, ``.rst``, in any case), so references and output
+   ``.md``, ``.rst``, in any case), so references and output
    names could take it for a file. The folder and everything in it are not
    documented; the build goes on. Rename the folder.
 
