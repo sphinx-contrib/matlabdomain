@@ -170,6 +170,10 @@ differently, and change only when the object is renamed, moved or removed
 (then the file is removed too). Characters that are not safe in a URL, and
 names that differ only by case, are escaped like the output names of
 ``scmd apidoc``.
+Adding a file whose name differs from an existing one only by case (``foo.m``
+next to ``Foo.m``) also changes the address of the existing one, because both
+get the escaped form; update links to it that are stored elsewhere, for example
+in a Simulink model.
 
 The address in the browser's address bar after the redirect is the page's
 own, which does not follow the object. A small script on every page

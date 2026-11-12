@@ -347,6 +347,35 @@ def test_names_differing_by_case_and_removed_objects(make_app, tmp_path):
     assert (outdir / "404.html").read_text() == "mine\n"  # not ours: kept
 
 
+def test_a_case_only_sibling_moves_the_address_of_the_existing_file(make_app, tmp_path):
+    # Pinned as it is: both names get the escaped form once Foo.m has a sibling.
+    (tmp_path / "Foo.m").write_text("function Foo\n% Foo Help.\nend\n")
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
+    )
+    index = tmp_path / "index.rst"
+    index.write_text("Index\n=====\n\n.. mat:autofunction:: Foo\n")
+
+    def stable_files():
+        app = make_app(srcdir=tmp_path)
+        app.build()
+        app.cleanup()
+        outdir = Path(app.outdir)
+        return sorted(
+            p.relative_to(outdir).as_posix() for p in (outdir / "mat").rglob("*.html")
+        )
+
+    assert stable_files() == ["mat/name/Foo.html", "mat/ref/Foo.m.html"]
+    (tmp_path / "foo.m").write_text("function foo\n% foo Help.\nend\n")
+    index.write_text(index.read_text() + "\n.. mat:autofunction:: foo\n")
+    assert stable_files() == [
+        "mat/name/foo.html",
+        "mat/name/~46oo.html",
+        "mat/ref/foo.m.html",
+        "mat/ref/~46oo.m.html",
+    ]
+
+
 def test_incremental_builds_remove_stale_pages_and_relink(make_app, tmp_path):
     def build(files=(), remove=()):
         write(tmp_path / "src", {f: FUNCTION.format(name=Path(f).stem) for f in files})
