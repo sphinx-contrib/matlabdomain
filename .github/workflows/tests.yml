@@ -27,8 +27,9 @@ jobs:
     timeout-minutes: 15
     runs-on: ${{ matrix.os }}
     # Sphinx master may break at any time, and so may a Python prerelease;
-    # neither may block.
-    continue-on-error: ${{ matrix.sphinx-version == 'dev' || matrix.python-version == '3.16' }}
+    # neither may block. tests/test_tested_versions.py reads the matrix: the
+    # Python versions of the other rows are the tested range in the docs.
+    continue-on-error: ${{ matrix.experimental == true }}
     env:
       COVERAGE_FILE: .coverage.${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.sphinx-version }}
     strategy:
@@ -51,10 +52,12 @@ jobs:
             os: ubuntu-latest
             python-version: "3.15"
             sphinx-version: dev
+            experimental: true
         -   description: next Python prerelease
             os: ubuntu-latest
             python-version: "3.16"
             sphinx-version: latest
+            experimental: true
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -76,7 +79,7 @@ jobs:
         path: htmlcov
     - name: Upload coverage data
       # A row that may fail does not feed the 100% gate.
-      if: (success() || failure()) && matrix.sphinx-version != 'dev' && matrix.python-version != '3.16'
+      if: (success() || failure()) && matrix.experimental != true
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: coverage-data-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.sphinx-version }}
