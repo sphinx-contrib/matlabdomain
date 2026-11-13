@@ -5,6 +5,7 @@ incremental and parallel builds, ``scmd apidoc`` and
 """
 
 import json
+import ntpath
 import os
 import shutil
 import struct
@@ -545,8 +546,9 @@ def test_paths_on_another_drive_are_left_alone(make_app, project, monkeypatch):
     assert dom.sidecar_doc("+demo/guide.md") == "api/+demo/guide-md"
 
 
-@pytest.mark.skipif(os.name != "nt", reason="drives are a Windows thing")
-def test_source_path_on_another_drive():
+def test_source_path_on_another_drive(monkeypatch):
+    # Windows' own rule for paths, so the test runs on every system.
+    monkeypatch.setattr(mat_sidecars.os.path, "relpath", ntpath.relpath)
     sidecar = mat_sidecars._Sidecar("a.md", "Z:\\src\\a.md", "C:\\docs", None)
     assert sidecar.source_path("Z:\\src\\img.png") is None
     assert sidecar.source_path("C:\\docs\\img.png") == "/img.png"

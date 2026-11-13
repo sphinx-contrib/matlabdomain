@@ -854,6 +854,20 @@ def _case_insensitive(folder):
         probe.unlink()
 
 
+@pytest.fixture
+def case_insensitive(tmp_path, monkeypatch):
+    """Make ``tmp_path`` behave as a case-insensitive file system. Where the
+    real one keeps case apart, two names that differ only by case count as
+    one file, so the tests of that code run on every system.
+    """
+    if not _case_insensitive(tmp_path):
+        monkeypatch.setattr(
+            _generate,
+            "_same_file",
+            lambda a, b: os.path.exists(a) and a.casefold() == b.casefold(),
+        )
+
+
 def test_case_only_renames_reach_the_output(tmp_path):
     # Pages of an earlier run, from sources whose names differed only by case.
     out = tmp_path / "out"
@@ -868,9 +882,8 @@ def test_case_only_renames_reach_the_output(tmp_path):
         assert sorted(result.removed) == ["ALPHA/NM_shared.m.rst", "ALPHA/index.rst"]
 
 
+@pytest.mark.usefixtures("case_insensitive")
 def test_dry_run_does_not_rename(tmp_path):
-    if not _case_insensitive(tmp_path):
-        pytest.skip("needs a case-insensitive file system")
     out = tmp_path / "out"
     run(ROOT, out, ("separate", True))
     (out / "alpha").rename(out / "ALPHA")
@@ -881,9 +894,8 @@ def test_dry_run_does_not_rename(tmp_path):
     assert result.changed
 
 
+@pytest.mark.usefixtures("case_insensitive")
 def test_case_variant_without_the_marker_is_kept(tmp_path, caplog_sphinx):
-    if not _case_insensitive(tmp_path):
-        pytest.skip("needs a case-insensitive file system")
     out = tmp_path / "out"
     run(ROOT, out)
     (out / "beta" / "index.rst").unlink()

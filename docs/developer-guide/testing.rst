@@ -100,16 +100,30 @@ Writing tests
 Coverage
 --------
 
-Every reachable line and branch of ``sphinxcontrib`` is covered, Windows and
-Linux combined. CI's coverage job combines the data of every test job
-except the Sphinx ``dev`` job and fails below 100%:
+Every reachable line and branch of ``sphinxcontrib`` is covered. CI's
+coverage job combines the data of every test job except the Sphinx ``dev``
+job and fails below 100%. Check it before a push:
 
 .. code-block:: console
 
-   $ uv run pytest --cov --cov-report=term-missing
+   $ uv run pytest -q -o addopts= --cov --cov-report=term-missing:skip-covered --cov-fail-under=100
 
-* A line that only one system reaches (POSIX permissions, non-UTF-8 file
-  names) counts when the other system's job covers it.
+On Linux the suite alone reaches 100%, so every line this command lists as
+missing is a line your change left untested. On Windows and macOS it also
+lists a few lines that only Linux runs: a folder that cannot be read, a file
+name that is not valid UTF-8, names that differ only by case or by Unicode
+form. There, look for the lines of your change in the list. CI's coverage
+job decides.
+
+* Code for one system or one Python version has a test that also runs on
+  Linux, so the command above stays at 100% there. Where the system lacks
+  the condition, the test supplies it: a file system that ignores case
+  (the ``case_insensitive`` fixture in ``tests/test_apidoc.py``), Windows'
+  rule for paths on two drives (``ntpath``), the Python version
+  (``tests/test_mat_typing.py``). On a system that has the condition, the
+  same test meets the real one.
+* A line that only Linux reaches (POSIX permissions, non-UTF-8 file names)
+  counts when a Linux job covers it.
 * A defensive guard that only a bug can reach stays, marked
   ``# pragma: no cover`` (or ``no branch``) with the reason on the same or
   the previous line. ``exclude_also`` lists only ``if __name__ ==
