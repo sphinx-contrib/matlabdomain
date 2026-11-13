@@ -72,7 +72,8 @@ for a file without one, the auto directive for a folder).
      - an object described twice, or two objects that would get the same
        anchor
      - where the second description is written (for content generated
-       from help text, the outermost auto directive)
+       from help text, the outermost auto directive); the message names
+       where the first one is written
    * - ``mat.sidecar``
      - a sidecar doc without a heading, a ``mat:autosidecar`` reference
        that is not an indexed sidecar doc, a project root on another drive

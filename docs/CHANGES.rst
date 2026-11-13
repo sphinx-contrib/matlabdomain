@@ -286,7 +286,8 @@ Builds:
   documented, names the code file and the line of the declaration, not
   ``<autodoc>``. A ``mat.duplicate`` warning
   for an object generated from help text points at the outermost auto
-  directive. An object or folder described on several pages
+  directive, and its "other instance in" names the file and line where
+  the other description is written, not its page. An object or folder described on several pages
   belongs to the same page after an incremental build as after a fresh
   one, also when that page changes, drops the description or is removed.
 * One bad source file no longer stops the build. A file that cannot be

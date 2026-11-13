@@ -139,9 +139,11 @@ What each warning means
    a person wrote in a reStructuredText or Markdown file: its own
    directive, or, for a description generated from help text, the
    outermost auto directive (a method from ``:members:`` points at the
-   ``mat:autoclass`` line). A parallel build (``-j``) gives the same
-   warnings as a serial one, and an incremental build the same as a fresh
-   one for the pages it reads.
+   ``mat:autoclass`` line). "Other instance in" names the other
+   description in the same way, as ``file:line``: the page, an included
+   file, a sidecar doc, or the auto directive. A parallel build (``-j``)
+   gives the same warnings as a serial one, and an incremental build the
+   same as a fresh one for the pages it reads.
 
 ``mat.apidoc``
    ``scmd apidoc``: a file that cannot be read was left out, two

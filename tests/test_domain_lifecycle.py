@@ -595,7 +595,7 @@ def test_merge_duplicate_object_like_serial(make_app, srcdir):
     }
     expected = [
         f"<SRC>/{later}.rst:7: WARNING: [sphinxcontrib-matlabdomain] duplicate "
-        f"object description of x/Obj.m, other instance in <SRC>/{earlier}.rst, "
+        f"object description of x/Obj.m, other instance in <SRC>/{earlier}.rst:7, "
         "use :no-index: for one of them [mat.duplicate]"
         for earlier, later in (("doc_a", "doc_b"), ("doc_b", "doc_c"))
     ]
@@ -713,11 +713,14 @@ def test_worker_leaves_pages_of_other_processes_to_check_consistency(make_app, s
     app.env.temp_data["docname"] = "doc_c"
     dom.note_object("x/Obj.m", "class", "Obj", location="doc_c.rst:8")
     assert app.warning.getvalue().count("[mat.duplicate]") == 1
-    assert "of x/Obj.m, other instance in" in app.warning.getvalue()
+    # the other instance where it is written, from its stored location
+    assert "of x/Obj.m, other instance in doc_b.rst:4," in app.warning.getvalue()
 
     dom.reconcile()  # env-updated, in the main process
     assert app.warning.getvalue().count("[mat.duplicate]") == 2
-    assert app.warning.getvalue().count("of x/Old.m, other instance in") == 1
+    assert (
+        app.warning.getvalue().count("of x/Old.m, other instance in aa_old.rst:2,") == 1
+    )
 
 
 def _duplicate_warnings(app, root):
@@ -729,11 +732,15 @@ def _duplicate_warnings(app, root):
     )
 
 
-def _dup(later, line, ref, earlier):
+def _dup(later, line, ref, earlier, earlier_line):
+    """Return the duplicate warning at line ``line`` of the page ``later`` about the
+    description at line ``earlier_line`` of the page ``earlier``.
+    """
     return (
         f"<SRC>/{later}.rst:{line}: WARNING: [sphinxcontrib-matlabdomain] duplicate "
-        f"object description of {ref}, other instance in <SRC>/{earlier}.rst, use "
-        ":no-index: for one of them [mat.duplicate]"
+        f"object description of {ref}, other instance in "
+        f"<SRC>/{earlier}.rst:{earlier_line}, use :no-index: for one of them "
+        "[mat.duplicate]"
     )
 
 
@@ -755,16 +762,16 @@ def test_duplicate_warnings_of_parallel_build_equal_serial(
     serial.build()
     expected = sorted(
         [
-            _dup("b1", 6, "g", "a1"),
+            _dup("b1", 6, "g", "a1", 4),
             # an auto directive: the line of the directive on the page
-            _dup("b2", 8, "f.m", "a2"),
-            _dup("b3", 6, "h.m", "a3"),
-            _dup("b4", 8, "h.m", "b3"),
+            _dup("b2", 8, "f.m", "a2", 4),
+            _dup("b3", 6, "h.m", "a3", 4),
+            _dup("b4", 8, "h.m", "b3", 6),
             # the members of an autoclass: the line of the autoclass
-            _dup("b5", 6, "K.m", "a4"),
-            _dup("b5", 6, "K.m.m", "a4"),
-            _dup("zz", 8, "K.m", "b5"),
-            _dup("zz", 8, "K.m.m", "b5"),
+            _dup("b5", 6, "K.m", "a4", 4),
+            _dup("b5", 6, "K.m.m", "a4", 4),
+            _dup("zz", 8, "K.m", "b5", 6),
+            _dup("zz", 8, "K.m.m", "b5", 6),
         ]
     )
     assert _duplicate_warnings(serial, roots["serial"]) == expected
@@ -799,7 +806,7 @@ def test_removed_duplicate_gives_no_warning_in_the_next_build(make_app, tmp_path
         (tmp_path / path).write_text(text, encoding="utf-8")
     first = make_app(srcdir=tmp_path)
     first.build()
-    assert _duplicate_warnings(first, tmp_path) == [_dup("b", 4, "g", "a")]
+    assert _duplicate_warnings(first, tmp_path) == [_dup("b", 4, "g", "a", 4)]
 
     (tmp_path / "b.rst").write_text("B\n=\n\nNothing.\n", encoding="utf-8")
     later = time.time_ns() + 2_000_000_000
@@ -917,7 +924,7 @@ def test_winner_page_changes_and_keeps_its_description(make_app, tmp_path):
         ["b"],
     )
     assert app.env.domaindata["mat"]["objects"]["g"] == ("b", "function", "g")
-    assert _duplicate_warnings(app, root) == [_dup("b", 6, "g", "a")]
+    assert _duplicate_warnings(app, root) == [_dup("b", 6, "g", "a", 4)]
 
 
 def test_winner_page_drops_its_folder_description(make_app, tmp_path):
@@ -966,7 +973,8 @@ def test_earlier_page_changes_and_keeps_its_description(make_app, tmp_path):
         ["a"],
     )
     assert app.env.domaindata["mat"]["objects"]["g"] == ("b", "function", "g")
-    assert _duplicate_warnings(app, root) == [_dup("b", 4, "g", "a")]
+    # a, not read before b, is at its new line
+    assert _duplicate_warnings(app, root) == [_dup("b", 4, "g", "a", 6)]
 
 
 def test_page_adds_a_description_an_unchanged_later_page_has(make_app, tmp_path):
@@ -983,7 +991,7 @@ def test_page_adds_a_description_an_unchanged_later_page_has(make_app, tmp_path)
         ["a"],
     )
     assert app.env.domaindata["mat"]["objects"]["g"] == ("b", "function", "g")
-    assert _duplicate_warnings(app, root) == [_dup("b", 6, "g", "a")]
+    assert _duplicate_warnings(app, root) == [_dup("b", 6, "g", "a", 4)]
 
 
 def test_winner_page_drops_its_description_in_a_parallel_read(
@@ -1065,7 +1073,13 @@ def test_unchanged_page_between_changed_pages_warns_like_a_fresh_build(
     # each describing page after the first warns about the one before it
     describing = sorted([unchanged, *changed])
     expected = sorted(
-        _dup(later, 4 if later == unchanged else 6, "g", earlier)
+        _dup(
+            later,
+            4 if later == unchanged else 6,
+            "g",
+            earlier,
+            4 if earlier == unchanged else 6,
+        )
         for earlier, later in itertools.pairwise(describing)
     )
     assert _duplicate_warnings(app, root) == expected
@@ -1117,7 +1131,7 @@ def test_nested_auto_directive_reports_the_line_of_the_outer_one(make_app, tmp_p
         (tmp_path / path).write_text(text, encoding="utf-8")
     app = make_app(srcdir=tmp_path)
     app.build()
-    assert _duplicate_warnings(app, tmp_path) == [_dup("b", 8, "h.m", "a")]
+    assert _duplicate_warnings(app, tmp_path) == [_dup("b", 8, "h.m", "a", 4)]
     assert app.env.get_domain("mat").data["objects"]["h.m"][0] == "b"
 
 
@@ -1153,4 +1167,111 @@ def test_duplicate_below_an_include_is_at_its_line_in_parallel_and_serial(
         found[parallel] = _duplicate_warnings(app, root)
     if sphinx.util.parallel.parallel_available:
         assert sorted(merged) == [["a", "c1", "c2", "c3"], ["c4", "c5", "index", "z"]]
-    assert found[0] == found[2] == [_dup("z", 6, "g", "a")]
+    assert found[0] == found[2] == [_dup("z", 6, "g", "a", 4)]
+
+
+# --- where the other instance of a duplicate is written ------------------------
+
+# f is described in an included file, a sidecar doc, on a page, by an auto
+# directive and by an auto directive in the help of h; each description warns
+# about the one before it, where that one is written.
+WRITTEN = {
+    "conf.py": DUPLICATE_CONF
+    + 'matlab_src_sidecar_suffixes = [".rst"]\nexclude_patterns = ["inc.txt"]\n',
+    "src/f.m": DUPLICATE_SOURCES["src/f.m"],
+    "src/h.m": "function h\n% H help\n%\n% .. mat:autofunction:: f\nend\n",
+    "inc.txt": "Included text.\n\nMore.\n\n.. mat:function:: f\n\n   Included.\n",
+    "src/guide.rst": "Guide\n=====\n\nText.\n\n.. mat:function:: f\n\n   Sidecar.\n",
+    "b_incl.rst": "Incl\n====\n\n.. include:: inc.txt\n",
+    "c_side.rst": "Side\n====\n\nText.\n\n.. mat:autosidecar:: guide.rst\n",
+    "d_page.rst": "Page\n====\n\n.. mat:function:: f\n\n   On the page.\n",
+    "e_auto.rst": "Auto\n====\n\nText.\n\nMore.\n\n.. mat:autofunction:: f\n",
+    "f_auto.rst": "Help\n====\n\nText.\n\n.. mat:autofunction:: h\n",
+    "g_page.rst": "Last\n====\n\n.. mat:function:: f\n\n   Last.\n",
+    **{f"{c}{i}.rst": f"{c}{i}\n==\n\nText.\n" for c in "dz" for i in range(3)},
+}
+WRITTEN["index.rst"] = "Index\n=====\n\n.. toctree::\n\n" + "".join(
+    f"   {name[:-4]}\n"
+    for name in sorted(WRITTEN)
+    if name[-4:] == ".rst" and "/" not in name
+)
+
+
+def _other(later, ref, other):
+    """Return the duplicate warning at ``later`` about the description at ``other``."""
+    return (
+        f"<SRC>/{later}: WARNING: [sphinxcontrib-matlabdomain] duplicate object "
+        f"description of {ref}, other instance in <SRC>/{other}, use :no-index: "
+        "for one of them [mat.duplicate]"
+    )
+
+
+WRITTEN_WARNINGS = [
+    _other("d_page.rst:4", "f.m", "src/guide.rst:6"),
+    _other("e_auto.rst:8", "f.m", "d_page.rst:4"),
+    # the other instance of generated content: the outermost auto directive
+    _other("f_auto.rst:6", "f.m", "e_auto.rst:8"),
+    _other("g_page.rst:4", "f.m", "f_auto.rst:6"),
+    _other("src/guide.rst:6", "f.m", "inc.txt:5"),
+]
+
+
+def test_other_instance_is_where_it_is_written_in_parallel_and_serial(
+    make_app, tmp_path, monkeypatch
+):
+    merged = []
+    original = MATLABDomain.merge_domaindata
+
+    def recording(self, docnames, otherdata):
+        merged.append(sorted(docnames))
+        return original(self, docnames, otherdata)
+
+    monkeypatch.setattr(MATLABDomain, "merge_domaindata", recording)
+    found = {}
+    for parallel in (0, 2):
+        root = tmp_path / str(parallel)
+        _write_pages(root, WRITTEN)
+        app = make_app(srcdir=root, parallel=parallel)
+        app.build()
+        found[parallel] = _duplicate_warnings(app, root)
+    if sphinx.util.parallel.parallel_available:
+        # pairs in one chunk, and d_page, e_auto in two (check_consistency)
+        assert sorted(merged) == [
+            ["b_incl", "c_side", "d0", "d1", "d2", "d_page"],
+            ["e_auto", "f_auto", "g_page", "index", "z0", "z1"],
+            ["z2"],
+        ]
+    assert found[0] == found[2] == WRITTEN_WARNINGS
+
+
+def test_other_instance_of_an_incremental_build_is_where_it_is_written(
+    make_app, tmp_path
+):
+    root = tmp_path / "incremental"
+    _write_pages(root, WRITTEN)
+    make_app(srcdir=root).build()
+    _touch(root, "e_auto.rst")
+    app = make_app(srcdir=root)
+    app.build()
+    assert app.env.get_domain("mat").read_docnames == ["e_auto"]
+    # the pairs with e_auto, as in a fresh build (reconcile)
+    assert _duplicate_warnings(app, root) == [
+        line for line in WRITTEN_WARNINGS if "e_auto" in line
+    ]
+
+
+def test_other_instance_without_a_location_is_its_page(make_app, tmp_path):
+    # A folder description stores no location; a function directive that
+    # names the folder's reference is its duplicate.
+    _write_pages(
+        tmp_path,
+        {
+            **WINNER_SOURCES,
+            "index.rst": WINNER_INDEX + "   a\n   b\n",
+            "a.rst": LIB_PAGE.format(title="A"),
+            "b.rst": "B\n=\n\n.. mat:function:: lib/\n",
+        },
+    )
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    assert _duplicate_warnings(app, tmp_path) == [_other("b.rst:4", "lib/", "a.rst")]

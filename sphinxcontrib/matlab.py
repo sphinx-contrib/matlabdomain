@@ -1135,11 +1135,16 @@ class MATLABDomain(Domain):
         self._displays = self._stable_urls = None
 
     def _warn_duplicate(self, name, other, location):
+        """Warn at ``location`` that ``name`` is also described in the document
+        ``other``, naming where that description is written (``file:line``),
+        else the page.
+        """
+        written = self.data["described"][other][name][0]
         logger.warning(
             "[sphinxcontrib-matlabdomain] duplicate object description of %s, "
             "other instance in %s, use :no-index: for one of them",
             name,
-            self.env.doc2path(other),
+            written or self.env.doc2path(other),
             type="mat",
             subtype="duplicate",
             location=location,
