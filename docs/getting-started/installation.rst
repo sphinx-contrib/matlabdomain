@@ -34,12 +34,28 @@ With pip, use ``pip install "sphinxcontrib-matlabdomain[markdown]"``.
 Requirements
 ------------
 
-* Python 3.11 to 3.14 (the standard builds; free-threaded Python is not
-  supported yet).
+* Python 3.11 or newer, the standard builds. Free-threaded Python is not
+  supported, because ``tree-sitter`` does not support it yet
+  (`py-tree-sitter#458
+  <https://github.com/tree-sitter/py-tree-sitter/issues/458>`_).
 * Sphinx 8.0 or newer.
 * ``tree-sitter`` 0.26.1 and ``tree-sitter-matlab`` 1.3.3. These
   are pinned exactly, because both projects change their output in minor
   releases; each new release is checked before the pins move.
+
+Tested: Python |python-tested| and Sphinx |sphinx-tested|. Support is best
+effort: every Python version that is still maintained, and every Sphinx
+release from 8.0 on, is meant to work. A new release is added to the tests
+within about three months, so a newer version may already work before it is
+listed. A Python version past its end of life may still work but is not
+supported.
+
+On Python 3.15 and newer, ``tree-sitter`` 0.26.1 has no prebuilt wheel, so
+installing it compiles it from source and needs a C compiler (on Windows,
+the Microsoft C++ Build Tools). Python 3.15 support is merged in
+py-tree-sitter (`py-tree-sitter#519
+<https://github.com/tree-sitter/py-tree-sitter/issues/519>`_) but not yet
+released.
 
 The extension is tested on Linux and Windows (x86-64) and macOS (arm64).
 Path references and patterns are case-sensitive on every system. On a

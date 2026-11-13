@@ -8,7 +8,9 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html.
 # -- Path setup --------------------------------------------------------------
 
 import importlib
+import re
 import sys
+import tomllib
 from pathlib import Path
 
 # _ext/ holds extensions of these docs only, not part of the package.
@@ -30,6 +32,44 @@ author = "Mark Mikofski, Jørgen Cederberg, Jason H. Nicholson and contributors"
 version = ""
 # The full version, including alpha/beta/rc tags
 release = ""
+
+
+# -- Tested versions ---------------------------------------------------------
+
+# The pages state the tested range as |python-tested| and |sphinx-tested|.
+# Python: the classifiers, which tests/test_tested_versions.py keeps equal to
+# the CI matrix. Sphinx: the dependency's floor to the newest Sphinx in
+# uv.lock.
+_root = Path(__file__).parent.parent
+_project = tomllib.loads((_root / "pyproject.toml").read_text(encoding="utf-8"))
+_lock = tomllib.loads((_root / "uv.lock").read_text(encoding="utf-8"))
+
+
+def _version(text):
+    return tuple(int(part) for part in text.split("."))
+
+
+_python = sorted(
+    (
+        c.rsplit(" :: ", 1)[1]
+        for c in _project["project"]["classifiers"]
+        if re.fullmatch(r"Programming Language :: Python :: 3\.\d+", c)
+    ),
+    key=_version,
+)
+_sphinx_floor = next(
+    d.removeprefix("Sphinx>=")
+    for d in _project["project"]["dependencies"]
+    if d.startswith("Sphinx>=")
+)
+_sphinx_newest = max(
+    (p["version"] for p in _lock["package"] if p["name"] == "sphinx"), key=_version
+)
+_sphinx = [".".join(v.split(".")[:2]) for v in (_sphinx_floor, _sphinx_newest)]
+rst_epilog = f"""
+.. |python-tested| replace:: {_python[0]} to {_python[-1]}
+.. |sphinx-tested| replace:: {_sphinx[0]} to {_sphinx[1]}
+"""
 
 
 # -- General configuration ---------------------------------------------------

@@ -64,16 +64,23 @@ def bare_app(make_app, tmp_path):
 
 
 def test_docs_build_without_warnings(make_app, tmp_path):
-    # The docs include files from examples/apidoc.
+    # The docs include files from examples/apidoc, and read the tested
+    # versions from pyproject.toml and uv.lock.
     for folder in ("docs", "examples/apidoc"):
         shutil.copytree(
             REPO / folder, tmp_path / folder, ignore=shutil.ignore_patterns("_build")
         )
+    for name in ("pyproject.toml", "uv.lock"):
+        shutil.copyfile(REPO / name, tmp_path / name)
     app = make_app(srcdir=tmp_path / "docs", freshenv=True)
     app.build(force_all=True)
     assert app.config.nitpicky
     assert app.warning.getvalue() == ""
     output = Path(app.outdir)
+    installation = (output / "getting-started/installation.html").read_text(
+        encoding="utf-8"
+    )
+    assert f"Tested: Python {version_range()}." in installation
     primer = (output / "getting-started/sphinx-primer.html").read_text(encoding="utf-8")
     assert 'href="../reference/glossary.html#term-builder"' in primer
     for name in (
@@ -89,6 +96,31 @@ def test_docs_build_without_warnings(make_app, tmp_path):
     tips = glossary_tips(output)
     assert "The part of Sphinx" in tips["reference/glossary.html#term-builder"]
     assert not (output / "_static/tippy").exists()
+
+
+def version_range():
+    """``"3.11 to 3.15 and Sphinx 8.0 to 9.2"`` from pyproject.toml and uv.lock."""
+    project = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))
+    lock = tomllib.loads((REPO / "uv.lock").read_text(encoding="utf-8"))
+    python = sorted(
+        int(m[1])
+        for c in project["project"]["classifiers"]
+        if (m := re.fullmatch(r"Programming Language :: Python :: 3\.(\d+)", c))
+    )
+    (floor,) = (
+        d.removeprefix("Sphinx>=")
+        for d in project["project"]["dependencies"]
+        if d.startswith("Sphinx>=")
+    )
+    newest = max(
+        tuple(map(int, p["version"].split(".")))
+        for p in lock["package"]
+        if p["name"] == "sphinx"
+    )
+    return (
+        f"3.{python[0]} to 3.{python[-1]} and Sphinx "
+        f"{'.'.join(floor.split('.')[:2])} to {newest[0]}.{newest[1]}"
+    )
 
 
 def glossary_tips(output):

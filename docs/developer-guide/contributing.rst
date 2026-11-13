@@ -132,8 +132,21 @@ Versions and compatibility
   (:doc:`../user-guide/referencing`), the ``scmd apidoc``
   options and template variables, and the ``matlab-api-check`` rules and
   report format.
-* Supported: Python 3.11 to 3.14, Sphinx 8.0 and newer, on Linux, Windows
-  and macOS.
+* Supported, best effort: every Python version still maintained upstream
+  from 3.11 on, and every Sphinx release from 8.0 on, on Linux, Windows and
+  macOS. Python versions past their end of life may work but are not
+  supported. Tested: Python |python-tested| and Sphinx |sphinx-tested|. The
+  tested range follows new and retired releases within about three months,
+  not on the day of a release. ``requires-python`` and the Sphinx dependency
+  have no upper bound: a cap makes installers refuse the package or pick an
+  old release.
+* To add or drop a Python version, change the ``Programming Language ::
+  Python :: 3.x`` classifiers, the CI matrix (``.github/workflows/tests.yml``)
+  and the tox ``env_list`` together; ``tests/test_tested_versions.py`` names
+  what is out of step. A prerelease row in CI has ``experimental: true``: it
+  may fail and is not part of the tested range. The newest tested Sphinx is
+  the one in ``uv.lock`` (``uv lock --upgrade-package sphinx``). The docs read
+  both ranges from these files (``docs/conf.py``).
 * ``tree-sitter`` and ``tree-sitter-matlab`` are pinned to exact ranges in
   ``pyproject.toml``. Neither project marks breaking changes with a major
   version, so every new release is evaluated by reading its changes and

@@ -34,7 +34,11 @@ Requirements
 ^^^^^^^^^^^^
 
 * Python 3.11 or later and Sphinx 8.0 or later (support for Python 3.10 and
-  Sphinx 7 and earlier is dropped).
+  Sphinx 7 and earlier is dropped). Tested on Python 3.11 to 3.15 and Sphinx
+  8.0 to 9.2; newer releases are supported on a best-effort basis and added
+  to the tests within about three months. On Python 3.15 ``tree-sitter``
+  0.26.1 is compiled from source, which needs a C compiler. Free-threaded
+  Python is not supported.
 * Source files are parsed with tree-sitter (``tree-sitter`` 0.26 and
   ``tree-sitter-matlab`` 1.3.3) instead of a Pygments lexer; the module
   ``sphinxcontrib.mat_lexer`` is removed.
@@ -455,7 +459,11 @@ Project
 * Jason H. Nicholson, author of the 1.0 rewrite, maintains the project;
   Jørgen Cederberg is a former maintainer (``AUTHORS``).
 * Build, test and static-analysis policy is in ``pyproject.toml`` (Ruff,
-  Pyright, tox); CI runs on Windows, macOS and Linux.
+  Pyright, tox); CI runs on Windows, macOS and Linux. A Python prerelease
+  (now 3.16) and Sphinx's development branch are tested too but may fail.
+  A test keeps the tested Python versions in the CI matrix, the
+  classifiers and tox in step; the docs read the tested range from
+  ``pyproject.toml`` and ``uv.lock``.
 
 0.22.1 (2024-08-17)
 -------------------

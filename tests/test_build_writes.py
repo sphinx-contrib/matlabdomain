@@ -52,7 +52,8 @@ def synthetic_project(tmp_path):
 def copied_project(tmp_path, name):
     """Copy ``docs/`` and ``examples/apidoc``, which include each other,
     without build output and bytecode caches (a cache that is already there
-    would hide that a build writes one).
+    would hide that a build writes one), and the files ``docs/conf.py`` reads
+    the tested versions from.
     """
     for folder in ("docs", "examples/apidoc"):
         shutil.copytree(
@@ -60,6 +61,8 @@ def copied_project(tmp_path, name):
             tmp_path / folder,
             ignore=shutil.ignore_patterns("_build", "__pycache__"),
         )
+    for file in ("pyproject.toml", "uv.lock"):
+        shutil.copyfile(REPO / file, tmp_path / file)
     return tmp_path, tmp_path / name
 
 
