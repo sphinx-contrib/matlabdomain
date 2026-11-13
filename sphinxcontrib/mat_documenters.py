@@ -114,6 +114,12 @@ logger = getLogger("matlab-domain")
 # which the output drops, separates a link from the text around it.
 _MARKUP_BEFORE = frozenset("-:/'\"<([{")
 _MARKUP_AFTER = frozenset("-.,:;!?\\/'\")]}>")
+# States of ``detect_literal_block``: a literal block is a line ending with
+# "::", a blank line, then indented lines; auto-links skip it.
+_LINKING = 0  # not in a literal block
+_AFTER_COLONS = -1  # a line ending with "::"
+_AFTER_BLANK = -2  # then a blank line
+_IN_LITERAL = 1  # in the indented lines
 #: roles of files that "See also" and auto-links name (``ref_role``)
 _FILE_ROLES = (
     "class",
@@ -461,19 +467,19 @@ class MatlabDocumenter(PyDocumenter):
         # returns not_in_literal_block = True if the line is not in a literal block
         not_in_literal_block = False
         if line.endswith("::"):
-            no_link_state = -1  # 1st sign of literal block
+            no_link_state = _AFTER_COLONS  # 1st sign of literal block
         elif not line:  # blank line
-            if no_link_state == -1:  # if 1st sign already detected
-                no_link_state = -2  # 2nd sign of literal block
-            elif no_link_state == 1:  # if in literal block
-                no_link_state = -2  # need to look again for indented line
-        elif no_link_state == -2:  # following 1st 2 signs
+            if no_link_state == _AFTER_COLONS:  # if 1st sign already detected
+                no_link_state = _AFTER_BLANK  # 2nd sign of literal block
+            elif no_link_state == _IN_LITERAL:  # if in literal block
+                no_link_state = _AFTER_BLANK  # need to look again for indented line
+        elif no_link_state == _AFTER_BLANK:  # following 1st 2 signs
             if line.startswith("  "):  # indented line, literal block
-                no_link_state = 1  # no linking!
+                no_link_state = _IN_LITERAL  # no linking!
             else:  # not indented line, literal block has ended
-                no_link_state = 0  # restart linking!
+                no_link_state = _LINKING  # restart linking!
                 not_in_literal_block = True  # including in this line
-        elif no_link_state != 1:  # not in a literal block, go ahead and link
+        elif no_link_state != _IN_LITERAL:  # not in a literal block, go ahead and link
             not_in_literal_block = True
 
         return not_in_literal_block, no_link_state
@@ -514,7 +520,7 @@ class MatlabDocumenter(PyDocumenter):
                     p2 = re.compile(
                         look_behind + re.escape(nn) + r"\.(\w+)" + look_ahead2
                     )
-                no_link_state = 0  # normal mode (no literal block detected)
+                no_link_state = _LINKING
                 for i in range(len(docstrings)):
                     for j in range(len(docstrings[i])):
                         not_in_literal_block, no_link_state = self.detect_literal_block(
@@ -571,7 +577,7 @@ class MatlabDocumenter(PyDocumenter):
             # <name>()
             pat = r"(?<!(`|\.|<|@|\*|\xa0|/|\|))\b" + n + r"\(\)(?!\xa0|\|)"
             p = re.compile(pat)
-            no_link_state = 0  # normal mode (no literal block detected)
+            no_link_state = _LINKING
             for i in range(len(docstrings)):
                 for j in range(len(docstrings[i])):
                     not_in_literal_block, no_link_state = self.detect_literal_block(
@@ -1359,7 +1365,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         p = re.compile(
             r"(?<!(`|\.|<|@|\*|\xa0|/|\|))\b" + name + r"\b(?!`|\*|\xa0|\.\w|/|\|)"
         )
-        no_link_state = 0  # normal mode (no literal block detected)
+        no_link_state = _LINKING
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
                 not_in_literal_block, no_link_state = self.detect_literal_block(
@@ -1502,7 +1508,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         # negative look-behind for ` . < * / | or <non-breaking space>
         # and negative look-ahead for ` * / | or <non-breaking space>
         p = re.compile(r"(?<!(`|\.|<|\*|\xa0|/|\|))\b" + name + r"\b(?!`|\*|\xa0|/|\|)")
-        no_link_state = 0  # normal mode (no literal block detected)
+        no_link_state = _LINKING
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
                 not_in_literal_block, no_link_state = self.detect_literal_block(

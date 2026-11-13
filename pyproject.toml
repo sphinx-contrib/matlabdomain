@@ -200,8 +200,7 @@ ignore = [
     "D107",
     "D203",
     "D205",
-    "D213",
-    "PLR2004"
+    "D213"
 ]
 # List of all the ruff rules (includes why the rule matters)
 # https://docs.astral.sh/ruff/rules/
@@ -230,7 +229,10 @@ select = [
 max-complexity = 51
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["ARG001", "ARG002", "D104", "E203"]
+# Tests and test tools compare with literal expected values (counts, exit
+# codes, the fuzzer's odds); a named constant for each would read worse.
+"test_slow/**/*" = ["PLR2004"]
+"tests/**/*" = ["ARG001", "ARG002", "D104", "E203", "PLR2004"]
 "tests/test_autodoc.py" = ["E501"]
 "tests/test_mat_types.py" = ["E501"]
 

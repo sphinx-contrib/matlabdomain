@@ -409,6 +409,8 @@ _PROSE_WORDS = frozenset(
         "is", "are", "be", "this", "that", "these", "those", "which", "it",
     }
 )  # fmt: skip
+#: a heading of more words reads as a sentence
+_HEADING_WORDS = 3
 
 
 def _prose(spelling):
@@ -416,7 +418,7 @@ def _prose(spelling):
     or a lowercase function word.
     """
     words = spelling.split()
-    return len(words) > 3 or any(w in _PROSE_WORDS for w in words)
+    return len(words) > _HEADING_WORDS or any(w in _PROSE_WORDS for w in words)
 
 
 def napoleon_headings(found, threshold=SECTION_FILES):

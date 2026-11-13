@@ -204,7 +204,7 @@ def chooser_link(dom, builder, fromdocname, refs, contnode):
     _, by_name, names, _ = addresses(dom)
     name = dom.data["objects"][refs[0]][2]
     listed = names.get(name, [])
-    if len(listed) < 2 or not set(refs) <= set(listed):
+    if len(listed) <= 1 or not set(refs) <= set(listed):
         return contnode
     uri = relative_uri(builder.get_target_uri(fromdocname), by_name[name])
     node = nodes.reference("", "", internal=True, refuri=uri, reftitle=name)

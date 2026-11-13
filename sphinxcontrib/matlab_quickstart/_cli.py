@@ -137,14 +137,11 @@ def get_parser(prog="scmd quickstart"):
 
 
 def _section(entry):
-    if isinstance(entry, str):
-        return entry
-    if (
-        isinstance(entry, (list, tuple))
-        and len(entry) == 2
-        and all(isinstance(part, str) for part in entry)
-    ):
-        return tuple(entry)
+    match entry:
+        case str():
+            return entry
+        case [str() as heading, str() as style]:
+            return heading, style
     raise ValueError(
         f"{NAPOLEON} must be a list of headings and [heading, style] pairs, "
         f"not {entry!r}."

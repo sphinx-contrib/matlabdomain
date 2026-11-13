@@ -458,7 +458,7 @@ def _untangle_titles(entries, namespace):
     for entry in entries:
         by_title.setdefault(entry["title"], []).append(entry)
     for title, same in sorted(by_title.items()):
-        if len(same) < 2:
+        if len(same) == 1:
             continue
         if same[0]["kind"] != "library_block":
             refs = sorted(e["ref"] for e in same)

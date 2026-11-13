@@ -154,7 +154,7 @@ def make_target_id(reference: str) -> str:
     """Anchor for a path reference (see the module docstring)."""
     out = ["mat-"]
     for char in reference:
-        if char in _ANCHOR_SAFE or ord(char) > 0x7F:
+        if char in _ANCHOR_SAFE or not char.isascii():
             out.append(char)
         else:
             out.extend(f"~{byte:02X}" for byte in char.encode("utf-8"))
@@ -334,7 +334,7 @@ def _location(
         chain = _package_chain(folder_parts[:-1], namelengthmax)
         if chain is None:
             # A class folder directly under an invalid package is not callable.
-            if len(folder_parts) >= 2 and folder_parts[-2].startswith("+"):
+            if len(folder_parts) > 1 and folder_parts[-2].startswith("+"):
                 return None
             if any(part.startswith("@") for part in folder_parts[:-1]):
                 return None

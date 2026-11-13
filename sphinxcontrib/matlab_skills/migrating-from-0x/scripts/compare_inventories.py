@@ -61,13 +61,14 @@ def main():
         help="objects to list per kind and side (default 10)",
     )
     args = parser.parse_args()
-    if len(args.inventories) == 1:
-        for role, names in sorted(load(args.inventories[0]).items()):
+    first, *rest = args.inventories
+    if not rest:
+        for role, names in sorted(load(first).items()):
             print(f"{role:20} {len(names):6}")
         return
-    if len(args.inventories) != 2:
+    if len(rest) > 1:
         parser.error("give one inventory, or two to compare")
-    old, new = load(args.inventories[0]), load(args.inventories[1])
+    old, new = load(first), load(rest[0])
     unmapped = []
     root = args.root.resolve() if args.root else None
     for role, names in list(old.items()) if root else []:
