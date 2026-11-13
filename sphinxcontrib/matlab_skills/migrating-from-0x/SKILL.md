@@ -140,8 +140,8 @@ It turns `module`/`automodule` of a `+` package into
 references (`+pkg/Cls.m`, `+pkg/Cls.m.method`), `:ref:` links to
 `modindex` into `mat-folderindex`
 and `:friend-members:` into `:access-list-members:`, and removes
-`:special-members:` and `:inherited-members:`. It lists what it cannot do
-("check by hand"): an `automodule` of a class folder or the root (it
+`:special-members:` (`:inherited-members:` works in 1.0 and stays). It
+lists what it cannot do ("check by hand"): an `automodule` of a class folder or the root (it
 becomes `mat:currentfolder`, which documents nothing; check that the page
 documents the class or its files), names not found below the root, bare
 names it keeps as MATLAB names (after `.. module:: .`, say; they must be
@@ -156,7 +156,7 @@ Old directives and removed options are errors that drop the object, yet the
 build exits 0 without `-W`. After the rewrite, nothing should match:
 
 ```console
-grep -rnE "(auto|current)?module::|:mat:mod:|:(special|inherited)-members:|mat:(auto)?(exception|decorator)|mat:classmethod" docs
+grep -rnE "(auto|current)?module::|:mat:mod:|:special-members:|mat:(auto)?(exception|decorator)|mat:classmethod" docs
 ```
 
 ## 7. Help text

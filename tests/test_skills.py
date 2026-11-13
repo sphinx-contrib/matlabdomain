@@ -211,3 +211,18 @@ def test_namespace_of():
     assert REWRITE.namespace_of("./") is None
     # a + folder in a class folder is no namespace
     assert REWRITE.namespace_of("target/@Cls/+p/") is None
+
+
+def test_rewrite_keeps_inherited_members():
+    """The page rewrite removes ``:special-members:`` but keeps
+    ``:inherited-members:``, which works in 1.0.
+    """
+    notes = []
+    page = (
+        ".. mat:autoclass:: Cls\n   :members:\n   :special-members:\n"
+        "   :inherited-members: Base\n"
+    )
+    out = REWRITE.rewrite(Path("."), page, notes, "page.rst")
+    assert out == ".. mat:autoclass:: Cls\n   :members:\n   :inherited-members: Base\n"
+    assert "page.rst:3: removed :special-members:" in notes
+    assert not any("inherited" in note for note in notes)

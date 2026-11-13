@@ -11,7 +11,7 @@ package) or folder forms (any other folder), dotted names in auto
 directives and roles to path references (when they name a file
 below ROOT), ``modindex`` references to ``mat-folderindex`` and
 ``:friend-members:`` to ``:access-list-members:``, and removes
-``:special-members:`` and ``:inherited-members:``. Everything it cannot
+``:special-members:``. Everything it cannot
 rewrite is listed under "check by hand". Help text in ``.m`` files is not
 changed.
 """
@@ -32,7 +32,7 @@ RST_DIRECTIVE = re.compile(rf"^([\s>]*)\.\. (mat:)?({AUTO}|{MODULE})::[ \t]*(\S*
 MD_DIRECTIVE = re.compile(
     rf"^([\s>]*)```\{{(mat:)?({AUTO}|{MODULE})\}}[ \t]*(\S*)(.*)$"
 )
-REMOVED_OPTION = re.compile(r"^[\s>]*:(special-members|inherited-members):")
+REMOVED_OPTION = re.compile(r"^[\s>]*:special-members:")
 FRIEND_OPTION = re.compile(r"^([\s>]*):friend-members:")
 MODINDEX = re.compile(r"(:ref:`(?:[^`<]*<)?)modindex(>?`)")
 REMOVED_DIRECTIVE = re.compile(
