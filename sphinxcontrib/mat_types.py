@@ -72,6 +72,7 @@ __all__ = [
     "MatModel",
     "MatModule",
     "MatModuleAnalyzer",
+    "MatNamespace",
     "MatObject",
     "MatProperty",
     "MatScript",
@@ -471,6 +472,15 @@ def find_source(dom, target, folder=None, accept=is_source_object):
     target = unicodedata.normalize("NFC", target.strip())
     if target == ".":
         target = ROOT_REFERENCE
+    namespace = mat_naming.namespace_name(folder) if folder else None
+    if namespace is not None:
+        # The current namespace: a MATLAB name in it, after a path reference.
+        match = _match(dom, target, accept)
+        return (
+            _resolved(dom, [match] if match else [])
+            or find_source(dom, f"{namespace}.{target}", None, accept)
+            or find_source(dom, target, None, accept)
+        )
     exact = [target]
     if folder:
         exact.append(join_reference(folder, target))
@@ -497,8 +507,24 @@ def find_source(dom, target, folder=None, accept=is_source_object):
     return []
 
 
-def warn_ambiguous(target, labels, location, hint="use a path reference"):
-    """Warn ``mat.ambiguous``: ``target`` matches every one of ``labels``."""
+#: the hint of ``warn_ambiguous`` when only folders match: the ``+`` folders
+#: of a namespace
+NAMESPACE_HINT = (
+    "use a path reference for one folder, or mat:namespace, mat:autonamespace "
+    "or :mat:namespace: for the whole namespace"
+)
+
+
+def warn_ambiguous(target, labels, location, hint=None):
+    """Warn ``mat.ambiguous``: ``target`` matches every one of ``labels``.
+
+    The default ``hint`` is to use a path reference, and when only folders
+    match (the ``+`` folders of one namespace) also the namespace directives.
+    """
+    if hint is None:
+        labels = list(labels)
+        folders = all(label[-1:] == "/" for label in labels)
+        hint = NAMESPACE_HINT if folders else "use a path reference"
     logger.warning(
         "[sphinxcontrib-matlabdomain] %r matches several objects: %s; %s",
         target,
@@ -1951,6 +1977,97 @@ class MatModule(MatObject):
             return _resolve_path(dom, join_reference(self.ref, name))
 
 
+def class_of_folder(dom, folder):
+    """Return the reference of the class of the class folder ``folder``: its
+    class file (``class_file_reference``) if that is a classdef, as for
+    ``_load_class_folder``; else None.
+    """
+    if not _is_class_folder(folder):
+        return None
+    ref = class_file_reference(folder)
+    record = dom.data["index"].get(dom.source_paths().get(ref))
+    return ref if record is not None and record["type"] == "class" else None
+
+
+def find_namespace(dom, name):
+    """Return the namespace with the MATLAB name ``name``
+    (:class:`MatNamespace`), or None when no ``+`` folder has that name. A
+    path reference is no namespace name.
+    """
+    _note_lookup(dom)
+    name = unicodedata.normalize("NFC", name.strip())
+    refs = sorted(r for r in dom.data["matlab_names"].get(name, ()) if r[-1:] == "/")
+    if not refs:
+        return None
+    return MatNamespace(name, [dom.entities_table[r] for r in refs])
+
+
+def warn_not_namespace(name, location):
+    """Warn ``mat.not_found``: ``name`` is no namespace of the project."""
+    logger.warning(
+        "[sphinxcontrib-matlabdomain] %r is not a namespace of the project; "
+        "write the MATLAB name of a namespace (a.b for +a/+b/)",
+        name,
+        type="mat",
+        subtype="not_found",
+        location=location,
+    )
+
+
+class MatNamespace(MatObject):
+    """A namespace: the ``+`` folders that have one MATLAB name, wherever
+    they are. It is not stored: :func:`find_namespace` makes it.
+
+    :param name: MATLAB name (``a.b``).
+    :param folders: its folders (:class:`MatModule`), sorted by reference.
+    """
+
+    def __init__(self, name, folders):
+        super().__init__(name)
+        self.matlab_name = name
+        self.ref = mat_naming.namespace_reference(name)
+        self.folders = folders
+        #: the first folder's path, the source :class:`MatModuleAnalyzer` names
+        self.path = folders[0].path
+
+    def member_refs(self):
+        """``(name, reference)`` of what is directly in the namespace, folder by
+        folder: the files of each folder, one per name as in a folder's
+        ``:members:`` (a file before a class folder), and the class of each
+        class folder (``class_of_folder``). Not ``private/``, subfolders and
+        other namespaces.
+        """
+        dom = _domain()
+        found = []
+        for folder in self.folders:
+            names = {}
+            # files first; a stable sort keeps the folder's order
+            listed = sorted(folder.member_refs(), key=lambda m: m[1][-1:] == "/")
+            for name, ref in listed:
+                if ref[-1:] == "/":
+                    ref = class_of_folder(dom, ref)
+                    if ref is None:
+                        continue
+                    name = name[1:]
+                names.setdefault(name, ref)
+            found.extend(names.items())
+        return found
+
+    @property
+    def __doc__(self):
+        """A namespace has no help text of its own: autodoc reads ``__doc__``
+        as None.
+        """
+        return None
+
+    @override
+    def getter(self, name, *defargs) -> Any:
+        """Return None: autodoc asks a namespace for its ``__doc__`` (it has
+        no help text of its own) and ``__module__`` (none, as for a folder).
+        """
+        return None
+
+
 class MatFunction(MatObject):
     """A MATLAB function.
 
@@ -2483,7 +2600,8 @@ class MatcodeError(Exception):
 
 class MatModuleAnalyzer:
     """Stands in for Sphinx's ``ModuleAnalyzer`` in autodoc: the source order
-    of a folder's files and of its classes' members (``tagorder``).
+    of a folder's or namespace's files and of its classes' members
+    (``tagorder``).
     """
 
     # folder reference -> analyzer, or the MatcodeError of an unknown folder
@@ -2491,14 +2609,20 @@ class MatModuleAnalyzer:
 
     @classmethod
     def for_module(cls, modname):
-        """Return the analyzer of the folder ``modname`` (a folder reference), cached
-        per folder; raise :class:`MatcodeError` if no folder has that reference (autodoc
-        calls ``ModuleAnalyzer.for_module`` the same way).
+        """Return the analyzer of the folder ``modname`` (a folder reference) or
+        namespace (a namespace reference), cached per reference; raise
+        :class:`MatcodeError` if neither has that reference (autodoc calls
+        ``ModuleAnalyzer.for_module`` the same way).
         """
         entry = cls.cache.get(modname)
         if entry is None:
-            mod = resolve(_domain(), modname)
-            if isinstance(mod, MatModule):
+            dom = _domain()
+            namespace = mat_naming.namespace_name(modname)
+            if namespace is None:
+                mod = resolve(dom, modname)
+            else:
+                mod = find_namespace(dom, namespace)
+            if isinstance(mod, (MatModule, MatNamespace)):
                 entry = cls(mod)
             else:
                 entry = MatcodeError(f"error importing {modname!r}")

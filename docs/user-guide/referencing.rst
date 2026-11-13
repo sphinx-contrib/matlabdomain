@@ -53,13 +53,19 @@ file extension.
      - ``checkPositive``
    * - the folder ``+shapes``
      - ``+shapes/``
+     - (none: shown by its path)
+   * - the namespace ``shapes``, all its ``+shapes`` folders
+     - ``+shapes``
      - ``shapes``
    * - the project root
      - ``./``
      - (none)
 
 Members follow their file with a ``.``; folders end with ``/``. Paths are
-unique, so a path reference always names exactly one object. You normally
+unique, so a path reference always names exactly one object. A namespace
+has no single path: its reference is its ``+`` folder names joined with
+``/``, without the final ``/`` (``+shapes/+io`` for ``shapes.io``), a form
+that no file or folder has. You normally
 write MATLAB names, and use a path reference when a MATLAB name is
 ambiguous.
 
@@ -87,7 +93,9 @@ renders as:
    * - ``:mat:attr:``
      - properties and enumeration values
    * - ``:mat:folder:``
-     - folders and namespaces
+     - folders
+   * - ``:mat:namespace:``
+     - namespaces
    * - ``:mat:scpt:``
      - scripts
    * - ``:mat:app:``
@@ -123,15 +131,18 @@ this order:
    MATLAB name visible from it, including the folder's ``private/`` files,
    as in MATLAB. The current folder is set by ``mat:autofolder``,
    ``mat:folder`` and ``mat:currentfolder``; in help text, it is the folder
-   of the documented file. Inside a class, its members can be named
-   without the class (``:mat:meth:`area```);
+   of the documented file. After ``mat:namespace`` or
+   ``mat:autonamespace``, it is a MATLAB name in that namespace instead
+   (``totalArea`` is ``shapes.totalArea``). Inside a class, its members can
+   be named without the class (``:mat:meth:`area```);
 3. a MATLAB name (``shapes.Circle``) that exactly one documented object has.
    ``private/`` files are not considered, so a private helper never makes a
    public name ambiguous. If several objects have the name, a
    ``mat.ambiguous`` warning lists their path references, which you can use
    instead. With :confval:`matlab_link_shadowed_files_to_chooser_pages` the name links
    to the page that lists them (:ref:`stable-addresses`), without the
-   warning;
+   warning. Then a documented ``+`` folder by the MATLAB name of its
+   namespace (``shapes`` is ``+shapes/``);
 4. a folder path without its trailing ``/`` (``scripts``), tried last so
    that it never hides a MATLAB name.
 
@@ -143,11 +154,20 @@ Folders and namespaces
 ----------------------
 
 All folders are one object type, ``folder`` (directives ``mat:folder``,
-``mat:autofolder``; role ``:mat:folder:``). A valid ``+`` folder shows
-``namespace shapes`` and can be linked by its MATLAB name (``shapes``) or
-its path (``+shapes/``). Any other folder shows ``folder scripts/`` and is
-linked by path. ``@Name`` class folders are not folder objects: link to
-their class. The :ref:`mat-folderindex` lists the documented folders.
+``mat:autofolder``; role ``:mat:folder:``). A folder shows ``folder`` and
+its path (``folder +shapes/``, ``folder scripts/``) and is linked by path.
+A ``+`` folder can also be linked by the MATLAB name of its namespace
+(``shapes``) while the namespace has only that folder.
+
+A namespace is an object of its own, of the type ``namespace`` (directives
+``mat:namespace``, ``mat:autonamespace``; role ``:mat:namespace:``). It is
+one object however many ``+`` folders have its name (``toolbox/+shapes/``
+and ``extras/+shapes/``), shows ``namespace shapes`` and is linked by its
+MATLAB name. With no namespace documented, ``:mat:namespace:`shapes```
+links to a documented ``+shapes`` folder (a role accepts any type).
+
+``@Name`` class folders are not folder objects: link to their class. The
+:ref:`mat-folderindex` lists the documented folders and namespaces.
 
 Files MATLAB cannot call
 ------------------------
@@ -171,7 +191,8 @@ Link anchors
 
 The HTML anchor of an object is ``mat-`` followed by its path reference,
 for example ``documenting.html#mat-+shapes/Circle.m`` and
-``#mat-+shapes/Circle.m.area`` on :doc:`documenting`. In the path reference, each character other
+``#mat-+shapes/Circle.m.area`` on :doc:`documenting`, and ``#mat-+shapes``
+for the namespace. In the path reference, each character other
 than ASCII letters, digits, non-ASCII characters and
 ``- . _ ! $ & ' ( ) * + , ; = : @ /`` is written as ``~XX`` per UTF-8 byte
 (a space becomes ``~20``, ``~`` becomes ``~7E``). Only folder names can
@@ -206,8 +227,9 @@ references and how links follow changes of the other project;
 Coming from Python
 ------------------
 
-* There is no module path. ``mat:folder`` replaces ``py:module``; a dotted
-  name such as ``target.subfolder.f`` is not a reference.
+* There is no module path. ``mat:folder`` replaces ``py:module``, and
+  ``mat:namespace`` does for a ``+`` package; a dotted name such as
+  ``target.subfolder.f`` is not a reference.
 * Plain folders do not qualify names; files in them are global.
 * Two files may have the same MATLAB name in one project; MATLAB decides by
   path order at run time. The extension does not model the path: it warns

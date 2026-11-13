@@ -172,10 +172,10 @@ know which object to document") and the directive writes nothing.
 
 .. rst:directive:: .. mat:autofolder:: name
 
-   A folder (path reference ending with ``/``, or a namespace's MATLAB
-   name), written as ``mat:folder``. It also sets the current folder. The
-   options apply to the members too, so ``:members:`` also documents the
-   members of the folder's classes.
+   A folder (path reference ending with ``/``, or the MATLAB name of a
+   namespace that has one folder), written as ``mat:folder``. It also sets
+   the current folder. The options apply to the members too, so
+   ``:members:`` also documents the members of the folder's classes.
 
    .. rst:directive:option:: members
       :type: no value, or a comma-separated list of file names
@@ -208,6 +208,51 @@ know which object to document") and the directive writes nothing.
                              no-index
 
       Do not create link targets or index entries.
+
+.. rst:directive:: .. mat:autonamespace:: name
+
+   A namespace (its MATLAB name, ``shapes.io``), written as
+   ``mat:namespace``. It documents the namespace wherever its ``+`` folders
+   are. It also makes the namespace the current folder. The options apply
+   to the members too, as for ``mat:autofolder``.
+
+   Not recommended: use ``scmd apidoc`` with namespace grouping instead
+   (:doc:`../user-guide/apidoc`). This directive exists so that a 0.x
+   ``mat:automodule`` of a package has a counterpart in 1.0
+   (:doc:`../user-guide/migration`).
+
+   .. rst:directive:option:: members
+      :type: no value, or a comma-separated list of names
+
+      Document the functions, classes, scripts and apps directly in the
+      namespace, from all its folders, sorted by name; or the named ones.
+      A class folder counts as its class. Not ``private/`` and not the
+      inner namespaces (``shapes.io.text`` is a namespace of its own); not
+      ``Contents.m`` and the other special files. When two folders have a
+      file of the same name, both are documented, with a ``mat.ambiguous``
+      warning.
+
+   .. rst:directive:option:: undoc-members
+                             private-members
+                             protected-members
+                             hidden-members
+                             access-list-members
+                             friend-members
+                             exclude-members
+                             member-order
+                             show-inheritance
+
+      As for ``mat:autoclass``; they apply to the namespace's members and
+      their members.
+
+   .. rst:directive:option:: synopsis
+                             platform
+                             deprecated
+
+      As for ``mat:folder``.
+
+   .. rst:directive:option:: noindex
+                             no-index
 
       Do not create link targets or index entries.
 
@@ -491,11 +536,12 @@ without a "reference target not found" warning.
 
 .. rst:directive:: .. mat:folder:: name
 
-   A folder: a path reference (with or without the trailing ``/``) or a
-   namespace's MATLAB name. A valid ``+`` folder is shown as ``namespace
-   <MATLAB name>``, any other as ``folder <path>``; an ``@`` class folder
-   is an error (document its class). Sets the current folder. A folder may
-   be described on several pages; the last one is the link target.
+   A folder: a path reference (with or without the trailing ``/``), or the
+   MATLAB name of a namespace that has one folder. It is shown as ``folder
+   <path>``, a ``+`` folder too (its namespace is ``mat:namespace``); an
+   ``@`` class folder is an error (document its class). Sets the current
+   folder. A folder may be described on several pages; the last one is the
+   link target.
 
    .. rst:directive:option:: synopsis
       :type: text
@@ -515,6 +561,24 @@ without a "reference target not found" warning.
                              no-index
 
       Do not create a link target or an index entry.
+
+.. rst:directive:: .. mat:namespace:: name
+
+   A namespace, shown as ``namespace <MATLAB name>``: one object, however
+   many ``+`` folders have the name. The argument is the MATLAB name
+   (``shapes.io``); anything else warns ``mat.not_found``. After it, names
+   on the page are looked up in the namespace (``read`` is
+   ``shapes.io.read``) until the next folder or namespace directive. A
+   namespace may be described on several pages; the last one is the link
+   target.
+
+   .. rst:directive:option:: synopsis
+                             platform
+                             deprecated
+                             noindex
+                             no-index
+
+      As for ``mat:folder``.
 
 .. rst:directive:: .. mat:simulink_model:: name
 
@@ -567,14 +631,14 @@ without a "reference target not found" warning.
 .. rst:directive:: .. mat:currentfolder:: name
 
    Set the current folder for the rest of the page without documenting
-   it: a folder path or namespace name, ``.`` for the project root, or
-   ``None`` to clear it.
+   it: a folder path or the MATLAB name of a namespace that has one
+   folder, ``.`` for the project root, or ``None`` to clear it.
 
 Roles
 -----
 
 The target is a MATLAB name, a path reference or a name relative to the
-current folder. ``~target`` shows only the last part; ``title <target>``
+current folder or namespace. ``~target`` shows only the last part; ``title <target>``
 sets the text; a leading ``.`` also matches the end of MATLAB names. A role
 prefers objects of its type, then accepts any.
 
@@ -600,7 +664,12 @@ prefers objects of its type, then accepts any.
 
 .. rst:role:: mat:folder
 
-   A folder or namespace.
+   A folder: its path, or the MATLAB name of a namespace that has one
+   documented folder.
+
+.. rst:role:: mat:namespace
+
+   A namespace, by its MATLAB name.
 
 .. rst:role:: mat:scpt
 
@@ -655,6 +724,6 @@ Indices
 -------
 
 The domain adds the *MATLAB Folder Index*, which lists the documented
-folders: link to it with ``:ref:`mat-folderindex```
+folders and namespaces: link to it with ``:ref:`mat-folderindex```
 (:ref:`mat-folderindex`). The general index (``genindex``) has an entry for
 every documented object.

@@ -50,10 +50,12 @@ from .mat_types import (
     MatMethod,
     MatModule,
     MatModuleAnalyzer,
+    MatNamespace,
     MatProperty,
     MatScript,
     MatSimulinkFile,
     display_name,
+    find_namespace,
     find_source,
     is_code_object,
     is_folder_object,
@@ -63,6 +65,7 @@ from .mat_types import (
     same_block,
     simulink_accepts,
     warn_ambiguous,
+    warn_not_namespace,
 )
 from .mat_typing import override
 
@@ -825,7 +828,7 @@ class MatlabDocumenter(PyDocumenter):
             classes.sort(key=lambda cls: cls.priority)
             # members are named by path reference: files of a folder, or
             # members of a class
-            if isinstance(self.object, MatModule):
+            if isinstance(self.object, (MatModule, MatNamespace)):
                 full_mname = getattr(member, "ref", None) or mat_naming.join_reference(
                     self.ref, mname
                 )
@@ -942,9 +945,14 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
             )
         return ret
 
+    @property
+    def argument(self):
+        """The argument of the description directive: the path reference."""
+        return self.ref
+
     @override
     def add_directive_header(self, sig):
-        self.add_generated(f".. {self.domain}:folder:: {self.ref}")
+        self.add_generated(f".. {self.domain}:{self.objtype}:: {self.argument}")
         if self.options.no_index or self.options.noindex:
             self.add_generated("   :noindex:")
 
@@ -988,6 +996,85 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
                     subtype="not_found",
                 )
         return False, ret
+
+
+class MatNamespaceDocumenter(MatFolderDocumenter):
+    """Documenter of ``mat:autonamespace``: a namespace (its MATLAB name) and,
+    with ``:members:``, what is directly in it, from all its folders: as
+    ``mat:autofolder`` documents one folder, and with the class of each class
+    folder. Members in several folders are all documented, with a
+    ``mat.ambiguous`` warning.
+    """
+
+    objtype = "namespace"
+
+    @override
+    def parse_name(self):
+        # the pattern matches any non-empty name
+        target, self.args, self.retann = cast(
+            re.Match, self.name_pattern.match(self.name)
+        ).groups()
+        location = self.directive.location
+        namespace = find_namespace(self.env.get_domain("mat"), target)
+        if namespace is None:
+            warn_not_namespace(target.strip(), location)
+            self.env.note_reread()
+            return False
+        self._resolved = namespace
+        self.ref = self.fullname = self.modname = namespace.ref
+        self.display = namespace.matlab_name
+        self.objpath = []
+        if self.args or self.retann:
+            logger.warning(
+                "[sphinxcontrib-matlabdomain] signature arguments or return "
+                "annotation given for autonamespace %s",
+                self.display,
+                type="mat",
+                subtype="directive",
+                location=location,
+            )
+        return True
+
+    @property
+    @override
+    def argument(self):
+        """The argument of ``mat:namespace``: the MATLAB name."""
+        return self.display
+
+    @override
+    def get_object_members(self, want_all):
+        dom = self.env.get_domain("mat")
+        refs = self.object.member_refs()
+        if want_all:
+            # special files are documented only when named, as in a folder
+            chosen = sorted((n, r) for n, r in refs if not is_hidden(r))
+        else:
+            chosen = []
+            for mname in self.options.members or []:
+                named = [(n, r) for n, r in refs if n == mname]
+                if not named:
+                    logger.warning(
+                        "[sphinxcontrib-matlabdomain] missing attribute mentioned"
+                        " in :members:: namespace %s, attribute %s",
+                        self.display,
+                        mname,
+                        type="mat",
+                        subtype="not_found",
+                        location=self.directive.location,
+                    )
+                chosen.extend(named)
+        by_name = {}
+        for name, ref in chosen:
+            by_name.setdefault(name, []).append(ref)
+        for name, same in by_name.items():
+            if len(same) > 1:
+                warn_ambiguous(
+                    f"{self.display}.{name}",
+                    same,
+                    self.directive.location,
+                    "each is documented; link to one by its path reference",
+                )
+        return False, [(name, resolve(dom, ref)) for name, ref in chosen]
 
 
 class MatModuleLevelDocumenter(MatlabDocumenter):

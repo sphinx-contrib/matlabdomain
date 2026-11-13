@@ -116,6 +116,11 @@ What each warning means
    :confval:`matlab_link_shadowed_files_to_chooser_pages` links such names to the page
    that lists the objects and turns the warning off for them (an auto
    directive still has to name one object).
+   A namespace name where a folder is expected (``mat:folder:: shapes``)
+   matches each of the namespace's folders; to document the whole
+   namespace, use ``mat:namespace`` or ``mat:autonamespace`` and link with
+   ``:mat:namespace:``. ``mat:autonamespace`` documents a file that two
+   folders of the namespace have twice, with this warning.
 
 ``mat.not_found``
    An auto directive (``mat:autofunction`` and the others) names no object
@@ -125,12 +130,15 @@ What each warning means
    (:doc:`referencing`) and :confval:`matlab_src_code_project_root`.
    Description directives (``mat:function``) never read a file and never
    get it (:doc:`documenting`). A name in ``:members:`` that the object
-   does not have gets it too.
+   does not have gets it too, and so does a ``mat:namespace`` or
+   ``mat:autonamespace`` argument that is not the MATLAB name of a
+   namespace of the project (a path, a folder, a class).
 
 ``mat.directive``
    A directive got an argument of the wrong kind: ``mat:folder`` names a
-   class folder (document the class instead), or ``mat:autofolder`` has
-   arguments or a return annotation (a folder has neither).
+   class folder (document the class instead), or ``mat:autofolder`` or
+   ``mat:autonamespace`` has arguments or a return annotation (a folder or
+   namespace has neither).
 
 ``mat.duplicate``
    The same object is described twice (add ``:no-index:`` to one of the

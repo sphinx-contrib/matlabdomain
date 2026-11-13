@@ -57,16 +57,18 @@ for a file without one, the auto directive for a folder).
        cycle); it is not followed
      - every build
    * - ``mat.ambiguous``
-     - a name that matches several :term:`objects <object>`
+     - a name that matches several :term:`objects <object>`; a file that
+       two folders of a namespace have, in ``mat:autonamespace``
      - where the name is used
    * - ``mat.not_found``
      - an auto :term:`directive` whose argument matches no object; a name
-       in ``:members:`` that is not a member
+       in ``:members:`` that is not a member; a ``mat:namespace`` or
+       ``mat:autonamespace`` argument that is not a namespace
      - where the directive is
    * - ``mat.directive``
      - a directive argument of the wrong kind: a class folder given to
        ``mat:folder``, arguments or a return annotation given to
-       ``mat:autofolder``
+       ``mat:autofolder`` or ``mat:autonamespace``
      - where the directive is
    * - ``mat.duplicate``
      - an object described twice, or two objects that would get the same

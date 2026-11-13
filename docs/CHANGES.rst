@@ -71,10 +71,12 @@ Names and references:
   existing deep links and intersphinx references change.
 * ``mat:module``, ``mat:automodule``, ``mat:currentmodule`` and
   ``:mat:mod:`` are replaced by ``mat:folder``, ``mat:autofolder``,
-  ``mat:currentfolder`` and ``:mat:folder:``. A valid ``+`` folder shows
-  ``namespace <name>``, any other folder ``folder <path>``; ``@Class``
-  folders are documented through their class. The module index is now the
-  folder index (``mat-folderindex.html``).
+  ``mat:currentfolder`` and ``:mat:folder:``; for a ``+`` package, by
+  ``mat:namespace``, ``mat:autonamespace`` and ``:mat:namespace:`` (#362).
+  Every folder shows ``folder <path>``, a ``+`` folder too: ``namespace
+  <name>`` is the namespace object's. ``@Class`` folders are documented
+  through their class. The module index is now the folder index
+  (``mat-folderindex.html``); it lists folders and namespaces.
 * Files MATLAB cannot call for :confval:`matlab_version` (keyword
   namespaces, invalid names, ``@C/sub`` files from R2026a, ...) are
   documented by path with one ``mat.not_callable`` warning each that says
@@ -339,6 +341,14 @@ Classes:
 
 Linking:
 
+* A namespace is an object (#362): one per MATLAB name, however many
+  ``+`` folders have it, in the inventory (``+a/+b`` for ``a.b``) and the
+  general index, with a stable address. ``mat:namespace`` describes it,
+  ``:mat:namespace:`` links to it, and after either names on the page are
+  looked up in it. ``mat:autonamespace`` documents it and, with
+  ``:members:``, the files directly in all its folders; it is the
+  counterpart of a 0.x ``automodule`` of a package, and ``scmd apidoc``
+  pages are recommended instead.
 * References to another project's MATLAB objects
   (``sphinx.ext.intersphinx``) resolve by MATLAB name too
   (``:mat:class:`geom.Circle```), not only by path reference. The

@@ -142,7 +142,7 @@ def test_anchors_and_signatures(app):
         "nm_priv()",
         "+for/nm_kw.m()",
         "@NmBox/sub/nm_legacy.m()",
-        "namespace nmpkg",
+        "folder +nmpkg/",
         "folder alpha/",
     ):
         assert sig in plain
@@ -216,7 +216,8 @@ def test_inventory_uses_path_references(app):
         "index.html#mat-my~20folder/nm_spaced.m",
         "nm_spaced",
     )
-    assert entry("mat:folder", "+nmpkg/")[1] == "nmpkg"
+    # A folder is shown by its path: the inventory's "-" (the name).
+    assert entry("mat:folder", "+nmpkg/")[1] == "-"
     assert entry("mat:folder", "alpha/")[0] == "index.html#mat-alpha/"
     assert "mat:module" not in inv
 
@@ -475,7 +476,7 @@ def test_folder_directive_and_roles(make_app, tmp_path):
     assert "[mat.directive]" in warnings
     objects = app.env.domaindata["mat"]["objects"]
     assert objects["a/"] == ("index", "folder", "a/")
-    assert objects["+pk/"] == ("index", "folder", "pk")
+    assert objects["+pk/"] == ("index", "folder", "+pk/")
     assert objects["./"] == ("index", "folder", "./")
     assert objects["+pk/g.m"] == ("index", "function", "pk.g")
     assert "@C/" not in objects
@@ -485,7 +486,7 @@ def test_folder_directive_and_roles(make_app, tmp_path):
     # "¶" links: by MATLAB name where there is one, else by path.
     assert re.findall(r'class="headerlink" href="(mat/[^"]*)"', text) == [
         "mat/ref/a/index.html",
-        "mat/name/pk.html",
+        "mat/ref/%2Bpk/index.html",
         "mat/ref/index.html",
         "mat/name/pk.g.html",
     ]
@@ -566,7 +567,7 @@ def test_folder_paths_and_ambiguous_names(make_app, tmp_path):
     app.build()
     objects = app.env.domaindata["mat"]["objects"]
     assert objects["pk/"] == ("index", "folder", "pk/")
-    assert objects["+pk/"] == ("index", "folder", "pk")
+    assert objects["+pk/"] == ("index", "folder", "+pk/")
     links = html(app).split("Links:")[1].split("</p>")[0]
     assert object_hrefs(links) == ["mat-+pk/", "mat-pk/"]  # :any:`f` unlinked
     warnings = app.warning.getvalue()

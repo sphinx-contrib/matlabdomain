@@ -213,7 +213,7 @@ EXPECTED = {
         f"{BASE}mat/ref/%2Bgeom/Circle.m.Radius.html",
         "geom.Circle.Radius",
     ),
-    "folder": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
+    "folder": (f"{BASE}mat/ref/%2Bgeom/index.html", "+geom/"),
     "private": (f"{BASE}mat/ref/util/private/check.m.html", "check"),
     "short": (f"{BASE}mat/ref/%2Bgeom/%2Bio/read.m.html", "geom.io.read"),
     "name_class": (f"{BASE}mat/ref/%2Bgeom/Circle.m.html", "geom.Circle"),
@@ -222,7 +222,8 @@ EXPECTED = {
         f"{BASE}mat/ref/%2Bgeom/Circle.m.area.html",
         "geom.Circle.area",
     ),
-    "name_namespace": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
+    # A folder is named by its path; folder grouping describes no namespace.
+    "name_namespace": (None, "geom"),
     "name_any": (f"{BASE}mat/ref/%2Bgeom/Circle.m.html", "geom.Circle"),
     "name_named": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
     "name_prefixed": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
@@ -250,7 +251,8 @@ def test_consumer_links_to_the_library(make_app, tmp_path):
     assert "target not found: helper" not in warnings
     assert "mat:func reference target not found: check" in warnings
     assert "mat:func reference target not found: +geom/Circle.m" in warnings
-    assert warnings.count("WARNING") == 3
+    assert "mat:folder reference target not found: geom" in warnings
+    assert warnings.count("WARNING") == 4
     # Every remote link opens a page of the library that has its anchor.
     for href, _ in links.values():
         if href and href.startswith(BASE):

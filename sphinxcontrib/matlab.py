@@ -410,7 +410,10 @@ class MatObjectDirective(ObjectDescription):
         found = mat_types.find_one(dom, name, folder, accept, self.get_location())
         if found:
             return found[0], mat_types.display_name(dom, found[0])
-        return (mat_naming.join_reference(folder, name) if folder else name), name
+        # below the current folder; a current namespace has no single folder
+        if folder and folder[-1:] == "/":
+            return mat_naming.join_reference(folder, name), name
+        return name, name
 
     def get_index_text(self, folder, name_cls):  # pragma: no cover - abstract
         """Return the text for the index entry of the object."""
@@ -676,11 +679,11 @@ class MatAttributelike(MatClassmember):
 
 
 class MatFolder(MatObjectDirective):
-    """Description of a folder.
-
-    A valid ``+`` folder shows ``namespace <MATLAB name>``; any other folder
-    shows ``folder <path reference>``. ``@Class`` folders are documented
-    through their class. Sets the current folder like ``mat:currentfolder``.
+    """Description of a folder, shown as ``folder <path reference>`` (a ``+``
+    folder too: its namespace is ``mat:namespace``). The argument may also be
+    the MATLAB name of a namespace with one folder. ``@Class`` folders are
+    documented through their class. Sets the current folder like
+    ``mat:currentfolder``.
     """
 
     option_spec: ClassVar[OptionSpec] = {
@@ -705,32 +708,20 @@ class MatFolder(MatObjectDirective):
                 location=self.get_location(),
             )
             raise ValueError
-        entity = dom.entities_table.get(ref)
-        if entity is not None:
-            namespace = getattr(entity, "matlab_name", None)
-        elif ref != mat_naming.ROOT_REFERENCE:
-            namespace = mat_naming.folder_namespace(
-                ref.rstrip("/"),
-                mat_naming.default_namelengthmax(self.env.config.matlab_version),
-                self.env.config.matlab_version,
-            )
-        else:
-            namespace = None
-        kind, display = ("namespace", namespace) if namespace else ("folder", ref)
+        return self._signature(signode, ref, ref)
 
+    def _signature(self, signode, ref, display):
         signode["module"] = ref
         signode["class"] = ""
         signode["fullname"] = display
-        signode += addnodes.desc_annotation(f"{kind} ", f"{kind} ")
+        kind = f"{self.objtype} "
+        signode += addnodes.desc_annotation(kind, kind)
         signode += addnodes.desc_name(display, display)
         return ref, display
 
     @override
     def get_index_text(self, folder, name_cls):
-        ref, display = name_cls
-        if display == ref:
-            return translation("%s (folder)") % display
-        return translation("%s (namespace)") % display
+        return translation("%s (folder)") % name_cls[1]
 
     @override
     def add_target_and_index(self, name_cls, sig, signode):
@@ -741,8 +732,9 @@ class MatFolder(MatObjectDirective):
             signode["ids"].append(target_id)
             signode["first"] = not self.names
             self.state.document.note_explicit_target(signode)
-        # Like the former module directive, a folder may be described on
-        # several pages without a duplicate warning; the last one wins.
+        # Like the former module directive, a folder or namespace may be
+        # described on several pages without a duplicate warning; the last
+        # one wins.
         dom = cast(MATLABDomain, self.env.get_domain("mat"))
         dom.note_object(
             ref,
@@ -769,6 +761,40 @@ class MatFolder(MatObjectDirective):
                 location=self.get_location(),
             )
         self.env.temp_data["mat:folder"] = folder
+        return result
+
+
+class MatNamespace(MatFolder):
+    """Description of a namespace, shown as ``namespace <MATLAB name>``: one
+    object, however many ``+`` folders have the name. The argument is the
+    MATLAB name. Relative names resolve in the namespace until the next
+    folder or namespace directive.
+    """
+
+    @override
+    def handle_signature(self, sig, signode):
+        dom = cast(MATLABDomain, self.env.get_domain("mat"))
+        namespace = mat_types.find_namespace(dom, sig)
+        if namespace is None:
+            mat_types.warn_not_namespace(sig.strip(), self.get_location())
+            raise ValueError
+        return self._signature(signode, namespace.ref, namespace.matlab_name)
+
+    @override
+    def get_index_text(self, folder, name_cls):
+        return translation("%s (namespace)") % name_cls[1]
+
+    @override
+    def before_content(self):
+        super().before_content()
+        if self.names:
+            self.env.temp_data["mat:objfolder"] = self.names[0][0]
+
+    @override
+    def run(self):
+        result = ObjectDescription.run(self)
+        # the current namespace (a namespace reference), or none
+        self.env.temp_data["mat:folder"] = self.names[0][0] if self.names else None
         return result
 
 
@@ -887,6 +913,7 @@ class MATLABDomain(Domain):
         "attribute": ObjType(translation("attribute"), "attr", "obj"),
         "event": ObjType(translation("event"), "event", "obj"),
         "folder": ObjType(translation("folder"), "folder", "obj"),
+        "namespace": ObjType(translation("namespace"), "namespace", "obj"),
         "script": ObjType(translation("script"), "scpt", "obj"),
         "application": ObjType(translation("application"), "app", "obj"),
         **{
@@ -904,6 +931,7 @@ class MATLABDomain(Domain):
         "attribute": MatAttributelike,
         "event": MatClassmember,
         "folder": MatFolder,
+        "namespace": MatNamespace,
         "currentfolder": MatCurrentFolder,
         "script": MatModulelevel,
         "application": MatModulelevel,
@@ -919,6 +947,7 @@ class MATLABDomain(Domain):
         "event": MatXRefRole(),
         "meth": MatXRefRole(fix_parens=True),
         "folder": MatXRefRole(),
+        "namespace": MatXRefRole(),
         "obj": MatXRefRole(),
         "scpt": MatXRefRole(),
         "app": MatXRefRole(),
@@ -928,8 +957,12 @@ class MATLABDomain(Domain):
     }
     initial_data: ClassVar[dict[str, Any]] = {
         # Per-document registrations (cleared/merged by docname).
-        "objects": {},  # path reference -> docname, objtype, display name
-        "folders": {},  # folder reference -> docname, synopsis, platform, deprecated
+        # path reference (or namespace reference) -> docname, objtype,
+        # display name
+        "objects": {},
+        # folder or namespace reference -> docname, synopsis, platform,
+        # deprecated
+        "folders": {},
         "doc_sources": {},  # docname -> {source path: (mtime_ns, size)} it used
         "sidecar_docs": {},  # docname -> {sidecar reference: title} it renders
         # docname -> [(sidecar reference, kind, target, line)]: broken relative
@@ -941,8 +974,9 @@ class MATLABDomain(Domain):
         # objects and folders the document describes, from which "objects" and
         # "folders" are derived (``reconcile``): where a duplicate warning
         # points, ``file:line`` of the directive a person wrote (None for a
-        # folder, which never warns as a duplicate) and,
-        # for a folder, its "folders" data (synopsis, platform, deprecated)
+        # folder or namespace, which never warns as a duplicate) and,
+        # for a folder or namespace, its "folders" data (synopsis, platform,
+        # deprecated)
         "described": {},
         # Shared source state, rebuilt by ``mat_types.analyze`` each build;
         # files are parsed lazily (see ``mat_types``).
@@ -967,7 +1001,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 32
+    data_version = 33
     indices: ClassVar[list[type[Index]]] = [
         MATLABFolderIndex,
     ]
@@ -977,6 +1011,9 @@ class MATLABDomain(Domain):
         # display name -> references of documented objects (built lazily)
         self._displays = None
         self._spaced: dict[str, str] = {}  # built with _displays
+        # namespace name -> references of the documented folders that have
+        # it (built with _displays)
+        self._folder_names: dict[str, list[str]] = {}
         # mat_urls.addresses (built lazily)
         self._stable_urls = None
         # sidecar reference -> the first document that renders it (built lazily)
@@ -1011,6 +1048,8 @@ class MATLABDomain(Domain):
         self.text_cache = {}
         # files or folders were added, removed or changed type
         self.index_changed = False
+        # the namespace names of folders come from the index
+        self._displays = None
 
     def source_paths(self):
         """Path reference -> source path of every indexed file."""
@@ -1266,9 +1305,13 @@ class MATLABDomain(Domain):
             # spaces; the first of those that collapse to one form (in sorted
             # order) has it
             self._spaced = {}
+            self._folder_names = {}
             # by reference: the merge order of a parallel read does not matter
-            for ref, (_, _, display) in sorted(self.data["objects"].items()):
+            for ref, (_, objtype, display) in sorted(self.data["objects"].items()):
                 self._displays.setdefault(display, []).append(ref)
+                entity = self.entities_table.get(ref) if objtype == "folder" else None
+                if namespace := getattr(entity, "matlab_name", None):
+                    self._folder_names.setdefault(namespace, []).append(ref)
             for ref in sorted(self.data["objects"]):
                 if mat_naming.has_line_break(ref):
                     self._spaced.setdefault(mat_naming.collapse_space(ref), ref)
@@ -1287,13 +1330,45 @@ class MATLABDomain(Domain):
         # Folder a documented object's MATLAB name is visible from.
         return mat_types.source_scope(self, reference)
 
+    def _steps(self, folder, cls, name):
+        """Return the steps of ``find_obj``: (candidates, first only) pairs."""
+        objects = self.data["objects"]
+        namespace = mat_naming.namespace_name(folder) if folder else None
+        if namespace is not None:
+            folder = None
+        exact = [name]
+        if cls:
+            exact.append(f"{cls}.{name}")
+        if folder:
+            exact.append(mat_naming.join_reference(folder, name))
+        exact = [self._documented(r) for r in exact]
+        # Exact references are tried in order.
+        steps = [([r for r in exact if r in objects], True)]
+        if namespace is not None:
+            steps.append((self._by_display(f"{namespace}.{name}"), False))
+        if folder:
+            steps.append(
+                ([r for r in self._by_display(name) if self._scope(r) == folder], False)
+            )
+        for refs in (self._by_display(name), self._folder_names.get(name, ())):
+            public = [r for r in refs if not mat_naming.is_private_reference(r)]
+            steps.append((public, False))
+        if not name.endswith("/"):
+            folders = [f"{name}/"]
+            if folder:
+                folders.append(f"{mat_naming.join_reference(folder, name)}/")
+            steps.append(([r for r in folders if r in objects], True))
+        return steps
+
     def find_obj(self, folder, cls, name, type, searchmode=0):
         """Find documented objects for ``name``.
 
         1. exact path reference; 2. relative to the class ``cls`` and the
         folder ``folder`` (a path below it or a MATLAB name visible from it,
-        including its ``private/``); 3. a MATLAB name, excluding private
-        files; 4. a folder path without its trailing ``/``. With
+        including its ``private/``), or, when ``folder`` is a namespace
+        reference, a MATLAB name in that namespace; 3. a MATLAB name,
+        excluding private files, then a ``+`` folder by the MATLAB name of
+        its namespace; 4. a folder path without its trailing ``/``. With
         ``searchmode`` 1 (``.name``), a non-private MATLAB-name suffix as last
         resort. Return a list of (reference, object entry) tuples; several
         entries mean the name is ambiguous.
@@ -1310,33 +1385,7 @@ class MATLABDomain(Domain):
 
         if name == ".":
             name = mat_naming.ROOT_REFERENCE
-        exact = [name]
-        if cls:
-            exact.append(f"{cls}.{name}")
-        if folder:
-            exact.append(mat_naming.join_reference(folder, name))
-        exact = [self._documented(r) for r in exact]
-        # (candidates, first only): exact references are tried in order.
-        steps = [([r for r in exact if r in objects], True)]
-        if folder:
-            steps.append(
-                ([r for r in self._by_display(name) if self._scope(r) == folder], False)
-            )
-        steps.append(
-            (
-                [
-                    r
-                    for r in self._by_display(name)
-                    if not mat_naming.is_private_reference(r)
-                ],
-                False,
-            )
-        )
-        if not name.endswith("/"):
-            folders = [f"{name}/"]
-            if folder:
-                folders.append(f"{mat_naming.join_reference(folder, name)}/")
-            steps.append(([r for r in folders if r in objects], True))
+        steps = self._steps(folder, cls, name)
         # Objects of the role's type first (``:class:`C``` inside class C is the
         # class, not its constructor), then any type.
         for typed in (True, False) if objtypes is not None else (False,):
@@ -1358,7 +1407,7 @@ class MATLABDomain(Domain):
 
     def _refnode(self, builder, fromdocname, ref, entry, contnode):
         docname, objtype, title = entry
-        if objtype == "folder" and ref in self.data["folders"]:
+        if objtype in ("folder", "namespace") and ref in self.data["folders"]:
             _, synopsis, platform, deprecated = self.data["folders"][ref]
             if synopsis:
                 title += f": {synopsis}"
@@ -1503,7 +1552,7 @@ class MATLABDomain(Domain):
                 objtype,
                 docname,
                 mat_naming.make_target_id(ref),
-                0 if objtype == "folder" else 1,
+                0 if objtype in ("folder", "namespace") else 1,
             )
 
     @override
@@ -1607,6 +1656,11 @@ def setup(app):
         "mat", "autofolder", mat_directives.MatlabAutodocDirective
     )
 
+    app.registry.add_documenter("mat:namespace", doc.MatNamespaceDocumenter)
+    app.add_directive_to_domain(
+        "mat", "autonamespace", mat_directives.MatlabAutodocDirective
+    )
+
     app.registry.add_documenter("mat:function", doc.MatFunctionDocumenter)
     app.add_directive_to_domain(
         "mat", "autofunction", mat_directives.MatlabAutodocDirective
@@ -1659,6 +1713,7 @@ def setup(app):
         )
 
     app.add_autodoc_attrgetter(mat_types.MatModule, mat_types.MatModule.getter)
+    app.add_autodoc_attrgetter(mat_types.MatNamespace, mat_types.MatNamespace.getter)
     app.add_autodoc_attrgetter(doc.MatClass, doc.MatClass.getter)
     app.add_directive_to_domain("mat", "autosidecar", mat_sidecars.AutoSidecar)
 

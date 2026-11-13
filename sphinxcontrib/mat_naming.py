@@ -17,6 +17,11 @@ intersphinx):
   follows it with ``/`` and its Simulink path below the file, a ``/``
   inside a block name doubled (``src/lib.slx/Group/Gain//Bias``); a
   folder whose name ends in such an extension is not a source folder.
+- A namespace, one object however many ``+`` folders have its MATLAB name,
+  is named by its ``+`` folder names joined with ``/``, without the
+  trailing ``/`` of a folder (``+a/+b`` for ``a.b``). No path reference has
+  this form: a file's ends in its extension (a name in a ``+`` folder has
+  no ``.``), a folder's in ``/``.
 - An object's HTML anchor is ``make_target_id(reference)``: ``mat-``
   followed by the reference, where every ASCII character other than letters,
   digits and ``- . _ ! $ & ' ( ) * + , ; = : @ /`` becomes ``~XX`` per UTF-8
@@ -249,6 +254,23 @@ def folder_of(reference: str) -> str:
         return path
     head = path.rpartition("/")[0]
     return f"{head}/" if head else ROOT_REFERENCE
+
+
+def namespace_reference(name: str) -> str:
+    """Return the reference of the namespace with the MATLAB name ``name``:
+    ``a.b`` -> ``+a/+b`` (see the module docstring).
+    """
+    return "/".join(f"+{part}" for part in name.split("."))
+
+
+def namespace_name(reference: str) -> str | None:
+    """Return the MATLAB name of a namespace reference (``+a/+b`` ->
+    ``a.b``), or None for any other reference.
+    """
+    parts = reference.split("/")
+    if not all(len(part) > 1 and part[0] == "+" and "." not in part for part in parts):
+        return None
+    return ".".join(part[1:] for part in parts)
 
 
 def is_private_reference(reference: str) -> bool:

@@ -64,7 +64,8 @@ References to the library are written like local ones:
    :mat:class:`geom.Circle`              a MATLAB name
    :mat:func:`util/scale.m`              a path reference
    :mat:meth:`geom.Circle.area`          a member
-   :mat:folder:`geom`                    a namespace, if documented
+   :mat:namespace:`geom`                 a namespace, if documented
+   :mat:folder:`+geom/`                  a folder, by its path
    :mat:func:`Scale it <util/scale.m>`   with link text
    :mat:func:`lib:util/scale.m`          in the inventory "lib" only
    :external+lib:mat:func:`scale`        in "lib" only, never a local object

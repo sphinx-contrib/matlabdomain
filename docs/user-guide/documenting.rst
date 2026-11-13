@@ -212,8 +212,9 @@ type is ``data`` (role ``:mat:data:``) and it gets an index entry.
 Folders and the current folder
 ------------------------------
 
-``mat:autofolder`` documents a folder. A ``+`` folder is shown as a
-namespace; any other folder as ``folder`` and its path:
+``mat:autofolder`` documents a folder, shown as ``folder`` and its path. A
+``+`` folder is shown the same way; its namespace is an :term:`object` of
+its own (:ref:`documenting-namespaces`):
 
 .. literalinclude:: ../snippets/autofolder.rst
    :language: rst
@@ -276,3 +277,32 @@ warning.
 Nest ``mat:method`` and ``mat:attribute`` in ``mat:class`` to document
 members. The auto directives generate these directives; you rarely need
 them for code that has files.
+
+.. _documenting-namespaces:
+
+Namespaces
+----------
+
+A namespace is one :term:`object`, however many ``+`` folders have its
+name. ``mat:autonamespace`` documents it by its MATLAB name, and with
+``:members:`` the files directly in it, from all its folders:
+
+.. literalinclude:: ../snippets/autonamespace.rst
+   :language: rst
+
+.. include:: ../snippets/autonamespace.rst
+
+``mat:namespace`` describes a namespace without its members, and
+``:mat:namespace:`shapes``` links to it. After either directive, names on
+the page are looked up in the namespace, until the next folder or
+namespace directive: ``totalArea`` is ``shapes.totalArea``.
+
+``:members:`` works as on ``mat:autofolder``, and the options apply to the
+members too. The files come from every folder of the namespace, and a
+class folder (``@Polygon/``) counts as its class. Inner namespaces,
+``private/`` and the special files are left out.
+
+``mat:autonamespace`` is not recommended. Use ``scmd apidoc`` with
+namespace grouping instead (:doc:`apidoc`): it writes one page per
+namespace. ``mat:autonamespace`` exists so that a 0.x ``mat:automodule``
+of a package has a counterpart in 1.0 (:doc:`migration`).

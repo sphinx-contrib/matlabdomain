@@ -127,7 +127,7 @@ def test_object_and_label_share_an_anchor(built):
 
 
 def test_folders(built):
-    assert signature(built, "+pkg/").astext() == "namespace pkg"
+    assert signature(built, "+pkg/").astext() == "folder +pkg/"
     assert signature(built, "nothere/").astext() == "folder nothere/"
     dom = built.env.get_domain("mat")
     assert set(dom.data["folders"]) == {"+pkg/", "nothere/"}
