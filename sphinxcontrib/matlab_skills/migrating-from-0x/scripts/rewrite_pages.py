@@ -6,8 +6,9 @@ ROOT is the MATLAB project root (the folder ``matlab_src_dir`` pointed at).
 PATH is a page (``.rst``, ``.md``) or a folder searched for them. Without
 ``--write`` it prints a diff and changes nothing.
 
-It rewrites module directives and roles to their folder forms, dotted names
-in auto directives and roles to path references (when they name a file
+It rewrites module directives and roles to their namespace forms (a ``+``
+package) or folder forms (any other folder), dotted names in auto
+directives and roles to path references (when they name a file
 below ROOT), ``modindex`` references to ``mat-folderindex`` and
 ``:friend-members:`` to ``:access-list-members:``, and removes
 ``:special-members:`` and ``:inherited-members:``. Everything it cannot
@@ -85,6 +86,24 @@ def folder_parts(ref):
     return [p for p in ref.rstrip("/").split("/") if p not in ("", ".")]
 
 
+def namespace_of(ref):
+    """Return the MATLAB name of the namespace of folder reference ``ref``
+    (``a/+p/+q/`` gives ``p.q``), or None when it is no ``+`` folder or is
+    below a class folder.
+    """
+    parts = folder_parts(ref)
+    if not parts or not parts[-1].startswith("+"):
+        return None
+    if any(part.startswith("@") for part in parts):
+        return None
+    names = []
+    for part in reversed(parts):
+        if not part.startswith("+"):
+            break
+        names.append(part[1:])
+    return ".".join(reversed(names))
+
+
 def rewrite_target(root, current, text):
     """Rewrite a role target (``~x``, ``title <x>``); None if unchanged."""
     m = re.fullmatch(r"(.*<)([^<>]+)(>)", text)
@@ -138,7 +157,8 @@ def directive_line(m, directive, args):
 
 def rewrite_module_directive(root, current, m, notes, loc):
     """Return ``(line, current)`` for the module directive ``m``: the line
-    rewritten to its folder form, and the folder parts of the current module.
+    rewritten to its namespace form (a ``+`` package) or folder form, and the
+    folder parts of the current module.
     """
     _, _, kind, name, rest = m.groups()
     # 0.x module names start at the root.
@@ -155,6 +175,9 @@ def rewrite_module_directive(root, current, m, notes, loc):
                 f"{loc}: check by hand (automodule of a class folder or the root; "
                 f"document its class or files): {m.string.strip()}"
             )
+    elif namespace := namespace_of(ref):
+        new = "mat:autonamespace" if kind == "automodule" else "mat:namespace"
+        return directive_line(m, new, f"{namespace}{rest}"), current
     else:
         new = "mat:autofolder" if kind == "automodule" else "mat:folder"
     target = "." if ref == "./" else ref
@@ -204,6 +227,9 @@ def rewrite_role(root, current, m, notes, loc, md_role=False):
     if kind == "mod":
         ref = resolve(root, [], target.lstrip("~"))
         if ref and ref.endswith("/"):
+            if namespace := namespace_of(ref):
+                tilde = "~" if target.startswith("~") else ""
+                return role_text("mat:", "namespace", tilde + namespace, md_role)
             return role_text("mat:", "folder", ref, md_role)
         notes.append(f"{loc}: check by hand (module role): {m[0]}")
         return m[0]

@@ -1,5 +1,6 @@
 """scmd skills: the agent skills in the package, listing and installing them."""
 
+import importlib.util
 import os
 from pathlib import Path
 
@@ -121,3 +122,92 @@ def test_force_replaces_a_link_not_its_target(tmp_path):
     assert main(["install", "migrating-from-0x", "-d", str(dest), "-f"]) == 0
     assert (target / "keep.txt").read_text() == "kept"
     assert (dest / "migrating-from-0x" / "SKILL.md").is_file()
+
+
+# --- migrating-from-0x: rewrite_pages.py --------------------------------------
+
+
+def _rewrite_pages():
+    path = PACKAGE / "migrating-from-0x" / "scripts" / "rewrite_pages.py"
+    spec = importlib.util.spec_from_file_location("rewrite_pages", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+REWRITE = _rewrite_pages()
+# a 0.x project: a plain folder target/ with packages, a nested package and
+# a class folder
+OLD_SOURCES = [
+    "target/f.m",
+    "target/+pkg/g.m",
+    "target/+pkg/+sub/s.m",
+    "target/@Cls/Cls.m",
+    "+top/t.m",
+]
+
+
+@pytest.fixture
+def old_root(tmp_path):
+    for ref in OLD_SOURCES:
+        (tmp_path / ref).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / ref).write_text("function x\nend\n")
+    return tmp_path
+
+
+def rewritten(root, text):
+    notes = []
+    return REWRITE.rewrite(root, text, notes, "page.rst"), notes
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    [
+        # a package: its namespace, by MATLAB name
+        (".. automodule:: target.+pkg", ".. mat:autonamespace:: pkg"),
+        (".. mat:automodule:: target.pkg", ".. mat:autonamespace:: pkg"),
+        (".. module:: target.+pkg", ".. mat:namespace:: pkg"),
+        (".. automodule:: target.+pkg.+sub", ".. mat:autonamespace:: pkg.sub"),
+        (".. automodule:: +top", ".. mat:autonamespace:: top"),
+        ("```{automodule} target.+pkg", "```{mat:autonamespace} pkg"),
+        # a plain folder, a current module and a class folder: folder forms
+        (".. automodule:: target", ".. mat:autofolder:: target/"),
+        (".. module:: target", ".. mat:folder:: target/"),
+        (".. currentmodule:: target.+pkg", ".. mat:currentfolder:: target/+pkg/"),
+        (".. automodule:: target.@Cls", ".. mat:currentfolder:: target/@Cls/"),
+        (".. automodule:: .", ".. mat:currentfolder:: ."),
+        # roles
+        (":mat:mod:`target.+pkg`", ":mat:namespace:`pkg`"),
+        (":mat:mod:`~target.+pkg.+sub`", ":mat:namespace:`~pkg.sub`"),
+        ("{mat:mod}`target.+pkg`", "{mat:namespace}`pkg`"),
+        (":mod:`target`", ":mat:folder:`target/`"),
+    ],
+)
+def test_rewrite_modules(old_root, old, new):
+    text, _ = rewritten(old_root, f"{old}\n")
+    assert text == f"{new}\n"
+
+
+def test_names_after_a_package_resolve_in_its_folder(old_root):
+    text, notes = rewritten(
+        old_root,
+        ".. automodule:: target.+pkg\n   :members:\n\n"
+        ".. autofunction:: g\n\n.. autofunction:: +sub.s\n\nSee :func:`g`.\n",
+    )
+    assert text == (
+        ".. mat:autonamespace:: pkg\n   :members:\n\n"
+        ".. autofunction:: target/+pkg/g.m\n\n"
+        ".. autofunction:: target/+pkg/+sub/s.m\n\n"
+        "See :func:`target/+pkg/g.m`.\n"
+    )
+    assert notes == []
+
+
+def test_namespace_of():
+    assert REWRITE.namespace_of("target/+pkg/+sub/") == "pkg.sub"
+    assert REWRITE.namespace_of("+top/") == "top"
+    assert REWRITE.namespace_of("target/") is None
+    assert REWRITE.namespace_of("./") is None
+    # a + folder in a class folder is no namespace
+    assert REWRITE.namespace_of("target/@Cls/+p/") is None

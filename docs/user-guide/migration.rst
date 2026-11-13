@@ -88,14 +88,21 @@ Directives and roles
      - 1.0
    * - ``.. module:: target``, ``.. mat:module:: target``
      - ``.. mat:folder:: target/``
+   * - ``.. module:: target.+pkg`` (a package)
+     - ``.. mat:namespace:: pkg`` (its MATLAB name)
    * - ``.. automodule:: target``, ``.. mat:automodule:: target``
      - ``.. mat:autofolder:: target/``
+   * - ``.. automodule:: target.+pkg`` (a package)
+     - ``.. mat:autonamespace:: pkg``; better, the ``scmd apidoc`` pages
+       (:doc:`apidoc`)
    * - ``.. currentmodule:: target``, ``.. mat:currentmodule:: target``
      - ``.. mat:currentfolder:: target/``
    * - ``.. module:: .`` (the root, so that names start there)
      - remove it: path references start at the root
    * - ``:mat:mod:`target```
      - ``:mat:folder:`target/```
+   * - ``:mat:mod:`target.+pkg```
+     - ``:mat:namespace:`pkg```
    * - ``.. mat:exception::``, ``.. mat:autoexception::``, ``:mat:exc:``
      - document error classes with ``mat:class`` / ``mat:autoclass`` and
        ``:mat:class:``

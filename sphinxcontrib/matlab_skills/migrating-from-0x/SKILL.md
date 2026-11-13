@@ -132,10 +132,13 @@ python scripts/rewrite_pages.py --root <code root> docs
 python scripts/rewrite_pages.py --root <code root> --write docs
 ```
 
-It turns `module`/`automodule`/`currentmodule` (with or without `mat:`)
-into `mat:folder`/`mat:autofolder`/`mat:currentfolder`, `:mat:mod:` into
-`:mat:folder:`, dotted names into path references (`+pkg/Cls.m`,
-`+pkg/Cls.m.method`), `:ref:` links to `modindex` into `mat-folderindex`
+It turns `module`/`automodule` of a `+` package into
+`mat:namespace`/`mat:autonamespace` with the package's MATLAB name, other
+`module`/`automodule`/`currentmodule` (with or without `mat:`) into
+`mat:folder`/`mat:autofolder`/`mat:currentfolder`, `:mat:mod:` into
+`:mat:namespace:` (a package) or `:mat:folder:`, dotted names into path
+references (`+pkg/Cls.m`, `+pkg/Cls.m.method`), `:ref:` links to
+`modindex` into `mat-folderindex`
 and `:friend-members:` into `:access-list-members:`, and removes
 `:special-members:` and `:inherited-members:`. It lists what it cannot do
 ("check by hand"): an `automodule` of a class folder or the root (it
@@ -146,6 +149,8 @@ unique, or use a path reference), `exception`, `decorator` and
 `classmethod` directives (use `mat:staticmethod` for a static method).
 It also reads directives inside Markdown block quotes (`> .. module::`).
 Pages that a generator writes are replaced in step 8 instead.
+`mat:autonamespace` keeps a hand-written package page building; the
+`scmd apidoc` pages of step 8 are the better replacement for it.
 
 Old directives and removed options are errors that drop the object, yet the
 build exits 0 without `-W`. After the rewrite, nothing should match:
@@ -261,9 +266,9 @@ Expected:
   line it could not parse ("Expected property", "Invalid signature" in the
   0.x warnings), and files 0.x could not place ("don't know which
   module").
-- The script maps 0.x modules to 1.0 folders and `mat-modindex` to
-  `mat-folderindex`. A class folder or the root as a module has no folder
-  object in 1.0.
+- The script maps 0.x packages to 1.0 namespaces, other modules to 1.0
+  folders and `mat-modindex` to `mat-folderindex`. A class folder or the
+  root as a module has no folder object in 1.0.
 - 0.x alone may have members of a `classdef` inside a `%{ ... %}` block
   comment, pages of a copied source tree, the same object under a second
   short name (after `.. module:: .`), and files the migration removed (the
