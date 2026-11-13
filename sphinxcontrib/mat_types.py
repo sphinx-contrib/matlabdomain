@@ -1842,6 +1842,16 @@ class MatModule(MatObject):
     :type package: str
     """
 
+    #: the attributes :meth:`getter` returns as they are
+    _MODULE_ATTRIBUTES = (
+        "__name__",
+        "__doc__",
+        "__all__",
+        "__file__",
+        "__path__",
+        "__package__",
+    )
+
     def __init__(self, name, path, package):
         super().__init__(name)
         #: Path to module on disk, path to package's __init__.py
@@ -1919,18 +1929,8 @@ class MatModule(MatObject):
     @override
     def getter(self, name, *_defargs) -> Any:
         """:class:`MatModule` ``getter`` method to get attributes."""
-        if name == "__name__":
-            return self.__name__
-        elif name == "__doc__":
-            return self.__doc__
-        elif name == "__all__":
-            return self.__all__
-        elif name == "__file__":
-            return self.__file__
-        elif name == "__path__":
-            return self.__path__
-        elif name == "__package__":
-            return self.__package__
+        if name in self._MODULE_ATTRIBUTES:
+            return getattr(self, name)
         elif name == "__module__":
             logger.debug(
                 "[sphinxcontrib-matlabdomain] mod %s is a package "
@@ -2018,6 +2018,9 @@ class MatClass(MatObject):
     :type tokens: list
     """
 
+    #: the attributes :meth:`getter` returns as they are
+    _CLASS_ATTRIBUTES = ("__name__", "__doc__", "__module__", "__bases__")
+
     def __init__(self, name, modname, tokens, encoding):
         super().__init__(name)
         parsed_class = MatClassParser(tokens, encoding)
@@ -2097,14 +2100,8 @@ class MatClass(MatObject):
     @override
     def getter(self, name, *defargs) -> Any:
         """:class:`MatClass` ``getter`` method to get attributes."""
-        if name == "__name__":
-            return self.__name__
-        elif name == "__doc__":
-            return self.__doc__
-        elif name == "__module__":
-            return self.__module__
-        elif name == "__bases__":
-            return self.__bases__
+        if name in self._CLASS_ATTRIBUTES:
+            return getattr(self, name)
         elif name in self.properties:
             return MatProperty(name, self, self.properties[name])
         elif name in self.enumerations:
