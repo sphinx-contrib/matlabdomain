@@ -1,4 +1,4 @@
-"""Test autodoc of classes with documented properties (``test_numad`` root).
+"""Test autodoc of classes with documented properties.
 
 :copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.
@@ -11,7 +11,7 @@ import pytest
 
 @pytest.fixture
 def srcdir(rootdir):
-    return rootdir / "roots" / "test_numad"
+    return rootdir / "roots" / "test_documented_properties"
 
 
 def test_first(app):

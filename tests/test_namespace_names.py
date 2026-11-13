@@ -12,10 +12,10 @@ from sphinx import addnodes
 
 @pytest.fixture
 def srcdir(rootdir):
-    return rootdir / "roots" / "test_package_prefix"
+    return rootdir / "roots" / "test_namespace_names"
 
 
-def test_package_prefix(app):
+def test_namespace_names(app):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     assert isinstance(content[4], addnodes.desc)

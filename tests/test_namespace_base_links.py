@@ -11,10 +11,10 @@ import pytest
 
 @pytest.fixture
 def srcdir(rootdir):
-    return rootdir / "roots" / "test_package_links"
+    return rootdir / "roots" / "test_namespace_base_links"
 
 
-def test_package_links(app):
+def test_namespace_base_links(app):
     content = pickle.loads((app.doctreedir / "contents.doctree").read_bytes())
 
     assert content[5].astext() == (

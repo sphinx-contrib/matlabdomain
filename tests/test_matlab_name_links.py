@@ -1,7 +1,7 @@
 """MATLAB-name signatures and links.
 
-These tests used ``matlab_short_links = True``; its output (MATLAB names) is
-now the default and the option is removed (see ``test_config.py``).
+MATLAB names are what signatures and links show (the 0.x option
+``matlab_short_links`` is removed, see ``test_config.py``).
 
 :copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.

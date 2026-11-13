@@ -1,4 +1,4 @@
-project = "test_docs_automodule"
+project = "test_class_named_like_folder"
 copyright = "the sphinxcontrib-matlabdomain team (see AUTHORS)"
 author = "Mark Mikofski, Jørgen Cederberg, Jason H. Nicholson and contributors"
 matlab_src_code_project_root = "."

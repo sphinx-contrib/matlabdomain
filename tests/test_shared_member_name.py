@@ -12,10 +12,10 @@ from docutils import nodes
 
 @pytest.fixture
 def srcdir(rootdir):
-    return rootdir / "roots" / "test_duplicate_link"
+    return rootdir / "roots" / "test_shared_member_name"
 
 
-def test_duplicate_link(app):
+def test_shared_member_name_is_not_linked(app):
     content = pickle.loads((app.doctreedir / "groups.doctree").read_bytes())
 
     assert isinstance(content[0], nodes.section)

@@ -1,4 +1,4 @@
-"""Test autodoc when code base contains both matlab and python code."""
+"""Test autodoc of a project with MATLAB and Python code in separate folders."""
 
 import pickle
 
@@ -8,10 +8,10 @@ from sphinx import addnodes
 
 @pytest.fixture
 def srcdir(rootdir):
-    return rootdir / "roots" / "test_pymat"
+    return rootdir / "roots" / "test_python_and_matlab"
 
 
-def test_pymat(app):
+def test_python_and_matlab(app):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     # python code

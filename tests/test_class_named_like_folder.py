@@ -11,7 +11,7 @@ import pytest
 
 @pytest.fixture
 def srcdir(rootdir):
-    return rootdir / "roots" / "test_module_class_names"
+    return rootdir / "roots" / "test_class_named_like_folder"
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def confdict(matlab_auto_link):
 
 
 @pytest.mark.parametrize("matlab_auto_link", ["basic", "all"])
-def test_module_class_names(app, confdict):
+def test_class_named_like_folder(app, confdict):
     content = pickle.loads((app.doctreedir / "index.doctree").read_bytes())
 
     expected_content = (
