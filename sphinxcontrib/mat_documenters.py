@@ -122,6 +122,12 @@ _LINKING = 0  # not in a literal block
 _AFTER_COLONS = -1  # a line ending with "::"
 _AFTER_BLANK = -2  # then a blank line
 _IN_LITERAL = 1  # in the indented lines
+# Auto-links of names everywhere: a name is not preceded by ` . + < @ * / | or
+# a non-breaking space, nor followed by ` * / |, a non-breaking space,
+# " Properties:", " Methods:" or (_NAME_AFTER only) .<alphanum>.
+_NAME_BEFORE = r"(?<!(`|\.|\+|<|@|\*|\xa0|/|\|))\b"
+_NAME_AFTER = r"\b(?!(`|\*|\xa0|\sProperties:|\sMethods:|\.\w|/|\|))"
+_MEMBER_AFTER = r"\b(?!(`|\*|\xa0|\sProperties:|\sMethods:|/|\|))"
 #: roles of files that "See also" and auto-links name (``ref_role``)
 _FILE_ROLES = (
     "class",
@@ -523,12 +529,6 @@ class MatlabDocumenter(PyDocumenter):
         """
         dom = self.env.get_domain("mat")
         folder = mat_naming.folder_of(self.ref)
-        # negative look-behind for ` . + < @ * / | <non-breaking space>
-        look_behind = r"(?<!(`|\.|\+|<|@|\*|\xa0|/|\|))\b"
-        # negative look-ahead for ` * / | or <non-breaking space> or
-        # " Properties:" or " Methods:" or .<alphanum>
-        look_ahead = r"\b(?!(`|\*|\xa0|\sProperties:|\sMethods:|\.\w|/|\|))"
-        look_ahead2 = r"\b(?!(`|\*|\xa0|\sProperties:|\sMethods:|/|\|))"
         for nn in list(dom.data["matlab_names"]):
             # Only names in the text can link; resolving parses their files.
             if not any(nn in line for lines in docstrings for line in lines):
@@ -537,7 +537,7 @@ class MatlabDocumenter(PyDocumenter):
             if not found:
                 continue
             # entity_name is NOT followed by .<property_or_method>
-            p = re.compile(look_behind + re.escape(nn) + look_ahead)
+            p = re.compile(_NAME_BEFORE + re.escape(nn) + _NAME_AFTER)
             if len(found) > 1:
                 if not any(p.search(line) for lines in docstrings for line in lines):
                     continue
@@ -549,52 +549,43 @@ class MatlabDocumenter(PyDocumenter):
                 ref, o = found[0]
                 role = o.ref_role()
             if role in (*_FILE_ROLES, "obj"):
-                if role == "class":
-                    o = cast(MatClass, o)
-                    # entity_name IS followed by .<property_or_method>
-                    p2 = re.compile(
-                        look_behind + re.escape(nn) + r"\.(\w+)" + look_ahead2
-                    )
-                no_link_state = _LINKING
-                for i in range(len(docstrings)):
-                    for j in range(len(docstrings[i])):
-                        not_in_literal_block, no_link_state = self.detect_literal_block(
-                            docstrings[i][j], no_link_state
-                        )
-                        if not_in_literal_block:
-                            link = self._link(role, nn, ref)
-                            docstrings[i][j] = p.sub(
-                                lambda m, t=link: _inline(m, t), docstrings[i][j]
-                            )
-                            if role == "class" and (
-                                match := p2.search(docstrings[i][j])
-                            ):
-                                # if match.group(1) is a property
-                                #   -> :attr:`{nn}.{match.group(1)}`
-                                for nnn in cast(MatClass, o).properties:
-                                    if match.group(2) == nnn:
-                                        text = self._link(
-                                            "attr", f"{nn}.{nnn}", f"{ref}.{nnn}"
-                                        )
-                                        docstrings[i][j] = p2.sub(
-                                            lambda m, t=text: _inline(m, t),
-                                            docstrings[i][j],
-                                        )
-                                        break
-                                # if match.group(1) is a method
-                                #   -> :meth:`{nn}.{match.group(1)}`
-                                for nnn in cast(MatClass, o).methods:
-                                    if match.group(2) == nnn:
-                                        text = self._link(
-                                            "meth", f"{nn}.{nnn}", f"{ref}.{nnn}"
-                                        )
-                                        docstrings[i][j] = p2.sub(
-                                            lambda m, t=text: _inline(m, t),
-                                            docstrings[i][j],
-                                        )
-                                        break
-
+                self._link_name_everywhere(docstrings, p, role, nn, ref, o)
         return docstrings
+
+    def _link_name_everywhere(self, docstrings, p, role, nn, ref, o):
+        """Replace the matches of ``p``, the name ``nn``, with a ``role`` link to
+        ``ref`` in the lines of ``docstrings`` outside literal blocks. After a class
+        name, also link its properties and methods (``nn.name``).
+        """
+        p2 = None
+        if role == "class":
+            # entity_name IS followed by .<property_or_method>
+            p2 = re.compile(_NAME_BEFORE + re.escape(nn) + r"\.(\w+)" + _MEMBER_AFTER)
+        no_link_state = _LINKING
+        for lines in docstrings:
+            for j, line in enumerate(lines):
+                not_in_literal_block, no_link_state = self.detect_literal_block(
+                    line, no_link_state
+                )
+                if not not_in_literal_block:
+                    continue
+                link = self._link(role, nn, ref)
+                lines[j] = p.sub(lambda m, t=link: _inline(m, t), line)
+                if p2 is not None:
+                    lines[j] = self._link_class_members(lines[j], p2, nn, ref, o)
+
+    def _link_class_members(self, line, p2, nn, ref, cls):
+        """Return ``line`` with ``nn.name``, the match of ``p2``, linked to the
+        property or method ``name`` of the class ``cls`` (reference ``ref``).
+        """
+        if not (match := p2.search(line)):
+            return line
+        member = match.group(2)
+        for role, members in (("attr", cls.properties), ("meth", cls.methods)):
+            if member in members:
+                text = self._link(role, f"{nn}.{member}", f"{ref}.{member}")
+                line = p2.sub(lambda m, t=text: _inline(m, t), line)
+        return line
 
     def auto_link(self, docstrings):
         """Apply ``matlab_auto_link``: the "See also" links for ``"basic"`` and
