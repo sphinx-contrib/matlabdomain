@@ -1116,6 +1116,7 @@ dependencies = [
     { name = "sphinx", version = "9.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
     { name = "tree-sitter" },
     { name = "tree-sitter-matlab" },
+    { name = "typing-extensions", marker = "python_full_version < '3.12'" },
 ]
 
 [package.optional-dependencies]
@@ -1154,6 +1155,7 @@ requires-dist = [
     { name = "sphinx", specifier = ">=8.0.0" },
     { name = "tree-sitter", specifier = "==0.26.1" },
     { name = "tree-sitter-matlab", specifier = "==1.3.3" },
+    { name = "typing-extensions", marker = "python_full_version < '3.12'", specifier = ">=4.4" },
 ]
 provides-extras = ["markdown"]
 

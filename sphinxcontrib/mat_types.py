@@ -56,6 +56,7 @@ from .mat_naming import (
 from .mat_simulink import read_diagram
 from .mat_simulink._nodes import parse_xml
 from .mat_simulink._parts import read_members
+from .mat_typing import override
 
 logger = getLogger("matlab-domain")
 
@@ -1807,6 +1808,7 @@ class MatModule(MatObject):
         #: folders in the order of their names on disk, set by the index stage
         self.members = None
 
+    @override
     def ref_role(self):
         """Return the role used for references and automatic links."""
         return "folder"
@@ -1856,6 +1858,7 @@ class MatModule(MatObject):
     def __package__(self):
         return self.package
 
+    @override
     def getter(self, name, *_defargs) -> Any:
         """:class:`MatModule` ``getter`` method to get attributes."""
         if name == "__name__":
@@ -1915,6 +1918,7 @@ class MatFunction(MatObject):
         #: line of the declaration (one-based)
         self.line = parsed_function.line
 
+    @override
     def ref_role(self):
         """Return the role used for references and automatic links."""
         return "func"
@@ -1927,6 +1931,7 @@ class MatFunction(MatObject):
     def __module__(self):
         return self.module
 
+    @override
     def getter(self, name, *defargs) -> Any:
         if name == "__name__":
             return self.__name__
@@ -1977,6 +1982,7 @@ class MatClass(MatObject):
         #: ``{name: {"attrs", "docstring", "line"}}`` of the events
         self.events = parsed_class.events
 
+    @override
     def ref_role(self):
         """Return the role used for references and automatic links."""
         return "class"
@@ -2012,6 +2018,7 @@ class MatClass(MatObject):
 
         return bases_
 
+    @override
     def getter(self, name, *defargs) -> Any:
         """:class:`MatClass` ``getter`` method to get attributes."""
         if name == "__name__":
@@ -2052,6 +2059,7 @@ class MatProperty(MatObject):
         self.type = attrs["type"]
         self.validators = attrs["validators"]
 
+    @override
     def ref_role(self):
         """Return the role used for references and automatic links."""
         return "attr"
@@ -2074,6 +2082,7 @@ class MatEnumeration(MatObject):
         #: constructor arguments (``Red (1, 0, 0)``), or None
         self.args = attrs.get("args")
 
+    @override
     def ref_role(self):
         """Return the role used for references and automatic links."""
         return "enum"
@@ -2095,6 +2104,7 @@ class MatEvent(MatObject):
         self.docstring = attrs["docstring"]
         self.docstring_line = attrs.get("docstring_line")
 
+    @override
     def ref_role(self):
         """Return the role used for references and automatic links."""
         return "event"
@@ -2127,6 +2137,7 @@ class MatMethod(MatFunction):
         self.cls = cls
         self.attrs = parsed_function.attrs
 
+    @override
     def ref_role(self):
         """Return the role used for references and automatic links."""
         return "meth"
@@ -2216,6 +2227,7 @@ class MatSimulinkFile(MatObject):
     #: object type: the directive and role
     objtype = ""
 
+    @override
     def ref_role(self):
         return self.objtype
 
@@ -2247,6 +2259,7 @@ class MatLibrary(MatSimulinkFile):
 
     objtype = "simulink_library"
 
+    @override
     def getter(self, name, *defargs) -> Any:
         blocks = self.diagram.library_blocks if self.diagram is not None else ()
         # The exact path first; else a space for a line break, as in a role.

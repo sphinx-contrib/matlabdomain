@@ -26,6 +26,7 @@ from ..mat_types import (
     check_config_names,
     project_root,
 )
+from ..mat_typing import override
 from ._generate import GROUPS, ApidocOptions, generate
 
 #: exit status when --check finds pages to change
@@ -191,6 +192,7 @@ class _WarningHandler(logging.Handler):
         self.suppress = suppress
         self.count = 0
 
+    @override
     def emit(self, record):
         warning_type = getattr(record, "type", None) or ""
         subtype = getattr(record, "subtype", None) or ""

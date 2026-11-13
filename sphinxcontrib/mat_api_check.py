@@ -20,6 +20,7 @@ from sphinx.util.matching import Matcher
 
 from . import mat_simulink, mat_types
 from .mat_classify import is_hidden
+from .mat_typing import override
 
 logger = getLogger("matlab-domain")
 
@@ -743,27 +744,34 @@ class MatlabApiCheckBuilder(Builder):
     name = "matlab-api-check"
     epilog = f"The MATLAB API check passed; see %(outdir)s{os.sep}{REPORT_TXT}."
 
+    @override
     def init(self):
         #: number of findings with the severity ``error``
         self.errors = 0
         #: number of selection entries that selected no file and fail the build
         self.unmatched = 0
 
+    @override
     def get_outdated_docs(self):
         return "the MATLAB sources"
 
-    def get_target_uri(self, docname, typ=None):  # noqa: ARG002
+    @override
+    def get_target_uri(self, docname, typ=None):
         return ""
 
+    @override
     def write_documents(self, docnames):
         """No pages (Sphinx >= 8.1)."""
 
+    @override
     def prepare_writing(self, docnames):
         """Nothing to prepare (abstract before Sphinx 8.1)."""
 
+    @override
     def write_doc(self, docname, doctree):
         """No pages (Sphinx 8.0 calls this for every page)."""
 
+    @override
     def finish(self):
         config = self.config
         dom = self.env.get_domain("mat")

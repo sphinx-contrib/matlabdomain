@@ -39,6 +39,7 @@ from . import mat_documenters as doc
 # Public: a conf.py extends it (matlab_external_names = [*DEFAULT_EXTERNAL_NAMES, ...]).
 from .mat_config import DEFAULT_EXTERNAL_NAMES as DEFAULT_EXTERNAL_NAMES
 from .mat_simulink import _linker as simulink_linker
+from .mat_typing import override
 
 logger = getLogger("matlab-domain")
 
@@ -50,6 +51,7 @@ class MatTypedField(TypedField):
     objects, so an unresolved type gives no "target not found" warning.
     """
 
+    @override
     def make_xref(
         self,
         rolename,
@@ -117,7 +119,8 @@ class CheckExternalReferences(SphinxPostTransform):
 
     default_priority = 8  # before intersphinx's IntersphinxRoleResolver (9)
 
-    def run(self, **kwargs):  # noqa: ARG002
+    @override
+    def run(self, **kwargs):
         for node in list(self.document.findall(addnodes.pending_xref)):
             if "intersphinx" in node and node.get("refdomain") == "mat":
                 contnode = node[0].deepcopy()
@@ -328,6 +331,7 @@ class MatObjectDirective(ObjectDescription):
         """
         return False
 
+    @override
     def handle_signature(self, sig, signode):
         """Transform a MATLAB signature into RST nodes.
 
@@ -408,7 +412,8 @@ class MatObjectDirective(ObjectDescription):
     def _is_same_object(node, fullname):
         return isinstance(node, addnodes.desc_signature) and fullname in node["names"]
 
-    def add_target_and_index(self, name_cls, sig, signode):  # noqa: ARG002 - required by Sphinx API
+    @override
+    def add_target_and_index(self, name_cls, sig, signode):
         ref, display = name_cls
         target_id = mat_naming.make_target_id(ref)
 
@@ -443,6 +448,7 @@ class MatObjectDirective(ObjectDescription):
             entry = ("single", indextext, target_id, "", None)
             self.indexnode["entries"].append(entry)
 
+    @override
     def before_content(self):
         # needed for automatic qualification of members (reset in subclasses)
         self.clsname_set = False
@@ -451,6 +457,7 @@ class MatObjectDirective(ObjectDescription):
         if self.names:
             self.env.temp_data["mat:objfolder"] = mat_naming.folder_of(self.names[0][0])
 
+    @override
     def after_content(self):
         if self.clsname_set:
             self.env.temp_data["mat:class"] = None
@@ -460,9 +467,11 @@ class MatObjectDirective(ObjectDescription):
 class MatModulelevel(MatObjectDirective):
     """Description of an object on folder level (functions, data, application)."""
 
+    @override
     def needs_arglist(self):
         return self.objtype == "function"
 
+    @override
     def get_index_text(self, folder, name_cls):
         if self.objtype == "function":
             return translation("%s() (function in %s)") % (name_cls[1], folder)
@@ -491,6 +500,7 @@ class MatSimulinkObject(MatObjectDirective):
         ),
     ]
 
+    @override
     def handle_signature(self, sig, signode):
         sig = sig.strip()
         reference = self.options.get("reference")
@@ -520,6 +530,7 @@ class MatSimulinkObject(MatObjectDirective):
         signode += addnodes.desc_name(shown, shown)
         return ref, display
 
+    @override
     def transform_content(self, content_node):
         """Put the Simulink documentation file where the autodoc directive's
         placeholder comment is.
@@ -537,6 +548,7 @@ class MatSimulinkObject(MatObjectDirective):
                 content_node.replace(node, found)
                 return
 
+    @override
     def get_index_text(self, folder, name_cls):
         return translation("%s (%s in %s)") % (
             name_cls[1],
@@ -563,6 +575,7 @@ class MatClasslike(MatObjectDirective):
         **dict.fromkeys(flags, directives.flag),
     }
 
+    @override
     def _object_hierarchy_parts(self, sig):
         """Return a tuple of strings, one entry for each part of the object's \
            hierarchy (e.g. ``('package', 'Class')``).
@@ -575,16 +588,20 @@ class MatClasslike(MatObjectDirective):
         """
         return tuple(sig.attributes.get("fullname").split("."))
 
+    @override
     def _toc_entry_name(self, sig):
         # TODO respecting the configuration setting ``toc_object_entries_show_parents``
         return mat_naming.split_display(sig.attributes.get("fullname"))[1]
 
+    @override
     def get_signature_prefix(self):
         return f"{self.flag_prefix()}{self.objtype} "
 
+    @override
     def get_index_text(self, folder, name_cls):
         return translation("%s (class in %s)") % (name_cls[1], folder)
 
+    @override
     def before_content(self):
         MatObjectDirective.before_content(self)
         # A class signature always parses (mat_sig_re matches any line).
@@ -596,14 +613,17 @@ class MatClasslike(MatObjectDirective):
 class MatClassmember(MatObjectDirective):
     """Description of a class member (methods, attributes)."""
 
+    @override
     def needs_arglist(self):
         return self.objtype.endswith("method")
 
+    @override
     def get_signature_prefix(self):
         static = "static " if self.objtype == "staticmethod" else ""
         return f"{self.flag_prefix()}{static}"
 
-    def get_index_text(self, folder, name_cls):  # noqa: ARG002
+    @override
+    def get_index_text(self, folder, name_cls):
         name = name_cls[1]
         kind = {
             "method": translation("%s() (%s method)"),
@@ -616,6 +636,7 @@ class MatClassmember(MatObjectDirective):
             return f"{name}()" if self.objtype.endswith("method") else name
         return kind % (member, clsname)
 
+    @override
     def before_content(self):
         MatObjectDirective.before_content(self)
         if self.names and not self.env.temp_data.get("mat:class"):
@@ -662,6 +683,7 @@ class MatFolder(MatObjectDirective):
         "deprecated": directives.flag,
     }
 
+    @override
     def handle_signature(self, sig, signode):
         dom = cast(MATLABDomain, self.env.get_domain("mat"))
         ref = mat_types.folder_reference(
@@ -697,13 +719,15 @@ class MatFolder(MatObjectDirective):
         signode += addnodes.desc_name(display, display)
         return ref, display
 
-    def get_index_text(self, folder, name_cls):  # noqa: ARG002
+    @override
+    def get_index_text(self, folder, name_cls):
         ref, display = name_cls
         if display == ref:
             return translation("%s (folder)") % display
         return translation("%s (namespace)") % display
 
-    def add_target_and_index(self, name_cls, sig, signode):  # noqa: ARG002 - required by Sphinx API
+    @override
+    def add_target_and_index(self, name_cls, sig, signode):
         ref, display = name_cls
         target_id = mat_naming.make_target_id(ref)
         if target_id not in self.state.document.ids:
@@ -727,6 +751,7 @@ class MatFolder(MatObjectDirective):
         entry = ("single", self.get_index_text(ref, name_cls), target_id, "", None)
         self.indexnode["entries"].append(entry)
 
+    @override
     def run(self):
         result = super().run()
         if self.names:
@@ -751,6 +776,7 @@ class MatCurrentFolder(Directive):
     final_argument_whitespace = True
     option_spec: ClassVar[OptionSpec] = {}
 
+    @override
     def run(self):
         env = self.state.document.settings.env
         folder = self.arguments[0].strip()
@@ -779,6 +805,7 @@ def _short_title(title):
 
 
 class MatXRefRole(XRefRole):
+    @override
     def process_link(self, env, refnode, has_explicit_title, title, target):
         refnode["mat:folder"] = env.temp_data.get("mat:objfolder") or env.temp_data.get(
             "mat:folder"
@@ -809,6 +836,7 @@ class MATLABFolderIndex(Index):
     localname = translation("MATLAB Folder Index")
     shortname = translation("folder index")
 
+    @override
     def generate(self, docnames=None):
         content = {}
         objects = self.domain.data["objects"]
@@ -1104,6 +1132,7 @@ class MATLABDomain(Domain):
             location=location,
         )
 
+    @override
     def clear_doc(self, docname):
         for ref, (fn, _, _) in list(self.data["objects"].items()):
             if fn == docname:
@@ -1126,6 +1155,7 @@ class MATLABDomain(Domain):
         self._displays = self._stable_urls = None
         self._sidecar_docs = None
 
+    @override
     def process_doc(self, env, docname, document):
         if slugs := document.get("matlab_sidecar_slugs"):
             metadata = env.metadata[docname]
@@ -1136,6 +1166,7 @@ class MATLABDomain(Domain):
         ):
             self.data["xref_docs"][docname] = True
 
+    @override
     def merge_domaindata(self, docnames, otherdata):
         # Merge per-document registrations from a parallel-read worker, and
         # the files it parsed, so the next build need not parse them again.
@@ -1183,6 +1214,7 @@ class MATLABDomain(Domain):
         self._displays = self._stable_urls = None
         self._sidecar_docs = None
 
+    @override
     def check_consistency(self):
         # Duplicates that parallel-read workers could not see: as a serial
         # build does, each description warns about the one before it in
@@ -1327,6 +1359,7 @@ class MATLABDomain(Domain):
             title,
         )
 
+    @override
     def resolve_xref(self, env, fromdocname, builder, type, target, node, contnode):
         if type == "sidecar":
             return self._resolve_sidecar(
@@ -1374,6 +1407,7 @@ class MATLABDomain(Domain):
             and len({entry[2] for _, entry in matches}) == 1
         )
 
+    @override
     def get_full_qualified_name(self, node):
         """Return the path reference of an intersphinx target that is a MATLAB
         name, or None.
@@ -1439,6 +1473,7 @@ class MATLABDomain(Domain):
         name = mat_naming.collapse_space(ref)
         return name if self._documented(name) == ref else None
 
+    @override
     def get_objects(self):
         for ref, (docname, objtype, display) in self.data["objects"].items():
             name = self.inventory_name(ref)
@@ -1455,7 +1490,8 @@ class MATLABDomain(Domain):
                 0 if objtype == "folder" else 1,
             )
 
-    def resolve_any_xref(self, env, fromdocname, builder, target, node, contnode):  # noqa: ARG002 - required by Sphinx API
+    @override
+    def resolve_any_xref(self, env, fromdocname, builder, target, node, contnode):
         searchmode = (node.hasattr("refspecific") and 1) or 0
         matches = self.find_obj(
             node.get("mat:folder"), node.get("mat:class"), target, None, searchmode

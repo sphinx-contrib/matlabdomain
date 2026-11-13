@@ -42,6 +42,7 @@ from sphinx.util.typing import OptionSpec
 
 from . import mat_naming, mat_types
 from .mat_handlers import handler_for
+from .mat_typing import override
 
 if TYPE_CHECKING:
     from .matlab import MATLABDomain
@@ -284,6 +285,7 @@ class _Sidecar(_Relative):
         super().__init__(os.path.dirname(path), srcdir, dom)
         self.ref, self.path = ref, path
 
+    @override
     def rewrite(self, tree):
         """Also resolve this sidecar doc's relative hyperlinks."""
         super().rewrite(tree)
@@ -408,16 +410,19 @@ def _renderer_class():
     from myst_parser.mdit_to_docutils.sphinx_ import SphinxRenderer
 
     class SidecarRenderer(SphinxRenderer):
+        @override
         def setup_render(self, options, env):
             super().setup_render(options, env)
             # Sections go below the directive's node, as in MyST's include.
             self._level_to_section = cast(Any, {0: self.current_node})
             env["temp_root_node"] = self.current_node
 
+        @override
         def add_line_and_source_path(self, node, token):
             super().add_line_and_source_path(node, token)
             node.source = self.md_options["matlab_sidecar"].path
 
+        @override
         def create_warning(
             self, message, subtype, *, wtype=None, line=None, append_to=None
         ):
@@ -435,6 +440,7 @@ def _renderer_class():
                 append_to=append_to,
             )
 
+        @override
         def _render_finalise(self):
             # The word count is the document's (a MyST document adds its own);
             # heading slugs add to those of sidecar docs rendered before.
@@ -446,6 +452,7 @@ def _renderer_class():
             self._heading_slugs = {**earlier, **self._heading_slugs}
             super()._render_finalise()
 
+        @override
         def render_link_unknown(self, token):
             sidecar = self.md_options["matlab_sidecar"]
             dest = self.md.normalizeLinkText(str(token.attrGet("href") or ""))
@@ -528,6 +535,7 @@ class AutoSidecar(SphinxDirective):
     final_argument_whitespace = True
     option_spec: ClassVar[OptionSpec] = {"no-title": directives.flag}
 
+    @override
     def run(self):
         ref = unicodedata.normalize("NFC", self.arguments[0].strip())
         dom = cast("MATLABDomain", self.env.get_domain("mat"))

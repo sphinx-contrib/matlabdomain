@@ -42,6 +42,7 @@ from __future__ import annotations
 import os
 
 from . import mat_classify, mat_simulink
+from .mat_typing import override
 
 #: Simulink index type -> its auto directive
 SIMULINK_DIRECTIVES = {
@@ -82,9 +83,11 @@ class MFileHandler(Handler):
     extension = ".m"
     kinds = (mat_classify.SCRIPT, mat_classify.FUNCTION, mat_classify.CLASS)
 
+    @override
     def classify(self, path, text=None):
         return mat_classify.classify(path, text)
 
+    @override
     def read(self, path, encoding=None):
         with open(path, "rb") as f:
             text, problem = mat_classify.decode_source(f.read(), encoding)
@@ -110,6 +113,7 @@ class MFileHandler(Handler):
             )
         return kind, text, problems
 
+    @override
     def parse(self, path, stem, folder, encoding=None, text=None):
         from .mat_types import MatObject
 
@@ -122,10 +126,12 @@ class MlappHandler(Handler):
     extension = ".mlapp"
     kinds = ("application",)
 
-    def classify(self, path, text=None):  # noqa: ARG002
+    @override
+    def classify(self, path, text=None):
         return "application" if self.discover(path) else "unknown"
 
-    def parse(self, path, stem, folder, encoding=None):  # noqa: ARG002
+    @override
+    def parse(self, path, stem, folder, encoding=None):
         from .mat_types import MatObject
 
         return MatObject.parse_mlappfile(path, stem, folder)
@@ -138,13 +144,15 @@ class SimulinkHandler(Handler):
     blocks = True
     naming = "model"
 
-    def classify(self, path, text=None):  # noqa: ARG002
+    @override
+    def classify(self, path, text=None):
         try:
             return mat_simulink.classify(path)
         except (OSError, mat_simulink.SimulinkFileError):
             return "unknown"
 
-    def read(self, path, encoding=None):  # noqa: ARG002
+    @override
+    def read(self, path, encoding=None):
         try:
             kind = mat_simulink.classify(path)
         except mat_simulink.SimulinkFileError as err:
@@ -154,11 +162,13 @@ class SimulinkHandler(Handler):
             return kind, None, [("parse_error", message, None)]
         return kind, None, []
 
-    def parse(self, path, stem, folder, encoding=None):  # noqa: ARG002
+    @override
+    def parse(self, path, stem, folder, encoding=None):
         from .mat_types import MatObject
 
         return MatObject.parse_simulink(path, stem, folder)
 
+    @override
     def document(self, kind):
         return SIMULINK_DIRECTIVES.get(kind)
 

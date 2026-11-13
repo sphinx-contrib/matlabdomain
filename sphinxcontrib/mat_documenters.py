@@ -63,6 +63,7 @@ from .mat_types import (
     simulink_accepts,
     warn_ambiguous,
 )
+from .mat_typing import override
 
 mat_ext_sig_re = re.compile(
     r"""^ ([+@]?[+@\w.]+::)?            # explicit module name
@@ -175,6 +176,7 @@ class MatlabDocumenter(PyDocumenter):
     analyzer: MatModuleAnalyzer | None
     options: Any
 
+    @override
     def parse_name(self):
         """Resolve *self.name* to the object to document (plan.md Section 2.3).
 
@@ -239,20 +241,24 @@ class MatlabDocumenter(PyDocumenter):
         self.fullname = self.ref
         return True
 
+    @override
     def import_object(self):
         """Set the object resolved by :meth:`parse_name` as *self.object*."""
         self.object = self._resolved
         return True
 
+    @override
     def get_doc(self) -> list[list[str]]:
         return super().get_doc() or []
 
     #: True for the objects this documenter documents (folders or not)
     accepts = staticmethod(is_code_object)
 
+    @override
     def format_name(self):
         return self.display
 
+    @override
     def add_directive_header(self, sig):
         """Add the directive header and options to the generated content."""
         directive = getattr(self, "directivetype", self.objtype)
@@ -272,6 +278,7 @@ class MatlabDocumenter(PyDocumenter):
             if attrs.get(attr):
                 self.add_line(f"   :{flag}:", self.get_sourcename())
 
+    @override
     def add_content(self, more_content, no_docstring=False):
         """Add content from docstrings, attribute documentation and user."""
         sourcename = self.help_source()
@@ -591,6 +598,7 @@ class MatlabDocumenter(PyDocumenter):
 
         return docstrings
 
+    @override
     def get_object_members(self, want_all):
         """Return `(members_check_module, members)` where `members` is a
         list of `(membername, member)` pairs of the members of *self.object*.
@@ -635,6 +643,7 @@ class MatlabDocumenter(PyDocumenter):
                 ]
         return False, sorted(members)
 
+    @override
     def filter_members(self, members: list[tuple[str, Any]], want_all):
         """Filter the given member list.
 
@@ -733,6 +742,7 @@ class MatlabDocumenter(PyDocumenter):
                 ret.append((membername, member, isattr))
         return ret
 
+    @override
     def document_members(self, all_members=False):
         """Generate reST for member documentation.
 
@@ -795,11 +805,12 @@ class MatlabDocumenter(PyDocumenter):
         for documenter, _ in memberdocumenters:
             documenter.generate(all_members=True, real_modname=self.real_modname)
 
+    @override
     def generate(
         self,
         more_content=None,
         real_modname=None,
-        check_module=False,  # noqa: ARG002 - members are always in their folder
+        check_module=False,  # unused: members are always in their folder
         all_members=False,
     ):
         """Generate reST for the object given by *self.name*, and possibly for
@@ -864,6 +875,7 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
         "deprecated": bool_option,
     }
 
+    @override
     def parse_name(self):
         ret = MatlabDocumenter.parse_name(self)
         if self.args or self.retann:
@@ -878,7 +890,8 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
             )
         return ret
 
-    def add_directive_header(self, sig):  # noqa: ARG002
+    @override
+    def add_directive_header(self, sig):
         sourcename = self.get_sourcename()
         self.add_line(f".. {self.domain}:folder:: {self.ref}", sourcename)
         if self.options.no_index or self.options.noindex:
@@ -892,6 +905,7 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
         if self.options.deprecated:
             self.add_line("   :deprecated:", "<autodoc>")
 
+    @override
     def get_object_members(self, want_all):
         if want_all:
             # A file is listed before a folder with the same name; special
@@ -970,12 +984,14 @@ class MatDocstringSignatureMixin(MatlabDocumenter):
         setattr(self, "__new_doclines", doclines[i:])
         return args, retann
 
+    @override
     def get_doc(self):
         lines = getattr(self, "__new_doclines", None)
         if lines is not None:
             return [lines]
         return MatlabDocumenter.get_doc(self)
 
+    @override
     def format_signature(self):
         if self.args is None and self.env.config.autodoc_docstring_signature:
             # only act if a signature is not explicitly given already, and if
@@ -993,14 +1009,17 @@ class MatFunctionDocumenter(MatDocstringSignatureMixin, MatModuleLevelDocumenter
     member_order = 30
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+    @override
+    def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatFunction)
 
+    @override
     def format_args(self):
         # a placeholder for an unreadable file is a script without args
         if getattr(self.object, "args", None):
             return "(" + ", ".join(self.object.args) + ")"
 
+    @override
     def document_members(self, all_members=False):
         pass
 
@@ -1029,9 +1048,11 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
     option_spec: ClassVar[OptionSpec] = MEMBER_OPTIONS
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+    @override
+    def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatClass)
 
+    @override
     def format_args(self):
         """Format arguments.
 
@@ -1057,6 +1078,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         init_doc.objpath = [self.object.name]
         return init_doc, init_doc._find_signature()
 
+    @override
     def format_signature(self):
         # get constructor method signature from docstring
         ctor = self._constructor()
@@ -1069,6 +1091,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
         return MatModuleLevelDocumenter.format_signature(self)
 
+    @override
     def add_directive_header(self, sig):
         MatlabDocumenter.add_directive_header(self, sig)
         # an unreadable file's placeholder has no attributes
@@ -1085,6 +1108,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
                     _("   Bases: %s") % ", ".join(base_class_links), "<autodoc>"
                 )
 
+    @override
     def get_doc(self):
         content = self.env.config.autoclass_content
 
@@ -1114,6 +1138,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
         return doc
 
+    @override
     def help_sources(self):
         sources = super().help_sources()
         # ``autoclass_content`` may add the constructor's help
@@ -1121,10 +1146,12 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             sources.append((ctor.docstring, ctor.docstring_line))
         return sources
 
+    @override
     def class_object(self):
         # the associated MatClass object
         return self.object
 
+    @override
     def auto_link_basic(self, docstrings):
         docstrings = MatlabDocumenter.auto_link_basic(self, docstrings)
         return self.auto_link_class_members(docstrings)
@@ -1169,10 +1196,12 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             line = p.sub(lambda _: link, line, 1)
         return line
 
+    @override
     def auto_link_all(self, docstrings):
         docstrings = self.auto_link_methods(self.object, docstrings)
         return MatlabDocumenter.auto_link_all(self, docstrings)
 
+    @override
     def document_members(self, all_members=False):
         want_all = all_members or self.options.members is ALL
         # find out which members are documentable
@@ -1301,7 +1330,8 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
 class MatDataDocumenter(MatModuleLevelDocumenter, PyDataDocumenter):
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+    @override
+    def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatScript)
 
 
@@ -1313,9 +1343,11 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
     priority = 1  # must be more than FunctionDocumenter
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+    @override
+    def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatMethod)
 
+    @override
     def import_object(self):
         ret = MatClassLevelDocumenter.import_object(self)
         if self.object.attrs.get("Static"):
@@ -1326,12 +1358,14 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
             self.directivetype = "method"
         return ret
 
+    @override
     def add_directive_header(self, sig):
         super().add_directive_header(sig)
         self.add_flags(
             self.object.attrs, (("abstract", "Abstract"), ("sealed", "Sealed"))
         )
 
+    @override
     def format_args(self):
         """Format argument.
 
@@ -1351,9 +1385,11 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
             else:
                 return "(" + ", ".join(arglist) + ")"
 
+    @override
     def document_members(self, all_members=False):
         pass
 
+    @override
     def class_object(self):
         # the associated MatClass object
         return self.object.cls
@@ -1385,6 +1421,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
                     )
         return docstrings
 
+    @override
     def auto_link_all(self, docstrings):
         docstrings = self.auto_link_methods(self.object.cls, docstrings)
         docstrings = self.auto_link_self(docstrings)
@@ -1423,24 +1460,29 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
     priority = 10
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+    @override
+    def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, (MatProperty, MatEnumeration))
 
+    @override
     def document_members(self, all_members=False):
         pass
 
+    @override
     def import_object(self):
         ret = MatClassLevelDocumenter.import_object(self)
         # only properties have a default value and specs
         self._datadescriptor = not isinstance(self.object, MatProperty)
         return ret
 
+    @override
     def get_real_modname(self):
         return (
             self.get_attr(self.parent or self.object, "__module__", None)
             or self.modname
         )
 
+    @override
     def add_directive_header(self, sig):
         MatClassLevelDocumenter.add_directive_header(self, sig)
         if isinstance(self.object, MatProperty):
@@ -1493,12 +1535,14 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         else:
             self.add_line(f"   :annotation: = {self.options.annotation}", "<autodoc>")
 
+    @override
     def add_content(self, more_content, no_docstring=False):
         # if not self._datadescriptor:
         #     # if it's not a data descriptor, its docstring is very probably the
         #     # wrong thing to display
         MatClassLevelDocumenter.add_content(self, more_content, no_docstring)
 
+    @override
     def class_object(self):
         # the associated MatClass object
         return self.object.cls
@@ -1528,6 +1572,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                     )
         return docstrings
 
+    @override
     def auto_link_all(self, docstrings):
         docstrings = self.auto_link_methods(self.object.cls, docstrings)
         docstrings = self.auto_link_self(docstrings)
@@ -1542,16 +1587,20 @@ class MatEventDocumenter(MatClassLevelDocumenter):
     option_spec: ClassVar[OptionSpec] = dict(MatModuleLevelDocumenter.option_spec)
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+    @override
+    def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatEvent)
 
+    @override
     def document_members(self, all_members=False):
         pass
 
+    @override
     def class_object(self):
         # the associated MatClass object
         return self.object.cls
 
+    @override
     def auto_link_all(self, docstrings):
         docstrings = self.auto_link_methods(self.object.cls, docstrings)
         return MatlabDocumenter.auto_link_all(self, docstrings)
@@ -1563,9 +1612,11 @@ class MatScriptDocumenter(MatModuleLevelDocumenter):
     objtype = "script"
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+    @override
+    def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatScript)
 
+    @override
     def document_members(self, all_members=False):
         pass
 
@@ -1576,9 +1627,11 @@ class MatApplicationDocumenter(MatModuleLevelDocumenter):
     objtype = "application"
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+    @override
+    def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, MatApplication)
 
+    @override
     def document_members(self, all_members=False):
         pass
 
@@ -1674,16 +1727,20 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
         cls.accepts = staticmethod(simulink_accepts(SIMULINK_CLASSES[cls.objtype]))
 
     @classmethod
-    def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
+    @override
+    def can_document_member(cls, member, membername, isattr, parent):
         return isinstance(member, SIMULINK_CLASSES[cls.objtype])
 
+    @override
     def format_name(self):
         return self.display.replace("\n", " ")
 
-    def format_signature(self, **kwargs):  # noqa: ARG002
+    @override
+    def format_signature(self, **kwargs):
         return ""
 
-    def add_directive_header(self, sig):  # noqa: ARG002
+    @override
+    def add_directive_header(self, sig):
         sourcename = self.get_sourcename()
         self.add_line(f".. mat:{self.objtype}:: {self.format_name()}", sourcename)
         if self.options.no_index or self.options.noindex:
@@ -1694,9 +1751,11 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
             ref = json.dumps(ref, ensure_ascii=False)
         self.add_line(f"   :reference: {ref}", sourcename)
 
+    @override
     def document_members(self, all_members=False):
         pass
 
+    @override
     def add_content(self, more_content, no_docstring=False):
         super().add_content(None, no_docstring)
         sourcename = self.get_sourcename()
@@ -1906,6 +1965,7 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
             if (want_all or among(block, named)) and not among(block, excluded)
         ]
 
+    @override
     def get_object_members(self, want_all):
         library = cast(MatLibrary, self.object)
         blocks = library.diagram.library_blocks if library.diagram else ()
@@ -1918,6 +1978,7 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
                 members.append((block.path, member))
         return False, members
 
+    @override
     def document_members(self, all_members=False):
         MatlabDocumenter.document_members(self, all_members)
         want_all = all_members or self.options.members is ALL

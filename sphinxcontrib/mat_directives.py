@@ -15,6 +15,7 @@ from sphinx.util.logging import getLogger
 
 from .mat_sidecars import HelpPaths
 from .mat_types import MatObject
+from .mat_typing import override
 
 logger = getLogger("matlab-domain")
 
@@ -42,6 +43,7 @@ class MatlabAutodocDirective(AutodocDirective):
     optional_arguments = 0
     final_argument_whitespace = True
 
+    @override
     def run(self):
         source, lineno = self.get_source_info()
         logger.debug(

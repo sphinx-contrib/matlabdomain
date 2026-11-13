@@ -51,7 +51,9 @@ dependencies = [
     # Pin each dependency. Never trust the version number alone because it will break
     # our consumers.
     "tree-sitter-matlab==1.3.3",
-    "tree-sitter==0.26.1"
+    "tree-sitter==0.26.1",
+    # typing.override before Python 3.12 (sphinxcontrib.mat_typing); 4.4 added it.
+    "typing-extensions>=4.4; python_version < '3.12'"
 ]
 description = 'Sphinx "matlabdomain" extension'
 dynamic = ["version"]
@@ -119,6 +121,7 @@ source_pkgs = [
     "sphinxcontrib.mat_simulink",
     "sphinxcontrib.mat_tree_sitter_parser",
     "sphinxcontrib.mat_types",
+    "sphinxcontrib.mat_typing",
     "sphinxcontrib.mat_urls",
     "sphinxcontrib.matlab",
     "sphinxcontrib.matlab_apidoc",
@@ -181,6 +184,9 @@ extend-exclude = [
 force-exclude = true
 indent-width = 4
 line-length = 88
+# sphinxcontrib is a namespace package (no __init__.py); declaring it lets Ruff
+# resolve the relative imports of mat_typing (lint.typing-modules).
+namespace-packages = ["sphinxcontrib"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -234,6 +240,9 @@ select = [
     "UP",
     "W"
 ]
+# ``override`` is imported from here; Ruff then knows the methods it decorates
+# override a base class method (no ARG002 for parameters the base needs).
+typing-modules = ["sphinxcontrib.mat_typing"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 51
