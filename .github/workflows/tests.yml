@@ -26,15 +26,16 @@ jobs:
     name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }}
     timeout-minutes: 15
     runs-on: ${{ matrix.os }}
-    # Sphinx master may break at any time; it must not block.
-    continue-on-error: ${{ matrix.sphinx-version == 'dev' }}
+    # Sphinx master may break at any time, and so may a Python prerelease;
+    # neither may block.
+    continue-on-error: ${{ matrix.sphinx-version == 'dev' || matrix.python-version == '3.16' }}
     env:
       COVERAGE_FILE: .coverage.${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.sphinx-version }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
         sphinx-version: ["latest"]
         include:
         -   description: oldest supported dependencies on oldest supported python
@@ -48,8 +49,12 @@ jobs:
         -   description: sphinx dev with latest python
             # dev does not work with python <= 3.11 so only test with latest python
             os: ubuntu-latest
-            python-version: "3.14"
+            python-version: "3.15"
             sphinx-version: dev
+        -   description: next Python prerelease
+            os: ubuntu-latest
+            python-version: "3.16"
+            sphinx-version: latest
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -57,6 +62,7 @@ jobs:
     - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
     - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
     - name: Install tox
       run: uv tool install 'tox>=4.60' --with=tox-uv
@@ -69,7 +75,8 @@ jobs:
         name: ${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.sphinx-version }}_htmlcov
         path: htmlcov
     - name: Upload coverage data
-      if: (success() || failure()) && matrix.sphinx-version != 'dev'
+      # A row that may fail does not feed the 100% gate.
+      if: (success() || failure()) && matrix.sphinx-version != 'dev' && matrix.python-version != '3.16'
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: coverage-data-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.sphinx-version }}

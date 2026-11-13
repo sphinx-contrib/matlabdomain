@@ -301,8 +301,11 @@ env_list = [
     "py313-sphinxlatest",
     "py314-sphinxmin",
     "py314-sphinxlatest",
+    "py315-sphinxmin",
+    "py315-sphinxlatest",
+    "py316-sphinxlatest",
     "py312-sphinx82",
-    "py314-sphinxdev"
+    "py315-sphinxdev"
 ]
 requires = ["tox>=4.60"]
 
