@@ -11,7 +11,7 @@ differences. Added in Phase 8 (14 projects, about 24,000 `.m` files).
 | `fetch.py` | Clones a missing project into `../repos/<name>` and moves an existing checkout to its commit. |
 | `gauntlet.py` | Runs the gauntlet on the checkouts and writes `results.json` (the summary) and `manifest.json`. Clones nothing. |
 | `compare.py` | Compares two runs, or a run and a saved summary. |
-| `summaries/` | The baseline per platform (`linux.json`, `windows.json`: the `results.json` of the Phase 9 runs). |
+| `summaries/` | The baseline per platform (`linux.json`, `windows.json`): the `results.json` of a full run with `--jobs`. `environment` in each names the date and the commit. |
 
 `test_slow/repos/` (checkouts, shared with the profiling and Simulink tools) and
 `runs/` (output) are ignored by Git.
@@ -78,15 +78,17 @@ for d in test_slow/artifacts/*/repo; do n=$(basename "$(dirname "$d")"); mv "$d"
 Checkouts from before `test_slow/repos` existed (`test_slow/gauntlet/repos`) can
 be moved the same way: `mv test_slow/gauntlet/repos test_slow/repos`.
 
-## Expected (Phase 9, `summaries/`)
+## Expected (`summaries/`, 2026-11)
 
 All 14 projects: exit 0 everywhere except `api` (exit 1: every project has
 findings), no traceback or duplicate object, the rerun changes nothing, and
-Windows and Linux give the same pages, warnings and api-check findings
-(`compare.py` on the two summaries: `0 of 14 projects differ`; the `conf`
-and `all` variants also match Phase 8).
-matpower's serial and `-j` builds differ (13 pages, 65 `ref.equation`
-warnings; for `api` only the warnings, the reports are identical): its
+Windows and Linux give the same pages, warnings and api-check findings.
+`compare.py` on the two summaries prints `1 of 14 projects differ`:
+matpower, in its `-j` rows only. On Windows `-j` builds serially, so those
+rows say `identical` there.
+On Linux, matpower's serial and `-j` builds differ (6 pages with the
+defaults, 10 with `matlab_auto_link = "all"`, 39 `ref.equation` warnings;
+for `api` only the warnings, the reports are identical): its
 symlinked copies define each equation label twice, and Sphinx's math
 domain merges them per worker. A file that is not valid UTF-8
 decodes as ISO-8859-1 on Linux and Windows ANSI on Windows, so its warnings
