@@ -438,6 +438,95 @@ def process_default(node, encoding):
     return re.sub(re_trim_line, "", default)
 
 
+def _decode(node, encoding):
+    return node_text(node).decode(encoding, errors="backslashreplace")
+
+
+def declaration_values(match, encoding):
+    """Return the ``size``, ``type``, ``validators`` and ``default`` of a
+    property or argument declaration from its query ``match`` (``q_property``
+    or ``q_arg``); each is None where the declaration has none.
+    """
+    dims_list = get_nodes(match, "dims")
+    size_type = get_node(match, "size_type")  # only properties have one
+    dims = None
+    if dims_list:
+        dims = tuple(_decode(dim, encoding) for dim in dims_list)
+    elif size_type is not None:
+        dims = _SIZE_TYPES.get(node_text(size_type))
+    type_node = get_node(match, "type")
+    vf_list = get_nodes(match, "validation_functions")
+    default_node = get_node(match, "default")
+    return {
+        "size": dims,
+        "type": _decode(type_node, encoding) if type_node is not None else None,
+        "validators": [_decode(vf, encoding) for vf in vf_list] if vf_list else None,
+        "default": (
+            process_default(default_node, encoding)
+            if default_node is not None
+            else None
+        ),
+    }
+
+
+def _comment_after(node, comment, encoding):
+    """Return ``comment_help`` of the ``comment`` that follows ``node``: its
+    first line if it starts on the last line of ``node``, all of it if on the
+    next line; ``("", None)`` if further down.
+    """
+    gap = comment.start_point.row - node.end_point.row
+    if gap == 0:
+        # Keep only inline help on the declaration line.
+        return comment_help(comment, encoding, first_line_only=True)
+    if gap <= 1:
+        # Otherwise take the whole docstring
+        return comment_help(comment, encoding)
+    return "", None
+
+
+def declaration_help(decl, prop_node, encoding):
+    """Return ``(help, line)`` of a property or argument declaration ``decl``
+    (``prop_node`` is its ``prop_node`` capture): a comment on its line or
+    right below it, overridden by a comment block right above it; ``help`` is
+    None if it has none. ``line`` is the one-based file line of its first line.
+    """
+    docstring, doc_line = "", None
+    # Without a semicolon tree-sitter-matlab puts the comment after the
+    # property node. It combines inline comments with following comments,
+    # which means this requires some relatively ugly processing, but worth
+    # it for the ease of the rest of it.
+    after = prop_node.next_sibling
+    if after and after.type == "comment":
+        prev_sib = cast(Node, after.prev_named_sibling)
+        docstring, doc_line = _comment_after(prev_sib, after, encoding)
+    # With a semicolon the comment follows the declaration. Only try this if
+    # no docstring was found above.
+    after = decl.next_named_sibling
+    if docstring == "" and after is not None and after.type == "comment":
+        docstring, doc_line = _comment_after(decl, after, encoding)
+    # A previous comment that ends on the line before overrides the docstring;
+    # a first line on the same line as the previous declaration belongs to it.
+    before = decl.prev_named_sibling
+    if (
+        before is not None
+        and before.type == "comment"
+        and decl.start_point.row - before.end_point.row <= 1
+    ):
+        prev_decl = before.prev_named_sibling
+        skip = (
+            prev_decl is not None
+            and prev_decl.type == "property"
+            and before.start_point.row == prev_decl.end_point.row
+        )
+        ds, ds_line = comment_help(before, encoding, skip_first_line=skip)
+        if ds:
+            docstring, doc_line = ds, ds_line
+    # After all that if our docstring is empty then we have none
+    if not docstring.strip():
+        docstring = None
+    return docstring, doc_line
+
+
 class MatScriptParser:
     """The help of a MATLAB script: its first comment block (``docstring``,
     ``docstring_line``).
@@ -539,139 +628,27 @@ class MatFunctionParser:
         if not arguments:
             return
 
-        # TODO this is almost identical to property parsing.
-        #      might be a good idea to extract common code here.
         # ``~`` (an ignored input) has no name, so ``q_arg`` does not match it
         matched = [
             (arg, matches[0][1])
             for arg in arguments
             if (matches := list(QueryCursor(q_arg).matches(arg)))
         ]
+        # Here we trust that the person is giving us valid matlab.
+        arg_loc = self.retv if "Output" in attrs else self.args
         for arg, arg_match in matched:
-            # extract name (this is always available so no need for None check)
-            name = [
-                node_text(name).decode(self.encoding, errors="backslashreplace")
-                for name in arg_match["name"]
-            ]
-
-            # extract dims list
-            dims_list = get_nodes(arg_match, "dims")
-            dims = None
-            if dims_list:
-                dims = tuple(
-                    [
-                        dim.text.decode(self.encoding, errors="backslashreplace")
-                        for dim in dims_list
-                    ]
-                )
-
-            # extract type
-            type_node = get_node(arg_match, "type")
-            typename = (
-                node_text(type_node).decode(self.encoding, errors="backslashreplace")
-                if type_node is not None
-                else None
+            # the name is always captured; a name-value argument's is the first
+            name = _decode(arg_match["name"][0], self.encoding)
+            docstring, _ = declaration_help(
+                arg, required_node(arg_match, "prop_node"), self.encoding
             )
-
-            # extract validator functions
-            vf_list = get_nodes(arg_match, "validation_functions")
-            vfs = None
-            if vf_list:
-                vfs = [
-                    vf.text.decode(self.encoding, errors="backslashreplace")
-                    for vf in vf_list
-                ]
-
-            # extract default
-            default_node = get_node(arg_match, "default")
-            default = (
-                process_default(default_node, self.encoding)
-                if default_node is not None
-                else None
-            )
-
-            # extract inline or following docstring if there is no semicolon
-            # (tree-sitter-matlab puts the comment after the property node)
-            prop_node = required_node(arg_match, "prop_node")
-            docstring_node = None
-            if prop_node.next_sibling and prop_node.next_sibling.type == "comment":
-                docstring_node = prop_node.next_sibling
-            docstring = ""
-            if docstring_node is not None:
-                # tree-sitter-matlab combines inline comments with following
-                # comments which means this requires some relatively ugly
-                # processing, but worth it for the ease of the rest of it.
-                prev_sib = cast(Node, docstring_node.prev_named_sibling)
-                if docstring_node.start_point.row == prev_sib.end_point.row:
-                    # Keep only inline help on the declaration line.
-                    docstring = process_text_into_docstring(
-                        docstring_node.text, self.encoding
-                    )
-                    docstring = docstring.split("\n")[0]
-                elif docstring_node.start_point.row - prev_sib.end_point.row <= 1:
-                    # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(
-                        docstring_node.text, self.encoding
-                    )
-
-            # extract inline or following docstring if there _is_ a semicolon.
-            # Only try this if no docstring was found above.
-            next_node = arg.next_named_sibling
-            if next_node is None or docstring != "":
-                # Nothing to be done.
-                pass
-            elif next_node.type == "comment":
-                if next_node.start_point.row == arg.end_point.row:
-                    # Keep only inline help on the declaration line.
-                    docstring = process_text_into_docstring(
-                        next_node.text, self.encoding
-                    )
-                    docstring = docstring.split("\n")[0]
-                elif next_node.start_point.row - arg.end_point.row <= 1:
-                    # Otherwise take the whole docstring
-                    docstring = process_text_into_docstring(
-                        next_node.text, self.encoding
-                    )
-
-            # override docstring with prior if exists
-            prev_node = arg.prev_named_sibling
-            # A previous comment that ends on the line before sets the
-            # docstring; a first line on the same line as the previous
-            # argument belongs to that argument.
-            if (
-                prev_node is not None
-                and prev_node.type == "comment"
-                and arg.start_point.row - prev_node.end_point.row <= 1
-            ):
-                ds = process_text_into_docstring(prev_node.text, self.encoding)
-                prev_arg = prev_node.prev_named_sibling
-                if (
-                    prev_arg is not None
-                    and prev_arg.type == "property"
-                    and prev_node.start_point.row == prev_arg.end_point.row
-                ):
-                    ds = "\n".join(ds.split("\n")[1:])
-                if ds:
-                    docstring = ds
-            # After all that if our docstring is empty then we have none
-            if not docstring.strip():
-                docstring = None
-
-            # Here we trust that the person is giving us valid matlab. A
-            # name-value argument (``opts.Name``) is listed under ``opts``.
-            arg_loc = self.retv if "Output" in attrs else self.args
+            # A name-value argument (``opts.Name``) is listed under ``opts``.
             name_node = arg.child_by_field_name("name")
             if name_node.type == "property_name" and arg_loc is self.args:
-                full_name = name_node.text.decode(
-                    self.encoding, errors="backslashreplace"
-                )
-                self.name_value[full_name] = docstring
-            arg_loc[name[0]] = {
+                self.name_value[_decode(name_node, self.encoding)] = docstring
+            arg_loc[name] = {
                 "attrs": attrs,
-                "size": dims,
-                "type": typename,
-                "validators": vfs,
-                "default": default,
+                **declaration_values(arg_match, self.encoding),
                 "docstring": docstring,
             }
 
@@ -842,117 +819,13 @@ class MatClassParser:
                 key=lambda match: (sum(map(len, match.values())), "type" in match),
             )
             # extract name (this is always available so no need for None check)
-            name = node_text(required_node(prop_match, "name")).decode(
-                self.encoding, errors="backslashreplace"
+            name = _decode(required_node(prop_match, "name"), self.encoding)
+            docstring, doc_line = declaration_help(
+                prop, required_node(prop_match, "prop_node"), self.encoding
             )
-
-            # extract dims list
-            size_type = get_node(prop_match, "size_type")
-            dims_list = get_nodes(prop_match, "dims")
-            dims = None
-            if dims_list:
-                dims = tuple(
-                    [
-                        dim.text.decode(self.encoding, errors="backslashreplace")
-                        for dim in dims_list
-                    ]
-                )
-            elif size_type is not None:
-                dims = _SIZE_TYPES.get(node_text(size_type))
-
-            # extract validator functions
-            vf_list = get_nodes(prop_match, "validation_functions")
-            vfs = None
-            if vf_list:
-                vfs = [
-                    vf.text.decode(self.encoding, errors="backslashreplace")
-                    for vf in vf_list
-                ]
-
-            # extract type
-            type_node = get_node(prop_match, "type")
-            typename = (
-                node_text(type_node).decode(self.encoding, errors="backslashreplace")
-                if type_node is not None
-                else None
-            )
-
-            # extract default
-            default_node = get_node(prop_match, "default")
-            default = (
-                process_default(default_node, self.encoding)
-                if default_node is not None
-                else None
-            )
-
-            # extract inline or following docstring if there is no semicolon
-            # (tree-sitter-matlab puts the comment after the property node)
-            prop_node = required_node(prop_match, "prop_node")
-            docstring_node = None
-            if prop_node.next_sibling and prop_node.next_sibling.type == "comment":
-                docstring_node = prop_node.next_sibling
-            docstring, doc_line = "", None
-            if docstring_node is not None:
-                # tree-sitter-matlab combines inline comments with following
-                # comments which means this requires some relatively ugly
-                # processing, but worth it for the ease of the rest of it.
-                prev_sib = cast(Node, docstring_node.prev_named_sibling)
-                if docstring_node.start_point.row == prev_sib.end_point.row:
-                    # Keep only inline help on the declaration line.
-                    docstring, doc_line = comment_help(
-                        docstring_node, self.encoding, first_line_only=True
-                    )
-                elif docstring_node.start_point.row - prev_sib.end_point.row <= 1:
-                    # Otherwise take the whole docstring
-                    docstring, doc_line = comment_help(docstring_node, self.encoding)
-
-            # extract inline or following docstring if there _is_ a semicolon.
-            # Only try this if no docstring was found above.
-            next_node = prop.next_named_sibling
-            if next_node is None or docstring != "":
-                # Nothing to be done.
-                pass
-            elif next_node.type == "comment":
-                if next_node.start_point.row == prop.end_point.row:
-                    # Keep only inline help on the declaration line.
-                    docstring, doc_line = comment_help(
-                        next_node, self.encoding, first_line_only=True
-                    )
-                elif next_node.start_point.row - prop.end_point.row <= 1:
-                    # Otherwise take the whole docstring
-                    docstring, doc_line = comment_help(next_node, self.encoding)
-
-            # override docstring with prior if exists
-            prev_node = prop.prev_named_sibling
-            # A previous comment that ends on the line before sets the
-            # docstring; a first line on the same line as the previous
-            # property belongs to that property.
-            if (
-                prev_node is not None
-                and prev_node.type == "comment"
-                and prop.start_point.row - prev_node.end_point.row <= 1
-            ):
-                prev_prop = prev_node.prev_named_sibling
-                skip = (
-                    prev_prop is not None
-                    and prev_prop.type == "property"
-                    and prev_node.start_point.row == prev_prop.end_point.row
-                )
-                ds, ds_line = comment_help(
-                    prev_node, self.encoding, skip_first_line=skip
-                )
-                if ds:
-                    docstring, doc_line = ds, ds_line
-            # After all that if our docstring is empty then we have none
-            if not docstring.strip():
-                docstring = None
-
             self.properties[name] = {
                 "attrs": attrs,
-                "size": dims,
-                "type": typename,
-                "validators": vfs,
-                "default": default,
+                **declaration_values(prop_match, self.encoding),
                 "docstring": docstring,
                 "docstring_line": doc_line,
                 "line": prop.start_point.row + 1,
