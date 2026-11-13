@@ -3,7 +3,8 @@
 Usage, from anywhere (--fetch runs fetch.py first; without it, nothing is
 cloned and a missing checkout is a problem):
   python test_slow/gauntlet/gauntlet.py [NAME ...] [--fetch] [--out DIR]
-      [--trials N] [--jobs] [--variant {all,api,conf}] [--projects FILE]
+      [--trials N] [--jobs] [--variant {all,api,conf,inherited}]
+      [--projects FILE]
 
 For each enabled project in the list (NAME arguments keep the projects whose
 name contains one of them), on its checkout test_slow/repos/<name>:
@@ -15,9 +16,11 @@ name contains one of them), on its checkout test_slow/repos/<name>:
 - builds that output with sphinx-build -E (no -W), once per variant:
   ``conf`` (the defaults), ``all`` (``-D matlab_auto_link=all``) and ``api``
   (``-b matlab-api-check`` with the default rules; its reports are kept as
-  OUT/<name>/api-check.{txt,json}); exit code, wall time, warnings by
-  subtype (OUT/<name>/<variant>.warnings.txt), a traceback or crash log in
-  stderr; for ``api`` also the report's summary;
+  OUT/<name>/api-check.{txt,json}); with --variant also ``inherited``
+  (``-D autodoc_default_options.inherited-members=``: every class documents
+  its inherited members); exit code, wall time, the number and bytes of the
+  HTML files, warnings by subtype (OUT/<name>/<variant>.warnings.txt), a
+  traceback or crash log in stderr; for ``api`` also the report's summary;
 - with --jobs, builds each variant again with -j auto and compares exit
   codes, the bytes of every *.html and objects.inv (the api-check reports),
   and the warnings (Windows has no fork, so -j runs serially there).
@@ -73,7 +76,11 @@ VARIANTS = {
     "conf": ("html", []),
     "all": ("html", ["-D", "matlab_auto_link=all"]),
     "api": ("matlab-api-check", []),
+    # every class documents its inherited members; only with --variant
+    "inherited": ("html", ["-D", "autodoc_default_options.inherited-members="]),
 }
+#: the variants run without --variant (the saved baselines have these)
+DEFAULT_VARIANTS = ("conf", "all", "api")
 API_REPORTS = ("api-check.json", "api-check.txt")
 CONF = (
     'extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]\n'
@@ -182,6 +189,7 @@ def build(docs, outdir, root, variant, extra=()):
         "duplicate_objects": text.count("duplicate object description"),
         "traceback": "Traceback" in proc.stderr or "Traceback" in text,
         "html_files": sum(f.endswith(".html") for f in files),
+        "html_bytes": sum(len(d) for f, d in files.items() if f.endswith(".html")),
     }
     if "api-check.json" in files:
         summary = json.loads(files["api-check.json"])["summary"]
@@ -303,7 +311,7 @@ def run_project(project, lock, args, out):
     docs = out / project.name / "trial0"
     proc, wall, summary = apidoc(docs, "-f")
     row["rerun"] = {"rc": proc.returncode, "summary": summary}
-    for variant in args.variant or list(VARIANTS):
+    for variant in args.variant or DEFAULT_VARIANTS:
         base = out / project.name / variant
         serial, files, warnings = build(docs, base, root, variant)
         row[variant] = serial

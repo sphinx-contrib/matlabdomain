@@ -33,7 +33,15 @@ project, `gauntlet.py` generates the pages 3 times (`--trials`), reruns with
 `-f` (expect nothing created or updated), and builds with the defaults
 (`conf`), with `matlab_auto_link = "all"` (`all`) and with `-b
 matlab-api-check` (`api`, the default rules; its reports are kept as
-`<project>/api-check.{txt,json}`); `--variant` picks one.
+`<project>/api-check.{txt,json}`); `--variant` picks one. `--variant
+inherited` (not in the default set) builds with
+`-D autodoc_default_options.inherited-members=`, so every class documents
+its inherited members; compare its `html_bytes`, `html_files` and `wall_s`
+with `conf`'s to see what `:inherited-members:` costs:
+
+```console
+python test_slow/gauntlet/gauntlet.py --jobs --variant conf --variant inherited
+```
 `--jobs` builds each again with `-j auto` and compares the HTML,
 `objects.inv` (the api-check reports) and warnings. On Windows, `-j` runs
 serially (no fork).

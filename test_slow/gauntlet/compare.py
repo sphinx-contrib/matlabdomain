@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 RECORD = re.compile(r"(^|: )(WARNING|ERROR|CRITICAL|SEVERE): ")
-VARIANTS = ("conf", "all", "api")
+VARIANTS = ("conf", "all", "api", "inherited")
 
 
 def load(arg):
