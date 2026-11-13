@@ -26,6 +26,9 @@ VARIANTS = ("conf", "all", "api")
 
 
 def load(arg):
+    """Return ``(environment, projects, manifest, folder)`` of a run folder or a
+    ``results.json`` file; ``manifest`` and ``folder`` are None for a file.
+    """
     path = Path(arg)
     folder = path if path.is_dir() else None
     data = json.loads(
@@ -41,6 +44,9 @@ def load(arg):
 
 
 def records(text):
+    """Split a warnings log into records: a line with a level (``WARNING:``, ...) and
+    the lines that continue it.
+    """
     out = []
     # rstrip: a pre-commit hook may strip line-end spaces from committed results
     for line in (raw.rstrip() for raw in text.splitlines()):
@@ -52,6 +58,10 @@ def records(text):
 
 
 def normalize(record, name):
+    """Return a warning record of project ``name`` with what differs between machines
+    replaced: the project root, the generated docs folder, path separators and the
+    fallback codec's name.
+    """
     root = r"[^\s'\"]*?test_slow[\\/]+(?:gauntlet[\\/]+)?repos[\\/]+" + re.escape(name)
     record = re.sub(root, "<ROOT>", record)
     record = re.sub(
@@ -70,6 +80,9 @@ def normalize(record, name):
 
 
 def warnings(folder, name, file):
+    """Return the normalized records of the warnings log ``file`` of project ``name`` in
+    run ``folder``, counted; empty when the log is missing.
+    """
     path = folder / name / file
     if not path.exists():
         return collections.Counter()
@@ -78,6 +91,9 @@ def warnings(folder, name, file):
 
 
 def counts(a, b):
+    """Return ``key a vs b`` for each key whose count differs between the counters ``a``
+    and ``b``, joined by commas.
+    """
     keys = sorted(set(a) | set(b))
     return ", ".join(
         f"{k} {a.get(k, 0)} vs {b.get(k, 0)}" for k in keys if a.get(k) != b.get(k)
@@ -85,6 +101,13 @@ def counts(a, b):
 
 
 def compare(name, ra, rb, a, b):
+    """Return the differences of project ``name`` between its results ``ra`` and ``rb``:
+    commit, CLI summary and warnings, and per build its exit code, warnings, api-check
+    summary and -j match.
+
+    ``a`` and ``b`` are ``(manifest, folder)`` of the runs; when both are run folders,
+    the generated pages, api-check findings and warning logs are compared too.
+    """
     problems = []
     if ra.get("commit") != rb.get("commit"):
         problems.append(
@@ -151,6 +174,9 @@ def compare(name, ra, rb, a, b):
 
 
 def main():
+    """Compare the two runs given on the command line, print the projects that differ,
+    and exit 1 if any does.
+    """
     if len(sys.argv) != 3:
         sys.exit(__doc__)
     env_a, res_a, *a = load(sys.argv[1])

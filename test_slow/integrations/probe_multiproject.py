@@ -44,6 +44,10 @@ PROJECTS = ("alpha", "beta")
 
 
 class Probe:
+    """One step of the probe in the work folder ``work``: runs the commands, records
+    each check and the notes, and writes them to ``<work>/<step>.json``.
+    """
+
     def __init__(self, work, step):
         self.work = work
         self.step = step
@@ -51,6 +55,9 @@ class Probe:
         self.notes = {}
 
     def check(self, name, ok, detail: object = ""):
+        """Record check ``name`` as passed if ``ok``, and print it; ``detail`` is
+        printed when it fails.
+        """
         self.checks.append({"check": name, "ok": bool(ok), "detail": detail})
         print(
             f"{'ok  ' if ok else 'FAIL'} {name}"
@@ -58,6 +65,10 @@ class Probe:
         )
 
     def run(self, cmd, env=None, cwd=None):
+        """Run ``cmd`` (default folder: the work folder) with ``env`` added to the
+        environment (None removes a variable); return the exit code and the combined
+        output.
+        """
         full_env = {**os.environ, "NO_COLOR": "1", **(env or {})}
         for key, value in (env or {}).items():
             if value is None:
@@ -74,6 +85,7 @@ class Probe:
         return proc.returncode, proc.stdout + proc.stderr
 
     def apidoc(self, confdir):
+        """Run ``scmd apidoc -c confdir -q``; return the exit code and the output."""
         return self.run(
             [
                 sys.executable,
@@ -103,11 +115,15 @@ class Probe:
         return code, log, data
 
     def html(self, name, page):
+        """Return the text of HTML page ``page`` of build ``name``."""
         return (self.work / "docs" / "_build" / name / "html" / page).read_text(
             encoding="utf-8"
         )
 
     def save(self):
+        """Write the checks and notes to ``<work>/<step>.json``, print the tally, and
+        return the exit code: 1 if a check failed.
+        """
         failed = [c for c in self.checks if not c["ok"]]
         path = self.work / f"{self.step}.json"
         path.write_text(
@@ -126,6 +142,9 @@ def lines(log, *words):
 
 
 def inventory(path):
+    """Return ``"<kind> <name>"`` -> URI of every object in the ``objects.inv`` at
+    ``path``.
+    """
     with open(path, "rb") as f:
         inv = InventoryFile.load(cast(Any, f), "", lambda _base, uri: uri)
     return {
@@ -136,6 +155,7 @@ def inventory(path):
 
 
 def html_tree(root):
+    """Return path -> bytes of every HTML page below ``root``."""
     return {
         p.relative_to(root).as_posix(): p.read_bytes()
         for p in sorted(root.rglob("*.html"))
@@ -166,6 +186,10 @@ def assemble_and_index(probe, builds):
 
 
 def prepare(probe):
+    """Step ``prepare``: copy the fixture to the work folder, write the API pages, build
+    Alpha and Beta alone and through sphinx-multiproject, check them, and assemble and
+    index the search site.
+    """
     work = probe.work
     if work.exists():
         shutil.rmtree(work)
@@ -386,6 +410,10 @@ def prepare(probe):
 
 
 def update(probe):
+    """Step ``update``: change Alpha's help, remove Beta's ``+gizmo`` namespace, write
+    the API pages again, rebuild incrementally and from scratch, check that no stale
+    page is left, and index the site again.
+    """
     work = probe.work
     compute = work / "alpha/src/+shared/compute.m"
     compute.write_text(
@@ -443,6 +471,9 @@ def update(probe):
 
 
 def main(argv=None):
+    """Run the step named on the command line in the work folder; return 1 if a check
+    failed.
+    """
     parser = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
     parser.add_argument("step", choices=("prepare", "update"))
     parser.add_argument(

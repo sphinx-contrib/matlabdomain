@@ -55,6 +55,9 @@ def _text(fragment):
 
 
 def projects(tmp):
+    """Copy the test roots, ``tests/test_docs`` and ``docs`` into ``tmp``; return name
+    -> the copy's Sphinx source folder.
+    """
     out = {}
     for root in sorted((REPO / "tests" / "roots").iterdir()):
         dst = tmp / "roots" / root.name
@@ -74,6 +77,9 @@ def projects(tmp):
 
 
 def inventory(path):
+    """Return the ``mat:`` entries of the ``objects.inv`` at ``path`` as sorted
+    ``"<type> <name> <uri> [<display name>]"`` lines.
+    """
     from sphinx.util.inventory import InventoryFile
 
     with open(path, "rb") as f:
@@ -90,6 +96,10 @@ def inventory(path):
 
 
 def snapshot(out_path):
+    """Build every project in every variant and write, per build, the exit code, the
+    warnings, the inventory and per HTML page its ids, links, signatures and text to
+    ``out_path`` (JSON).
+    """
     result = {}
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
@@ -131,6 +141,9 @@ def snapshot(out_path):
 
 
 def compare(a_path, b_path):
+    """Print what differs between snapshots ``a_path`` and ``b_path``, build by build
+    and page by page.
+    """
     a = json.loads(Path(a_path).read_text())
     b = json.loads(Path(b_path).read_text())
     same = 0

@@ -44,6 +44,9 @@ def _sweep(src_dir: Path) -> None:
 
 
 def main() -> None:
+    """Parse every ``.m`` file below SRC_DIR under cProfile, write ``parse.prof``, and
+    print the time, the failures and the top functions.
+    """
     src_dir = (
         Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else DEFAULT_SRC.resolve()
     )

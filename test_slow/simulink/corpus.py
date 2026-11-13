@@ -34,6 +34,9 @@ _FORMS = [
 
 
 def files(folders):
+    """Yield every ``.slx`` and ``.mdl`` file below ``folders``, skipping hidden folders
+    and unreadable ones.
+    """
     for folder in folders:
         for top, dirs, names in os.walk(folder, onerror=lambda _: None):
             dirs[:] = [d for d in dirs if not d.startswith(".")]
@@ -43,6 +46,9 @@ def files(folders):
 
 
 def mask_forms(path: Path, data: bytes) -> str:
+    """Return the forms in which the file keeps masks (``element``, ``object``,
+    ``parameters``), joined by ``+``; empty for none or an unreadable zip.
+    """
     texts = [data]
     if data[:2] == b"PK":
         try:
@@ -72,6 +78,9 @@ def _attempt(step, path):
 
 
 def check(path: Path, data: bytes) -> dict:
+    """Classify and read the file at ``path``; return its row: size, mask forms, kind,
+    layout, release, error, and the times to classify and to read.
+    """
     row = {"path": str(path), "size": len(data), "mask_forms": mask_forms(path, data)}
     t0 = time.perf_counter()
     row["classified"], error = _attempt(classify, path)
@@ -90,6 +99,9 @@ def check(path: Path, data: bytes) -> dict:
 
 
 def main(argv=None) -> int:
+    """Read each distinct Simulink file below the folders, print the report (and write
+    ``--csv``), and return 1 if the reader crashed.
+    """
     parser = argparse.ArgumentParser(
         description="Read every Simulink file below FOLDERs."
     )

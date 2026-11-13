@@ -99,6 +99,9 @@ def records(text):
 
 
 def subtypes(text):
+    """Return the warning records of a log counted by their ``[type.subtype]``
+    (``(none)`` without one), sorted.
+    """
     counts = collections.Counter()
     for record in records(text):
         m = SUBTYPE.search(record)
@@ -107,6 +110,9 @@ def subtypes(text):
 
 
 def run(*args):
+    """Run ``python -m <args>`` in the gauntlet's environment; return the completed
+    process and the wall time in seconds.
+    """
     start = time.perf_counter()
     proc = subprocess.run(
         [PY, "-m", *args],
@@ -120,12 +126,18 @@ def run(*args):
 
 
 def apidoc(docs, *flags):
+    """Run ``scmd apidoc`` with ``conf.py`` in ``docs``; return the process, the wall
+    time and the numbers of its summary line (None without one).
+    """
     proc, wall = run("sphinxcontrib.matlab_cli", "apidoc", *flags, "-c", str(docs))
     m = SUMMARY.search(proc.stdout)
     return proc, wall, m.groups() if m else None
 
 
 def manifest(folder):
+    """Return the path -> SHA-256 of every generated ``.rst`` file below ``folder``
+    (outside ``_build``).
+    """
     return {
         p.relative_to(folder).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
         for p in sorted(folder.rglob("*.rst"))
@@ -134,6 +146,11 @@ def manifest(folder):
 
 
 def build(docs, outdir, root, variant, extra=()):
+    """Build ``docs`` into ``outdir`` with the builder and options of ``variant``;
+    return the row of numbers (exit code, time, warnings by subtype, ...), the bytes of
+    the HTML pages, ``objects.inv`` and api-check reports, and the warning lines with
+    ``root`` replaced, counted.
+    """
     shutil.rmtree(outdir, ignore_errors=True)
     warnfile = outdir.parent / f"{outdir.name}.warnings.txt"
     builder, args = VARIANTS[variant]
@@ -189,6 +206,9 @@ def expected_rc(row):
 
 
 def compare_jobs(serial, files, warnings, par, pfiles, pwarnings):
+    """Return how the -j build differs from the serial one (exit code, output files,
+    warnings), or ``identical``.
+    """
     problems = []
     if par["rc"] != serial["rc"]:
         problems.append(f"exit {serial['rc']} vs {par['rc']}")
@@ -206,6 +226,9 @@ def compare_jobs(serial, files, warnings, par, pfiles, pwarnings):
 
 
 def environment():
+    """Return the facts of this run: date, platform, the versions of Python, Sphinx and
+    tree-sitter, and the matlabdomain commit.
+    """
     status = P.git(REPO, "status", "--porcelain", "--untracked-files=no")
     return {
         "date": time.strftime("%Y-%m-%d"),
@@ -221,6 +244,10 @@ def environment():
 
 
 def problems(project, row):
+    """Return the problems in the results ``row`` of ``project``: failed generations, a
+    rerun that changed pages, unexpected exit codes, tracebacks, duplicate objects and
+    -j differences.
+    """
     out = [
         f"apidoc: exit {t['rc']}, traceback {t['traceback']}, summary {t['summary']}"
         for t in row["trials"]
@@ -403,6 +430,9 @@ def print_quickstart_table(rows):
 
 
 def main():
+    """Run the gauntlet on the selected projects, write ``results.json`` and
+    ``manifest.json``, print the problems, and exit 1 if there is one.
+    """
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     parser.add_argument(
         "names", nargs="*", help="keep projects whose name contains one"

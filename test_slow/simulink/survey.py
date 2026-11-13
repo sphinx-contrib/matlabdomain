@@ -49,6 +49,9 @@ _SEARCHES = {
 
 
 def opc_parts(text: str) -> dict[str, bytes]:
+    """Return part name -> bytes of a MathWorks OPC text package (an ``.mdl`` file of
+    R2021b and later), decoding the BASE64 parts.
+    """
     parts, name, lines, b64 = {}, None, [], False
     for line in text.splitlines(keepends=True):
         if line.startswith(("__MWOPC_PART_BEGIN__ ", "__MWOPC_PACKAGE_END__")):
@@ -70,11 +73,17 @@ def opc_parts(text: str) -> dict[str, bytes]:
 
 
 def normalized(name: str) -> str:
+    """Return a part name with its numbers replaced by ``N`` (``system_12.xml`` ->
+    ``system_N.xml``), so releases that number parts differently compare equal.
+    """
     name = re.sub(r"system_[\d_]+\.xml", "system_N.xml", name)
     return re.sub(r"_\d[\d_]*(\.\w+)$", r"_N\1", name)
 
 
 def survey_file(path: Path) -> dict:
+    """Return the facts of one fixture: layout (``zip``, ``opc-text`` or ``classic``),
+    part names, mask forms, reference kinds and the parts that hold each probe text.
+    """
     data = path.read_bytes()
     if data[:2] == b"PK":
         with zipfile.ZipFile(path) as z:
@@ -108,10 +117,14 @@ def survey_file(path: Path) -> dict:
 
 
 def release_key(release: str) -> tuple[int, str, str]:
+    """Return the sort key of a release name (``R2024b`` -> ``(2024, "b", "")``)."""
     return int(release[1:5]), release[5], release[6:]
 
 
 def survey(root: Path) -> list[dict]:
+    """Survey every fixture in ``<root>/<release>/<variant>/``; return the rows sorted
+    by diagram, variant and release.
+    """
     rows = []
     for path in sorted(root.glob("*/*/*")):
         if path.suffix in (".slx", ".mdl"):
@@ -149,6 +162,9 @@ def changes(rows: list[dict]) -> list[str]:
 
 
 def main(argv=None) -> int:
+    """Survey the fixtures, write ``--out``, and print what changes from release to
+    release.
+    """
     parser = argparse.ArgumentParser(description="Survey the Simulink fixtures.")
     parser.add_argument("fixtures", nargs="?", type=Path, default=FIXTURES)
     parser.add_argument("--out", type=Path, help="write the survey as JSON")

@@ -61,12 +61,19 @@ def rmtree(path):
 
 
 class Probe:
+    """The probe's runner in the work folder ``work``: runs the commands, records each
+    check and the notes, and writes them to ``<work>/multiversion.json``.
+    """
+
     def __init__(self, work):
         self.work = work
         self.checks = []
         self.notes = {}
 
     def check(self, name, ok, detail: object = ""):
+        """Record check ``name`` as passed if ``ok``, and print it; ``detail`` is
+        printed when it fails.
+        """
         self.checks.append({"check": name, "ok": bool(ok), "detail": detail})
         print(
             f"{'ok  ' if ok else 'FAIL'} {name}"
@@ -74,6 +81,9 @@ class Probe:
         )
 
     def run(self, cmd, cwd, env=None):
+        """Run ``cmd`` in folder ``cwd`` with ``env`` added to the environment; return
+        the exit code and the combined output.
+        """
         full_env = {**os.environ, "NO_COLOR": "1", **(env or {})}
         proc = subprocess.run(
             cmd,
@@ -87,6 +97,9 @@ class Probe:
         return proc.returncode, proc.stdout + proc.stderr
 
     def git(self, repo, *args, date=None):
+        """Run ``git <args>`` in ``repo`` (author and committer date ``date``, if
+        given); return its output, or raise ``RuntimeError`` when it fails.
+        """
         env = {"GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date} if date else {}
         code, log = self.run(
             ["git", "-c", "core.autocrlf=false", *args], cwd=repo, env=env
@@ -96,6 +109,9 @@ class Probe:
         return log.strip()
 
     def apidoc(self, repo):
+        """Run ``scmd apidoc -c docs -q`` in ``repo``; return the exit code and the
+        output.
+        """
         return self.run(
             [
                 sys.executable,
@@ -110,6 +126,10 @@ class Probe:
         )
 
     def multiversion(self, repo, out, records, *args, env=None):
+        """Run sphinx-multiversion on ``repo`` into ``out``; return the exit code, the
+        output and the JSON record each version's build wrote into ``records``, by
+        version.
+        """
         if records.exists():
             shutil.rmtree(records)
         records.mkdir(parents=True)
@@ -124,6 +144,9 @@ class Probe:
         return code, log, found
 
     def save(self):
+        """Write the checks and notes to ``<work>/multiversion.json``, print the tally,
+        and return the exit code: 1 if a check failed.
+        """
         failed = [c for c in self.checks if not c["ok"]]
         path = self.work / "multiversion.json"
         path.write_text(
@@ -137,6 +160,10 @@ class Probe:
 
 
 def make_repo(probe, repo):
+    """Create the Git repository ``repo`` from the fixture: ``rev1`` tagged ``v1.0``,
+    then ``rev2`` on top (without the files its ``DELETED`` lists), tagged ``v2.0``, on
+    branch ``main``.
+    """
     # shutil.copy, not copy2: a copied mtime can hide a same-size change from Git.
     shutil.copytree(FIXTURE / "rev1", repo, copy_function=shutil.copy)
     probe.git(repo, "init", "-q", "-b", "main")
@@ -194,6 +221,9 @@ def snapshot(probe, repo, clone, refs):
 
 
 def html(out, version, page):
+    """Return the text of HTML page ``page`` of ``version`` in the multiversion output
+    ``out``.
+    """
     return (out / version / page).read_text(encoding="utf-8")
 
 
@@ -213,6 +243,7 @@ def environment(log):
 
 
 def inventory(path):
+    """Return ``"<kind> <name>"`` of every object in the ``objects.inv`` at ``path``."""
     with open(path, "rb") as f:
         inv = InventoryFile.load(cast(Any, f), "", lambda _base, uri: uri)
     return {f"{kind} {name}" for kind, items in inv.items() for name in items}
@@ -333,6 +364,9 @@ def check_versions(probe, out, records, label):
 
 
 def main(argv=None):
+    """Run the three scenarios in the work folder, write the checks and the site, and
+    return 1 if a check failed.
+    """
     parser = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
     parser.add_argument(
         "--work",

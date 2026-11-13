@@ -90,6 +90,7 @@ def seeds() -> list[tuple[str, bytes]]:
 
 
 def bit_flips(rng: random.Random, data: bytes) -> bytes:
+    """Flip one to eight random bits of ``data``."""
     out = bytearray(data)
     for _ in range(rng.randint(1, 8)):
         if out:
@@ -98,6 +99,7 @@ def bit_flips(rng: random.Random, data: bytes) -> bytes:
 
 
 def truncate(rng: random.Random, data: bytes) -> bytes:
+    """Cut ``data`` at a random length (possibly empty or whole)."""
     return data[: rng.randrange(len(data) + 1)]
 
 
@@ -144,6 +146,9 @@ TEXT_MUTATIONS: list[Callable[[random.Random, bytes], bytes]] = [
 
 
 def read_zip(data: bytes) -> list[tuple[str, bytes]] | None:
+    """Return ``(name, content)`` of each member of the zip ``data``, or None if it is
+    not a readable zip.
+    """
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as z:
             return [(i.filename, z.read(i)) for i in z.infolist()]
@@ -152,6 +157,7 @@ def read_zip(data: bytes) -> list[tuple[str, bytes]] | None:
 
 
 def write_zip(members: list[tuple[str, bytes]], rng: random.Random) -> bytes:
+    """Return a zip of ``members``, stored or deflated at random."""
     buf = io.BytesIO()
     method = rng.choice([zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED])
     with zipfile.ZipFile(buf, "w", method) as z:
@@ -184,6 +190,9 @@ def rewrite_members(rng: random.Random, data: bytes) -> bytes:
 
 
 def mutate(rng: random.Random, data: bytes) -> bytes:
+    """Apply one to three random mutations to ``data``: mostly zip member rewrites for a
+    zip, else text mutations.
+    """
     for _ in range(rng.choice([1, 1, 1, 2, 3])):
         if data[:2] == b"PK" and rng.random() < 0.7:
             data = rewrite_members(rng, data)
@@ -225,6 +234,9 @@ def keep_case(keep: Path | None, seed: int, n: int, suffix: str, data: bytes) ->
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run ``--cases`` mutated cases from ``--seed``, print the outcomes, keep the
+    escaping files, and return 1 if a case escaped or was too slow.
+    """
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cases", type=int, default=1000)

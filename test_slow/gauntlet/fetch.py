@@ -27,10 +27,15 @@ import projects as P
 
 
 class Skip(Exception):
+    """A project is skipped: its checkout cannot be brought to the target commit (the
+    message says why).
+    """
+
     pass
 
 
 def is_shallow(repo):
+    """Return True if the checkout ``repo`` is a shallow clone."""
     return P.git(repo, "rev-parse", "--is-shallow-repository") == "true"
 
 
@@ -53,6 +58,9 @@ def fetch(repo, ref, shallow):
 
 
 def init(project):
+    """Create an empty repository at the project's checkout, with long paths and
+    symbolic links on, and its URL as ``origin``.
+    """
     repo = project.checkout
     repo.mkdir(parents=True, exist_ok=True)
     P.git(repo, "init", "-q")
@@ -63,6 +71,10 @@ def init(project):
 
 
 def sync(project, target, args):
+    """Bring the project's checkout to commit ``target`` (None: keep HEAD, or the remote
+    HEAD for a new checkout or with ``--update``); return ``(commit, what was done)``.
+    Raise :class:`Skip` when local changes are in the way or ``origin`` is another URL.
+    """
     repo = project.checkout
     if not (repo / ".git").exists():
         init(project)
@@ -101,6 +113,9 @@ def sync(project, target, args):
 
 
 def main():
+    """Fetch or move the selected projects, print what each did, write the lock file,
+    and exit 1 if a project failed or was skipped.
+    """
     parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
     parser.add_argument(
         "names", nargs="*", help="keep projects whose name contains one"
