@@ -42,6 +42,8 @@ Requirements
 * ``tree-sitter`` 0.26.1 and ``tree-sitter-matlab`` 1.3.3. These
   are pinned exactly, because both projects change their output in minor
   releases; each new release is checked before the pins move.
+* On Python 3.11 only, ``typing-extensions`` 4.4 or newer, for the
+  ``override`` decorator that Python 3.12 added to ``typing``.
 
 Tested: Python |python-tested| and Sphinx |sphinx-tested|. Support is best
 effort: every Python version that is still maintained, and every Sphinx
