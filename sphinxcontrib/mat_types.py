@@ -2346,7 +2346,7 @@ class MatApplication(MatObject):
 
 
 class MatSimulinkFile(MatObject):
-    """A Simulink file: model, library or subsystem file (S5 documents them).
+    """A Simulink file: model, library or subsystem file.
 
     :param name: File name without extension.
     :param modname: Folder reference of its folder.

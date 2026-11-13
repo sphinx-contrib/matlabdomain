@@ -1,5 +1,5 @@
 """Every builder finishes a small project without an exception or a warning,
-and the HTML-format builders leave redirects that lead somewhere (G4-T10).
+and the HTML-format builders leave redirects that lead somewhere.
 
 The project sets what a builder needs to be quiet (``version``, ``copyright``,
 ``man_pages``), so a warning here is the extension's.
@@ -120,7 +120,7 @@ def test_builder_finishes_a_tiny_project_without_warning(make_app, tmp_path, bui
 def test_builders_without_html_pages_get_no_stable_addresses(
     make_app, tmp_path, builder
 ):
-    """Stable addresses are for builders that write ``.html`` pages (G4-F9)."""
+    """Stable addresses are for builders that write ``.html`` pages."""
     app, status, warnings = build(make_app, tiny_project(tmp_path), builder)
     out = Path(app.outdir)
     suffix = {"json": ".fjson", "pickle": ".fpickle"}[builder]

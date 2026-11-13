@@ -5,7 +5,7 @@ Usage (run from the matlabdomain repo root):
   # snapshot with whatever ``sphinxcontrib.matlab`` the interpreter imports
   <python> test_slow/naming/compare_render.py snapshot OUT.json
   <python> test_slow/naming/compare_render.py compare A.json B.json
-  # A = legacy dotted names, B = path references (Phase 3b): pairs old and
+  # A = legacy dotted names, B = path references: pairs old and
   # new anchors per page, then reports link, inventory, signature, text and
   # warning changes
   <python> test_slow/naming/compare_render.py report A.json B.json

@@ -1,4 +1,4 @@
-"""An incremental HTML build gives the same output as a clean one (G4-T3).
+"""An incremental HTML build gives the same output as a clean one.
 
 For each edit: a clean HTML build of a small project, the edit, an incremental
 HTML build into the same output and doctree folders, and a clean HTML build of
@@ -6,8 +6,8 @@ the edited project in fresh folders. The two output trees must be equal under
 ``snapshot``. The two-builder variant runs ``matlab-api-check`` and ``text``
 on the same doctree folder (other output folders) between the edit and the
 incremental HTML build, as the user guide allows for the API check. The three
-``*_after_another_builder`` tests show each cause of G4-T3 on the smallest
-project, with api-check alone (fixed by G4-F8: the HTML build that follows
+``*_after_another_builder`` tests show each cause of a difference on the smallest
+project, with api-check alone (the fix: the HTML build that follows
 another builder's reading writes every page once, and removes the pages of
 documents gone since its last build).
 
@@ -369,7 +369,7 @@ def test_removed_api_page_after_another_builder(make_app, tmp_path, check):
     assert not (outdir / "api/two/index.html").exists()
 
 
-# What each build writes (G4-F8). A build that read nothing and whose output
+# What each build writes. A build that read nothing and whose output
 # is in step with the environment writes nothing; one that follows another
 # builder's reading writes every page once.
 

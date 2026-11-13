@@ -1,4 +1,4 @@
-"""Documenting Simulink files and library blocks (S5a): the
+"""Documenting Simulink files and library blocks: the
 ``mat:simulink_*`` directives, their auto forms and roles.
 """
 
@@ -394,7 +394,7 @@ def test_reference_option_is_one_line():
     ]
 
 
-# --- Simulink documentation files (S5c) ---------------------------------------
+# --- Simulink documentation files ---------------------------------------------
 
 HID_RST = """\
 Hid library
@@ -604,7 +604,7 @@ def test_suffix_errors_and_another_drive(make_app, tmp_path, monkeypatch):
     assert warnings == ""
 
 
-# --- References (S5d) ---------------------------------------------------------
+# --- References ---------------------------------------------------------------
 
 REFERENCES = (
     "References Doc Text (library link): simulink/Model-Wide Utilities/DocBlock "
@@ -660,7 +660,7 @@ def test_reference_targets_that_are_not_names():
     ]
 
 
-# --- links from MATLAB help to Simulink files (S5e) -----------------------------
+# --- links from MATLAB help to Simulink files -----------------------------------
 
 USES = """\
 function uses

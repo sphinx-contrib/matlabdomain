@@ -9,8 +9,8 @@
 # enabled: false keeps the entry but skips the project (default true).
 # parallel_may_differ: true when a serial vs -j difference is not a problem.
 #
-# The pins: the default branch HEADs on 2026-10-30 (Phase 8); the Phase 7
-# projects kept their earlier pins.
+# The pins: the default branch HEADs on 2026-10-30; the projects added
+# before that date kept their earlier pins.
 
 [projects.Psychtoolbox-3]
 commit = "8f952b4cae7ee3fd90a792b1b36bfb3030ed701d"

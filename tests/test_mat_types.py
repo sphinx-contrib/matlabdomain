@@ -514,7 +514,7 @@ def test_file_parsing_with_no_encoding_specified(dir_test_data):
 
     obj = MatObject.parse_mfile(mfile, "f_with_latin_1", "test_data")
 
-    # Not valid UTF-8: decoded as ISO-8859-1, like MATLAB R2026a (Phase 5).
+    # Not valid UTF-8: decoded as ISO-8859-1, like MATLAB R2026a.
     assert obj.name == "f_with_latin_1"
     assert obj.docstring == "Analyse de la réponse à un créneau"
     assert [w[0] for w in obj.source_warnings] == ["encoding"]

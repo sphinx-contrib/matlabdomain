@@ -1,5 +1,5 @@
 """One ``conf.py``, the same settings and the same errors in ``sphinx-build``
-and in ``scmd apidoc`` (G4-T11).
+and in ``scmd apidoc``.
 
 Everything is driven by ``mat_config.CONFIG``: a new config value is covered
 without editing the tests. A row for which only one of the two refuses a

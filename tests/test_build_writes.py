@@ -1,4 +1,4 @@
-"""A build writes only to its output and doctree folders (G4-T6).
+"""A build writes only to its output and doctree folders.
 
 Where the project root is and where a tool writes is the user's choice, and a
 build writes where the user pointed it: its output folder and its doctree

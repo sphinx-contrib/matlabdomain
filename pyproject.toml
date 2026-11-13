@@ -156,7 +156,7 @@ typeCheckingMode = "basic"
 [tool.pytest]
 addopts = ["-ra", "--strict-config", "--strict-markers", "--show-capture=all", "--showlocals", "-s", "-vv"]
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS"]
-# Deprecation tripwire (G4-F10): the extension builds on autodoc's Documenter
+# Deprecation tripwire: the extension builds on autodoc's Documenter
 # classes, which Sphinx keeps only for backwards compatibility. A deprecation
 # warning attributed to this package's own modules fails the suite. The module
 # field is a regular expression matched from the start of the module name, so

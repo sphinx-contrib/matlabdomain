@@ -1,8 +1,8 @@
-"""Sphinx config for the SCM profiling harness (Phase 1 "before" profile).
+"""Sphinx config for the SCM profiling harness.
 
 Points `matlab_src_code_project_root` at a large real MATLAB tree (~1700 .m
-files). Before Phase 6, `analyze()` eagerly walked AND tree-sitter-parsed every
-file on `builder-inited`; since Phase 6 it only indexes them (read and
+files). Before the index became lazy, `analyze()` walked and parsed every
+file on `builder-inited`; now a build only indexes them (read and
 classify), and nothing is documented here, so nothing is parsed.
 """
 

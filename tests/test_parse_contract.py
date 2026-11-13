@@ -278,10 +278,11 @@ def test_special_files_are_indexed_but_hidden(make_app, tmp_path):
     assert "WARNING" not in app.warning.getvalue()
 
 
-# --- Docstring position (Section 2.7) -----------------------------------------
+# --- Docstring position -------------------------------------------------------
 
 # name: (file lines, {object: MATLAB R2026a ``help`` text or None}). Verified
-# with ``help`` on these exact files; HEAD before Phase 4 matched 12 of 29.
+# with ``help`` on these exact files; before the parser followed ``help``, it
+# matched 12 of 29.
 HELP_CASES = {
     "fBefore": (
         ["% fBefore LEAD", "% second line", "function fBefore", "x = 1;", "end"],

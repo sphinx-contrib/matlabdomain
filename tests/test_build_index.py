@@ -308,7 +308,7 @@ def test_build_index_of_a_missing_root(tmp_path):
     assert source_index.matlab_names == {}
 
 
-# --- Unicode forms and letter case of names (G4-T7) --------------------------
+# --- Unicode forms and letter case of names ----------------------------------
 
 NFC = "café"
 NFD = "café"
@@ -500,7 +500,7 @@ def test_include_pattern_folder_case_is_exact(tmp_path):
 
 @pytest.mark.skipif(
     sys.platform not in ("win32", "darwin"),
-    reason="G4-T7: case-insensitive file systems (Windows, macOS); not run on Linux",
+    reason="case-insensitive file systems (Windows, macOS); not run on Linux",
 )
 def test_include_pattern_folder_case_is_exact_on_case_insensitive_systems(tmp_path):
     # Matching is case-sensitive on every OS, also where
@@ -517,7 +517,7 @@ def test_include_pattern_folder_case_is_exact_on_case_insensitive_systems(tmp_pa
     ]
 
 
-# --- Sphinx output inside the root (G4-T7) -----------------------------------
+# --- Sphinx output inside the root -------------------------------------------
 
 
 def test_copied_html_output_without_buildinfo_is_skipped(tmp_path):

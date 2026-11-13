@@ -1,4 +1,4 @@
-"""Names, anchors and the inventory as properties (G4-T4).
+"""Names, anchors and the inventory as properties.
 
 (a) ``objects.inv`` read back with Sphinx's loader holds the objects of the
 domain; (b) seeded random checks of the naming functions; (c) which added

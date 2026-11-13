@@ -2,7 +2,7 @@
 
 Runs `scmd apidoc` and `sphinx-build` on real MATLAB projects and
 reports crashes, warnings by subtype, timings, and serial vs `-j`
-differences. Added in Phase 8 (14 projects, about 24,000 `.m` files).
+differences (14 projects, about 24,000 `.m` files).
 
 | File | Purpose |
 |---|---|

@@ -1,5 +1,5 @@
-"""Chooser pages are rendered only when they may differ from the files on disk
-(G4-F11): a build that writes no document page, whose chooser data is that of
+"""Chooser pages are rendered only when they may differ from the files on disk:
+a build that writes no document page, whose chooser data is that of
 ``mat/choosers.json`` and whose chooser files all exist renders none.
 
 Rendered pages are counted through ``html-page-context``, not timed.
