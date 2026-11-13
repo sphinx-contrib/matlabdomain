@@ -192,14 +192,24 @@ skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
 ignore = [
+    # Missing docstrings (D100 module, D101 class, D102 method, D103 function,
+    # D105 magic method, D107 __init__): not required yet; a later step of
+    # #361 adds them.
     "D100",
     "D101",
     "D102",
     "D103",
     "D105",
     "D107",
+    # D203 and D211 exclude each other; the code follows D211 (no blank line
+    # before a class docstring).
     "D203",
+    # The house style wraps the first sentence of a docstring over several
+    # lines, so no blank line follows the first line. Sphinx autosummary and
+    # napoleon take the first sentence, not the first line.
     "D205",
+    # D212 and D213 exclude each other; the code follows D212 (the summary
+    # starts on the first line).
     "D213"
 ]
 # List of all the ruff rules (includes why the rule matters)
@@ -232,9 +242,17 @@ max-complexity = 51
 # Tests and test tools compare with literal expected values (counts, exit
 # codes, the fuzzer's odds); a named constant for each would read worse.
 "test_slow/**/*" = ["PLR2004"]
-"tests/**/*" = ["ARG001", "ARG002", "D104", "E203", "PLR2004"]
+# These conf.py files share their settings with "from shared_conf import *"
+# after putting its folder on sys.path, as a multi-project Sphinx setup does.
+"test_slow/integrations/multiproject/**/conf.py" = ["E402", "F403"]
+# Pytest passes fixtures by parameter name, used in the body or not (ARG001),
+# and test doubles keep the signature of the method they replace (ARG002).
+# Literal expected values: see test_slow above (PLR2004).
+"tests/**/*" = ["ARG001", "ARG002", "PLR2004"]
+# Expected output is compared as whole lines, longer than the line length.
 "tests/test_autodoc.py" = ["E501"]
 "tests/test_mat_types.py" = ["E501"]
+"tests/test_upstream_issues.py" = ["E501"]
 
 [tool.ruff.lint.pylint]
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-args

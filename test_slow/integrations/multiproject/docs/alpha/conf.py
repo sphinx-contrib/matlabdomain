@@ -4,7 +4,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from shared_conf import *  # noqa: F403
+from shared_conf import *
 
 project = "Alpha"
 # Relative to this folder, the Sphinx source folder of the project.

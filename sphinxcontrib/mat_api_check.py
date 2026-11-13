@@ -196,7 +196,7 @@ def sections_for(labels):
     return sections
 
 
-def check_config(app, config):  # noqa: ARG001
+def check_config(_app, config):
     """``config-inited``: ConfigError for unknown rules or severities and for
     ignore patterns that are not relative globs.
     """

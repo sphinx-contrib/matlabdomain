@@ -5,7 +5,7 @@ import sys
 
 _here = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_here))
-from shared_conf import *  # noqa: E402, F403
+from shared_conf import *
 
 project = "Beta"
 matlab_src_code_project_root = "../../beta/src"

@@ -177,7 +177,7 @@ def _external_names(patterns):
     return re.compile("|".join(f"(?:{p})" for p in patterns) or "(?!)")
 
 
-def check_external_names(app, config):  # noqa: ARG001
+def check_external_names(_app, config):
     names = config.matlab_external_names
     if isinstance(names, str) or not isinstance(names, (list, tuple)):
         raise ConfigError(f"matlab_external_names must be a list, not {names!r}.")
@@ -1481,7 +1481,7 @@ def analyze(app):
     mat_types.analyze(app)
 
 
-def check_config_names(app, config):  # noqa: ARG001
+def check_config_names(_app, config):
     # vars(config): names another extension set earlier (sphinx-multiproject).
     names = {*config._raw_config, *vars(config)}
     mat_types.check_config_names(names, config._options)
@@ -1502,7 +1502,7 @@ def _get_version():
         return "0.0.0"
 
 
-def reconcile_objects(app, env):  # noqa: ARG001
+def reconcile_objects(_app, env):
     """``env-updated`` (main process, before the environment is pickled and
     before ``env-get-updated``): derive "objects" and "folders" of the
     references described or cleared in this build (``MATLABDomain.reconcile``).

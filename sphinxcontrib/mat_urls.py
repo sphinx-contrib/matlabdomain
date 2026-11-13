@@ -217,7 +217,7 @@ def is_chooser_uri(uri):
     return f"/{ROOT}/name/" in "/" + urlsplit(uri).path
 
 
-def rewrite_permalinks(app, pagename, templatename, context, doctree):  # noqa: ARG001
+def rewrite_permalinks(app, pagename, _templatename, context, doctree):
     """``html-page-context``: point the "¶" links of objects to their stable
     addresses. A document's page (one with a doctree; generated pages have
     none) also means that this build renders the chooser pages again.
@@ -596,7 +596,7 @@ def builder_key(builder):
     return (builder.name, os.path.normcase(os.path.abspath(str(builder.outdir))))
 
 
-def note_pages(app, env, added, changed, removed):  # noqa: ARG001
+def note_pages(app, env, _added, _changed, removed):
     """``env-get-outdated``: remember where each object was, and the removed
     documents, before this build reads anything.
     """

@@ -6,10 +6,8 @@ from pathlib import Path
 
 import pytest
 
-# needed for sphinx testing
-# import once in the pytest config
-# so it does not need to be imported in every test file
-from sphinx.testing.fixtures import make_app, test_params  # noqa: F401
+# Sphinx's test fixtures (make_app, test_params, ...) for every test file.
+pytest_plugins = ["sphinx.testing.fixtures"]
 
 
 def remove_build_tree(path):
@@ -35,7 +33,7 @@ def dir_test_data(rootdir) -> Path:
 
 
 @pytest.fixture
-def app(make_app, srcdir: Path, confdict: dict):  # noqa: F811
+def app(make_app, srcdir: Path, confdict: dict):
     """Run sphinx build on a source directory \
        and yield an initialize SphinxTestApp instance.
 

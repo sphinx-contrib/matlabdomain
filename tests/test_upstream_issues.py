@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """One regression test for each upstream issue that pull request #373 closes
 or answers, rebuilt from the text of the issue with 1.0 syntax.
 """

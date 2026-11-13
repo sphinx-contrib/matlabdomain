@@ -1319,7 +1319,7 @@ def analyze(app):
     dom.index_changed = old_shape is not None and old_shape != _index_shape(data)
 
 
-def outdated_docs(app, env, added, changed, removed):  # noqa: ARG001
+def outdated_docs(_app, env, _added, _changed, _removed):
     """``env-get-outdated``: documents that used a source file that changed,
     and, when files or folders were added, removed or changed type, every
     document that looked up sources.
@@ -1341,14 +1341,14 @@ def outdated_docs(app, env, added, changed, removed):  # noqa: ARG001
     ]
 
 
-def note_read_docs(app, env, docnames):  # noqa: ARG001
+def note_read_docs(_app, env, docnames):
     """``env-before-read-docs``: remember the documents this build reads."""
     dom = env.get_domain("mat")
     dom.read_docnames = list(docnames)
     dom.described_here = set()
 
 
-def warn_parsed_sources(app, env):  # noqa: ARG001
+def warn_parsed_sources(_app, env):
     """``env-updated``: parse-stage warnings, once per file that a document
     read in this build used, in index order (serial and parallel builds).
     """
