@@ -282,21 +282,40 @@ class MatlabDocumenter(PyDocumenter):
     def add_directive_header(self, sig):
         """Add the directive header and options to the generated content."""
         directive = getattr(self, "directivetype", self.objtype)
-        sourcename = self.get_sourcename()
-
-        self.add_line(
-            f".. {self.domain}:{directive}:: {self.format_name()}{sig}", sourcename
-        )
-
+        self.add_generated(f".. {self.domain}:{directive}:: {self.format_name()}{sig}")
         if self.options.no_index or self.options.noindex:
-            self.add_line("   :noindex:", sourcename)
-        self.add_line(f"   :reference: {self.ref}", sourcename)
+            self.add_generated("   :noindex:")
+        self.add_generated(f"   :reference: {self.ref}")
+
+    def add_generated(self, line):
+        """Add ``line``, which this documenter generates (not help text), at
+        ``generated_source``.
+        """
+        self.add_line(line, *self.generated_source())
+
+    def generated_source(self):
+        """Return ``(source, offset)`` of the lines this documenter generates
+        that are not help text: the code file of the object and the offset of
+        its declaration line (line 1 without one); for an object without a
+        file, the auto directive, in a page or in the code file of help text.
+        ``add_line`` takes a zero-based offset; docutils adds one.
+        """
+        obj = self.object
+        # a method in its own file of a class folder
+        ref = obj.ref if getattr(obj, "from_class_folder", False) else self.ref
+        file = mat_naming.parse_reference(ref)[0]
+        path = cast(Any, self.env.get_domain("mat")).source_paths().get(file)
+        if path is not None:
+            return path, (obj.line or 1) - 1
+        where, _, line = self.directive.location.rpartition(":")
+        code, found, _ = where.rpartition(f":{mat_sidecars.HELP_SOURCE}")
+        return (code if found else where), int(line or 1) - 1
 
     def add_flags(self, attrs, flags):
         """Add the flag options (``:abstract:``) whose MATLAB attribute is set."""
         for flag, attr in flags:
             if attrs.get(attr):
-                self.add_line(f"   :{flag}:", self.get_sourcename())
+                self.add_generated(f"   :{flag}:")
 
     @override
     def add_content(self, more_content, no_docstring=False):
@@ -869,14 +888,14 @@ class MatlabDocumenter(PyDocumenter):
         # make sure that the result starts with an empty line.  This is
         # necessary for some situations where another directive preprocesses
         # reST and no starting newline is present
-        self.add_line("", "<autodoc>")
+        self.add_generated("")
 
         # format the object's signature, if any
         sig = self.format_signature()
 
         # generate the directive header and options, if applicable
         self.add_directive_header(sig)
-        self.add_line("", "<autodoc>")
+        self.add_generated("")
 
         # e.g. the module directive doesn't have content
         self.indent += self.content_indent
@@ -920,18 +939,17 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
 
     @override
     def add_directive_header(self, sig):
-        sourcename = self.get_sourcename()
-        self.add_line(f".. {self.domain}:folder:: {self.ref}", sourcename)
+        self.add_generated(f".. {self.domain}:folder:: {self.ref}")
         if self.options.no_index or self.options.noindex:
-            self.add_line("   :noindex:", sourcename)
+            self.add_generated("   :noindex:")
 
         # add some folder-specific options
         if self.options.synopsis:
-            self.add_line(f"   :synopsis: {self.options.synopsis}", "<autodoc>")
+            self.add_generated(f"   :synopsis: {self.options.synopsis}")
         if self.options.platform:
-            self.add_line(f"   :platform: {self.options.platform}", "<autodoc>")
+            self.add_generated(f"   :platform: {self.options.platform}")
         if self.options.deprecated:
-            self.add_line("   :deprecated:", "<autodoc>")
+            self.add_generated("   :deprecated:")
 
     @override
     def get_object_members(self, want_all):
@@ -1130,11 +1148,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
         # add inheritance info, if wanted
         if self.options.show_inheritance:
-            self.add_line("", "<autodoc>")
+            self.add_generated("")
             if base_class_links := make_baseclass_links(self.env, self.object):
-                self.add_line(
-                    _("   Bases: %s") % ", ".join(base_class_links), "<autodoc>"
-                )
+                self.add_generated(_("   Bases: %s") % ", ".join(base_class_links))
 
     @override
     def get_doc(self):
@@ -1316,9 +1332,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
         # container
         if cons_names or prop_names or enum_names or meth_names or event_names:
-            self.add_line("", "<autodoc>")
-            self.add_line(".. container:: members", "<autodoc>")
-            self.add_line("", "<autodoc>")
+            self.add_generated("")
+            self.add_generated(".. container:: members")
+            self.add_generated("")
             self.indent += "   "
 
         # constructor
@@ -1354,9 +1370,9 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         exclude_members = self.options.exclude_members or []
 
         # output heading and section content
-        self.add_line(heading, "<autodoc>")
+        self.add_generated(heading)
         self.indent += "   "
-        self.add_line(".. ", "<autodoc>")  # a comment, to force a <dd> in the HTML
+        self.add_generated(".. ")  # a comment, to force a <dd> in the HTML
         if exclude_members is EMPTY:
             self.options.exclude_members = set(new_excludes)
         else:
@@ -1548,7 +1564,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                 # its constructor arguments
                 args = self.object.args
                 if args and self.env.config.matlab_show_property_default_value:
-                    self.add_line(f"   :annotation: ({', '.join(args)})", "<autodoc>")
+                    self.add_generated(f"   :annotation: ({', '.join(args)})")
             elif not self._datadescriptor:
                 obj_default = ""
                 if self.env.config.matlab_show_property_default_value:
@@ -1576,11 +1592,11 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
                         )
                     obj_default = prop_spec + obj_default
 
-                self.add_line(f"   :annotation: {obj_default}", "<autodoc>")
+                self.add_generated(f"   :annotation: {obj_default}")
         elif self.options.annotation is SUPPRESS:
             pass
         else:
-            self.add_line(f"   :annotation: = {self.options.annotation}", "<autodoc>")
+            self.add_generated(f"   :annotation: = {self.options.annotation}")
 
     @override
     def add_content(self, more_content, no_docstring=False):
@@ -1731,12 +1747,21 @@ def _escaped(text):
     return re.sub(r"([^\w\s])", r"\\\1", " ".join(text.split()))
 
 
+class _FileText(str):
+    """A line that holds reST text of a Simulink file (a mask description or
+    Help, a parameter prompt, a port description): help text of the object,
+    whose relative paths are relative to the code folder.
+    """
+
+    __slots__ = ()
+
+
 def _block(first, text, indent):
     """Lines of ``first`` followed by the lines of reST ``text``, indented."""
     lines = text.strip().splitlines() or [""]
     return [
-        f"{first}{lines[0]}".rstrip(),
-        *(f"{indent}{line}".rstrip() for line in lines[1:]),
+        _FileText(f"{first}{lines[0]}".rstrip()),
+        *(_FileText(f"{indent}{line}".rstrip()) for line in lines[1:]),
     ]
 
 
@@ -1792,15 +1817,14 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
 
     @override
     def add_directive_header(self, sig):
-        sourcename = self.get_sourcename()
-        self.add_line(f".. mat:{self.objtype}:: {self.format_name()}", sourcename)
+        self.add_generated(f".. mat:{self.objtype}:: {self.format_name()}")
         if self.options.no_index or self.options.noindex:
-            self.add_line("   :noindex:", sourcename)
+            self.add_generated("   :noindex:")
         ref = self.ref
         # An option value is one line without surrounding space.
         if "\n" in ref or ref != ref.strip() or ref[:1] == '"':
             ref = json.dumps(ref, ensure_ascii=False)
-        self.add_line(f"   :reference: {ref}", sourcename)
+        self.add_generated(f"   :reference: {ref}")
 
     @override
     def document_members(self, all_members=False):
@@ -1809,16 +1833,19 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
     @override
     def add_content(self, more_content, no_docstring=False):
         super().add_content(None, no_docstring)
-        sourcename = self.get_sourcename()
         # The directive puts the Simulink documentation file here.
-        self.add_line("", sourcename)
-        self.add_line(f".. {SIMULINK_DOC_PLACEHOLDER}", sourcename)
-        self.add_line("", sourcename)
+        self.add_generated("")
+        self.add_generated(f".. {SIMULINK_DOC_PLACEHOLDER}")
+        self.add_generated("")
         if more_content:
             for line, src in zip(more_content.data, more_content.items, strict=False):
                 self.add_line(line, src[0], src[1])
         for line in self.simulink_lines():
-            self.add_line(line, sourcename)
+            if isinstance(line, _FileText):
+                # no file lines: line 1, as for the description
+                self.add_line(line, self.help_source())
+            else:
+                self.add_generated(line)
 
     def simulink_parts(self):
         """Return ``(mask, ports, metadata)`` of the object."""
@@ -2050,13 +2077,12 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
                 items.append((block.path, f":mat:simulink_library:`{block.opens}`"))
         if not items:
             return
-        sourcename = self.get_sourcename()
-        self.add_line("", sourcename)
-        self.add_line(f".. rubric:: {_('Links to other blocks')}", sourcename)
-        self.add_line("", sourcename)
+        self.add_generated("")
+        self.add_generated(f".. rubric:: {_('Links to other blocks')}")
+        self.add_generated("")
         for path, link in items:
-            self.add_line(f"* {_literal(path)}: {link}", sourcename)
-        self.add_line("", sourcename)
+            self.add_generated(f"* {_literal(path)}: {link}")
+        self.add_generated("")
 
 
 class MatSimulinkSubsystemDocumenter(MatSimulinkDocumenter):

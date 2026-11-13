@@ -381,8 +381,7 @@ def test_reference_option_is_one_line():
         ref='lib.slx/Two\nLines "x"',
         display="lib/Two\nLines",
         options=SimpleNamespace(no_index=False, noindex=True),
-        get_sourcename=lambda: "src",
-        add_line=lambda line, _source: lines.append(line),
+        add_generated=lines.append,
     )
     documenter = cast(Any, mat_documenters.MatSimulinkDocumenter)
     fake.format_name = lambda: documenter.format_name(fake)

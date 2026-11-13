@@ -1587,6 +1587,9 @@ class MatObject:
     #: one-based file line of the first line of the help in a code file (None:
     #: no help, or help that is not on a file line)
     docstring_line: int | None = None
+    #: one-based line of the declaration in the code file (None: no
+    #: declaration line, as in a script, a Simulink file or a folder)
+    line: int | None = None
     ref: str
     matlab_name: str
     private: bool
@@ -2136,6 +2139,7 @@ class MatProperty(MatObject):
         self.default = attrs["default"]
         self.docstring = attrs["docstring"]
         self.docstring_line = attrs.get("docstring_line")
+        self.line = attrs.get("line")
         self.size = attrs["size"]
         self.type = attrs["type"]
         self.validators = attrs["validators"]
@@ -2173,6 +2177,7 @@ class MatEnumeration(MatObject):
         self.cls = cls
         self.docstring = attrs["docstring"]
         self.docstring_line = attrs.get("docstring_line")
+        self.line = attrs.get("line")
         #: constructor arguments (``Red (1, 0, 0)``), or None
         self.args = attrs.get("args")
 
@@ -2210,6 +2215,7 @@ class MatEvent(MatObject):
         self.attrs = attrs["attrs"]
         self.docstring = attrs["docstring"]
         self.docstring_line = attrs.get("docstring_line")
+        self.line = attrs.get("line")
 
     @override
     def ref_role(self):

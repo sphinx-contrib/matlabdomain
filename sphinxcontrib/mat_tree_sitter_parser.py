@@ -917,6 +917,7 @@ class MatClassParser:
                 "args": args,
                 "docstring": docstring,
                 "docstring_line": doc_line,
+                "line": enum.start_point.row + 1,
             }
 
     def _parse_attributes(self, attrs_nodes):

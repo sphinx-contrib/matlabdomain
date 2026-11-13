@@ -10,7 +10,12 @@ lists them in a table.
 A warning about a :term:`directive` names the file and line where the
 directive is written: the page, a file the page includes, a sidecar doc,
 or help text, as ``<file>:docstring of <reference>:<line>`` with the line
-in the code file.
+in the code file. A warning about the text that an auto directive adds
+around help text, for example a base class that is not documented, names
+the code file and the line of the declaration: the ``classdef`` line, the
+property line or the ``function`` line. A file without such a line, such
+as a script or a Simulink file, is at line 1. A folder has no file, so it
+is at the auto directive.
 
 Turning warnings off
 --------------------

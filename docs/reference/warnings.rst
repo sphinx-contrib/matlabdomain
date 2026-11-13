@@ -7,7 +7,10 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
 :doc:`../user-guide/warnings` explains each one. A warning about a
 directive names the file and line where the directive is written: a page,
 a file a page includes, a sidecar doc, or help text
-(``<file>:docstring of <reference>:<line>``).
+(``<file>:docstring of <reference>:<line>``). A warning about the text an
+auto directive adds around help text, such as a base class that is not
+documented, names the code file and the line of the declaration (line 1
+for a file without one, the auto directive for a folder).
 
 .. list-table::
    :header-rows: 1

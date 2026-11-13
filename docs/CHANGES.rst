@@ -281,7 +281,10 @@ Builds:
   ``mat.duplicate`` warnings, at the same lines; an incremental build
   gives the same as a fresh one for the pages it reads. A warning about a
   directive names the file and line where it is written: the page, an
-  included file, a sidecar doc, or help text. A ``mat.duplicate`` warning
+  included file, a sidecar doc, or help text. A warning about the text an
+  auto directive adds around help text, such as a base class that is not
+  documented, names the code file and the line of the declaration, not
+  ``<autodoc>``. A ``mat.duplicate`` warning
   for an object generated from help text points at the outermost auto
   directive. An object or folder described on several pages
   belongs to the same page after an incremental build as after a fresh
