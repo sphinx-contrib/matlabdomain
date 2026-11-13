@@ -683,8 +683,9 @@ CHUNKS = [
 
 def test_worker_leaves_pages_of_other_processes_to_check_consistency(make_app, srcdir):
     # A worker forked after another chunk was merged sees that chunk's
-    # objects: it warns neither about them (check_consistency does) nor less
-    # about its own pages and unchanged pages of an earlier build.
+    # objects: it warns neither about them (check_consistency does) nor about
+    # unchanged pages of an earlier build, which every worker sees (reconcile
+    # does, once), but about its own pages.
     app = build(make_app, srcdir)
     dom = app.env.get_domain("mat")
     old = "aa_old"  # not read again
@@ -703,11 +704,16 @@ def test_worker_leaves_pages_of_other_processes_to_check_consistency(make_app, s
     assert dom.data["objects"]["x/Obj.m"] == ("doc_b", "class", "Obj")
 
     dom.note_object("x/Old.m", "class", "Old", location=("doc_b", 6))
-    assert "of x/Old.m, other instance in" in app.warning.getvalue()
+    assert "[mat.duplicate]" not in app.warning.getvalue()
 
     app.env.temp_data["docname"] = "doc_c"
     dom.note_object("x/Obj.m", "class", "Obj", location=("doc_c", 8))
+    assert app.warning.getvalue().count("[mat.duplicate]") == 1
     assert "of x/Obj.m, other instance in" in app.warning.getvalue()
+
+    dom.reconcile()  # env-updated, in the main process
+    assert app.warning.getvalue().count("[mat.duplicate]") == 2
+    assert app.warning.getvalue().count("of x/Old.m, other instance in") == 1
 
 
 def _duplicate_warnings(app, root):
@@ -1009,6 +1015,56 @@ def test_winner_page_drops_its_description_in_a_parallel_read(
     assert "target not found" not in app.warning.getvalue()
     assert _duplicate_warnings(app, root) == []
     assert 'href="a.html#mat-g"' in (app.outdir / "index.html").read_text("utf-8")
+
+
+# An unchanged page U and two changed pages C1, C2 describe g. Six pages are
+# read again (-j 2 reads them in two chunks of three, both forked at once):
+# C1, C2 and fillers; U is not read.
+UNCHANGED_AND_CHANGED = {
+    # U < C1 < C2, C1 and C2 in different chunks
+    "u_c1_c2": ("a", ["b", "c1", "c2", "d1", "d2", "e"], ["b", "e"]),
+    # C1 < U < C2
+    "c1_u_c2": ("c", ["a", "b1", "b2", "d1", "d2", "e"], ["a", "e"]),
+    # C1 < C2 < U
+    "c1_c2_u": ("z", ["a", "b1", "b2", "d1", "d2", "e"], ["a", "e"]),
+    # U between two changed pages of the same chunk
+    "same_chunk": ("b", ["a", "c", "d", "e", "f", "g"], ["a", "c"]),
+}
+
+
+@pytest.mark.parametrize("parallel", [0, 2], ids=["serial", "parallel"])
+@pytest.mark.parametrize("case", list(UNCHANGED_AND_CHANGED))
+def test_unchanged_page_between_changed_pages_warns_like_a_fresh_build(
+    make_app, tmp_path, monkeypatch, case, parallel
+):
+    unchanged, read, changed = UNCHANGED_AND_CHANGED[case]
+    merged = []
+    original = MATLABDomain.merge_domaindata
+
+    def recording(self, docnames, otherdata):
+        merged.append(sorted(docnames))
+        return original(self, docnames, otherdata)
+
+    monkeypatch.setattr(MATLABDomain, "merge_domaindata", recording)
+    docs = sorted([unchanged, *read])
+    first = {
+        "index.rst": WINNER_INDEX + "".join(f"   {d}\n" for d in docs),
+        **{f"{d}.rst": f"{d}\n==\n\nText.\n" for d in read},
+        **{f"{d}.rst": G_PAGE.format(title=d) for d in [unchanged, *changed]},
+    }
+    second = {f"{d}.rst": f"{d}\n==\n\nOther text.\n" for d in read}
+    for d in changed:
+        second[f"{d}.rst"] = f"{d}\n=\n\nNew text.\n\n.. mat:function:: g(x)\n\n   G.\n"
+    app, root = _incremental(make_app, tmp_path, first, second, read, parallel)
+    if parallel and sphinx.util.parallel.parallel_available:
+        assert sorted(merged) == [read[:3], read[3:]]
+    # each describing page after the first warns about the one before it
+    describing = sorted([unchanged, *changed])
+    expected = sorted(
+        _dup(later, 4 if later == unchanged else 6, "g", earlier)
+        for earlier, later in itertools.pairwise(describing)
+    )
+    assert _duplicate_warnings(app, root) == expected
 
 
 def test_shared_folder_description_reads_only_the_changed_page(make_app, tmp_path):

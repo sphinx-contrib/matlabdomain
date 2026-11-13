@@ -1062,8 +1062,9 @@ class MATLABDomain(Domain):
 
         Warns on duplicates only when ``location`` is given, about the
         description before it in a fresh build's reading order (sorted
-        documents) if that one is in this process or in a document not read
-        in this build; ``reconcile`` and ``check_consistency`` warn the rest.
+        documents) if this process read that one in this build;
+        ``check_consistency`` warns about one another process read,
+        ``reconcile`` about one not read in this build.
         """
         docname = self.env.docname
         display = display or name
@@ -1074,12 +1075,7 @@ class MATLABDomain(Domain):
         if location is not None and (old is None or old[0] is None):
             earlier = [d for d in pages.get(name, ()) if d < docname]
             other = max(earlier) if earlier else None
-            # A description in a document that another process read in this
-            # build (a parallel-read worker forked after another chunk was
-            # merged) is check_consistency's to warn about.
-            if other is not None and (
-                other in self.described_here or other not in self.read_docnames
-            ):
+            if other is not None and other in self.described_here:
                 self._warn_duplicate(name, other, location)
         line = old[0] if old is not None and old[0] is not None else None
         if line is None and location is not None:
@@ -1105,8 +1101,10 @@ class MATLABDomain(Domain):
         """``env-updated``, after all reading and merging: each reference
         described or cleared in this build gets the entry of the last document
         that describes it in sorted order (a fresh build's reading order), or
-        none. Warns a document not read in this build about the one before it
-        that was read (a fresh build reads the later one later).
+        none. Warns each pair of neighbouring documents that describe it of
+        which this build read exactly one, at the later one about the earlier
+        one, as a fresh build does: every process sees the unread one, so
+        this is the one place that warns such a pair once.
         """
         touched, self._touched = self._touched, set()
         if not touched:
@@ -1123,7 +1121,7 @@ class MATLABDomain(Domain):
                 continue
             for earlier, later in itertools.pairwise(docs):
                 line = described[later][ref][0]
-                if earlier in read and later not in read and line is not None:
+                if (earlier in read) != (later in read) and line is not None:
                     self._warn_duplicate(ref, earlier, (later, line))
             winner = docs[-1]
             _, objtype, display, _ = described[winner][ref]
@@ -1235,10 +1233,8 @@ class MATLABDomain(Domain):
         # build does, each description warns about the one before it in
         # sorted order, at the line of its directive, where the two were read
         # in different chunks; a worker warned the pairs within its chunk
-        # (chunks are runs of sorted documents). Known difference from serial:
-        # in an incremental -j build, an unchanged page that describes the
-        # object is in every worker's data, so two changed pages in different
-        # chunks both warn about it (one warning more than serial).
+        # (chunks are runs of sorted documents); reconcile warns the pairs
+        # with a document not read in this build.
         chunks = self._chunks
         self._chunks = {}
         self._chunk_count = 0
