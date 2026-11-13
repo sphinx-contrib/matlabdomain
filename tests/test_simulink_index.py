@@ -1,5 +1,5 @@
 """Simulink files in the index: handlers, references with blocks, MATLAB
-names, lookups and incremental builds (S4 of the Simulink plan).
+names, lookups and incremental builds.
 """
 
 import builtins

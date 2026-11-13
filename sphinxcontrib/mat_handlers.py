@@ -12,7 +12,7 @@ handler provides:
   source file of this type (the base class checks that it is a file);
 - ``classify(path, text=None)``: the index type of the file (``unknown`` if
   it is not one);
-- ``read(path, encoding)``: the index stage, which returns
+- ``read(path, encoding)``: called by the index stage; returns
   ``(type, text, problems)`` with the decoded text (``None`` for binary
   formats) and ``(subtype, message, row)`` warnings; raises ``OSError``.
   The type it returns is the index type; a parsed object's
