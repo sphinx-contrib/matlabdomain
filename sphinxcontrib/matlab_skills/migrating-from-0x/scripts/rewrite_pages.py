@@ -79,6 +79,9 @@ def resolve(root, current, name):
 
 
 def folder_parts(ref):
+    """Return the folder names of folder reference ``ref``: ``a/+p/`` gives
+    ``["a", "+p"]``, the root folder ``./`` none.
+    """
     return [p for p in ref.rstrip("/").split("/") if p not in ("", ".")]
 
 
@@ -97,6 +100,9 @@ def rewrite_target(root, current, text):
 
 
 def rewrite(root, text, notes, where):
+    """Return page ``text`` rewritten to 1.0 syntax; append to ``notes`` what needs a
+    hand fix, located as ``where:line``.
+    """
     out = []
     current = []
     for lineno, line in enumerate(text.splitlines(keepends=True), 1):
@@ -194,6 +200,9 @@ def rewrite(root, text, notes, where):
 
 
 def pages(paths):
+    """Yield each file in ``paths``, and the ``.rst`` and ``.md`` pages below
+    each folder in it (outside ``_build``), sorted.
+    """
     for path in paths:
         if path.is_dir():
             yield from sorted(
@@ -206,6 +215,9 @@ def pages(paths):
 
 
 def main():
+    """Rewrite the pages given on the command line, or print the diff without
+    ``--write``, then list what to check by hand.
+    """
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

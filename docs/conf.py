@@ -1,9 +1,9 @@
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/stable/config
+"""Sphinx configuration of the sphinxcontrib-matlabdomain documentation.
+
+The docs use the extension itself: the user guide renders the sample project
+in ``docs/src``. The Sphinx options are listed at
+https://www.sphinx-doc.org/en/master/usage/configuration.html.
+"""
 
 # -- Path setup --------------------------------------------------------------
 

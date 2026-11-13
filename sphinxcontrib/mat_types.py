@@ -1565,6 +1565,7 @@ class MatObject:
         """Return the role used for references and automatic links."""
         return "ref"
 
+    @override
     def __reduce_ex__(self, protocol):
         # The ``__module__`` property breaks pickle's default class lookup, so
         # restore by class name. Live tree-sitter objects are dropped.
@@ -1576,13 +1577,22 @@ class MatObject:
 
     @property
     def __name__(self):
+        """The name of the object: autodoc reads ``__name__`` as it would a Python
+        object's.
+        """
         return self.name
 
+    @override
     def __repr__(self):
         # __str__() method not required, if not given, then __repr__() used
         return f'<{self.__class__.__name__}: "{self.name}">'
 
     def getter(self, name, *defargs) -> Any:
+        """Return attribute ``name`` for autodoc (``autodoc_attrgetter``), or the first
+        of ``defargs`` if the object has none.
+
+        Subclasses add their members and the attributes autodoc asks for.
+        """
         if name == "__name__":
             return self.__name__
         if defargs:
@@ -1840,22 +1850,35 @@ class MatModule(MatObject):
 
     @property
     def __doc__(self):
+        """A folder has no help text of its own: autodoc reads ``__doc__`` as None."""
         return None
 
     @property
     def __all__(self):
+        """``(name, object)`` of the folder's files and folders: autodoc's module
+        documenter lists the members in ``__all__``.
+        """
         return self.safe_getmembers()
 
     @property
     def __path__(self):
+        """The folder's path in a list, like the ``__path__`` of a Python package, which
+        autodoc reads.
+        """
         return [self.path]
 
     @property
     def __file__(self):
+        """The folder's path, like the ``__file__`` of a Python module, which autodoc
+        reads.
+        """
         return self.path
 
     @property
     def __package__(self):
+        """The folder reference, like the ``__package__`` of a Python module, which
+        autodoc reads.
+        """
         return self.package
 
     @override
@@ -1925,10 +1948,16 @@ class MatFunction(MatObject):
 
     @property
     def __doc__(self):
+        """The help text of the function: autodoc reads it as ``__doc__``, as it would
+        the docstring of a Python object.
+        """
         return self.docstring
 
     @property
     def __module__(self):
+        """The folder reference of the folder that holds the function: autodoc reads it
+        as ``__module__``, the module of a Python object.
+        """
         return self.module
 
     @override
@@ -1998,14 +2027,26 @@ class MatClass(MatObject):
 
     @property
     def __module__(self):
+        """The folder reference of the folder that holds the class: autodoc reads it as
+        ``__module__``, the module of a Python object.
+        """
         return self.module
 
     @property
     def __doc__(self):
+        """The help text of the class: autodoc reads it as ``__doc__``, as it would the
+        docstring of a Python object.
+        """
         return self.docstring
 
     @property
     def __bases__(self):
+        """Base class name -> its :class:`MatClass`, or None when no class of that name
+        is found from the class's folder.
+
+        Like the ``__bases__`` of a Python class; the base class links of the class
+        documenter read it.
+        """
         bases_ = dict.fromkeys(list(self.bases))  # make copy of bases
         dom = _domain()
         folder = folder_of(self.ref) if getattr(self, "ref", None) else None
@@ -2048,6 +2089,14 @@ class MatClass(MatObject):
 
 
 class MatProperty(MatObject):
+    """A property of a MATLAB class.
+
+    :param name: Name of the property.
+    :param cls: The :class:`MatClass` that declares it.
+    :param attrs: What the parser read: ``attrs``, ``default``, ``docstring``,
+        ``size``, ``type`` and ``validators``.
+    """
+
     def __init__(self, name, cls, attrs):
         super().__init__(name)
         self.cls = cls
@@ -2066,14 +2115,27 @@ class MatProperty(MatObject):
 
     @property
     def __module__(self):
+        """The folder reference of the folder that holds the class of the property:
+        autodoc reads it as ``__module__``, the module of a Python object.
+        """
         return self.cls.module
 
     @property
     def __doc__(self):
+        """The help text of the property: autodoc reads it as ``__doc__``, as it would
+        the docstring of a Python object.
+        """
         return self.docstring
 
 
 class MatEnumeration(MatObject):
+    """A member of the enumeration block of a MATLAB class.
+
+    :param name: Name of the enumeration member.
+    :param cls: The :class:`MatClass` that declares it.
+    :param attrs: What the parser read: ``docstring``.
+    """
+
     def __init__(self, name, cls, attrs):
         super().__init__(name)
         self.cls = cls
@@ -2089,14 +2151,27 @@ class MatEnumeration(MatObject):
 
     @property
     def __module__(self):
+        """The folder reference of the folder that holds the class of the enumeration
+        member: autodoc reads it as ``__module__``, the module of a Python object.
+        """
         return self.cls.module
 
     @property
     def __doc__(self):
+        """The help text of the enumeration member: autodoc reads it as ``__doc__``, as
+        it would the docstring of a Python object.
+        """
         return self.docstring
 
 
 class MatEvent(MatObject):
+    """An event of a MATLAB class.
+
+    :param name: Name of the event.
+    :param cls: The :class:`MatClass` that declares it.
+    :param attrs: What the parser read: ``attrs`` and ``docstring``.
+    """
+
     def __init__(self, name, cls, attrs):
         super().__init__(name)
         self.cls = cls
@@ -2111,14 +2186,30 @@ class MatEvent(MatObject):
 
     @property
     def __module__(self):
+        """The folder reference of the folder that holds the class of the event: autodoc
+        reads it as ``__module__``, the module of a Python object.
+        """
         return self.cls.module
 
     @property
     def __doc__(self):
+        """The help text of the event: autodoc reads it as ``__doc__``, as it would the
+        docstring of a Python object.
+        """
         return self.docstring
 
 
 class MatMethod(MatFunction):
+    """A method of a MATLAB class, declared in its classdef file or in a function file
+    of its class folder.
+
+    :param name: Name of the method.
+    :param parsed_function: The parser's result for the method
+        (``MatFunctionParser``, or ``MatSignature`` without a body).
+    :param modname: Folder reference of the class's folder.
+    :param cls: The :class:`MatClass` of the method.
+    """
+
     from_class_folder: bool
 
     def __init__(self, name, parsed_function, modname, cls):
@@ -2143,15 +2234,26 @@ class MatMethod(MatFunction):
         return "meth"
 
     @property
+    @override
     def __module__(self):
         return self.module
 
     @property
+    @override
     def __doc__(self):
         return self.docstring
 
 
 class MatScript(MatObject):
+    """A MATLAB script: a ``.m`` file whose first code is not ``function`` or
+    ``classdef``.
+
+    :param name: File name without extension.
+    :param modname: Folder reference of its folder.
+    :param tks: The root node of the file's tree-sitter tree.
+    :param encoding: The encoding of the file.
+    """
+
     def __init__(self, name, modname, tks, encoding):
         super().__init__(name)
         parsed_script = MatScriptParser(tks, encoding)
@@ -2165,10 +2267,16 @@ class MatScript(MatObject):
 
     @property
     def __doc__(self):
+        """The help text of the script: autodoc reads it as ``__doc__``, as it would the
+        docstring of a Python object.
+        """
         return self.docstring
 
     @property
     def __module__(self):
+        """The folder reference of the folder that holds the script: autodoc reads it as
+        ``__module__``, the module of a Python object.
+        """
         return self.module
 
 
@@ -2192,10 +2300,16 @@ class MatApplication(MatObject):
 
     @property
     def __doc__(self):
+        """The help text of the app (its summary and description): autodoc reads it as
+        ``__doc__``, as it would the docstring of a Python object.
+        """
         return self.docstring
 
     @property
     def __module__(self):
+        """The folder reference of the folder that holds the app: autodoc reads it as
+        ``__module__``, the module of a Python object.
+        """
         return self.module
 
 
@@ -2218,6 +2332,7 @@ class MatSimulinkFile(MatObject):
             mask = diagram.system_mask
             self.docstring = diagram.description or (mask.description if mask else "")
 
+    @override
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         # a subclass's own ``__doc__`` and ``__module__`` hide the properties
@@ -2233,10 +2348,16 @@ class MatSimulinkFile(MatObject):
 
     @property
     def __doc__(self):
+        """The file's description, else its system mask's: autodoc reads it as
+        ``__doc__``.
+        """
         return self.docstring
 
     @property
     def __module__(self):
+        """The folder reference of the folder that holds the Simulink file: autodoc
+        reads it as ``__module__``, the module of a Python object.
+        """
         return self.module
 
 
@@ -2292,10 +2413,14 @@ class MatBlock(MatObject):
 
     @property
     def __doc__(self):
+        """The block's description, else its mask's: autodoc reads it as ``__doc__``."""
         return self.docstring
 
     @property
     def __module__(self):
+        """The folder reference of the folder that holds the block's library: autodoc
+        reads it as ``__module__``, the module of a Python object.
+        """
         return self.module
 
 
@@ -2328,6 +2453,10 @@ class MatModuleAnalyzer:
 
     @classmethod
     def for_module(cls, modname):
+        """Return the analyzer of the folder ``modname`` (a folder reference), cached
+        per folder; raise :class:`MatcodeError` if no folder has that reference (autodoc
+        calls ``ModuleAnalyzer.for_module`` the same way).
+        """
         entry = cls.cache.get(modname)
         if entry is None:
             mod = resolve(_domain(), modname)

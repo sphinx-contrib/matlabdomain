@@ -148,6 +148,9 @@ def _html_builder(builder):
 
 
 def enabled(app):
+    """Return True if this build writes stable addresses: ``matlab_stable_urls`` is on
+    and the builder writes HTML pages (not EPUB).
+    """
     return app.config.matlab_stable_urls and _html(app)
 
 

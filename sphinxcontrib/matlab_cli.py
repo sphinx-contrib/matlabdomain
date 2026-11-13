@@ -16,6 +16,9 @@ COMMANDS = {
 
 
 def main(argv=None):
+    """Run ``scmd <command> ...`` (``apidoc``, ``quickstart`` or ``skills``) with the
+    arguments ``argv`` (default: the command line); return the exit code.
+    """
     prog = os.path.basename(sys.argv[0]) if argv is None else "scmd"
     parser = argparse.ArgumentParser(prog=prog, allow_abbrev=False)
     parser.add_argument(

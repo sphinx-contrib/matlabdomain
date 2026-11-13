@@ -62,18 +62,34 @@ class Handler:
     naming = "code"
 
     def discover(self, path) -> bool:
+        """Return True if ``path``, which has this handler's extension, is a source file
+        of its type; here: if it is a file.
+        """
         return os.path.isfile(path)
 
     def classify(self, path, text: str | None = None) -> str:
+        """Return the index type of the file at ``path`` (``text``: its text, if already
+        read), or ``unknown``.
+        """
         raise NotImplementedError
 
     def read(self, path, encoding=None):  # noqa: ARG002
+        """Return ``(type, text, problems)`` for the index stage: the index type, the
+        decoded text (None here: a binary format) and ``(subtype, message, row)``
+        warnings; raise ``OSError``.
+        """
         return self.classify(path), None, []
 
     def parse(self, path, stem, folder, encoding=None):
+        """Return the parsed :class:`~sphinxcontrib.mat_types.MatObject` of the file at
+        ``path``, named ``stem``, in folder reference ``folder``.
+        """
         raise NotImplementedError
 
     def document(self, kind: str) -> str | None:
+        """Return the auto directive that documents index type ``kind``
+        (``mat:autofunction``, ...), or None when ``kind`` has no directive.
+        """
         return f"mat:auto{kind}" if kind in self.kinds else None
 
 
@@ -174,10 +190,14 @@ class SimulinkHandler(Handler):
 
 
 class SlxHandler(SimulinkHandler):
+    """Simulink files saved as ``.slx``: a zip container of XML parts."""
+
     extension = ".slx"
 
 
 class MdlHandler(SimulinkHandler):
+    """Simulink files saved as ``.mdl``: one text file (the older format)."""
+
     extension = ".mdl"
 
 

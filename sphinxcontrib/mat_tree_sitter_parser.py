@@ -1,3 +1,10 @@
+"""Read MATLAB code with tree-sitter: the help, signature and members of
+scripts, functions and classes.
+
+The queries below select the parts of the tree; the parser classes turn the
+matches into the plain data that ``mat_types`` builds its objects from.
+"""
+
 import re
 from typing import cast
 
@@ -7,6 +14,7 @@ from tree_sitter import Language, Node, Query, QueryCursor
 
 
 def get_nodes(match_dict, key):
+    """Return the nodes captured as ``key`` in a query match, in source order."""
     res = match_dict.get(key)
     if res:
         return sorted(
@@ -16,15 +24,20 @@ def get_nodes(match_dict, key):
 
 
 def get_node(match_dict, key):
+    """Return the first node captured as ``key`` in a query match, or None."""
     res = match_dict.get(key)
     return res[0] if res else None
 
 
 def required_node(match_dict, key) -> Node:
+    """Return the first node captured as ``key``, for a capture the query always
+    makes (typed as a ``Node``).
+    """
     return cast(Node, get_node(match_dict, key))
 
 
 def node_text(node) -> bytes:
+    """Return the source bytes of ``node`` (typed as ``bytes``)."""
     return cast(bytes, node.text)
 
 
@@ -426,8 +439,14 @@ def process_default(node, encoding):
 
 
 class MatScriptParser:
+    """The help of a MATLAB script: its first comment block (``docstring``,
+    ``docstring_line``).
+
+    :param root_node: The root node of the script's tree-sitter tree.
+    :param encoding: The encoding of the file, to decode the comment text.
+    """
+
     def __init__(self, root_node, encoding):
-        """Parse a MATLAB script."""
         self.encoding = encoding
         #: one-based file line of the first line of the docstring
         self.docstring_line = None
@@ -450,8 +469,15 @@ class MatScriptParser:
 
 
 class MatFunctionParser:
+    """A MATLAB function definition: its name, input and output arguments,
+    argument validation blocks, help and line.
+
+    :param root_node: The root node of the file's tree-sitter tree, or the
+        node of a method's function definition.
+    :param encoding: The encoding of the file, to decode names and comments.
+    """
+
     def __init__(self, root_node, encoding):
-        """Parse a function definition."""
         self.encoding = encoding
         fun_nodes = [m[1]["f"][0] for m in QueryCursor(q_function).matches(root_node)]
         fun_node = fun_nodes[0] if fun_nodes else root_node
@@ -712,6 +738,13 @@ class MatSignature:
 
 
 class MatClassParser:
+    """A MATLAB ``classdef``: its name, attributes, superclasses, help,
+    properties, methods, method declarations, enumeration members and events.
+
+    :param root_node: The root node of the class file's tree-sitter tree.
+    :param encoding: The encoding of the file, to decode names and comments.
+    """
+
     def __init__(self, root_node, encoding):
         # DATA
         self.encoding = encoding

@@ -20,6 +20,9 @@ LINE = re.compile(
 
 
 def main():
+    """Print the warning groups of WARNINGS_FILE, most frequent first, with up to
+    ``--show`` example lines each, and the totals.
+    """
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

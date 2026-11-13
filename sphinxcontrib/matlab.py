@@ -70,7 +70,12 @@ class MatTypedField(TypedField):
 
 
 def keep_unresolved_references(app, env, node, contnode):
-    # Runs after intersphinx (priority 900), so other projects' names still link.
+    """``missing-reference``: render an unresolved MATLAB reference as its text, without
+    a warning, when it is a type, an ambiguous name, a name in ``matlab_external_names``
+    or a Simulink role outside the project's files.
+
+    Runs after intersphinx (priority 900), so other projects' names still link.
+    """
     if node.get("refdomain") != "mat":
         return None
     external = _external_names(tuple(app.config.matlab_external_names))
@@ -181,6 +186,9 @@ def _external_names(patterns):
 
 
 def check_external_names(_app, config):
+    """``config-inited``: ConfigError unless ``matlab_external_names`` is a list of
+    valid regular expressions.
+    """
     names = config.matlab_external_names
     if isinstance(names, str) or not isinstance(names, (list, tuple)):
         raise ConfigError(f"matlab_external_names must be a list, not {names!r}.")
@@ -805,6 +813,10 @@ def _short_title(title):
 
 
 class MatXRefRole(XRefRole):
+    """The roles of the MATLAB domain (``mat:func``, ``mat:class``, ...): they record
+    the current folder and class, which the reference is resolved from.
+    """
+
     @override
     def process_link(self, env, refnode, has_explicit_title, title, target):
         refnode["mat:folder"] = env.temp_data.get("mat:objfolder") or env.temp_data.get(
@@ -1039,6 +1051,9 @@ class MATLABDomain(Domain):
 
     @property
     def entities_table(self):
+        """Path reference -> parsed :class:`~sphinxcontrib.mat_types.MatObject` of the
+        files and folders parsed so far.
+        """
         return self.data["entities_table"]
 
     def note_object(self, name, objtype, display=None, location=None, folder=None):
@@ -1514,16 +1529,23 @@ class MATLABDomain(Domain):
 
 
 def analyze(app):
+    """``builder-inited``: index the project's sources (``mat_types.analyze``)."""
     mat_types.analyze(app)
 
 
 def check_config_names(_app, config):
+    """``config-inited``: ConfigError for a ``matlab_*`` name in ``conf.py`` that
+    this version does not have.
+    """
     # vars(config): names another extension set earlier (sphinx-multiproject).
     names = {*config._raw_config, *vars(config)}
     mat_types.check_config_names(names, config._options)
 
 
 def ensure_configuration(app, config):
+    """``config-inited``: ConfigError for invalid source settings or
+    ``matlab_auto_link``.
+    """
     mat_config.check_sources(config, app.srcdir)
     if config.matlab_auto_link not in (None, "basic", "all"):
         raise ConfigError("matlab_auto_link must be None, 'basic', or 'all'.")
@@ -1547,6 +1569,9 @@ def reconcile_objects(_app, env):
 
 
 def setup(app):
+    """Register the MATLAB domain, its directives, documenters, builders, config values
+    and event handlers with Sphinx.
+    """
     # The mat:auto* directives read autodoc's config values.
     app.setup_extension("sphinx.ext.autodoc")
     app.connect("config-inited", check_config_names)

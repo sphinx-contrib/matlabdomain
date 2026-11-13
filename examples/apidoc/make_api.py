@@ -18,6 +18,9 @@ HERE = Path(__file__).resolve().parent
 
 
 def main(output_dir=HERE / "docs" / "api"):
+    """Index ``src/`` and write its API pages to ``output_dir``: the pages of
+    ``scmd apidoc --conf-dir docs``.
+    """
     # What to index: matlab_src_code_project_root and the other matlab_src_*
     # values; ``source_dir`` is the Sphinx source folder.
     settings = IndexSettings(

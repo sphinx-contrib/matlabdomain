@@ -85,6 +85,10 @@ MATLAB_KEYWORDS = frozenset(
 
 @dataclass(frozen=True)
 class MatlabName:
+    """How MATLAB names a file: the name it is called by, its namespace, the two joined,
+    the folder it is in, and whether it is private (in a ``private/`` folder).
+    """
+
     pseudo_name: str
     pseudo_package: str
     pseudo_fullname: str
@@ -102,6 +106,9 @@ def _release_key(release: str) -> tuple[int, str]:
 
 
 def validate_matlab_version(matlab_version: str) -> str:
+    """Return ``matlab_version`` (a release such as ``R2026a``) if it is well formed and
+    not older than ``MATLAB_VERSION_FLOOR``; raise ``ValueError`` otherwise.
+    """
     if _release_key(matlab_version) < _release_key(MATLAB_VERSION_FLOOR):
         raise ValueError(
             f"matlab_version {matlab_version} is older than the oldest supported "
@@ -116,6 +123,9 @@ def has_matlab_behavior(rule: str, matlab_version: str) -> bool:
 
 
 def default_namelengthmax(matlab_version: str) -> int:
+    """Return MATLAB's ``namelengthmax`` in release ``matlab_version``: 2048 from the
+    release that raised it, else 63.
+    """
     return 2048 if has_matlab_behavior("namelengthmax_2048", matlab_version) else 63
 
 
@@ -129,6 +139,9 @@ def is_valid_identifier(
     *,
     allow_keywords: bool,
 ) -> bool:
+    """Return True if ``name`` is a valid MATLAB identifier of at most ``namelengthmax``
+    characters; a keyword is valid only with ``allow_keywords``.
+    """
     if not isinstance(name, str) or not name:
         return False
     if not _identifier_pattern(namelengthmax).match(name):

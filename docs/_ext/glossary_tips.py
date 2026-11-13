@@ -38,6 +38,7 @@ UNLINKED = (nodes.reference, addnodes.pending_xref, addnodes.download_reference)
 
 
 def setup(app: Sphinx) -> ExtensionMetadata:
+    """Add the tip assets to HTML pages and write the tips when writing starts."""
     app.connect("builder-inited", _add_assets)
     app.connect("write-started", _write_tips)
     return {"version": "1", "parallel_read_safe": True, "parallel_write_safe": True}

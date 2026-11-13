@@ -22,6 +22,7 @@ from sphinx.util.inventory import InventoryFile
 
 
 def load(path):
+    """Return role -> set of object names of the ``objects.inv`` at ``path``."""
     with open(path, "rb") as f:
         inv = InventoryFile.load(cast(Any, f), "", lambda _base, uri: uri)
     inv = getattr(inv, "data", inv)
@@ -47,6 +48,9 @@ def to_path_ref(root, dotted):
 
 
 def main():
+    """Print the object counts of one inventory, or compare two (see the module
+    docstring).
+    """
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

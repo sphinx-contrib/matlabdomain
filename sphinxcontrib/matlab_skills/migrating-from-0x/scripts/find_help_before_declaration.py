@@ -18,6 +18,7 @@ DECLARATION = re.compile(r"^\s*(function|classdef)\b")
 
 
 def first_lines(path):
+    """Yield the non-blank lines of the file at ``path`` (UTF-8, else Latin-1)."""
     raw = path.read_bytes()
     try:
         text = raw.decode("utf-8-sig")
@@ -29,6 +30,9 @@ def first_lines(path):
 
 
 def main():
+    """Print each ``.m`` file below ROOT whose first lines are comments followed by its
+    ``function`` or ``classdef`` line, with the first comment line, and the count.
+    """
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )

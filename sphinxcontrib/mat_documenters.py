@@ -349,10 +349,15 @@ class MatlabDocumenter(PyDocumenter):
         ]
 
     def class_object(self) -> MatClass | None:
-        # the associated MatClass object (for class, property and method documenters)
+        """Return the :class:`MatClass` the documented object belongs to: the class
+        itself, or the class of a property, method or event; None here.
+        """
         return None
 
     def auto_link_basic(self, docstrings):
+        """Link the names in the "See also" lines of ``docstrings``, the links of
+        ``matlab_auto_link = "basic"``; return ``docstrings``.
+        """
         return self.auto_link_see_also(docstrings)
 
     def _link(self, role, text, ref):
@@ -392,7 +397,11 @@ class MatlabDocumenter(PyDocumenter):
         return found[0] if found else None
 
     def auto_link_see_also(self, docstrings):
-        # autolink known names in See also
+        """Link each name in a "See also" line, and in the lines that continue it, to
+        the object it names from this object's folder; return ``docstrings``.
+
+        Names that match nothing, or several objects, stay text.
+        """
         see_also_re = re.compile(r"^(\s*See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
         see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
         is_see_also_line = False
@@ -470,8 +479,12 @@ class MatlabDocumenter(PyDocumenter):
         return docstrings
 
     def detect_literal_block(self, line, no_link_state):
-        # skip over literal blocks (i.e. line ending with ::, blank line, indented line)
-        # returns not_in_literal_block = True if the line is not in a literal block
+        """Advance the literal-block state machine by one help line.
+
+        A literal block is a line ending with ``::``, a blank line, then indented lines;
+        auto-links skip it. Return ``(not_in_literal_block, state)``: whether ``line``
+        may get links, and the state for the next line (start with ``_LINKING``).
+        """
         not_in_literal_block = False
         if line.endswith("::"):
             no_link_state = _AFTER_COLONS  # 1st sign of literal block
@@ -492,7 +505,10 @@ class MatlabDocumenter(PyDocumenter):
         return not_in_literal_block, no_link_state
 
     def auto_link_all(self, docstrings):
-        # auto-link known classes and functions everywhere
+        """Link the names of known classes, functions and other files anywhere in
+        ``docstrings`` (``matlab_auto_link = "all"``), outside literal blocks and inline
+        markup; return ``docstrings``.
+        """
         dom = self.env.get_domain("mat")
         folder = mat_naming.folder_of(self.ref)
         # negative look-behind for ` . + < @ * / | <non-breaking space>
@@ -569,7 +585,9 @@ class MatlabDocumenter(PyDocumenter):
         return docstrings
 
     def auto_link(self, docstrings):
-        # called for "basic" or "all" (matlab_auto_link is set)
+        """Apply ``matlab_auto_link``: the "See also" links for ``"basic"`` and
+        ``"all"``, and the links everywhere for ``"all"``; return ``docstrings``.
+        """
         docstrings = self.auto_link_basic(docstrings)
 
         # auto-link everywhere
@@ -579,6 +597,9 @@ class MatlabDocumenter(PyDocumenter):
         return docstrings
 
     def auto_link_methods(self, class_obj, docstrings):
+        """Link each ``name()`` in ``docstrings`` that is a method of ``class_obj`` to
+        that method, outside literal blocks; return ``docstrings``.
+        """
         for n in class_obj.methods:
             # negative look-behind for ` . < @ * / | <non-breaking space>, then
             # <name>()
@@ -865,6 +886,10 @@ class MatlabDocumenter(PyDocumenter):
 
 
 class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
+    """Documenter of ``mat:autofolder``: a folder (a namespace, a class folder or a
+    plain folder) and, with ``:members:``, its files and folders.
+    """
+
     objtype = "folder"
     accepts = staticmethod(is_folder_object)
     # Members share the options, so the class options apply to their members.
@@ -1157,7 +1182,11 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         return self.auto_link_class_members(docstrings)
 
     def auto_link_class_members(self, docstrings):
-        # auto link property and method names in class docstring
+        """Link the first word of each line in the "Properties:" and "Methods:" lists of
+        a class's help to that property or method; return ``docstrings``.
+
+        A list ends at the next blank line.
+        """
         prop_re = re.compile(r"(.* Properties:)", re.IGNORECASE)
         meth_re = re.compile(r"(.* Methods:)", re.IGNORECASE)
         is_prop_line = False
@@ -1185,6 +1214,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         return docstrings
 
     def link_member(self, type, line):
+        """Return ``line``, a "name - description" line, with the name linked to the
+        member of the class with that name, using role ``type`` (``attr`` or
+        ``meth``).
+        """
         parens = "()" if type == "meth" else ""
         p = re.compile(r"((\*\s*)?(\b\w*\b))(?=\s*-)")
         if match := p.search(line):
@@ -1309,6 +1342,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             self.document_member_section("Event Summary", non_events, all_members)
 
     def document_member_section(self, heading, new_excludes, all_members):
+        """Write the section ``heading`` ("Property Summary", ...) of the class's
+        members, leaving out the members in ``new_excludes`` (those of the other
+        sections) as well as the excluded ones.
+        """
         # save up original indent and exclude_members
         indent = self.indent
         exclude_members = self.options.exclude_members or []
@@ -1329,6 +1366,10 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
 
 class MatDataDocumenter(MatModuleLevelDocumenter, PyDataDocumenter):
+    """Documenter of ``mat:autodata``, autodoc's data documenter in the MATLAB domain;
+    among the members of a folder it accepts scripts.
+    """
+
     @classmethod
     @override
     def can_document_member(cls, member, membername, isattr, parent):
@@ -1395,6 +1436,9 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         return self.object.cls
 
     def auto_link_self(self, docstrings):
+        """Link the method's own name, followed by ``()``, in its help to the method;
+        return ``docstrings``.
+        """
         name = self.object.name
         # negative look-behind for ` . < @ * / | or <non-breaking space>
         # and negative look-ahead for ` * / | or <non-breaking space> or .<alphanum>
@@ -1548,6 +1592,9 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         return self.object.cls
 
     def auto_link_self(self, docstrings):
+        """Link the property's own name in its help to the property; return
+        ``docstrings``.
+        """
         name = self.object.name
         # negative look-behind for ` . < * / | or <non-breaking space>
         # and negative look-ahead for ` * / | or <non-breaking space>
@@ -1722,6 +1769,7 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
         "references": bool_option,
     }
 
+    @override
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.accepts = staticmethod(simulink_accepts(SIMULINK_CLASSES[cls.objtype]))
@@ -1842,6 +1890,10 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
         return [f"{label}:mat:obj:`{' '.join(value.split())}`"]
 
     def metadata_lines(self, metadata):
+        """Return the field lines of the file's metadata (release, model version,
+        creator, dates) chosen by ``:metadata:`` or ``matlab_simulink_metadata``; warn
+        about unknown keys.
+        """
         keys = self.options.metadata
         if keys is None:
             keys = self.env.config.matlab_simulink_metadata

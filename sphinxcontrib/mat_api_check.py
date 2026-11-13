@@ -286,6 +286,11 @@ def _why_unmatched(root, entry):
 
 @dataclass
 class Finding:
+    """One problem ``matlab-api-check`` found in the help of a documented object: the
+    object (path reference, MATLAB name, kind), the rule and its severity, the message,
+    and where (file path and line, or a docname).
+    """
+
     reference: str
     name: str | None
     kind: str
@@ -305,6 +310,7 @@ class Finding:
         return None if self.line is None else f"{self.path}:{self.line}"
 
     def to_json(self):
+        """Return the finding as a dict, one entry of the JSON report."""
         return {
             "reference": self.reference,
             "name": self.name,
