@@ -339,39 +339,12 @@ def _location(
     R2026a+, ...).
     """
     last = folder_parts[-1]
-    folder = _join_parts(folder_parts)
-
     if last.startswith("@"):
-        class_name = last[1:]
-        if not is_valid_identifier(class_name, namelengthmax, allow_keywords=False):
-            return None
-        chain = _package_chain(folder_parts[:-1], namelengthmax)
-        if chain is None:
-            # A class folder directly under an invalid package is not callable.
-            if len(folder_parts) > 1 and folder_parts[-2].startswith("+"):
-                return None
-            if any(part.startswith("@") for part in folder_parts[:-1]):
-                return None
-            return "class", class_name, folder
-        segments, idx = chain
-        if any(part.startswith("@") for part in folder_parts[: idx + 1]):
-            return None
-        return (
-            "class",
-            ".".join([*segments, class_name]),
-            _join_parts(folder_parts[: idx + 1]),
-        )
-
+        return _class_location(folder_parts, namelengthmax)
     if last.startswith("+"):
-        chain = _package_chain(folder_parts, namelengthmax)
-        if chain is None:
-            return None
-        segments, idx = chain
-        # Packages below a class folder are not callable.
-        if any(part.startswith("@") for part in folder_parts[: idx + 1]):
-            return None
-        return "package", ".".join(segments), _join_parts(folder_parts[: idx + 1])
+        return _package_location(folder_parts, namelengthmax)
 
+    folder = _join_parts(folder_parts)
     # Plain folder below a class folder: scripts/functions were callable before
     # R2026a; classes never were.
     if any(part.startswith("@") for part in folder_parts[:-1]):
@@ -379,6 +352,45 @@ def _location(
             return None
         return "class_subfolder", "", folder
     return "plain", "", folder
+
+
+def _class_location(
+    folder_parts: list[str], namelengthmax: int
+) -> tuple[str, str, str] | None:
+    """``_location`` of a class folder (``@name``)."""
+    class_name = folder_parts[-1][1:]
+    if not is_valid_identifier(class_name, namelengthmax, allow_keywords=False):
+        return None
+    chain = _package_chain(folder_parts[:-1], namelengthmax)
+    if chain is None:
+        # A class folder directly under an invalid package is not callable.
+        if len(folder_parts) > 1 and folder_parts[-2].startswith("+"):
+            return None
+        if any(part.startswith("@") for part in folder_parts[:-1]):
+            return None
+        return "class", class_name, _join_parts(folder_parts)
+    segments, idx = chain
+    if any(part.startswith("@") for part in folder_parts[: idx + 1]):
+        return None
+    return (
+        "class",
+        ".".join([*segments, class_name]),
+        _join_parts(folder_parts[: idx + 1]),
+    )
+
+
+def _package_location(
+    folder_parts: list[str], namelengthmax: int
+) -> tuple[str, str, str] | None:
+    """``_location`` of a package folder (``+name``)."""
+    chain = _package_chain(folder_parts, namelengthmax)
+    if chain is None:
+        return None
+    segments, idx = chain
+    # Packages below a class folder are not callable.
+    if any(part.startswith("@") for part in folder_parts[: idx + 1]):
+        return None
+    return "package", ".".join(segments), _join_parts(folder_parts[: idx + 1])
 
 
 def _private_name(
@@ -478,18 +490,36 @@ def form_matlab_name(
     kind, prefix, parent_folder = location
 
     if kind == "class":
-        class_name = folder_parts[-1][1:]
-        if is_class:
-            if stem != class_name:
-                return None
-            return MatlabName(stem, prefix, prefix, parent_folder)
-        if not is_valid_identifier(stem, namelengthmax, allow_keywords=True):
-            return None
-        return MatlabName(stem, prefix, stem, parent_folder)
-
+        return _name_in_class_folder(
+            stem, is_class, prefix, parent_folder, namelengthmax
+        )
     if not is_valid_identifier(stem, namelengthmax, allow_keywords=False):
         return None
+    return _name_outside_class_folder(stem, is_class, kind, prefix, parent_folder)
 
+
+def _name_in_class_folder(
+    stem: str, is_class: bool, class_name: str, parent_folder: str, namelengthmax: int
+) -> MatlabName | None:
+    """``form_matlab_name`` of a file in a class folder: the class itself, whose
+    qualified name is ``class_name``, or one of its methods.
+    """
+    if is_class:
+        # The classdef file is named like the folder: the last part of the name.
+        if stem != class_name.rpartition(".")[2]:
+            return None
+        return MatlabName(stem, class_name, class_name, parent_folder)
+    if not is_valid_identifier(stem, namelengthmax, allow_keywords=True):
+        return None
+    return MatlabName(stem, class_name, stem, parent_folder)
+
+
+def _name_outside_class_folder(
+    stem: str, is_class: bool, kind: str, prefix: str, parent_folder: str
+) -> MatlabName | None:
+    """``form_matlab_name`` of a file whose name is valid in a plain, package or
+    class subfolder (``kind`` and ``prefix`` from ``_location``).
+    """
     if kind == "class_subfolder":
         if is_class:
             return None
