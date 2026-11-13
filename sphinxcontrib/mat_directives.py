@@ -6,14 +6,14 @@
 
 from sphinx.ext.autodoc.directive import (
     AutodocDirective,
-    DocumenterBridge,
     DummyOptionSpec,
     parse_generated_content,
     process_documenter_options,
 )
 from sphinx.util.logging import getLogger
 
-from .mat_sidecars import HelpPaths
+from .mat_documenters import MatDocumenterBridge
+from .mat_sidecars import PAGE_LOCATION, HelpPaths
 from .mat_types import MatObject
 from .mat_typing import override
 
@@ -22,9 +22,6 @@ logger = getLogger("matlab-domain")
 #: options of this extension that ``autodoc_default_options`` may set (autodoc
 #: itself merges only its own); ``:no-<option>:`` turns one off
 DEFAULT_OPTIONS = ("hidden-mask-parameters", "references")
-#: ``env.temp_data`` key: the line of the outermost auto directive on the page
-#: while its generated content is parsed
-PAGE_LINE = "mat:page_line"
 
 
 class MatlabAutodocDirective(AutodocDirective):
@@ -82,27 +79,31 @@ class MatlabAutodocDirective(AutodocDirective):
                 ),
                 self.name,
                 exc,
-                location=(self.env.docname, lineno),
+                location=self.get_location(),
             )
             return []
 
-        # Objects described in the generated content are on the page at the
-        # line of the outermost auto directive (``self.lineno`` counts lines of
-        # the generated text in there).
+        # Objects described in the generated content are where the outermost
+        # auto directive is written (the generated text is in no file).
         temp_data = self.env.temp_data
-        outer = temp_data.get(PAGE_LINE)
+        outer = temp_data.get(PAGE_LOCATION)
         if outer is None:
-            temp_data[PAGE_LINE] = self.lineno
+            temp_data[PAGE_LOCATION] = self.get_location()
         try:
             return self._generate(doccls, documenter_options, source, lineno)
         finally:
             if outer is None:
-                temp_data.pop(PAGE_LINE, None)
+                temp_data.pop(PAGE_LOCATION, None)
 
     def _generate(self, doccls, documenter_options, source, lineno):
         reporter = self.state.document.reporter
-        params = DocumenterBridge(
-            self.env, reporter, documenter_options, lineno, self.state
+        params = MatDocumenterBridge(
+            self.env,
+            reporter,
+            documenter_options,
+            lineno,
+            self.state,
+            location=self.get_location(),
         )
         documenter = doccls(params, self.arguments[0])
         documenter.generate(more_content=self.content)

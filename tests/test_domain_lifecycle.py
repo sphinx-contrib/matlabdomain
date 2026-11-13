@@ -94,7 +94,7 @@ def used_paths(srcdir, refs=USED):
 
 
 def test_initial_data_layout():
-    assert MATLABDomain.data_version == 30
+    assert MATLABDomain.data_version == 31
     assert set(MATLABDomain.initial_data) == {
         "objects",
         "folders",
@@ -470,8 +470,8 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
         "sidecar_issues": {"doc_a": [], "doc_b": [("b/guide.md", "link", "x", 1)]},
         "xref_docs": {"doc_a": True, "doc_b": True},
         "described": {
-            "doc_a": {"a/Obj.m": (3, "class", "Obj", None)},
-            "doc_b": {"b/Obj.m": (5, "class", "Obj", None)},
+            "doc_a": {"a/Obj.m": ("doc_a.rst:3", "class", "Obj", None)},
+            "doc_b": {"b/Obj.m": ("doc_b.rst:5", "class", "Obj", None)},
         },
         "index": {"/elsewhere/x.m": {}},
         "sidecars": {"/elsewhere/guide.md": {}},
@@ -497,7 +497,9 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
     assert data["sidecar_issues"] == {"doc_a": []}
     assert "doc_a" in data["xref_docs"]
     assert "doc_b" not in data["xref_docs"]
-    assert data["described"]["doc_a"] == {"a/Obj.m": (3, "class", "Obj", None)}
+    assert data["described"]["doc_a"] == {
+        "a/Obj.m": ("doc_a.rst:3", "class", "Obj", None)
+    }
     assert "doc_b" not in data["described"]
     assert dom.sidecar_doc("a/guide.md") == "doc_a"
     assert dom.sidecar_doc("b/guide.md") is None
@@ -516,30 +518,30 @@ def test_note_object(make_app, srcdir):
 
     dom.note_object("some/Thing.m", "class", "Thing")
     assert dom.data["objects"]["some/Thing.m"] == ("index_first", "class", "Thing")
-    # Without a location (a folder) it is noted without a line: never warned
+    # Without a location (a folder) it is noted without one: never warned
     # about by check_consistency or reconcile.
     entry = dom.data["described"]["index_first"]["some/Thing.m"]
     assert entry == (None, "class", "Thing", None)
 
     warnings_before = app.warning.getvalue()
     dom.note_object("some/Thing.m", "function", "Thing")
-    dom.note_object("some/Thing.m", "class", "Thing", location=("index_first", 3))
+    dom.note_object("some/Thing.m", "class", "Thing", location="index_first.rst:3")
     assert app.warning.getvalue() == warnings_before  # the same page
     entry = dom.data["described"]["index_first"]["some/Thing.m"]
-    assert entry == (3, "class", "Thing", None)
+    assert entry == ("index_first.rst:3", "class", "Thing", None)
 
     # index_first sorts first and was read by this process: a later page warns.
     app.env.temp_data["docname"] = "zz_page"
-    dom.note_object("some/Thing.m", "class", "Thing", location=("zz_page", 5))
+    dom.note_object("some/Thing.m", "class", "Thing", location="zz_page.rst:5")
     warning = app.warning.getvalue()
     assert "duplicate object description of some/Thing.m" in warning
     assert "[mat.duplicate]" in warning
     assert dom.data["objects"]["some/Thing.m"] == ("zz_page", "class", "Thing")
 
 
-def _worker(docname, objects=(), folders=(), line=7):
-    """Domain data of a parallel-read worker that read ``docname``; its object
-    descriptions are at ``line`` (folders: None).
+def _worker(docname, objects=(), folders=(), root="", line=7):
+    """Domain data of a parallel-read worker that read ``docname`` (in the
+    folder ``root``); its object descriptions are at ``line`` (folders: None).
     """
     data = {name: {} for name in MATLABDomain.initial_data}
     data["objects"] = {ref: (docname, *entry) for ref, *entry in objects}
@@ -548,7 +550,9 @@ def _worker(docname, objects=(), folders=(), line=7):
     data["described"] = {
         docname: {
             ref: (
-                None if ref in folder_data else line,
+                None
+                if ref in folder_data
+                else f"{os.path.join(root, docname)}.rst:{line}",
                 objtype,
                 display,
                 folder_data.get(ref),
@@ -586,7 +590,7 @@ def test_merge_duplicate_object_like_serial(make_app, srcdir):
     # A serial build reads doc_a, doc_b, doc_c in this order: the last one
     # wins and each later description warns about the one before it.
     workers = {
-        doc: _worker(doc, [("x/Obj.m", "class", "Obj")])
+        doc: _worker(doc, [("x/Obj.m", "class", "Obj")], root=srcdir)
         for doc in ("doc_a", "doc_b", "doc_c")
     }
     expected = [
@@ -692,22 +696,22 @@ def test_worker_leaves_pages_of_other_processes_to_check_consistency(make_app, s
     dom.read_docnames = ["doc_a", "doc_b", "doc_c"]
     dom.described_here = set()
     described = dom.data["described"]
-    described["doc_a"] = {"x/Obj.m": (2, "class", "Obj", None)}  # merged chunk
-    described[old] = {"x/Old.m": (2, "class", "Old", None)}
+    described["doc_a"] = {"x/Obj.m": ("doc_a.rst:2", "class", "Obj", None)}  # merged
+    described[old] = {"x/Old.m": ("aa_old.rst:2", "class", "Old", None)}
     dom._pages_of = None
     app.env.temp_data["docname"] = "doc_b"
     app.warning.truncate(0)
     app.warning.seek(0)
 
-    dom.note_object("x/Obj.m", "class", "Obj", location=("doc_b", 4))
+    dom.note_object("x/Obj.m", "class", "Obj", location="doc_b.rst:4")
     assert "[mat.duplicate]" not in app.warning.getvalue()
     assert dom.data["objects"]["x/Obj.m"] == ("doc_b", "class", "Obj")
 
-    dom.note_object("x/Old.m", "class", "Old", location=("doc_b", 6))
+    dom.note_object("x/Old.m", "class", "Old", location="doc_b.rst:6")
     assert "[mat.duplicate]" not in app.warning.getvalue()
 
     app.env.temp_data["docname"] = "doc_c"
-    dom.note_object("x/Obj.m", "class", "Obj", location=("doc_c", 8))
+    dom.note_object("x/Obj.m", "class", "Obj", location="doc_c.rst:8")
     assert app.warning.getvalue().count("[mat.duplicate]") == 1
     assert "of x/Obj.m, other instance in" in app.warning.getvalue()
 
@@ -1115,3 +1119,38 @@ def test_nested_auto_directive_reports_the_line_of_the_outer_one(make_app, tmp_p
     app.build()
     assert _duplicate_warnings(app, tmp_path) == [_dup("b", 8, "h.m", "a")]
     assert app.env.get_domain("mat").data["objects"]["h.m"][0] == "b"
+
+
+def test_duplicate_below_an_include_is_at_its_line_in_parallel_and_serial(
+    make_app, tmp_path, monkeypatch
+):
+    # -j 2 reads a, c1-c3 and c4, c5, index, z in two chunks: the pair is
+    # warned by check_consistency, at the line z has after its include.
+    merged = []
+    original = MATLABDomain.merge_domaindata
+
+    def recording(self, docnames, otherdata):
+        merged.append(sorted(docnames))
+        return original(self, docnames, otherdata)
+
+    monkeypatch.setattr(MATLABDomain, "merge_domaindata", recording)
+    others = [f"c{i}" for i in range(1, 6)]
+    pages = {
+        **WINNER_SOURCES,
+        "conf.py": DUPLICATE_CONF + 'exclude_patterns = ["pad.txt"]\n',
+        "index.rst": WINNER_INDEX + "".join(f"   {d}\n" for d in ["a", *others, "z"]),
+        "a.rst": G_PAGE.format(title="A"),
+        "pad.txt": "".join(f"Padding {i}.\n\n" for i in range(10)),
+        "z.rst": "Z\n=\n\n.. include:: pad.txt\n\n.. mat:function:: g(x)\n\n   G.\n",
+        **{f"{d}.rst": f"{d}\n==\n\nText.\n" for d in others},
+    }
+    found = {}
+    for parallel in (0, 2):
+        root = tmp_path / str(parallel)
+        _write_pages(root, pages)
+        app = make_app(srcdir=root, parallel=parallel)
+        app.build()
+        found[parallel] = _duplicate_warnings(app, root)
+    if sphinx.util.parallel.parallel_available:
+        assert sorted(merged) == [["a", "c1", "c2", "c3"], ["c4", "c5", "index", "z"]]
+    assert found[0] == found[2] == [_dup("z", 6, "g", "a")]

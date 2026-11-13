@@ -7,6 +7,11 @@ type ``mat`` and a subtype, starts with the path reference of the file, and
 gives ``file:line`` where a line is known. :doc:`../reference/warnings`
 lists them in a table.
 
+A warning about a :term:`directive` names the file and line where the
+directive is written: the page, a file the page includes, a sidecar doc,
+or help text, as ``<file>:docstring of <reference>:<line>`` with the line
+in the code file.
+
 Turning warnings off
 --------------------
 
@@ -125,10 +130,13 @@ What each warning means
 ``mat.duplicate``
    The same object is described twice (add ``:no-index:`` to one of the
    descriptions), or two objects would get the same anchor, so the second
-   cannot be linked. It points at the second description: the line of its
-   directive on the page, or of the auto directive that generated it (a
-   method from ``:members:`` points at the ``mat:autoclass`` line). A
-   parallel build (``-j``) gives the same warnings as a serial one.
+   cannot be linked. It points at the second description, at the directive
+   a person wrote in a reStructuredText or Markdown file: its own
+   directive, or, for a description generated from help text, the
+   outermost auto directive (a method from ``:members:`` points at the
+   ``mat:autoclass`` line). A parallel build (``-j``) gives the same
+   warnings as a serial one, and an incremental build the same as a fresh
+   one for the pages it reads.
 
 ``mat.apidoc``
    ``scmd apidoc``: a file that cannot be read was left out, two

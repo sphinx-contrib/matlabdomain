@@ -21,6 +21,7 @@ from sphinx.locale import _ as translation
 from sphinx.roles import XRefRole
 from sphinx.transforms.post_transforms import SphinxPostTransform
 from sphinx.util.docfields import Field, GroupedField, TypedField
+from sphinx.util.docutils import SphinxDirective
 from sphinx.util.logging import getLogger
 from sphinx.util.nodes import make_refnode
 from sphinx.util.typing import OptionSpec, RoleFunction
@@ -406,8 +407,7 @@ class MatObjectDirective(ObjectDescription):
         # A directive written by hand: use the source file it names, if any.
         dom = self.env.get_domain("mat")
         folder = self.env.temp_data.get("mat:folder")
-        location = (self.env.docname, self.lineno)
-        found = mat_types.find_one(dom, name, folder, accept, location)
+        found = mat_types.find_one(dom, name, folder, accept, self.get_location())
         if found:
             return found[0], mat_types.display_name(dom, found[0])
         return (mat_naming.join_reference(folder, name) if folder else name), name
@@ -425,10 +425,10 @@ class MatObjectDirective(ObjectDescription):
         ref, display = name_cls
         target_id = mat_naming.make_target_id(ref)
 
-        # the page and the line of the directive written there
+        # the directive a person wrote: the outermost auto directive of
+        # generated content, else this one
         location = (
-            self.env.docname,
-            self.env.temp_data.get(mat_directives.PAGE_LINE, self.lineno),
+            self.env.temp_data.get(mat_sidecars.PAGE_LOCATION) or self.get_location()
         )
         # note target
         if target_id not in self.state.document.ids:
@@ -694,9 +694,7 @@ class MatFolder(MatObjectDirective):
     @override
     def handle_signature(self, sig, signode):
         dom = cast(MATLABDomain, self.env.get_domain("mat"))
-        ref = mat_types.folder_reference(
-            dom, sig, location=(self.env.docname, self.lineno)
-        )
+        ref = mat_types.folder_reference(dom, sig, location=self.get_location())
         if ref.rstrip("/").rpartition("/")[2].startswith("@"):
             logger.warning(
                 "[sphinxcontrib-matlabdomain] %s is a class folder; "
@@ -704,7 +702,7 @@ class MatFolder(MatObjectDirective):
                 ref,
                 type="mat",
                 subtype="directive",
-                location=(self.env.docname, self.lineno),
+                location=self.get_location(),
             )
             raise ValueError
         entity = dom.entities_table.get(ref)
@@ -766,13 +764,15 @@ class MatFolder(MatObjectDirective):
             folder = self.names[0][0]
         else:
             folder = mat_types.folder_reference(
-                self.env.get_domain("mat"), self.arguments[0]
+                self.env.get_domain("mat"),
+                self.arguments[0],
+                location=self.get_location(),
             )
         self.env.temp_data["mat:folder"] = folder
         return result
 
 
-class MatCurrentFolder(Directive):
+class MatCurrentFolder(SphinxDirective):
     """Set the current folder for relative references without documenting it.
 
     ``None`` clears it; ``.`` is the project root.
@@ -786,13 +786,12 @@ class MatCurrentFolder(Directive):
 
     @override
     def run(self):
-        env = self.state.document.settings.env
         folder = self.arguments[0].strip()
-        env.temp_data["mat:folder"] = (
+        self.env.temp_data["mat:folder"] = (
             None
             if folder == "None"
             else mat_types.folder_reference(
-                env.get_domain("mat"), folder, location=(env.docname, self.lineno)
+                self.env.get_domain("mat"), folder, location=self.get_location()
             )
         )
         return []
@@ -938,10 +937,11 @@ class MATLABDomain(Domain):
         "sidecar_issues": {},
         # docname -> True: it has a reference to a MATLAB object
         "xref_docs": {},
-        # docname -> {reference: (line, objtype, display, folder)}: the objects
-        # and folders the document describes, from which "objects" and
-        # "folders" are derived (``reconcile``): the line of the directive on
-        # the page (None for a folder, which never warns as a duplicate) and,
+        # docname -> {reference: (location, objtype, display, folder)}: the
+        # objects and folders the document describes, from which "objects" and
+        # "folders" are derived (``reconcile``): where a duplicate warning
+        # points, ``file:line`` of the directive a person wrote (None for a
+        # folder, which never warns as a duplicate) and,
         # for a folder, its "folders" data (synopsis, platform, deprecated)
         "described": {},
         # Shared source state, rebuilt by ``mat_types.analyze`` each build;
@@ -967,7 +967,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 30
+    data_version = 31
     indices: ClassVar[list[type[Index]]] = [
         MATLABFolderIndex,
     ]
@@ -1060,10 +1060,12 @@ class MATLABDomain(Domain):
         """Register a documented object (``name`` is its path reference); a
         folder description passes its ``folders`` data as ``folder``.
 
-        Warns on duplicates only when ``location`` is given, about the
-        description before it in a fresh build's reading order (sorted
-        documents) if this process read that one in this build;
-        ``check_consistency`` warns about one another process read,
+        ``location`` is where the description is written (``file:line``, see
+        ``MatObjectDirective.add_target_and_index``); the first one in a
+        document is kept. Warns on duplicates only when ``location`` is
+        given, about the description before it in a fresh build's reading
+        order (sorted documents) if this process read that one in this
+        build; ``check_consistency`` warns about one another process read,
         ``reconcile`` about one not read in this build.
         """
         docname = self.env.docname
@@ -1077,10 +1079,8 @@ class MATLABDomain(Domain):
             other = max(earlier) if earlier else None
             if other is not None and other in self.described_here:
                 self._warn_duplicate(name, other, location)
-        line = old[0] if old is not None and old[0] is not None else None
-        if line is None and location is not None:
-            line = location[1]
-        described[name] = (line, objtype, display, folder)
+        where = old[0] if old is not None and old[0] is not None else location
+        described[name] = (where, objtype, display, folder)
         pages.setdefault(name, set()).add(docname)
         self._touched.add(name)
         self.data["objects"][name] = (docname, objtype, display)
@@ -1120,9 +1120,9 @@ class MATLABDomain(Domain):
                 data["folders"].pop(ref, None)
                 continue
             for earlier, later in itertools.pairwise(docs):
-                line = described[later][ref][0]
-                if (earlier in read) != (later in read) and line is not None:
-                    self._warn_duplicate(ref, earlier, (later, line))
+                where = described[later][ref][0]
+                if (earlier in read) != (later in read) and where is not None:
+                    self._warn_duplicate(ref, earlier, where)
             winner = docs[-1]
             _, objtype, display, _ = described[winner][ref]
             data["objects"][ref] = (winner, objtype, display)
@@ -1231,8 +1231,8 @@ class MATLABDomain(Domain):
     def check_consistency(self):
         # Duplicates that parallel-read workers could not see: as a serial
         # build does, each description warns about the one before it in
-        # sorted order, at the line of its directive, where the two were read
-        # in different chunks; a worker warned the pairs within its chunk
+        # sorted order, at the location of its directive, where the two were
+        # read in different chunks; a worker warned the pairs within its chunk
         # (chunks are runs of sorted documents); reconcile warns the pairs
         # with a document not read in this build.
         chunks = self._chunks
@@ -1245,14 +1245,14 @@ class MATLABDomain(Domain):
         pages = self._pages()
         for ref in sorted(refs):
             for earlier, later in itertools.pairwise(sorted(pages[ref])):
-                line = described[later][ref][0]
+                where = described[later][ref][0]
                 if (
-                    line is not None
+                    where is not None
                     and earlier in chunks
                     and later in chunks
                     and chunks[earlier] != chunks[later]
                 ):
-                    self._warn_duplicate(ref, earlier, (later, line))
+                    self._warn_duplicate(ref, earlier, where)
 
     def _by_display(self, name):
         if self._displays is None:

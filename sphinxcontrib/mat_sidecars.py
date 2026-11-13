@@ -338,6 +338,10 @@ def relative_includes(env, current):
 #: source of the lines of help text (``MatlabDocumenter.add_content``), after
 #: the path of its file (``<file>:docstring of <reference>``, as in Python)
 HELP_SOURCE = "docstring of "
+#: ``env.temp_data`` key: the location (``file:line``) of the outermost auto
+#: directive while its generated content is parsed (none in a sidecar doc,
+#: which a person wrote)
+PAGE_LOCATION = "mat:page_location"
 
 
 def help_source(ref, path=None):
@@ -418,11 +422,6 @@ def _renderer_class():
             env["temp_root_node"] = self.current_node
 
         @override
-        def add_line_and_source_path(self, node, token):
-            super().add_line_and_source_path(node, token)
-            node.source = self.md_options["matlab_sidecar"].path
-
-        @override
         def create_warning(
             self, message, subtype, *, wtype=None, line=None, append_to=None
         ):
@@ -474,17 +473,27 @@ def _renderer_class():
 
 
 @contextmanager
-def _reporting_at(reporter, path):
+def _reporting_at(document, path, markdown):
     """Make the roles and warnings of the sidecar doc ``path`` being parsed
     name its file and line (the reporter looks lines up in the document that
-    includes it).
+    includes it). In Markdown, myst-parser takes the source of its nodes and
+    directives from the document, as its ``include`` does for the file it
+    includes. Its descriptions are where they are written, also in generated
+    content (``PAGE_LOCATION``).
     """
-    original = reporter.get_source_and_line
+    reporter = document.reporter
+    temp_data = document.settings.env.temp_data
+    original = reporter.get_source_and_line, document["source"]
+    outer = temp_data.pop(PAGE_LOCATION, None)
     reporter.get_source_and_line = lambda line=None: (path, line)
+    if markdown:
+        document["source"] = path
     try:
         yield
     finally:
-        reporter.get_source_and_line = original
+        reporter.get_source_and_line, document["source"] = original
+        if outer is not None:
+            temp_data[PAGE_LOCATION] = outer
 
 
 def parse_file(directive, path, ref):
@@ -499,11 +508,12 @@ def parse_file(directive, path, ref):
     sidecar = _Sidecar(ref, path, srcdir, env.get_domain("mat"))
     container = nodes.Element()
     container.document = directive.state.document
+    markdown = path.endswith(MARKDOWN)
     with (
         relative_includes(env, lambda: sidecar),
-        _reporting_at(directive.state.document.reporter, path),
+        _reporting_at(directive.state.document, path, markdown),
     ):
-        if path.endswith(MARKDOWN):
+        if markdown:
             parser = _markdown_parser(env)
             parser.options["document"] = directive.state.document
             parser.options["current_node"] = container

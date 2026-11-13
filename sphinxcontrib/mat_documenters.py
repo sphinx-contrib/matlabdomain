@@ -28,6 +28,7 @@ from sphinx.ext.autodoc import (
 from sphinx.ext.autodoc import (
     ModuleDocumenter as PyModuleDocumenter,
 )
+from sphinx.ext.autodoc.directive import DocumenterBridge
 from sphinx.locale import _
 from sphinx.util.docstrings import prepare_docstring
 from sphinx.util.inspect import safe_getattr
@@ -161,8 +162,21 @@ def follow_lines(before, numbers, after, start):
     return found
 
 
+class MatDocumenterBridge(DocumenterBridge):
+    """The ``DocumenterBridge`` of an auto directive, with the location
+    (``file:line``) of the directive for the warnings of its documenters,
+    which share it.
+    """
+
+    def __init__(self, *args, location):
+        super().__init__(*args)
+        self.location = location
+
+
 class MatlabDocumenter(PyDocumenter):
     """Base class for documenters of MATLAB objects."""
+
+    directive: MatDocumenterBridge
 
     domain = "mat"
     #: True for members of a class (methods, attributes)
@@ -210,7 +224,7 @@ class MatlabDocumenter(PyDocumenter):
                 dom, target, self.env.temp_data.get("mat:folder"), self.accepts
             )
         if len(found) != 1:
-            location = (self.env.docname, self.directive.lineno)
+            location = self.directive.location
             if found:
                 warn_ambiguous(target, [ref for ref, _ in found], location)
             else:
@@ -1908,7 +1922,7 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
                     ", ".join(SIMULINK_METADATA),
                     type="mat",
                     subtype="simulink",
-                    location=(self.env.docname, self.directive.lineno),
+                    location=self.directive.location,
                 )
             elif values.get(key):
                 text = _escaped(values[key])
@@ -2009,7 +2023,7 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
                     name,
                     type="mat",
                     subtype="not_found",
-                    location=(self.env.docname, self.directive.lineno),
+                    location=self.directive.location,
                 )
         return [
             block

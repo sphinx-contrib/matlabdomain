@@ -1,11 +1,18 @@
 """Hand-written directives and roles of the mat domain."""
 
+import os
 import re
+import shutil
+from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from sphinx import addnodes
+from sphinx.util import console
 
 from sphinxcontrib.matlab import MATLABFolderIndex
+
+strip_escape_sequences = cast(Any, console).strip_escape_sequences
 
 CONF = 'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
 
@@ -189,3 +196,206 @@ def test_classmethod_directive_is_removed(make_app, tmp_path):
     app = build(make_app, tmp_path, page)
     assert "classmethod" not in app.env.get_domain("mat").object_types
     assert 'Unknown directive type "mat:classmethod"' in app.warning.getvalue()
+
+
+# --- where the warnings of directives point --------------------------------------
+
+SLX = Path(__file__).parent / "simulink" / "fixtures" / "R2026b" / "slx"
+# (directive, what it warns): each directive warns once, at the place it is
+# written; a duplicate at the directive a person wrote in a reST or Markdown
+# file (``AUTO``: the outermost auto directive of help text).
+WARNING_DIRECTIVES = [
+    (".. mat:function:: dup", "mat.ambiguous"),
+    (".. mat:function:: g", "mat.duplicate"),
+    (".. mat:currentfolder:: ns", "mat.ambiguous"),
+    (".. mat:folder:: ns", "mat.ambiguous"),
+    (".. mat:folder:: @K", "mat.directive"),
+    (".. mat:currentfolder:: None", None),
+    (".. mat:autofunction:: nosuch", "mat.not_found"),
+    (".. mat:autofunction:: dup", "mat.ambiguous"),
+    (".. mat:autofunction:: h", "mat.duplicate"),
+    (".. mat:autofunction:: one\n   :members: [", "option"),
+    (".. mat:autosimulink_model:: probeModel\n   :metadata: bogus", "mat.simulink"),
+    (".. mat:autosimulink_library:: probeLib\n   :members: Nosuch", "mat.not_found"),
+]
+DIRECTIVES = "\n\n".join(directive for directive, _ in WARNING_DIRECTIVES) + "\n"
+FUNCTION = "function y = {0}(x)\n% {0} help\ny = x;\nend\n"
+PLACES = {
+    # on the page
+    "page": {"p.rst": "P\n=\n\n" + DIRECTIVES},
+    # on the page, below an included file
+    "below_include": {
+        "p.rst": "P\n=\n\n.. include:: pad.txt\n\n" + DIRECTIVES,
+        "pad.txt": "".join(f"Padding {i}.\n\n" for i in range(10)),
+    },
+    # in an included file
+    "included": {
+        "p.rst": "P\n=\n\nText.\n\nMore.\n\n.. include:: inc.txt\n",
+        "inc.txt": "Included.\n\n" + DIRECTIVES,
+    },
+    # in a sidecar doc
+    "sidecar": {
+        "p.rst": "P\n=\n\nText.\n\nMore.\n\n.. mat:autosidecar:: guide.rst\n",
+        "src/guide.rst": "Guide\n=====\n\nText.\n\n" + DIRECTIVES,
+    },
+    # in the help text of a file an auto directive documents
+    "help": {
+        "p.rst": "P\n=\n\nText.\n\n.. mat:autofunction:: f\n",
+        "src/f.m": "function y = f(x)\n% F help\n%\n"
+        + "".join(f"% {line}\n" if line else "%\n" for line in DIRECTIVES.split("\n"))
+        + "y = x;\nend\n",
+    },
+    # in a sidecar doc that help text renders
+    "sidecar_in_help": {
+        "p.rst": "P\n=\n\nText.\n\n.. mat:autofunction:: f\n",
+        "src/f.m": "function y = f(x)\n% F help\n%\n"
+        "% .. mat:autosidecar:: guide.rst\ny = x;\nend\n",
+        "src/guide.rst": "Guide\n=====\n\nText.\n\n" + DIRECTIVES,
+    },
+}
+LOCATION_SOURCES = {
+    "conf.py": 'extensions = ["sphinxcontrib.matlab"]\n'
+    'matlab_src_code_project_root = "src"\n'
+    'matlab_src_sidecar_suffixes = [".rst"]\n'
+    'exclude_patterns = ["inc.txt", "pad.txt", "_build"]\n',
+    "index.rst": "Index\n=====\n\n.. toctree::\n\n   a\n   p\n",
+    # sorts before p: p's descriptions of g and h are the duplicates
+    "a.rst": "A\n=\n\n.. mat:function:: g\n\n.. mat:autofunction:: h\n",
+    "src/a/dup.m": FUNCTION.format("dup"),
+    "src/b/dup.m": FUNCTION.format("dup"),
+    "src/a/+ns/x.m": FUNCTION.format("x"),
+    "src/b/+ns/y.m": FUNCTION.format("y"),
+    "src/@K/K.m": "classdef K\n% K help\nend\n",
+    "src/one.m": FUNCTION.format("one"),
+    "src/h.m": FUNCTION.format("h"),
+}
+WARNING_LINE = re.compile(r"^(.*):(\d+): (?:WARNING|ERROR): (.*?)(?: \[(\S+)\])?$")
+
+
+def located_warnings(app, root):
+    """``{(file relative to root, line, kind)}`` of the warnings of ``app``."""
+    found = set()
+    text = strip_escape_sequences(app.warning.getvalue())
+    for line in text.splitlines():
+        match = WARNING_LINE.match(line)
+        assert match is not None, line
+        where, number, message, kind = match.groups()
+        if kind is None and "An option to" in message:
+            kind = "option"
+        rel = os.path.relpath(where.partition(":docstring of ")[0], root)
+        if ":docstring of " in where:
+            rel += ":docstring of " + where.partition(":docstring of ")[2]
+        found.add((rel.replace(os.sep, "/"), int(number), kind))
+    return found
+
+
+def expected_warnings(file, text, outer=None, source=None):
+    """Return the warnings of ``WARNING_DIRECTIVES`` written in ``text`` of
+    ``file``; ``outer`` is (file, line) of the outermost auto directive for
+    help text, whose warnings are at ``source``.
+    """
+    lines = text.split("\n")
+    expected = set()
+    for directive, kind in WARNING_DIRECTIVES:
+        if kind is None:
+            continue
+        first = directive.split("\n")[0]
+        (line,) = [i for i, t in enumerate(lines, 1) if t.lstrip("% ") == first]
+        if kind == "mat.duplicate" and outer is not None:
+            expected.add((*outer, kind))
+        else:
+            expected.add((source or file, line, kind))
+    return expected
+
+
+def build_place(make_app, root, files, conf=""):
+    sources = {**LOCATION_SOURCES, **files}
+    sources["conf.py"] += conf
+    for path, text in sources.items():
+        (root / path).parent.mkdir(parents=True, exist_ok=True)
+        (root / path).write_text(text, encoding="utf-8")
+    (root / "src").mkdir(exist_ok=True)
+    for name in ("probeModel", "probeLib"):
+        shutil.copyfile(SLX / f"{name}.slx", root / "src" / f"{name}.slx")
+    app = make_app(srcdir=root, freshenv=True)
+    app.build()
+    return app
+
+
+@pytest.mark.parametrize("place", list(PLACES))
+def test_directive_warnings_name_the_place_of_the_directive(make_app, tmp_path, place):
+    files = PLACES[place]
+    app = build_place(make_app, tmp_path, files)
+    if place == "help":
+        text = files["src/f.m"]
+        expected = expected_warnings(
+            "src/f.m",
+            text,
+            outer=("p.rst", 6),
+            source="src/f.m:docstring of f.m",
+        )
+    else:
+        file = {
+            "included": "inc.txt",
+            "sidecar": "src/guide.rst",
+            "sidecar_in_help": "src/guide.rst",
+        }.get(place, "p.rst")
+        expected = expected_warnings(file, files[file])
+    assert located_warnings(app, tmp_path) == expected
+
+
+MARKDOWN_GUIDE = """\
+# Guide
+
+Text.
+
+```{mat:function} dup
+```
+
+```{mat:function} g
+```
+
+```{mat:currentfolder} ns
+```
+
+```{mat:folder} @K
+```
+
+```{mat:currentfolder} None
+```
+
+```{eval-rst}
+.. mat:autofunction:: nosuch
+
+.. mat:autofunction:: h
+```
+"""
+
+
+def test_directive_warnings_in_a_markdown_sidecar_doc(make_app, tmp_path):
+    pytest.importorskip("myst_parser")
+    files = {
+        "p.rst": "P\n=\n\nText.\n\nMore.\n\n.. mat:autosidecar:: guide.md\n",
+        "src/guide.md": MARKDOWN_GUIDE,
+    }
+    app = build_place(
+        make_app,
+        tmp_path,
+        files,
+        'extensions = ["sphinxcontrib.matlab", "myst_parser"]\n'
+        'matlab_src_sidecar_suffixes = [".rst", ".md"]\n',
+    )
+    lines = MARKDOWN_GUIDE.split("\n")
+
+    def at(text):
+        return lines.index(text) + 1
+
+    assert located_warnings(app, tmp_path) == {
+        ("src/guide.md", at("```{mat:function} dup"), "mat.ambiguous"),
+        ("src/guide.md", at("```{mat:function} g"), "mat.duplicate"),
+        ("src/guide.md", at("```{mat:currentfolder} ns"), "mat.ambiguous"),
+        ("src/guide.md", at("```{mat:folder} @K"), "mat.directive"),
+        # auto directives write reST: in an eval-rst block
+        ("src/guide.md", at(".. mat:autofunction:: nosuch"), "mat.not_found"),
+        ("src/guide.md", at(".. mat:autofunction:: h"), "mat.duplicate"),
+    }

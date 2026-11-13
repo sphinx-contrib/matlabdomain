@@ -4,7 +4,10 @@ Warnings
 Every warning of the :term:`extension` has the type ``mat`` and one of these
 subtypes. Turn one off with ``suppress_warnings = ["mat.<subtype>"]``, or
 all with ``"mat"``; ``scmd apidoc`` reads the same setting.
-:doc:`../user-guide/warnings` explains each one.
+:doc:`../user-guide/warnings` explains each one. A warning about a
+directive names the file and line where the directive is written: a page,
+a file a page includes, a sidecar doc, or help text
+(``<file>:docstring of <reference>:<line>``).
 
 .. list-table::
    :header-rows: 1
@@ -65,8 +68,8 @@ all with ``"mat"``; ``scmd apidoc`` reads the same setting.
    * - ``mat.duplicate``
      - an object described twice, or two objects that would get the same
        anchor
-     - where the second description is (the line of the auto directive
-       for generated content)
+     - where the second description is written (for content generated
+       from help text, the outermost auto directive)
    * - ``mat.sidecar``
      - a sidecar doc without a heading, a ``mat:autosidecar`` reference
        that is not an indexed sidecar doc, a project root on another drive
