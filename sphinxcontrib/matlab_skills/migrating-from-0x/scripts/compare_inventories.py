@@ -47,6 +47,63 @@ def to_path_ref(root, dotted):
     return "/".join(parts) + "/"
 
 
+def map_old_names(old, root):
+    """Map the 0.x dotted names of ``old`` (role -> names) to path references
+    through ``root``, in place; return the names not found below it.
+    """
+    unmapped = []
+    for role, names in list(old.items()):
+        if role == "mat:module":
+            # 0.x modules are 1.0 folders; class folders and the root get no object.
+            folders = old.setdefault("mat:folder", set())
+            for name in names:
+                ref = "./" if name == "." else to_path_ref(root, name)
+                if ref is None or not ref.endswith("/"):
+                    unmapped.append(f"{role} {name}")
+                elif ref != "./" and not ref.rstrip("/").split("/")[-1].startswith("@"):
+                    folders.add(ref)
+            del old[role]
+        elif role.startswith("mat:"):
+            mapped = set()
+            for name in names:
+                ref = to_path_ref(root, name)
+                if ref is None:
+                    unmapped.append(f"{role} {name}")
+                mapped.add(ref or name)
+            old[role] = mapped
+    return unmapped
+
+
+def print_comparison(old, new, show):
+    """Print the object counts of ``old`` and ``new`` by kind, the objects only
+    one side has (``show`` per kind and side) and the objects whose kind changed.
+    """
+    print(f"{'kind':20} {'old':>6} {'new':>6} {'old only':>9} {'new only':>9}")
+    details = []
+    for role in sorted(set(old) | set(new)):
+        o, n = old.get(role, set()), new.get(role, set())
+        print(f"{role:20} {len(o):6} {len(n):6} {len(o - n):9} {len(n - o):9}")
+        for side, names in (("old only", o - n), ("new only", n - o)):
+            if names:
+                shown = sorted(names)[:show]
+                more = (
+                    f" (+{len(names) - len(shown)} more)"
+                    if len(names) > len(shown)
+                    else ""
+                )
+                details.append(f"\n{role} {side}{more}:\n  " + "\n  ".join(shown))
+    where_old = {x: r for r, xs in old.items() for x in xs}
+    where_new = {x: r for r, xs in new.items() for x in xs}
+    moved = Counter(
+        f"{where_old[x]} -> {where_new[x]}"
+        for x in where_old.keys() & where_new.keys()
+        if where_old[x] != where_new[x]
+    )
+    if moved:
+        print("\nkind changed:", dict(moved))
+    print("".join(details))
+
+
 def main():
     """Print the object counts of one inventory, or compare two (see the module
     docstring).
@@ -73,53 +130,10 @@ def main():
     if len(rest) > 1:
         parser.error("give one inventory, or two to compare")
     old, new = load(first), load(rest[0])
-    unmapped = []
-    root = args.root.resolve() if args.root else None
-    for role, names in list(old.items()) if root else []:
-        if role == "mat:module":
-            # 0.x modules are 1.0 folders; class folders and the root get no object.
-            folders = old.setdefault("mat:folder", set())
-            for name in names:
-                ref = "./" if name == "." else to_path_ref(root, name)
-                if ref is None or not ref.endswith("/"):
-                    unmapped.append(f"{role} {name}")
-                elif ref != "./" and not ref.rstrip("/").split("/")[-1].startswith("@"):
-                    folders.add(ref)
-            del old[role]
-        elif role.startswith("mat:"):
-            mapped = set()
-            for name in names:
-                ref = to_path_ref(root, name)
-                if ref is None:
-                    unmapped.append(f"{role} {name}")
-                mapped.add(ref or name)
-            old[role] = mapped
+    unmapped = map_old_names(old, args.root.resolve()) if args.root else []
     if "mat-modindex" in old.get("std:label", set()):
         old["std:label"] = (old["std:label"] - {"mat-modindex"}) | {"mat-folderindex"}
-    print(f"{'kind':20} {'old':>6} {'new':>6} {'old only':>9} {'new only':>9}")
-    details = []
-    for role in sorted(set(old) | set(new)):
-        o, n = old.get(role, set()), new.get(role, set())
-        print(f"{role:20} {len(o):6} {len(n):6} {len(o - n):9} {len(n - o):9}")
-        for side, names in (("old only", o - n), ("new only", n - o)):
-            if names:
-                shown = sorted(names)[: args.show]
-                more = (
-                    f" (+{len(names) - len(shown)} more)"
-                    if len(names) > len(shown)
-                    else ""
-                )
-                details.append(f"\n{role} {side}{more}:\n  " + "\n  ".join(shown))
-    where_old = {x: r for r, xs in old.items() for x in xs}
-    where_new = {x: r for r, xs in new.items() for x in xs}
-    moved = Counter(
-        f"{where_old[x]} -> {where_new[x]}"
-        for x in where_old.keys() & where_new.keys()
-        if where_old[x] != where_new[x]
-    )
-    if moved:
-        print("\nkind changed:", dict(moved))
-    print("".join(details))
+    print_comparison(old, new, args.show)
     if unmapped:
         print(
             f"\n0.x names not found below the root ({len(unmapped)}):\n  "

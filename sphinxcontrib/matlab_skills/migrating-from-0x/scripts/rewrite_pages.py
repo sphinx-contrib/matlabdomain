@@ -108,95 +108,109 @@ def rewrite(root, text, notes, where):
     for lineno, line in enumerate(text.splitlines(keepends=True), 1):
         body = line.rstrip("\r\n")
         eol = line[len(body) :]
+        loc = f"{where}:{lineno}"
         if REMOVED_OPTION.match(body):
             option = body.strip(" \t>")
-            notes.append(f"{where}:{lineno}: removed {option}")
+            notes.append(f"{loc}: removed {option}")
             continue
         if REMOVED_DIRECTIVE.match(body):
-            notes.append(
-                f"{where}:{lineno}: check by hand (removed directive): {body.strip()}"
-            )
+            notes.append(f"{loc}: check by hand (removed directive): {body.strip()}")
         body = FRIEND_OPTION.sub(r"\1:access-list-members:", body)
         body = MODINDEX.sub(r"\1mat-folderindex\2", body)
         m = RST_DIRECTIVE.match(body) or MD_DIRECTIVE.match(body)
-        if m:
-            indent, prefix, kind, name, rest = m.groups()
-            prefix = prefix or ""
-            md = body.lstrip(" \t>").startswith("```")
-            # 0.x module names start at the root; other names may be relative.
-            ref = resolve(root, [] if kind.endswith("module") else current, name)
-            if kind.endswith("module"):
-                if ref is None or not ref.endswith("/"):
-                    notes.append(
-                        f"{where}:{lineno}: check by hand (folder not found): "
-                        f"{body.strip()}"
-                    )
-                else:
-                    current = folder_parts(ref)
-                    class_folder = bool(current) and current[-1].startswith("@")
-                    if ref == "./" or class_folder or kind == "currentmodule":
-                        new = "mat:currentfolder"
-                        if kind == "automodule":
-                            notes.append(
-                                f"{where}:{lineno}: check by hand (automodule of a "
-                                "class folder or the root; document its class or "
-                                f"files): {body.strip()}"
-                            )
-                    else:
-                        new = "mat:autofolder" if kind == "automodule" else "mat:folder"
-                    target = "." if ref == "./" else ref
-                    body = (
-                        f"{indent}```{{{new}}} {target}{rest}"
-                        if md
-                        else f"{indent}.. {new}:: {target}{rest}"
-                    )
-            elif ref is not None and ref != name and not ref.endswith("/"):
-                directive = f"{{{prefix}{kind}}}" if md else f"{prefix}{kind}::"
-                body = (
-                    f"{indent}```{directive} {ref}{rest}"
-                    if md
-                    else f"{indent}.. {directive} {ref}{rest}"
-                )
-            elif ref is None and "." in name:
-                notes.append(
-                    f"{where}:{lineno}: check by hand (not found below the root): "
-                    f"{body.strip()}"
-                )
-            elif ref is None and name:
-                notes.append(
-                    f"{where}:{lineno}: check by hand (kept as a MATLAB name): "
-                    f"{body.strip()}"
-                )
-
-        def role(m, md_role=False, lineno=lineno, current=current):
-            prefix, kind, target = m.groups()
-            prefix = prefix or ""
-
-            def form(kind, target):
-                return (
-                    f"{{{prefix}{kind}}}`{target}`"
-                    if md_role
-                    else f":{prefix}{kind}:`{target}`"
-                )
-
-            if kind == "mod":
-                ref = resolve(root, [], target.lstrip("~"))
-                if ref and ref.endswith("/"):
-                    prefix = "mat:"
-                    return form("folder", ref)
-                notes.append(f"{where}:{lineno}: check by hand (module role): {m[0]}")
-                return m[0]
-            if kind == "exc":
-                notes.append(
-                    f"{where}:{lineno}: check by hand (use :mat:class:): {m[0]}"
-                )
-            new = rewrite_target(root, current, target)
-            return form(kind, new) if new else m[0]
-
-        body = ROLE.sub(role, body)
-        body = MD_ROLE.sub(lambda m: role(m, md_role=True), body)
+        if m and m[3].endswith("module"):
+            body, current = rewrite_module_directive(root, current, m, notes, loc)
+        elif m:
+            body = rewrite_directive(root, current, m, notes, loc)
+        body = rewrite_roles(root, current, body, notes, loc)
         out.append(body + eol)
     return "".join(out)
+
+
+def directive_line(m, directive, args):
+    """Return the directive line of ``m`` (a match of ``RST_DIRECTIVE`` or
+    ``MD_DIRECTIVE``) in its syntax, with ``directive`` and ``args``.
+    """
+    if m.string.lstrip(" \t>").startswith("```"):
+        return f"{m[1]}```{{{directive}}} {args}"
+    return f"{m[1]}.. {directive}:: {args}"
+
+
+def rewrite_module_directive(root, current, m, notes, loc):
+    """Return ``(line, current)`` for the module directive ``m``: the line
+    rewritten to its folder form, and the folder parts of the current module.
+    """
+    _, _, kind, name, rest = m.groups()
+    # 0.x module names start at the root.
+    ref = resolve(root, [], name)
+    if ref is None or not ref.endswith("/"):
+        notes.append(f"{loc}: check by hand (folder not found): {m.string.strip()}")
+        return m.string, current
+    current = folder_parts(ref)
+    class_folder = bool(current) and current[-1].startswith("@")
+    if ref == "./" or class_folder or kind == "currentmodule":
+        new = "mat:currentfolder"
+        if kind == "automodule":
+            notes.append(
+                f"{loc}: check by hand (automodule of a class folder or the root; "
+                f"document its class or files): {m.string.strip()}"
+            )
+    else:
+        new = "mat:autofolder" if kind == "automodule" else "mat:folder"
+    target = "." if ref == "./" else ref
+    return directive_line(m, new, f"{target}{rest}"), current
+
+
+def rewrite_directive(root, current, m, notes, loc):
+    """Return the line of the auto directive ``m`` with its 0.x name rewritten
+    to a path reference; a name that is not found is noted and kept.
+    """
+    _, prefix, kind, name, rest = m.groups()
+    ref = resolve(root, current, name)
+    if ref is not None and ref != name and not ref.endswith("/"):
+        return directive_line(m, f"{prefix or ''}{kind}", f"{ref}{rest}")
+    if ref is None and "." in name:
+        notes.append(
+            f"{loc}: check by hand (not found below the root): {m.string.strip()}"
+        )
+    elif ref is None and name:
+        notes.append(
+            f"{loc}: check by hand (kept as a MATLAB name): {m.string.strip()}"
+        )
+    return m.string
+
+
+def rewrite_roles(root, current, body, notes, loc):
+    """Return the line ``body`` with the 0.x targets of its roles rewritten."""
+    body = ROLE.sub(lambda m: rewrite_role(root, current, m, notes, loc), body)
+    return MD_ROLE.sub(
+        lambda m: rewrite_role(root, current, m, notes, loc, md_role=True), body
+    )
+
+
+def role_text(prefix, kind, target, md_role):
+    """Return the role ``kind`` with ``target``, in Markdown with ``md_role``."""
+    if md_role:
+        return f"{{{prefix}{kind}}}`{target}`"
+    return f":{prefix}{kind}:`{target}`"
+
+
+def rewrite_role(root, current, m, notes, loc, md_role=False):
+    """Return the role of ``m`` (a match of ``ROLE``, or of ``MD_ROLE`` with
+    ``md_role``) with its 0.x target rewritten; what it cannot rewrite is noted.
+    """
+    prefix, kind, target = m.groups()
+    prefix = prefix or ""
+    if kind == "mod":
+        ref = resolve(root, [], target.lstrip("~"))
+        if ref and ref.endswith("/"):
+            return role_text("mat:", "folder", ref, md_role)
+        notes.append(f"{loc}: check by hand (module role): {m[0]}")
+        return m[0]
+    if kind == "exc":
+        notes.append(f"{loc}: check by hand (use :mat:class:): {m[0]}")
+    new = rewrite_target(root, current, target)
+    return role_text(prefix, kind, new, md_role) if new else m[0]
 
 
 def pages(paths):
