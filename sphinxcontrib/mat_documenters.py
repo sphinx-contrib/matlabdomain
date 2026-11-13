@@ -419,78 +419,76 @@ class MatlabDocumenter(PyDocumenter):
         see_also_re = re.compile(r"^(\s*See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
         see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
         is_see_also_line = False
-        for i in range(len(docstrings)):
-            for j in range(len(docstrings[i])):
-                if line := docstrings[i][j]:
-                    if is_see_also_line:
-                        # find name
-                        match = see_also_cond_re.search(line)
-                        if match is None:  # no names, e.g. a "---" line
-                            is_see_also_line = False
-                            continue
-                        entries_str = match.group(2)  # the entries
-                    elif match := see_also_re.search(line):
-                        is_see_also_line = True  # line begins with "See also"
-                        entries_str = match.group(2)  # the entries
-                elif is_see_also_line:  # blank line following see also section
-                    is_see_also_line = False  # end see also section
-
-                if is_see_also_line and entries_str:
-                    match = cast(re.Match[str], match)
-                    tail = match.group(3)
-                    # "See also f()": the parentheses are the last entry's
-                    if tail.startswith("()"):
-                        entries_str, tail = entries_str + "()", tail[2:]
-                    # split on ,
-                    entries = re.split(r"\s*,\s*", entries_str)
-                    for k in range(len(entries)):
-                        if entries[k].endswith("`"):
-                            continue
-
-                        # a class or function (path reference or MATLAB name)
-                        found = self._find_link(entries[k].rstrip("()"))
-                        if found is not None and found[1] is None:
-                            entries[k] = self._link("obj", entries[k], found[0])
-                            continue
-                        role = found[1].ref_role() if found is not None else None
-                        if found is not None and role in _FILE_ROLES:
-                            entries[k] = self._link(role, entries[k], found[0])
-                            continue
-
-                        # if we have an associated class, search properties and methods
-                        if cls := self.class_object():
-                            name = entries[k].rstrip("()")
-                            if name in cls.methods:
-                                entries[k] = (
-                                    f":mat:meth:`{name}() "
-                                    f"<{cls.fullname(self.env)}.{name}>`"
-                                )
-                                continue
-                            elif name in cls.properties:
-                                entries[k] = (
-                                    f":mat:attr:`{name} "
-                                    f"<{cls.fullname(self.env)}.{name}>`"
-                                )
-                                continue
-                            elif name in cls.events:
-                                entries[k] = (
-                                    f":mat:event:`{name} "
-                                    f"<{cls.fullname(self.env)}.{name}>`"
-                                )
-                                continue
-
-                        # a method, property or event of another class
-                        if found is not None and role in ["meth", "attr", "event"]:
-                            entries[k] = self._link(role, entries[k], found[0])
-                            continue
-
-                        # not yet handled
-                        entries[k] = f"``{entries[k]}``"
-
-                    if tail and not (tail[0].isspace() or tail[0] in _MARKUP_AFTER):
-                        tail = "\\ " + tail
-                    docstrings[i][j] = match.group(1) + ", ".join(entries) + tail
+        for lines in docstrings:
+            for j, line in enumerate(lines):
+                if not line:  # a blank line ends the see also section
+                    is_see_also_line = False
+                    continue
+                if is_see_also_line:
+                    match = see_also_cond_re.search(line)
+                    if match is None:  # no names, e.g. a "---" line
+                        is_see_also_line = False
+                        continue
+                else:
+                    match = see_also_re.search(line)  # begins with "See also"
+                    is_see_also_line = match is not None
+                if match is not None and match.group(2):  # the entries
+                    lines[j] = self._link_see_also_line(match)
         return docstrings
+
+    def _link_see_also_line(self, match):
+        """Return the "See also" line of ``match`` with its entries linked."""
+        entries_str, tail = match.group(2), match.group(3)
+        # "See also f()": the parentheses are the last entry's
+        if tail.startswith("()"):
+            entries_str, tail = entries_str + "()", tail[2:]
+        entries = [
+            self._link_see_also_entry(entry)
+            for entry in re.split(r"\s*,\s*", entries_str)
+        ]
+        if tail and not (tail[0].isspace() or tail[0] in _MARKUP_AFTER):
+            tail = "\\ " + tail
+        return match.group(1) + ", ".join(entries) + tail
+
+    def _link_see_also_entry(self, entry):
+        """Return the "See also" entry ``entry`` as a link to what it names, or as
+        literal text if it names nothing.
+        """
+        if entry.endswith("`"):
+            return entry
+        # a class or function (path reference or MATLAB name)
+        found = self._find_link(entry.rstrip("()"))
+        if found is not None and found[1] is None:
+            return self._link("obj", entry, found[0])
+        role = found[1].ref_role() if found is not None else None
+        if found is not None and role in _FILE_ROLES:
+            return self._link(role, entry, found[0])
+        # a method, property or event of the associated class
+        if (link := self._class_member_link(entry.rstrip("()"))) is not None:
+            return link
+        # a method, property or event of another class
+        if found is not None and role in ["meth", "attr", "event"]:
+            return self._link(role, entry, found[0])
+        # not yet handled
+        return f"``{entry}``"
+
+    def _class_member_link(self, name):
+        """Return a link to the method, property or event ``name`` of the class
+        the documented object belongs to; None if it has no such member.
+        """
+        if not (cls := self.class_object()):
+            return None
+        for members, role, parentheses in (
+            (cls.methods, "meth", "()"),
+            (cls.properties, "attr", ""),
+            (cls.events, "event", ""),
+        ):
+            if name in members:
+                return (
+                    f":mat:{role}:`{name}{parentheses} "
+                    f"<{cls.fullname(self.env)}.{name}>`"
+                )
+        return None
 
     def detect_literal_block(self, line, no_link_state):
         """Advance the literal-block state machine by one help line.
