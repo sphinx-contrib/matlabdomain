@@ -904,10 +904,20 @@ class MatXRefRole(XRefRole):
     the current folder and class, which the reference is resolved from.
     """
 
+    def help_folder(self):
+        """Return the folder of the code file whose help text the role is
+        written in (for an inherited member, the folder of the base), or None
+        outside help text.
+        """
+        ref = mat_sidecars.help_reference(self.get_source_info()[0])
+        return None if ref is None else mat_naming.folder_of(ref)
+
     @override
     def process_link(self, env, refnode, has_explicit_title, title, target):
-        refnode["mat:folder"] = env.temp_data.get("mat:objfolder") or env.temp_data.get(
-            "mat:folder"
+        refnode["mat:folder"] = (
+            self.help_folder()
+            or env.temp_data.get("mat:objfolder")
+            or env.temp_data.get("mat:folder")
         )
         cls = env.temp_data.get("mat:class")
         refnode["mat:class"] = cls[0] if cls else None

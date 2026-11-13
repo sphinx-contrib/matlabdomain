@@ -687,6 +687,73 @@ def test_see_also_in_inherited_help_resolves_from_the_base(make_app, tmp_path):
     assert ("func", "lib/private/libHelper.m") in xrefs(app)
 
 
+ROLES = {
+    "src/lib/Base3.m": (
+        "classdef Base3\n"
+        "    % BASE3 HELP\n"
+        "    methods\n"
+        "        function run(obj)\n"
+        "            % RUN HELP, see :mat:func:`helper`, :mat:func:`secret`\n"
+        "            % and :mat:meth:`other`.\n"
+        "        end\n"
+        "        function other(obj)\n"
+        "            % OTHER HELP\n"
+        "        end\n"
+        "    end\n"
+        "end\n"
+    ),
+    "src/lib/helper.m": "function helper\n% HELPER of lib\nend\n",
+    "src/lib/private/secret.m": "function secret\n% SECRET HELP\nend\n",
+    "src/app/helper.m": "function helper\n% HELPER of app\nend\n",
+    "src/app/Sub3.m": "classdef Sub3 < Base3\n% SUB3 HELP\nend\n",
+}
+
+
+def test_roles_in_inherited_help_resolve_from_the_base(make_app, tmp_path):
+    # A role in the help of a base member names what the base's folder sees:
+    # its own helper, not the one in the folder of the subclass, and the
+    # private function of its folder. A member name is one of the class
+    # documented.
+    app = build(
+        make_app,
+        tmp_path,
+        page(
+            autoclass("app/Sub3.m", ":inherited-members:"),
+            autoclass("lib/Base3.m"),
+            ".. mat:autofunction:: lib/helper.m\n",
+            ".. mat:autofunction:: app/helper.m\n",
+            ".. mat:autofunction:: lib/private/secret.m\n",
+        ),
+        ROLES,
+        conf="nitpicky = True\n",
+    )
+    assert warnings(app) == []
+    html = (Path(app.outdir) / "index.html").read_text(encoding="utf-8")
+    run = html[html.index('id="mat-app/Sub3.m.run"') :]
+    run = run[: run.index("</dd>")]
+    assert 'href="#mat-lib/helper.m"' in run
+    assert 'href="#mat-app/helper.m"' not in run
+    assert 'href="#mat-lib/private/secret.m"' in run
+    assert 'href="#mat-app/Sub3.m.other"' in run
+
+
+def test_generated_lines_of_an_inherited_member_name_the_base_file(make_app, tmp_path):
+    # The base is on no page, so the link of "Inherited from" finds no target:
+    # the warning is at the declaration of the member in the base's file.
+    app = build(
+        make_app,
+        tmp_path,
+        page(autoclass("app/Sub2.m", ":inherited-members:")),
+        {**LOCATED, "src/lib/pic.png": ""},
+        conf="nitpicky = True\n",
+    )
+    base = tmp_path / "src" / "lib" / "Base2.m"
+    assert [w for w in warnings(app) if "mat:class" in w] == [
+        f"{base}:4: WARNING: mat:class reference target not found: "
+        "lib/Base2.m [ref.class]"
+    ]
+
+
 def test_method_links_go_to_the_inherited_entries(make_app, tmp_path):
     app = build(
         make_app,

@@ -131,7 +131,8 @@ this order:
    MATLAB name visible from it, including the folder's ``private/`` files,
    as in MATLAB. The current folder is set by ``mat:autofolder``,
    ``mat:folder`` and ``mat:currentfolder``; in help text, it is the folder
-   of the documented file. After ``mat:namespace`` or
+   of the file the help is written in (for an inherited member, the file
+   of the base class). After ``mat:namespace`` or
    ``mat:autonamespace``, it is a MATLAB name in that namespace instead
    (``totalArea`` is ``shapes.totalArea``). Inside a class, its members can
    be named without the class (``:mat:meth:`area```);
