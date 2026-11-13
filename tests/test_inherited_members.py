@@ -660,8 +660,10 @@ def test_warnings_of_inherited_help_name_the_base_file(make_app, tmp_path):
     )
     base = tmp_path / "src" / "lib" / "Base2.m"
     (warning,) = warnings(app)
-    assert warning.startswith(
-        f"{base}:docstring of lib/Base2.m.meth:7: WARNING: Inline"
+    # Sphinx normalizes the whole location as a path: on Windows the
+    # reference has backslashes too.
+    assert warning.replace("\\", "/").startswith(
+        f"{base.as_posix()}:docstring of lib/Base2.m.meth:7: WARNING: Inline"
     )
 
 
