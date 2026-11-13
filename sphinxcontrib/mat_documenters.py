@@ -300,16 +300,22 @@ class MatlabDocumenter(PyDocumenter):
         file, the auto directive, in a page or in the code file of help text.
         ``add_line`` takes a zero-based offset; docutils adds one.
         """
-        obj = self.object
-        # a method in its own file of a class folder
-        ref = obj.ref if getattr(obj, "from_class_folder", False) else self.ref
-        file = mat_naming.parse_reference(ref)[0]
-        path = cast(Any, self.env.get_domain("mat")).source_paths().get(file)
+        path = self.code_path()
         if path is not None:
-            return path, (obj.line or 1) - 1
+            return path, (self.object.line or 1) - 1
         where, _, line = self.directive.location.rpartition(":")
         code, found, _ = where.rpartition(f":{mat_sidecars.HELP_SOURCE}")
         return (code if found else where), int(line or 1) - 1
+
+    def code_path(self):
+        """Return the path of the code file the object is written in: for a
+        method with a file of its own in a class folder, that file. None for an
+        object without a file (a folder), or without an index.
+        """
+        obj = self.object
+        ref = obj.ref if getattr(obj, "from_class_folder", False) else self.ref
+        file = mat_naming.parse_reference(ref)[0]
+        return cast(Any, self.env.get_domain("mat")).source_paths().get(file)
 
     def add_flags(self, attrs, flags):
         """Add the flag options (``:abstract:``) whose MATLAB attribute is set."""
@@ -351,11 +357,10 @@ class MatlabDocumenter(PyDocumenter):
 
     def help_source(self):
         """Source of the help lines: ``<file>:docstring of <reference>``, as
-        Python's autodoc names it (the file only without an index).
+        Python's autodoc names it (the reference only without an index). The
+        file is the one the help is written in.
         """
-        file = mat_naming.parse_reference(self.ref)[0]
-        path = cast(Any, self.env.get_domain("mat")).source_paths().get(file)
-        return mat_sidecars.help_source(self.fullname, path)
+        return mat_sidecars.help_source(self.fullname, self.code_path())
 
     def help_sources(self):
         """``(help, line)`` of each help text of the object, in order: the help

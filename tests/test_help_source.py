@@ -113,6 +113,31 @@ def test_class_member_help_is_at_its_file_line(make_app, tmp_path):
     ]
 
 
+def test_help_of_a_method_file_is_in_that_file(make_app, tmp_path):
+    # A method of a class folder with a file of its own: its help is there.
+    files = {
+        "@Cf/Cf.m": "classdef Cf\n% CF help\nmethods\n    meth(obj)\nend\nend\n",
+        "@Cf/meth.m": (
+            "function meth(obj)\n% METH help\n%\n% More.\n%\n"
+            "% Calls :mat:func:`noMeth` and :mat:func:`near` here.\n"
+            "%\n% .. image:: pic.png\nend\n"
+        ),
+        "@Cf/private/near.m": "function near\n% NEAR help\nend\n",
+        "@Cf/pic.png": "",
+    }
+    index = (
+        ".. mat:autoclass:: Cf\n   :members:\n\n"
+        ".. mat:autofunction:: @Cf/private/near.m\n"
+    )
+    found = build(make_app, tmp_path, files, index)
+    meth = tmp_path / "src" / "@Cf" / "meth.m"
+    assert found[0].startswith(missing(meth, "docstring of @Cf/Cf.m.meth:6", "noMeth"))
+    # names and paths in it are still found from the class folder
+    assert len(found) == 1, found
+    html = (tmp_path / "_build" / "html" / "index.html").read_text(encoding="utf-8")
+    assert 'src="_images/pic.png"' in html
+
+
 def test_simulink_help_is_at_its_line_in_the_description(make_app, tmp_path):
     index = ".. mat:autosimulink_model:: m\n"
     found = build(make_app, tmp_path, {"m.mdl": MODEL}, index)
