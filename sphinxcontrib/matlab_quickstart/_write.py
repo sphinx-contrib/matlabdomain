@@ -1,4 +1,4 @@
-"""What ``scmd quickstart`` writes (plan.md Section 2.13).
+"""What ``scmd quickstart`` writes.
 
 It writes the files of the Sphinx source folder from the templates, and the
 edits outside it: the docs dependency group through ``uv add --frozen``,

@@ -178,7 +178,7 @@ class MatlabDocumenter(PyDocumenter):
 
     @override
     def parse_name(self):
-        """Resolve *self.name* to the object to document (plan.md Section 2.3).
+        """Resolve *self.name* to the object to document.
 
         Sets *self.ref* (path reference), *self.display* (MATLAB name),
         *self.modname* (folder reference), *self.objpath* (file stem and

@@ -1,6 +1,6 @@
 """Intersphinx between a library built with scmd apidoc and a
 consumer project: MATLAB-name, path and named-inventory references, and what
-survives when an object moves to another API page (plan.md Section 2.3). The
+survives when an object moves to another API page. The
 library's inventory points to the stable addresses (``mat/ref/``).
 """
 
@@ -327,7 +327,7 @@ def test_names_in_several_inventories(make_app, tmp_path):
     assert warnings.count("WARNING") == 4
 
 
-# --- repaging (plan.md open items L1/L2) -------------------------------------
+# --- repaging: an object moves to another API page ---------------------------
 
 # (group, page size, page before, page after) of util/scale.m when
 # util/alpha.m is added: it sorts first, so scale.m moves to the next page.

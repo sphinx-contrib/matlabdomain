@@ -1,4 +1,4 @@
-"""The documentation in ``docs/`` (plan.md Phase 10): it builds without
+"""The documentation in ``docs/``: it builds without
 warnings, and its reference pages list every configuration value, directive,
 directive option, role, warning and command-line option, and nothing else.
 """

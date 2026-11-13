@@ -81,7 +81,7 @@ __all__ = [
 
 
 # The parsed-source model lives in ``env.domaindata['mat']`` and is pickled
-# with the environment (plan.md Sections 2.1 and 2.2):
+# with the environment:
 #
 #   index: source path -> index-stage record (reference, type, mtime, size,
 #     warnings, unreadable; matlab_name, private, scope from naming).
@@ -457,7 +457,7 @@ def _resolved(dom, matches):
 
 
 def find_source(dom, target, folder=None, accept=is_source_object):
-    """Resolve ``target`` to discovered objects (plan.md Section 2.3).
+    """Resolve ``target`` to discovered objects.
 
     1. exact path reference; 2. relative to ``folder`` (a path below it, or a
     MATLAB name visible from it, including its ``private/``); 3. a MATLAB name,
@@ -660,7 +660,7 @@ def project_root(config, srcdir):
 
 
 DEFAULT_INCLUDE_PATTERNS = ["**/*"]
-#: root files that are neither code nor sidecar docs (plan.md Section 2.11)
+#: root files that are neither code nor sidecar docs
 DEFAULT_EXCLUSION_PATTERNS = [
     "README.*",
     "CHANGES.*",
@@ -724,8 +724,8 @@ def _literal_folder(pattern):
 
 
 class SourceFilter:
-    """Include and exclusion patterns below the project root (plan.md Section
-    2.4), matched like Sphinx's ``exclude_patterns`` against path references
+    """Include and exclusion patterns below the project root, matched like
+    Sphinx's ``exclude_patterns`` against path references
     (case-sensitive on every OS). Patterns are taken in Unicode NFC form, like
     the references.
     """
@@ -895,11 +895,11 @@ def _is_link(path):
 
 @dataclass(frozen=True)
 class IndexSettings:
-    """What the index stage reads (plan.md Section 2.8), without a Sphinx app.
+    """What the index stage reads, without a Sphinx app.
 
     ``root`` is the absolute project root; ``include`` and ``exclude`` are
     patterns normalized by ``_normalize_pattern``. ``sidecar_suffixes`` selects the
-    sidecar docs (plan.md Section 2.11); files with them below
+    sidecar docs; files with them below
     ``source_dir`` (the Sphinx source folder) are not sidecar docs when that
     folder is inside the root.
     """
@@ -946,7 +946,7 @@ class SourceIndex:
     - ``text_cache``: ``(path, mtime_ns, size)`` -> decoded text;
     - ``sidecars``: sidecar doc path -> ``{reference, mtime, size}``, in walk
       order. Sidecar docs are not read, named or members of their folder, so
-      they never shadow code (plan.md Section 2.11).
+      they never shadow code.
     - ``simulink_docs``: Simulink documentation file path -> ``{reference,
       mtime, size}``: a file with a suffix of ``simulink_doc_suffixes`` and
       the exact name of a Simulink file next to it. It is not a sidecar doc.
@@ -1005,10 +1005,10 @@ def _documentation_files(settings):
 
 
 class _Indexer:
-    """The index stage (plan.md Section 2.1): walk the project root and read,
+    """The index stage: walk the project root and read,
     decode and classify each source file once. Records of files whose
     ``(path, mtime, size)`` did not change are reused without reading.
-    Sidecar docs (plan.md Section 2.11) are recorded, not read. With
+    Sidecar docs are recorded, not read. With
     ``sidecars_only`` the walk records sidecar docs only.
     """
 

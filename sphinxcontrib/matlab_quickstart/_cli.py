@@ -1,4 +1,4 @@
-"""Command line of ``scmd quickstart`` (plan.md Section 2.13).
+"""Command line of ``scmd quickstart``.
 
 It runs the prompts with detected defaults, the answers file, the dry run,
 the writes and the report.

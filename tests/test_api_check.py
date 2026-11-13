@@ -1,4 +1,4 @@
-"""The matlab-api-check builder (plan.md Section 2.9, Phase 9)."""
+"""The matlab-api-check builder."""
 
 import json
 import shutil

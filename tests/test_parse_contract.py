@@ -1,7 +1,4 @@
-"""Parse contract in a build: classify() types, divergence and empty-file warnings.
-
-plan.md Phase 4, Sections 2.5-2.7.
-"""
+"""Parse contract in a build: classify() types, divergence and empty-file warnings."""
 
 import os
 import time
@@ -171,7 +168,7 @@ def test_divergence_and_empty_file_warnings(make_app, tmp_path, monkeypatch):
 
 
 def test_divergence_of_an_unused_file_is_not_reported(make_app, tmp_path):
-    # Only a parse finds it, and nothing uses the files (plan.md Section 2.10).
+    # Only a parse finds it, and nothing uses the files.
     write_project(tmp_path, SOURCES, "Index\n=====\n")
     app = make_app(srcdir=tmp_path)
     app.build()

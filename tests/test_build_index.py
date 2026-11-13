@@ -1,5 +1,5 @@
-"""The index stage without a Sphinx app: ``IndexSettings`` and ``build_index``
-(plan.md Section 2.8, Phase 7).
+"""The index stage without a Sphinx app: ``IndexSettings`` and
+``build_index``.
 """
 
 import dataclasses
@@ -503,7 +503,7 @@ def test_include_pattern_folder_case_is_exact(tmp_path):
     reason="G4-T7: case-insensitive file systems (Windows, macOS); not run on Linux",
 )
 def test_include_pattern_folder_case_is_exact_on_case_insensitive_systems(tmp_path):
-    # Matching is case-sensitive on every OS (plan.md Section 2.4), also where
+    # Matching is case-sensitive on every OS, also where
     # the file system finds Src/ for src/.
     write(tmp_path, CASE_FILES)
     if _case_sensitive(tmp_path):

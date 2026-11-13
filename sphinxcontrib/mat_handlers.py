@@ -1,6 +1,6 @@
 """Registry of the handlers that read each source file type.
 
-See plan.md Section 2.6.
+See "The file-type registry" in ``docs/developer-guide/architecture.rst``.
 
 Each source file type is one handler, registered under its file extension.
 Discovery, parsing and path references ask this registry instead of testing
@@ -12,7 +12,7 @@ handler provides:
   source file of this type (the base class checks that it is a file);
 - ``classify(path, text=None)``: the index type of the file (``unknown`` if
   it is not one);
-- ``read(path, encoding)``: the index stage (plan.md Section 2.1):
+- ``read(path, encoding)``: the index stage, which returns
   ``(type, text, problems)`` with the decoded text (``None`` for binary
   formats) and ``(subtype, message, row)`` warnings; raises ``OSError``.
   The type it returns is the index type; a parsed object's

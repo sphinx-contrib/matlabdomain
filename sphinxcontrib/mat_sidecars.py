@@ -1,7 +1,7 @@
 """Sidecar docs: ``.md`` and ``.rst`` pages next to the code.
 
 Sidecar docs are indexed with the code (``mat_types``) and rendered into a
-document by ``mat:autosidecar`` (plan.md Section 2.11).
+document by ``mat:autosidecar``.
 
 - Relative paths in a sidecar doc are relative to its folder: images and
   downloads are rewritten to source-folder-relative paths (``/`` +

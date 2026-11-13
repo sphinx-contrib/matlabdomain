@@ -44,7 +44,8 @@ MATLAB_VERSION_FLOOR = "R2024a"
 DEFAULT_MATLAB_VERSION = "R2026a"
 
 # Version-dependent MATLAB behavior: rule -> first release with the new behavior.
-# Every row needs MATLAB evidence (see plan.md, "matlab_version").
+# Every row needs MATLAB evidence (release notes, or the behavior checked in
+# MATLAB releases), named in the row's comment.
 MATLAB_VERSION_RULES = {
     # namelengthmax went from 63 to 2048 (R2025a release notes).
     "namelengthmax_2048": "R2025a",

@@ -39,7 +39,7 @@ CONFIG = {
         "env",
         _LIST,
     ),
-    # Sidecar docs: [] is off; e.g. [".md", ".rst"] (plan.md 2.11).
+    # Sidecar docs: [] is off; e.g. [".md", ".rst"].
     "matlab_src_sidecar_suffixes": ([], "env", _LIST),
     "matlab_src_encoding": (None, "env", ()),
     "matlab_version": (mat_naming.DEFAULT_MATLAB_VERSION, "env", ()),
@@ -73,7 +73,7 @@ CONFIG = {
     "matlab_api_check_ignore_unmatched": (False, "", bool),
     # Section -> the labels it accepts, replacing the built-in ones.
     "matlab_api_check_section_labels": ({}, "", dict),
-    # scmd apidoc (plan.md Section 2.8): read by the CLI only.
+    # scmd apidoc: read by the CLI only.
     "matlab_apidoc_output_dir": (None, "", (str, _NONE)),
     "matlab_apidoc_separate": (False, "", (bool,)),
     "matlab_apidoc_maxdepth": (4, "", (int,)),

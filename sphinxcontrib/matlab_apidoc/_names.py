@@ -1,4 +1,4 @@
-"""Output file names of ``scmd apidoc`` (plan.md Section 2.8).
+"""Output file names of ``scmd apidoc``.
 
 Pure functions of path references: the same names on every OS.
 

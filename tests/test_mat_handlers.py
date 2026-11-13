@@ -1,4 +1,4 @@
-"""File-type handler registry (plan.md Section 2.6)."""
+"""File-type handler registry."""
 
 import subprocess
 import sys

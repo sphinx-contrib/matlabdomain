@@ -75,7 +75,7 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 markdown = [
-    # Sidecar docs in Markdown (plan.md Section 2.11). The renderer
+    # Sidecar docs in Markdown. The renderer
     # subclasses myst-parser's SphinxRenderer: test each release before
     # moving the cap.
     "myst-parser>=4,<6"

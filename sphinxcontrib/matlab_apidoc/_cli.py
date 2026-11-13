@@ -1,4 +1,4 @@
-"""Command line of ``scmd apidoc`` (plan.md Section 2.8).
+"""Command line of ``scmd apidoc``.
 
 The settings come from ``conf.py`` in ``-c DIR`` (default: the working
 folder) only; the flags are run-time options.

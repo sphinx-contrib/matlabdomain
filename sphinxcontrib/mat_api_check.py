@@ -1,4 +1,4 @@
-"""The ``matlab-api-check`` builder: audit MATLAB help text (plan.md Section 2.9).
+"""The ``matlab-api-check`` builder: audit MATLAB help text.
 
 Every indexed object is checked, whether a page documents it or not, unless
 ``matlab_api_check_files`` selects files.
@@ -617,7 +617,7 @@ class _Checker:
             self.describe("description", where, "application", obj.docstring)
 
     def sidecars(self, env):
-        """Check the sidecar docs (plan.md Section 2.11): each is
+        """Check the sidecar docs: each is
         rendered by ``mat:autosidecar`` in a document that a toctree includes
         (or an orphan), and its relative links and images exist.
         """

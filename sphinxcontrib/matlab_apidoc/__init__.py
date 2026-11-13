@@ -1,6 +1,6 @@
 """``scmd apidoc``: write reST pages that document a project's MATLAB files.
 
-The pages use sphinxcontrib-matlabdomain directives (plan.md Section 2.8).
+The pages use sphinxcontrib-matlabdomain directives.
 
 ``main(argv)`` runs the command line; ``generate(source_index, options)``
 writes the pages of a ``mat_types.build_index`` result.

@@ -1287,7 +1287,7 @@ class MATLABDomain(Domain):
         return mat_types.source_scope(self, reference)
 
     def find_obj(self, folder, cls, name, type, searchmode=0):
-        """Find documented objects for ``name`` (plan.md Section 2.3).
+        """Find documented objects for ``name``.
 
         1. exact path reference; 2. relative to the class ``cls`` and the
         folder ``folder`` (a path below it or a MATLAB name visible from it,

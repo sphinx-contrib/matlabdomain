@@ -1,6 +1,6 @@
 """The project facts that ``scmd quickstart`` reads; nothing here writes.
 
-The facts (plan.md Section 2.13) are uv, the MATLAB release, the git
+The facts are uv, the MATLAB release, the git
 submodules, the MATLAB project path, sidecar doc candidates, how
 matlabdomain itself is installed, and, from the index, the inventory, the
 help headings and the copyright blocks that run into help.

@@ -1,4 +1,4 @@
-"""Lazy index and parse, source patterns and parallel reads (plan.md Phase 6)."""
+"""Lazy index and parse, source patterns and parallel reads."""
 
 import os
 import pickle
@@ -93,8 +93,8 @@ def test_parse_warnings_once_per_build(make_app, tmp_path, parsed):
 
 
 def test_member_lookup_by_file_name_does_not_parse_again(make_app, tmp_path, parsed):
-    # plan.md Phase 5 follow-up: a lookup after the index stage parsed and
-    # warned again.
+    # A lookup by file name after the build used to parse the file again and
+    # repeat its warning.
     write(tmp_path, FILES, "Index\n=====\n\n.. mat:autoscript:: Broken.m\n")
     app = make_app(srcdir=tmp_path)
     app.build()

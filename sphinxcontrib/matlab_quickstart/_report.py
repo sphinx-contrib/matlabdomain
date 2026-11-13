@@ -1,4 +1,4 @@
-"""The report of ``scmd quickstart`` (plan.md Section 2.13).
+"""The report of ``scmd quickstart``.
 
 It shows the project facts, the inventory of the index, the help headings,
 the copyright blocks that run into help, and the next steps.

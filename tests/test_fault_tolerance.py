@@ -1,4 +1,4 @@
-"""Fault tolerance: one bad file never breaks a build (plan.md Phase 5, 2.10).
+"""Fault tolerance: one bad file never breaks a build.
 
 Malformed fixtures are written to temporary projects, so the ``test_docs``
 build that walks ``tests/`` never sees them.
@@ -67,7 +67,7 @@ def zip_bytes(members):
     return buf.getvalue()
 
 
-# --- decoding (MATLAB R2026a on Linux, plan.md Section 2.10) ---------------
+# --- decoding (MATLAB R2026a on Linux) -------------------------------------
 
 
 def test_decode_utf8_and_latin1_fallback():

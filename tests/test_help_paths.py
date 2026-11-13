@@ -1,6 +1,5 @@
-"""Relative paths in help text resolve from the folder of the code file
-(plan.md M16): images, figures, downloads, ``literalinclude``, ``include``
-and hyperlinks.
+"""Relative paths in help text resolve from the folder of the code file:
+images, figures, downloads, ``literalinclude``, ``include`` and hyperlinks.
 """
 
 from pathlib import Path

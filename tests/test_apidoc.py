@@ -1,5 +1,5 @@
 """scmd apidoc: output names, pages, templates, writing, the CLI and
-builds of its output (plan.md Section 2.8, Phase 7).
+builds of its output.
 """
 
 import importlib.metadata

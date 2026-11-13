@@ -1,6 +1,5 @@
 """scmd quickstart: detection, the files it writes, the edits
-outside the Sphinx source folder, the command line and the report
-(plan.md Section 2.13, Phase 16).
+outside the Sphinx source folder, the command line and the report.
 """
 
 import json

@@ -1,7 +1,6 @@
 """Page model, rendering and writing of ``scmd apidoc``.
 
-The pages come from a ``SourceIndex`` alone: no file is parsed (plan.md
-Sections 2.8, 2.12).
+The pages come from a ``SourceIndex`` alone: no file is parsed.
 
 - Namespace grouping (the default): one page per namespace, merging all
   its ``+`` folders, and ``Global`` for the files outside any namespace;
@@ -26,7 +25,7 @@ Sections 2.8, 2.12).
   changed, and start with ``MARKER``. A file with the marker belongs to the
   generator: it is rewritten and, when no longer a page, removed. Without
   ``force``, a file without it is kept.
-- Sidecar docs (plan.md Section 2.11), in folder grouping, get a page of
+- Sidecar docs, in folder grouping, get a page of
   their own each
   (``<name>-<suffix>``, e.g. ``guide-md``), listed by their folder's page
   after the API sections. A folder's README (any letter case) is that

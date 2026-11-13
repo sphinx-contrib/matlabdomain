@@ -1,4 +1,4 @@
-"""Stable addresses of documented objects in HTML builds (plan.md Section 2.3).
+"""Stable addresses of documented objects in HTML builds.
 
 API pages split into ``global.html``, ``global-2.html``, ... by
 ``matlab_apidoc_page_size``, so the page an object is on can change. Each
