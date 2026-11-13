@@ -75,6 +75,8 @@ def projects(tmp):
     # docs/conf.py reads the tested versions from these, one folder up
     for name in ("pyproject.toml", "uv.lock"):
         shutil.copyfile(REPO / name, tmp / name)
+    # the pages include files of the worked example
+    shutil.copytree(REPO / "examples", tmp / "examples")
     out["docs"] = docs
     return out
 
