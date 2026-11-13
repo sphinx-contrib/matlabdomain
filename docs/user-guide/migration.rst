@@ -114,9 +114,11 @@ Directives and roles
      - removed
    * - ``:inherited-members:``
      - kept. 0.x offered it, but it stopped every build that used it; a user
-       implemented it (PR #346, issue #180), so 1.0 makes it work. It is not
-       recommended: ``:show-inheritance:`` links to the base classes instead
-       (:doc:`documenting`).
+       implemented it (PR #346, issue #180), so 1.0 makes it work. A page
+       with the option builds, but documents no inherited member and warns
+       until ``conf.py`` sets :confval:`matlab_inherited_members` ``= True``.
+       It is not recommended: ``:show-inheritance:`` links to the base
+       classes instead (:doc:`documenting`).
    * - ``:friend-members:``
      - ``:access-list-members:`` (the old name still works)
 

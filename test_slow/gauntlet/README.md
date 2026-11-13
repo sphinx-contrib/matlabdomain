@@ -35,7 +35,8 @@ project, `gauntlet.py` generates the pages 3 times (`--trials`), reruns with
 matlab-api-check` (`api`, the default rules; its reports are kept as
 `<project>/api-check.{txt,json}`); `--variant` picks one. `--variant
 inherited` (not in the default set) builds with
-`-D autodoc_default_options.inherited-members=`, so every class documents
+`-D matlab_inherited_members=1 -D autodoc_default_options.inherited-members=`,
+so every class documents
 its inherited members; compare its `html_bytes`, `html_files` and `wall_s`
 with `conf`'s to see what `:inherited-members:` costs:
 

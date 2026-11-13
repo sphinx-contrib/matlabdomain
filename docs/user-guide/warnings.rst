@@ -140,6 +140,12 @@ What each warning means
    ``mat:autonamespace`` has arguments or a return annotation (a folder or
    namespace has neither).
 
+   It is also the warning for ``:inherited-members:`` while
+   :confval:`matlab_inherited_members` is off: the directive documents no
+   inherited member. Set ``matlab_inherited_members = True`` in
+   ``conf.py``, or remove the option. When ``autodoc_default_options`` sets
+   the option, the build warns once, at start-up.
+
 ``mat.duplicate``
    The same object is described twice (add ``:no-index:`` to one of the
    descriptions), or two objects would get the same anchor, so the second

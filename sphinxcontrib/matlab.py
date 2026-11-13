@@ -1729,6 +1729,7 @@ def setup(app):
     app.connect("config-inited", check_config_names)
     app.connect("config-inited", ensure_configuration)
     app.connect("config-inited", check_external_names)
+    app.connect("config-inited", mat_directives.check_inherited_members)
     app.connect("config-inited", mat_sidecars.check_config)
     app.connect("config-inited", mat_api_check.check_config)
     app.connect("config-inited", simulink_linker.check_config)

@@ -49,6 +49,8 @@ CONFIG = {
     "matlab_auto_link": (None, "env", ()),
     "matlab_class_signature": (False, "env", ()),
     "matlab_add_namespace_names": (True, "env", bool),
+    # :inherited-members: works only when this is on (it repeats base help).
+    "matlab_inherited_members": (False, "env", (bool,)),
     # Regexes of names references to which are text, without a warning.
     "matlab_external_names": (list(DEFAULT_EXTERNAL_NAMES), "html", _LIST),
     # Stable addresses (mat/ref/, mat/name/) and "¶" links to them.

@@ -12,6 +12,7 @@ from sphinx.ext.autodoc.directive import (
 )
 from sphinx.util.logging import getLogger
 
+from . import mat_config
 from .mat_documenters import MatDocumenterBridge
 from .mat_sidecars import PAGE_LOCATION, HelpPaths
 from .mat_types import MatObject
@@ -22,6 +23,27 @@ logger = getLogger("matlab-domain")
 #: options of this extension that ``autodoc_default_options`` may set (autodoc
 #: itself merges only its own); ``:no-<option>:`` turns one off
 DEFAULT_OPTIONS = ("hidden-mask-parameters", "references")
+#: the configuration value without which ``:inherited-members:`` does nothing
+INHERITED_VALUE = "matlab_inherited_members"
+
+
+def check_inherited_members(_app, config):
+    """``config-inited``: ConfigError unless ``matlab_inherited_members`` is a
+    bool; one warning for the build when ``autodoc_default_options`` turns
+    ``inherited-members`` on without it.
+    """
+    if mat_config.typed_value(config, INHERITED_VALUE):
+        return
+    value = config.autodoc_default_options.get("inherited-members", False)
+    if value is not False:
+        logger.warning(
+            "[sphinxcontrib-matlabdomain] autodoc_default_options sets "
+            "inherited-members, which needs %s = True in conf.py; the "
+            "inherited members are left out",
+            INHERITED_VALUE,
+            type="mat",
+            subtype="directive",
+        )
 
 
 class MatlabAutodocDirective(AutodocDirective):
@@ -65,6 +87,7 @@ class MatlabAutodocDirective(AutodocDirective):
                 and not negated
             ):
                 self.options[name] = defaults[name]
+        self._check_inherited_members(doccls)
         try:
             documenter_options = process_documenter_options(
                 doccls, self.config, self.options
@@ -94,6 +117,25 @@ class MatlabAutodocDirective(AutodocDirective):
         finally:
             if outer is None:
                 temp_data.pop(PAGE_LOCATION, None)
+
+    def _check_inherited_members(self, doccls):
+        """Warn that ``:inherited-members:``, written in this directive, does
+        nothing without ``matlab_inherited_members``.
+        """
+        name = "inherited-members"
+        if (
+            name in self.options
+            and name in doccls.option_spec
+            and not self.config.matlab_inherited_members
+        ):
+            logger.warning(
+                "[sphinxcontrib-matlabdomain] :inherited-members: needs "
+                "%s = True in conf.py; the inherited members are left out",
+                INHERITED_VALUE,
+                type="mat",
+                subtype="directive",
+                location=self.get_location(),
+            )
 
     def _generate(self, doccls, documenter_options, source, lineno):
         reporter = self.state.document.reporter

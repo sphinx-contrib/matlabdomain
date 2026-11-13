@@ -124,6 +124,18 @@ Output
 
    Show the constructor's arguments in the class signature.
 
+.. confval:: matlab_inherited_members
+   :type: ``bool``
+   :default: ``False``
+
+   Let the ``:inherited-members:`` option of ``mat:autoclass`` and
+   ``mat:autofolder`` document the members a class inherits. Off by default:
+   the option repeats the help of every base member on the page of every
+   subclass, so it suits small projects with little inheritance. While it
+   is off, the option documents no inherited member and the build warns
+   (``mat.directive``): once for each directive that writes the option, or
+   once for the build when ``autodoc_default_options`` sets it.
+
 .. confval:: matlab_add_namespace_names
    :type: ``bool``
    :default: ``True``

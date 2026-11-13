@@ -18,17 +18,20 @@ from typing import Any, cast
 import pytest
 from docutils import nodes
 from sphinx import addnodes
+from sphinx.errors import ConfigError
 from sphinx.util import console
 from sphinx.util.inventory import InventoryFile
 from test_incremental_equals_clean import differences, snapshot
 
 from sphinxcontrib import mat_handlers, mat_naming
 
-CONF = (
+#: matlab_inherited_members off, its default
+CONF_OFF = (
     'extensions = ["sphinxcontrib.matlab"]\n'
     'matlab_src_code_project_root = "src"\n'
     'primary_domain = "mat"\n'
 )
+CONF = CONF_OFF + "matlab_inherited_members = True\n"
 
 ROOT = """\
 classdef Root < handle
@@ -146,8 +149,8 @@ def write(root, files):
         target.write_text(text, encoding="utf-8")
 
 
-def build(make_app, tmp_path, page, files=FILES, conf="", **kwargs):
-    write(tmp_path, {**files, "conf.py": CONF + conf, "index.rst": page})
+def build(make_app, tmp_path, page, files=FILES, conf="", base=CONF, **kwargs):
+    write(tmp_path, {**files, "conf.py": base + conf, "index.rst": page})
     app = make_app(srcdir=tmp_path, **kwargs)
     app.build()
     return app
@@ -913,3 +916,163 @@ def test_parallel_build_equals_serial(make_app, tmp_path):
         out[name] = (snapshot(root / "_build/html"), warnings(app))
     assert differences(out["serial"][0], out["parallel"][0]) == []
     assert out["serial"][1] == out["parallel"][1] == []
+
+
+# --- matlab_inherited_members: off by default -------------------------------------
+
+NEEDS = (
+    "WARNING: [sphinxcontrib-matlabdomain] :inherited-members: needs "
+    "matlab_inherited_members = True in conf.py; the inherited members are "
+    "left out [mat.directive]"
+)
+
+
+def posix_warnings(app):
+    """Return the warnings, with the paths in them written with ``/``."""
+    return [line.replace(os.sep, "/") for line in warnings(app)]
+
+
+def test_off_the_option_inherits_nothing_and_warns_once_per_directive(
+    make_app, tmp_path
+):
+    app = build(
+        make_app,
+        tmp_path,
+        page(
+            autoclass("Sub", ":inherited-members:"),
+            ".. mat:autofolder:: .\n   :members: Sub\n   :inherited-members: Root\n"
+            "   :no-index:\n",
+            autoclass("Sub", ":no-index:"),
+        ),
+        base=CONF_OFF,
+    )
+    assert set(documented(app, "Sub.m.")) == OWN
+    assert "Inherited from" not in app.env.get_doctree("index").astext()
+    index = (tmp_path / "index.rst").as_posix()
+    assert posix_warnings(app) == [f"{index}:4: {NEEDS}", f"{index}:8: {NEEDS}"]
+
+
+def test_off_the_bases_are_not_read(make_app, tmp_path):
+    root = tmp_path / "off"
+    write(root, {**FILES, **PAGES, "conf.py": CONF_OFF})
+    _age(root)
+    app = _html_build(make_app, root)
+    domain = app.env.get_domain("mat")
+    used = {Path(path).name for path in domain.data["doc_sources"]["sub"]}
+    assert used == {"Sub.m"}
+    _edit_base(root)
+    app = _html_build(make_app, root)
+    assert app.env.get_domain("mat").read_docnames == ["base"]
+
+
+@pytest.mark.parametrize("value", [True, "", "Root"])
+def test_off_autodoc_default_options_warn_once_for_the_build(make_app, tmp_path, value):
+    app = build(
+        make_app,
+        tmp_path,
+        page(
+            autoclass("Sub"),
+            autoclass("Base", ":no-index:"),
+            ".. mat:autofolder:: .\n   :members: Sub\n   :no-index:\n",
+        ),
+        conf=f"autodoc_default_options = {{'inherited-members': {value!r}}}\n",
+        base=CONF_OFF,
+    )
+    assert set(documented(app, "Sub.m.")) == OWN
+    assert posix_warnings(app) == [
+        "WARNING: [sphinxcontrib-matlabdomain] autodoc_default_options sets "
+        "inherited-members, which needs matlab_inherited_members = True in "
+        "conf.py; the inherited members are left out [mat.directive]"
+    ]
+
+
+def test_off_a_written_option_warns_with_autodoc_default_options_too(
+    make_app, tmp_path
+):
+    app = build(
+        make_app,
+        tmp_path,
+        page(autoclass("Sub", ":inherited-members:")),
+        conf="autodoc_default_options = {'inherited-members': True}\n",
+        base=CONF_OFF,
+    )
+    found = posix_warnings(app)
+    assert len(found) == 2
+    assert found[1] == f"{(tmp_path / 'index.rst').as_posix()}:4: {NEEDS}"
+
+
+@pytest.mark.parametrize("base", [CONF_OFF, CONF], ids=["off", "on"])
+def test_turning_the_option_off_never_warns(make_app, tmp_path, base):
+    app = build(
+        make_app,
+        tmp_path,
+        page(autoclass("Sub", ":no-inherited-members:"), autoclass("Base")),
+        conf="autodoc_default_options = {'inherited-members': False}\n",
+        base=base,
+    )
+    assert set(documented(app, "Sub.m.")) == OWN
+    assert warnings(app) == []
+
+
+def test_on_nothing_warns(make_app, tmp_path):
+    app = build(
+        make_app,
+        tmp_path,
+        page(autoclass("Sub", ":inherited-members:"), autoclass("Base")),
+        conf="autodoc_default_options = {'inherited-members': True}\n",
+    )
+    assert set(documented(app, "Sub.m.")) == OWN | INHERITED
+    assert warnings(app) == []
+
+
+@pytest.mark.parametrize("value", [1, "yes", None])
+def test_matlab_inherited_members_must_be_a_bool(make_app, tmp_path, value):
+    with pytest.raises(ConfigError) as err:
+        build(
+            make_app,
+            tmp_path,
+            page(autoclass("Sub")),
+            conf=f"matlab_inherited_members = {value!r}\n",
+            base=CONF_OFF,
+        )
+    assert str(err.value) == f"matlab_inherited_members must be bool, not {value!r}."
+
+
+def test_off_parallel_build_warns_as_serial(make_app, tmp_path):
+    pages = {
+        **PAGES,
+        "index.rst": INDEX + "   both\n",
+        "both.rst": "Both\n====\n\n"
+        + autoclass("Sub", ":inherited-members:", ":no-index:"),
+    }
+    out = {}
+    for name, parallel in (("serial", 0), ("parallel", 2)):
+        root = tmp_path / name
+        write(root, {**FILES, **pages, "conf.py": CONF_OFF})
+        app = _html_build(make_app, root, parallel=parallel)
+        found = [w.replace(root.as_posix(), "<root>") for w in posix_warnings(app)]
+        out[name] = (snapshot(root / "_build/html"), found)
+    assert differences(out["serial"][0], out["parallel"][0]) == []
+    assert out["serial"][1] == out["parallel"][1]
+    assert out["serial"][1] == [
+        f"<root>/both.rst:4: {NEEDS}",
+        f"<root>/sub.rst:4: {NEEDS}",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("before", "after"), [(CONF_OFF, CONF), (CONF, CONF_OFF)], ids=["on", "off"]
+)
+def test_switching_the_value_equals_a_clean_build(make_app, tmp_path, before, after):
+    inc = tmp_path / "inc"
+    write(inc, {**FILES, **PAGES, "conf.py": before})
+    _age(inc)
+    _html_build(make_app, inc)
+    write(inc, {"conf.py": after})
+    app = _html_build(make_app, inc)
+    assert "sub" in app.env.get_domain("mat").read_docnames
+    clean = tmp_path / "clean"
+    write(clean, {**FILES, **PAGES, "conf.py": after})
+    _html_build(make_app, clean)
+    a, b = snapshot(inc / "_build/html"), snapshot(clean / "_build/html")
+    assert differences(a, b) == []

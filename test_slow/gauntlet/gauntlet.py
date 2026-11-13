@@ -17,8 +17,9 @@ name contains one of them), on its checkout test_slow/repos/<name>:
   ``conf`` (the defaults), ``all`` (``-D matlab_auto_link=all``) and ``api``
   (``-b matlab-api-check`` with the default rules; its reports are kept as
   OUT/<name>/api-check.{txt,json}); with --variant also ``inherited``
-  (``-D autodoc_default_options.inherited-members=``: every class documents
-  its inherited members); exit code, wall time, the number and bytes of the
+  (``-D matlab_inherited_members=1 -D
+  autodoc_default_options.inherited-members=``: every class documents its
+  inherited members); exit code, wall time, the number and bytes of the
   HTML files, warnings by subtype (OUT/<name>/<variant>.warnings.txt), a
   traceback or crash log in stderr; for ``api`` also the report's summary;
 - with --jobs, builds each variant again with -j auto and compares exit
@@ -77,7 +78,15 @@ VARIANTS = {
     "all": ("html", ["-D", "matlab_auto_link=all"]),
     "api": ("matlab-api-check", []),
     # every class documents its inherited members; only with --variant
-    "inherited": ("html", ["-D", "autodoc_default_options.inherited-members="]),
+    "inherited": (
+        "html",
+        [
+            "-D",
+            "matlab_inherited_members=1",
+            "-D",
+            "autodoc_default_options.inherited-members=",
+        ],
+    ),
 }
 #: the variants run without --variant (the saved baselines have these)
 DEFAULT_VARIANTS = ("conf", "all", "api")

@@ -104,6 +104,7 @@ ONE_SIDED = {
     ("matlab_api_check_rules", "format"): "build",
     ("matlab_api_check_ignore_patterns", "type"): "build",
     ("matlab_api_check_section_labels", "type"): "build",
+    ("matlab_inherited_members", "type"): "build",
     ("matlab_apidoc_output_dir", "type"): "command",
     ("matlab_apidoc_separate", "type"): "command",
     ("matlab_apidoc_maxdepth", "type"): "command",

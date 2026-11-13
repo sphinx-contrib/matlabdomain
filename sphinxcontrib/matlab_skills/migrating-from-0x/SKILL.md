@@ -140,7 +140,9 @@ It turns `module`/`automodule` of a `+` package into
 references (`+pkg/Cls.m`, `+pkg/Cls.m.method`), `:ref:` links to
 `modindex` into `mat-folderindex`
 and `:friend-members:` into `:access-list-members:`, and removes
-`:special-members:` (`:inherited-members:` works in 1.0 and stays). It
+`:special-members:` (`:inherited-members:` works in 1.0 and stays; a page with
+it builds, but warns and shows no inherited member until `conf.py` sets
+`matlab_inherited_members = True`). It
 lists what it cannot do ("check by hand"): an `automodule` of a class folder or the root (it
 becomes `mat:currentfolder`, which documents nothing; check that the page
 documents the class or its files), names not found below the root, bare

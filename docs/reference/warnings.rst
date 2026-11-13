@@ -68,8 +68,10 @@ for a file without one, the auto directive for a folder).
    * - ``mat.directive``
      - a directive argument of the wrong kind: a class folder given to
        ``mat:folder``, arguments or a return annotation given to
-       ``mat:autofolder`` or ``mat:autonamespace``
-     - where the directive is
+       ``mat:autofolder`` or ``mat:autonamespace``; ``:inherited-members:``
+       while :confval:`matlab_inherited_members` is off
+     - where the directive is; for ``autodoc_default_options``, once at
+       start-up
    * - ``mat.duplicate``
      - an object described twice, or two objects that would get the same
        anchor

@@ -114,7 +114,8 @@ constructor, properties, enumeration values and methods, in sections:
   shown as text, without a "reference target not found" warning (see
   :confval:`matlab_external_names` for the names and how to add others).
 * ``:inherited-members:`` also documents the members a class inherits
-  from its base classes in the project (below). It is not recommended:
+  from its base classes in the project (below), when
+  :confval:`matlab_inherited_members` is on. It is not recommended:
   ``:show-inheritance:`` links to the base classes instead.
 * Members without help are left out (enumeration values are always
   shown); ``:undoc-members:`` adds them.
@@ -176,7 +177,10 @@ Inherited members
 ^^^^^^^^^^^^^^^^^
 
 ``:inherited-members:`` adds the members a class inherits from its base
-classes in the project. Each one is listed with the class's own members and
+classes in the project. It works only when ``conf.py`` sets
+:confval:`matlab_inherited_members` to ``True``, as these docs do; while
+the value is off, the option adds nothing and the build warns. Each one is
+listed with the class's own members and
 starts with "Inherited from" and a link to the base class. ``Circle``
 inherits ``Name``, ``Color`` and ``describe`` from ``Shape``:
 

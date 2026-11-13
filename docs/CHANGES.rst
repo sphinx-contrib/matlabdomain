@@ -355,7 +355,10 @@ Classes:
   list of class names (``:inherited-members: pkg.Framework``) stops at those
   bases. It is not recommended: the same help text is repeated on the page
   of every subclass, so the pages grow and the build slows down;
-  ``:show-inheritance:`` links to the base class instead.
+  ``:show-inheritance:`` links to the base class instead. So it works only
+  when the new value :confval:`matlab_inherited_members` is ``True`` (off by
+  default); while it is off the option documents no inherited member and
+  the build warns (``mat.directive``).
 
 Linking:
 

@@ -95,6 +95,9 @@ matlab_src_code_project_root = "src"
 # extension adds them to exclude_patterns.
 matlab_src_sidecar_suffixes = [".rst"]
 matlab_auto_link = "basic"
+# The user guide shows :inherited-members: on a class (user-guide/documenting);
+# the option documents nothing unless this is on.
+matlab_inherited_members = True
 primary_domain = "mat"
 nitpicky = True
 # MathWorks answers link checkers with 403 Forbidden.

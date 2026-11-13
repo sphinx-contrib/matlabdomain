@@ -412,11 +412,13 @@ class MatlabDocumenter(PyDocumenter):
 
     def inherited_of(self, cls):
         """Return ``{name: (member, owner)}``: the members ``cls`` inherits, with
-        ``:inherited-members:``; else nothing.
+        ``:inherited-members:`` and ``matlab_inherited_members``; else nothing.
         """
         option = self.options.inherited_members
         if not option or not isinstance(cls, MatClass):
             return {}
+        if not self.env.config.matlab_inherited_members:
+            return {}  # the directive or the build warned
         known = self.directive.inherited
         if cls.ref not in known:
             known[cls.ref] = cls.inherited_members(option.stop)

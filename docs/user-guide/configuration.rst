@@ -248,6 +248,13 @@ How things are shown
   class signature whatever this setting is.
 * :confval:`matlab_add_namespace_names` (default ``True``): show the
   namespace in signatures (``shapes.Circle``); ``False`` shows ``Circle``.
+* :confval:`matlab_inherited_members` (default ``False``): let the
+  ``:inherited-members:`` option document the members a class inherits
+  (:doc:`documenting`). It is off by default because the option repeats the
+  help of every base member on the page of every subclass: the pages grow
+  and the build slows down. Turn it on for a small project with little
+  inheritance. While it is off, a directive that writes the option warns
+  and documents only the class's own members.
 * :confval:`matlab_external_names`: MATLAB's own classes and namespaces
   (``handle``, ``matlab.*``, ``Simulink.*``, ``double``, ``datetime``,
   ...). A reference to one of them that the project does not document is
@@ -284,9 +291,10 @@ These Sphinx and autodoc settings apply too:
     order, whatever order the file system lists them in.
 * ``autodoc_default_options``: default options of the auto directives, for
   example ``{"members": True, "show-inheritance": True}``. With
-  ``"inherited-members": True`` every class also documents the members it
-  inherits, on the pages of ``scmd apidoc`` too; this is not recommended for
-  a project with many subclasses (:doc:`documenting`).
+  ``"inherited-members": True`` and :confval:`matlab_inherited_members`
+  every class also documents the members it inherits, on the pages of
+  ``scmd apidoc`` too; this is not recommended for a project with many
+  subclasses (:doc:`documenting`).
 * ``add_function_parentheses``: ``()`` after function and method links.
   Sphinx's ``add_module_names`` is not read; use
   :confval:`matlab_add_namespace_names`.

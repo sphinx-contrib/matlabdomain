@@ -93,7 +93,9 @@ know which object to document") and the directive writes nothing.
       :type: no value, or a comma-separated list of class names
 
       Also document the members the class inherits from its base classes in
-      the project. Each one is listed in its section like the class's own
+      the project. It needs :confval:`matlab_inherited_members` ``= True``
+      in ``conf.py``; without it the option documents no inherited member
+      and the build warns (``mat.directive``). Each one is listed in its section like the class's own
       members, starts with "Inherited from" and a link to its base class,
       and gets a link target under the class (``Sub.baseMethod``).
 
