@@ -7,7 +7,8 @@
 import difflib
 import json
 import re
-from typing import Any, ClassVar, cast
+from dataclasses import dataclass
+from typing import Any, ClassVar, NamedTuple, cast
 
 from sphinx.ext.autodoc import (
     ALL,
@@ -92,11 +93,40 @@ mat_auto_sig_re = re.compile(
 )
 
 
-# TODO: check MRO's for all classes, attributes and methods!!!
+@dataclass(frozen=True)
+class InheritedMembers:
+    """The value of ``:inherited-members:`` (always true): the bases to stop at."""
+
+    #: names or MATLAB names of the bases not to walk
+    stop: frozenset[str] = frozenset()
+
+
+def inherited_members_option(arg):
+    """``:inherited-members:``: no value (``True`` or ``""`` from
+    ``autodoc_default_options``) walks all project bases; a comma-separated list
+    names the bases to stop at. ``False`` (``autodoc_default_options``) is off.
+    """
+    if arg is False:
+        return None
+    names = () if arg is None or arg is True else str(arg).split(",")
+    return InheritedMembers(frozenset(n.strip() for n in names if n.strip()))
+
+
+class Inherited(NamedTuple):
+    """An inherited member, as its class's documenter hands it to the member's."""
+
+    #: the member (property, method or event) of the base
+    member: Any
+    #: the base that declares it
+    owner: MatClass
+    #: the class documented, which inherits it
+    cls: MatClass
+
 
 #: options of the documenters with members (classes and folders)
 MEMBER_OPTIONS = {
     "members": members_option,
+    "inherited-members": inherited_members_option,
     "undoc-members": bool_option,
     "noindex": bool_option,
     "no-index": bool_option,
@@ -180,6 +210,8 @@ class MatDocumenterBridge(DocumenterBridge):
     def __init__(self, *args, location):
         super().__init__(*args)
         self.location = location
+        #: class reference -> its inherited members (``MatClass.inherited_members``)
+        self.inherited = {}
 
 
 class MatlabDocumenter(PyDocumenter):
@@ -222,16 +254,7 @@ class MatlabDocumenter(PyDocumenter):
         target, args, retann = match.groups()
 
         dom = self.env.get_domain("mat")
-        found = []
-        cls = self.env.temp_data.get("mat:class")
-        if self.class_level and cls:
-            obj = lookup_reference(dom, f"{cls[0]}.{target}")
-            if obj is not None and self.accepts(obj):
-                found = [(f"{cls[0]}.{target}", obj)]
-        if not found:
-            found = find_source(
-                dom, target, self.env.temp_data.get("mat:folder"), self.accepts
-            )
+        found = self.find_objects(dom, target)
         if len(found) != 1:
             location = self.directive.location
             if found:
@@ -263,6 +286,20 @@ class MatlabDocumenter(PyDocumenter):
         self.retann = retann
         self.fullname = self.ref
         return True
+
+    def find_objects(self, dom, target):
+        """Return the ``[(reference, object)]`` that ``target`` names: a member of the
+        current class first (for a class member), else ``find_source`` from the
+        current folder.
+        """
+        cls = self.env.temp_data.get("mat:class")
+        if self.class_level and cls:
+            obj = lookup_reference(dom, f"{cls[0]}.{target}")
+            if obj is not None and self.accepts(obj):
+                return [(f"{cls[0]}.{target}", obj)]
+        return find_source(
+            dom, target, self.env.temp_data.get("mat:folder"), self.accepts
+        )
 
     @override
     def import_object(self):
@@ -312,11 +349,12 @@ class MatlabDocumenter(PyDocumenter):
 
     def code_path(self):
         """Return the path of the code file the object is written in: for a
-        method with a file of its own in a class folder, that file. None for an
-        object without a file (a folder), or without an index.
+        method with a file of its own in a class folder, that file; for an
+        inherited member, the file of the base. None for an object without a
+        file (a folder), or without an index.
         """
         obj = self.object
-        ref = obj.ref if getattr(obj, "from_class_folder", False) else self.ref
+        ref = obj.ref if getattr(obj, "from_class_folder", False) else self.help_ref()
         file = mat_naming.parse_reference(ref)[0]
         return cast(Any, self.env.get_domain("mat")).source_paths().get(file)
 
@@ -363,7 +401,38 @@ class MatlabDocumenter(PyDocumenter):
         Python's autodoc names it (the reference only without an index). The
         file is the one the help is written in.
         """
-        return mat_sidecars.help_source(self.fullname, self.code_path())
+        return mat_sidecars.help_source(self.help_ref(), self.code_path())
+
+    def help_ref(self):
+        """Return the reference of the object whose help this is: where the help
+        is written (the base's member for an inherited member), and whose folder
+        the names in it are found from.
+        """
+        return self.ref
+
+    def inherited_of(self, cls):
+        """Return ``{name: (member, owner)}``: the members ``cls`` inherits, with
+        ``:inherited-members:``; else nothing.
+        """
+        option = self.options.inherited_members
+        if not option or not isinstance(cls, MatClass):
+            return {}
+        known = self.directive.inherited
+        if cls.ref not in known:
+            known[cls.ref] = cls.inherited_members(option.stop)
+        return known[cls.ref]
+
+    def member_names(self, cls, kind):
+        """Names of the members of ``cls`` of the type ``kind`` (``MatMethod``,
+        ``MatProperty`` or ``MatEvent``), with the inherited ones.
+        """
+        own = {
+            MatMethod: cls.methods,
+            MatProperty: cls.properties,
+            MatEvent: cls.events,
+        }
+        inherited = self.inherited_of(cls).items()
+        return [*own[kind], *(n for n, (m, _) in inherited if isinstance(m, kind))]
 
     def help_sources(self):
         """``(help, line)`` of each help text of the object, in order: the help
@@ -425,7 +494,7 @@ class MatlabDocumenter(PyDocumenter):
         found = find_source(
             self.env.get_domain("mat"),
             target,
-            mat_naming.folder_of(self.ref),
+            mat_naming.folder_of(self.help_ref()),
             is_source_object,
         )
         if len(found) > 1:
@@ -511,12 +580,12 @@ class MatlabDocumenter(PyDocumenter):
         """
         if not (cls := self.class_object()):
             return None
-        for members, role, parentheses in (
-            (cls.methods, "meth", "()"),
-            (cls.properties, "attr", ""),
-            (cls.events, "event", ""),
+        for kind, role, parentheses in (
+            (MatMethod, "meth", "()"),
+            (MatProperty, "attr", ""),
+            (MatEvent, "event", ""),
         ):
-            if name in members:
+            if name in self.member_names(cls, kind):
                 return (
                     f":mat:{role}:`{name}{parentheses} "
                     f"<{cls.fullname(self.env)}.{name}>`"
@@ -555,7 +624,7 @@ class MatlabDocumenter(PyDocumenter):
         markup; return ``docstrings``.
         """
         dom = self.env.get_domain("mat")
-        folder = mat_naming.folder_of(self.ref)
+        folder = mat_naming.folder_of(self.help_ref())
         for nn in list(dom.data["matlab_names"]):
             # Only names in the text can link; resolving parses their files.
             if not any(nn in line for lines in docstrings for line in lines):
@@ -628,9 +697,10 @@ class MatlabDocumenter(PyDocumenter):
 
     def auto_link_methods(self, class_obj, docstrings):
         """Link each ``name()`` in ``docstrings`` that is a method of ``class_obj`` to
-        that method, outside literal blocks; return ``docstrings``.
+        that method (inherited ones too, with ``:inherited-members:``), outside literal
+        blocks; return ``docstrings``.
         """
-        for n in class_obj.methods:
+        for n in self.member_names(class_obj, MatMethod):
             # negative look-behind for ` . < @ * / | <non-breaking space>, then
             # <name>()
             pat = r"(?<!(`|\.|<|@|\*|\xa0|/|\|))\b" + n + r"\(\)(?!\xa0|\|)"
@@ -655,8 +725,10 @@ class MatlabDocumenter(PyDocumenter):
         list of `(membername, member)` pairs of the members of *self.object*.
 
         If *want_all* is True, return all members.  Else, only return those
-        members given by *self.options.members* (which may also be none).
+        members given by *self.options.members* (which may also be none). With
+        ``:inherited-members:``, the members the class inherits count too.
         """
+        inherited = self.inherited_of(self.object)
         if not want_all:
             if not self.options.members:
                 return False, []
@@ -664,7 +736,10 @@ class MatlabDocumenter(PyDocumenter):
             # specific members given
             members = []
             for mname in self.options.members:
-                if (member := self.get_attr(self.object, mname, None)) is not None:
+                member = self.get_attr(self.object, mname, None)
+                if member is None and mname in inherited:
+                    member = inherited[mname][0]
+                if member is not None:
                     members.append((mname, member))
                 else:
                     logger.warning(
@@ -692,6 +767,7 @@ class MatlabDocumenter(PyDocumenter):
                     (mname, self.get_attr(self.object, mname, None))
                     for mname in list(obj_dict.keys())
                 ]
+            members += [(mname, member) for mname, (member, _) in inherited.items()]
         return False, sorted(members)
 
     @override
@@ -813,6 +889,7 @@ class MatlabDocumenter(PyDocumenter):
             ]
 
         # document non-skipped members
+        inherited = self.inherited_of(self.object)
         memberdocumenters = []
         for mname, member, isattr in self.filter_members(members, want_all):
             classes = []
@@ -837,6 +914,10 @@ class MatlabDocumenter(PyDocumenter):
             else:
                 full_mname = f"{self.ref}.{mname}"
             documenter = classes[-1](self.directive, full_mname, self.indent)
+            if (found := inherited.get(mname)) is not None:
+                documenter.inherited = Inherited(
+                    found[0], found[1], cast(MatClass, self.object)
+                )
             documenter.source_tag = ".".join([*self.objpath, mname])
             memberdocumenters.append((documenter, isattr))
         member_order = self.options.member_order or self.env.config.autodoc_member_order
@@ -1089,6 +1170,36 @@ class MatClassLevelDocumenter(MatlabDocumenter):
     """
 
     class_level = True
+    #: an inherited member: set by the class documenter, which found it
+    inherited: Inherited | None = None
+
+    @override
+    def find_objects(self, dom, target):
+        # ``Sub.m.member`` of an inherited member is no reference of the files.
+        if self.inherited is not None:
+            return [(target, self.inherited.member)]
+        return super().find_objects(dom, target)
+
+    @override
+    def help_ref(self):
+        if self.inherited is not None:
+            return f"{self.inherited.owner.ref}.{self.inherited.member.name}"
+        return self.ref
+
+    @override
+    def class_object(self):
+        # the documented class: for an inherited member, the one that inherits it
+        if self.inherited is not None:
+            return self.inherited.cls
+        return self.object.cls
+
+    @override
+    def add_content(self, more_content, no_docstring=False):
+        if self.inherited is not None:
+            link = self.inherited.owner.link(self.env)
+            self.add_generated(_("Inherited from %s.") % link)
+            self.add_generated("")
+        super().add_content(more_content, no_docstring)
 
 
 class MatDocstringSignatureMixin(MatlabDocumenter):
@@ -1372,13 +1483,13 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
             cons_names = [
                 membername
                 for (membername, member) in filtered_members
-                if isinstance(member, MatMethod) and member.name == member.cls.name
+                if isinstance(member, MatMethod) and member.name == self.object.name
             ]
         # create list of non-constructor methods
         meth_names = [
             membername
             for (membername, member) in filtered_members
-            if isinstance(member, MatMethod) and member.name != member.cls.name
+            if isinstance(member, MatMethod) and member.name != self.object.name
         ]
         # create list of enums
         enum_names = [
@@ -1402,13 +1513,13 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
         non_constructors = [
             membername
             for (membername, member) in members
-            if not isinstance(member, MatMethod) or member.name != member.cls.name
+            if not isinstance(member, MatMethod) or member.name != self.object.name
         ]
         # create list of members that are not non-constructor methods
         non_methods = [
             membername
             for (membername, member) in members
-            if not isinstance(member, MatMethod) or member.name == member.cls.name
+            if not isinstance(member, MatMethod) or member.name == self.object.name
         ]
         # create list of members that are not properties
         non_enums = [
@@ -1541,11 +1652,6 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
     def document_members(self, all_members=False):
         pass
 
-    @override
-    def class_object(self):
-        # the associated MatClass object
-        return self.object.cls
-
     def auto_link_self(self, docstrings):
         """Link the method's own name, followed by ``()``, in its help to the method;
         return ``docstrings``.
@@ -1578,7 +1684,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
 
     @override
     def auto_link_all(self, docstrings):
-        docstrings = self.auto_link_methods(self.object.cls, docstrings)
+        docstrings = self.auto_link_methods(self.class_object(), docstrings)
         docstrings = self.auto_link_self(docstrings)
         return MatlabDocumenter.auto_link_all(self, docstrings)
 
@@ -1697,11 +1803,6 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         #     # wrong thing to display
         MatClassLevelDocumenter.add_content(self, more_content, no_docstring)
 
-    @override
-    def class_object(self):
-        # the associated MatClass object
-        return self.object.cls
-
     def auto_link_self(self, docstrings):
         """Link the property's own name in its help to the property; return
         ``docstrings``.
@@ -1732,7 +1833,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     @override
     def auto_link_all(self, docstrings):
-        docstrings = self.auto_link_methods(self.object.cls, docstrings)
+        docstrings = self.auto_link_methods(self.class_object(), docstrings)
         docstrings = self.auto_link_self(docstrings)
         return MatlabDocumenter.auto_link_all(self, docstrings)
 
@@ -1754,13 +1855,8 @@ class MatEventDocumenter(MatClassLevelDocumenter):
         pass
 
     @override
-    def class_object(self):
-        # the associated MatClass object
-        return self.object.cls
-
-    @override
     def auto_link_all(self, docstrings):
-        docstrings = self.auto_link_methods(self.object.cls, docstrings)
+        docstrings = self.auto_link_methods(self.class_object(), docstrings)
         return MatlabDocumenter.auto_link_all(self, docstrings)
 
 

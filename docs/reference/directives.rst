@@ -86,7 +86,37 @@ know which object to document") and the directive writes nothing.
 
    .. rst:directive:option:: show-inheritance
 
-      Add a "Bases:" line with the superclasses.
+      Add a "Bases:" line with the superclasses. This is the recommended way
+      to show what a class inherits: the line links to the base classes.
+
+   .. rst:directive:option:: inherited-members
+      :type: no value, or a comma-separated list of class names
+
+      Also document the members the class inherits from its base classes in
+      the project. Each one is listed in its section like the class's own
+      members, starts with "Inherited from" and a link to its base class,
+      and gets a link target under the class (``Sub.baseMethod``).
+
+      The bases are read in the order the ``classdef`` lists them, each with
+      its own bases before the next. A member the class defines itself wins
+      over an inherited one, and the first base that defines a name wins
+      over the later ones. Properties, methods (also static and abstract
+      ones) and events are inherited. Constructors, enumeration values and
+      members with ``Access = private`` (or ``GetAccess`` or ``ListenAccess``)
+      are not, also with ``:private-members:``. The other options filter
+      inherited members as they filter the class's own.
+      Base classes outside the project (``handle``, ``matlab.mixin.Copyable``)
+      and names that match no class or several classes are skipped.
+
+      With a list of class names (``Framework`` or ``pkg.Framework``), the
+      members of those bases are left out, and so are the members of their
+      bases unless another base of the class leads to them.
+
+      This option is not recommended. The help of a base member is repeated
+      on the page of every class that inherits it, so the pages grow and
+      the build slows down on a project with many subclasses or deep
+      inheritance. Use ``:show-inheritance:`` instead; on a small project
+      with little inheritance this option is fine.
 
    .. rst:directive:option:: noindex
                              no-index
@@ -194,6 +224,7 @@ know which object to document") and the directive writes nothing.
                              exclude-members
                              member-order
                              show-inheritance
+                             inherited-members
 
       As for ``mat:autoclass``; they apply to the folder's members and their
       members.

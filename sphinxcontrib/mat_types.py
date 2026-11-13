@@ -2217,6 +2217,23 @@ class MatClass(MatObject):
 
         return bases_
 
+    def inherited_members(self, stop=frozenset()):
+        """Return ``{name: (member, owner)}``: the members a subclass inherits from
+        the project classes among its bases (``__bases__``), each with the
+        :class:`MatClass` that declares it.
+
+        The class's own members come first, then the bases depth-first, left to
+        right as the ``classdef`` lists them; the first owner of a name wins. Not
+        inherited: constructors, enumeration values and private members. A base
+        named in ``stop`` (its name or MATLAB name) is not walked, nor its bases
+        through it. Each class is walked once, so a diamond or a cycle of bases
+        ends.
+        """
+        found = {}
+        taken = set(_member_names(self))
+        _walk_bases(self, stop, {self.ref}, taken, found)
+        return found
+
     @override
     def getter(self, name, *defargs) -> Any:
         """:class:`MatClass` ``getter`` method to get attributes."""
@@ -2238,6 +2255,50 @@ class MatClass(MatObject):
             return objdict
         else:
             return super().getter(name, *defargs)
+
+
+def _member_names(cls):
+    """Names of the properties, methods, enumeration values and events of ``cls``."""
+    return [*cls.properties, *cls.methods, *cls.enumerations, *cls.events]
+
+
+def is_private(member):
+    """Return True for a member whose ``Access`` (else ``GetAccess``, else
+    ``ListenAccess``) is ``private``: subclasses do not inherit it.
+    """
+    attrs = getattr(member, "attrs", None) or {}
+    level = attrs.get("Access") or attrs.get("GetAccess") or attrs.get("ListenAccess")
+    return isinstance(level, str) and level.strip("'\"") == "private"
+
+
+def _inheritable(base):
+    """``(name, member)`` of the members of ``base`` a subclass inherits: its
+    properties, methods except the constructor, and events; not private ones.
+    """
+    names = [*base.properties, *base.methods, *base.events]
+    members = ((name, base.getter(name)) for name in names if name != base.name)
+    return [(name, member) for name, member in members if not is_private(member)]
+
+
+def _stopped(base, stop):
+    """Return True if ``stop`` names ``base``: its name or its MATLAB name."""
+    return base.name in stop or getattr(base, "matlab_name", None) in stop
+
+
+def _walk_bases(cls, stop, visited, taken, found):
+    """Add to ``found`` the inheritable members of the bases of ``cls`` whose
+    names are not ``taken``, depth-first; ``visited`` holds the references of
+    the classes walked.
+    """
+    for base in cls.__bases__.values():
+        if base is None or base.ref in visited or _stopped(base, stop):
+            continue
+        visited.add(base.ref)
+        for name, member in _inheritable(base):
+            if name not in taken:
+                taken.add(name)
+                found[name] = (member, base)
+        _walk_bases(base, stop, visited, taken, found)
 
 
 class MatProperty(MatObject):

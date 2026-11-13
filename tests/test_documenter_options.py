@@ -368,8 +368,9 @@ def test_folder_options(make_app, tmp_path):
 
 
 def test_option_lists(make_app, tmp_path):
-    # :no-index: everywhere; folders take the class member options; options of
-    # Python's autodoc that do nothing for MATLAB are errors.
+    # :no-index: everywhere; folders take the class member options (also
+    # :inherited-members:); options of Python's autodoc that do nothing for
+    # MATLAB are errors.
     app = build(
         make_app,
         tmp_path,
@@ -379,7 +380,7 @@ def test_option_lists(make_app, tmp_path):
             ".. mat:folder:: sub\n   :no-index:\n",
             ".. mat:autofolder:: .\n   :members: Access\n   :protected-members:\n"
             "   :no-index:\n",
-            ".. mat:autofolder:: sub\n   :inherited-members:\n",
+            ".. mat:autofolder:: sub\n   :inherited-members:\n   :no-index:\n",
             ".. mat:autodata:: consts\n   :annotation: x\n",
             ".. mat:autofunction:: fnone\n   :no-index-entry:\n",
         ),
@@ -389,9 +390,9 @@ def test_option_lists(make_app, tmp_path):
     assert domain.data["folders"] == {}
     assert "protected property" in html(app)
     errors = app.warning.getvalue()
-    for directive in ("mat:autofolder", "mat:autodata", "mat:autofunction"):
+    for directive in ("mat:autodata", "mat:autofunction"):
         assert f"An option to {directive} is either unknown" in errors
-    assert errors.count("is either unknown") == 3
+    assert errors.count("is either unknown") == 2
 
 
 def test_more_content(make_app, tmp_path):
