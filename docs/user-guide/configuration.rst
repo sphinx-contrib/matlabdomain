@@ -283,7 +283,10 @@ These Sphinx and autodoc settings apply too:
     file. The files of a folder have no source order; they stay in name
     order, whatever order the file system lists them in.
 * ``autodoc_default_options``: default options of the auto directives, for
-  example ``{"members": True, "show-inheritance": True}``.
+  example ``{"members": True, "show-inheritance": True}``. With
+  ``"inherited-members": True`` every class also documents the members it
+  inherits, on the pages of ``scmd apidoc`` too; this is not recommended for
+  a project with many subclasses (:doc:`documenting`).
 * ``add_function_parentheses``: ``()`` after function and method links.
   Sphinx's ``add_module_names`` is not read; use
   :confval:`matlab_add_namespace_names`.

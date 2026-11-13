@@ -110,9 +110,13 @@ Directives and roles
      - removed (no MATLAB equivalent)
    * - ``.. mat:classmethod::``
      - ``.. mat:staticmethod::`` (MATLAB has no other class methods)
-   * - ``:special-members:``, ``:inherited-members:``
-     - removed (``:inherited-members:`` stopped every build that used it
-       with an exception)
+   * - ``:special-members:``
+     - removed
+   * - ``:inherited-members:``
+     - kept. 0.x offered it, but it stopped every build that used it; a user
+       implemented it (PR #346, issue #180), so 1.0 makes it work. It is not
+       recommended: ``:show-inheritance:`` links to the base classes instead
+       (:doc:`documenting`).
    * - ``:friend-members:``
      - ``:access-list-members:`` (the old name still works)
 
@@ -125,7 +129,7 @@ ones, before the first build:
 
 .. code-block:: console
 
-   $ grep -rnE "(auto|current)?module::|:mat:mod:|:(special|inherited)-members:|mat:(auto)?(exception|decorator)|mat:classmethod" docs
+   $ grep -rnE "(auto|current)?module::|:mat:mod:|:special-members:|mat:(auto)?(exception|decorator)|mat:classmethod" docs
 
 Names
 -----

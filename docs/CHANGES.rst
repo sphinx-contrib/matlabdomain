@@ -157,11 +157,10 @@ Directives and options:
 * Python-domain features that do not apply to MATLAB are removed: the
   ``mat:decorator``, ``mat:decoratormethod``, ``mat:exception`` and
   ``mat:autoexception`` directives, the ``:mat:exc:`` role, and the
-  ``:special-members:`` and ``:inherited-members:`` options of
-  ``mat:autoclass`` (``:inherited-members:`` crashed the build). Names in
-  ``:raises:`` fields link to classes.
+  ``:special-members:`` option of ``mat:autoclass``. Names in ``:raises:``
+  fields link to classes.
 * The auto directives accept only the options that do something.
-  ``mat:autofolder`` no longer accepts ``:inherited-members:``,
+  ``mat:autofolder`` no longer accepts
   ``:special-members:``, ``:imported-members:``, ``:ignore-module-all:``
   and ``:no-value:``; ``mat:autodata`` no longer accepts ``:annotation:``
   and ``:no-value:``; no auto directive accepts ``:no-index-entry:``.
@@ -345,6 +344,18 @@ Classes:
   it. ``mat:autofolder`` accepts ``:protected-members:``,
   ``:hidden-members:`` and ``:access-list-members:`` for the classes it
   documents.
+* ``:inherited-members:`` of ``mat:autoclass`` and ``mat:autofolder``
+  works (#180, PR #346 by ehennestad). 0.x offered it, but it stopped every
+  build that used it; a user took the time to implement it, so 1.0
+  implements it again on the new parser. A class documents the members it
+  inherits from its base classes in the project, under its own name
+  (``Sub.baseMethod``), each starting with "Inherited from" and a link to
+  the base. Its own members win, then the bases in ``classdef`` order;
+  constructors, enumeration values and private members are not inherited. A
+  list of class names (``:inherited-members: pkg.Framework``) stops at those
+  bases. It is not recommended: the same help text is repeated on the page
+  of every subclass, so the pages grow and the build slows down;
+  ``:show-inheritance:`` links to the base class instead.
 
 Linking:
 

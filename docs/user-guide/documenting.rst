@@ -113,6 +113,9 @@ constructor, properties, enumeration values and methods, in sections:
   ``matlab.mixin.Copyable``) are not documented in your project; they are
   shown as text, without a "reference target not found" warning (see
   :confval:`matlab_external_names` for the names and how to add others).
+* ``:inherited-members:`` also documents the members a class inherits
+  from its base classes in the project (below). It is not recommended:
+  ``:show-inheritance:`` links to the base classes instead.
 * Members without help are left out (enumeration values are always
   shown); ``:undoc-members:`` adds them.
 * Members with ``Access = private`` or ``protected``, ``Hidden`` members and
@@ -168,6 +171,38 @@ A folder ``@X/`` is a class folder only if ``@X/X.m`` is a ``classdef``.
 Old-style classes (a class folder without a ``classdef``, from before
 MATLAB R2008a) are not supported: their files are functions. Document each
 file with ``mat:autofunction``.
+
+Inherited members
+^^^^^^^^^^^^^^^^^
+
+``:inherited-members:`` adds the members a class inherits from its base
+classes in the project. Each one is listed with the class's own members and
+starts with "Inherited from" and a link to the base class. ``Circle``
+inherits ``Name``, ``Color`` and ``describe`` from ``Shape``:
+
+.. literalinclude:: ../snippets/autoclass_inherited.rst
+   :language: rst
+
+.. include:: ../snippets/autoclass_inherited.rst
+
+* A member the class defines itself wins over the inherited one, as an
+  implemented abstract method does. Constructors, enumeration values and
+  private members are not inherited. The other options (``:undoc-members:``,
+  ``:protected-members:``, ``:exclude-members:`` and so on) apply to inherited
+  members too.
+* A list of class names stops at those bases: ``:inherited-members:
+  pkg.Framework`` leaves out the members of ``pkg.Framework`` and of its
+  own bases.
+* Base classes outside the project, such as ``handle``, are skipped.
+
+.. caution::
+
+   The documentation does not recommend ``:inherited-members:``. It does not
+   scale: the help of one base member is repeated on the page of every class
+   that inherits it, so the pages get larger and the build gets slower with
+   each subclass and each level of inheritance. ``:show-inheritance:`` links
+   to the base class instead, where the reader finds its members once. On a
+   small project with little inheritance, the option is fine.
 
 Single members
 --------------
