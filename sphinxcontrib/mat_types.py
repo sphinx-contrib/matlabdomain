@@ -1129,53 +1129,20 @@ class _Indexer:
             return True
         if mod.ref != ROOT_REFERENCE and sphinx_output(mod.path, keys):
             return False
-        sidecars = bool(self.sidecar_suffixes) and not (
-            self.docs is not None and _within(mod.path, self.docs)
-        )
         denied = []
         seen = {}  # reference: the first name on disk that has it
         # documentation file candidates, and the stems of Simulink files
         loose, simulink_stems = [], set()
         for key in keys:
-            if _undecodable(key):
-                _warn(
-                    "parse_error",
-                    f"{mod.ref}: the name {os.fsencode(key)!r} is not valid UTF-8; "
-                    "it is not documented.",
-                )
+            entry = self.entry(mod, key, denied)
+            if entry is None:
                 continue
-            path = os.path.join(mod.path, key)
-            ref = join_reference(mod.ref, unicodedata.normalize("NFC", key))
-            try:
-                st = os.stat(path)
-            except PermissionError as err:  # e.g. a folder listed but not entered
-                if not key.startswith("."):  # skipped folders stay quiet
-                    denied.append(err)
-                continue
-            except OSError:  # e.g. a broken link
-                continue
+            path, ref, st = entry
             if stat.S_ISDIR(st.st_mode):
-                # VCS and editors; Sphinx output (more in list())
-                if key.startswith(".") or os.path.normcase(path) == self.build_dir:
-                    continue
-                ref += "/"
-                if not self.sources.walks(ref):
-                    continue
-                if (extension := file_like_folder(key)) is not None:
-                    logger.error(
-                        "[sphinxcontrib-matlabdomain] %s: a folder must not be "
-                        "named like a %s file; its contents are not documented.",
-                        ref,
-                        extension,
-                        type="mat",
-                        subtype="folder_name",
-                    )
-                    continue
-                child_chain = self.folder_chain(path, ref, key, chain)
-                if child_chain is None or self.twin(seen, key, ref):
-                    continue
-                self.pending[ref] = (MatModule(key, path, ref), child_chain)
-                mod.members.append((key, ref))
+                if (
+                    folder_ref := self.add_folder(key, path, ref, chain, seen)
+                ) is not None:
+                    mod.members.append((key, folder_ref))
                 continue
             handler = handler_for(path)
             if handler is None:
@@ -1185,14 +1152,89 @@ class _Indexer:
                 continue
             if handler.blocks and self.sources.includes(ref):
                 simulink_stems.add(os.path.splitext(key)[0])
-            if self.sidecars_only or not self.sources.includes(ref):
-                continue
-            if (_is_link(path) and self.outside(path, ref)) or self.twin(
-                seen, key, ref
-            ):
-                continue
-            self.index_file(handler, path, ref, st)
-            mod.members.append((os.path.splitext(key)[0], ref))
+            if self.add_file(handler, key, path, ref, st, seen):
+                mod.members.append((os.path.splitext(key)[0], ref))
+        self.add_documentation_files(mod, loose, simulink_stems, seen)
+        if denied:
+            _warn(
+                "parse_error",
+                f"{mod.ref}: {len(denied)} entries cannot be accessed "
+                f"({denied[0].strerror or denied[0]}); they are not documented.",
+            )
+        return True
+
+    @staticmethod
+    def entry(mod, key, denied):
+        """Return the path, reference and ``os.stat`` result of the name
+        ``key`` in the folder ``mod``; None for a name that is not valid UTF-8
+        (with a warning) or cannot be stat'ed. Permission errors of names that
+        do not start with a dot are added to ``denied``.
+        """
+        if _undecodable(key):
+            _warn(
+                "parse_error",
+                f"{mod.ref}: the name {os.fsencode(key)!r} is not valid UTF-8; "
+                "it is not documented.",
+            )
+            return None
+        path = os.path.join(mod.path, key)
+        ref = join_reference(mod.ref, unicodedata.normalize("NFC", key))
+        try:
+            st = os.stat(path)
+        except PermissionError as err:  # e.g. a folder listed but not entered
+            if not key.startswith("."):  # skipped folders stay quiet
+                denied.append(err)
+            return None
+        except OSError:  # e.g. a broken link
+            return None
+        return path, ref, st
+
+    def add_folder(self, key, path, ref, chain, seen):
+        """Queue the subfolder ``key`` (file reference ``ref``) for the walk
+        and return its reference, which ends in ``/``; None for a folder that
+        is skipped.
+        """
+        # VCS and editors; Sphinx output (more in list())
+        if key.startswith(".") or os.path.normcase(path) == self.build_dir:
+            return None
+        ref += "/"
+        if not self.sources.walks(ref):
+            return None
+        if (extension := file_like_folder(key)) is not None:
+            logger.error(
+                "[sphinxcontrib-matlabdomain] %s: a folder must not be "
+                "named like a %s file; its contents are not documented.",
+                ref,
+                extension,
+                type="mat",
+                subtype="folder_name",
+            )
+            return None
+        child_chain = self.folder_chain(path, ref, key, chain)
+        if child_chain is None or self.twin(seen, key, ref):
+            return None
+        self.pending[ref] = (MatModule(key, path, ref), child_chain)
+        return ref
+
+    def add_file(self, handler, key, path, ref, st, seen):
+        """Index the source file ``key``, read by ``handler``; return False if
+        it is not documented.
+        """
+        if self.sidecars_only or not self.sources.includes(ref):
+            return False
+        if (_is_link(path) and self.outside(path, ref)) or self.twin(seen, key, ref):
+            return False
+        self.index_file(handler, path, ref, st)
+        return True
+
+    def add_documentation_files(self, mod, loose, simulink_stems, seen):
+        """Record the sidecar docs and the documentation files of Simulink
+        models among the ``loose`` files of the folder ``mod``; recorded, not
+        read.
+        """
+        sidecars = bool(self.sidecar_suffixes) and not (
+            self.docs is not None and _within(mod.path, self.docs)
+        )
         for key, path, ref, st in loose:
             stem, suffix = os.path.splitext(key)
             simulink_doc = (
@@ -1211,13 +1253,6 @@ class _Indexer:
                 self.out.simulink_docs[path] = record
             else:
                 self.out.sidecars[path] = record
-        if denied:
-            _warn(
-                "parse_error",
-                f"{mod.ref}: {len(denied)} entries cannot be accessed "
-                f"({denied[0].strerror or denied[0]}); they are not documented.",
-            )
-        return True
 
     def index_file(self, handler, path, ref, st):
         key = (path, st.st_mtime_ns, st.st_size)
