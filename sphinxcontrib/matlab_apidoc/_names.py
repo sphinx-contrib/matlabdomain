@@ -97,36 +97,9 @@ def docnames(references, suffix="rst", tocfile="index"):
     names, groups = {}, []
     for parent, kids in children.items():
         page = f"{tocfile if not parent else 'index'}.{suffix}"
-        files: dict[str, list[str]] = {}
-        for kind, raw in kids:
-            if kind == _FILE:
-                full = f"{escape_segment(raw)}.{suffix}"
-                files.setdefault(full, []).append(raw)
-        by_name: dict[str, list[tuple[str, str] | None]] = {page.lower(): [None]}
-        for kind, raw in sorted(kids):
-            out = escape_segment(raw)
-            if kind == _DIR and out.startswith("_"):
-                out = _escape_char("_") + out[1:]
-            # Exact only: case-only clashes keep their earlier names.
-            if kind == _DIR and out in files:
-                clash = [(_FILE, file) for file in files[out]]
-                groups.append((parent, [*clash, (kind, raw)]))
-                base, _, extension = out.rpartition(".")
-                out = f"{base}{_escape_char('.')}{extension}"
-            names[parent, kind, raw] = out
-            full = out if kind == _DIR else f"{out}.{suffix}"
-            by_name.setdefault(full.lower(), []).append((kind, raw))
-        for group in by_name.values():
-            members = [m for m in group if m is not None]
-            if len(group) > 1 and members:
-                for kind, raw in members:
-                    out = escape_upper(names[parent, kind, raw])
-                    full = out if kind == _DIR else f"{out}.{suffix}"
-                    if full.lower() == page.lower():
-                        # all lowercase, like the page itself
-                        out = _escape_char(out[0]) + out[1:]
-                    names[parent, kind, raw] = out
-                groups.append((parent, members))
+        kid_names, kid_groups = _name_siblings(kids, page, suffix)
+        names.update({(parent, *kid): out for kid, out in kid_names.items()})
+        groups += [(parent, group) for group in kid_groups]
 
     def path(folders):
         return [names[folders[:i], _DIR, name] for i, name in enumerate(folders)]
@@ -146,3 +119,52 @@ def docnames(references, suffix="rst", tocfile="index"):
             leaf = names[folders, _FILE, file]
         out[ref] = "/".join([*path(folders), leaf])
     return out, collisions
+
+
+def _name_siblings(kids, page, suffix):
+    """Return ``(names, groups)`` for the children ``kids`` (``(kind, raw)``)
+    of one output folder whose page is ``page``: the output name of each child,
+    and the groups of children whose output paths collided.
+    """
+    files: dict[str, list[str]] = {}
+    for kind, raw in kids:
+        if kind == _FILE:
+            full = f"{escape_segment(raw)}.{suffix}"
+            files.setdefault(full, []).append(raw)
+    names, groups = {}, []
+    by_name: dict[str, list[tuple[str, str] | None]] = {page.lower(): [None]}
+    for kind, raw in sorted(kids):
+        out = escape_segment(raw)
+        if kind == _DIR and out.startswith("_"):
+            out = _escape_char("_") + out[1:]
+        # Exact only: case-only clashes keep their earlier names.
+        if kind == _DIR and out in files:
+            clash = [(_FILE, file) for file in files[out]]
+            groups.append([*clash, (kind, raw)])
+            base, _, extension = out.rpartition(".")
+            out = f"{base}{_escape_char('.')}{extension}"
+        names[kind, raw] = out
+        full = out if kind == _DIR else f"{out}.{suffix}"
+        by_name.setdefault(full.lower(), []).append((kind, raw))
+    groups += _escape_case_clashes(names, by_name, page, suffix)
+    return names, groups
+
+
+def _escape_case_clashes(names, by_name, page, suffix):
+    """Escape the uppercase letters in ``names`` of the siblings whose output
+    paths differ only by case (``by_name``: the siblings by lowercase output
+    path; ``None`` stands for the page); return the groups of those siblings.
+    """
+    groups = []
+    for group in by_name.values():
+        members = [m for m in group if m is not None]
+        if len(group) > 1 and members:
+            for kind, raw in members:
+                out = escape_upper(names[kind, raw])
+                full = out if kind == _DIR else f"{out}.{suffix}"
+                if full.lower() == page.lower():
+                    # all lowercase, like the page itself
+                    out = _escape_char(out[0]) + out[1:]
+                names[kind, raw] = out
+            groups.append(members)
+    return groups
