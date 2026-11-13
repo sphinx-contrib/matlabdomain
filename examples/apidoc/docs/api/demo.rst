@@ -3,6 +3,8 @@
 namespace demo
 ==============
 
+.. mat:namespace:: demo
+
 .. contents::
    :local:
    :backlinks: none

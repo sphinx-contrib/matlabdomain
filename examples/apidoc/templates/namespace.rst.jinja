@@ -8,6 +8,10 @@
 {%- endmacro -%}
 
 {{ title | e | heading }}
+{%- if namespace and page == 1 %}
+
+.. mat:namespace:: {{ namespace }}
+{%- endif %}
 
 .. contents::
    :local:

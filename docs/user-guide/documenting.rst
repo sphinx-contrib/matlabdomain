@@ -304,5 +304,6 @@ class folder (``@Polygon/``) counts as its class. Inner namespaces,
 
 ``mat:autonamespace`` is not recommended. Use ``scmd apidoc`` with
 namespace grouping instead (:doc:`apidoc`): it writes one page per
-namespace. ``mat:autonamespace`` exists so that a 0.x ``mat:automodule``
+namespace, with ``mat:namespace`` at the top, so links to the namespace
+land there. ``mat:autonamespace`` exists so that a 0.x ``mat:automodule``
 of a package has a counterpart in 1.0 (:doc:`migration`).

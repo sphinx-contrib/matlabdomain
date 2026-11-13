@@ -3,6 +3,8 @@
 namespace nmpkg
 ===============
 
+.. mat:namespace:: nmpkg
+
 .. contents::
    :local:
    :backlinks: none

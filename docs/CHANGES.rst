@@ -348,7 +348,8 @@ Linking:
   looked up in it. ``mat:autonamespace`` documents it and, with
   ``:members:``, the files directly in all its folders; it is the
   counterpart of a 0.x ``automodule`` of a package, and ``scmd apidoc``
-  pages are recommended instead.
+  pages are recommended instead. Each ``scmd apidoc`` namespace page
+  starts with ``mat:namespace``, so links to the namespace land there.
 * References to another project's MATLAB objects
   (``sphinx.ext.intersphinx``) resolve by MATLAB name too
   (``:mat:class:`geom.Circle```), not only by path reference. The

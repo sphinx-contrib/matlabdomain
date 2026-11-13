@@ -3,6 +3,8 @@
 namespace pkg
 =============
 
+.. mat:namespace:: pkg
+
 .. contents::
    :local:
    :backlinks: none

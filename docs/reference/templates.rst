@@ -26,11 +26,14 @@ In namespace grouping, one page of a namespace or of the global namespace.
    ``namespace demo`` or ``Global``; with several pages, followed by the
    range of entries (``namespace demo (101-200)``).
 ``namespace``
-   The namespace's MATLAB name, or ``None`` for the global namespace.
+   The namespace's MATLAB name, or ``None`` for the global namespace,
+   which has no ``mat:namespace``.
 ``kind``
    ``"namespace"`` or ``"global"``.
 ``page``, ``pages``
    The number of this page and of the namespace's pages (1 and 1 for most).
+   The default template describes the namespace (``mat:namespace``) on
+   page 1 only, so that page is the namespace's link target.
 ``first``, ``last``
    The numbers of the first and last entries on this page, counting from
    1 across the namespace's pages.

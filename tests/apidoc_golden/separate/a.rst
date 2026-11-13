@@ -3,6 +3,8 @@
 namespace a
 ===========
 
+.. mat:namespace:: a
+
 .. contents::
    :local:
    :backlinks: none

@@ -3,6 +3,8 @@
 namespace demo.geometry
 =======================
 
+.. mat:namespace:: demo.geometry
+
 .. contents::
    :local:
    :backlinks: none
