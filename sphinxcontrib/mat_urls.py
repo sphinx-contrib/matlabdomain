@@ -484,11 +484,32 @@ def write_redirects(app, exception):
     builder = app.builder
     dom = app.env.get_domain("mat")
     by_ref, by_name, names, _ = addresses(dom)
-    objects = dom.data["objects"]
     themed = getattr(builder, "mat_chooser_pages", None)
     state = getattr(builder, "mat_chooser_state", None)
     if themed is None:
         themed, state = _kept_choosers(app)
+    files = _address_files(builder, dom, by_ref, by_name, names, themed)
+    files[REFS] = _refs_script(by_ref)
+    if state is not None:
+        files[STATE] = state
+    outdir = str(builder.outdir)
+    not_found = os.path.join(outdir, "404.html")
+    if not os.path.exists(not_found) or _is_ours(not_found):
+        files["404.html"] = _not_found(builder.get_target_uri(app.config.root_doc))
+    failed = _write_files(outdir, files)
+    _remove_stale_files(outdir, [*files, *themed])
+    rewrite_inventory(
+        os.path.join(outdir, "objects.inv"),
+        *_inventory_entries(dom, by_ref, by_name, names, failed),
+    )
+
+
+def _address_files(builder, dom, by_ref, by_name, names, themed):
+    """Return the redirect pages of the stable addresses and the chooser pages of
+    the MATLAB names of several objects, by output path; the theme writes the
+    chooser pages in ``themed``.
+    """
+    objects = dom.data["objects"]
     files = {}
     for ref, stub in by_ref.items():
         files[stub] = _redirect(objects[ref][2], _target(builder, dom, stub, ref))
@@ -498,20 +519,28 @@ def write_redirects(app, exception):
             files[stub] = _redirect(name, _target(builder, dom, stub, refs[0]))
         elif stub not in themed:
             files[stub] = _chooser(name, _entries(builder, dom, stub, refs))
+    return files
+
+
+def _refs_script(by_ref):
+    """Return the ``REFS`` script: the stable address of each target id, empty
+    where it equals the id.
+    """
     refs_map = {}
     for ref, stub in by_ref.items():
         key = mat_naming.make_target_id(ref)[4:]
         value = stub[len(ROOT) + 5 : -5]  # mat/ref/<value>.html
         refs_map[key] = "" if value == key else value
-    files[REFS] = (
+    return (
         f"{JS_MARKER}\nwindow.matStableRefs = {json.dumps(refs_map, sort_keys=True)};\n"
     )
-    if state is not None:
-        files[STATE] = state
-    outdir = str(builder.outdir)
-    not_found = os.path.join(outdir, "404.html")
-    if not os.path.exists(not_found) or _is_ours(not_found):
-        files["404.html"] = _not_found(builder.get_target_uri(app.config.root_doc))
+
+
+def _write_files(outdir, files):
+    """Write ``files`` (output path: text) below ``outdir``, once none of them
+    would overwrite a file this extension did not write; return the output
+    paths that could not be written, each with a warning.
+    """
     for stub in files:
         _check_owned(os.path.join(outdir, *stub.split("/")))
     failed = set()
@@ -528,10 +557,15 @@ def write_redirects(app, exception):
                 type="mat",
                 subtype="stable_url",
             )
+    return failed
+
+
+def _remove_stale_files(outdir, kept):
+    """Remove the files this extension wrote below ``ROOT`` that are not in
+    ``kept`` (output paths), and the folders left empty.
+    """
     root = os.path.join(outdir, ROOT)
-    wanted = {
-        os.path.normcase(os.path.join(outdir, *s.split("/"))) for s in [*files, *themed]
-    }
+    wanted = {os.path.normcase(os.path.join(outdir, *s.split("/"))) for s in kept}
     for folder, _, names_in in os.walk(root, topdown=False):
         for file in names_in:
             path = os.path.join(folder, file)
@@ -539,6 +573,13 @@ def write_redirects(app, exception):
                 os.remove(path)
         if folder != root and not os.listdir(folder):
             os.rmdir(folder)
+
+
+def _inventory_entries(dom, by_ref, by_name, names, failed):
+    """Return the ``uris`` and ``choosers`` arguments of ``rewrite_inventory``,
+    without the addresses whose file could not be written (``failed``).
+    """
+    objects = dom.data["objects"]
     uris = {}
     for ref, stub in by_ref.items():
         name = dom.inventory_name(ref)
@@ -550,7 +591,7 @@ def write_redirects(app, exception):
         if len(refs) > 1 and by_name[name] not in failed
         for objtype in sorted({objects[ref][1] for ref in refs})
     ]
-    rewrite_inventory(os.path.join(outdir, "objects.inv"), uris, choosers)
+    return uris, choosers
 
 
 def _not_found(home):
