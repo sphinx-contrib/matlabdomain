@@ -131,7 +131,13 @@ def test_help_of_a_method_file_is_in_that_file(make_app, tmp_path):
     )
     found = build(make_app, tmp_path, files, index)
     meth = tmp_path / "src" / "@Cf" / "meth.m"
-    assert found[0].startswith(missing(meth, "docstring of @Cf/Cf.m.meth:6", "noMeth"))
+    # Sphinx normalizes the whole location as a path: "\\" on Windows, also in
+    # the reference.
+    assert (
+        found[0]
+        .replace("\\", "/")
+        .startswith(missing(meth.as_posix(), "docstring of @Cf/Cf.m.meth:6", "noMeth"))
+    )
     # names and paths in it are still found from the class folder
     assert len(found) == 1, found
     html = (tmp_path / "_build" / "html" / "index.html").read_text(encoding="utf-8")

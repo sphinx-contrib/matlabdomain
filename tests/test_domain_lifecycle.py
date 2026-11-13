@@ -724,9 +724,14 @@ def test_worker_leaves_pages_of_other_processes_to_check_consistency(make_app, s
 
 
 def _duplicate_warnings(app, root):
+    """Return the ``mat.duplicate`` warnings of ``app``, sorted, with ``/`` in
+    every path and ``<SRC>`` for the source folder ``root``. Windows writes
+    a backslash in most paths and ``/`` in the path of an included file.
+    """
     text = strip_escape_sequences(app.warning.getvalue())
+    source = str(root).replace("\\", "/")
     return sorted(
-        line.replace(str(root), "<SRC>").replace("<SRC>\\", "<SRC>/")
+        line.replace("\\", "/").replace(source, "<SRC>")
         for line in text.splitlines()
         if "[mat.duplicate]" in line
     )

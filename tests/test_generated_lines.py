@@ -122,10 +122,12 @@ def build(make_app, root, files, parallel=0):
 
 def relative(where, root):
     """``where`` (a file, or ``<file>:docstring of <reference>``) relative to
-    ``root``, with ``/``.
+    ``root``, with ``/``. In a printed warning Sphinx has normalized the whole
+    of it as a path, so on Windows the reference has backslashes too.
     """
     file, found, ref = where.partition(":docstring of ")
-    return os.path.relpath(file, root).replace(os.sep, "/") + found + ref
+    file = os.path.relpath(file, root)
+    return (file + found + ref).replace(os.sep, "/")
 
 
 def located(app, root):
@@ -348,9 +350,9 @@ def test_parallel_build_gives_the_same_warnings(make_app, tmp_path):
         app = build(make_app, tmp_path / str(parallel), files, parallel)
         app.cleanup()  # else the next app warns that it registers again
         text = strip_escape_sequences(app.warning.getvalue())
+        root = (tmp_path / str(parallel)).as_posix()
         found[parallel] = sorted(
-            line.replace(str(tmp_path / str(parallel)), "<SRC>")
-            for line in text.splitlines()
+            line.replace("\\", "/").replace(root, "<SRC>") for line in text.splitlines()
         )
     assert found[0] == found[2]
     assert {line.split(": WARNING")[0] for line in found[0]} == {
