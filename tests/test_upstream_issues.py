@@ -273,7 +273,7 @@ def test_issue_273_all_help_lines_are_rendered(make_app, tmp_path):
         "First line summary.",
         "Longer description",
         "Parameters",
-        "a – the a",
+        "a \u2013 the a",
         "Returns",
         "Second paragraph.",
         "G more lines. and more.",

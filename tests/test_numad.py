@@ -1,7 +1,4 @@
-"""test_autodoc.
-~~~~~~~~~~~~
-
-Test the autodoc extension.
+"""Test autodoc of classes with documented properties (``test_numad`` root).
 
 :copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.

@@ -1,9 +1,7 @@
-"""sphinxcontrib.matlab_quickstart._report.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""The report of ``scmd quickstart`` (plan.md Section 2.13).
 
-The report of ``scmd quickstart`` (plan.md Section 2.13): the
-project facts, the inventory of the index, the help headings, the
-copyright blocks that run into help, and the next steps.
+It shows the project facts, the inventory of the index, the help headings,
+the copyright blocks that run into help, and the next steps.
 """
 
 from __future__ import annotations

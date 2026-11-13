@@ -1,7 +1,6 @@
-"""sphinxcontrib.mat_handlers.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Registry of the handlers that read each source file type.
 
-File-type handler registry (plan.md Section 2.6).
+See plan.md Section 2.6.
 
 Each source file type is one handler, registered under its file extension.
 Discovery, parsing and path references ask this registry instead of testing

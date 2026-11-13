@@ -201,12 +201,7 @@ ignore = [
     "D203",
     "D205",
     "D213",
-    "D400",
-    "D415",
-    "PLR2004",
-    "RUF001",
-    "RUF012",
-    "SIM102"
+    "PLR2004"
 ]
 # List of all the ruff rules (includes why the rule matters)
 # https://docs.astral.sh/ruff/rules/

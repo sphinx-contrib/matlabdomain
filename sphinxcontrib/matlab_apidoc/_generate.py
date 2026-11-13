@@ -1,9 +1,7 @@
-"""sphinxcontrib.matlab_apidoc._generate.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Page model, rendering and writing of ``scmd apidoc``.
 
-Page model, rendering and writing of ``scmd apidoc`` (plan.md
-Sections 2.8, 2.12). The pages come from a ``SourceIndex`` alone: no file
-is parsed.
+The pages come from a ``SourceIndex`` alone: no file is parsed (plan.md
+Sections 2.8, 2.12).
 
 - Namespace grouping (the default): one page per namespace, merging all
   its ``+`` folders, and ``Global`` for the files outside any namespace;

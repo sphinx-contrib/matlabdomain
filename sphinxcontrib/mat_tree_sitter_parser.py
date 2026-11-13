@@ -427,7 +427,7 @@ def process_default(node, encoding):
 
 class MatScriptParser:
     def __init__(self, root_node, encoding):
-        """Parse a MATLAB script"""
+        """Parse a MATLAB script."""
         self.encoding = encoding
         #: one-based file line of the first line of the docstring
         self.docstring_line = None
@@ -451,7 +451,7 @@ class MatScriptParser:
 
 class MatFunctionParser:
     def __init__(self, root_node, encoding):
-        """Parse a function definition"""
+        """Parse a function definition."""
         self.encoding = encoding
         fun_nodes = [m[1]["f"][0] for m in QueryCursor(q_function).matches(root_node)]
         fun_node = fun_nodes[0] if fun_nodes else root_node
@@ -619,9 +619,12 @@ class MatFunctionParser:
             ):
                 ds = process_text_into_docstring(prev_node.text, self.encoding)
                 prev_arg = prev_node.prev_named_sibling
-                if prev_arg is not None and prev_arg.type == "property":
-                    if prev_node.start_point.row == prev_arg.end_point.row:
-                        ds = "\n".join(ds.split("\n")[1:])
+                if (
+                    prev_arg is not None
+                    and prev_arg.type == "property"
+                    and prev_node.start_point.row == prev_arg.end_point.row
+                ):
+                    ds = "\n".join(ds.split("\n")[1:])
                 if ds:
                     docstring = ds
             # After all that if our docstring is empty then we have none

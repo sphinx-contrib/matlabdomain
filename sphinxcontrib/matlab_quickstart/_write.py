@@ -1,13 +1,11 @@
-"""sphinxcontrib.matlab_quickstart._write.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""What ``scmd quickstart`` writes (plan.md Section 2.13).
 
-What ``scmd quickstart`` writes (plan.md Section 2.13): the
-files of the Sphinx source folder from the templates, and the edits
-outside it: the docs dependency group through ``uv add --frozen``, lines in
-``.gitignore`` and ``.gitattributes``, and, for a project with Simulink
-files, the MATLAB function behind their Help links (``linker_files``). It
-never touches ``uv.lock``, the project's MATLAB code or CI, and never
-commits.
+It writes the files of the Sphinx source folder from the templates, and the
+edits outside it: the docs dependency group through ``uv add --frozen``,
+lines in ``.gitignore`` and ``.gitattributes``, and, for a project with
+Simulink files, the MATLAB function behind their Help links
+(``linker_files``). It never touches ``uv.lock``, the project's MATLAB code
+or CI, and never commits.
 """
 
 from __future__ import annotations

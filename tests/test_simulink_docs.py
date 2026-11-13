@@ -164,7 +164,7 @@ def test_simulink_pages(make_app, tmp_path):
     assert "Created by" not in words.split("Simulink model probeRef")[0]
     assert "Created by: matlabdomain Release: R2026b" in words
     assert "Model version" not in words.split("Simulink model probeRef")[1]
-    assert "Mask parameters: k ( edit ) – Factor k. Default: 1 ." in words
+    assert "Mask parameters: k ( edit ) \u2013 Factor k. Default: 1 ." in words
     assert (
         "Port Name Data type Dimensions Unit Description input 1 u double 3 m "
         "input u doc input 2 w second input input 3 busPort.sig1 output 1 y "
@@ -207,7 +207,7 @@ def test_help_links_and_hidden_parameters(make_app, tmp_path):
     assert "Mask type: a`b" in blocks[2]
     assert "Mask type" not in blocks[1]
     # hidden and unnamed parameters are left out; a value with ` is escaped
-    assert "a – Shown. Default: a`b." in blocks[0]
+    assert "a \u2013 Shown. Default: a`b." in blocks[0]
     assert " b " not in blocks[0] + " "
     assert "No name" not in blocks[0]
 

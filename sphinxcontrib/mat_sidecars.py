@@ -1,9 +1,7 @@
-"""sphinxcontrib.mat_sidecars.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Sidecar docs: ``.md`` and ``.rst`` pages next to the code.
 
-Sidecar docs (pages next to code; plan.md Section 2.11): ``.md`` and
-``.rst`` files in the project, indexed with the code (``mat_types``) and
-rendered into a document by ``mat:autosidecar``.
+Sidecar docs are indexed with the code (``mat_types``) and rendered into a
+document by ``mat:autosidecar`` (plan.md Section 2.11).
 
 - Relative paths in a sidecar doc are relative to its folder: images and
   downloads are rewritten to source-folder-relative paths (``/`` +
@@ -29,7 +27,7 @@ import re
 import unicodedata
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -40,6 +38,7 @@ from sphinx.errors import ConfigError
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.logging import getLogger
 from sphinx.util.nodes import clean_astext, nested_parse_with_titles
+from sphinx.util.typing import OptionSpec
 
 from . import mat_naming, mat_types
 from .mat_handlers import handler_for
@@ -314,11 +313,14 @@ def relative_includes(env, current):
     original = env.relfn2path
 
     def relfn2path(filename, docname=None):
-        if docname is None and not _external(filename):
-            if (rel := current()) is not None:
-                source = rel.source_path(os.path.join(rel.folder, filename))
-                if source is not None:
-                    filename = source
+        if (
+            docname is None
+            and not _external(filename)
+            and (rel := current()) is not None
+        ):
+            source = rel.source_path(os.path.join(rel.folder, filename))
+            if source is not None:
+                filename = source
         return original(filename, docname)
 
     env.relfn2path = relfn2path
@@ -524,7 +526,7 @@ class AutoSidecar(SphinxDirective):
 
     required_arguments = 1
     final_argument_whitespace = True
-    option_spec = {"no-title": directives.flag}
+    option_spec: ClassVar[OptionSpec] = {"no-title": directives.flag}
 
     def run(self):
         ref = unicodedata.normalize("NFC", self.arguments[0].strip())

@@ -1,7 +1,4 @@
-"""test_class_subfolder.
-~~~~~~~~~~~~
-
-Test the autodoc extension.
+"""Test autodoc of classes in folders named like the class.
 
 :copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.

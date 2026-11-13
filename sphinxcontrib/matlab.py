@@ -1,7 +1,4 @@
-"""sphinxcontrib.matlab.
-~~~~~~~~~~~~~~~~~~~~
-
-The MATLAB domain.
+"""The MATLAB domain: its object directives, roles, indices and lookup.
 
 :copyright: Copyright by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.
@@ -12,7 +9,7 @@ import itertools
 import json
 import re
 import unicodedata
-from typing import cast
+from typing import Any, ClassVar, cast
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
@@ -26,6 +23,7 @@ from sphinx.transforms.post_transforms import SphinxPostTransform
 from sphinx.util.docfields import Field, GroupedField, TypedField
 from sphinx.util.logging import getLogger
 from sphinx.util.nodes import make_refnode
+from sphinx.util.typing import OptionSpec, RoleFunction
 
 from . import (
     mat_api_check,
@@ -257,7 +255,7 @@ def _pseudo_parse_arglist(signode, arglist):
 class MatObjectDirective(ObjectDescription):
     """Description of a general MATLAB object."""
 
-    option_spec = {
+    option_spec: ClassVar[OptionSpec] = {
         "noindex": directives.flag,
         "no-index": directives.flag,
         "annotation": directives.unchanged,
@@ -265,7 +263,7 @@ class MatObjectDirective(ObjectDescription):
         "reference": directives.unchanged,
     }
 
-    doc_field_types = [
+    doc_field_types: ClassVar[list[Field]] = [
         MatTypedField(
             "parameter",
             label=translation("Parameters"),
@@ -482,7 +480,7 @@ class MatSimulinkObject(MatObjectDirective):
     arguments; a ``:reference:`` with a newline is written as JSON text.
     """
 
-    doc_field_types = [
+    doc_field_types: ClassVar[list[Field]] = [
         *MatObjectDirective.doc_field_types,
         TypedField(
             "maskparameter",
@@ -560,7 +558,7 @@ class MatClasslike(MatObjectDirective):
     """Description of a class."""
 
     flags = ("abstract", "sealed")
-    option_spec = {
+    option_spec: ClassVar[OptionSpec] = {
         **MatObjectDirective.option_spec,
         **dict.fromkeys(flags, directives.flag),
     }
@@ -632,7 +630,7 @@ class MatMethodlike(MatClassmember):
     """Description of a method."""
 
     flags = ("abstract", "sealed")
-    option_spec = {
+    option_spec: ClassVar[OptionSpec] = {
         **MatObjectDirective.option_spec,
         **dict.fromkeys(flags, directives.flag),
     }
@@ -642,7 +640,7 @@ class MatAttributelike(MatClassmember):
     """Description of a property or enumeration value."""
 
     flags = ("abstract", "constant", "dependent", "read-only")
-    option_spec = {
+    option_spec: ClassVar[OptionSpec] = {
         **MatObjectDirective.option_spec,
         **dict.fromkeys(flags, directives.flag),
     }
@@ -656,7 +654,7 @@ class MatFolder(MatObjectDirective):
     through their class. Sets the current folder like ``mat:currentfolder``.
     """
 
-    option_spec = {
+    option_spec: ClassVar[OptionSpec] = {
         "platform": lambda x: x,
         "synopsis": lambda x: x,
         "noindex": directives.flag,
@@ -751,7 +749,7 @@ class MatCurrentFolder(Directive):
     required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = True
-    option_spec = {}
+    option_spec: ClassVar[OptionSpec] = {}
 
     def run(self):
         env = self.state.document.settings.env
@@ -841,7 +839,7 @@ class MATLABDomain(Domain):
 
     name = "mat"
     label = "MATLAB"
-    object_types = {
+    object_types: ClassVar[dict[str, ObjType]] = {
         "function": ObjType(translation("function"), "func", "obj"),
         "data": ObjType(translation("data"), "data", "obj"),
         "class": ObjType(translation("class"), "class", "obj"),
@@ -858,7 +856,7 @@ class MATLABDomain(Domain):
         },
     }
 
-    directives = {
+    directives: ClassVar[dict[str, type[Directive]]] = {
         "function": MatModulelevel,
         "data": MatModulelevel,
         "class": MatClasslike,
@@ -872,7 +870,7 @@ class MATLABDomain(Domain):
         "application": MatModulelevel,
         **dict.fromkeys(SIMULINK_LABELS, MatSimulinkObject),
     }
-    roles = {
+    roles: ClassVar[dict[str, RoleFunction | XRefRole]] = {
         "data": MatXRefRole(),
         "func": MatXRefRole(fix_parens=True),
         "class": MatXRefRole(),
@@ -889,7 +887,7 @@ class MATLABDomain(Domain):
         # A sidecar doc, by path reference; the text is its title.
         "sidecar": XRefRole(),
     }
-    initial_data = {
+    initial_data: ClassVar[dict[str, Any]] = {
         # Per-document registrations (cleared/merged by docname).
         "objects": {},  # path reference -> docname, objtype, display name
         "folders": {},  # folder reference -> docname, synopsis, platform, deprecated
@@ -930,7 +928,7 @@ class MATLABDomain(Domain):
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
     data_version = 30
-    indices = [
+    indices: ClassVar[list[type[Index]]] = [
         MATLABFolderIndex,
     ]
 

@@ -1,7 +1,4 @@
-"""sphinxcontrib.mat_naming
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-MATLAB naming helpers.
+"""MATLAB names, path references and the anchors made from them.
 
 This module is the single contract point for:
 - MATLAB identifier validation (including namelengthmax variants)

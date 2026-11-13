@@ -1,7 +1,4 @@
-"""test_package_links.py.
-~~~~~~~~~~~~
-
-Test the autodoc extension.
+"""Test links to the base classes of namespace classes.
 
 :copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.

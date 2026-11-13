@@ -1,8 +1,7 @@
-"""sphinxcontrib.matlab_skills._cli.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Command line of ``scmd skills``.
 
-Command line of ``scmd skills``: ``list`` prints the agent skills that ship
-with the package, ``install`` copies them into a project's skill folder.
+``list`` prints the agent skills that ship with the package, ``install``
+copies them into a project's skill folder.
 """
 
 from __future__ import annotations

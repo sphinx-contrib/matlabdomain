@@ -1,7 +1,4 @@
-"""sphinxcontrib.mat_types
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Types for MATLAB.
+"""The index of a MATLAB project and the objects parsed from its files.
 
 :copyright: Copyright 2014-2024 by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.
@@ -16,7 +13,7 @@ import sys
 import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 from sphinx.environment import CONFIG_OK
 from sphinx.errors import ConfigError
@@ -1564,7 +1561,7 @@ class MatObject:
         self.name = name
 
     def ref_role(self):
-        """Return the role used for references and automatic links"""
+        """Return the role used for references and automatic links."""
         return "ref"
 
     def __reduce_ex__(self, protocol):
@@ -1811,7 +1808,7 @@ class MatModule(MatObject):
         self.members = None
 
     def ref_role(self):
-        """Return the role used for references and automatic links"""
+        """Return the role used for references and automatic links."""
         return "folder"
 
     def member_refs(self):
@@ -1919,7 +1916,7 @@ class MatFunction(MatObject):
         self.line = parsed_function.line
 
     def ref_role(self):
-        """Return the role used for references and automatic links"""
+        """Return the role used for references and automatic links."""
         return "func"
 
     @property
@@ -1981,15 +1978,15 @@ class MatClass(MatObject):
         self.events = parsed_class.events
 
     def ref_role(self):
-        """Return the role used for references and automatic links"""
+        """Return the role used for references and automatic links."""
         return "class"
 
     def fullname(self, env):  # noqa: ARG002
-        """Return the path reference of the class, for use as a link target"""
+        """Return the path reference of the class, for use as a link target."""
         return self.ref
 
     def link(self, env, name=None):  # noqa: ARG002
-        """Return a link for the class object"""
+        """Return a link for the class object."""
         title = name or getattr(self, "matlab_name", None) or self.ref
         return f":mat:class:`{title} <{self.ref}>`"
 
@@ -2056,7 +2053,7 @@ class MatProperty(MatObject):
         self.validators = attrs["validators"]
 
     def ref_role(self):
-        """Return the role used for references and automatic links"""
+        """Return the role used for references and automatic links."""
         return "attr"
 
     @property
@@ -2078,7 +2075,7 @@ class MatEnumeration(MatObject):
         self.args = attrs.get("args")
 
     def ref_role(self):
-        """Return the role used for references and automatic links"""
+        """Return the role used for references and automatic links."""
         return "enum"
 
     @property
@@ -2099,7 +2096,7 @@ class MatEvent(MatObject):
         self.docstring_line = attrs.get("docstring_line")
 
     def ref_role(self):
-        """Return the role used for references and automatic links"""
+        """Return the role used for references and automatic links."""
         return "event"
 
     @property
@@ -2131,7 +2128,7 @@ class MatMethod(MatFunction):
         self.attrs = parsed_function.attrs
 
     def ref_role(self):
-        """Return the role used for references and automatic links"""
+        """Return the role used for references and automatic links."""
         return "meth"
 
     @property
@@ -2314,7 +2311,7 @@ class MatModuleAnalyzer:
     """
 
     # folder reference -> analyzer, or the MatcodeError of an unknown folder
-    cache = {}
+    cache: ClassVar[dict[str, Any]] = {}
 
     @classmethod
     def for_module(cls, modname):

@@ -1,7 +1,4 @@
-"""sphinxcontrib.mat_directives.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Extend autodoc directives to matlabdomain.
+"""The ``mat:auto*`` directives that run the MATLAB documenters.
 
 :copyright: Copyright by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.

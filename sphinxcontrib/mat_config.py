@@ -1,9 +1,7 @@
-"""sphinxcontrib.mat_config.
-~~~~~~~~~~~~~~~~~~~~~~~~~
+"""The ``matlab_*`` configuration values in one table.
 
-The ``matlab_*`` configuration values in one table. The build registers
-them (``setup``) and ``scmd apidoc`` reads ``conf.py`` with the same
-defaults and the same checks, so the two always agree.
+The build registers them (``setup``) and ``scmd apidoc`` reads ``conf.py``
+with the same defaults and the same checks, so the two always agree.
 """
 
 from __future__ import annotations

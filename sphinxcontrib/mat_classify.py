@@ -1,8 +1,6 @@
-"""sphinxcontrib.mat_classify.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""Classify MATLAB ``.m`` files as script, function, class or unknown.
 
-Classify MATLAB ``.m`` files as ``script``, ``function``, ``class`` or
-``unknown`` from their text (plan.md Section 2.5). It is the single
+The type comes from the file's text (plan.md Section 2.5). This is the single
 classifier for the index, apidoc and api-check.
 
 The first line of code decides: blank lines, ``%`` comment lines and

@@ -13,7 +13,7 @@ import sys
 import time
 import zlib
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import pytest
 import sphinx.builders
@@ -215,8 +215,10 @@ def test_sidecar_suffix_list():
 def test_source_filter_default_exclusions():
     class Config:
         matlab_src_code_project_root = None
-        matlab_src_include_patterns = ["**/*"]
-        matlab_src_exclude_patterns = list(mat_types.DEFAULT_EXCLUSION_PATTERNS)
+        matlab_src_include_patterns: ClassVar[list[str]] = ["**/*"]
+        matlab_src_exclude_patterns: ClassVar[list[str]] = list(
+            mat_types.DEFAULT_EXCLUSION_PATTERNS
+        )
 
     sources = mat_types.source_filter(Config)
     assert not sources.includes("README.md")

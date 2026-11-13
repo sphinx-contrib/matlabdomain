@@ -1,7 +1,4 @@
-"""sphinxcontrib.mat_documenters.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Extend autodoc directives to matlabdomain.
+"""Autodoc documenters for MATLAB functions, classes, scripts and models.
 
 :copyright: Copyright by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.
@@ -10,7 +7,7 @@ Extend autodoc directives to matlabdomain.
 import difflib
 import json
 import re
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 from sphinx.ext.autodoc import (
     ALL,
@@ -35,6 +32,7 @@ from sphinx.locale import _
 from sphinx.util.docstrings import prepare_docstring
 from sphinx.util.inspect import safe_getattr
 from sphinx.util.logging import getLogger
+from sphinx.util.typing import OptionSpec
 
 from . import mat_naming, mat_sidecars, mat_simulink
 from .mat_classify import is_hidden
@@ -164,7 +162,10 @@ class MatlabDocumenter(PyDocumenter):
     class_level = False
     #: splits the auto directive's argument into (target, arguments, return)
     name_pattern = mat_auto_sig_re
-    option_spec = {"noindex": bool_option, "no-index": bool_option}
+    option_spec: ClassVar[OptionSpec] = {
+        "noindex": bool_option,
+        "no-index": bool_option,
+    }
     analyzer: MatModuleAnalyzer | None
     options: Any
 
@@ -482,11 +483,11 @@ class MatlabDocumenter(PyDocumenter):
         dom = self.env.get_domain("mat")
         folder = mat_naming.folder_of(self.ref)
         # negative look-behind for ` . + < @ * / | <non-breaking space>
-        look_behind = r"(?<!(`|\.|\+|<|@|\*| |/|\|))\b"
+        look_behind = r"(?<!(`|\.|\+|<|@|\*|\xa0|/|\|))\b"
         # negative look-ahead for ` * / | or <non-breaking space> or
         # " Properties:" or " Methods:" or .<alphanum>
-        look_ahead = r"\b(?!(`|\*| |\sProperties:|\sMethods:|\.\w|/|\|))"
-        look_ahead2 = r"\b(?!(`|\*| |\sProperties:|\sMethods:|/|\|))"
+        look_ahead = r"\b(?!(`|\*|\xa0|\sProperties:|\sMethods:|\.\w|/|\|))"
+        look_ahead2 = r"\b(?!(`|\*|\xa0|\sProperties:|\sMethods:|/|\|))"
         for nn in list(dom.data["matlab_names"]):
             # Only names in the text can link; resolving parses their files.
             if not any(nn in line for lines in docstrings for line in lines):
@@ -524,32 +525,33 @@ class MatlabDocumenter(PyDocumenter):
                             docstrings[i][j] = p.sub(
                                 lambda m, t=link: _inline(m, t), docstrings[i][j]
                             )
-                            if role == "class":
-                                if match := p2.search(docstrings[i][j]):
-                                    # if match.group(1) is a property
-                                    #   -> :attr:`{nn}.{match.group(1)}`
-                                    for nnn in cast(MatClass, o).properties:
-                                        if match.group(2) == nnn:
-                                            text = self._link(
-                                                "attr", f"{nn}.{nnn}", f"{ref}.{nnn}"
-                                            )
-                                            docstrings[i][j] = p2.sub(
-                                                lambda m, t=text: _inline(m, t),
-                                                docstrings[i][j],
-                                            )
-                                            break
-                                    # if match.group(1) is a method
-                                    #   -> :meth:`{nn}.{match.group(1)}`
-                                    for nnn in cast(MatClass, o).methods:
-                                        if match.group(2) == nnn:
-                                            text = self._link(
-                                                "meth", f"{nn}.{nnn}", f"{ref}.{nnn}"
-                                            )
-                                            docstrings[i][j] = p2.sub(
-                                                lambda m, t=text: _inline(m, t),
-                                                docstrings[i][j],
-                                            )
-                                            break
+                            if role == "class" and (
+                                match := p2.search(docstrings[i][j])
+                            ):
+                                # if match.group(1) is a property
+                                #   -> :attr:`{nn}.{match.group(1)}`
+                                for nnn in cast(MatClass, o).properties:
+                                    if match.group(2) == nnn:
+                                        text = self._link(
+                                            "attr", f"{nn}.{nnn}", f"{ref}.{nnn}"
+                                        )
+                                        docstrings[i][j] = p2.sub(
+                                            lambda m, t=text: _inline(m, t),
+                                            docstrings[i][j],
+                                        )
+                                        break
+                                # if match.group(1) is a method
+                                #   -> :meth:`{nn}.{match.group(1)}`
+                                for nnn in cast(MatClass, o).methods:
+                                    if match.group(2) == nnn:
+                                        text = self._link(
+                                            "meth", f"{nn}.{nnn}", f"{ref}.{nnn}"
+                                        )
+                                        docstrings[i][j] = p2.sub(
+                                            lambda m, t=text: _inline(m, t),
+                                            docstrings[i][j],
+                                        )
+                                        break
 
         return docstrings
 
@@ -567,7 +569,7 @@ class MatlabDocumenter(PyDocumenter):
         for n in class_obj.methods:
             # negative look-behind for ` . < @ * / | <non-breaking space>, then
             # <name>()
-            pat = r"(?<!(`|\.|<|@|\*| |/|\|))\b" + n + r"\(\)(?! |\|)"
+            pat = r"(?<!(`|\.|<|@|\*|\xa0|/|\|))\b" + n + r"\(\)(?!\xa0|\|)"
             p = re.compile(pat)
             no_link_state = 0  # normal mode (no literal block detected)
             for i in range(len(docstrings)):
@@ -849,7 +851,7 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
     objtype = "folder"
     accepts = staticmethod(is_folder_object)
     # Members share the options, so the class options apply to their members.
-    option_spec = {
+    option_spec: ClassVar[OptionSpec] = {
         **MEMBER_OPTIONS,
         "synopsis": identity,
         "platform": identity,
@@ -1018,7 +1020,7 @@ class MatClassDocumenter(MatModuleLevelDocumenter):
 
     objtype = "class"
     member_order = 20
-    option_spec = MEMBER_OPTIONS
+    option_spec: ClassVar[OptionSpec] = MEMBER_OPTIONS
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
@@ -1355,7 +1357,7 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         # negative look-behind for ` . < @ * / | or <non-breaking space>
         # and negative look-ahead for ` * / | or <non-breaking space> or .<alphanum>
         p = re.compile(
-            r"(?<!(`|\.|<|@|\*| |/|\|))\b" + name + r"\b(?!`|\*| |\.\w|/|\|)"
+            r"(?<!(`|\.|<|@|\*|\xa0|/|\|))\b" + name + r"\b(?!`|\*|\xa0|\.\w|/|\|)"
         )
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
@@ -1363,15 +1365,18 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
                 not_in_literal_block, no_link_state = self.detect_literal_block(
                     docstrings[i][j], no_link_state
                 )
-                if not_in_literal_block and docstrings[i][j]:  # also not blank line
-                    if _ := p.search(docstrings[i][j]):
-                        link = (
-                            f":mat:meth:`{name}() "
-                            f"<{self.class_object().fullname(self.env)}.{name}>`"
-                        )
-                        docstrings[i][j] = p.sub(
-                            lambda m, t=link: _inline(m, t), docstrings[i][j]
-                        )
+                if (
+                    not_in_literal_block
+                    and docstrings[i][j]  # not a blank line
+                    and p.search(docstrings[i][j])
+                ):
+                    link = (
+                        f":mat:meth:`{name}() "
+                        f"<{self.class_object().fullname(self.env)}.{name}>`"
+                    )
+                    docstrings[i][j] = p.sub(
+                        lambda m, t=link: _inline(m, t), docstrings[i][j]
+                    )
         return docstrings
 
     def auto_link_all(self, docstrings):
@@ -1404,7 +1409,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
 
     objtype = "attribute"
     member_order = 60
-    option_spec = dict(MatModuleLevelDocumenter.option_spec)
+    option_spec: ClassVar[OptionSpec] = dict(MatModuleLevelDocumenter.option_spec)
     option_spec["annotation"] = annotation_option
 
     # must be higher than the MethodDocumenter, else it will recognize
@@ -1496,7 +1501,7 @@ class MatAttributeDocumenter(MatClassLevelDocumenter):
         name = self.object.name
         # negative look-behind for ` . < * / | or <non-breaking space>
         # and negative look-ahead for ` * / | or <non-breaking space>
-        p = re.compile(r"(?<!(`|\.|<|\*| |/|\|))\b" + name + r"\b(?!`|\*| |/|\|)")
+        p = re.compile(r"(?<!(`|\.|<|\*|\xa0|/|\|))\b" + name + r"\b(?!`|\*|\xa0|/|\|)")
         no_link_state = 0  # normal mode (no literal block detected)
         for i in range(len(docstrings)):
             for j in range(len(docstrings[i])):
@@ -1528,7 +1533,7 @@ class MatEventDocumenter(MatClassLevelDocumenter):
 
     objtype = "event"
     member_order = 70
-    option_spec = dict(MatModuleLevelDocumenter.option_spec)
+    option_spec: ClassVar[OptionSpec] = dict(MatModuleLevelDocumenter.option_spec)
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):  # noqa: ARG003 - required by Sphinx API
@@ -1653,7 +1658,7 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
     objtype = "simulink_model"
     # The argument is the whole name: block names may hold parentheses.
     name_pattern = re.compile(r"\s*(.+?)\s*((?!))?((?!))?\Z", re.DOTALL)
-    option_spec = {
+    option_spec: ClassVar[OptionSpec] = {
         **_SIMULINK_OPTIONS,
         "references": bool_option,
     }
@@ -1862,7 +1867,7 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
     """
 
     objtype = "simulink_library"
-    option_spec = {
+    option_spec: ClassVar[OptionSpec] = {
         **_SIMULINK_OPTIONS,
         "members": members_option,
         "undoc-members": bool_option,
@@ -1942,7 +1947,7 @@ class MatSimulinkBlockDocumenter(MatSimulinkDocumenter):
     """Documenter of a block of a Simulink library."""
 
     objtype = "simulink_library_block"
-    option_spec = _SIMULINK_OPTIONS
+    option_spec: ClassVar[OptionSpec] = _SIMULINK_OPTIONS
 
 
 MatSimulinkDocumenter.accepts = staticmethod(

@@ -555,7 +555,7 @@ def test_target_ids_are_unique():
         "f.m",
     ]
     rng = random.Random(0)
-    alphabet = [chr(c) for c in range(0x00, 0x80)] + list("é 漢😀")
+    alphabet = [chr(c) for c in range(0x00, 0x80)] + list("é\xa0漢😀")
     refs = set(tricky)
     for _ in range(5000):
         refs.add("".join(rng.choice(alphabet) for _ in range(rng.randint(1, 6))))

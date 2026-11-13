@@ -1,7 +1,4 @@
-"""test_package_links.py.
-~~~~~~~~~~~~
-
-Test the autodoc extension.
+"""Test that a member name several classes share is warned about, not linked.
 
 :copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.

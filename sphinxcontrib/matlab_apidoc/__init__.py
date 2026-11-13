@@ -1,8 +1,6 @@
-"""sphinxcontrib.matlab_apidoc.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""``scmd apidoc``: write reST pages that document a project's MATLAB files.
 
-``scmd apidoc``: write reST pages that document the MATLAB files of
-a project with sphinxcontrib-matlabdomain directives (plan.md Section 2.8).
+The pages use sphinxcontrib-matlabdomain directives (plan.md Section 2.8).
 
 ``main(argv)`` runs the command line; ``generate(source_index, options)``
 writes the pages of a ``mat_types.build_index`` result.

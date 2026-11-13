@@ -53,7 +53,7 @@ def test_target(app, confdict):
         "mymethod(b)\n\n"
         "A method in ClassExample\n\n"
         "Parameters\n\n"
-        "b – an input to mymethod()"
+        "b \u2013 an input to mymethod()"
     )
 
     if not confdict.get("matlab_show_property_default_value", False):
@@ -166,8 +166,8 @@ def test_classfolder(app, confdict):
         "classMethod(varargin)\n\n"
         "CLASSMETHOD A function within a package\n\n"
         "Parameters\n\n"
-        "obj – An instance of this class.\n\n"
-        "varargin – Variable input arguments.\n\n"
+        "obj \u2013 An instance of this class.\n\n"
+        "varargin \u2013 Variable input arguments.\n\n"
         "Returns\n\n"
         "varargout\n\n\n\n"
         "method_inside_classdef(a, b)\n\n"
@@ -196,7 +196,7 @@ def test_package(app, confdict):
         "package\n\n\n\n"
         "class package.ClassBar\n\n"
         "Bases: handle\n\n"
-        "The Bar and Foo handler, with doFoo() and doBar() methods.\n\n"
+        "The Bar and Foo handler, with doFoo() and\xa0doBar() methods.\n\n"
         "Constructor Summary\n\n\n\n\n\n"
         "ClassBar()\n\n"
         "Initialize the bars and foos\n\n"
@@ -229,7 +229,7 @@ def test_package(app, confdict):
         assert docstring1.rawsource == (
             "The Bar and Foo handler, "
             "with :mat:meth:`doFoo() <target/+package/ClassBar.m.doFoo>` "
-            "and doBar() methods."
+            "and\xa0doBar() methods."
         )
         assert docstring2.rawsource == (
             "Number of :mat:attr:`foos <target/+package/ClassBar.m.foos>`, "
@@ -253,7 +253,7 @@ def test_package(app, confdict):
     else:
         assert (
             docstring1.rawsource
-            == "The Bar and Foo handler, with doFoo() and doBar() methods."
+            == "The Bar and Foo handler, with doFoo() and\xa0doBar() methods."
         )
         assert docstring2.rawsource == "Number of foos, used by doBar() method"
 
