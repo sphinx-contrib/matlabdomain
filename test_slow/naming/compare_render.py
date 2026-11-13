@@ -72,6 +72,9 @@ def projects(tmp):
     out["test_docs"] = tests / "test_docs"
     docs = tmp / "docs"
     shutil.copytree(REPO / "docs", docs, ignore=shutil.ignore_patterns("_build"))
+    # docs/conf.py reads the tested versions from these, one folder up
+    for name in ("pyproject.toml", "uv.lock"):
+        shutil.copyfile(REPO / name, tmp / name)
     out["docs"] = docs
     return out
 
