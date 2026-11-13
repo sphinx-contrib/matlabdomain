@@ -245,12 +245,15 @@ select = [
 typing-modules = ["sphinxcontrib.mat_typing"]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 51
+max-complexity = 15
 
 [tool.ruff.lint.per-file-ignores]
 # Tests and test tools compare with literal expected values (counts, exit
-# codes, the fuzzer's odds); a named constant for each would read worse.
-"test_slow/**/*" = ["PLR2004"]
+# codes, the fuzzer's odds); a named constant for each would read worse. The
+# complexity limits (C901, PLR0911-PLR0915) hold for the package, the docs and
+# the tests; the tools here (gauntlet, probes, render comparison) are scripts
+# run by hand, exempt by the maintainer's decision (#361).
+"test_slow/**/*" = ["C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR2004"]
 # D1 exempts only helper modules in test_slow, which no one runs or reads on
 # their own; the scripts the docs tell people to run have docstrings. This one
 # is the gauntlet's project list, imported by fetch.py and gauntlet.py.
@@ -278,11 +281,11 @@ max-complexity = 51
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-args
 max-args = 7
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-branches
-max-branches = 30
+max-branches = 15
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-returns
-max-returns = 20
+max-returns = 8
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-statements
-max-statements = 100
+max-statements = 60
 
 [tool.setuptools.package-data]
 "sphinxcontrib.mat_simulink" = ["matlab/+sphinxcontrib/+matlabdomain/*.m"]
