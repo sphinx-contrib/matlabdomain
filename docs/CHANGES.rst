@@ -38,7 +38,8 @@ Requirements
   8.0 to 9.2; newer releases are supported on a best-effort basis and added
   to the tests within about three months. On Python 3.15 ``tree-sitter``
   0.26.1 is compiled from source, which needs a C compiler. Free-threaded
-  Python is not supported.
+  Python is not supported. On Python 3.11, ``typing-extensions`` 4.4 or
+  later is a new dependency.
 * Source files are parsed with tree-sitter (``tree-sitter`` 0.26 and
   ``tree-sitter-matlab`` 1.3.3) instead of a Pygments lexer; the module
   ``sphinxcontrib.mat_lexer`` is removed.

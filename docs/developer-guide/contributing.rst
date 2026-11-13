@@ -72,7 +72,19 @@ and format), codespell, TOML and YAML checks, trailing whitespace and line
 ends (LF), and ``uv lock``. Run it on demand with ``uv run pre-commit run
 --files <files>``. Pull requests run every hook on all files.
 
-* Python code follows ruff's configuration in ``pyproject.toml``.
+* Python code follows ruff's configuration in ``pyproject.toml``. Each rule
+  it ignores, and each folder it exempts, has a comment there that says why.
+* Every module, class, method and function in ``sphinxcontrib/`` has a
+  docstring; tests do not need one. The first sentence may wrap over
+  several lines.
+* A method that overrides a base class method (from Sphinx, docutils or this
+  package) is marked ``@override``, imported from ``sphinxcontrib.mat_typing``
+  (not from ``typing``, which lacks it on Python 3.11). Ruff then knows the
+  signature is fixed by the base class, so it neither asks for a docstring
+  nor reports an unused argument.
+* Functions stay within ruff's complexity limits (15 paths, 15 branches,
+  60 statements, 8 returns); split a function that grows past them into
+  helpers rather than raising a limit.
 * Run ``uv run tox -e lint`` for non-mutating lint, format and basic type
   checks, including tests and maintained helper scripts.
 * Every new configuration value starts with ``matlab_``.

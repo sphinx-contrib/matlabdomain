@@ -47,6 +47,12 @@ Modules
      - The autodoc documenters behind ``mat:auto*``.
    * - ``mat_api_check.py``
      - The ``matlab-api-check`` builder.
+   * - ``mat_urls.py``
+     - Stable addresses in HTML builds: the redirect files under
+       ``mat/ref/`` and ``mat/name/`` and the pages that list several
+       objects of one MATLAB name.
+   * - ``mat_typing.py``
+     - ``override``, from ``typing`` or (Python 3.11) ``typing_extensions``.
    * - ``mat_sidecars.py``
      - Sidecar docs: the configuration check, ``mat:autosidecar``, the
        myst-parser renderer for Markdown sidecar docs and the link mapping.
