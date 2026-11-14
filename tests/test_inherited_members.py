@@ -807,6 +807,33 @@ def test_autofolder_applies_it_to_its_classes(make_app, tmp_path):
     assert set(documented(app, "Sub.m.")) == OWN | INHERITED - {"rootProp", "rootMeth"}
 
 
+NAMESPACE = {
+    "src/+pkg/Base.m": (
+        "classdef Base\n    % BASE HELP\n    methods\n"
+        "        function baseMeth(obj)\n            % base method\n"
+        "        end\n    end\nend\n"
+    ),
+    "src/+pkg/Sub.m": (
+        "classdef Sub < pkg.Base\n    % SUB HELP\n    methods\n"
+        "        function subMeth(obj)\n            % sub method\n"
+        "        end\n    end\nend\n"
+    ),
+}
+
+
+def test_autonamespace_applies_it_to_its_classes(make_app, tmp_path):
+    # the namespace directive has the options of the folder directive
+    directive = ".. mat:autonamespace:: pkg\n   :members:\n   :inherited-members:\n"
+    app = build(make_app, tmp_path, page(directive), NAMESPACE)
+    assert set(documented(app, "+pkg/Sub.m.")) == {"subMeth", "baseMeth"}
+    assert warnings(app) == []
+    app.cleanup()  # else the next app warns that it registers again
+    off = build(make_app, tmp_path / "off", page(directive), NAMESPACE, base=CONF_OFF)
+    assert set(documented(off, "+pkg/Sub.m.")) == {"subMeth"}
+    index = (tmp_path / "off" / "index.rst").as_posix()
+    assert posix_warnings(off) == [f"{index}:4: {NEEDS}"]
+
+
 @pytest.mark.parametrize("value", [True, "", "Root"])
 def test_autodoc_default_options(make_app, tmp_path, value):
     app = build(

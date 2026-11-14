@@ -274,6 +274,7 @@ know which object to document") and the directive writes nothing.
                              exclude-members
                              member-order
                              show-inheritance
+                             inherited-members
 
       As for ``mat:autoclass``; they apply to the namespace's members and
       their members.
