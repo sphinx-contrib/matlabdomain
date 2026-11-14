@@ -19,15 +19,15 @@ The tools and their jobs
 * An :term:`extension` adds behavior to Sphinx. This extension supplies the
   MATLAB :term:`domain`, which contains :term:`directives <directive>` for
   documenting MATLAB objects and :term:`roles <role>` for links to them.
-* ``conf.py`` configures the Sphinx project. It is a Python file, not a
-  MATLAB script. The generated web pages go in the build output folder.
+* ``conf.py`` configures the Sphinx project. It is a Python file. The 
+  generated web pages go in the build output folder.
 
 Open a terminal
 ---------------
 
 A terminal runs commands in a *shell*. It is separate from the MATLAB
 Command Window. Commands such as ``uv run`` and ``cd`` below belong in the
-terminal, not in MATLAB. Each terminal has a current folder; commands that
+terminal. Each terminal has a current folder; commands that
 use relative paths start there.
 
 * **Windows:** Open Windows Terminal and select PowerShell or Command Prompt

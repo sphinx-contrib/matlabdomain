@@ -348,12 +348,6 @@ method of ``Circle``. Ignoring a class file also skips its methods.
    * - ``"@Legacy/**"``
      - an old-style class folder
 
-Memory
-------
-
-The index keeps decoded source text in memory until it is parsed or the
-build ends. Its memory cost depends on the selected source files.
-
 Removed settings
 ----------------
 

@@ -167,8 +167,8 @@ Help headings
 
 Sidecar docs
    ``.md`` files in a folder with ``.m`` or ``.mlapp`` files, outside the
-   Sphinx source folder. Markdown pages elsewhere (an MkDocs site) do not
-   count.
+   Sphinx source folder. Markdown pages elsewhere (a MkDocs site) do not
+   count as sidecar docs but need ignored explicitly in the configuration.
 
 The matlabdomain requirement
    Copied from how the running matlabdomain is installed: a git URL and
