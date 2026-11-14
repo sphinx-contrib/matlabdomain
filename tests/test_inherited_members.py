@@ -1077,7 +1077,10 @@ def test_off_parallel_build_warns_as_serial(make_app, tmp_path):
         root = tmp_path / name
         write(root, {**FILES, **pages, "conf.py": CONF_OFF})
         app = _html_build(make_app, root, parallel=parallel)
-        found = [w.replace(root.as_posix(), "<root>") for w in posix_warnings(app)]
+        # sorted: the workers of a parallel build report in any order
+        found = sorted(
+            w.replace(root.as_posix(), "<root>") for w in posix_warnings(app)
+        )
         out[name] = (snapshot(root / "_build/html"), found)
     assert differences(out["serial"][0], out["parallel"][0]) == []
     assert out["serial"][1] == out["parallel"][1]
