@@ -36,11 +36,11 @@ jobs:
       run: uv build
     - name: Install the wheel without the checkout
       run: |
-        # tree-sitter<0.23 has no wheels for the newest Python.
-        uv venv --python 3.12 "$RUNNER_TEMP/smoke"
+        uv venv "$RUNNER_TEMP/smoke"
         uv pip install --python "$RUNNER_TEMP/smoke" dist/*.whl
         cd "$RUNNER_TEMP"
-        smoke/bin/python -c "import sphinxcontrib.matlab"
+        smoke/bin/scmd --version
+        smoke/bin/scmd skills list
     - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: dist

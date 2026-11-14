@@ -1,5 +1,5 @@
-# The test matrix. pr-master.yml calls it; the monthly run catches new
-# Python, Sphinx and dependency releases.
+# The test matrix and the combined coverage gate. pr-master.yml calls it;
+# the monthly run catches new Python, Sphinx and dependency releases.
 name: Tests
 
 on:
@@ -26,25 +26,38 @@ jobs:
     name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, Sphinx ${{ matrix.sphinx-version }}
     timeout-minutes: 15
     runs-on: ${{ matrix.os }}
-    # Sphinx master may break at any time; it must not block.
-    continue-on-error: ${{ matrix.sphinx-version == 'dev' }}
+    # Sphinx master may break at any time, and so may a Python prerelease;
+    # neither may block. tests/test_tested_versions.py reads the matrix: the
+    # Python versions of the other rows are the tested range in the docs.
+    continue-on-error: ${{ matrix.experimental == true }}
+    env:
+      COVERAGE_FILE: .coverage.${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.sphinx-version }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        # test all python versions but the oldest one supported
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
         sphinx-version: ["latest"]
         include:
         -   description: oldest supported dependencies on oldest supported python
             os: ubuntu-latest
-            python-version: "3.10"
+            python-version: "3.11"
             sphinx-version: min
+        -   description: last Sphinx 8 release line
+            os: ubuntu-latest
+            python-version: "3.12"
+            sphinx-version: "82"
         -   description: sphinx dev with latest python
             # dev does not work with python <= 3.11 so only test with latest python
             os: ubuntu-latest
-            python-version: "3.14"
+            python-version: "3.15"
             sphinx-version: dev
+            experimental: true
+        -   description: next Python prerelease
+            os: ubuntu-latest
+            python-version: "3.16"
+            sphinx-version: latest
+            experimental: true
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -52,9 +65,10 @@ jobs:
     - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
     - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
     - name: Install tox
-      run: uv tool install tox --with=tox-uv
+      run: uv tool install 'tox>=4.60' --with=tox-uv
     - name: Run with tox
       run: tox -e "${{ matrix.python-version }}-sphinx${{ matrix.sphinx-version }}"
     - name: Upload html coverage
@@ -63,3 +77,71 @@ jobs:
       with:
         name: ${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.sphinx-version }}_htmlcov
         path: htmlcov
+    - name: Upload coverage data
+      # A row that may fail does not feed the 100% gate.
+      if: (success() || failure()) && matrix.experimental != true
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: coverage-data-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.sphinx-version }}
+        path: .coverage.*
+        include-hidden-files: true
+        if-no-files-found: ignore
+
+  coverage:
+    name: Combined coverage
+    needs: test
+    if: success() || failure()
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        pattern: coverage-data-*
+        merge-multiple: true
+    - name: Combine and check coverage
+      run: |
+        uvx coverage combine
+        uvx coverage html
+        uvx coverage report --show-missing --skip-covered --fail-under=100
+    - name: Upload combined html coverage
+      if: success() || failure()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: combined_htmlcov
+        path: htmlcov
+
+  local-check:
+    # The local coverage check of docs/developer-guide/testing.rst: with
+    # --simulate-platforms, one machine alone must reach 100% on each system.
+    # Its data stays out of the combined gate, which counts real conditions
+    # only: its artifacts are not named coverage-data-*.
+    name: Local check, ${{ matrix.os }}
+    timeout-minutes: 15
+    runs-on: ${{ matrix.os }}
+    env:
+      COVERAGE_FILE: .coverage-local-check
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version-file: .python-version
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+    - name: Run the local coverage check
+      run: uv run --locked pytest -q -o addopts= --simulate-platforms --cov --cov-report=term-missing:skip-covered --cov-fail-under=100
+    - name: Upload coverage data
+      if: success() || failure()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: local-check-${{ matrix.os }}
+        path: .coverage-local-check
+        include-hidden-files: true
+        if-no-files-found: ignore

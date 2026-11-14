@@ -7,7 +7,7 @@ classdef BaseClass
 %   DoBase - another BaseClass method
 %
 % See Also
-%    target.ClassExample, baseFunction, ClassExample
+%    target/ClassExample.m, baseFunction, ClassExample
 
 methods
     function obj = BaseClass(obj,args)

@@ -1,0 +1,58 @@
+{#- scmd apidoc: one page of a folder in folder grouping.
+    Copy this file to a folder and name it in matlab_apidoc_templatedir to
+    change the output. Context keys are listed in the documentation.
+    The toctree macro is adapted from Sphinx's apidoc templates
+    (sphinx/templates/apidoc/package.rst.jinja), Copyright (c) 2007-2026 by
+    the Sphinx team, BSD-2-Clause. -#}
+{%- macro toctree(docnames) -%}
+.. toctree::
+   :maxdepth: {{ maxdepth }}
+{% for docname in docnames %}
+   {{ docname }}
+{%- endfor %}
+{%- endmacro -%}
+
+{%- macro autodoc(entry) -%}
+.. {{ entry.directive }}:: {{ entry.argument }}
+{%- for name, value in entry.options.items() %}
+   :{{ name }}:{% if value %} {{ value }}{% endif %}
+{%- endfor %}
+{%- endmacro -%}
+
+{{ title | e | heading }}
+{%- if page == 1 %}
+
+.. mat:autofolder:: {{ ref }}
+{%- endif %}
+{%- if sections or sidecars %}
+
+.. contents::
+   :local:
+   :backlinks: none
+{%- endif %}
+{%- if readme %}
+
+.. mat:autosidecar:: {{ readme }}
+   :no-title:
+{%- endif %}
+{%- for section, entries in sections %}
+
+{{ section | e | heading(2) }}
+{%- if separate %}
+
+{{ toctree(entries | map(attribute="docname")) }}
+{%- else %}
+{%- for entry in entries %}
+
+{{ entry.title | e | heading(3) }}
+
+{{ autodoc(entry) }}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+{%- if sidecars %}
+
+{{ "Sidecar docs" | heading(2) }}
+
+{{ toctree(sidecars | map(attribute="docname")) }}
+{%- endif %}

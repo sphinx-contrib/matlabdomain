@@ -1,0 +1,18 @@
+{{ project | e | heading }}
+
+.. Written by scmd quickstart: replace this comment with an
+   introduction to {{ project }}.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API reference
+
+   API/index
+{% if guide and markdown %}
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Contributing
+
+   BUILDING_DOCS
+{% endif %}

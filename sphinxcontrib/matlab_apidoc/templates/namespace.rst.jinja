@@ -1,0 +1,47 @@
+{#- scmd apidoc: one page of a namespace, or of the global
+    namespace, in namespace grouping. Copy this file
+    to a folder and name it in matlab_apidoc_templatedir to change the
+    output. Context keys are listed in the documentation. -#}
+{%- macro autodoc(entry) -%}
+.. {{ entry.directive }}:: {{ entry.argument }}
+{%- for name, value in entry.options.items() %}
+   :{{ name }}:{% if value %} {{ value }}{% endif %}
+{%- endfor %}
+{%- endmacro -%}
+
+{{ title | e | heading }}
+{%- if namespace and page == 1 %}
+
+.. mat:namespace:: {{ namespace }}
+{%- endif %}
+
+.. contents::
+   :local:
+   :backlinks: none
+{%- for section, entries in sections %}
+
+{{ section | e | heading(2) }}
+{%- if separate %}
+
+.. toctree::
+   :maxdepth: {{ maxdepth }}
+{% for entry in entries %}
+   {{ entry.docname }}
+{%- endfor %}
+{%- else %}
+{%- for entry in entries %}
+
+{{ entry.title | e | heading(3) }}
+
+{{ autodoc(entry) }}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+{%- if sidecars %}
+
+{{ "Sidecar docs" | heading(2) }}
+{%- for sidecar in sidecars %}
+
+.. mat:autosidecar:: {{ sidecar.ref }}
+{%- endfor %}
+{%- endif %}

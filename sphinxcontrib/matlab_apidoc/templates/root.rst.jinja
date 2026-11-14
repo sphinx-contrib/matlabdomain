@@ -1,0 +1,13 @@
+{#- scmd apidoc: the root page: one flat
+    toctree, Global or the root folder first. Copy this file to a
+    folder and name it in matlab_apidoc_templatedir to change the output.
+    Context keys are listed in the documentation. -#}
+{{ title | e | heading }}
+{%- if pages %}
+
+.. toctree::
+   :maxdepth: {{ maxdepth }}
+{% for docname in pages %}
+   {{ docname }}
+{%- endfor %}
+{%- endif %}

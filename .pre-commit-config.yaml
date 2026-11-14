@@ -1,3 +1,6 @@
+# Recorded tool output and MATLAB-written fixtures are kept verbatim.
+exclude: ^(test_slow/profiling/results/|tests/simulink/fixtures/)
+
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -8,32 +11,38 @@ repos:
     -   id: check-toml
     -   id: check-yaml
     -   id: end-of-file-fixer
-    -   id: mixed-line-ending
-        args: [--fix=lf]
     -   id: trailing-whitespace
 
-    # Format TOML files
 -   repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
     rev: v2.15.0
     hooks:
     -   id: pretty-format-toml
         args: [--autofix, --indent, '4']
+        exclude: uv.lock
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10
+    rev: v0.17.3
     hooks:
-    # Run the linter.
     -   id: ruff-check
-        # args: [--statistics]
-        args: [--fix, --show-fixes, --unsafe-fixes]
-    # Run the formatter.
+        args: [--fix, --show-fixes]
     -   id: ruff-format
-        # args: [--diff]
 
-    # Checks for spelling errors
 -   repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
     -   id: codespell
         args: [--toml, pyproject.toml]
         additional_dependencies: [tomli]
+
+-   repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.5
+    hooks:
+    -   id: uv-lock
+
+# Last, so it also fixes the CRLF that pretty-format-toml writes on Windows.
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: \.(bat|cmd)$

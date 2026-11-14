@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Search all projects</title>
+<link href="../pagefind/pagefind-ui.css" rel="stylesheet">
+<script src="../pagefind/pagefind-ui.js"></script>
+</head>
+<body>
+<h1>Search all projects</h1>
+<div id="search"></div>
+<script>
+// Sphinx puts section ids on <section>, and matlabdomain object ids on <dt>,
+// so Pagefind finds no sub results of its own. Build them from the anchors
+// Pagefind records: each hit goes to the nearest object or section above it.
+const escape = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const label = (id) => id.startsWith("mat-") ? decodeURIComponent(id.slice(4).replace(/~/g, "%")) : id;
+
+function subResults(result) {
+  const anchors = (result.anchors || [])
+    .filter((a) => a.id.startsWith("mat-") || a.element === "section")
+    .sort((a, b) => a.location - b.location);
+  const words = result.content.split(/\s+/);
+  const groups = new Map();
+  for (const loc of result.locations) {
+    const owner = anchors.filter((a) => a.location <= loc).pop();
+    if (!owner) continue;
+    if (!groups.has(owner.id)) groups.set(owner.id, []);
+    groups.get(owner.id).push(loc);
+  }
+  const page = result.url.split("#")[0];
+  return [...groups].map(([id, locs]) => {
+    const start = Math.max(0, locs[0] - 6);
+    const excerpt = words.slice(start, locs[0] + 14)
+      .map((w, i) => locs.includes(start + i) ? `<mark>${escape(w)}</mark>` : escape(w)).join(" ");
+    return { title: label(id), url: `${page}#${id}`, excerpt, locations: locs };
+  });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  // Pagefind takes the site root (also under a URL prefix) from its bundle.
+  // No images: its automatic image metadata is relative to the page.
+  const ui = new PagefindUI({
+    element: "#search",
+    showSubResults: true,
+    showImages: false,
+    processResult: (result) => ({ ...result, sub_results: subResults(result) }),
+  });
+  const q = new URLSearchParams(location.search).get("q");
+  if (q) ui.triggerSearch(q);
+});
+</script>
+</body>
+</html>

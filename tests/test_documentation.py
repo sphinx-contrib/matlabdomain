@@ -1,0 +1,321 @@
+"""The documentation in ``docs/``: it builds without
+warnings, and its reference pages list every configuration value, directive,
+directive option, role, warning and command-line option, and nothing else.
+"""
+
+import json
+import re
+import shutil
+import tomllib
+from pathlib import Path
+
+import pytest
+
+from sphinxcontrib.matlab import MATLABDomain
+from sphinxcontrib.matlab_apidoc._cli import get_parser
+from sphinxcontrib.matlab_quickstart._cli import get_parser as get_quickstart_parser
+from sphinxcontrib.matlab_skills._cli import get_parser as get_skills_parser
+
+REPO = Path(__file__).parents[1]
+REFERENCE = REPO / "docs" / "reference"
+SOURCE = REPO / "sphinxcontrib"
+
+# How the code emits warning subtypes: a logger keyword, mat_types._warn, and
+# (subtype, message, row) tuples collected for later.
+WARNING_RE = re.compile(
+    r'subtype="(\w+)"|_warn\(\s*"(\w+)"'
+    r'|(?:append\(|\[)\s*\(\s*"([a-z]+(?:_[a-z]+)*)",'
+)
+
+
+def entries(pattern, page):
+    """Return the first group of ``pattern`` on each matching line of ``page``."""
+    text = (REFERENCE / page).read_text(encoding="utf-8")
+    return set(re.findall(pattern, text, re.MULTILINE))
+
+
+def documented_directives():
+    """``{directive: {option, ...}}`` from the ``rst:directive`` entries."""
+    directives = {}
+    options = column = None
+    text = (REFERENCE / "directives.rst").read_text(encoding="utf-8")
+    for line in text.splitlines():
+        if m := re.match(r"\.\. rst:directive:: \.\. mat:(\w+)::", line):
+            options = directives.setdefault(m[1], set())
+            column = None
+        elif m := re.match(r"(\s+\.\. rst:directive:option:: )(\S+)$", line):
+            assert options is not None
+            options.add(m[2])
+            column = len(m[1])
+        elif column and re.fullmatch(rf" {{{column}}}\S+", line):
+            # another option name of the same entry
+            assert options is not None
+            options.add(line.strip())
+        else:
+            column = None
+    return directives
+
+
+@pytest.fixture
+def bare_app(make_app, tmp_path):
+    (tmp_path / "conf.py").write_text('extensions = ["sphinxcontrib.matlab"]\n')
+    (tmp_path / "index.rst").write_text("Index\n=====\n")
+    return make_app(srcdir=tmp_path)
+
+
+def test_docs_build_without_warnings(make_app, tmp_path):
+    # The docs include files from examples/apidoc, and read the tested
+    # versions from pyproject.toml and uv.lock.
+    for folder in ("docs", "examples/apidoc"):
+        shutil.copytree(
+            REPO / folder, tmp_path / folder, ignore=shutil.ignore_patterns("_build")
+        )
+    for name in ("pyproject.toml", "uv.lock"):
+        shutil.copyfile(REPO / name, tmp_path / name)
+    app = make_app(srcdir=tmp_path / "docs", freshenv=True)
+    app.build(force_all=True)
+    assert app.config.nitpicky
+    assert app.warning.getvalue() == ""
+    output = Path(app.outdir)
+    installation = (output / "getting-started/installation.html").read_text(
+        encoding="utf-8"
+    )
+    assert f"Tested: Python {version_range()}." in installation
+    primer = (output / "getting-started/sphinx-primer.html").read_text(encoding="utf-8")
+    assert 'href="../reference/glossary.html#term-builder"' in primer
+    for name in (
+        "getting-started/installation",
+        "user-guide/configuration",
+        "reference/cli",
+        "developer-guide/contributing",
+    ):
+        assert "std-term" in (output / f"{name}.html").read_text(encoding="utf-8"), name
+    # Hover tips of glossary terms (docs/_ext/glossary_tips.py).
+    assert '<script defer="defer" src="../_static/glossary-tips.js?v=' in primer
+    assert 'href="../_static/glossary-tips.css?v=' in primer
+    tips = glossary_tips(output)
+    assert "The part of Sphinx" in tips["reference/glossary.html#term-builder"]
+    assert not (output / "_static/tippy").exists()
+
+
+def version_range():
+    """``"3.11 to 3.15 and Sphinx 8.0 to 9.2"`` from pyproject.toml and uv.lock."""
+    project = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))
+    lock = tomllib.loads((REPO / "uv.lock").read_text(encoding="utf-8"))
+    python = sorted(
+        int(m[1])
+        for c in project["project"]["classifiers"]
+        if (m := re.fullmatch(r"Programming Language :: Python :: 3\.(\d+)", c))
+    )
+    (floor,) = (
+        d.removeprefix("Sphinx>=")
+        for d in project["project"]["dependencies"]
+        if d.startswith("Sphinx>=")
+    )
+    newest = max(
+        tuple(map(int, p["version"].split(".")))
+        for p in lock["package"]
+        if p["name"] == "sphinx"
+    )
+    return (
+        f"3.{python[0]} to 3.{python[-1]} and Sphinx "
+        f"{'.'.join(floor.split('.')[:2])} to {newest[0]}.{newest[1]}"
+    )
+
+
+def glossary_tips(output):
+    """Return the tips of ``_static/glossary-tips.js``, by link target."""
+    script = (output / "_static/glossary-tips.js").read_text(encoding="utf-8")
+    data = script.rsplit("\nglossaryTips(", 1)[1]
+    assert data.endswith(");\n")
+    return json.loads(data.removesuffix(");\n"))
+
+
+TIPS_PROJECT = {
+    "conf.py": (
+        f"import sys\nsys.path.insert(0, {str(REPO / 'docs' / '_ext')!r})\n"
+        'extensions = ["glossary_tips"]\nnitpicky = True\n'
+    ),
+    "index.rst": "Index\n=====\n\n.. toctree::\n\n   terms\n   guide/page\n",
+    "terms.rst": (
+        "Terms\n=====\n\n.. glossary::\n\n"
+        "   domain\n      Groups :term:`builder` objects.\n\n"
+        "   builder\n      Writes ``html``; see :doc:`guide/page` and\n"
+        "      `Sphinx <https://www.sphinx-doc.org>`_.\n\n"
+        "      .. index:: builder\n"
+    ),
+    "guide/page.rst": "Page\n====\n\nA :term:`builder` in a :term:`domain`.\n",
+}
+
+
+def test_glossary_tips(make_app, tmp_path):
+    scripts = []
+    for parallel in (0, 2):
+        root = tmp_path / f"j{parallel}"
+        for name, text in TIPS_PROJECT.items():
+            (root / name).parent.mkdir(parents=True, exist_ok=True)
+            (root / name).write_text(text, encoding="utf-8")
+        app = make_app("html", srcdir=root, parallel=parallel)
+        app.build()
+        app.cleanup()
+        assert app.warning.getvalue() == ""
+        scripts.append((Path(app.outdir) / "_static/glossary-tips.js").read_bytes())
+    # One file, written in the main process: -j gives the same bytes.
+    assert scripts[0] == scripts[1]
+    tips = glossary_tips(Path(app.outdir))
+    assert list(tips) == ["terms.html#term-builder", "terms.html#term-domain"]
+    builder = tips["terms.html#term-builder"]
+    assert builder.startswith('<p class="glossary-tip-term">builder</p>')
+    assert '<code class="docutils literal notranslate">' in builder
+    assert "Page" in builder and "Sphinx" in builder
+    # Text only: no links or ids that would clash with the page's own.
+    assert "<a " not in builder and " id=" not in builder
+    assert "builder" in tips["terms.html#term-domain"]
+    page = (Path(app.outdir) / "guide/page.html").read_text(encoding="utf-8")
+    assert "../_static/glossary-tips.js?v=" in page
+
+
+def test_configuration_values(bare_app):
+    config = {opt.name for opt in bare_app.config if opt.name.startswith("matlab_")}
+    assert entries(r"^\.\. confval:: (\w+)$", "configuration.rst") == config
+
+
+def test_directives_and_options(bare_app):
+    directives = {
+        name: set(cls.option_spec or {})
+        for name, cls in MATLABDomain.directives.items()
+    }
+    registry = bare_app.registry
+    for name, cls in registry.domain_directives["mat"].items():
+        documenter = registry.documenters.get(f"mat:{name.removeprefix('auto')}")
+        # mat:autosidecar renders a sidecar doc, not an object.
+        options = cls.option_spec if documenter is None else documenter.option_spec
+        directives[name] = set(options)
+    assert documented_directives() == directives
+
+
+def test_roles(bare_app):
+    roles = set(MATLABDomain.roles) | set(bare_app.registry.domain_roles.get("mat", {}))
+    assert entries(r"^\.\. rst:role:: mat:(\w+)$", "directives.rst") == roles
+
+
+def test_warnings():
+    subtypes = {
+        next(filter(None, m.groups()))
+        for path in SOURCE.rglob("*.py")
+        for m in WARNING_RE.finditer(path.read_text(encoding="utf-8"))
+    }
+    assert len(subtypes) > 5
+    assert entries(r"^\s+\* - ``mat\.(\w+)``$", "warnings.rst") == subtypes
+
+
+def program_options(program):
+    """Return the ``.. option::`` names after ``.. program:: <program>``."""
+    text = (REFERENCE / "cli.rst").read_text(encoding="utf-8")
+    parts = re.split(r"^\.\. program:: (.+)$", text, flags=re.MULTILINE)
+    body = dict(zip(parts[1::2], parts[2::2], strict=True))[program]
+    options = set()
+    for line in re.findall(r"^\.\. option:: (.+)$", body, re.MULTILINE):
+        options.update(part.split()[0] for part in line.split(", "))
+    return options
+
+
+def skills_subparser(name):
+    def parser():
+        action = get_skills_parser()._subparsers._group_actions[0]  # type: ignore[union-attr]
+        return action.choices[name]  # type: ignore[index]
+
+    return parser
+
+
+@pytest.mark.parametrize(
+    ("program", "parser"),
+    [
+        ("scmd apidoc", get_parser),
+        ("scmd quickstart", get_quickstart_parser),
+        ("scmd skills", get_skills_parser),
+        ("scmd skills list", skills_subparser("list")),
+        ("scmd skills install", skills_subparser("install")),
+    ],
+)
+def test_command_line_options(program, parser):
+    cli = set()
+    for action in parser()._actions:
+        cli.update(action.option_strings or [action.metavar or action.dest.upper()])
+    assert program_options(program) == cli
+
+
+def repository_configuration(root):
+    suffixes = {".toml", ".ini", ".cfg", ".yaml", ".yml", ".json"}
+    names = {
+        "uv.lock",
+        ".python-version",
+        ".gitignore",
+        ".gitattributes",
+        ".editorconfig",
+        "MANIFEST.in",
+        "Makefile",
+        "make.bat",
+        "conf.py",
+        "CONTRIBUTING.rst",
+        "codespell_ignore_words.txt",
+        "CODEOWNERS",
+    }
+    paths = list(root.iterdir())
+    for folder in (".github", ".vscode"):
+        paths.extend((root / folder).rglob("*"))
+    for folder in ("docs", "test_slow/gauntlet"):
+        if (root / folder).is_dir():
+            paths.extend((root / folder).iterdir())
+    paths.extend((root / "examples").rglob("conf.py"))
+    return {
+        path.relative_to(root).as_posix()
+        for path in paths
+        if path.is_file()
+        and "_build" not in path.relative_to(root).parts
+        and (path.suffix in suffixes or path.name in names)
+    }
+
+
+def test_repository_configuration():
+    page = REPO / "docs/developer-guide/contributing.rst"
+    section = page.read_text(encoding="utf-8").split(
+        ".. _repository-configuration:", 1
+    )[1]
+    documented = re.findall(r"^``([^`]+)``$", section, re.MULTILINE)
+    assert len(documented) == len(set(documented)), "duplicate config entries"
+    assert set(documented) == repository_configuration(REPO)
+
+
+def test_ruff_hook_matches_dev_pin():
+    project = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))
+    pins = [
+        d.removeprefix("ruff==")
+        for d in project["dependency-groups"]["dev"]
+        if isinstance(d, str) and d.startswith("ruff==")
+    ]
+    hooks = (REPO / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+    hook = re.search(r"ruff-pre-commit\s+rev: v(\S+)", hooks)
+    assert hook is not None
+    assert pins == [hook[1]]
+
+
+@pytest.mark.parametrize(
+    ("name", "included"),
+    [
+        ("new-tool.toml", True),
+        (".github/workflows/new.yml", True),
+        (".github/CODEOWNERS", True),
+        (".vscode/new.json", True),
+        ("test_slow/gauntlet/new.toml", True),
+        ("examples/apidoc/docs/conf.py", True),
+        ("tests/roots/new/conf.py", False),
+        ("test_slow/gauntlet/runs/new/config.json", False),
+        ("examples/apidoc/docs/_build/conf.py", False),
+    ],
+)
+def test_repository_configuration_scope(tmp_path, name, included):
+    path = tmp_path / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.touch()
+    assert (name in repository_configuration(tmp_path)) == included

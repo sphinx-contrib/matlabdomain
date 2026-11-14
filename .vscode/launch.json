@@ -1,0 +1,84 @@
+{
+    // VS Code debug configs for working on sphinxcontrib-matlabdomain.
+    // "justMyCode": false lets you step into Sphinx and tree-sitter internals.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Sphinx: Debug docs build",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sphinx.cmd.build",
+            "args": [
+                "-b", "html",
+                "${workspaceFolder}/docs",
+                "${workspaceFolder}/docs/_build/html"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "sphinxcontrib-matlabdomain: Debug profiling harness build",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sphinx.cmd.build",
+            "args": [
+                "-b", "html",
+                "-E",
+                "${workspaceFolder}/test_slow/profiling",
+                "${workspaceFolder}/test_slow/profiling/_build/html"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "sphinxcontrib-matlabdomain: Profile harness (cProfile)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_slow/profiling/profile_build.py",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Debug current test file",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-o", "addopts=",
+                "-vv"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        // A dry run on the worked example (its conf.py); drop -n to write.
+        {
+            "name": "Debug scmd apidoc (CLI)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sphinxcontrib.matlab_cli",
+            "args": [
+                "apidoc",
+                "-n",
+                "-c", "${workspaceFolder}/examples/apidoc/docs"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        // The test root with known gaps; exits 1 (its findings are errors).
+        {
+            "name": "Debug matlab-api-check",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "sphinx.cmd.build",
+            "args": [
+                "-E",
+                "-b", "matlab-api-check",
+                "${workspaceFolder}/tests/roots/test_api_check",
+                "${workspaceFolder}/_build/api-check-debug"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

@@ -1,0 +1,10 @@
+{#- scmd apidoc: the page of one file with matlab_apidoc_separate.
+    Copy this file to a folder and name it in
+    matlab_apidoc_templatedir to change the output. The context holds the
+    keys of one entry, listed in the documentation. -#}
+{{ title | e | heading }}
+
+.. {{ directive }}:: {{ argument }}
+{%- for name, value in options.items() %}
+   :{{ name }}:{% if value %} {{ value }}{% endif %}
+{%- endfor %}

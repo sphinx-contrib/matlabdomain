@@ -1,7 +1,7 @@
 root
 ----
 
-.. currentmodule:: .
+.. currentfolder:: .
 
 .. autoclass:: BaseClass
     :show-inheritance:

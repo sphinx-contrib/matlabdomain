@@ -8,9 +8,14 @@ sphinxcontrib_matlabdomain.egg-info/
 tests/test_docs/_build/
 .cache/
 .pytest_cache/
-.vscode/
+.ruff_cache/
 _build
 htmlcov
 .coverage
+.coverage.*
 coverage.xml
 build/
+dist/
+test_slow/repos/
+test_slow/gauntlet/runs/
+test_slow/profiling/*.prof

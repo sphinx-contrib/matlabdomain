@@ -1,0 +1,1 @@
+.. mat:autofunction:: shapes.totalArea

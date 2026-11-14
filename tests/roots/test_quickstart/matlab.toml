@@ -1,0 +1,7 @@
+name = "Quickstart test"
+
+[folders]
+path = ["src"]
+
+[project]
+startup-files = ["src/startup_hook.m"]

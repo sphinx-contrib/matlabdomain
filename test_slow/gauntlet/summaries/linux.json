@@ -1,0 +1,2084 @@
+{
+ "environment": {
+  "date": "2026-11-11",
+  "platform": "linux",
+  "python": "3.14.3",
+  "sphinx": "9.2.0",
+  "tree-sitter": "0.26.1",
+  "tree-sitter-matlab": "1.3.3",
+  "matlabdomain": "ad58cd92389c"
+ },
+ "projects": {
+  "Psychtoolbox-3": {
+   "commit": "8f952b4cae7ee3fd90a792b1b36bfb3030ed701d",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.392,
+     "summary": [
+      "43",
+      "43",
+      "0",
+      "0",
+      "4265",
+      "300",
+      "0.18"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.389,
+     "summary": [
+      "43",
+      "43",
+      "0",
+      "0",
+      "4265",
+      "300",
+      "0.18"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.379,
+     "summary": [
+      "43",
+      "43",
+      "0",
+      "0",
+      "4265",
+      "300",
+      "0.17"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 5,
+    "mat.encoding": 1,
+    "mat.not_callable": 294
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "43",
+     "0",
+     "0",
+     "43",
+     "4265",
+     "300",
+     "0.18"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 11.04,
+    "warnings": {
+     "docutils": 919,
+     "mat.encoding": 1,
+     "mat.not_callable": 294
+    },
+    "warning_records": 1214,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 8123
+   },
+   "conf_jobs": {
+    "wall_s": 4.15,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 23.33,
+    "warnings": {
+     "docutils": 926,
+     "mat.encoding": 1,
+     "mat.not_callable": 294
+    },
+    "warning_records": 1221,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 8123
+   },
+   "all_jobs": {
+    "wall_s": 6.35,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 9.71,
+    "warnings": {
+     "docutils": 919,
+     "mat.api_check": 6603,
+     "mat.encoding": 1,
+     "mat.not_callable": 294
+    },
+    "warning_records": 7817,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 4081,
+      "class": 1,
+      "method": 16,
+      "property": 0,
+      "event": 0,
+      "script": 117,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 66,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 5248,
+     "warnings": 1355,
+     "findings": {
+      "description": 57,
+      "method-description": 13,
+      "property-description": 0,
+      "event-description": 0,
+      "inputs": 3692,
+      "outputs": 1486,
+      "name-value": 0,
+      "example": 1340,
+      "method-example": 15,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 1.76,
+    "diff": "identical"
+   }
+  },
+  "WEC-Sim": {
+   "commit": "78122ef5499544bf169e695da3fc60b548177e55",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.302,
+     "summary": [
+      "5",
+      "5",
+      "0",
+      "0",
+      "190",
+      "5",
+      "0.09"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.294,
+     "summary": [
+      "5",
+      "5",
+      "0",
+      "0",
+      "190",
+      "5",
+      "0.09"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.298,
+     "summary": [
+      "5",
+      "5",
+      "0",
+      "0",
+      "190",
+      "5",
+      "0.09"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 5
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "5",
+     "0",
+     "0",
+     "5",
+     "190",
+     "5",
+     "0.09"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 1.67,
+    "warnings": {
+     "docutils": 42
+    },
+    "warning_records": 42,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 1270
+   },
+   "conf_jobs": {
+    "wall_s": 1.35,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 1.82,
+    "warnings": {
+     "docutils": 42
+    },
+    "warning_records": 42,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 1270
+   },
+   "all_jobs": {
+    "wall_s": 1.46,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 1.47,
+    "warnings": {
+     "docutils": 42,
+     "mat.api_check": 533
+    },
+    "warning_records": 575,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 72,
+      "class": 21,
+      "method": 166,
+      "property": 282,
+      "event": 0,
+      "script": 76,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 2,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 19
+     },
+     "errors": 173,
+     "warnings": 360,
+     "findings": {
+      "description": 30,
+      "method-description": 49,
+      "property-description": 50,
+      "event-description": 0,
+      "inputs": 56,
+      "outputs": 36,
+      "name-value": 2,
+      "example": 161,
+      "method-example": 149,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 1.03,
+    "diff": "identical"
+   }
+  },
+  "WEC-Sim_Applications": {
+   "commit": "2d7569271c00e8736c2755192ee45941ffd49403",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.234,
+     "summary": [
+      "4",
+      "4",
+      "0",
+      "0",
+      "284",
+      "17",
+      "0.03"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.232,
+     "summary": [
+      "4",
+      "4",
+      "0",
+      "0",
+      "284",
+      "17",
+      "0.03"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.23,
+     "summary": [
+      "4",
+      "4",
+      "0",
+      "0",
+      "284",
+      "17",
+      "0.03"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 17
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "4",
+     "0",
+     "0",
+     "4",
+     "284",
+     "17",
+     "0.03"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 1.37,
+    "warnings": {
+     "docutils": 9,
+     "mat.invalid_matlab": 1
+    },
+    "warning_records": 10,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 1168
+   },
+   "conf_jobs": {
+    "wall_s": 1.07,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 1.38,
+    "warnings": {
+     "docutils": 9,
+     "mat.ambiguous": 5,
+     "mat.invalid_matlab": 1
+    },
+    "warning_records": 15,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 1168
+   },
+   "all_jobs": {
+    "wall_s": 1.12,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 1.18,
+    "warnings": {
+     "docutils": 9,
+     "mat.api_check": 857,
+     "mat.invalid_matlab": 1
+    },
+    "warning_records": 867,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 24,
+      "class": 28,
+      "method": 228,
+      "property": 147,
+      "event": 0,
+      "script": 172,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 0,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 60
+     },
+     "errors": 287,
+     "warnings": 570,
+     "findings": {
+      "description": 39,
+      "method-description": 212,
+      "property-description": 145,
+      "event-description": 0,
+      "inputs": 18,
+      "outputs": 18,
+      "name-value": 0,
+      "example": 224,
+      "method-example": 201,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 0.84,
+    "diff": "identical"
+   }
+  },
+  "YALMIP": {
+   "commit": "b06a22fe619bab2a7eeae78bf2140dbad8c2041c",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.273,
+     "summary": [
+      "18",
+      "18",
+      "0",
+      "0",
+      "1701",
+      "17",
+      "0.06"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.286,
+     "summary": [
+      "18",
+      "18",
+      "0",
+      "0",
+      "1701",
+      "17",
+      "0.07"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.279,
+     "summary": [
+      "18",
+      "18",
+      "0",
+      "0",
+      "1701",
+      "17",
+      "0.07"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 13,
+    "mat.empty_code_file": 1,
+    "mat.encoding": 3
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "18",
+     "0",
+     "0",
+     "18",
+     "1701",
+     "17",
+     "0.06"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 3.7,
+    "warnings": {
+     "docutils": 73,
+     "mat.empty_code_file": 1,
+     "mat.encoding": 3
+    },
+    "warning_records": 77,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 3408
+   },
+   "conf_jobs": {
+    "wall_s": 1.54,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 4.25,
+    "warnings": {
+     "docutils": 73,
+     "mat.empty_code_file": 1,
+     "mat.encoding": 3
+    },
+    "warning_records": 77,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 3408
+   },
+   "all_jobs": {
+    "wall_s": 1.7,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 3.31,
+    "warnings": {
+     "docutils": 73,
+     "mat.api_check": 5490,
+     "mat.empty_code_file": 1,
+     "mat.encoding": 3
+    },
+    "warning_records": 5567,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 1698,
+      "class": 0,
+      "method": 0,
+      "property": 0,
+      "event": 0,
+      "script": 2,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 1,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 3848,
+     "warnings": 1642,
+     "findings": {
+      "description": 940,
+      "method-description": 0,
+      "property-description": 0,
+      "event-description": 0,
+      "inputs": 1275,
+      "outputs": 1633,
+      "name-value": 0,
+      "example": 1642,
+      "method-example": 0,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 0.85,
+    "diff": "identical"
+   }
+  },
+  "chebfun": {
+   "commit": "7574c77680d7e82b79626300bf255498271a72df",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.311,
+     "summary": [
+      "15",
+      "15",
+      "0",
+      "0",
+      "3435",
+      "165",
+      "0.10"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.313,
+     "summary": [
+      "15",
+      "15",
+      "0",
+      "0",
+      "3435",
+      "165",
+      "0.10"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.309,
+     "summary": [
+      "15",
+      "15",
+      "0",
+      "0",
+      "3435",
+      "165",
+      "0.10"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 165
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "15",
+     "0",
+     "0",
+     "15",
+     "3435",
+     "165",
+     "0.10"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 8.36,
+    "warnings": {
+     "docutils": 731
+    },
+    "warning_records": 731,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 7865
+   },
+   "conf_jobs": {
+    "wall_s": 5.85,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 11.86,
+    "warnings": {
+     "docutils": 730,
+     "mat.ambiguous": 1
+    },
+    "warning_records": 731,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 7865
+   },
+   "all_jobs": {
+    "wall_s": 9.19,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 7.35,
+    "warnings": {
+     "docutils": 731,
+     "mat.api_check": 10077
+    },
+    "warning_records": 10808,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 1240,
+      "class": 75,
+      "method": 2577,
+      "property": 177,
+      "event": 0,
+      "script": 3,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 1,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 6386,
+     "warnings": 3691,
+     "findings": {
+      "description": 119,
+      "method-description": 243,
+      "property-description": 12,
+      "event-description": 0,
+      "inputs": 2386,
+      "outputs": 3638,
+      "name-value": 0,
+      "example": 1262,
+      "method-example": 2417,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 4.31,
+    "diff": "identical"
+   }
+  },
+  "eeglab": {
+   "commit": "d0963be9d81acc5b66e84f8d3d7c89e3ce127cc4",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.251,
+     "summary": [
+      "8",
+      "8",
+      "0",
+      "0",
+      "659",
+      "0",
+      "0.04"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.247,
+     "summary": [
+      "8",
+      "8",
+      "0",
+      "0",
+      "659",
+      "0",
+      "0.04"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.245,
+     "summary": [
+      "8",
+      "8",
+      "0",
+      "0",
+      "659",
+      "0",
+      "0.04"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {},
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "8",
+     "0",
+     "0",
+     "8",
+     "659",
+     "0",
+     "0.04"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 3.9,
+    "warnings": {
+     "docutils": 1867
+    },
+    "warning_records": 1867,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 1401
+   },
+   "conf_jobs": {
+    "wall_s": 1.85,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 5.54,
+    "warnings": {
+     "docutils": 1867
+    },
+    "warning_records": 1867,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 1401
+   },
+   "all_jobs": {
+    "wall_s": 2.88,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 3.55,
+    "warnings": {
+     "docutils": 1867,
+     "mat.api_check": 543
+    },
+    "warning_records": 2410,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 606,
+      "class": 2,
+      "method": 42,
+      "property": 19,
+      "event": 0,
+      "script": 27,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 1,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 377,
+     "warnings": 166,
+     "findings": {
+      "description": 14,
+      "method-description": 26,
+      "property-description": 18,
+      "event-description": 0,
+      "inputs": 132,
+      "outputs": 205,
+      "name-value": 0,
+      "example": 108,
+      "method-example": 40,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 1.03,
+    "diff": "identical"
+   }
+  },
+  "fieldtrip": {
+   "commit": "02149cbf43920b87b823567b28feaa1cd9d5e6a4",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.443,
+     "summary": [
+      "41",
+      "41",
+      "0",
+      "0",
+      "5332",
+      "183",
+      "0.23"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.436,
+     "summary": [
+      "41",
+      "41",
+      "0",
+      "0",
+      "5332",
+      "183",
+      "0.22"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.444,
+     "summary": [
+      "41",
+      "41",
+      "0",
+      "0",
+      "5332",
+      "183",
+      "0.23"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 155,
+    "mat.empty_code_file": 1,
+    "mat.encoding": 27
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "41",
+     "0",
+     "0",
+     "41",
+     "5332",
+     "183",
+     "0.23"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 14.14,
+    "warnings": {
+     "docutils": 4548,
+     "mat.empty_code_file": 1,
+     "mat.encoding": 27
+    },
+    "warning_records": 4576,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 8403
+   },
+   "conf_jobs": {
+    "wall_s": 4.92,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 27.25,
+    "warnings": {
+     "docutils": 4551,
+     "mat.ambiguous": 360,
+     "mat.empty_code_file": 1,
+     "mat.encoding": 27
+    },
+    "warning_records": 4939,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 8403
+   },
+   "all_jobs": {
+    "wall_s": 7.09,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 14.09,
+    "warnings": {
+     "docutils": 4548,
+     "mat.api_check": 12797,
+     "mat.empty_code_file": 1,
+     "mat.encoding": 27
+    },
+    "warning_records": 17373,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 5166,
+      "class": 23,
+      "method": 348,
+      "property": 103,
+      "event": 0,
+      "script": 122,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 21,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 7555,
+     "warnings": 5242,
+     "findings": {
+      "description": 695,
+      "method-description": 295,
+      "property-description": 94,
+      "event-description": 0,
+      "inputs": 3387,
+      "outputs": 3178,
+      "name-value": 0,
+      "example": 4815,
+      "method-example": 333,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 3.13,
+    "diff": "identical"
+   }
+  },
+  "matlab2tikz": {
+   "commit": "806c97d99f87f8a1e99a7c54e853c25c82aac301",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.213,
+     "summary": [
+      "2",
+      "2",
+      "0",
+      "0",
+      "65",
+      "0",
+      "0.01"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.212,
+     "summary": [
+      "2",
+      "2",
+      "0",
+      "0",
+      "65",
+      "0",
+      "0.01"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.215,
+     "summary": [
+      "2",
+      "2",
+      "0",
+      "0",
+      "65",
+      "0",
+      "0.01"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {},
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "2",
+     "0",
+     "0",
+     "2",
+     "65",
+     "0",
+     "0.01"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 0.5,
+    "warnings": {
+     "docutils": 46
+    },
+    "warning_records": 46,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 47
+   },
+   "conf_jobs": {
+    "wall_s": 0.57,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 0.53,
+    "warnings": {
+     "docutils": 46
+    },
+    "warning_records": 46,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 47
+   },
+   "all_jobs": {
+    "wall_s": 0.59,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 0.5,
+    "warnings": {
+     "docutils": 46,
+     "mat.api_check": 155
+    },
+    "warning_records": 201,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 64,
+      "class": 0,
+      "method": 0,
+      "property": 0,
+      "event": 0,
+      "script": 1,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 0,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 102,
+     "warnings": 53,
+     "findings": {
+      "description": 2,
+      "method-description": 0,
+      "property-description": 0,
+      "event-description": 0,
+      "inputs": 49,
+      "outputs": 51,
+      "name-value": 0,
+      "example": 53,
+      "method-example": 0,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 0.52,
+    "diff": "identical"
+   }
+  },
+  "matnwb": {
+   "commit": "08da374334958a89438747a143fd71941cba99ce",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.258,
+     "summary": [
+      "65",
+      "65",
+      "0",
+      "0",
+      "449",
+      "1",
+      "0.03"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.25,
+     "summary": [
+      "65",
+      "65",
+      "0",
+      "0",
+      "449",
+      "1",
+      "0.03"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.243,
+     "summary": [
+      "65",
+      "65",
+      "0",
+      "0",
+      "449",
+      "1",
+      "0.03"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.encoding": 1
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "65",
+     "0",
+     "0",
+     "65",
+     "449",
+     "1",
+     "0.03"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 4.15,
+    "warnings": {
+     "docutils": 64,
+     "mat.encoding": 1
+    },
+    "warning_records": 65,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 4428
+   },
+   "conf_jobs": {
+    "wall_s": 2.38,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 4.58,
+    "warnings": {
+     "docutils": 64,
+     "mat.encoding": 1
+    },
+    "warning_records": 65,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 4428
+   },
+   "all_jobs": {
+    "wall_s": 2.7,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 3.55,
+    "warnings": {
+     "docutils": 64,
+     "mat.api_check": 4099,
+     "mat.encoding": 1
+    },
+    "warning_records": 4164,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 223,
+      "class": 204,
+      "method": 1188,
+      "property": 524,
+      "event": 0,
+      "script": 19,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 1,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 2471,
+     "warnings": 1628,
+     "findings": {
+      "description": 117,
+      "method-description": 838,
+      "property-description": 143,
+      "event-description": 0,
+      "inputs": 794,
+      "outputs": 703,
+      "name-value": 19,
+      "example": 419,
+      "method-example": 1066,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 1.73,
+    "diff": "identical"
+   }
+  },
+  "matpower": {
+   "commit": "80b6e16f760f58721ad31221c7287c28259cd4ad",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.616,
+     "summary": [
+      "25",
+      "25",
+      "0",
+      "0",
+      "2429",
+      "795",
+      "0.39"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.627,
+     "summary": [
+      "25",
+      "25",
+      "0",
+      "0",
+      "2429",
+      "795",
+      "0.39"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.605,
+     "summary": [
+      "25",
+      "25",
+      "0",
+      "0",
+      "2429",
+      "795",
+      "0.38"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 795
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "25",
+     "0",
+     "0",
+     "25",
+     "2429",
+     "795",
+     "0.38"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 42.48,
+    "warnings": {
+     "docutils": 1948,
+     "mat.ambiguous": 615,
+     "ref.equation": 66,
+     "ref.numref": 4,
+     "ref.ref": 106
+    },
+    "warning_records": 2739,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 8466
+   },
+   "conf_jobs": {
+    "wall_s": 25.78,
+    "diff": "6 files differ: global-12.html, global-13.html, global-4.html, global-7.html, mp-3.html; warnings differ: serial 2739, parallel 2700"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 47.3,
+    "warnings": {
+     "docutils": 1946,
+     "mat.ambiguous": 3492,
+     "ref.equation": 66,
+     "ref.numref": 4,
+     "ref.ref": 106
+    },
+    "warning_records": 5614,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 8466
+   },
+   "all_jobs": {
+    "wall_s": 26.24,
+    "diff": "10 files differ: global-12.html, global-13.html, global-14.html, global-16.html, global-4.html; warnings differ: serial 5614, parallel 5575"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 35.23,
+    "warnings": {
+     "docutils": 1948,
+     "mat.api_check": 11236,
+     "ref.equation": 66
+    },
+    "warning_records": 13250,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 1708,
+      "class": 547,
+      "method": 2981,
+      "property": 583,
+      "event": 0,
+      "script": 6,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 4,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 6687,
+     "warnings": 4549,
+     "findings": {
+      "description": 8,
+      "method-description": 1524,
+      "property-description": 59,
+      "event-description": 0,
+      "inputs": 2205,
+      "outputs": 2950,
+      "name-value": 0,
+      "example": 1859,
+      "method-example": 2631,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 18.31,
+    "diff": "warnings differ: serial 13250, parallel 13211"
+   }
+  },
+  "mtex": {
+   "commit": "e10898f0c7250c3903f4228879cd3f93a9b0acd2",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.362,
+     "summary": [
+      "17",
+      "17",
+      "0",
+      "0",
+      "3414",
+      "4",
+      "0.14"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.364,
+     "summary": [
+      "17",
+      "17",
+      "0",
+      "0",
+      "3414",
+      "4",
+      "0.14"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.357,
+     "summary": [
+      "17",
+      "17",
+      "0",
+      "0",
+      "3414",
+      "4",
+      "0.14"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.encoding": 4
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "17",
+     "0",
+     "0",
+     "17",
+     "3414",
+     "4",
+     "0.14"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 12.37,
+    "warnings": {
+     "docutils": 1616,
+     "mat.encoding": 4
+    },
+    "warning_records": 1620,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 10326
+   },
+   "conf_jobs": {
+    "wall_s": 5.83,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 19.36,
+    "warnings": {
+     "docutils": 1616,
+     "mat.encoding": 4
+    },
+    "warning_records": 1620,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 10326
+   },
+   "all_jobs": {
+    "wall_s": 9.55,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 11.08,
+    "warnings": {
+     "docutils": 1616,
+     "mat.api_check": 8361,
+     "mat.encoding": 4
+    },
+    "warning_records": 9981,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 905,
+      "class": 227,
+      "method": 2659,
+      "property": 972,
+      "event": 0,
+      "script": 564,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 0,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 3984,
+     "warnings": 4377,
+     "findings": {
+      "description": 164,
+      "method-description": 624,
+      "property-description": 361,
+      "event-description": 0,
+      "inputs": 1460,
+      "outputs": 1736,
+      "name-value": 0,
+      "example": 1612,
+      "method-example": 2404,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 3.72,
+    "diff": "identical"
+   }
+  },
+  "regularizeNd": {
+   "commit": "27cc7888004929071f8dc3ecfaf394ef4d55e644",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.236,
+     "summary": [
+      "2",
+      "2",
+      "0",
+      "0",
+      "24",
+      "1",
+      "0.02"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.24,
+     "summary": [
+      "2",
+      "2",
+      "0",
+      "0",
+      "24",
+      "1",
+      "0.02"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.238,
+     "summary": [
+      "2",
+      "2",
+      "0",
+      "0",
+      "24",
+      "1",
+      "0.02"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 1
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "2",
+     "0",
+     "0",
+     "2",
+     "24",
+     "1",
+     "0.02"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 0.56,
+    "warnings": {
+     "docutils": 5,
+     "image.not_readable": 1
+    },
+    "warning_records": 6,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 59
+   },
+   "conf_jobs": {
+    "wall_s": 0.6,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 0.57,
+    "warnings": {
+     "docutils": 5,
+     "image.not_readable": 1
+    },
+    "warning_records": 6,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 59
+   },
+   "all_jobs": {
+    "wall_s": 0.61,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 0.49,
+    "warnings": {
+     "docutils": 5,
+     "image.not_readable": 1,
+     "mat.api_check": 30
+    },
+    "warning_records": 36,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 6,
+      "class": 1,
+      "method": 4,
+      "property": 0,
+      "event": 0,
+      "script": 17,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 0,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 8,
+     "warnings": 22,
+     "findings": {
+      "description": 3,
+      "method-description": 3,
+      "property-description": 0,
+      "event-description": 0,
+      "inputs": 2,
+      "outputs": 0,
+      "name-value": 0,
+      "example": 18,
+      "method-example": 4,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 0.49,
+    "diff": "identical"
+   }
+  },
+  "spatialmath-matlab": {
+   "commit": "6eeff4a79f14286705560b84f1fe72e0b7e0e7f7",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.237,
+     "summary": [
+      "3",
+      "3",
+      "0",
+      "0",
+      "158",
+      "1",
+      "0.01"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.237,
+     "summary": [
+      "3",
+      "3",
+      "0",
+      "0",
+      "158",
+      "1",
+      "0.01"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.234,
+     "summary": [
+      "3",
+      "3",
+      "0",
+      "0",
+      "158",
+      "1",
+      "0.01"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.encoding": 1
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "3",
+     "0",
+     "0",
+     "3",
+     "158",
+     "1",
+     "0.01"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 1.51,
+    "warnings": {
+     "docutils": 263,
+     "mat.encoding": 1
+    },
+    "warning_records": 264,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 1038
+   },
+   "conf_jobs": {
+    "wall_s": 1.34,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 2.36,
+    "warnings": {
+     "docutils": 263,
+     "mat.encoding": 1
+    },
+    "warning_records": 264,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 1038
+   },
+   "all_jobs": {
+    "wall_s": 2.05,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 1.29,
+    "warnings": {
+     "docutils": 263,
+     "mat.api_check": 1182,
+     "mat.encoding": 1
+    },
+    "warning_records": 1446,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 115,
+      "class": 19,
+      "method": 320,
+      "property": 38,
+      "event": 0,
+      "script": 22,
+      "application": 2,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 0,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 723,
+     "warnings": 459,
+     "findings": {
+      "description": 32,
+      "method-description": 17,
+      "property-description": 12,
+      "event-description": 0,
+      "inputs": 291,
+      "outputs": 383,
+      "name-value": 0,
+      "example": 140,
+      "method-example": 307,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 1.01,
+    "diff": "identical"
+   }
+  },
+  "vhlab-toolbox-matlab": {
+   "commit": "ac85cf5cb233561ebaa9f581edc1625f36b27c78",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.305,
+     "summary": [
+      "95",
+      "95",
+      "0",
+      "0",
+      "1726",
+      "57",
+      "0.08"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.305,
+     "summary": [
+      "95",
+      "95",
+      "0",
+      "0",
+      "1726",
+      "57",
+      "0.09"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.317,
+     "summary": [
+      "95",
+      "95",
+      "0",
+      "0",
+      "1726",
+      "57",
+      "0.09"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 51,
+    "mat.not_callable": 6
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "95",
+     "0",
+     "0",
+     "95",
+     "1726",
+     "57",
+     "0.09"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 9.2,
+    "warnings": {
+     "docutils": 1425,
+     "mat.invalid_matlab": 1,
+     "mat.not_callable": 6
+    },
+    "warning_records": 1432,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 6630
+   },
+   "conf_jobs": {
+    "wall_s": 3.85,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 11.9,
+    "warnings": {
+     "docutils": 1421,
+     "mat.ambiguous": 22,
+     "mat.invalid_matlab": 1,
+     "mat.not_callable": 6
+    },
+    "warning_records": 1450,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 6630
+   },
+   "all_jobs": {
+    "wall_s": 4.51,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 7.61,
+    "warnings": {
+     "docutils": 1425,
+     "mat.api_check": 6196,
+     "mat.invalid_matlab": 1,
+     "mat.not_callable": 6
+    },
+    "warning_records": 7628,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "api_check": {
+     "checked": {
+      "function": 1436,
+      "class": 277,
+      "method": 1214,
+      "property": 366,
+      "event": 0,
+      "script": 13,
+      "application": 0,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 0,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 3370,
+     "warnings": 2826,
+     "findings": {
+      "description": 220,
+      "method-description": 544,
+      "property-description": 256,
+      "event-description": 0,
+      "inputs": 1314,
+      "outputs": 1279,
+      "name-value": 13,
+      "example": 1386,
+      "method-example": 1184,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 1.82,
+    "diff": "identical"
+   }
+  }
+ }
+}

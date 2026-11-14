@@ -1,6 +1,9 @@
 # Normalize line endings to LF for all text files
 # This ensures consistent behavior across Windows, macOS, and Linux
 
+# Every text file, also without a rule below; wins over core.autocrlf
+* text=auto eol=lf
+
 # Source code
 *.py text eol=lf
 *.m text eol=lf
@@ -9,6 +12,7 @@
 *.rst text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
+*.jinja text eol=lf
 
 # Configuration files
 *.yml text eol=lf
@@ -16,6 +20,7 @@
 *.toml text eol=lf
 *.ini text eol=lf
 *.cfg text eol=lf
+uv.lock text eol=lf
 
 # Data files
 *.json text eol=lf
@@ -24,12 +29,15 @@
 # Shell scripts
 *.sh text eol=lf
 
-# Batch files
-*.bat text eol=lf
-*.cmd text eol=lf
+# Batch files: cmd.exe misreads labels in LF-only files
+*.bat text eol=crlf
+*.cmd text eol=crlf
 
 # Binary files (no line ending conversion)
 *.mlapp binary
+# Simulink files: test fixtures must keep the bytes MATLAB wrote
+*.slx binary
+*.mdl binary
 *.png binary
 *.jpg binary
 *.jpeg binary

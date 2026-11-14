@@ -21,9 +21,9 @@ Test Data
 ^^^^^^^^^
 This is the test data module
 
-.. automodule:: test_data
+.. autofolder:: test_data
 
-:mod:`test_data` is a really cool module
+:folder:`test_data` is a really cool module
 
 .. _ClassInheritHandle:
 
@@ -335,35 +335,35 @@ FunctionWithLatin1Encoding
 ++++++++
 This is the test package
 
-.. automodule:: test_data.+package
+.. autofolder:: test_data/+package
 
 packageFunc
 ~~~~~~~~~~~
 
-.. autofunction:: package_func
+.. autofunction:: package_func.m
 
 @ClassFolder
 ++++++++++++
 This is the test class folder
 
-.. automodule:: test_data.@ClassFolder
+.. currentfolder:: test_data/@ClassFolder
 
 ClassFolder
 ~~~~~~~~~~~
 
-.. autoclass:: ClassFolder
+.. autoclass:: ClassFolder.m
 
 classMethod
 ~~~~~~~~~~~
 
-.. autofunction:: classMethod
-.. automethod:: ClassFolder.method_inside_classdef
+.. autofunction:: classMethod.m
+.. automethod:: ClassFolder.m.method_inside_classdef
 
 
 A Static Function
 ~~~~~~~~~~~~~~~~~
 
-.. autofunction:: a_static_func
+.. autofunction:: a_static_func.m
 
 
 
@@ -371,7 +371,7 @@ Submodule
 +++++++++
 This is the test_data module
 
-.. automodule:: test_data.submodule
+.. autofolder:: test_data/submodule
 
 
 Ellipsis after equals
@@ -427,9 +427,9 @@ A Matlab unittest class
 A matlab application (``.mlapp`` file)
 ++++++++++++++++++++++++++++++++++++++
 
-.. autoapplication:: test_data.Application
+.. autoapplication:: test_data/Application.mlapp
 
-This is a reference to an application :app:`test_data.Application`
+This is a reference to an application :app:`Application`
 
 Indices and tables
 ==================

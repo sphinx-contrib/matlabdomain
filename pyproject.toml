@@ -1,10 +1,35 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=40.8.0", "setuptools_scm"]
+requires = ["setuptools>=77", "setuptools-scm>=8"]
+
+[dependency-groups]
+dev = [
+    { include-group = "test" },
+    { include-group = "docs" },
+    "pre-commit",
+    "ruff==0.17.3",
+    "pyright==1.1.414",
+    "tox>=4.60",
+    "sphinx-autobuild"
+]
+docs = [
+    "furo",
+    "sphinxcontrib-mermaid"
+]
+test = [
+    "pytest>=9",
+    "pytest-cov",
+    "pytest-randomly",
+    # The Markdown tests need the renderer; keep the cap in step with the
+    # `markdown` extra.
+    "myst-parser>=4,<6"
+]
 
 [project]
 authors = [
-    { name = "Jørgen Cederberg", email = "jorgen@cederberg.be" }
+    { name = "Mark Mikofski" },
+    { name = "Jørgen Cederberg" },
+    { name = "Jason H. Nicholson", email = "github@jasonhnicholson.com" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -13,38 +38,56 @@ classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Documentation",
     "Topic :: Utilities",
     "Framework :: Sphinx :: Extension",
     "Framework :: Sphinx :: Domain"
 ]
 dependencies = [
-    "Sphinx>=7.0.0",
-    "tree-sitter-matlab>=1.0.2,<1.0.5",
-    "tree-sitter>=0.21.3,<0.23.0"
+    "Sphinx>=8.0.0",
+    # tree-sitter and tree-sitter-matlab do NOT follow SemVer: both ship breaking
+    # changes (grammar/AST shape, Python binding API) WITHOUT a major-version bump.
+    # e.g. tree-sitter-matlab 1.3.0 was a BREAKING `fix!` released as a minor bump.
+    # Pin each dependency. Never trust the version number alone because it will break
+    # our consumers.
+    "tree-sitter-matlab==1.3.3",
+    "tree-sitter==0.26.1",
+    # typing.override before Python 3.12 (sphinxcontrib.mat_typing); 4.4 added it.
+    "typing-extensions>=4.4; python_version < '3.12'"
 ]
 description = 'Sphinx "matlabdomain" extension'
 dynamic = ["version"]
-license = "BSD-3-Clause"
+license = "BSD-2-Clause"
+maintainers = [
+    { name = "Jason H. Nicholson", email = "github@jasonhnicholson.com" },
+    { name = "Remi Gau" },
+    { name = "Anton Edvinovich Pozharskiy" }
+]
 name = "sphinxcontrib-matlabdomain"
 readme = "README.rst"
-requires-python = ">=3.10.0"
+requires-python = ">=3.11"
 
 [project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-cov",
-    "pre-commit",
-    "tox>4.8",
-    "defusedxml>=0.7.1"
-]
-rtd = [
-    "sphinx-rtd-theme",
-    "sphinxcontrib-napoleon"
+markdown = [
+    # Sidecar docs in Markdown. The renderer
+    # subclasses myst-parser's SphinxRenderer: test each release before
+    # moving the cap.
+    "myst-parser>=4,<6"
 ]
 
+[project.scripts]
+scmd = "sphinxcontrib.matlab_cli:main"
+sphinxcontrib-matlabdomain = "sphinxcontrib.matlab_cli:main"
+
 [project.urls]
-Download = "http://pypi.python.org/pypi/sphinxcontrib-matlabdomain"
+Documentation = "https://sphinxcontrib-matlabdomain.readthedocs.io/"
+Download = "https://pypi.org/project/sphinxcontrib-matlabdomain/"
 Homepage = "https://github.com/sphinx-contrib/matlabdomain"
 
 [tool.codespell]
@@ -52,28 +95,104 @@ builtin = "clear,rare"
 ignore-words = ".github/codespell_ignore_words.txt"
 skip = "./.git"
 
+[tool.coverage.paths]
+# tox measures the installed package; map it back to the checkout.
+source = [
+    "sphinxcontrib/",
+    "*/site-packages/sphinxcontrib/"
+]
+
+[tool.coverage.report]
+exclude_also = [
+    'if __name__ == "__main__":',
+    "if TYPE_CHECKING:"
+]
+
 [tool.coverage.run]
 branch = true
 omit = [
     '*/_build/*'
 ]
+relative_files = true
+# Not "sphinxcontrib": other distributions share that namespace package.
+source_pkgs = [
+    "sphinxcontrib.mat_api_check",
+    "sphinxcontrib.mat_classify",
+    "sphinxcontrib.mat_config",
+    "sphinxcontrib.mat_directives",
+    "sphinxcontrib.mat_documenters",
+    "sphinxcontrib.mat_handlers",
+    "sphinxcontrib.mat_naming",
+    "sphinxcontrib.mat_sidecars",
+    "sphinxcontrib.mat_simulink",
+    "sphinxcontrib.mat_tree_sitter_parser",
+    "sphinxcontrib.mat_types",
+    "sphinxcontrib.mat_typing",
+    "sphinxcontrib.mat_urls",
+    "sphinxcontrib.matlab",
+    "sphinxcontrib.matlab_apidoc",
+    "sphinxcontrib.matlab_cli",
+    "sphinxcontrib.matlab_quickstart",
+    "sphinxcontrib.matlab_skills"
+]
 
-[tool.pytest.ini_options]
-addopts = "-ra --strict-config --strict-markers --show-capture=all --showlocals -s -vv"
-doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
+[tool.pyright]
+exclude = [
+    "**/__pycache__",
+    "**/_build",
+    "**/.venv",
+    "**/build",
+    "tests/roots",
+    "tests/test_data",
+    "tests/test_docs",
+    "tests/quickstart_golden",
+    "test_slow/repos",
+    "test_slow/gauntlet/runs"
+]
+include = ["sphinxcontrib", "tests", "docs", "examples", "test_slow"]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+
+[tool.pytest]
+addopts = ["-ra", "--strict-config", "--strict-markers", "--show-capture=all", "--showlocals", "-s", "-vv"]
+doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS"]
+# Deprecation tripwire: the extension builds on autodoc's Documenter
+# classes, which Sphinx keeps only for backwards compatibility. A deprecation
+# warning attributed to this package's own modules fails the suite. The module
+# field is a regular expression matched from the start of the module name, so
+# it ends with (\.|$) to exclude e.g. sphinxcontrib.matlabfoo. Warnings
+# attributed to other packages (myst_parser, sphinx, ...) are untouched.
+# Python attributes a warning to the frame that `stacklevel` selects, so only
+# warnings raised with that frame in our code are caught. Sphinx's
+# RemovedInSphinxNNWarning classes derive from DeprecationWarning (10) or
+# PendingDeprecationWarning (11); both are listed. When one fires, fix the
+# code or add a precise temporary "ignore" entry for that message after these
+# (later entries win).
+filterwarnings = [
+    "error::DeprecationWarning:sphinxcontrib\\.(matlab|mat_\\w+|matlab_\\w+)(\\.|$)",
+    "error::PendingDeprecationWarning:sphinxcontrib\\.(matlab|mat_\\w+|matlab_\\w+)(\\.|$)"
+]
 junit_family = "xunit2"
 log_cli_level = "INFO"
-minversion = "6.0"
+minversion = "9.0"
+testpaths = ["tests"]
 xfail_strict = true
 
 [tool.ruff]
-include = [
-    "tests/**/*.py",
-    "sphinxcontrib/**/*.py",
-    "doc/**/*.py"
+extend-exclude = [
+    "tests/roots",
+    "tests/test_data",
+    "tests/test_docs",
+    "tests/quickstart_golden",
+    "test_slow/repos",
+    "test_slow/gauntlet/runs"
 ]
+force-exclude = true
 indent-width = 4
 line-length = 88
+# sphinxcontrib is a namespace package (no __init__.py); declaring it lets Ruff
+# resolve the relative imports of mat_typing (lint.typing-modules).
+namespace-packages = ["sphinxcontrib"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -84,21 +203,20 @@ quote-style = "double"
 skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
-fixable = ["ALL"]
 ignore = [
-    "D100",
-    "D101",
-    "D102",
-    "D103",
-    "D105",
+    # Constructor arguments are documented in the class docstring (the numpydoc
+    # and Google convention), so __init__ needs no docstring of its own.
     "D107",
+    # D203 and D211 exclude each other; the code follows D211 (no blank line
+    # before a class docstring).
     "D203",
+    # The house style wraps the first sentence of a docstring over several
+    # lines, so no blank line follows the first line. Sphinx autosummary and
+    # napoleon take the first sentence, not the first line.
     "D205",
-    "PLR2004",
-    "RUF001",
-    "RUF012",
-    "SIM102",
-    "PTH"
+    # D212 and D213 exclude each other; the code follows D212 (the summary
+    # starts on the first line).
+    "D213"
 ]
 # List of all the ruff rules (includes why the rule matters)
 # https://docs.astral.sh/ruff/rules/
@@ -116,44 +234,127 @@ select = [
     "FURB",
     "I",
     "PERF",
-    "PTH",
     "PLR",
     "RUF",
     "SIM",
     "UP",
     "W"
 ]
-unfixable = []
+# ``override`` is imported from here; Ruff then knows the methods it decorates
+# override a base class method (no ARG002 for parameters the base needs).
+typing-modules = ["sphinxcontrib.mat_typing"]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 51
+max-complexity = 15
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["ARG001", "ARG002", "D104", "E203"]
+# Tests and test tools compare with literal expected values (counts, exit
+# codes, the fuzzer's odds); a named constant for each would read worse. The
+# complexity limits (C901, PLR0911-PLR0915) hold for the package, the docs and
+# the tests; the tools here (gauntlet, probes, render comparison) are scripts
+# run by hand, exempt by the maintainer's decision (#361).
+"test_slow/**/*" = ["C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR2004"]
+# D1 exempts only helper modules in test_slow, which no one runs or reads on
+# their own; the scripts the docs tell people to run have docstrings. This one
+# is the gauntlet's project list, imported by fetch.py and gauntlet.py.
+"test_slow/gauntlet/projects.py" = ["D1"]
+# These conf.py files share their settings with "from shared_conf import *"
+# after putting its folder on sys.path, as a multi-project Sphinx setup does.
+"test_slow/integrations/multiproject/**/conf.py" = ["E402", "F403"]
+# Helper module of the multiproject fixture: the settings its conf.py files
+# share (see projects.py above for D1).
+"test_slow/integrations/multiproject/docs/shared_conf.py" = ["D1"]
+# The Sphinx configuration of the multiversion fixture, a test input (see
+# projects.py above for D1).
+"test_slow/integrations/multiversion/rev1/docs/conf.py" = ["D1"]
+# Pytest passes fixtures by parameter name, used in the body or not (ARG001),
+# and test doubles keep the signature of the method they replace (ARG002).
+# Test names say what they test (D1). Literal expected values: see test_slow
+# above (PLR2004).
+"tests/**/*" = ["ARG001", "ARG002", "D1", "PLR2004"]
+# Expected output is compared as whole lines, longer than the line length.
 "tests/test_autodoc.py" = ["E501"]
 "tests/test_mat_types.py" = ["E501"]
+"tests/test_upstream_issues.py" = ["E501"]
 
 [tool.ruff.lint.pylint]
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-args
 max-args = 7
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-branches
-max-branches = 30
+max-branches = 15
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-returns
-max-returns = 20
+max-returns = 8
 # https://docs.astral.sh/ruff/settings/#lint_pylint_max-statements
-max-statements = 100
-
-[tool.setuptools]
-include-package-data = true
+max-statements = 60
 
 [tool.setuptools.package-data]
-"*" = [
-    "README.rst",
-    "LICENSE",
-    "CHANGES.*"
-]
+"sphinxcontrib.mat_simulink" = ["matlab/+sphinxcontrib/+matlabdomain/*.m"]
+"sphinxcontrib.matlab_apidoc" = ["templates/*.jinja"]
+"sphinxcontrib.matlab_quickstart" = ["templates/*.jinja"]
+"sphinxcontrib.matlab_skills" = ["*/SKILL.md", "*/scripts/*.py"]
 
 [tool.setuptools.packages.find]
+# Skill folders are data: their names are not package names.
+exclude = ["sphinxcontrib.matlab_skills.*"]
 include = ["sphinxcontrib*"]
 
 [tool.setuptools_scm]
+
+[tool.tox]
+env_list = [
+    "py311-sphinxmin",
+    "py311-sphinxlatest",
+    "py312-sphinxmin",
+    "py312-sphinxlatest",
+    "py313-sphinxmin",
+    "py313-sphinxlatest",
+    "py314-sphinxmin",
+    "py314-sphinxlatest",
+    "py315-sphinxmin",
+    "py315-sphinxlatest",
+    "py316-sphinxlatest",
+    "py312-sphinx82",
+    "py315-sphinxdev"
+]
+requires = ["tox>=4.60"]
+
+[tool.tox.env.lint]
+commands = [
+    ["ruff", "check", "."],
+    ["ruff", "format", "--check", "."],
+    ["pyright", "--pythonpath", "{env_python}", "--pythonplatform", "Linux"],
+    ["pyright", "--pythonpath", "{env_python}", "--pythonplatform", "Windows"],
+    ["pyright", "--pythonpath", "{env_python}", "--pythonplatform", "Darwin"]
+]
+dependency_groups = ["dev"]
+deps = []
+description = "Lint, format-check, and basic-type-check maintained Python"
+extras = ["markdown"]
+
+[tool.tox.env_run_base]
+commands = [
+    ["pytest", "--cov", "--cov-report=term-missing", "--cov-report=html", { replace = "posargs", extend = true }],
+    ["sphinx-build", "-b", "html", "-d", "{env_tmp_dir}/doctrees", "tests/test_docs", "{env_tmp_dir}/html"]
+]
+dependency_groups = ["test", "docs"]
+deps = [
+    { replace = "if", condition = "not factor.sphinxdev", then = ["myst-parser"], else = [], extend = true },
+    { replace = "if", condition = "factor.sphinxmin", then = ["myst-parser==4.0.*", "Sphinx==8.0.*", "tree-sitter==0.26.1", "tree-sitter-matlab==1.3.3"], else = [], extend = true },
+    { replace = "if", condition = "factor.sphinx82", then = ["Sphinx==8.2.*"], else = [], extend = true },
+    { replace = "if", condition = "factor.sphinxlatest", then = ["Sphinx"], else = [], extend = true },
+    { replace = "if", condition = "factor.sphinxdev", then = ["https://github.com/sphinx-doc/sphinx/archive/refs/heads/master.zip"], else = [], extend = true }
+]
+pass_env = [
+    "USERNAME",
+    "PY_COLORS",
+    "FORCE_COLOR",
+    "NO_COLOR",
+    "CLICOLOR",
+    "CLICOLOR_FORCE",
+    "COVERAGE_FILE"
+]
+
+# Lock against the public index, whatever index the machine's uv config names.
+[[tool.uv.index]]
+default = true
+url = "https://pypi.org/simple"

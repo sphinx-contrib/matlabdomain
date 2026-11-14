@@ -1,8 +1,8 @@
 submodule
 ---------
 
-.. autoclass:: target.submodule.ClassMeow
+.. autoclass:: target/submodule/ClassMeow.m
     :show-inheritance:
     :members:
 
-.. autofunction:: target.submodule.funcMeow
+.. autofunction:: funcMeow

@@ -1,0 +1,58 @@
+# Written by fetch.py: the commit of each checkout. Commit this file to rerun
+# the same commits elsewhere; fetch.py --update moves the unpinned projects.
+
+[projects.Psychtoolbox-3]
+commit = "8f952b4cae7ee3fd90a792b1b36bfb3030ed701d"
+url = "https://github.com/Psychtoolbox-3/Psychtoolbox-3.git"
+
+[projects.WEC-Sim]
+commit = "78122ef5499544bf169e695da3fc60b548177e55"
+url = "https://github.com/WEC-Sim/WEC-Sim.git"
+
+[projects.WEC-Sim_Applications]
+commit = "2d7569271c00e8736c2755192ee45941ffd49403"
+url = "https://github.com/WEC-Sim/WEC-Sim_Applications.git"
+
+[projects.YALMIP]
+commit = "b06a22fe619bab2a7eeae78bf2140dbad8c2041c"
+url = "https://github.com/yalmip/YALMIP.git"
+
+[projects.chebfun]
+commit = "7574c77680d7e82b79626300bf255498271a72df"
+url = "https://github.com/chebfun/chebfun.git"
+
+[projects.eeglab]
+commit = "d0963be9d81acc5b66e84f8d3d7c89e3ce127cc4"
+url = "https://github.com/sccn/eeglab.git"
+
+[projects.fieldtrip]
+commit = "02149cbf43920b87b823567b28feaa1cd9d5e6a4"
+url = "https://github.com/fieldtrip/fieldtrip.git"
+
+[projects.matlab2tikz]
+commit = "806c97d99f87f8a1e99a7c54e853c25c82aac301"
+url = "https://github.com/matlab2tikz/matlab2tikz.git"
+
+[projects.matnwb]
+commit = "08da374334958a89438747a143fd71941cba99ce"
+url = "https://github.com/NeurodataWithoutBorders/matnwb.git"
+
+[projects.matpower]
+commit = "80b6e16f760f58721ad31221c7287c28259cd4ad"
+url = "https://github.com/MATPOWER/matpower.git"
+
+[projects.mtex]
+commit = "e10898f0c7250c3903f4228879cd3f93a9b0acd2"
+url = "https://github.com/mtex-toolbox/mtex.git"
+
+[projects.regularizeNd]
+commit = "27cc7888004929071f8dc3ecfaf394ef4d55e644"
+url = "https://github.com/jasonnicholson/regularizeNd.git"
+
+[projects.spatialmath-matlab]
+commit = "6eeff4a79f14286705560b84f1fe72e0b7e0e7f7"
+url = "https://github.com/petercorke/spatialmath-matlab.git"
+
+[projects.vhlab-toolbox-matlab]
+commit = "ac85cf5cb233561ebaa9f581edc1625f36b27c78"
+url = "https://github.com/VH-Lab/vhlab-toolbox-matlab.git"

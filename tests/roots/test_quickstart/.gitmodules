@@ -1,0 +1,3 @@
+[submodule "ext/lib"]
+	path = ext/lib
+	url = https://example.org/lib.git

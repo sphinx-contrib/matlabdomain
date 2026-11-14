@@ -1,23 +1,32 @@
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/stable/config
+"""Sphinx configuration of the sphinxcontrib-matlabdomain documentation.
+
+The docs use the extension itself: the user guide renders the sample project
+in ``docs/src``. The Sphinx options are listed at
+https://www.sphinx-doc.org/en/master/usage/configuration.html.
+"""
 
 # -- Path setup --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
+import importlib
+import re
+import sys
+import tomllib
+from pathlib import Path
+
+# _ext/ holds extensions of these docs only, not part of the package.
+sys.path.insert(0, str(Path(__file__).parent / "_ext"))
+# Imported here without a bytecode cache: a build writes only to its output
+# and doctree folders, so not to docs/_ext/__pycache__ either.
+_dont_write_bytecode = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+importlib.import_module("glossary_tips")
+sys.dont_write_bytecode = _dont_write_bytecode
 
 # -- Project information -----------------------------------------------------
 
 project = "sphinxcontrib-matlabdomain"
-copyright = "Jørgen Cederberg"
-author = "Jørgen Cederberg"
+copyright = "the sphinxcontrib-matlabdomain team (see AUTHORS)"
+author = "Mark Mikofski, Jørgen Cederberg, Jason H. Nicholson and contributors"
 
 # The short X.Y version
 version = ""
@@ -25,18 +34,74 @@ version = ""
 release = ""
 
 
+# -- Tested versions ---------------------------------------------------------
+
+# The pages state the tested range as |python-tested| and |sphinx-tested|.
+# Python: the classifiers, which tests/test_tested_versions.py keeps equal to
+# the CI matrix. Sphinx: the dependency's floor to the newest Sphinx in
+# uv.lock.
+_root = Path(__file__).parent.parent
+_project = tomllib.loads((_root / "pyproject.toml").read_text(encoding="utf-8"))
+_lock = tomllib.loads((_root / "uv.lock").read_text(encoding="utf-8"))
+
+
+def _version(text):
+    return tuple(int(part) for part in text.split("."))
+
+
+_python = sorted(
+    (
+        c.rsplit(" :: ", 1)[1]
+        for c in _project["project"]["classifiers"]
+        if re.fullmatch(r"Programming Language :: Python :: 3\.\d+", c)
+    ),
+    key=_version,
+)
+_sphinx_floor = next(
+    d.removeprefix("Sphinx>=")
+    for d in _project["project"]["dependencies"]
+    if d.startswith("Sphinx>=")
+)
+_sphinx_newest = max(
+    (p["version"] for p in _lock["package"] if p["name"] == "sphinx"), key=_version
+)
+_sphinx = [".".join(v.split(".")[:2]) for v in (_sphinx_floor, _sphinx_newest)]
+rst_epilog = f"""
+.. |python-tested| replace:: {_python[0]} to {_python[-1]}
+.. |sphinx-tested| replace:: {_sphinx[0]} to {_sphinx[1]}
+"""
+
+
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-needs_sphinx = "7.0"
+needs_sphinx = "8.0"
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab", "sphinx.ext.napoleon"]
-matlab_src_dir = os.path.dirname(os.path.abspath(__file__))
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinxcontrib.matlab",
+    "sphinx.ext.napoleon",
+    "sphinxcontrib.mermaid",
+    # Hover tips for links to glossary terms.
+    "glossary_tips",
+]
+# The sample project rendered in the user guide.
+matlab_src_code_project_root = "src"
+# Sidecar docs (user-guide/sidecars): src/ is inside this folder, so the
+# extension adds them to exclude_patterns.
+matlab_src_sidecar_suffixes = [".rst"]
+matlab_auto_link = "basic"
+# The user guide shows :inherited-members: on a class (user-guide/documenting);
+# the option documents nothing unless this is on.
+matlab_inherited_members = True
 primary_domain = "mat"
+nitpicky = True
+# MathWorks answers link checkers with 403 Forbidden.
+linkcheck_ignore = [r"https://([a-z]+\.)?mathworks\.com/"]
 
 
 # Add any paths that contain templates here, relative to this directory.
@@ -60,18 +125,16 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
+# snippets/ holds reST that pages both show and include.
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "snippets"]
 
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "sphinx_rtd_theme"
+# Furo follows the reader's light or dark system setting, with a toggle;
+# it brings its own light and dark Pygments styles.
+html_theme = "furo"
+html_title = project
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
@@ -92,7 +155,7 @@ latex_documents = [
         master_doc,
         "sphinxcontrib-matlabdomain.tex",
         "sphinxcontrib-matlabdomain Documentation",
-        "Jorgen Cederberg",
+        author,
         "manual",
     ),
 ]

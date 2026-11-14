@@ -1,5 +1,7 @@
 """Test mat_types module functions and methods."""
 
+from pathlib import Path
+
 import pytest
 
 from sphinxcontrib.mat_types import (
@@ -10,91 +12,9 @@ from sphinxcontrib.mat_types import (
     MatObject,
     MatProperty,
     MatScript,
-    classfolder_class_name,
-    entities_table,
-    shortest_name,
+    parse_warnings,
+    project_root,
 )
-
-
-def test_classfolder_class_name():
-    name = classfolder_class_name("target.@ClassFolder")
-    assert name == "target.@ClassFolder"
-
-    name = classfolder_class_name("target.@ClassFolder.Func")
-    assert name == "target.@ClassFolder.Func"
-
-    name = classfolder_class_name("target.@ClassFolder.ClassFolder")
-    assert name == "target.ClassFolder"
-
-    name = classfolder_class_name("target.+pkg.@ClassFolder.ClassFolder")
-    assert name == "target.+pkg.ClassFolder"
-
-    name = classfolder_class_name("@ClassFolder")
-    assert name == "@ClassFolder"
-
-    name = classfolder_class_name("@ClassFolder.Func")
-    assert name == "@ClassFolder.Func"
-
-    name = classfolder_class_name("@ClassFolder.ClassFolder")
-    assert name == "ClassFolder"
-
-
-def test_shortest_name_no_alternative():
-    name = shortest_name("Class")
-    assert name == "Class"
-
-    name = shortest_name("")
-    assert name == ""
-
-
-def test_shortest_name_packages():
-    name = shortest_name("+package.Function")
-    assert name == "package.Function"
-
-    name = shortest_name("sub.+package.Function")
-    assert name == "package.Function"
-
-    name = shortest_name("sub.+package.Function")
-    assert name == "package.Function"
-
-    name = shortest_name("sub.+package.+level.Function")
-    assert name == "package.level.Function"
-
-
-def test_shortest_name_folders():
-    name = shortest_name("sub1.sub2.sub3.Function")
-    assert name == "Function"
-
-    name = shortest_name("sub1.Function")
-    assert name == "Function"
-
-
-def test_shortest_name_weird():
-    name = shortest_name("sub1.+sub2.sub3.Function")
-    assert name == "Function"
-
-
-def test_shortest_name_classfolders():
-    name = shortest_name("target.@ClassFolder")
-    assert name == "target.@ClassFolder"
-
-    name = shortest_name("target.@ClassFolder.Func")
-    assert name == "target.@ClassFolder.Func"
-
-    name = shortest_name("target.@ClassFolder.ClassFolder")
-    assert name == "target.@ClassFolder.ClassFolder"
-
-    name = shortest_name("target.+pkg.@ClassFolder.ClassFolder")
-    assert name == "target.+pkg.@ClassFolder.ClassFolder"
-
-    name = shortest_name("@ClassFolder")
-    assert name == "@ClassFolder"
-
-    name = shortest_name("@ClassFolder.Func")
-    assert name == "@ClassFolder.Func"
-
-    name = shortest_name("@ClassFolder.ClassFolder")
-    assert name == "@ClassFolder.ClassFolder"
 
 
 def test_ClassExample(dir_test_data):
@@ -277,13 +197,13 @@ def test_ClassWithEndOfLineComment(dir_test_data):
     assert obj.docstring == ""
     method_test1 = obj.methods["test1"]
     assert method_test1.name == "test1"
-    # TODO: Trailing comment get passed as docstring
-    # assert method_test.docstring == '' # noqa : ERA001
+    # the comment at the end of the function line is not help text
+    assert method_test1.docstring is None
 
     method_test2 = obj.methods["test2"]
     assert method_test2.name == "test2"
-    # TODO: Trailing comment get passed as docstring
-    # assert method_test.docstring == '' # noqa : ERA001
+    # the comment at the end of the function line is not help text
+    assert method_test2.docstring is None
 
 
 def test_ClassWithEvent(dir_test_data):
@@ -359,7 +279,14 @@ def test_ClassWithCommentHeader(dir_test_data):
     obj = MatObject.parse_mfile(mfile, "ClassWithCommentHeader", "test_data")
 
     assert obj.name == "ClassWithCommentHeader"
-    assert obj.docstring == "A class with a comment header on the top."
+    # MATLAB R2026a help shows the leading header, not the block after classdef.
+    assert obj.docstring == (
+        "This is a Comment Header\nCopyright (C) <year>, by <full_name>\n\n"
+        "Some descriptions ...\n\n"
+        "This header and all further comments above the class\n"
+        "will be ignored by the documentation system.\n\n"
+        "Licence (GPL, BSD, etc.)\n"
+    )
     method_get_tform = obj.methods["getTransformation"]
     assert method_get_tform.name == "getTransformation"
     assert list(method_get_tform.retv.keys()) == ["tform"]
@@ -372,7 +299,9 @@ def test_with_comment_header(dir_test_data):
     obj = MatObject.parse_mfile(mfile, "f_with_comment_header", "test_data")
 
     assert obj.name == "f_with_comment_header"
-    assert obj.docstring == "A simple function with a comment header on the top."
+    # MATLAB R2026a help shows the leading header.
+    assert obj.docstring.startswith("This is a Comment Header\nCopyright")
+    assert "comments above the function\n" in obj.docstring
 
 
 def test_script_with_comment_header(dir_test_data):
@@ -450,35 +379,43 @@ def test_PropTypeOld(dir_test_data):
     assert obj.properties == {
         "link_name": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": "'none'",
             "size": None,
             "type": "char",
             "validators": None,
+            "line": 3,
         },  # 'type': ['char']
         "pos": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": "zeros(3,1)",
             "size": (":", "1"),
             "type": "double",
             "validators": None,
+            "line": 4,
         },  # 'type': ['double', 'vector'],
         "rotm": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": "zeros(3,3)",
             "size": (":", ":"),
             "type": "double",
             "validators": None,
+            "line": 5,
         },  # 'type': ['double', 'matrix'],
         "idx": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": "0",
             "size": ("1", "1"),
             "type": "uint8",
             "validators": None,
+            "line": 6,
         },  # 'type': ['uint8', 'scalar'],
     }
 
@@ -577,8 +514,10 @@ def test_file_parsing_with_no_encoding_specified(dir_test_data):
 
     obj = MatObject.parse_mfile(mfile, "f_with_latin_1", "test_data")
 
+    # Not valid UTF-8: decoded as ISO-8859-1, like MATLAB R2026a.
     assert obj.name == "f_with_latin_1"
-    assert obj.docstring == r"Analyse de la r\xe9ponse \xe0 un cr\xe9neau"
+    assert obj.docstring == "Analyse de la réponse à un créneau"
+    assert [w[0] for w in obj.source_warnings] == ["encoding"]
 
 
 def test_ClassWithBuiltinOverload(dir_test_data):
@@ -606,25 +545,16 @@ def test_ClassWithBuiltinProperties(dir_test_data):
     assert obj.properties["beta"]["docstring"] == ("another overloaded property")
 
 
-# Fails when running with other test files. Warnings are already logged.
-@pytest.mark.xfail
-def test_f_with_name_mismatch(dir_test_data, caplog):
-    from logging import WARNING
-
-    caplog.clear()
+def test_f_with_name_mismatch(dir_test_data):
+    # As in MATLAB, the file name wins over the function name, silently.
     mfile = dir_test_data / "f_with_name_mismatch.m"
 
-    MatObject.parse_mfile(mfile, "f_with_name_mismatch", "test_data")
+    obj = MatObject.parse_mfile(mfile, "f_with_name_mismatch", "test_data")
 
-    records = caplog.record_tuples
-    assert records == [
-        (
-            "sphinx.matlab-domain",
-            WARNING,
-            '[sphinxcontrib-matlabdomain] Unexpected function name: "f_name_with_mismatch".'
-            ' Expected "f_with_name_mismatch"in module "test_data".',
-        ),
-    ]
+    assert isinstance(obj, MatFunction)
+    assert obj.name == "f_with_name_mismatch"
+    assert obj.source_warnings == []
+    assert parse_warnings(mfile, "test_data.f_with_name_mismatch", obj) == []
 
 
 def test_f_with_dummy_argument(dir_test_data):
@@ -664,22 +594,19 @@ def test_f_inputargs_error(dir_test_data):
     MatObject.parse_mfile(mfile, "f_inputargs_error", "test_data")
 
 
-# Fails when running with other test files. Warnings are already logged.
-@pytest.mark.xfail
-def test_ClassWithErrors(dir_test_data, caplog):
-    from logging import WARNING
-
-    caplog.clear()
+def test_ClassWithErrors(dir_test_data):
+    # The first line of code says class, tree-sitter parses a script:
+    # one mat.invalid_matlab warning, emitted when a page uses the file.
     mfile = dir_test_data / "ClassWithErrors.m"
 
-    MatObject.parse_mfile(mfile, "ClassWithErrors", "test_data")
+    obj = MatObject.parse_mfile(mfile, "ClassWithErrors", "test_data")
 
-    records = caplog.record_tuples
-    assert records == [
+    assert parse_warnings(mfile, "test_data.ClassWithErrors", obj) == [
         (
-            "sphinx.matlab-domain",
-            WARNING,
-            "[sphinxcontrib-matlabdomain] Parsing failed in test_data.ClassWithErrors. Check if valid MATLAB code.",
+            "invalid_matlab",
+            "test_data.ClassWithErrors: its first line of code makes it a class, "
+            "but tree-sitter parsed a script; the file may be invalid MATLAB.",
+            None,
         ),
     ]
 
@@ -693,25 +620,24 @@ def test_ClassWithLineContinuation(dir_test_data):
     assert obj.name == "ClassWithLineContinuation"
 
 
-# Fails when running with other test files. Warnings are already logged.
-@pytest.mark.xfail
-def test_ClassWithNameMismatch(dir_test_data, caplog):
-    from logging import WARNING
-
-    caplog.clear()
+def test_ClassWithNameMismatch(dir_test_data):
+    # The file name wins over the class name, with a warning (MATLAB refuses
+    # the file).
     mfile = dir_test_data / "ClassWithNameMismatch.m"
 
     obj = MatObject.parse_mfile(mfile, "ClassWithNameMismatch", "test_data")
 
     assert isinstance(obj, MatClass)
-    records = caplog.record_tuples
-    assert records == [
+    assert obj.name == "ClassWithNameMismatch"
+    assert list(obj.methods.keys()) == ["ClassWithNameMismatch"]
+    assert parse_warnings(mfile, "ClassWithNameMismatch.m", obj) == [
         (
-            "sphinx.matlab-domain",
-            WARNING,
-            '[sphinxcontrib-matlabdomain] Unexpected class name: "ClassWithMismatch". '
-            'Expected "ClassWithNameMismatch" in "test_data.ClassWithNameMismatch".',
-        ),
+            "invalid_matlab",
+            "ClassWithNameMismatch.m declares the class ClassWithMismatch, but its "
+            "file is ClassWithNameMismatch.m; MATLAB requires a classdef file to be "
+            "named after its class. It is documented under its file name.",
+            f"{mfile}:1",
+        )
     ]
 
 
@@ -725,27 +651,18 @@ def test_ClassWithAttributes(dir_test_data):
     assert obj.attrs == {"Sealed": True}
 
 
-# Fails when running with other test files. Warnings are already logged.
-@pytest.mark.xfail
-def test_ClassWithUnknownAttributes(dir_test_data, caplog):
-    from logging import WARNING
-
-    caplog.clear()
+def test_ClassWithUnknownAttributes(dir_test_data):
+    # Upstream #280: an attribute the parser does not know is kept and does
+    # not warn (there is no mat subtype for it).
     mfile = dir_test_data / "ClassWithUnknownAttributes.m"
 
     obj = MatObject.parse_mfile(mfile, "ClassWithUnknownAttributes", "test_data")
 
     assert isinstance(obj, MatClass)
     assert obj.name == "ClassWithUnknownAttributes"
+    assert obj.attrs == {"Unknown": None}
     assert list(obj.methods.keys()) == ["ClassWithUnknownAttributes"]
-    records = caplog.record_tuples
-    assert records == [
-        (
-            "sphinx.matlab-domain",
-            WARNING,
-            '[sphinxcontrib-matlabdomain] Unexpected class attribute: "Unknown". In "test_data.ClassWithUnknownAttributes".',
-        ),
-    ]
+    assert parse_warnings(mfile, "test_data.ClassWithUnknownAttributes", obj) == []
 
 
 def test_ClassWithEnumMethod(dir_test_data):
@@ -787,11 +704,13 @@ def test_ClassWithGetterSetter(dir_test_data):
     assert obj.properties == {
         "a": {
             "docstring": "A nice property",
+            "docstring_line": 4,
             "attrs": {},
             "default": None,
             "size": None,
             "type": None,
             "validators": None,
+            "line": 4,
         }
     }
 
@@ -807,11 +726,13 @@ def test_ClassWithDoubleQuotedString(dir_test_data):
     assert obj.properties == {
         "Property1": {
             "docstring": None,
+            "docstring_line": None,
             "attrs": {},
             "default": None,
             "size": None,
             "type": None,
             "validators": None,
+            "line": 6,
         }
     }
 
@@ -1138,7 +1059,7 @@ def app(make_app, rootdir):
     # Create app to setup build environment
     srcdir = rootdir / "test_docs"
     app = make_app(srcdir=srcdir)
-    MatObject.basedir = app.config.matlab_src_dir
+    MatObject.basedir = project_root(app.config, app.srcdir)
     return app
 
 
@@ -1159,11 +1080,11 @@ def test_script(mod):
     assert isinstance(script, MatScript)
 
 
-def test_module(dir_test_data, mod):
+def test_module(dir_test_data, mod, app):
     assert mod.getter("__name__") == "test_data"
-    assert mod.getter("__path__")[0] == str(dir_test_data)
-    assert mod.getter("__file__") == str(dir_test_data)
-    assert mod.getter("__package__") == "test_data"
+    assert Path(mod.getter("__path__")[0]) == dir_test_data
+    assert Path(mod.getter("__file__")) == dir_test_data
+    assert mod.getter("__package__") == "test_data/"
     assert not mod.getter("__module__")
     assert not mod.getter("__doc__")
     all_entities = mod.getter("__all__")
@@ -1243,7 +1164,7 @@ def test_module(dir_test_data, mod):
         "arguments",
     }
     assert all_items == expected_items
-    assert mod.getter("__name__") in entities_table
+    assert "test_data/" in app.env.get_domain("mat").entities_table
 
 
 def test_parse_twice(mod):
@@ -1256,7 +1177,7 @@ def test_classes(mod):
     cls = mod.getter("ClassInheritHandle")
     assert isinstance(cls, MatClass)
     assert cls.getter("__name__") == "ClassInheritHandle"
-    assert cls.getter("__module__") == "test_data"
+    assert cls.getter("__module__") == "test_data/"
     assert cls.bases == ["handle", "my.super.Class"]
     assert cls.attrs == {}
     assert cls.properties == {
@@ -1264,9 +1185,11 @@ def test_classes(mod):
             "attrs": {},
             "default": None,
             "docstring": "a property",
+            "docstring_line": 8,
             "size": None,
             "type": None,
             "validators": None,
+            "line": 8,
         }
     }
     assert cls.getter("__doc__") == "a handle class\n\n:param x: a variable"
@@ -1277,7 +1200,7 @@ def test_abstract_class(mod):
     abc = mod.getter("ClassAbstract")
     assert isinstance(abc, MatClass)
     assert abc.getter("__name__") == "ClassAbstract"
-    assert abc.getter("__module__") == "test_data"
+    assert abc.getter("__module__") == "test_data/"
     assert "ClassInheritHandle" in abc.getter("__bases__")
     assert "ClassExample" in abc.getter("__bases__")
     assert abc.bases == ["ClassInheritHandle", "ClassExample"]
@@ -1286,18 +1209,22 @@ def test_abstract_class(mod):
         "y": {
             "default": None,
             "docstring": "y variable",
+            "docstring_line": 11,
             "attrs": {"GetAccess": "private", "SetAccess": "private"},
             "size": None,
             "type": None,
             "validators": None,
+            "line": 11,
         },
         "version": {
             "default": "'0.1.1-beta'",
             "docstring": "version",
+            "docstring_line": 8,
             "attrs": {"Constant": True},
             "size": None,
             "type": None,
             "validators": None,
+            "line": 8,
         },
     }
     assert (
@@ -1345,13 +1272,13 @@ def test_class_method(mod):
 
 
 def test_submodule_class(mod):
-    cls = mod.getter("submodule.TestFibonacci")
+    cls = mod.getter("submodule/TestFibonacci")
     assert isinstance(cls, MatClass)
     assert cls.docstring == "Test of MATLAB unittest method attributes"
     assert cls.attrs == {}
     assert cls.bases == ["matlab.unittest.TestCase"]
     assert "compareFirstThreeElementsToExpected" in cls.methods
-    assert cls.module == "test_data.submodule"
+    assert cls.module == "test_data/submodule/"
     assert cls.properties == {}
     method = cls.getter("compareFirstThreeElementsToExpected")
     assert isinstance(method, MatMethod)
@@ -1369,15 +1296,17 @@ def test_folder_class(mod):
     assert cls.docstring == "A class in a folder"
     assert cls.attrs == {}
     assert cls.bases == []
-    assert cls.module == "test_data.@ClassFolder"
+    assert cls.module == "test_data/@ClassFolder/"
     assert cls.properties == {
         "p": {
             "attrs": {},
             "default": None,
             "docstring": "a property of a class folder",
+            "docstring_line": 5,
             "size": None,
             "type": None,
             "validators": None,
+            "line": 5,
         }
     }
 
@@ -1421,7 +1350,7 @@ def test_function_getter(mod):
         func.getter("__doc__")
         == "a fun function\n\n:param a1: the first input\n:param a2: another input\n:returns: ``[o1, o2, o3]`` some outputs"
     )
-    assert func.getter("__module__") == "test_data"
+    assert func.getter("__module__") == "test_data/"
 
 
 def test_package_function(mod):
