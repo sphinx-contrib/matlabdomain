@@ -546,9 +546,10 @@ def test_paths_on_another_drive_are_left_alone(make_app, project, monkeypatch):
     assert dom.sidecar_doc("+demo/guide.md") == "api/+demo/guide-md"
 
 
-def test_source_path_on_another_drive(monkeypatch):
-    # Windows' own rule for paths, so the test runs on every system.
-    monkeypatch.setattr(mat_sidecars.os.path, "relpath", ntpath.relpath)
+def test_source_path_on_another_drive(monkeypatch, condition):
+    if condition("Windows (paths on two drives)", os.name == "nt") == "simulated":
+        # Windows' own rule for paths.
+        monkeypatch.setattr(mat_sidecars.os.path, "relpath", ntpath.relpath)
     sidecar = mat_sidecars._Sidecar("a.md", "Z:\\src\\a.md", "C:\\docs", None)
     assert sidecar.source_path("Z:\\src\\img.png") is None
     assert sidecar.source_path("C:\\docs\\img.png") == "/img.png"

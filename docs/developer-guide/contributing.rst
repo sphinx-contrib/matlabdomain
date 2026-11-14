@@ -228,7 +228,9 @@ when adding, removing or moving a maintained configuration file.
   called by ``pr-master.yml`` and run monthly (new Python, Sphinx and
   dependency releases) and on demand. The Sphinx-development job is
   non-blocking. Uses the shared tox environments; local checks cannot
-  substitute for the cross-platform coverage gate.
+  substitute for the cross-platform coverage gate. Its ``Local check`` jobs
+  run the local coverage check (``--simulate-platforms``) on each system with
+  the locked environment, outside the combined gate.
 ``.github/workflows/push-master.yml``
   Pushes to ``master`` and release tags (bare versions such as ``0.22.1``):
   no tests. It builds the sdist and wheel and runs ``scmd`` from the

@@ -396,6 +396,20 @@ def test_names_differing_only_by_unicode_form_warn(tmp_path, warnings):
     ]
 
 
+@pytest.mark.simulates("a file system that keeps two Unicode forms apart")
+def test_unicode_twins_on_a_simulated_file_system(tmp_path, warnings, fake_folder):
+    # Only the NFD file exists; the listing adds its NFC twin, which os.stat
+    # finds as macOS would.
+    write(tmp_path, {f"{NFD}.m": FUNCTION.format(name="x", help="NFD")})
+    fake_folder(tmp_path, [f"{NFC}.m"], aliases={f"{NFC}.m": f"{NFD}.m"})
+    source_index = build_index(IndexSettings(str(tmp_path)))
+    assert list(source_index.index) == [str(tmp_path / f"{NFD}.m")]
+    assert refs(source_index) == [f"{NFC}.m"]
+    assert [m for s, m in warnings if s == "parse_error"] == [
+        TWIN_WARNING.format(ref=f"{NFC}.m", pre="", ext=".m")
+    ]
+
+
 def test_folders_differing_only_by_unicode_form_do_not_stop_the_index(
     tmp_path, warnings
 ):

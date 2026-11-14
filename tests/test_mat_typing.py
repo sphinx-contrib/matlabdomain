@@ -1,6 +1,6 @@
 """``override`` comes from ``typing``, or from ``typing_extensions`` before
-Python 3.12. One Python runs one of the two imports; these tests run both
-on any of them.
+Python 3.12. One Python runs one of the two imports; with
+``--simulate-platforms`` the other one runs too.
 """
 
 import importlib
@@ -21,8 +21,13 @@ def marker(method):
     ("version", "module"), [((3, 11), "typing_extensions"), ((3, 12), "typing")]
 )
 def test_override_comes_from_the_module_of_the_python_version(
-    monkeypatch, version, module
+    monkeypatch, condition, version, module
 ):
+    real = (sys.version_info >= (3, 12)) == (version >= (3, 12))
+    needs = f"Python {'>= 3.12' if version >= (3, 12) else '< 3.12'}"
+    if condition(needs, real) == "real":
+        assert mat_typing.override is importlib.import_module(module).override
+        return
     if module == "typing":
         monkeypatch.setattr(typing, "override", marker, raising=False)
     else:

@@ -855,12 +855,13 @@ def _case_insensitive(folder):
 
 
 @pytest.fixture
-def case_insensitive(tmp_path, monkeypatch):
-    """Make ``tmp_path`` behave as a case-insensitive file system. Where the
-    real one keeps case apart, two names that differ only by case count as
-    one file, so the tests of that code run on every system.
+def case_insensitive(tmp_path, monkeypatch, condition):
+    """Give ``tmp_path`` a case-insensitive file system: the real one, or, with
+    ``--simulate-platforms`` on a system that keeps case apart, one where two
+    names that differ only by case count as one file.
     """
-    if not _case_insensitive(tmp_path):
+    needs = "a case-insensitive file system"
+    if condition(needs, _case_insensitive(tmp_path)) == "simulated":
         monkeypatch.setattr(
             _generate,
             "_same_file",
@@ -1444,6 +1445,23 @@ def test_device_names_and_case_collisions(tmp_path, caplog_sphinx):
         "~61ux/index.rst",
     ]
     assert any("differ only by case" in m for _, m in caplog_sphinx)
+
+
+def test_folder_named_like_the_root_page_is_escaped(tmp_path, caplog_sphinx):
+    # A clash that needs no second name on disk, so every system has it.
+    write(tmp_path / "src", {"INDEX.txt/f.m": FUNCTION.format(name="f")})
+    out = tmp_path / "out"
+    run(tmp_path / "src", out, ("suffix", "txt"))
+    assert sorted(tree(out)) == ["index.txt", "~49~4E~44~45~58.txt/index.txt"]
+    assert [m for _, m in caplog_sphinx if "differ only by case" in m] == [
+        "[scmd apidoc] the output names of INDEX.txt/ in the output folder/ are "
+        "equal or differ only by case; conflicting characters are escaped as ~XX."
+    ]
+
+
+def test_missing_file_is_not_the_same_file(tmp_path):
+    missing = str(tmp_path / "missing")
+    assert not _generate._same_file(missing, missing)
 
 
 @pytest.mark.skipif(

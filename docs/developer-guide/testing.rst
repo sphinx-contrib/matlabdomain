@@ -17,7 +17,8 @@ for a quiet run, override them:
 
 The suite takes about a minute. A few tests are skipped on some systems:
 those that need POSIX permissions, non-UTF-8 file names (Linux) or Windows
-device names.
+device names, and, unless ``--simulate-platforms`` is given (see
+`Coverage`_), those that fake a condition of another system.
 
 tox runs the suite against each supported Sphinx line, as CI does:
 
@@ -102,28 +103,40 @@ Coverage
 
 Every reachable line and branch of ``sphinxcontrib`` is covered. CI's
 coverage job combines the data of every test job except the Sphinx ``dev``
-job and fails below 100%. Check it before a push:
+job and fails below 100%. Those jobs run without ``--simulate-platforms``, so
+each line counts only where a test met the real condition: a Windows job
+covers the code for drive letters, a Windows or macOS job the code for a
+case-insensitive file system, a Linux job the code for file names that are
+not valid UTF-8, a Python 3.11 job the import for Python 3.11.
+
+One system alone has only some of those conditions. With
+``--simulate-platforms`` the tests fake the others (a case-insensitive file
+system, paths on two drives, another Python version, a folder that cannot be
+listed, a file name that is not valid UTF-8, two names that differ only by
+Unicode form), so that one machine covers every line. Check it before a push,
+on any system:
 
 .. code-block:: console
 
-   $ uv run pytest -q -o addopts= --cov --cov-report=term-missing:skip-covered --cov-fail-under=100
+   $ uv run pytest -q -o addopts= --simulate-platforms --cov --cov-report=term-missing:skip-covered --cov-fail-under=100
 
-On Linux the suite alone reaches 100%, so every line this command lists as
-missing is a line your change left untested. On Windows and macOS it also
-lists a few lines that only Linux runs: a folder that cannot be read, a file
-name that is not valid UTF-8, names that differ only by case or by Unicode
-form. There, look for the lines of your change in the list. CI's coverage
-job decides.
+Every line it lists as missing is a line your change left untested. CI's
+``Local check`` jobs run this command on Linux, Windows and macOS; their data
+stays out of the combined gate, because a faked condition proves nothing about
+the real one. Without the option, a test that needs a condition the system
+lacks is skipped.
 
-* Code for one system or one Python version has a test that also runs on
-  Linux, so the command above stays at 100% there. Where the system lacks
-  the condition, the test supplies it: a file system that ignores case
-  (the ``case_insensitive`` fixture in ``tests/test_apidoc.py``), Windows'
-  rule for paths on two drives (``ntpath``), the Python version
-  (``tests/test_mat_typing.py``). On a system that has the condition, the
-  same test meets the real one.
-* A line that only Linux reaches (POSIX permissions, non-UTF-8 file names)
-  counts when a Linux job covers it.
+* Where an input that every system has reaches the code (a missing file for
+  an ``except OSError``), write a plain test.
+* Otherwise, code that only one system or Python version reaches gets two
+  tests: a real one, which is skipped where the condition is missing, and a
+  simulated one that runs everywhere with the option. Mark a test that only fakes with
+  ``@pytest.mark.simulates("the condition")``; a test that meets the real
+  condition where it can and fakes it elsewhere asks the ``condition``
+  fixture in ``tests/conftest.py``, which answers ``"real"`` or
+  ``"simulated"`` or skips. Fake at the narrowest boundary the package calls
+  (``os.listdir`` of one folder, for example, with the ``fake_folder``
+  fixture), and never where the system has the real condition.
 * A defensive guard that only a bug can reach stays, marked
   ``# pragma: no cover`` (or ``no branch``) with the reason on the same or
   the previous line. ``exclude_also`` lists only ``if __name__ ==
