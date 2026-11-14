@@ -396,6 +396,11 @@ def test_names_differing_only_by_unicode_form_warn(tmp_path, warnings):
     ]
 
 
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="Windows keeps the two forms apart, so the real test runs there; "
+    "its os.path.isfile does not call the os.stat this test fakes",
+)
 @pytest.mark.simulates("a file system that keeps two Unicode forms apart")
 def test_unicode_twins_on_a_simulated_file_system(tmp_path, warnings, fake_folder):
     # Only the NFD file exists; the listing adds its NFC twin, which os.stat
