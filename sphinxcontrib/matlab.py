@@ -158,7 +158,7 @@ def _check_inventories(env, node, contnode):
         mat_types.warn_ambiguous(target, labels, node, "write one of them")
         return contnode
     if not found:
-        return None
+        return _namespace_folder(inventories, names, node, contnode)
     uri, found_in = next(iter(found.items()))
     if (
         env.config.matlab_link_shadowed_files_to_chooser_pages
@@ -171,13 +171,68 @@ def _check_inventories(env, node, contnode):
         for ref, item in inventories[found_in].get(f"mat:{objtype}", {}).items()
         # Sphinx < 8.2: (project, version, uri, display name)
         if ref != target
-        and (getattr(item, "display_name", None) or item[3]) == target
+        and target
+        in ((getattr(item, "display_name", None) or item[3]), _plus_name(ref))
         and not mat_naming.is_private_reference(ref)
     }
     prefix = "" if len(names) == 1 else f"{found_in}:"
     node["mat:ambiguous"] = True
     mat_types.warn_ambiguous(target, [prefix + ref for ref in refs], node)
     return contnode
+
+
+def _named_in_inventories(inventories, names, objtypes, target):
+    """Return ``{(inventory, reference): label}`` of the non-private entries
+    of ``objtypes`` in the inventories ``names`` whose display name is
+    ``target`` (the MATLAB name).
+    """
+    found = {}
+    for name in names:
+        for objtype in objtypes:
+            for ref, item in inventories[name].get(f"mat:{objtype}", {}).items():
+                # Sphinx < 8.2: (project, version, uri, display name)
+                display = getattr(item, "display_name", None) or item[3]
+                # ``ref == target``: a chooser page's entry
+                if (
+                    display != target
+                    or ref == target
+                    or mat_naming.is_private_reference(ref)
+                ):
+                    continue
+                label = f"{name}:{ref}" if len(names) > 1 else ref
+                found.setdefault((name, ref), label)
+    return found
+
+
+def _namespace_folder(inventories, names, node, contnode):
+    """Return a link to the only folder of the namespace a ``:mat:namespace:``
+    role names in another project that documents no namespace object (the
+    role accepts any type), or None.
+    """
+    target = node["reftarget"]
+    if node["reftype"] != "namespace" or _named_in_inventories(
+        inventories, names, ["namespace"], target
+    ):
+        return None
+    found = _named_in_inventories(inventories, names, ["folder"], target)
+    if len(found) != 1:
+        return None
+    name, ref = next(iter(found))
+    item = inventories[name]["mat:folder"][ref]
+    # Sphinx < 8.2: (project, version, uri, display name)
+    uri = getattr(item, "uri", None) or item[2]
+    link = nodes.reference("", "", internal=False, refuri=uri, reftitle=ref)
+    link += contnode
+    return link
+
+
+def _plus_name(ref):
+    """Return the MATLAB name the ``+`` folders at the end of the folder
+    reference ``ref`` form (``a/+p/+q/`` -> ``p.q``), or None.
+    """
+    parts = mat_naming.split_folder(ref) if ref[-1:] == "/" else []
+    names = list(itertools.takewhile(lambda p: p[:1] == "+", reversed(parts)))
+    return ".".join(p[1:] for p in reversed(names)) or None
 
 
 @functools.cache
@@ -679,9 +734,10 @@ class MatAttributelike(MatClassmember):
 
 
 class MatFolder(MatObjectDirective):
-    """Description of a folder, shown as ``folder <path reference>`` (a ``+``
-    folder too: its namespace is ``mat:namespace``). The argument may also be
-    the MATLAB name of a namespace with one folder. ``@Class`` folders are
+    """Description of a folder. The only folder of a namespace is shown as
+    ``namespace <MATLAB name>`` (``MATLABDomain.folder_name``); any other
+    folder as ``folder <path reference>``. The argument may also be the
+    MATLAB name of a namespace with one folder. ``@Class`` folders are
     documented through their class. Sets the current folder like
     ``mat:currentfolder``.
     """
@@ -708,20 +764,26 @@ class MatFolder(MatObjectDirective):
                 location=self.get_location(),
             )
             raise ValueError
-        return self._signature(signode, ref, ref)
+        name = dom.folder_name(ref)
+        if name is None:
+            return self._signature(signode, ref, ref)
+        return self._signature(signode, ref, name, "namespace")
 
-    def _signature(self, signode, ref, display):
+    def _signature(self, signode, ref, display, kind=None):
         signode["module"] = ref
         signode["class"] = ""
         signode["fullname"] = display
-        kind = f"{self.objtype} "
+        kind = f"{kind or self.objtype} "
         signode += addnodes.desc_annotation(kind, kind)
         signode += addnodes.desc_name(display, display)
         return ref, display
 
     @override
     def get_index_text(self, folder, name_cls):
-        return translation("%s (folder)") % name_cls[1]
+        ref, display = name_cls
+        if display == ref:
+            return translation("%s (folder)") % display
+        return translation("%s (namespace)") % display
 
     @override
     def add_target_and_index(self, name_cls, sig, signode):
@@ -1001,7 +1063,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 33
+    data_version = 34
     indices: ClassVar[list[type[Index]]] = [
         MATLABFolderIndex,
     ]
@@ -1330,6 +1392,47 @@ class MATLABDomain(Domain):
         # Folder a documented object's MATLAB name is visible from.
         return mat_types.source_scope(self, reference)
 
+    def folder_name(self, ref):
+        """Return the MATLAB name the folder ``ref`` is shown by: its
+        namespace's, when no other indexed folder has that name; else None.
+        A folder the index does not have keeps the name its path forms.
+        """
+        entity = self.entities_table.get(ref)
+        if entity is None:
+            if ref == mat_naming.ROOT_REFERENCE:
+                return None
+            version = self.env.config.matlab_version
+            return mat_naming.folder_namespace(
+                ref.rstrip("/"), mat_naming.default_namelengthmax(version), version
+            )
+        name = getattr(entity, "matlab_name", None)
+        folders = [r for r in self.data["matlab_names"].get(name, ()) if r[-1:] == "/"]
+        return name if len(folders) == 1 else None
+
+    def object_name(self, ref):
+        """Return the MATLAB name of the documented object ``ref``, or None:
+        its display name, or, for a folder shown by its path, the name of its
+        namespace (which other folders have too).
+        """
+        _, objtype, display = self.data["objects"][ref]
+        if display != ref:
+            return display
+        if objtype == "folder":
+            return getattr(self.entities_table.get(ref), "matlab_name", None)
+        return None
+
+    def without_own_folders(self, refs):
+        """Return ``refs`` without the folders of a namespace object among
+        them: the name of a described namespace is the namespace's.
+        """
+        objects = self.data["objects"]
+        names = {objects[r][2] for r in refs if objects[r][1] == "namespace"}
+        return [
+            r
+            for r in refs
+            if not (objects[r][1] == "folder" and self.object_name(r) in names)
+        ]
+
     def _steps(self, folder, cls, name):
         """Return the steps of ``find_obj``: (candidates, first only) pairs."""
         objects = self.data["objects"]
@@ -1392,7 +1495,8 @@ class MATLABDomain(Domain):
             for refs, first_only in steps:
                 if typed:
                     refs = [r for r in refs if objects[r][1] in objtypes]
-                refs = list(dict.fromkeys(refs))[: 1 if first_only else None]
+                refs = self.without_own_folders(dict.fromkeys(refs))
+                refs = refs[: 1 if first_only else None]
                 if refs:
                     return [(r, objects[r]) for r in refs]
         if searchmode == 1:
@@ -1467,9 +1571,11 @@ class MATLABDomain(Domain):
         """Return True for objects of one MATLAB name that the project accepts
         (``matlab_link_shadowed_files_to_chooser_pages``).
         """
+        names = {self.object_name(ref) for ref, _ in matches}
         return (
             self.env.config.matlab_link_shadowed_files_to_chooser_pages
-            and len({entry[2] for _, entry in matches}) == 1
+            and len(names) == 1
+            and None not in names
         )
 
     @override
@@ -1498,21 +1604,7 @@ class MATLABDomain(Domain):
         names = [named] if named is not None else sorted(inventories)
         role = node["reftype"]
         objtypes = self.object_types if role == "any" else self.objtypes_for_role(role)
-        found = {}
-        for name in names:
-            for objtype in objtypes or ():
-                for ref, item in inventories[name].get(f"mat:{objtype}", {}).items():
-                    # Sphinx < 8.2: (project, version, uri, display name)
-                    display = getattr(item, "display_name", None) or item[3]
-                    # ``ref == target``: a chooser page's entry
-                    if (
-                        display != target
-                        or ref == target
-                        or mat_naming.is_private_reference(ref)
-                    ):
-                        continue
-                    label = f"{name}:{ref}" if len(names) > 1 else ref
-                    found.setdefault((name, ref), label)
+        found = _named_in_inventories(inventories, names, objtypes or (), target)
         if len(found) > 1:
             node["mat:ambiguous"] = True
             # One site's duplicates: its chooser page, if it has one, was

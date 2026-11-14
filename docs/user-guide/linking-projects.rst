@@ -65,6 +65,7 @@ References to the library are written like local ones:
    :mat:func:`util/scale.m`              a path reference
    :mat:meth:`geom.Circle.area`          a member
    :mat:namespace:`geom`                 a namespace, if documented
+   :mat:folder:`geom`                    the only folder of a namespace
    :mat:folder:`+geom/`                  a folder, by its path
    :mat:func:`Scale it <util/scale.m>`   with link text
    :mat:func:`lib:util/scale.m`          in the inventory "lib" only
@@ -157,7 +158,10 @@ that sends the browser to the page the object is on now
   (two global ``helper`` functions), it is a page in the site's theme that
   lists them all, with their path references and types, like MATLAB's
   ``which -all``. Files in
-  ``private/`` and files MATLAB cannot call have no such address.
+  ``private/`` and files MATLAB cannot call have no such address. For a
+  namespace, the address leads to the namespace if it is documented
+  (``mat:namespace``). Otherwise it leads to its folder if the namespace
+  has one folder, or lists its documented folders if it has several.
 * ``mat/ref/<path reference>.html`` for every object, for example
   ``mat/ref/+geom/Circle.m.html``; a folder's is ``mat/ref/<folder>/index.html``.
 

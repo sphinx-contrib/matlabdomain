@@ -14,6 +14,7 @@ from typing import Any, cast
 import pytest
 from sphinx import addnodes
 from sphinx.util import console
+from sphinx.util.inventory import InventoryFile
 from test_apidoc import FUNCTION, write
 from test_incremental_equals_clean import differences, snapshot
 from test_intersphinx import BASE, build_consumer, build_library, inventory
@@ -451,25 +452,212 @@ def test_arguments_or_return_annotation(make_app, tmp_path):
 # --- folders stay folders ---------------------------------------------------------
 
 
-def test_plus_folder_is_shown_as_a_folder(make_app, tmp_path):
-    app = build(
-        make_app,
-        tmp_path,
-        {"index": ".. mat:folder:: x/+ns/\n\n.. mat:autofolder:: one/+solo/\n"},
+def inventory_entries(app):
+    """``{(type, name): (uri, display)}`` of the mat entries of ``objects.inv``,
+    read with Sphinx's loader.
+    """
+    with open(Path(app.outdir) / "objects.inv", "rb") as f:
+        inv = InventoryFile.load(cast(Any, f), "", lambda _base, uri: uri)
+    return {
+        (objtype, name): (item[2], item[3])
+        if isinstance(item, tuple)
+        else (item.uri, item.display_name)
+        for objtype, items in inv.items()
+        if objtype.startswith("mat:")
+        for name, item in items.items()
+    }
+
+
+def headerlinks(app, page="index"):
+    """``{anchor: href}`` of the "¶" links of the object descriptions."""
+    return dict(
+        re.findall(
+            r'<dt class="sig[^"]*" id="([^"]*)">.*?class="headerlink" href="([^"]*)"',
+            (Path(app.outdir) / f"{page}.html").read_text(encoding="utf-8"),
+            re.DOTALL,
+        )
     )
+
+
+def stable_target(app, stub):
+    """Return where the stable address ``stub`` redirects to, or None for a
+    chooser page.
+    """
+    text = (Path(app.outdir) / stub).read_text(encoding="utf-8")
+    found = re.search(r'url=([^"]*)"', text)
+    return html_lib.unescape(found[1]) if found else None
+
+
+def chooser_refs(app, stub):
+    text = (Path(app.outdir) / stub).read_text(encoding="utf-8")
+    return re.findall(r'<span class="pre">([^<]*)</span></code></a> \((\w+)\)', text)
+
+
+FOLDER_DIRECTIVES = ["folder", "autofolder"]
+
+
+@pytest.mark.parametrize("directive", FOLDER_DIRECTIVES)
+def test_only_folder_of_a_namespace_is_shown_by_its_name(make_app, tmp_path, directive):
+    app = build(make_app, tmp_path, {"index": f".. mat:{directive}:: one/+solo/\n"})
+    assert warnings(app) == ""
+    assert signatures(app) == [("mat-one/+solo/", "namespace solo")]
+    assert objects(app) == {"one/+solo/": ("index", "folder", "solo")}
+    entries = {e[1] for e in app.env.get_domain("index").entries["index"]}
+    assert entries == {"solo (namespace)"}
+    assert inventory_entries(app) == {
+        ("mat:folder", "one/+solo/"): ("mat/ref/one/%2Bsolo/index.html", "solo")
+    }
+    assert headerlinks(app) == {"mat-one/+solo/": "mat/name/solo.html"}
+    assert stable_target(app, "mat/name/solo.html") == "../../index.html#mat-one/+solo/"
+
+
+@pytest.mark.parametrize("directive", FOLDER_DIRECTIVES)
+def test_folders_of_a_namespace_of_several_folders_are_shown_by_path(
+    make_app, tmp_path, directive
+):
+    page = f".. mat:{directive}:: x/+ns/\n\n.. mat:{directive}:: y/+ns/\n"
+    app = build(make_app, tmp_path, {"index": page})
     assert warnings(app) == ""
     assert signatures(app) == [
         ("mat-x/+ns/", "folder x/+ns/"),
-        ("mat-one/+solo/", "folder one/+solo/"),
+        ("mat-y/+ns/", "folder y/+ns/"),
     ]
     assert objects(app) == {
         "x/+ns/": ("index", "folder", "x/+ns/"),
-        "one/+solo/": ("index", "folder", "one/+solo/"),
+        "y/+ns/": ("index", "folder", "y/+ns/"),
     }
     entries = {e[1] for e in app.env.get_domain("index").entries["index"]}
-    assert entries == {"x/+ns/ (folder)", "one/+solo/ (folder)"}
-    # no address by MATLAB name for a folder
-    assert not (Path(app.outdir) / "mat/name/solo.html").exists()
+    assert entries == {"x/+ns/ (folder)", "y/+ns/ (folder)"}
+    # the display of a plain folder, and the chooser entry of the name
+    assert inventory_entries(app) == {
+        ("mat:folder", "x/+ns/"): ("mat/ref/x/%2Bns/index.html", "-"),
+        ("mat:folder", "y/+ns/"): ("mat/ref/y/%2Bns/index.html", "-"),
+        ("mat:folder", "ns"): ("mat/name/ns.html", "-"),
+    }
+    assert headerlinks(app) == {
+        "mat-x/+ns/": "mat/ref/x/%2Bns/index.html",
+        "mat-y/+ns/": "mat/ref/y/%2Bns/index.html",
+    }
+    assert stable_target(app, "mat/name/ns.html") is None
+    assert chooser_refs(app, "mat/name/ns.html") == [
+        ("x/+ns/", "folder"),
+        ("y/+ns/", "folder"),
+    ]
+
+
+def test_display_counts_the_indexed_folders(make_app, tmp_path):
+    # y/+ns/ is not described: x/+ns/ is still one of two folders.
+    app = build(make_app, tmp_path, {"index": ".. mat:folder:: x/+ns/\n"})
+    assert signatures(app) == [("mat-x/+ns/", "folder x/+ns/")]
+    # the only described object of the name ns: a redirect, not a chooser
+    assert stable_target(app, "mat/name/ns.html") == "../../index.html#mat-x/+ns/"
+
+
+@pytest.mark.parametrize("chooser", [False, True])
+def test_role_to_a_name_of_several_folders(make_app, tmp_path, chooser):
+    page = (
+        ".. mat:folder:: x/+ns/\n\n.. mat:folder:: y/+ns/\n\nLink: :mat:folder:`ns`.\n"
+    )
+    conf = f"matlab_link_shadowed_files_to_chooser_pages = {chooser}\n"
+    app = build(make_app, tmp_path, {"index": page}, conf=conf)
+    link = body(app).split("Link:")[1].split("</p>")[0]
+    if chooser:
+        assert warnings(app) == ""
+        assert 'href="mat/name/ns.html"' in link
+    else:
+        assert warnings(app) == (
+            "index.rst:8: WARNING: [sphinxcontrib-matlabdomain] 'ns' matches "
+            "several objects: x/+ns/, y/+ns/; use a path reference for one "
+            "folder, or mat:namespace, mat:autonamespace or :mat:namespace: for "
+            "the whole namespace [mat.ambiguous]\n"
+        )
+        assert "href" not in link
+
+
+def test_namespace_object_and_its_only_folder(make_app, tmp_path):
+    page = (
+        ".. mat:folder:: one/+solo/\n\n"
+        ".. mat:namespace:: solo\n\n"
+        "Links: :mat:folder:`solo`, :mat:namespace:`solo`, :mat:obj:`solo`, "
+        ":any:`solo`.\n"
+    )
+    app = build(make_app, tmp_path, {"index": page})
+    assert warnings(app) == ""
+    assert objects(app)["one/+solo/"] == ("index", "folder", "solo")
+    assert hrefs(body(app).split("Links:")[1]) == [
+        "#mat-one/+solo/",
+        "#mat-+solo",
+        "#mat-+solo",
+        "#mat-+solo",
+    ]
+    # the name is the namespace's; the folder keeps its address by path
+    assert stable_target(app, "mat/name/solo.html") == "../../index.html#mat-+solo"
+    assert headerlinks(app) == {
+        "mat-one/+solo/": "mat/ref/one/%2Bsolo/index.html",
+        "mat-+solo": "mat/name/solo.html",
+    }
+    assert inventory_entries(app) == {
+        ("mat:folder", "one/+solo/"): ("mat/ref/one/%2Bsolo/index.html", "solo"),
+        ("mat:namespace", "+solo"): ("mat/ref/%2Bsolo.html", "solo"),
+    }
+
+
+def test_namespace_object_and_its_several_folders(make_app, tmp_path):
+    page = (
+        ".. mat:folder:: x/+ns/\n\n.. mat:folder:: y/+ns/\n\n"
+        ".. mat:namespace:: ns\n\n"
+        "Links: :mat:namespace:`ns`, :mat:obj:`ns`, :any:`ns`.\n\n"
+        "Folder: :mat:folder:`ns`.\n"
+    )
+    app = build(make_app, tmp_path, {"index": page})
+    text = body(app)
+    assert hrefs(text.split("Links:")[1].split("Folder:")[0]) == ["#mat-+ns"] * 3
+    assert stable_target(app, "mat/name/ns.html") == "../../index.html#mat-+ns"
+    assert ("mat:folder", "ns") not in inventory_entries(app)
+    # the folder role prefers folders: the two are ambiguous, the namespace
+    # object is not among them
+    assert warnings(app) == (
+        "index.rst:12: WARNING: [sphinxcontrib-matlabdomain] 'ns' matches "
+        "several objects: x/+ns/, y/+ns/; use a path reference for one "
+        "folder, or mat:namespace, mat:autonamespace or :mat:namespace: for "
+        "the whole namespace [mat.ambiguous]\n"
+    )
+
+
+def _set_up_second_folder(root, present):
+    second = root / "src" / "y" / "+solo"
+    if present:
+        write(root, {"src/y/+solo/z.m": FUNCTION.format(name="z")})
+    elif second.exists():
+        shutil.rmtree(second)
+
+
+SECOND_FOLDER_PAGES = {
+    "index": ".. toctree::\n\n   a\n   b\n",
+    "a": "A\n=\n\n.. mat:autofolder:: one/+solo/\n   :members:\n",
+    "b": "B\n=\n\nLink: :mat:folder:`one/+solo/`.\n",
+}
+
+
+@pytest.mark.parametrize("added", [True, False], ids=["added", "removed"])
+def test_second_folder_incremental_equals_clean(make_app, tmp_path, added):
+    root = tmp_path / "inc"
+    project(root, SECOND_FOLDER_PAGES)
+    _set_up_second_folder(root, not added)
+    make_app(srcdir=root).build()
+    _set_up_second_folder(root, added)
+    app = make_app(srcdir=root)
+    app.build()
+    app.cleanup()
+    shown = "folder one/+solo/" if added else "namespace solo"
+    assert shown in [text for _, text in signatures(app, "a")]
+    fresh_root = tmp_path / "fresh"
+    project(fresh_root, SECOND_FOLDER_PAGES)
+    _set_up_second_folder(fresh_root, added)
+    fresh = make_app(srcdir=fresh_root)
+    fresh.build()
+    fresh.cleanup()
+    assert differences(snapshot(Path(app.outdir)), snapshot(Path(fresh.outdir))) == []
 
 
 def test_namespace_name_of_one_folder_names_the_folder(make_app, tmp_path):
@@ -654,6 +842,50 @@ def test_intersphinx_links_to_the_namespace_by_name(make_app, tmp_path):
     assert found == ""
 
 
+def test_intersphinx_to_the_only_folder_of_a_namespace(make_app, tmp_path):
+    # folder grouping: +geom/ is the only folder of geom and no namespace
+    # object is described
+    outdir = build_library(make_app, tmp_path / "lib")
+    mapping = {"lib": (BASE, str(outdir / "objects.inv"))}
+    references = {
+        "folder": ":mat:folder:`geom`",
+        "namespace": ":mat:namespace:`geom`",
+    }
+    links, found = build_consumer(make_app, tmp_path / "app", mapping, references)
+    assert links == {
+        "folder": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
+        "namespace": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
+    }
+    assert found == ""
+
+
+@pytest.mark.parametrize("chooser", [False, True])
+def test_intersphinx_to_a_namespace_of_several_folders(make_app, tmp_path, chooser):
+    outdir = build_library(make_app, tmp_path / "lib", extra=["other/+geom/extra.m"])
+    assert inventory(outdir)["geom"] == ("mat/name/geom.html", "-")
+    mapping = {"lib": (BASE, str(outdir / "objects.inv"))}
+    conf = f"matlab_link_shadowed_files_to_chooser_pages = {chooser}\n"
+    references = {
+        "folder": ":mat:folder:`geom`",
+        # no namespace object and no only folder to fall back to
+        "namespace": ":mat:namespace:`geom`",
+    }
+    links, found = build_consumer(make_app, tmp_path / "app", mapping, references, conf)
+    assert links["namespace"] == (None, "geom")
+    assert "mat:namespace reference target not found: geom" in found
+    if chooser:
+        assert links["folder"] == (f"{BASE}mat/name/geom.html", "geom")
+        assert found.count("WARNING") == 1
+    else:
+        assert links["folder"] == (None, "geom")
+        assert (
+            "'geom' matches several objects: +geom/, other/+geom/; use a path "
+            "reference for one folder, or mat:namespace, mat:autonamespace or "
+            ":mat:namespace: for the whole namespace [mat.ambiguous]"
+        ) in strip_escape_sequences(found)
+        assert found.count("WARNING") == 2
+
+
 # --- builds -------------------------------------------------------------------------
 
 BUILD_PAGES = {
@@ -661,7 +893,8 @@ BUILD_PAGES = {
     "p1": "P1\n==\n\n.. mat:autonamespace:: ns\n   :members:\n",
     "p2": "P2\n==\n\n.. mat:namespace:: ns\n\nSee :mat:func:`g`.\n",
     "p3": "P3\n==\n\n.. mat:autonamespace:: solo\n   :members:\n",
-    "p4": "P4\n==\n\n.. mat:folder:: x/+ns/\n\n.. mat:folder:: ns\n",
+    "p4": "P4\n==\n\n.. mat:folder:: x/+ns/\n\n.. mat:folder:: ns\n\n"
+    ".. mat:autofolder:: one/+solo/\n",
     "p5": "P5\n==\n\n:mat:namespace:`ns`, :mat:namespace:`solo`.\n",
     "p6": "P6\n==\n\n.. mat:autonamespace:: nosuch\n",
 }

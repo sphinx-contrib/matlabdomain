@@ -238,7 +238,7 @@ def test_folder_lines_name_the_auto_directive(make_app, tmp_path):
     folders = [
         where(sig, tmp_path)
         for sig in doctree.findall(addnodes.desc_signature)
-        if sig.astext() in ("@K/", "folder +pk/")
+        if sig.astext() in ("@K/", "namespace pk")
     ]
     assert folders == [("p.rst", 6), ("p.rst", 8), ("src/f.m", 4)]
     # a member of the folder has a file

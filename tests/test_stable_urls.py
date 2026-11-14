@@ -72,8 +72,7 @@ def test_names_of_several_objects_and_members(make_app, tmp_path):
     )
     assert (outdir / "mat/ref/+geom/Circle.m.area.html").is_file()
     assert (outdir / "mat/ref/+geom/index.html").is_file()  # the folder
-    # Folder grouping describes folders, not the namespace geom.
-    assert not (outdir / "mat/name/geom.html").exists()
+    assert (outdir / "mat/name/geom.html").is_file()  # the namespace
     # A private file has an address by path only.
     assert (outdir / "mat/ref/util/private/check.m.html").is_file()
     assert not (outdir / "mat/name/check.html").exists()

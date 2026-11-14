@@ -158,16 +158,16 @@ def _names(dom):
     """MATLAB name -> references of the non-private objects that have it.
 
     A Simulink block's display name is a Simulink path, not a MATLAB name.
+    The folders of a namespace that has several are under its name
+    (``MATLABDomain.object_name``), unless the namespace object is
+    documented: then the name is its alone.
     """
     out = {}
-    for ref, (_, _, display) in dom.data["objects"].items():
-        if (
-            display != ref
-            and "/" not in display
-            and not mat_naming.is_private_reference(ref)
-        ):
-            out.setdefault(display, []).append(ref)
-    return {name: sorted(refs) for name, refs in out.items()}
+    for ref in dom.data["objects"]:
+        name = dom.object_name(ref)
+        if name and "/" not in name and not mat_naming.is_private_reference(ref):
+            out.setdefault(name, []).append(ref)
+    return {name: sorted(dom.without_own_folders(refs)) for name, refs in out.items()}
 
 
 def addresses(dom):
@@ -192,9 +192,9 @@ def addresses(dom):
 def permalink(dom, ref):
     """Return the stable file a "¶" link of ``ref`` points to."""
     by_ref, by_name, names, _ = addresses(dom)
-    display = dom.data["objects"][ref][2]
-    if names.get(display) == [ref]:
-        return by_name[display]
+    name = dom.object_name(ref)
+    if names.get(name) == [ref]:
+        return by_name[name]
     return by_ref[ref]
 
 
@@ -205,7 +205,7 @@ def chooser_link(dom, builder, fromdocname, refs, contnode):
     if not (builder.config.matlab_stable_urls and _html_builder(builder)):
         return contnode
     _, by_name, names, _ = addresses(dom)
-    name = dom.data["objects"][refs[0]][2]
+    name = dom.object_name(refs[0])
     listed = names.get(name, [])
     if len(listed) <= 1 or not set(refs) <= set(listed):
         return contnode

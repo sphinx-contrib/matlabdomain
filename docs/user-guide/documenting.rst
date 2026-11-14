@@ -212,9 +212,12 @@ type is ``data`` (role ``:mat:data:``) and it gets an index entry.
 Folders and the current folder
 ------------------------------
 
-``mat:autofolder`` documents a folder, shown as ``folder`` and its path. A
-``+`` folder is shown the same way; its namespace is an :term:`object` of
-its own (:ref:`documenting-namespaces`):
+``mat:autofolder`` documents a folder. A ``+`` folder that is the only
+folder of its namespace is shown as ``namespace`` and the namespace's name.
+Any other folder is shown as ``folder`` and its path, also a ``+`` folder
+when the namespace has several folders (``toolbox/+shapes/`` and
+``extras/+shapes/``). The namespace itself is an :term:`object` of its own
+(:ref:`documenting-namespaces`):
 
 .. literalinclude:: ../snippets/autofolder.rst
    :language: rst

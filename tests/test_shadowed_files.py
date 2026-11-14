@@ -181,7 +181,9 @@ def test_no_chooser_page_lists_the_matches():
     names = {"f": ["a/f.m", "b/f.m"], "g": ["a/g.m"]}
     by_name = {"f": "mat/name/f.html", "g": "mat/name/g.html"}
     dom = SimpleNamespace(
-        data={"objects": objects}, _stable_urls=({}, by_name, names, {})
+        data={"objects": objects},
+        _stable_urls=({}, by_name, names, {}),
+        object_name=lambda ref: objects[ref][2],
     )
     builder = SimpleNamespace(
         config=SimpleNamespace(matlab_stable_urls=True),

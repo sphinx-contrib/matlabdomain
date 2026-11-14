@@ -53,7 +53,7 @@ file extension.
      - ``checkPositive``
    * - the folder ``+shapes``
      - ``+shapes/``
-     - (none: shown by its path)
+     - ``shapes`` (the only ``+shapes`` folder; else shown by its path)
    * - the namespace ``shapes``, all its ``+shapes`` folders
      - ``+shapes``
      - ``shapes``
@@ -141,8 +141,9 @@ this order:
    ``mat.ambiguous`` warning lists their path references, which you can use
    instead. With :confval:`matlab_link_shadowed_files_to_chooser_pages` the name links
    to the page that lists them (:ref:`stable-addresses`), without the
-   warning. Then a documented ``+`` folder by the MATLAB name of its
-   namespace (``shapes`` is ``+shapes/``);
+   warning. The folders of a namespace with several folders count as
+   objects of its name. A documented namespace (``mat:namespace``) has the
+   name alone: the name does not also match its folders;
 4. a folder path without its trailing ``/`` (``scripts``), tried last so
    that it never hides a MATLAB name.
 
@@ -154,17 +155,24 @@ Folders and namespaces
 ----------------------
 
 All folders are one object type, ``folder`` (directives ``mat:folder``,
-``mat:autofolder``; role ``:mat:folder:``). A folder shows ``folder`` and
-its path (``folder +shapes/``, ``folder scripts/``) and is linked by path.
-A ``+`` folder can also be linked by the MATLAB name of its namespace
-(``shapes``) while the namespace has only that folder.
+``mat:autofolder``; role ``:mat:folder:``). A ``+`` folder that is the only
+folder of its namespace below the project root shows ``namespace shapes``
+and can be linked by that name (``shapes``) or its path (``+shapes/``).
+Any other folder shows ``folder`` and its path (``folder scripts/``) and is
+linked by path. So are the ``+`` folders of a namespace with several
+folders (``toolbox/+shapes/`` and ``extras/+shapes/``, whether both are
+documented or not): the name ``shapes`` matches each of them, like a name
+of several files.
 
 A namespace is an object of its own, of the type ``namespace`` (directives
 ``mat:namespace``, ``mat:autonamespace``; role ``:mat:namespace:``). It is
 one object however many ``+`` folders have its name (``toolbox/+shapes/``
 and ``extras/+shapes/``), shows ``namespace shapes`` and is linked by its
-MATLAB name. With no namespace documented, ``:mat:namespace:`shapes```
-links to a documented ``+shapes`` folder (a role accepts any type).
+MATLAB name. A documented namespace takes its name: ``:mat:namespace:``,
+``:mat:obj:`` and its stable address lead to it, and only ``:mat:folder:``
+still leads to a folder. With no namespace documented,
+``:mat:namespace:`shapes``` links to the only ``+shapes`` folder (a role
+accepts any type).
 
 ``@Name`` class folders are not folder objects: link to their class. The
 :ref:`mat-folderindex` lists the documented folders and namespaces.

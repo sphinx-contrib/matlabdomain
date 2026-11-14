@@ -193,9 +193,10 @@ What the docs show
   declaration.
 * A script with local functions is documented as a script, not a function.
 * Signatures show MATLAB names: ``package.ClassBar``, not ``+package.ClassBar``.
-* Folders, ``+`` folders too, show as ``folder`` and their path. A
-  namespace is an object of its own (``mat:namespace``), shown as
-  ``namespace`` and its MATLAB name.
+* A ``+`` folder shows as ``namespace`` when it is the only folder of its
+  namespace; other folders, and the ``+`` folders of a namespace with
+  several folders, show as ``folder`` and their path. A namespace is also
+  an object of its own (``mat:namespace``).
 * Files MATLAB cannot call (a keyword namespace, an invalid file name) are
   documented by path, with a ``mat.not_callable`` warning.
 * New warnings point at files that are probably broken

@@ -210,7 +210,7 @@ def test_package(app, confdict):
         "Implement doBar stage, not called by ClassBar()\n\n\n\n"
         "doFoo()\n\n"
         f"doFoo{to_add} - Doing foo, without passing in @ClassExample\n\n\n\n"
-        "folder target/+package/\n\n\n\n\n\n"
+        "namespace package\n\n\n\n\n\n"
         "package.funcFoo(u, t)\n\n"
         "Function that does Foo\n\n"
         "x = package.funcFoo(u)\n\n"

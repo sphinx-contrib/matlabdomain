@@ -537,9 +537,12 @@ without a "reference target not found" warning.
 .. rst:directive:: .. mat:folder:: name
 
    A folder: a path reference (with or without the trailing ``/``), or the
-   MATLAB name of a namespace that has one folder. It is shown as ``folder
-   <path>``, a ``+`` folder too (its namespace is ``mat:namespace``); an
-   ``@`` class folder is an error (document its class). Sets the current
+   MATLAB name of a namespace that has one folder. The only folder of a
+   namespace is shown as ``namespace <MATLAB name>``; any other folder as
+   ``folder <path>``, also a ``+`` folder when the namespace has several
+   folders below the project root (described or not). The namespace as a
+   whole is ``mat:namespace``. An ``@`` class folder is an error (document
+   its class). Sets the current
    folder. A folder may be described on several pages; the last one is the
    link target.
 

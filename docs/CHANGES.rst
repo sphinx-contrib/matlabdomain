@@ -73,10 +73,17 @@ Names and references:
   ``:mat:mod:`` are replaced by ``mat:folder``, ``mat:autofolder``,
   ``mat:currentfolder`` and ``:mat:folder:``; for a ``+`` package, by
   ``mat:namespace``, ``mat:autonamespace`` and ``:mat:namespace:`` (#362).
-  Every folder shows ``folder <path>``, a ``+`` folder too: ``namespace
-  <name>`` is the namespace object's. ``@Class`` folders are documented
+  The only ``+`` folder of a namespace shows ``namespace <name>``; any
+  other folder shows ``folder <path>``. ``@Class`` folders are documented
   through their class. The module index is now the folder index
   (``mat-folderindex.html``); it lists folders and namespaces.
+* A namespace with ``+`` folders in several places (``a/+ns/`` and
+  ``b/+ns/``) has no folder that stands for it. Each of its folders shows
+  ``folder <path>`` and is linked by path. The name ``ns`` matches all of
+  them, as a name of several files does: a link by name warns
+  ``mat.ambiguous``, and ``mat/name/ns.html`` lists them. Document the
+  namespace with ``mat:namespace`` or ``mat:autonamespace`` to give the
+  name one target (#362).
 * Files MATLAB cannot call for :confval:`matlab_version` (keyword
   namespaces, invalid names, ``@C/sub`` files from R2026a, ...) are
   documented by path with one ``mat.not_callable`` warning each that says
