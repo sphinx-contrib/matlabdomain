@@ -18,22 +18,22 @@ How MATLAB names files
 * Files in a ``private/`` folder can be called only from the folder above
   it.
 
-The extension computes the MATLAB name of every file this way, for the
+The :term:`extension` computes the MATLAB name of every file this way, for the
 release in :confval:`matlab_version`. :term:`Signatures <signature>`, the
 index and the :term:`inventory` show it.
 
 Path references
 ---------------
 
-Two files can have the same MATLAB name, so the extension identifies every
-object by its *path reference* instead: its path relative to
+Two files can have the same MATLAB name, so the :term:`extension` identifies every
+:term:`object` by its *path reference* instead: its path relative to
 :confval:`matlab_src_code_project_root`, with ``/`` on every system and the
 file extension.
 
 .. list-table::
    :header-rows: 1
 
-   * - Object
+   * - :term:`Object`
      - Path reference
      - MATLAB name (shown)
    * - ``+shapes/Circle.m``
@@ -62,7 +62,7 @@ file extension.
      - (none)
 
 Members follow their file with a ``.``; folders end with ``/``. Paths are
-unique, so a path reference always names exactly one object. A namespace
+unique, so a path reference always names exactly one :term:`object`. A namespace
 has no single path: its reference is its ``+`` folder names joined with
 ``/``, without the final ``/`` (``+shapes/+io`` for ``shapes.io``), a form
 that no file or folder has. You normally
@@ -82,7 +82,7 @@ renders as:
 .. list-table::
    :header-rows: 1
 
-   * - Role
+   * - :term:`Role`
      - Links to
    * - ``:mat:func:``
      - functions
@@ -101,12 +101,13 @@ renders as:
    * - ``:mat:app:``
      - App Designer apps
    * - ``:mat:data:``
-     - objects documented with ``mat:data``
+     - :term:`objects <object>` documented with ``mat:data``
    * - ``:mat:obj:``, ``:mat:const:``, ``:mat:enum:``
-     - an object of any type
+     - an :term:`object` of any type
 
-A role prefers objects of its own type; when none matches, it accepts an
-object of any type. With ``primary_domain = "mat"`` in ``conf.py``, the
+A :term:`role` prefers :term:`objects <object>` of its own type; when none
+matches, it accepts an
+:term:`object` of any type. With ``primary_domain = "mat"`` in ``conf.py``, the
 ``mat:`` prefix can be left out (``:func:`times_two```).
 
 The text of a link:
@@ -117,13 +118,14 @@ The text of a link:
   shows ``area()``;
 * ``title <target>`` sets it explicitly.
 
-A target that starts with ``.`` (``.area``) also finds an object whose
+A target that starts with ``.`` (``.area``) also finds an :term:`object` whose
 MATLAB name ends with it, when nothing else matches.
 
 How a target is found
 ---------------------
 
-Roles, auto directives, "See also" links and auto-links look a target up in
+:term:`Roles <role>`, auto :term:`directives <directive>`, "See also" links and
+auto-links look a target up in
 this order:
 
 1. an exact path reference (``+shapes/Circle.m``);
@@ -136,27 +138,30 @@ this order:
    ``mat:autonamespace``, it is a MATLAB name in that namespace instead
    (``totalArea`` is ``shapes.totalArea``). Inside a class, its members can
    be named without the class (``:mat:meth:`area```);
-3. a MATLAB name (``shapes.Circle``) that exactly one documented object has.
+3. a MATLAB name (``shapes.Circle``) that exactly one documented :term:`object` has.
    ``private/`` files are not considered, so a private helper never makes a
-   public name ambiguous. If several objects have the name, a
+   public name ambiguous. If several :term:`objects <object>` have the name, a
    ``mat.ambiguous`` warning lists their path references, which you can use
    instead. With :confval:`matlab_link_shadowed_files_to_chooser_pages` the name links
    to the page that lists them (:ref:`stable-addresses`), without the
    warning. The folders of a namespace with several folders count as
-   objects of its name. A documented namespace (``mat:namespace``) has the
+   :term:`objects <object>` of its name. A documented namespace
+   (``mat:namespace``) has the
    name alone: the name does not also match its folders;
 4. a folder path without its trailing ``/`` (``scripts``), tried last so
    that it never hides a MATLAB name.
 
 There is no search path and no precedence: when two global functions share
-a name, link to the one you mean by path. A role links only to documented
-objects; with ``nitpicky = True``, Sphinx warns about the others.
+a name, link to the one you mean by path. A :term:`role` links only to documented
+:term:`objects <object>`; with ``nitpicky = True``, :term:`Sphinx` warns about the
+others.
 
 Folders and namespaces
 ----------------------
 
-All folders are one object type, ``folder`` (directives ``mat:folder``,
-``mat:autofolder``; role ``:mat:folder:``). A ``+`` folder that is the only
+All folders are one :term:`object` type, ``folder`` (:term:`directives
+<directive>` ``mat:folder``,
+``mat:autofolder``; :term:`role` ``:mat:folder:``). A ``+`` folder that is the only
 folder of its namespace below the project root shows ``namespace shapes``
 and can be linked by that name (``shapes``) or its path (``+shapes/``).
 Any other folder shows ``folder`` and its path (``folder scripts/``) and is
@@ -165,17 +170,19 @@ folders (``toolbox/+shapes/`` and ``extras/+shapes/``, whether both are
 documented or not): the name ``shapes`` matches each of them, like a name
 of several files.
 
-A namespace is an object of its own, of the type ``namespace`` (directives
-``mat:namespace``, ``mat:autonamespace``; role ``:mat:namespace:``). It is
-one object however many ``+`` folders have its name (``toolbox/+shapes/``
+A namespace is an :term:`object` of its own, of the type ``namespace``
+(:term:`directives <directive>`
+``mat:namespace``, ``mat:autonamespace``; :term:`role` ``:mat:namespace:``). It is
+one :term:`object` however many ``+`` folders have its name (``toolbox/+shapes/``
 and ``extras/+shapes/``), shows ``namespace shapes`` and is linked by its
 MATLAB name. A documented namespace takes its name: ``:mat:namespace:``,
 ``:mat:obj:`` and its stable address lead to it, and only ``:mat:folder:``
 still leads to a folder. With no namespace documented,
-``:mat:namespace:`shapes``` links to the only ``+shapes`` folder (a role
+``:mat:namespace:`shapes``` links to the only ``+shapes`` folder (a :term:`role`
 accepts any type).
 
-``@Name`` class folders are not folder objects: link to their class. The
+``@Name`` class folders are not folder :term:`objects <object>`: link to their
+class. The
 :ref:`mat-folderindex` lists the documented folders and namespaces.
 
 Files MATLAB cannot call
@@ -198,7 +205,7 @@ warning. Files below ``private/`` and the special files such as
 Link anchors
 ------------
 
-The HTML anchor of an object is ``mat-`` followed by its path reference,
+The HTML anchor of an :term:`object` is ``mat-`` followed by its path reference,
 for example ``documenting.html#mat-+shapes/Circle.m`` and
 ``#mat-+shapes/Circle.m.area`` on :doc:`documenting`, and ``#mat-+shapes``
 for the namespace. In the path reference, each character other
@@ -207,22 +214,24 @@ than ASCII letters, digits, non-ASCII characters and
 (a space becomes ``~20``, ``~`` becomes ``~7E``). Only folder names can
 contain such characters. Distinct references never share an anchor.
 
-This scheme is a stable contract: an anchor and an inventory name change
-only when the file moves or is renamed. The *page* an object is on is not
+This scheme is a stable contract: an anchor and an :term:`inventory` name change
+only when the file moves or is renamed. The *page* an :term:`object` is on is not
 part of it: when ``scmd apidoc`` splits long pages
 (:confval:`matlab_apidoc_page_size`), adding or removing a file can move an
-object to another page, and an address copied from the browser then no
-longer shows it. Each object therefore also has a stable address,
+:term:`object` to another page, and an address copied from the browser then no
+longer shows it. Each :term:`object` therefore also has a stable address,
 ``mat/name/<MATLAB name>.html`` or ``mat/ref/<path reference>.html``,
-which its "¶" link and its inventory entry point to (:ref:`library-changes`).
+which its "¶" link and its :term:`inventory` entry point to (:ref:`library-changes`).
 
 Linking from other projects
 ---------------------------
 
-The ``objects.inv`` inventory names each object by its path reference and
-shows its MATLAB name. Another Sphinx project that loads this extension
-and the inventory (``sphinx.ext.intersphinx``) links with either, as
-for its own objects; its own objects come first:
+The ``objects.inv`` :term:`inventory` names each :term:`object` by its path
+reference and
+shows its MATLAB name. Another :term:`Sphinx` project that loads this
+:term:`extension`
+and the :term:`inventory` (``sphinx.ext.intersphinx``) links with either, as
+for its own :term:`objects <object>`; its own :term:`objects <object>` come first:
 
 .. code-block:: rst
 
@@ -241,7 +250,7 @@ Coming from Python
   ``target.subfolder.f`` is not a reference.
 * Plain folders do not qualify names; files in them are global.
 * Two files may have the same MATLAB name in one project; MATLAB decides by
-  path order at run time. The extension does not model the path: it warns
+  path order at run time. The :term:`extension` does not model the path: it warns
   about the ambiguity and expects a path reference.
 * Classes are found from ``@`` folders and ``classdef`` files, not by
   importing code. Nothing is executed.

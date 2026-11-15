@@ -5,7 +5,7 @@ VS Code
 -------
 
 The repository's ``.vscode/launch.json`` has debug configurations
-(``debugpy``, with ``justMyCode`` off so you can step into Sphinx and
+(``debugpy``, with ``justMyCode`` off so you can step into :term:`Sphinx` and
 tree-sitter):
 
 ``Sphinx: Debug docs build``
@@ -39,7 +39,7 @@ Profiling a build
    $ python -m cProfile -o build.prof -m sphinx -E -b html docs docs/_build/html
    $ uvx snakeviz build.prof
 
-``test_slow/profiling`` is a profiling harness: a Sphinx project over the
+``test_slow/profiling`` is a profiling harness: a :term:`Sphinx` project over the
 gauntlet's ``vhlab-toolbox-matlab`` checkout (1,726 files; fetch it with
 ``test_slow/gauntlet/fetch.py``), with ``profile_build.py`` (a parse sweep
 that writes ``parse.prof``). A cold harness build takes about half a

@@ -75,6 +75,13 @@ keyboard focus to it, to preview the definition; Escape closes the preview.
       A Markdown format and parser that can express Sphinx directives and
       roles. It is an alternative to reStructuredText when enabled in Sphinx.
 
+   napoleon
+      The Sphinx extension ``sphinx.ext.napoleon``, which reads Google- and
+      NumPy-style help text: headings such as ``Args:`` and ``Returns:``
+      become formatted sections. Listed in ``extensions`` in ``conf.py``,
+      it also works on MATLAB help; ``napoleon_custom_sections`` adds
+      headings of your own.
+
    object
       A documented item, such as a MATLAB function or class. A description
       directive creates an entry that a role can link to.
@@ -107,6 +114,11 @@ keyboard focus to it, to preview the definition; Escape closes the preview.
       The folder containing a Sphinx project's source documents and their
       subfolders. Its location is an argument to ``sphinx-build``.
 
+   Sphinx
+      The Python documentation generator that this package extends. It reads
+      reStructuredText or Markdown source documents, collects them in its
+      environment, and writes HTML pages or other output through a builder.
+
    theme
       The appearance and navigation layout of the generated HTML site.
       This documentation uses the Furo theme.
@@ -114,6 +126,14 @@ keyboard focus to it, to preview the definition; Escape closes the preview.
    toctree
       A directive that connects pages into a table of contents. It controls
       the document hierarchy and, in many themes, the navigation sidebar.
+
+   Unicode NFC
+   NFC
+      Normalization Form C: one of the standard ways of writing a text in
+      Unicode, the one that uses composed characters where they exist. An
+      ``é`` can be stored as one character (NFC) or as ``e`` followed by a
+      combining accent (as macOS may store file names). Comparing two texts
+      in NFC form makes both spellings equal.
 
    virtual environment
       A separate Python interpreter and set of installed packages for a

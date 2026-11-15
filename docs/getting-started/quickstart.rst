@@ -2,9 +2,16 @@ Quickstart
 ==========
 
 This page sets up the documentation of a MATLAB project with one command,
-then shows what that command does by hand for a single function. If Sphinx
-is new to you, start with the :doc:`sphinx-primer` for shell commands and
-the :doc:`../reference/glossary` for terminology.
+then shows what that command does by hand for a single function. If
+:term:`Sphinx` is new to you, start with the :doc:`sphinx-primer` for shell
+commands and the :doc:`../reference/glossary` for terminology.
+
+.. tip::
+
+   An AI coding agent can do this set-up with the ``setting-up-a-project``
+   skill (:ref:`AI agent skills <agent-skills>`). Work through this page yourself first: an
+   hour or two of learning means you can maintain the site without an
+   agent.
 
 With ``scmd quickstart``
 ------------------------
@@ -30,7 +37,7 @@ keep it):
    > API pages per namespace or per folder [namespace]:
    ...
 
-It writes the Sphinx :term:`source folder <source directory>` ``docs/``
+It writes the :term:`Sphinx` :term:`source folder <source directory>` ``docs/``
 (``conf.py``, ``index.rst``, the make files, a build guide and the :term:`API`
 pages), adds the docs
 dependencies to ``pyproject.toml`` in a uv project, and prints a report of
@@ -102,8 +109,8 @@ replace that line with these lines:
    primary_domain = "mat"
 
 :confval:`matlab_src_code_project_root` is the one setting every project needs:
-the extension finds MATLAB files below that folder, and names them by their
-path relative to it. :doc:`../user-guide/configuration` covers the other
+the :term:`extension` finds MATLAB files below that folder, and names them by
+their path relative to it. :doc:`../user-guide/configuration` covers the other
 settings.
 
 4. Document the function
@@ -146,7 +153,8 @@ Next steps
 
 * Document a whole project: :doc:`../user-guide/apidoc` writes a page for
   every namespace or folder.
-* Write the directives yourself: :doc:`../user-guide/documenting`.
+* Write the :term:`directives <directive>` yourself:
+  :doc:`../user-guide/documenting`.
 * Link to functions and classes from your text: :doc:`../user-guide/referencing`.
 * Check that the help text describes every input and output:
   :doc:`../user-guide/api-check`.

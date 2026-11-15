@@ -1,9 +1,10 @@
 Sphinx primer for MATLAB users
 ==============================
 
-Sphinx builds documentation from text files and code. You do not need MATLAB
-to build these pages. This guide starts with the operating system's command
-line, then shows how Sphinx and this extension document MATLAB code.
+:term:`Sphinx` builds documentation from text files and code. You do not need
+MATLAB to build these pages. This guide starts with the operating system's
+command line, then shows how :term:`Sphinx` and this :term:`extension` document
+MATLAB code.
 
 For short definitions, use the :doc:`glossary <../reference/glossary>`.
 Terms such as :term:`builder` link to their definitions; hover over a link
@@ -14,12 +15,13 @@ The tools and their jobs
 
 * :term:`reStructuredText` is a plain-text format for documentation pages.
   :term:`Docutils` reads it. :term:`MyST` adds Markdown support when installed.
-* Sphinx reads the pages and uses a :term:`builder` to produce HTML or another
-  output. A :term:`toctree` connects the pages in the navigation.
-* An :term:`extension` adds behavior to Sphinx. This extension supplies the
-  MATLAB :term:`domain`, which contains :term:`directives <directive>` for
-  documenting MATLAB objects and :term:`roles <role>` for links to them.
-* ``conf.py`` configures the Sphinx project. It is a Python file. The 
+* :term:`Sphinx` reads the pages and uses a :term:`builder` to produce HTML or
+  another output. A :term:`toctree` connects the pages in the navigation.
+* An :term:`extension` adds behavior to :term:`Sphinx`. This :term:`extension`
+  supplies the MATLAB :term:`domain`, which contains :term:`directives
+  <directive>` for documenting MATLAB :term:`objects <object>` and
+  :term:`roles <role>` for links to them.
+* ``conf.py`` configures the :term:`Sphinx` project. It is a Python file. The 
   generated web pages go in the build output folder.
 
 Open a terminal
@@ -104,14 +106,15 @@ In the project folder, create a uv project only if it does not already have
    uv init --bare --vcs none
 
 This creates Python project metadata without starter code or a new Git
-repository. It leaves any existing Git repository in place. Add this extension:
+repository. It leaves any existing Git repository in place. Add this
+:term:`extension`:
 
 .. code-block:: console
 
    uv add sphinxcontrib-matlabdomain
 
 ``uv`` manages the :term:`Python environment <virtual environment>` and
-installs Sphinx as a dependency.
+installs :term:`Sphinx` as a dependency.
 
 If your project uses Git
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -166,8 +169,9 @@ and source pages. Review its output and follow its next steps. It can also
 detect existing project settings; see :doc:`quickstart` before accepting its
 defaults for an existing documentation project.
 
-From the project folder, build the HTML site. Quickstart puts Sphinx and the
-site's theme in the ``docs`` dependency group, so ask ``uv`` for that group:
+From the project folder, build the HTML site. Quickstart puts :term:`Sphinx` and
+the site's :term:`theme` in the ``docs`` dependency group, so ask ``uv`` for
+that group:
 
 .. code-block:: console
 
@@ -180,7 +184,7 @@ other environments, and :doc:`../user-guide/builds` explains build options.
 Read a page source
 ------------------
 
-An ``.rst`` page can contain ordinary prose and Sphinx markup:
+An ``.rst`` page can contain ordinary prose and :term:`Sphinx` :term:`markup`:
 
 .. code-block:: rst
 
@@ -191,9 +195,10 @@ An ``.rst`` page can contain ordinary prose and Sphinx markup:
 
    See :mat:func:`times_two` for the function.
 
-The heading names the section. The directive reads the function's MATLAB help
-text and creates an entry. The role links to that entry. Both use the ``mat``
-domain supplied by this extension. The source file must be below the MATLAB
-project root configured in ``conf.py``. See
+The heading names the section. The :term:`directive` reads the function's
+MATLAB help text and creates an entry. The :term:`role` links to that entry.
+Both use the ``mat`` :term:`domain` supplied by this :term:`extension`. The
+source file must be below the MATLAB project root configured in ``conf.py``.
+See
 :doc:`../user-guide/documenting` and :doc:`../user-guide/referencing` for
 examples and :doc:`../user-guide/help-text` for help-text formatting.

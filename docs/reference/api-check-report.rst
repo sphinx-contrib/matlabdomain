@@ -16,7 +16,7 @@ One line per finding, in the order of the path references::
 for apps and for sidecar findings without a line. Sidecar docs have no
 MATLAB name,
 so ``(<MATLAB name>)`` is left out for them. Then a summary: the :term:`objects <object>`
-checked per kind, the objects not
+checked per kind, the :term:`objects <object>` not
 checked per reason, and the findings per rule and severity.
 
 With :confval:`matlab_api_check_files` or
@@ -46,10 +46,10 @@ identical on every system.
    ``rules``
       Rule name to the severity in effect.
    ``checked``
-      Objects checked per kind: ``function``, ``class``, ``method``,
+      :term:`Objects <object>` checked per kind: ``function``, ``class``, ``method``,
       ``property``, ``event``, ``script``, ``application``, ``sidecar``.
    ``not_checked``
-      Objects not checked per reason: ``ignored``
+      :term:`Objects <object>` not checked per reason: ``ignored``
       (:confval:`matlab_api_check_ignore_patterns`), ``hidden``
       (``Contents.m`` and the other special files, and ``Hidden`` classes;
       their members are not counted), ``unreadable``,

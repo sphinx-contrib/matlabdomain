@@ -4,7 +4,7 @@ Simulink file formats
 What Simulink saves in ``.slx`` and ``.mdl`` files, release by release, as
 far as this project reads them. MathWorks does not
 publish these formats; everything here was observed in files and checked
-against what the Simulink API reports for the same files. The reader is
+against what the Simulink :term:`API` reports for the same files. The reader is
 ``sphinxcontrib.mat_simulink``. This page grows with every MATLAB release
 (see `Keeping this page current`_).
 
@@ -200,7 +200,7 @@ How this was verified
 library and subsystem file in R2026b and exports them to one release per
 change point above, as ``.slx`` and ``.mdl``; it also builds them natively
 in R2024a as ``.slx``. It then loads every file in R2026b and
-writes what the Simulink API reports (kind, description, release, system
+writes what the Simulink :term:`API` reports (kind, description, release, system
 mask, ports, references, library blocks) to ``tests/simulink/oracle.json``.
 ``tests/test_mat_simulink.py`` requires the reader to agree with it for
 every fixture.

@@ -24,25 +24,26 @@ What was checked, with ``scmd apidoc`` pages, sidecar docs and
      - works
      - Same output as one build per project.
    * - sphinx-multiproject 1.0.0, values in ``<project>/conf.py``
-     - Sphinx 8 only
-     - Its default; fails on Sphinx 9, in the extension.
+     - :term:`Sphinx` 8 only
+     - Its default; fails on :term:`Sphinx` 9, in the :term:`extension`.
    * - One search over several projects
      - with a tool
-     - Not from Sphinx or either extension; Pagefind works (below).
-   * - `sphinx-multiversion`_ 0.2.5 on Sphinx 8.2
+     - Not from :term:`Sphinx` or either :term:`extension`; Pagefind works (below).
+   * - `sphinx-multiversion`_ 0.2.5 on :term:`Sphinx` 8.2
      - works
      - When each version's commit holds its :term:`API` pages (below).
-   * - sphinx-multiversion on Sphinx 9
+   * - sphinx-multiversion on :term:`Sphinx` 9
      - fails
-     - In the extension (``Config.read()``); not yet fixed there.
+     - In the :term:`extension` (``Config.read()``); not yet fixed there.
 
 These were tried on Windows; Linux and macOS were not tried.
 
 Several projects
 ----------------
 
-Give each project its own Sphinx :term:`source folder <source directory>` with its own ``conf.py``;
-settings they share can live in a module the ``conf.py`` files import:
+Give each project its own :term:`Sphinx`
+:term:`source folder <source directory>` with its own ``conf.py``; settings
+they share can live in a module the ``conf.py`` files import:
 
 .. code-block:: text
 
@@ -89,7 +90,7 @@ Links between projects
 
 Use ``sphinx.ext.intersphinx``. When the projects are published side by
 side (``site/alpha/``, ``site/beta/``), Beta's ``conf.py`` can point at
-Alpha's built inventory:
+Alpha's built :term:`inventory`:
 
 .. code-block:: python
 
@@ -97,9 +98,9 @@ Alpha's built inventory:
        "alpha": ("../alpha/", "../_build/alpha/html/objects.inv"),
    }
 
-A role finds an object of the project itself first, so a path reference
-that both projects have links locally. Name the other project to link
-there:
+A :term:`role` finds an :term:`object` of the project itself first, so a
+path reference that both projects have links locally. Name the other
+project to link there:
 
 .. code-block:: rst
 
@@ -114,14 +115,17 @@ sphinx-multiproject
 `sphinx-multiproject`_ is for Read the Docs, where a repository has one
 configuration: one ``conf.py`` serves several projects, and the
 ``PROJECT`` environment variable picks the one to build. It does not
-merge projects: each build still has one source folder (it moves the
-source folder, not the configuration folder) and one search index.
+merge projects: each build still has one
+:term:`source folder <source directory>` (it moves the
+:term:`source folder <source directory>`, not the
+:term:`configuration folder <configuration directory>`) and one search index.
 Outside Read the Docs, its documentation recommends the layout above.
 
-Its default reads ``<project>/conf.py``. That fails on Sphinx 9 (``'str'
-object has no attribute 'parent'``), and on Sphinx 8 the file must not set
-``extensions`` and the other values Sphinx reads before extensions load,
-so it cannot also build on its own. Pass the values through its
+Its default reads ``<project>/conf.py``. That fails on :term:`Sphinx` 9 (``'str'
+object has no attribute 'parent'``), and on :term:`Sphinx` 8 the file must not set
+``extensions`` and the other values :term:`Sphinx` reads before
+:term:`extensions <extension>` load, so it cannot also build on its own.
+Pass the values through its
 ``config`` option instead, taken from the project's ``conf.py``, which
 ``scmd apidoc --conf-dir docs/<project>`` reads:
 
@@ -161,14 +165,14 @@ relative to ``docs``.
 Searching several projects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sphinx's search covers one build. Intersphinx links projects, but does
-not merge their searches, and neither extension on this page does. One
+:term:`Sphinx`'s search covers one build. Intersphinx links projects, but does
+not merge their searches, and neither :term:`extension` on this page does. One
 search over several projects needs a tool that indexes the published
 HTML, such as `Pagefind`_ (checked with 1.6.0; it is not a dependency of
-this extension):
+this :term:`extension`):
 
 #. Build every project from scratch, into fresh output folders. An
-   incremental build removes the API pages of MATLAB files that are gone,
+   incremental build removes the :term:`API` pages of MATLAB files that are gone,
    but keeps the HTML of any other page that no longer exists, and the
    search would still find it.
 #. Copy the outputs next to each other: ``site/alpha/``, ``site/beta/``.
@@ -178,8 +182,8 @@ this extension):
    ``../pagefind/pagefind-ui.js``.
 
 Mark what to index and which project a page belongs to with a
-``layout.html`` in ``templates_path`` (for the alabaster theme; other
-themes name their blocks differently):
+``layout.html`` in ``templates_path`` (for the alabaster :term:`theme`; other
+:term:`themes <theme>` name their blocks differently):
 
 .. code-block:: html+jinja
 
@@ -194,9 +198,9 @@ themes name their blocks differently):
 
 Results then show the project in the title and in a filter, and work
 under a URL prefix (``https://example.org/docs/alpha/...``) without
-settings. Pagefind's results list pages; to link the object in a page,
+settings. Pagefind's results list pages; to link the :term:`object` in a page,
 build sub-results from the ``mat-`` anchors that Pagefind records, in the
-search page's ``processResult`` option (Sphinx puts section ids on
+search page's ``processResult`` option (:term:`Sphinx` puts section ids on
 ``<section>`` elements, which Pagefind does not use for sub-results).
 
 Several versions
@@ -204,8 +208,9 @@ Several versions
 
 `sphinx-multiversion`_ builds the documentation of each Git branch and
 tag into its own folder and adds a version list to the pages. It needs
-Sphinx older than 9: version 0.2.5 fails on Sphinx 9 (``Config.read()``).
-How it works, and what follows for this extension:
+:term:`Sphinx` older than 9: version 0.2.5 fails on :term:`Sphinx` 9
+(``Config.read()``).
+How it works, and what follows for this :term:`extension`:
 
 * It copies each revision from Git (``git archive``) into a temporary
   folder and builds it there. Only committed files are in the copy.
@@ -213,7 +218,8 @@ How it works, and what follows for this extension:
   from; only ``version``, ``release``, ``rst_prolog`` and ``today`` come
   from the revision. The ``matlab_*`` values are therefore the checkout's.
 * A relative :confval:`matlab_src_code_project_root` is relative to the
-  Sphinx source folder, which is in the revision's copy, so each version
+  :term:`Sphinx` :term:`source folder <source directory>`, which is in the
+  revision's copy, so each version
   documents its own code. An absolute path, or one made from
   ``__file__`` in ``conf.py``, points every version at the checkout's
   code: older versions then document the newest code.
@@ -221,9 +227,9 @@ How it works, and what follows for this extension:
 API pages for each version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The API pages must be in the commit of each version. Running
+The :term:`API` pages must be in the commit of each version. Running
 ``scmd apidoc`` once before ``sphinx-multiversion`` does not
-help: uncommitted pages are not copied, so no version gets API pages.
+help: uncommitted pages are not copied, so no version gets :term:`API` pages.
 Two ways work:
 
 * Commit the generated pages, and keep them current with
@@ -247,8 +253,9 @@ Two ways work:
   The clone's tags and branches then point at commits with the pages; do
   not push them.
 
-Each version then has its own pages, objects, inventory, sidecar docs and
-images: an object that only one version has is in no other version. The
+Each version then has its own pages, :term:`objects <object>`,
+:term:`inventory`, sidecar docs and images: an :term:`object` that only one
+version has is in no other version. The
 version list links the same page of another version, or its start page
 when that version does not have the page.
 
@@ -258,7 +265,8 @@ Notes:
   sphinx`` in the revision's copy, so a ``sphinxcontrib/`` (or ``sphinx/``)
   folder at the top of the repository is imported instead of the
   installed packages.
-* Each version's output folder holds its doctrees (``.doctrees``); leave
+* Each version's output folder holds its :term:`doctrees <doctree>`
+  (``.doctrees``); leave
   them out when publishing.
 * On Python 3.12 and newer, give every ``sphinx-build`` option its value
   in the same argument: ``--doctree-dir=build/doctrees``, ``-bdirhtml``.
