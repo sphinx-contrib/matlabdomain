@@ -82,7 +82,9 @@ def test_docs_build_without_warnings(make_app, tmp_path):
     installation = (output / "getting-started/installation.html").read_text(
         encoding="utf-8"
     )
-    assert f"Tested: Python {version_range()}." in installation
+    # The sentence as text: "Sphinx" in it is a glossary link.
+    text = re.sub(r"<[^>]+>", "", installation)
+    assert f"Tested: Python {version_range()}." in text
     primer = (output / "getting-started/sphinx-primer.html").read_text(encoding="utf-8")
     assert 'href="../reference/glossary.html#term-builder"' in primer
     for name in (
