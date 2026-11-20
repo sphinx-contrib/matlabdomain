@@ -1732,7 +1732,6 @@ def quickstart(ctx):
     ctx.expect(
         ".gitignore has uncommitted" in proc.stderr,
         f"... naming .gitignore ({proc.stderr.strip()[-80:]})",
-        bug="E2E-1",
     )
 
     # 8. docs/ in use (an MkDocs folder): -q stops; interactive asks for another

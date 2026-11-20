@@ -544,6 +544,16 @@ def test_git_dirty(tmp_path, monkeypatch):
     assert _write.git_dirty(root) is None
 
 
+@pytest.mark.skipif(not HAS_GIT, reason="needs git")
+def test_git_dirty_names_a_modified_file_whole(tmp_path):
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / ".gitignore").write_text("x\n")
+    git_init(root)
+    (root / ".gitignore").write_text("x\ny\n")
+    assert _write.git_dirty(root) == [".gitignore"]
+
+
 def test_git_dirty_outside_a_work_tree(monkeypatch, tmp_path):
     monkeypatch.setattr(shutil, "which", lambda name: name)
     monkeypatch.setattr(

@@ -253,7 +253,7 @@ def run(command, cwd):
         encoding="utf-8",
         errors="replace",
     )
-    return proc.returncode, (proc.stdout + proc.stderr).strip()
+    return proc.returncode, (proc.stdout + proc.stderr).rstrip()
 
 
 def git_dirty(root):
