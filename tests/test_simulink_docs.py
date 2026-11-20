@@ -336,7 +336,11 @@ def test_line_break_in_a_block_name_is_a_space(make_app, tmp_path):
         "   :members: Two Lines, No Such Block\n",
     )
     assert page.count(anchor) == 1
-    assert "No Such Block" in warnings and "[mat.not_found]" in warnings
+    assert (
+        "probeLib.slx has no documented block 'No Such Block' [mat.not_found]"
+        in warnings
+    )
+    assert warnings.count("WARNING") == 1, warnings
 
     page, _ = build(
         make_app,

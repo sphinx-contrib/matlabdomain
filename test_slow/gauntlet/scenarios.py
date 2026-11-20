@@ -1963,7 +1963,6 @@ def simulink(ctx):
     ctx.expect(
         len(nope) == 1,
         f"a missing :members: block warns once ({len(nope)})",
-        bug="E2E-14",
     )
     other = [r for r in mine if "Nope" not in r]
     ctx.expect(not other, f"no other warning on the manual ({other[:2]})")

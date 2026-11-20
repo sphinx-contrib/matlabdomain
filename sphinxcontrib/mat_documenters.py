@@ -2243,16 +2243,6 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
         def among(block, names):
             return any(same_block(block.path, name) for name in names)
 
-        for name in named:
-            if not any(same_block(block.path, name) for block in blocks):
-                logger.warning(
-                    "[sphinxcontrib-matlabdomain] %s has no documented block %r",
-                    self.ref,
-                    name,
-                    type="mat",
-                    subtype="not_found",
-                    location=self.directive.location,
-                )
         return [
             block
             for block in blocks
@@ -2263,6 +2253,17 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
     def get_object_members(self, want_all):
         library = cast(MatLibrary, self.object)
         blocks = library.diagram.library_blocks if library.diagram else ()
+        # Here, not in _wanted, which document_members calls again.
+        for name in () if want_all else self.options.members or ():
+            if not any(same_block(block.path, name) for block in blocks):
+                logger.warning(
+                    "[sphinxcontrib-matlabdomain] %s has no documented block %r",
+                    self.ref,
+                    name,
+                    type="mat",
+                    subtype="not_found",
+                    location=self.directive.location,
+                )
         sections = mat_sidecars.documented_blocks(self.directive, self.ref)
         members = []
         for block in self._wanted(blocks, want_all):
