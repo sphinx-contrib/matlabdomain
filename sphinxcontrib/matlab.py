@@ -159,7 +159,7 @@ def _check_inventories(env, node, contnode):
         mat_types.warn_ambiguous(target, labels, node, "write one of them")
         return contnode
     if not found:
-        link = _namespace_folder(inventories, names, node, contnode)
+        link = _namespace_folder(inventories, names, node, target, contnode)
         if link is None and "intersphinx" in node:
             # intersphinx warns "not found" for an :external: role whose
             # MATLAB name is ambiguous; mat.ambiguous says more
@@ -212,12 +212,11 @@ def _named_in_inventories(inventories, names, objtypes, target):
     return found
 
 
-def _namespace_folder(inventories, names, node, contnode):
-    """Return a link to the only folder of the namespace a ``:mat:namespace:``
-    role names in another project that documents no namespace object (the
-    role accepts any type), or None.
+def _namespace_folder(inventories, names, node, target, contnode):
+    """Return a link to the only folder of the namespace ``target`` that a
+    ``:mat:namespace:`` role names in another project that documents no
+    namespace object (the role accepts any type), or None.
     """
-    target = node["reftarget"]
     if node["reftype"] != "namespace" or _named_in_inventories(
         inventories, names, ["namespace"], target
     ):
@@ -230,6 +229,8 @@ def _namespace_folder(inventories, names, node, contnode):
     # Sphinx < 8.2: (project, version, uri, display name)
     uri = getattr(item, "uri", None) or item[2]
     link = nodes.reference("", "", internal=False, refuri=uri, reftitle=ref)
+    if not node.get("refexplicit"):  # the MATLAB name, without ``lib:``
+        contnode = contnode.__class__(target, target, classes=contnode["classes"])
     link += contnode
     return link
 

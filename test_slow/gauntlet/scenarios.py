@@ -1157,6 +1157,8 @@ INTERSPHINX_PAGE = """
     * X10 :mat:func:`intfireleakyel_init`
     * X11 :mat:obj:`types.untyped.Set`
     * X12 :mat:func:`Read it <nwbRead.m>`
+    * X13 :mat:namespace:`vlt.app`
+    * X14 :mat:namespace:`vh:vlt.app`
     """
 
 TWO_VERSIONS_PAGE = """
@@ -1251,14 +1253,16 @@ def intersphinx(ctx):
     bugs = {}
     for key, href in sorted(links.items()):
         site = (
-            "https://vh.example/" if key in ("X09", "X10") else "https://one.example/"
+            "https://vh.example/"
+            if key in ("X09", "X10", "X13", "X14")
+            else "https://one.example/"
         )
         ctx.expect(
             bool(href) and href.startswith(site),
             f"{key} links to {site} ({href})",
             bug=bugs.get(key),
         )
-    ctx.expect(len(links) == 12, f"12 link items ({len(links)})")
+    ctx.expect(len(links) == 14, f"14 link items ({len(links)})")
     ctx.expect(
         "mat/name/intfireleakyel_init" in (links.get("X10") or ""),
         "an ambiguous name links to the library's chooser page",
