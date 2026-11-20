@@ -55,6 +55,7 @@ import sys
 import sysconfig
 import tempfile
 import time
+import tomllib
 from importlib import metadata
 from pathlib import Path
 
@@ -62,6 +63,8 @@ import projects as P
 
 REPO = P.HERE.parents[1]
 PY = sys.executable
+#: how a child process starts Python: ``[PY, "-m"]``, or under coverage with --coverage
+PY_M = [PY, "-m"]
 SUBTYPE = re.compile(r"\[([\w.-]+)\]\s*$")
 RECORD = re.compile(r"(^|: )(WARNING|ERROR|CRITICAL|SEVERE): ")
 SUMMARY = re.compile(
@@ -131,7 +134,7 @@ def run(*args):
     """
     start = time.perf_counter()
     proc = subprocess.run(
-        [PY, "-m", *args],
+        [*PY_M, *args],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -358,8 +361,7 @@ def quickstart(root, name, folder):
     start = time.perf_counter()
     proc = subprocess.run(
         [
-            PY,
-            "-m",
+            *PY_M,
             "sphinxcontrib.matlab_cli",
             "quickstart",
             str(root),
@@ -430,6 +432,68 @@ def run_quickstart(project, lock, out):
     return row, None, found
 
 
+def start_coverage(folder):
+    """Measure every child process from now on with the test suite's coverage
+    settings (``[tool.coverage]`` of pyproject.toml), its data in ``folder``;
+    return the rcfile.
+
+    Added: ``parallel`` (a data file per process), ``patch = ["fork", "_exit"]``
+    (the workers of ``-j`` are forked and leave through ``os._exit``) and an
+    absolute ``data_file``, because the children run in other folders.
+    """
+    global PY_M
+    folder.mkdir(parents=True, exist_ok=True)
+    for old in folder.glob(".coverage*"):
+        old.unlink()
+    with open(REPO / "pyproject.toml", "rb") as f:
+        settings = tomllib.load(f)["tool"]["coverage"]
+    settings["run"] |= {
+        "parallel": True,
+        "patch": ["fork", "_exit"],
+        "data_file": str(folder / ".coverage"),
+        # a child that imports none of the packages (apidoc's usage errors)
+        # would print these into the output the gauntlet reads
+        "disable_warnings": ["module-not-imported", "no-data-collected"],
+    }
+    lines = []
+    for table, values in settings.items():
+        lines.append(f"[tool.coverage.{table}]")
+        lines += [f"{key} = {json.dumps(value)}" for key, value in values.items()]
+    rcfile = folder / "coverage.toml"
+    rcfile.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    PY_M = [PY, "-m", "coverage", "run", f"--rcfile={rcfile}", "-m"]
+    return rcfile
+
+
+def report_coverage(rcfile):
+    """Combine the data files and write report.txt, coverage.json and htmlcov/
+    next to ``rcfile``; print the total.
+    """
+    folder = rcfile.parent
+    cov = [PY, "-m", "coverage"]
+    if any(folder.glob(".coverage.*")):
+        subprocess.run([*cov, "combine", "-q", f"--rcfile={rcfile}"], cwd=REPO)
+    with open(folder / "report.txt", "w", encoding="utf-8") as f:
+        subprocess.run(
+            [*cov, "report", f"--rcfile={rcfile}", "--skip-covered"],
+            cwd=REPO,
+            stdout=f,
+        )
+    for kind, flag in (("json", "-o"), ("html", "-d")):
+        out = folder / ("coverage.json" if kind == "json" else "htmlcov")
+        subprocess.run(
+            [*cov, kind, "-q", f"--rcfile={rcfile}", flag, str(out)], cwd=REPO
+        )
+    totals = json.loads((folder / "coverage.json").read_text(encoding="utf-8"))[
+        "totals"
+    ]
+    print(
+        f"coverage: lines {totals['percent_statements_covered']:.1f}%, branches "
+        f"{totals['percent_branches_covered']:.1f}%, total "
+        f"{totals['percent_covered']:.1f}% (report: {folder / 'report.txt'})"
+    )
+
+
 def print_quickstart_table(rows):
     """Per project: API pages, files indexed, warnings and times."""
     print(
@@ -478,6 +542,12 @@ def main():
     parser.add_argument(
         "--projects", default=P.LIST, help="the project list (default: %(default)s)"
     )
+    parser.add_argument(
+        "--coverage",
+        action="store_true",
+        help="measure the children with the test suite's coverage settings; data "
+        "and reports in OUT/coverage",
+    )
     args = parser.parse_args()
     if args.fetch:
         fetch = [sys.executable, str(P.HERE / "fetch.py"), *args.names]
@@ -485,6 +555,7 @@ def main():
             sys.exit("fetch.py failed; nothing was run")
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
+    rcfile = start_coverage(out / "coverage") if args.coverage else None
 
     lock = P.load_lock(args.projects)
     results = {"environment": environment(), "projects": {}}
@@ -512,6 +583,8 @@ def main():
     count = sum(map(len, bad.values()))
     if args.quickstart:
         print_quickstart_table(results["projects"])
+    if rcfile:
+        report_coverage(rcfile)
     print(f"\n{len(found)} projects; {count} problems; results in {out}")
     for name, items in bad.items():
         for item in items:

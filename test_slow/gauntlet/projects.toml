@@ -72,3 +72,9 @@ url = "https://github.com/petercorke/spatialmath-matlab.git"
 [projects.vhlab-toolbox-matlab]
 commit = "ac85cf5cb233561ebaa9f581edc1625f36b27c78"
 url = "https://github.com/VH-Lab/vhlab-toolbox-matlab.git"
+
+# The only project with classes that declare events (32 classes), App
+# Designer apps and a .prj MATLAB project; added 2026-11-19.
+[projects.widgets-toolbox]
+commit = "04f492d102e31f43cf17eb997ed7b85042035f78"
+url = "https://github.com/mathworks/widgets-toolbox.git"

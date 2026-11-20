@@ -147,7 +147,7 @@ The real-project gauntlet
 -------------------------
 
 ``test_slow/gauntlet`` runs ``scmd apidoc``, ``sphinx-build`` and
-``matlab-api-check`` on 14 open-source MATLAB projects (about 24,000 files)
+``matlab-api-check`` on 15 open-source MATLAB projects (about 24,000 files)
 and checks that nothing crashes, reruns are identical, serial and ``-j``
 builds agree, and Windows and Linux give the same output. Run it before
 changing the parser, the index or a tree-sitter pin; ``test_slow/README.md``
@@ -164,6 +164,16 @@ takes about 20 minutes on Linux.
 With ``--quickstart`` it runs ``scmd quickstart -q`` on a
 temporary ``git worktree`` of each project instead, then a ``-n`` build of
 what the command wrote; the checkouts stay unchanged.
+
+The gauntlet builds every project with the default configuration.
+``test_slow/gauntlet/scenarios.py`` runs the commands on the same projects
+with the rest of the interface (options, flags, hand-written pages,
+incremental rebuilds, intersphinx, invalid configuration, broken input,
+quickstart on standard input) and checks the expected behavior. With
+``--coverage`` both measure the code they reach with the test suite's
+coverage settings; ``test_slow/gauntlet/README.md`` explains how to combine
+the runs. The unit tests hold 100%; this number shows how much of the code
+real projects reach through the real interface.
 
 The checkouts need about 5 GB. On Windows, Git must create symbolic links:
 matpower, for one, has 807 of them, and without them Git writes small text

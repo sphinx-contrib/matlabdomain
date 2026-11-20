@@ -2,7 +2,8 @@
 
 Runs `scmd apidoc` and `sphinx-build` on real MATLAB projects and
 reports crashes, warnings by subtype, timings, and serial vs `-j`
-differences (14 projects, about 24,000 `.m` files).
+differences (15 projects, about 24,000 `.m` files). `scenarios.py` uses the
+rest of the interface on the same checkouts (below).
 
 | File | Purpose |
 |---|---|
@@ -11,6 +12,8 @@ differences (14 projects, about 24,000 `.m` files).
 | `fetch.py` | Clones a missing project into `../repos/<name>` and moves an existing checkout to its commit. |
 | `gauntlet.py` | Runs the gauntlet on the checkouts and writes `results.json` (the summary) and `manifest.json`. Clones nothing. |
 | `compare.py` | Compares two runs, or a run and a saved summary. |
+| `scenarios.py` | End-to-end scenarios: the options, flags, directives, roles, builders, rebuilds and error paths the gauntlet's default runs never use, each with checks of the expected behavior. |
+| `combine_coverage.py` | Combines the coverage of several runs made with `--coverage`. |
 | `summaries/` | The baseline per platform (`linux.json`, `windows.json`): the `results.json` of a full run with `--jobs`. `environment` in each names the date and the commit. |
 
 `test_slow/repos/` (checkouts, shared with the profiling and Simulink tools) and
@@ -64,6 +67,48 @@ python test_slow/gauntlet/gauntlet.py --quickstart --out test_slow/gauntlet/runs
 
 To update a baseline, copy `runs/<name>/results.json` to `summaries/<platform>.json`.
 
+## Scenarios
+
+`gauntlet.py` builds every project with the default configuration, so it
+reaches about 78% of the code. `scenarios.py` runs the real `scmd` and
+`sphinx-build` on the same checkouts (and on the repo's `docs/` and
+Simulink fixtures) with the rest of the interface: apidoc's options and
+flags, incremental rebuilds after edits, hand-written pages with every
+directive and role, intersphinx between projects, every invalid
+configuration value, quickstart answered on stdin and from answers files,
+`scmd skills`, the Simulink fixtures, broken input, the other configuration
+values and builders, api-check settings, and classes with events. Each
+scenario checks what correct behavior is (exit codes, warnings, pages,
+links); a project that is changed is copied first.
+
+```bash
+python test_slow/gauntlet/scenarios.py --list
+python test_slow/gauntlet/scenarios.py                  # all, about 10 minutes
+python test_slow/gauntlet/scenarios.py incremental      # one
+```
+
+Exit 1 on a failed check, a traceback, or a scenario that raised. A check
+marked with a bug id (`bug="E2E-3"`) is a known bug: it is listed as known
+while it fails, and the run asks to remove the mark when it passes. The
+ids are described in `matlabdomain-ai-files/gauntlet-coverage.md`.
+
+## Coverage
+
+`--coverage` (in `gauntlet.py` and `scenarios.py`) measures every child
+process with the test suite's coverage settings (`[tool.coverage]` of
+`pyproject.toml`, plus what it takes to follow child and `-j` worker
+processes) and writes `OUT/coverage/report.txt`, `coverage.json` and
+`htmlcov/`. To see what all the end-to-end runs reach together:
+
+```bash
+python test_slow/gauntlet/gauntlet.py --jobs --coverage --out runs/g
+python test_slow/gauntlet/gauntlet.py --quickstart --coverage --out runs/q
+python test_slow/gauntlet/scenarios.py --coverage --out runs/s
+python test_slow/gauntlet/combine_coverage.py runs/g runs/q runs/s --out runs/all
+```
+
+With coverage the runs take about 1.5 times as long.
+
 ## Repeatable commits
 
 - `commit` in `projects.toml` pins a project (a SHA, best in full, or a tag).
@@ -89,7 +134,9 @@ be moved the same way: `mv test_slow/gauntlet/repos test_slow/repos`.
 
 ## Expected (`summaries/`, 2026-11)
 
-All 14 projects: exit 0 everywhere except `api` (exit 1: every project has
+widgets-toolbox (added 2026-11-19) is not in the saved baselines yet;
+`compare.py` lists it as new until they are made again. All 14 other
+projects: exit 0 everywhere except `api` (exit 1: every project has
 findings), no traceback or duplicate object, the rerun changes nothing, and
 Windows and Linux give the same pages, warnings and api-check findings.
 `compare.py` on the two summaries prints `1 of 14 projects differ`:

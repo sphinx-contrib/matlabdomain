@@ -1,0 +1,2395 @@
+"""End-to-end scenarios: the real ``scmd`` and ``sphinx-build`` on real projects.
+
+Usage, from the matlabdomain repo root:
+  python test_slow/gauntlet/scenarios.py [NAME ...] [--out DIR] [--coverage] [--list]
+
+The gauntlet (gauntlet.py) builds 14 real projects with the default
+configuration. A scenario uses the rest of the interface on the same checkouts
+(test_slow/repos/, see README.md) or on the repo's own docs and Simulink
+fixtures: the other configuration values, the CLI flags, hand-written pages
+with every directive and role, incremental rebuilds after edits, intersphinx
+between two projects, other builders, invalid configuration, broken input, and
+quickstart answered on stdin. Each scenario states what correct behavior is
+(exit codes, warnings, pages, links) and checks it.
+
+A check marked with a bug id (``bug="E2E-3"``; the list:
+matlabdomain-ai-files/gauntlet-coverage.md) is a known bug: while it fails it
+is reported as known, not as a problem; when it passes, the run says to remove
+the mark. Every command is also checked for a traceback (a crash).
+
+A scenario that mutates a project works on a copy in OUT/<scenario>/; the
+checkouts stay as they are. Writes OUT/results.json and a log of each
+command (OUT/<scenario>/NN-<step>.log). Exit 1 on a failed check, a crash or a
+scenario that raised. With --coverage, the children are measured with the test
+suite's coverage settings (OUT/coverage, as gauntlet.py --coverage).
+"""
+
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+import traceback
+from pathlib import Path
+
+import gauntlet as G
+import projects as P
+
+REPO = G.REPO
+REPOS = P.REPOS
+DOCS = REPO / "docs"
+FIXTURES = REPO / "tests" / "simulink" / "fixtures"
+SCMD = Path(sys.executable).with_name("scmd" + (".exe" if os.name == "nt" else ""))
+SCENARIOS = {}
+#: the base conf.py of a scenario; values are added with ``conf(..., **values)``
+BASE_CONF = {
+    "extensions": ["sphinx.ext.autodoc", "sphinxcontrib.matlab"],
+    "exclude_patterns": ["_build"],
+}
+
+
+def scenario(func):
+    """Register ``func`` as a scenario named after it (``_`` -> ``-``)."""
+    SCENARIOS[func.__name__.replace("_", "-")] = func
+    return func
+
+
+class Failed(Exception):
+    """A step whose failure makes the rest of the scenario meaningless."""
+
+
+class Ctx:
+    """One scenario's folder, commands and checks."""
+
+    def __init__(self, name, folder):
+        self.name = name
+        self.dir = folder
+        self.checks = []
+        self.step = 0
+        shutil.rmtree(folder, ignore_errors=True)
+        folder.mkdir(parents=True)
+
+    # --- checks -------------------------------------------------------------
+    def expect(self, ok, what, bug=None):
+        """Record a check; return ``ok``."""
+        status = "ok" if ok else "FAIL"
+        if bug:
+            status = "known" if not ok else "FIXED?"
+        self.checks.append({"status": status, "what": what, "bug": bug})
+        mark = {"ok": " ", "FAIL": "!", "known": "~", "FIXED?": "?"}[status]
+        print(f"  {mark} {what}" + (f" [{bug}]" if bug else ""), flush=True)
+        return ok
+
+    def require(self, ok, what):
+        """Record a check the rest depends on; stop the scenario when it fails."""
+        if not self.expect(ok, what):
+            raise Failed(what)
+
+    # --- files --------------------------------------------------------------
+    def path(self, *parts):
+        """Return a path below the scenario's folder."""
+        return self.dir.joinpath(*parts)
+
+    def write(self, rel, text, encoding="utf-8"):
+        """Write ``text`` (dedented) to ``self.dir / rel``; return the path."""
+        path = self.dir / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_dedent(text), encoding=encoding, newline="\n")
+        return path
+
+    def copy_project(self, name, dest=None, root=""):
+        """Copy the checkout ``name`` (without .git) to ``self.dir / dest``."""
+        src = REPOS / name / root
+        if not src.is_dir():
+            raise Failed(f"no checkout {src} (run fetch.py)")
+        dest = self.dir / (dest or name)
+        shutil.copytree(src, dest, symlinks=True, ignore=shutil.ignore_patterns(".git"))
+        return dest
+
+    def conf(self, folder, **values):
+        """Write ``folder/conf.py``: BASE_CONF updated with ``values``; a value
+        of the class ``Raw`` is written as is.
+        """
+        settings = {**BASE_CONF, **values}
+        lines = [
+            f"{key} = {value if isinstance(value, Raw) else repr(value)}"
+            for key, value in settings.items()
+        ]
+        folder = Path(folder)
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / "conf.py").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return folder
+
+    # --- commands -----------------------------------------------------------
+    def run(self, label, argv, cwd=None, stdin=None, crash_ok=False, env=None):
+        """Run ``argv`` (after the Python prefix); log it; check for a crash."""
+        self.step += 1
+        start = time.perf_counter()
+        proc = subprocess.run(
+            [*argv],
+            cwd=cwd or REPO,
+            input=stdin,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env={**G.ENV, **(env or {})},
+        )
+        wall = time.perf_counter() - start
+        log = self.dir / f"{self.step:02d}-{_slug(label)}.log"
+        log.write_text(
+            f"$ {' '.join(map(str, argv))}\n(cwd {cwd or REPO}; exit "
+            f"{proc.returncode}; {wall:.1f} s)\n--- stdout\n{proc.stdout}"
+            f"--- stderr\n{proc.stderr}",
+            encoding="utf-8",
+        )
+        if not crash_ok:
+            self.expect(not crashed(proc.stderr), f"{label}: no traceback ({log.name})")
+        return proc
+
+    def scmd(self, label, *args, **kw):
+        """Run the installed ``scmd`` console script with ``args``."""
+        return self.run(label, [*python(), str(SCMD), *map(str, args)], **kw)
+
+    def sphinx(
+        self,
+        label,
+        src,
+        out,
+        *args,
+        builder="html",
+        fresh=True,
+        doctrees=None,
+        crash_ok=False,
+    ):
+        """Run sphinx-build; return a Build (exit code, warnings, out folder).
+
+        ``fresh``: -E and an empty output folder; else the output and the
+        doctrees (``doctrees`` or <out>.doctrees next to it) are kept.
+        """
+        out = Path(out)
+        doctrees = Path(doctrees) if doctrees else out.with_name(out.name + ".doctrees")
+        if fresh:
+            shutil.rmtree(out, ignore_errors=True)
+        out.mkdir(parents=True, exist_ok=True)
+        warnfile = out.parent / f"{out.name}.warnings.txt"
+        warnfile.unlink(missing_ok=True)
+        argv = [
+            *python(),
+            "-m",
+            "sphinx",
+            "-b",
+            builder,
+            "-d",
+            str(doctrees),
+            "-w",
+            str(warnfile),
+            *(["-E"] if fresh else []),
+            *map(str, args),
+            str(src),
+            str(out),
+        ]
+        proc = self.run(label, argv, crash_ok=crash_ok)
+        text = warnfile.read_text(encoding="utf-8") if warnfile.exists() else ""
+        return Build(proc, text, out)
+
+
+EXCEPTION = re.compile(
+    r"^\s*([A-Za-z_][\w.]*(?:Error|Exception|Interrupt)): ", re.MULTILINE
+)
+
+
+def crashed(stderr):
+    """Whether ``stderr`` shows a crash: a traceback, unless it ends in a
+    ``ConfigError`` (Sphinx prints its full report for every ``SphinxError``,
+    also a deliberate configuration error).
+    """
+    if "Traceback" not in stderr and "Exception occurred" not in stderr:
+        return False
+    errors = EXCEPTION.findall(stderr)
+    return not errors or errors[-1] != "sphinx.errors.ConfigError"
+
+
+class Raw(str):
+    """A conf.py value written as Python source."""
+
+
+class Build:
+    """The result of one sphinx-build."""
+
+    def __init__(self, proc, warnings, out):
+        self.proc = proc
+        self.rc = proc.returncode
+        self.warnings = warnings
+        self.records = G.records(warnings)
+        self.subtypes = G.subtypes(warnings)
+        self.out = out
+        self.stdout = proc.stdout
+        self.stderr = proc.stderr
+
+    def html(self, rel):
+        """Return the text of the output file ``rel`` ("" if missing)."""
+        path = self.out / rel
+        return path.read_text(encoding="utf-8") if path.exists() else ""
+
+    def files(self, suffix=".html"):
+        """Return the output files ending in ``suffix`` -> their bytes."""
+        return {
+            p.relative_to(self.out).as_posix(): p.read_bytes()
+            for p in self.out.rglob(f"*{suffix}")
+        }
+
+    def warned(self, pattern):
+        """Return the warning records that match the regular expression ``pattern``."""
+        return [r for r in self.records if re.search(pattern, r)]
+
+
+def mat_warnings(build):
+    """Return the warning records of matlabdomain (``[mat.*]``)."""
+    return build.warned(r"\[mat\.")
+
+
+def python():
+    """Return the Python prefix of a child process (with coverage under --coverage)."""
+    return G.PY_M[:-1]
+
+
+def _dedent(text):
+    import textwrap
+
+    return textwrap.dedent(text).lstrip("\n")
+
+
+def _slug(text):
+    return re.sub(r"[^A-Za-z0-9]+", "-", text).strip("-")[:50]
+
+
+def html_text(html):
+    """Return the text of an HTML page, tags removed and white space collapsed."""
+    return " ".join(re.sub(r"<[^>]+>", " ", html).split())
+
+
+# ---------------------------------------------------------------------------
+# Scenarios, each a function of a Ctx.
+# ---------------------------------------------------------------------------
+
+
+@scenario
+def docs(ctx):
+    """Build the repo's own documentation: strict, serial and -j, other builders."""
+    serial = ctx.sphinx("html", DOCS, ctx.path("html"), "-n", "-W", "--keep-going")
+    ctx.expect(serial.rc == 0, f"strict build: exit 0 (got {serial.rc})")
+    ctx.expect(not serial.records, f"no warnings ({len(serial.records)})")
+    par = ctx.sphinx("html -j", DOCS, ctx.path("html-j"), "-n", "-j", "auto")
+    ctx.expect(par.rc == 0 and not par.records, "-j build: exit 0, no warnings")
+    differ = [
+        f
+        for f, data in serial.files().items()
+        if par.files().get(f) != data and not f.startswith("_")
+    ]
+    ctx.expect(not differ, f"-j pages equal the serial ones ({differ[:3]})")
+    api = ctx.sphinx("api-check", DOCS, ctx.path("api"), builder="matlab-api-check")
+    ctx.expect(api.rc in (0, 1), f"api-check: exit 0 or 1 (got {api.rc})")
+    report = api.out / "api-check.json"
+    ctx.expect(report.exists(), "api-check writes api-check.json")
+    for builder in ("dirhtml", "singlehtml", "text", "latex", "epub"):
+        b = ctx.sphinx(builder, DOCS, ctx.path(builder), "-n", builder=builder)
+        ctx.expect(b.rc == 0, f"-b {builder}: exit 0 (got {b.rc})")
+        ctx.expect(
+            not mat_warnings(b),
+            f"-b {builder}: no matlabdomain warnings ({mat_warnings(b)[:2]})",
+        )
+
+
+def apidoc_project(ctx, name, folder="docs", root="", **values):
+    """Write ``ctx.dir/<folder>/conf.py`` documenting the checkout ``name``."""
+    return ctx.conf(
+        ctx.path(folder),
+        matlab_src_code_project_root=str(REPOS / name / root),
+        matlab_apidoc_output_dir="api",
+        **values,
+    )
+
+
+def rst_pages(folder):
+    """Return the generated pages below ``folder`` -> their text."""
+    return {
+        p.relative_to(folder).as_posix(): p.read_text(encoding="utf-8")
+        for p in sorted(folder.rglob("*.rst"))
+        if "_build" not in p.parts
+    }
+
+
+SUMMARY = re.compile(r"(\d+) pages?: (\d+) created, (\d+) updated, (\d+) unchanged")
+
+
+def counts(proc):
+    """Return the (pages, created, updated, unchanged) of an apidoc summary, or None."""
+    m = SUMMARY.search(proc.stdout)
+    return tuple(map(int, m.groups())) if m else None
+
+
+@scenario
+def apidoc_options(ctx):
+    """Run scmd apidoc's options and flags on real projects: folder grouping,
+    separate pages, private files, page size, depth, toc file, -n, -k, -q, -f,
+    switching the grouping back, and a build of each result.
+    """
+    for name in ("matnwb", "vhlab-toolbox-matlab"):
+        docs = apidoc_project(
+            ctx,
+            name,
+            folder=name,
+            matlab_apidoc_group="folder",
+            matlab_apidoc_separate=True,
+            matlab_apidoc_private=True,
+            matlab_apidoc_page_size=7,
+            matlab_apidoc_maxdepth=2,
+            matlab_apidoc_tocfile="reference",
+        )
+        (docs / "index.rst").write_text(
+            f"{name}\n{'=' * len(name)}\n\n.. toctree::\n\n   api/reference\n",
+            encoding="utf-8",
+        )
+        dry = ctx.scmd(f"{name} -n", "apidoc", "-c", docs, "-n")
+        ctx.expect(dry.returncode == 0, f"{name}: -n exits 0")
+        ctx.expect(not (docs / "api").exists(), f"{name}: -n writes nothing")
+        stale = ctx.scmd(f"{name} -k before", "apidoc", "-c", docs, "-k")
+        ctx.expect(stale.returncode == 1, f"{name}: -k exits 1 before the first run")
+        gen = ctx.scmd(f"{name} apidoc", "apidoc", "-c", docs)
+        ctx.require(gen.returncode == 0, f"{name}: apidoc exits 0")
+        pages = rst_pages(docs / "api")
+        n = counts(gen)
+        ctx.expect(
+            n is not None and n[0] == n[1] == len(pages),
+            f"{name}: the summary counts every page as created ({n}, {len(pages)})",
+        )
+        ctx.expect("reference.rst" in pages, f"{name}: the toc file is reference.rst")
+        ctx.expect(
+            any("mat:autofolder" in t for t in pages.values()),
+            f"{name}: folder grouping writes mat:autofolder",
+        )
+        ctx.expect(
+            any(p.endswith("-2.rst") for p in pages),
+            f"{name}: page_size 7 splits a long folder into pages",
+        )
+        if name == "matnwb":
+            ctx.expect(
+                any("private" in p for p in pages),
+                f"{name}: matlab_apidoc_private documents private folders",
+            )
+        quiet = ctx.scmd(f"{name} -q", "apidoc", "-c", docs, "-q")
+        ctx.expect(
+            quiet.returncode == 0 and not quiet.stdout,
+            f"{name}: -q prints nothing on stdout",
+        )
+        check = ctx.scmd(f"{name} -k after", "apidoc", "-c", docs, "-k")
+        ctx.expect(check.returncode == 0, f"{name}: -k exits 0 when up to date")
+        force = ctx.scmd(f"{name} -f", "apidoc", "-c", docs, "-f")
+        n = counts(force)
+        ctx.expect(
+            n is not None and n[1] == n[2] == 0,
+            f"{name}: -f rerun creates and updates nothing ({n})",
+        )
+        b = ctx.sphinx(f"{name} html", docs, ctx.path(f"{name}-html"), "-n")
+        ctx.expect(b.rc == 0, f"{name}: folder-grouped html: exit 0")
+        ctx.expect(
+            not b.warned(r"duplicate object|toctree contains reference to nonexisting"),
+            f"{name}: no duplicate object or broken toctree",
+        )
+        ctx.expect(
+            not b.warned(r"document isn't included in any toctree"),
+            f"{name}: every generated page is in a toctree "
+            f"({len(b.warned('isn.t included'))})",
+        )
+        # switch back to namespace grouping: the folder pages go
+        text = (docs / "conf.py").read_text(encoding="utf-8")
+        (docs / "conf.py").write_text(
+            text.replace("'folder'", "'namespace'"), encoding="utf-8"
+        )
+        ctx.expect(
+            ctx.scmd(f"{name} -k switched", "apidoc", "-c", docs, "-k").returncode == 1,
+            f"{name}: -k exits 1 after switching the grouping",
+        )
+        ctx.scmd(f"{name} apidoc namespace", "apidoc", "-c", docs)
+        after = rst_pages(docs / "api")
+        ctx.expect(
+            not any("mat:autofolder" in t for t in after.values()),
+            f"{name}: switching to namespace grouping removes the folder pages",
+        )
+        b = ctx.sphinx(f"{name} html ns", docs, ctx.path(f"{name}-html-ns"), "-n")
+        ctx.expect(
+            b.rc == 0 and not b.warned(r"duplicate object"),
+            f"{name}: namespace-grouped html after the switch: exit 0",
+        )
+
+
+ENV_COUNTS = re.compile(
+    r"updating environment: (?:\[[^\]]*\] )?(\d+) added, (\d+) changed, (\d+) removed"
+)
+
+
+def env_counts(build):
+    """Return the (added, changed, removed) of sphinx-build's "updating environment"."""
+    m = ENV_COUNTS.search(build.stdout)
+    return tuple(map(int, m.groups())) if m else None
+
+
+def same_pages(ctx, what, a, b, suffixes=(".html", ".inv")):
+    """Check that two builds wrote the same pages (byte for byte)."""
+    fa, fb = {}, {}
+    for suffix in suffixes:
+        fa |= a.files(suffix)
+        fb |= b.files(suffix)
+    differ = sorted(f for f in set(fa) | set(fb) if fa.get(f) != fb.get(f))
+    ctx.expect(not differ, f"{what} ({len(differ)} differ: {differ[:4]})")
+    return differ
+
+
+def auto_pages(docs):
+    """Return the number of pages below ``docs`` with an auto directive."""
+    return sum(".. mat:auto" in t for t in rst_pages(docs).values())
+
+
+@scenario
+def incremental(ctx):
+    """Edit, add, delete and shadow files of a copy of matnwb between builds
+    that keep their environment; rerun apidoc; change the configuration; the
+    final incremental pages must equal a clean build's.
+    """
+    proj = ctx.copy_project("matnwb", "proj")
+    docs = ctx.conf(
+        ctx.path("docs"),
+        matlab_src_code_project_root=str(proj),
+        matlab_apidoc_output_dir="api",
+    )
+    ctx.write(
+        "docs/index.rst",
+        """
+        matnwb
+        ======
+
+        .. toctree::
+
+           api/index
+        """,
+    )
+    html = ctx.path("html")
+
+    def build(label, **kw):
+        b = ctx.sphinx(label, docs, html, fresh=False, **kw)
+        ctx.expect(b.rc == 0, f"{label}: exit 0 (got {b.rc})")
+        return b
+
+    ctx.require(ctx.scmd("apidoc", "apidoc", "-c", docs).returncode == 0, "apidoc")
+    first = build("first build")
+    again = build("nothing changed")
+    ctx.expect(
+        env_counts(again) == (0, 0, 0),
+        f"a rebuild with nothing changed reads nothing ({env_counts(again)})",
+    )
+    # the index-stage warnings repeat on every build (reference/warnings.rst)
+    ctx.expect(
+        set(again.records) <= set(first.records)
+        and set(again.subtypes) <= {"mat.encoding", "mat.empty_code_file"},
+        f"... and repeats only the index-stage warnings ({again.subtypes})",
+    )
+
+    # edit the help of a global function: only its page is read again
+    f = proj / "nwbRead.m"
+    f.write_text(
+        f.read_text(encoding="utf-8").replace(
+            "% NWBREAD - Read an NWB file.", "% NWBREAD - Read an NWB file. Zebra42."
+        ),
+        encoding="utf-8",
+    )
+    edited = build("help edited")
+    ctx.expect(
+        env_counts(edited) == (0, 1, 0),
+        f"editing one help reads one page again ({env_counts(edited)})",
+    )
+    ctx.expect(
+        any(b"Zebra42" in d for d in edited.files().values()),
+        "the edited help is in the HTML",
+    )
+    ctx.expect(
+        ctx.scmd("-k help", "apidoc", "-c", docs, "-k").returncode == 0,
+        "apidoc -k: editing a help changes no page",
+    )
+
+    # add a function: apidoc -k sees it, apidoc adds it, the build documents it
+    ctx.write(
+        "proj/+io/zebraNew.m",
+        """
+        function out = zebraNew(in)
+        %ZEBRANEW Return the input. Added by the incremental scenario.
+        out = in;
+        end
+        """,
+    )
+    ctx.expect(
+        ctx.scmd("-k added", "apidoc", "-c", docs, "-k").returncode == 1,
+        "apidoc -k exits 1 after a function is added",
+    )
+    n = counts(ctx.scmd("apidoc added", "apidoc", "-c", docs))
+    ctx.expect(n is not None and n[2] >= 1, f"apidoc updates the io page ({n})")
+    added = build("function added")
+    page = added.html("api/io.html")
+    ctx.expect("zebraNew" in page, "the added function is on api/io.html")
+    # a file added: every page that looked up sources is read again
+    # (developer-guide/architecture.rst: env-get-outdated)
+    ctx.expect(
+        env_counts(added) == (0, auto_pages(docs), 0),
+        f"every API page is read again after a file is added ({env_counts(added)})",
+    )
+
+    # delete a function that others name in "See also" and code
+    (proj / "+io" / "isBool.m").unlink()
+    ctx.scmd("apidoc deleted", "apidoc", "-c", docs)
+    deleted = build("function deleted")
+    page = deleted.html("api/io.html")
+    ctx.expect(
+        'id="+io/isBool.m"' not in page and "io.isBool" not in page,
+        "the deleted function is gone from api/io.html",
+    )
+    ctx.expect(
+        not deleted.warned(r"isBool"),
+        f"no warning names it ({deleted.warned('isBool')[:2]})",
+    )
+
+    # a MEX file next to a function: MATLAB calls the MEX file, the help stays
+    (proj / "+io" / "getMatType.mexa64").write_bytes(b"\x7fELF")
+    mex = build("mex added")
+    ctx.expect(
+        "getMatType" in mex.html("api/io.html"),
+        "a function with a MEX file next to it stays documented",
+    )
+
+    # a function file turned into a script, and a class removed from a namespace
+    s = proj / "+io" / "pathParts.m"
+    s.write_text("% PATHPARTS A script now.\ndisp(1)\n", encoding="utf-8")
+    ctx.scmd("apidoc script", "apidoc", "-c", docs)
+    script = build("function became a script")
+    ctx.expect(
+        not script.warned(r"pathParts"),
+        f"a function that became a script: no warning "
+        f"({script.warned('pathParts')[:1]})",
+    )
+
+    # a configuration change reads every page again
+    conf = docs / "conf.py"
+    conf.write_text(
+        conf.read_text(encoding="utf-8") + "matlab_auto_link = 'all'\n",
+        encoding="utf-8",
+    )
+    configured = build("config changed")
+    n = env_counts(configured)
+    # Sphinx starts a fresh environment: every page counts as added
+    ctx.expect(
+        n is not None and n[0] + n[1] > auto_pages(docs),
+        f"a changed matlab_ value reads every page again ({n})",
+    )
+    final = build("final incremental")
+    clean = ctx.sphinx("clean build", docs, ctx.path("clean"))
+    same_pages(ctx, "the incremental build equals a clean build", final, clean)
+
+
+MANUAL = """
+    User manual
+    ===========
+
+    .. mat:currentfolder:: .
+
+    .. mat:autofunction:: nwbRead
+
+    .. mat:autofunction:: nwbExport(nwb, filename)
+
+       Content after the help text.
+
+    .. mat:autoclass:: NwbFile
+       :members:
+       :undoc-members:
+       :show-inheritance:
+       :inherited-members:
+       :member-order: bysource
+
+    .. mat:autoclass:: types.untyped.Set
+       :members: validateAll, export, add
+       :private-members:
+       :protected-members:
+       :hidden-members:
+       :access-list-members: ?matnwb.mixin.HasUnnamedGroups
+       :exclude-members: export
+       :member-order: groupwise
+
+    .. mat:autoclass:: +types/+untyped/@DataStub/DataStub.m
+       :members:
+
+    .. mat:automethod:: types.untyped.Set.validateAll
+       :noindex:
+
+    .. mat:autoclass:: spec.enum.Primitives
+       :members:
+       :undoc-members:
+
+    .. mat:autoscript:: tutorials/convertTrials.m
+
+    .. mat:autodata:: tutorials/dataPipe.m
+
+    .. mat:autofolder:: +misc/
+       :members:
+       :synopsis: Small helpers.
+       :platform: any
+       :deprecated:
+
+    .. mat:autonamespace:: file.interface
+       :members:
+       :undoc-members:
+       :synopsis: The interfaces.
+
+    .. mat:autonamespace:: io.space
+       :members: segmentSelection
+
+    .. mat:folder:: +io/+config/
+       :synopsis: Configuration.
+
+    .. mat:namespace:: types.untyped
+       :synopsis: Untyped containers.
+
+    .. mat:currentfolder:: +types/+untyped
+
+    Links, one per item:
+
+    * L01 :mat:class:`Set.m`
+    * L02 :mat:class:`~types.untyped.Set`
+    * L03 :mat:func:`.nwbRead`
+    * L04 :mat:meth:`types.untyped.Set.add`
+    * L05 :mat:obj:`the reader <nwbRead>`
+    * L06 :any:`nwbRead`
+    * L07 :mat:folder:`+misc/`
+    * L08 :mat:namespace:`types.untyped`
+    * L09 :mat:class:`spec.enum.Primitives`
+    * L10 :mat:scpt:`tutorials/convertTrials.m`
+    * L11 :mat:func:`+misc/str2validName.m`
+    * L12 :mat:class:`@DataStub/DataStub.m`
+
+    .. mat:currentfolder:: None
+
+    Hand-written descriptions
+    -------------------------
+
+    .. mat:function:: handWritten(a, [b, ]c) -> y
+       :annotation: helper
+
+       A hand-written function.
+
+    .. mat:class:: Shape(x)
+       :abstract:
+
+       A hand-written class.
+
+       .. mat:method:: area()
+
+       .. mat:staticmethod:: fromJson(text)
+
+       .. mat:attribute:: Sides
+
+       .. mat:event:: Changed
+
+    .. mat:script:: setupAll
+
+    .. mat:application:: Viewer
+
+    .. mat:data:: settings
+
+    * L13 :mat:func:`handWritten`
+    * L14 :mat:meth:`Shape.area`
+    * L15 :mat:event:`Shape.Changed`
+    """
+
+MISTAKES = """
+    Mistakes
+    ========
+
+    Each one should warn.
+
+    .. mat:autofunction:: noSuchFunction
+
+    .. mat:namespace:: no.such.namespace
+
+    .. mat:folder:: +types/+untyped/@DataStub/
+
+    .. mat:autonamespace:: io.space
+       :members: segmentSelection, noSuchMember
+       :noindex:
+
+    .. mat:autoclass:: types.untyped.Set
+       :noindex:
+       :no-such-option:
+
+    .. mat:autoclass:: types.untyped.Set
+       :noindex:
+       :member-order: sideways
+
+    .. mat:currentfolder:: +types/+untyped
+
+    MATLAB does not see a bare ``Set`` from inside ``+types/+untyped``:
+
+    .. mat:autoclass:: Set
+       :noindex:
+
+    * M02 :mat:class:`Set`
+
+    .. mat:autofolder:: +misc/
+       :noindex:
+
+    .. mat:autofunction:: str2validName
+       :noindex:
+
+    .. mat:folder:: no_such_folder/
+
+    .. mat:currentfolder:: no_such_folder
+
+    * M01 :mat:func:`noSuchFunction`
+    """
+
+
+def link_items(html):
+    """``{"L01": True, ...}``: whether each list item ``Lnn``/``Mnn`` has a link."""
+    out = {}
+    for item in re.findall(r"<li>(.*?)</li>", html, flags=re.DOTALL):
+        m = re.match(r"\s*(?:<p>)?\s*([LM]\d\d)\b", item)
+        if m:
+            out[m.group(1)] = "<a " in item
+    return out
+
+
+@scenario
+def handwritten(ctx):
+    """Hand-written pages on matnwb with every directive, option and role
+    (as a user writes them, no apidoc), and a page of mistakes that must warn.
+    """
+    docs = ctx.conf(
+        ctx.path("docs"),
+        matlab_src_code_project_root=str(REPOS / "matnwb"),
+        matlab_inherited_members=True,
+        nitpicky=True,
+    )
+    ctx.write(
+        "docs/index.rst",
+        """
+        matnwb by hand
+        ==============
+
+        .. toctree::
+
+           manual
+           mistakes
+        """,
+    )
+    ctx.write("docs/manual.rst", MANUAL)
+    ctx.write("docs/mistakes.rst", MISTAKES)
+    b = ctx.sphinx("html", docs, ctx.path("html"))
+    ctx.require(b.rc == 0, f"build: exit 0 (got {b.rc})")
+    manual = [r for r in b.records if "manual.rst" in r or "docstring of" in r]
+    mat_warnings = [r for r in manual if re.search(r"\[(mat|ref)\.", r)]
+    ctx.expect(
+        not mat_warnings,
+        f"the manual gives no mat.* or ref.* warning ({len(mat_warnings)}: "
+        f"{[w[-160:] for w in mat_warnings[:3]]})",
+    )
+    links = link_items(b.html("manual.html"))
+    unlinked = sorted(k for k, v in links.items() if not v)
+    ctx.expect(len(links) == 15, f"the manual has its 15 link items ({len(links)})")
+    ctx.expect(not unlinked, f"every role on the manual links ({unlinked})")
+    page = b.html("manual.html")
+    for what, needle in (
+        ("an inherited member says where it comes from", "Inherited from"),
+        ("show-inheritance adds Bases:", "Bases:"),
+        ("the explicit signature replaces the file's", "nwbExport</span></span><span"),
+        ("content after the help is kept", "Content after the help text."),
+        ("the enumeration values are listed", "Datasets"),
+        ("the folder synopsis is not dropped", "Small helpers."),
+        ("an abstract hand-written class says so", "abstract"),
+    ):
+        ctx.expect(needle in page, what)
+    ctx.expect(
+        "export"
+        not in re.findall(r'id="([^"]*Set[^"]*)"', page).__str__().split("Set.")[-1]
+        or 'id="+types/+untyped/Set.m.export"' not in page,
+        "exclude-members leaves out export",
+    )
+    ctx.expect(
+        "matlab-folder-index.html" in b.files()
+        or "mat-folderindex.html" in b.files()
+        or any("folder" in f and "index" in f for f in b.files()),
+        f"the folder index is written ({[f for f in b.files() if 'index' in f]})",
+    )
+
+    def warned(pattern, what, bug=None):
+        hits = [r for r in b.records if "mistakes.rst" in r and re.search(pattern, r)]
+        ctx.expect(bool(hits), what, bug=bug)
+
+    warned(
+        r"noSuchFunction.*\[mat\.not_found\]|don't know which object.*noSuchFunction",
+        "an unknown name in an auto directive warns mat.not_found",
+    )
+    warned(r"no\.such\.namespace", "an unknown namespace warns")
+    warned(r"@DataStub", "an @ class folder in mat:folder warns")
+    warned(r"noSuchMember", "a :members: name that is not there warns")
+    warned(r"no-such-option", "an unknown option is an error")
+    warned(r"sideways", "a bad :member-order: value is an error", bug="E2E-24")
+    warned(
+        r"no_such_folder/",
+        "mat:folder of a folder that does not exist warns",
+        bug="E2E-13",
+    )
+    warned(
+        r"currentfolder.*no_such_folder|no_such_folder.*currentfolder|"
+        r"no_such_folder[^/]",
+        "mat:currentfolder of a missing folder warns",
+        bug="E2E-13",
+    )
+    warned(
+        r"don't know which object to document for 'Set'",
+        "an auto directive does not resolve a name MATLAB cannot see "
+        "(as the role does not)",
+    )
+    warned(
+        r"don't know which object to document for 'str2validName'",
+        "after mat:autofolder:: +misc/, a bare name MATLAB cannot see is not resolved",
+    )
+    warned(
+        r"mat:class reference target not found: Set\b",
+        "a role does not resolve a name MATLAB cannot see",
+    )
+    ctx.expect(
+        not b.warned(r"page_location|no_such_folder/index")
+        and "mat/ref/no_such_folder/index.html" not in b.files(),
+        "no page is written for a folder that does not exist",
+        bug="E2E-13",
+    )
+    warned(
+        r"noSuchFunction.*\[ref\.|M01|"
+        r"mat:func reference target not found: noSuchFunction",
+        "-n: a role to a missing object warns",
+    )
+
+    # the same objects documented by apidoc and by hand: a duplicate warns
+    ctx.conf(
+        ctx.path("dup"),
+        matlab_src_code_project_root=str(REPOS / "matnwb"),
+        matlab_apidoc_output_dir="api",
+    )
+    ctx.write(
+        "dup/index.rst",
+        """
+        Duplicates
+        ==========
+
+        .. toctree::
+
+           api/index
+
+        .. mat:autofunction:: nwbRead
+        """,
+    )
+    ctx.scmd("dup apidoc", "apidoc", "-c", ctx.path("dup"))
+    for jobs in ((), ("-j", "auto")):
+        d = ctx.sphinx(
+            f"dup {' '.join(jobs)}",
+            ctx.path("dup"),
+            ctx.path("dup-html" + "-j" * bool(jobs)),
+            *jobs,
+        )
+        hits = d.warned(r"nwbRead.*(duplicate|described)")
+        ctx.expect(
+            len(hits) == 1,
+            f"{'-j: ' if jobs else ''}describing nwbRead "
+            f"twice warns once ({len(hits)})",
+        )
+
+
+def library(ctx, name, project, toc="api/index", **values):
+    """Apidoc and an html build of the checkout ``project`` as ``name``; return
+    the build (its objects.inv is the inventory of the library).
+    """
+    docs = apidoc_project(ctx, project, folder=name, **values)
+    (docs / "index.rst").write_text(
+        f"{name}\n{'=' * len(name)}\n\n.. toctree::\n\n   {toc}\n", encoding="utf-8"
+    )
+    ctx.require(
+        ctx.scmd(f"{name} apidoc", "apidoc", "-c", docs, "-q").returncode == 0,
+        f"{name}: apidoc",
+    )
+    b = ctx.sphinx(f"{name} html", docs, ctx.path(f"{name}-html"))
+    ctx.require(
+        b.rc == 0 and (b.out / "objects.inv").is_file(),
+        f"{name}: html with objects.inv",
+    )
+    return b
+
+
+INTERSPHINX_PAGE = """
+    Links to other projects
+    =======================
+
+    * X01 :mat:class:`types.untyped.Set`
+    * X02 :mat:func:`nwbRead.m`
+    * X03 :mat:meth:`types.untyped.Set.add`
+    * X04 :mat:namespace:`types.untyped`
+    * X05 :mat:func:`one:nwbRead.m`
+    * X06 :external+one:mat:func:`nwbRead`
+    * X07 :mat:namespace:`one:types.untyped`
+    * X08 :external+one:mat:namespace:`types.untyped`
+    * X09 :mat:folder:`vh:neuroscience/anatomy/`
+    * X10 :mat:func:`intfireleakyel_init`
+    * X11 :mat:obj:`types.untyped.Set`
+    * X12 :mat:func:`Read it <nwbRead.m>`
+    """
+
+TWO_VERSIONS_PAGE = """
+    Two versions of one library
+    ===========================
+
+    * Y01 :mat:func:`nwbRead.m`
+    * Y02 :mat:func:`one:nwbRead.m`
+    * Y03 :mat:func:`two:nwbRead`
+    * Y04 :mat:class:`one:types.untyped.Set`
+    * Y05 :external:mat:func:`nwbRead`
+    """
+
+
+def links_of(html, prefix):
+    """``{"X01": "<href>" or None, ...}`` for the list items starting ``prefix``."""
+    out = {}
+    for item in re.findall(r"<li>(.*?)</li>", html, flags=re.DOTALL):
+        m = re.match(r"\s*(?:<p>)?\s*(" + prefix + r"\d\d)\b", item)
+        if m:
+            href = re.search(r'<a [^>]*href="([^"]*)"', item)
+            out[m.group(1)] = href.group(1) if href else None
+    return out
+
+
+@scenario
+def intersphinx(ctx):
+    """Cross-project links: WEC-Sim_Applications to WEC-Sim with auto-links;
+    a hand-written page to matnwb and vhlab (namespace and folder grouping,
+    chooser pages); two versions of matnwb at once.
+    """
+    wecsim = library(ctx, "wecsim", "WEC-Sim")
+    one = library(ctx, "one", "matnwb")
+    two = library(ctx, "two", "matnwb")
+    vh = library(
+        ctx,
+        "vh",
+        "vhlab-toolbox-matlab",
+        matlab_apidoc_group="folder",
+        matlab_link_shadowed_files_to_chooser_pages=True,
+    )
+
+    def inv(b, url):
+        return (url, str(b.out / "objects.inv"))
+
+    # a real consumer of a real library, auto-linked
+    apps = apidoc_project(
+        ctx,
+        "WEC-Sim_Applications",
+        folder="apps",
+        matlab_auto_link="all",
+        extensions=[
+            "sphinx.ext.autodoc",
+            "sphinxcontrib.matlab",
+            "sphinx.ext.intersphinx",
+        ],
+        intersphinx_mapping={"wecsim": inv(wecsim, "https://wecsim.example/")},
+    )
+    (apps / "index.rst").write_text("Apps\n====\n\n.. toctree::\n\n   api/index\n")
+    ctx.scmd("apps apidoc", "apidoc", "-c", apps, "-q")
+    a = ctx.sphinx("apps html", apps, ctx.path("apps-html"))
+    ctx.expect(a.rc == 0, "WEC-Sim_Applications with intersphinx: exit 0")
+    # matlab_auto_link links the project's own objects; the count of links
+    # into the library is recorded, not checked (configuration.rst does not say)
+    n = sum(d.count(b"https://wecsim.example/") for d in a.files().values())
+    print(f"    (note: {n} auto-links into WEC-Sim)")
+
+    # a hand-written page
+    ext = ["sphinxcontrib.matlab", "sphinx.ext.intersphinx"]
+    docs = ctx.conf(
+        ctx.path("consumer"),
+        extensions=ext,
+        nitpicky=True,
+        matlab_link_shadowed_files_to_chooser_pages=True,
+        intersphinx_mapping={
+            "one": inv(one, "https://one.example/"),
+            "vh": inv(vh, "https://vh.example/"),
+        },
+    )
+    ctx.write("consumer/index.rst", INTERSPHINX_PAGE)
+    c = ctx.sphinx("consumer html", docs, ctx.path("consumer-html"))
+    ctx.expect(c.rc == 0, "the consumer builds")
+    links = links_of(c.html("index.html"), "X")
+    bugs = {}
+    for key, href in sorted(links.items()):
+        site = (
+            "https://vh.example/" if key in ("X09", "X10") else "https://one.example/"
+        )
+        ctx.expect(
+            bool(href) and href.startswith(site),
+            f"{key} links to {site} ({href})",
+            bug=bugs.get(key),
+        )
+    ctx.expect(len(links) == 12, f"12 link items ({len(links)})")
+    ctx.expect(
+        "mat/name/intfireleakyel_init" in (links.get("X10") or ""),
+        "an ambiguous name links to the library's chooser page",
+    )
+    ctx.expect(not c.warned(r"intfireleakyel_init"), "... without a warning")
+
+    # two versions of one library
+    docs2 = ctx.conf(
+        ctx.path("versions"),
+        extensions=ext,
+        nitpicky=True,
+        intersphinx_mapping={
+            "one": inv(one, "https://one.example/"),
+            "two": inv(two, "https://two.example/"),
+        },
+    )
+    ctx.write("versions/index.rst", TWO_VERSIONS_PAGE)
+    v = ctx.sphinx("versions html", docs2, ctx.path("versions-html"))
+    links = links_of(v.html("index.html"), "Y")
+    ctx.expect(links.get("Y01") is None, "Y01: a path reference in both is not linked")
+    ctx.expect(
+        len(
+            v.warned(
+                r"nwbRead.m.*one:nwbRead.m.*two:nwbRead.m|"
+                r"one:nwbRead.m, two:nwbRead.m"
+            )
+        )
+        >= 1,
+        "... and the warning lists one:nwbRead.m and two:nwbRead.m",
+    )
+    for key, site, bug in (
+        ("Y02", "https://one.example/", None),
+        ("Y03", "https://two.example/", None),
+        ("Y04", "https://one.example/", "E2E-5"),
+    ):
+        href = links.get(key)
+        ctx.expect(
+            bool(href) and href.startswith(site),
+            f"{key} links to {site} ({href})",
+            bug=bug,
+        )
+    y05 = [r for r in v.records if "index.rst:8:" in r]
+    ctx.expect(
+        len(y05) == 1,
+        f"Y05: one warning for an ambiguous :external: role ({len(y05)})",
+        bug="E2E-6",
+    )
+
+
+#: (values, tools, message) of each invalid configuration. Tools: "apidoc"
+#: (scmd apidoc), "html" (sphinx-build), "api" (-b matlab-api-check); each
+#: must stop with exit 2 (1 for scmd apidoc's usage errors is not accepted)
+#: and print the message (a regular expression), without a traceback.
+BAD_CONFIG = [
+    ({"matlab_src_code_project_root": "../no_such_root"}, "apidoc", r"no_such_root"),
+    (
+        {"matlab_src_code_project_root": "../no_such_root"},
+        "html",
+        r"no_such_root",
+        "E2E-10",
+    ),
+    (
+        {"matlab_src_code_project_root": 5},
+        "apidoc html",
+        r"matlab_src_code_project_root",
+    ),
+    (
+        {"matlab_src_include_patterns": "*.m"},
+        "apidoc html",
+        r"matlab_src_include_patterns",
+    ),
+    (
+        {"matlab_src_include_patterns": ["src\\*.m"]},
+        "apidoc html",
+        r"matlab_src_include_patterns",
+    ),
+    (
+        {"matlab_src_include_patterns": ["/abs/*.m"]},
+        "apidoc html",
+        r"matlab_src_include_patterns",
+    ),
+    (
+        {"matlab_src_exclude_patterns": ["../*.m"]},
+        "apidoc html",
+        r"matlab_src_exclude_patterns",
+    ),
+    (
+        {"matlab_src_exclude_patterns": [""]},
+        "apidoc html",
+        r"matlab_src_exclude_patterns",
+    ),
+    (
+        {"matlab_src_sidecar_suffixes": ["md"]},
+        "apidoc html",
+        r"matlab_src_sidecar_suffixes",
+    ),
+    ({"matlab_src_sidecar_suffixes": [".md"]}, "html", r"myst"),
+    ({"matlab_src_encoding": "no-such-codec"}, "apidoc html", r"no-such-codec"),
+    ({"matlab_version": "R2020c"}, "apidoc html", r"R2020c"),
+    ({"matlab_auto_link": "some"}, "html", r"matlab_auto_link"),
+    ({"matlab_external_names": "abc"}, "html", r"matlab_external_names"),
+    ({"matlab_external_names": [1]}, "html", r"matlab_external_names"),
+    ({"matlab_external_names": ["("]}, "html", r"matlab_external_names"),
+    ({"matlab_inherited_members": "yes"}, "html", r"matlab_inherited_members"),
+    ({"matlab_src_dir": "src"}, "apidoc html", r"matlab_src_dir"),
+    ({"matlab_keep_package_prefix": True}, "html", r"matlab_keep_package_prefix"),
+    ({"matlab_short_links": True}, "html", r"matlab_short_links"),
+    (
+        {"matlab_simulink_doc_suffixes": ["rst"]},
+        "html",
+        r"matlab_simulink_doc_suffixes",
+    ),
+    (
+        {"matlab_simulink_autobuild_server": "localhost:8000"},
+        "html",
+        r"matlab_simulink_autobuild_server",
+    ),
+    ({"matlab_api_check_rules": []}, "api", r"matlab_api_check_rules"),
+    ({"matlab_api_check_rules": {"no_such_rule": "error"}}, "api", r"no_such_rule"),
+    ({"matlab_api_check_rules": {"description": "fatal"}}, "api", r"fatal"),
+    (
+        {"matlab_api_check_section_labels": []},
+        "api",
+        r"matlab_api_check_section_labels",
+    ),
+    ({"matlab_api_check_section_labels": {"Nope": "X"}}, "api", r"Nope"),
+    (
+        {"matlab_api_check_ignore_patterns": "x"},
+        "api",
+        r"matlab_api_check_ignore_patterns",
+    ),
+    ({"matlab_api_check_files": 5}, "api", r"matlab_api_check_files"),
+    ({"matlab_api_check_files_from": ""}, "api", r"matlab_api_check_files_from"),
+    ({"matlab_api_check_files_from": "no_such_list.txt"}, "api", r"no_such_list"),
+    ({"matlab_apidoc_output_dir": None}, "apidoc", r"matlab_apidoc_output_dir"),
+    ({"matlab_apidoc_output_dir": "conf.py"}, "apidoc", r"conf.py"),
+    (
+        {"matlab_apidoc_templatedir": "no_such_templates"},
+        "apidoc",
+        r"no_such_templates",
+    ),
+    ({"matlab_apidoc_group": "x"}, "apidoc", r"matlab_apidoc_group"),
+    ({"matlab_apidoc_page_size": 0}, "apidoc", r"matlab_apidoc_page_size"),
+    ({"matlab_apidoc_tocfile": "a/b"}, "apidoc", r"matlab_apidoc_tocfile"),
+    ({"matlab_apidoc_tocfile": ""}, "apidoc", r"matlab_apidoc_tocfile"),
+    ({"matlab_apidoc_maxdepth": "x"}, "apidoc", r"matlab_apidoc_maxdepth"),
+    ({"matlab_apidoc_separate": "yes"}, "apidoc", r"matlab_apidoc_separate"),
+    ({"suppress_warnings": "mat.apidoc"}, "apidoc", r"suppress_warnings"),
+]
+
+
+@scenario
+def bad_config(ctx):
+    """Every invalid matlab_* value (and a few Sphinx ones the tools read):
+    scmd apidoc and sphinx-build stop with exit 2 and name the setting, no
+    traceback; a misspelled matlab_ name warns.
+    """
+    root = str(REPOS / "regularizeNd")
+    for i, (values, tools, message, *bug) in enumerate(BAD_CONFIG):
+        bug = bug[0] if bug else None
+        docs = ctx.conf(
+            ctx.path(f"c{i:02d}"),
+            **{
+                "matlab_src_code_project_root": root,
+                "matlab_apidoc_output_dir": "api",
+                **values,
+            },
+        )
+        (docs / "index.rst").write_text("Bad\n===\n", encoding="utf-8")
+        what = ", ".join(f"{k}={v!r}" for k, v in values.items())
+        for tool in tools.split():
+            if tool == "apidoc":
+                proc = ctx.scmd(f"{i:02d} apidoc", "apidoc", "-c", docs)
+                rc, text = proc.returncode, proc.stdout + proc.stderr
+            else:
+                b = ctx.sphinx(
+                    f"{i:02d} {tool}",
+                    docs,
+                    ctx.path(f"c{i:02d}-{tool}"),
+                    builder="html" if tool == "html" else "matlab-api-check",
+                )
+                rc, text = b.rc, b.stdout + b.stderr + b.warnings
+            ok = rc == 2 and re.search(message, text) is not None
+            first = (text.strip().splitlines() or [""])[-1][:150]
+            ctx.expect(
+                ok,
+                f"{tool}: {what}: exit 2 naming it (exit {rc}: {first})",
+                bug=bug if tool == "html" else None,
+            )
+
+    # a misspelled matlab_ name and no conf.py at all
+    docs = ctx.conf(
+        ctx.path("typo"),
+        matlab_src_code_project_root=root,
+        matlab_apidoc_output_dir="api",
+        matlab_auto_links="all",
+    )
+    (docs / "index.rst").write_text("Typo\n====\n", encoding="utf-8")
+    # an error that suggests the name (reference/configuration.rst)
+    b = ctx.sphinx("typo html", docs, ctx.path("typo-html"))
+    ctx.expect(
+        b.rc == 2 and "did you mean matlab_auto_link?" in b.stderr,
+        "a misspelled matlab_ name stops the build and suggests the name",
+    )
+    proc = ctx.scmd("typo apidoc", "apidoc", "-c", docs)
+    ctx.expect(
+        proc.returncode == 2 and "matlab_auto_link?" in proc.stderr,
+        "... scmd apidoc too",
+    )
+    proc = ctx.scmd("no conf.py", "apidoc", "-c", ctx.path("empty"))
+    ctx.expect(
+        proc.returncode == 2 and "conf.py" in proc.stderr,
+        f"scmd apidoc without conf.py: exit 2 naming conf.py ({proc.returncode})",
+    )
+
+
+FULL_ANSWERS = """
+    project = "matlab2tikz by answers"
+    author = "The scenario"
+    matlab_version = "R2024b"
+    group = "folder"
+    theme = "alabaster"
+    html_baseurl = "https://m2t.example/"
+    exclude = ["test"]
+    markdown = false
+    sidecars = false
+    make = "plain"
+    guide = false
+    api_pages = "generate"
+    napoleon_custom_sections = [["Inputs", "params_style"], "Description"]
+    """
+
+#: (answers file, message) of each invalid answers file: exit 2 naming it
+BAD_ANSWERS = [
+    ("nope = 1\n", r"nope"),
+    ('markdown = "yes"\n', r"markdown"),
+    ('group = "x"\n', r"group"),
+    ("theme = 5\n", r"theme"),
+    ('exclude = "tests"\n', r"exclude"),
+    ('make = "cmake"\n', r"make"),
+    ('api_pages = "x"\n', r"api_pages"),
+    ('matlab_version = "R2020c"\n', r"R2020c"),
+    ("napoleon_custom_sections = [5]\n", r"napoleon_custom_sections"),
+    ("markdown = false\nsidecars = true\n", r"sidecars"),
+    ('project = "unterminated\n', r"TOML|toml|line 1"),
+]
+
+
+def clone(ctx, project, dest, git=True):
+    """Copy a checkout: a git clone (``git``), else a plain copy; return it."""
+    path = ctx.path(dest)
+    if git:
+        subprocess.run(
+            ["git", "clone", "-q", "--shared", str(REPOS / project), str(path)],
+            check=True,
+        )
+    else:
+        ctx.copy_project(project, dest)
+    return path
+
+
+def commit_all(path):
+    """Commit everything in the git repository ``path``."""
+    subprocess.run(["git", "add", "-A"], cwd=path, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=s",
+            "-c",
+            "user.email=s@x",
+            "commit",
+            "-qm",
+            "scenario",
+        ],
+        cwd=path,
+        check=True,
+    )
+
+
+def git_status(path):
+    """Return ``git status --porcelain`` of ``path``."""
+    return subprocess.run(
+        ["git", "status", "--porcelain"], cwd=path, capture_output=True, text=True
+    ).stdout
+
+
+@scenario
+def quickstart(ctx):
+    """Run scmd quickstart beyond -q: answered on stdin, from answers files (good
+    and bad), -n, -f, outside git, a dirty .gitignore, a docs/ in use, a uv
+    project; and scmd skills.
+    """
+    # 1. every question answered with its default, on stdin
+    a = clone(ctx, "matlab2tikz", "a")
+    proc = ctx.scmd("interactive", "quickstart", a, stdin="\n" * 40, cwd=a)
+    ctx.require(
+        proc.returncode == 0,
+        f"interactive with defaults: exit 0 "
+        f"({proc.returncode}: {proc.stderr.strip()[-200:]})",
+    )
+    ctx.expect(
+        proc.stdout.count("?") >= 8 or proc.stdout.count("[") >= 8,
+        "it asked its questions",
+    )
+    ctx.expect((a / "docs" / "conf.py").is_file(), "it wrote docs/conf.py")
+    b = ctx.sphinx("a html", a / "docs", ctx.path("a-html"), "-n")
+    ctx.expect(b.rc == 0, f"its docs build: exit 0 ({b.rc})")
+    again = ctx.scmd("again without -f", "quickstart", a, "-q", cwd=a)
+    ctx.expect(
+        again.returncode == 2 and "conf.py" in again.stderr,
+        "a second run without -f stops: exit 2 naming conf.py",
+    )
+    # its own edits of .gitignore and .gitattributes must be committed first
+    # (reference/cli.rst: it stops when one has uncommitted changes)
+    commit_all(a)
+    before = (a / "docs" / "index.rst").read_text(encoding="utf-8")
+    (a / "docs" / "index.rst").write_text("changed\n", encoding="utf-8")
+    forced = ctx.scmd("again with -f", "quickstart", a, "-q", "-f", cwd=a)
+    ctx.expect(forced.returncode == 0, "with -f: exit 0")
+    ctx.expect(
+        (a / "docs" / "index.rst").read_text(encoding="utf-8") == before,
+        "-f rewrites index.rst",
+    )
+
+    # 2. a full answers file, saved again at the end
+    answers = ctx.write("answers.toml", FULL_ANSWERS)
+    c = clone(ctx, "matlab2tikz", "c")
+    proc = ctx.scmd(
+        "answers + save", "quickstart", c, "-a", answers, stdin="y\nsaved.toml\n", cwd=c
+    )
+    ctx.expect(proc.returncode == 0, f"-a FILE, then save: exit 0 ({proc.returncode})")
+    saved = c / "saved.toml"
+    ctx.expect(saved.is_file(), "the answers are saved to the path typed")
+    conf = (
+        (c / "docs" / "conf.py").read_text(encoding="utf-8")
+        if (c / "docs" / "conf.py").exists()
+        else ""
+    )
+    for what, needle in (
+        ("project", "matlab2tikz by answers"),
+        ("theme", "alabaster"),
+        ("html_baseurl", "https://m2t.example/"),
+        ("group", "folder"),
+        ("version", "R2024b"),
+        ("exclude", "test"),
+    ):
+        ctx.expect(needle in conf, f"conf.py has the answer {what}")
+    ctx.expect(
+        not (c / "docs" / "BUILDING_DOCS.md").exists(),
+        "guide = false writes no BUILDING_DOCS.md",
+    )
+    b = ctx.sphinx("c html", c / "docs", ctx.path("c-html"), "-n")
+    ctx.expect(b.rc == 0, "its docs build")
+
+    # 3. the same file with -q, and without -q in CI (stdin at its end)
+    d = clone(ctx, "matlab2tikz", "d")
+    proc = ctx.scmd("answers -q", "quickstart", d, "-a", answers, "-q", cwd=d)
+    ctx.expect(proc.returncode == 0, "-a FILE -q: exit 0")
+    e = clone(ctx, "matlab2tikz", "e")
+    proc = ctx.scmd(
+        "answers, stdin closed", "quickstart", e, "-a", answers, stdin="", cwd=e
+    )
+    ctx.expect(
+        proc.returncode == 0,
+        f"-a FILE in CI (stdin at its end): exit 0, not 'interrupted' "
+        f"({proc.returncode})",
+        bug="E2E-2",
+    )
+
+    # 4. invalid answers files (with -n nothing is written)
+    fresh = clone(ctx, "matlab2tikz", "fresh")
+    for i, (text, message) in enumerate(BAD_ANSWERS):
+        bad = ctx.write(f"bad{i}.toml", text)
+        proc = ctx.scmd(
+            f"bad answers {i}", "quickstart", fresh, "-a", bad, "-q", "-n", cwd=fresh
+        )
+        ctx.expect(
+            proc.returncode == 2 and re.search(message, proc.stderr),
+            f"answers {text.strip()!r}: exit 2 naming it "
+            f"({proc.returncode}: {proc.stderr.strip()[-120:]})",
+        )
+
+    # 5. a dry run writes nothing
+    f = clone(ctx, "matlab2tikz", "f")
+    proc = ctx.scmd("dry run", "quickstart", f, "-n", "-q", cwd=f)
+    ctx.expect(
+        proc.returncode == 0 and not git_status(f) and not (f / "docs").exists(),
+        "-n -q writes nothing",
+    )
+    ctx.expect("conf.py" in proc.stdout, "-n lists the files it would write")
+
+    # 6. outside git
+    g = clone(ctx, "matlab2tikz", "g", git=False)
+    proc = ctx.scmd("outside git", "quickstart", g, "-q", cwd=g)
+    ctx.expect(proc.returncode == 0, "outside git: exit 0")
+    ctx.expect(
+        not (g / ".gitignore").exists()
+        or "_build" not in (g / ".gitignore").read_text(encoding="utf-8"),
+        "outside git it edits no .gitignore (prints the lines)",
+    )
+    ctx.expect("_build" in proc.stdout, "... and prints the .gitignore lines")
+
+    # 7. uncommitted .gitignore stops it, naming the file
+    h = clone(ctx, "matlab2tikz", "h")
+    with open(h / ".gitignore", "a", encoding="utf-8") as fh:
+        fh.write("scratch/\n")
+    proc = ctx.scmd("dirty gitignore", "quickstart", h, "-q", cwd=h)
+    ctx.expect(proc.returncode == 2, "an uncommitted .gitignore: exit 2")
+    ctx.expect(
+        ".gitignore has uncommitted" in proc.stderr,
+        f"... naming .gitignore ({proc.stderr.strip()[-80:]})",
+        bug="E2E-1",
+    )
+
+    # 8. docs/ in use (an MkDocs folder): -q stops; interactive asks for another
+    k = clone(ctx, "matlab2tikz", "k")
+    ctx.write("k/docs/index.md", "# MkDocs\n")
+    proc = ctx.scmd("docs in use -q", "quickstart", k, "-q", cwd=k)
+    ctx.expect(
+        proc.returncode == 2 and "docs" in proc.stderr, "docs/ in use with -q: exit 2"
+    )
+    proc = ctx.scmd(
+        "docs in use", "quickstart", k, stdin="sphinx-docs\n" + "\n" * 40, cwd=k
+    )
+    ctx.expect(
+        proc.returncode == 0 and (k / "sphinx-docs" / "conf.py").is_file(),
+        "interactive: the folder typed instead is used",
+    )
+
+    # 9. usage errors
+    proc = ctx.scmd("root is a file", "quickstart", a / "README.md", "-q")
+    ctx.expect(proc.returncode == 2, "ROOT that is a file: exit 2")
+    proc = ctx.scmd(
+        "docs outside root", "quickstart", a, "-q", "-o", ctx.path("x"), cwd=a
+    )
+    ctx.expect(proc.returncode == 2, "DOCS outside ROOT: exit 2")
+    proc = ctx.scmd(
+        "missing answers", "quickstart", a, "-q", "-a", ctx.path("none.toml")
+    )
+    ctx.expect(proc.returncode == 2, "a missing answers file: exit 2")
+
+    # 10. a uv project gets the docs dependency group
+    u = clone(ctx, "matlab2tikz", "u")
+    (u / "pyproject.toml").write_text(
+        '[project]\nname = "m2t"\nversion = "0"\nrequires-python = ">=3.11"\n\n'
+        "[tool.uv]\n",
+        encoding="utf-8",
+    )
+    commit_all(u)
+    proc = ctx.scmd("uv project", "quickstart", u, "-q", cwd=u)
+    text = (u / "pyproject.toml").read_text(encoding="utf-8")
+    ctx.expect(
+        proc.returncode == 0
+        and "docs" in text
+        and "sphinxcontrib-matlabdomain" in text,
+        f"a uv project gets the docs group ({proc.returncode})",
+    )
+
+    # 11. scmd skills
+    proc = ctx.scmd("skills list", "skills", "list")
+    names = re.findall(r"^(\S+)$", proc.stdout, flags=re.MULTILINE)
+    ctx.expect(proc.returncode == 0 and len(names) >= 2, f"skills list: {names}")
+    dest = ctx.path("skills")
+    proc = ctx.scmd("skills install", "skills", "install", "-d", dest)
+    ctx.expect(
+        proc.returncode == 0 and all((dest / n / "SKILL.md").is_file() for n in names),
+        "skills install copies every skill",
+    )
+    proc = ctx.scmd("skills install again", "skills", "install", "-d", dest)
+    ctx.expect(
+        proc.returncode == 1, f"installing over them: exit 1 ({proc.returncode})"
+    )
+    (dest / names[0] / "SKILL.md").write_text("changed", encoding="utf-8")
+    proc = ctx.scmd(
+        "skills install -f", "skills", "install", "-d", dest, "-f", names[0]
+    )
+    ctx.expect(
+        proc.returncode == 0
+        and (dest / names[0] / "SKILL.md").read_text(encoding="utf-8") != "changed",
+        "-f replaces a skill",
+    )
+    proc = ctx.scmd("skills unknown", "skills", "install", "-d", dest, "no-such-skill")
+    ctx.expect(
+        proc.returncode == 2 and "no-such-skill" in proc.stderr,
+        f"an unknown skill: exit 2 naming it ({proc.returncode})",
+    )
+
+
+SIMULINK_MANUAL = """
+    Manual
+    ======
+
+    .. mat:currentfolder:: R2024a-native/slx
+
+    SETEXT-START
+
+    .. mat:autosimulink_library:: probeLib.slx
+       :members:
+       :noindex:
+
+    SETEXT-END
+
+    .. mat:autosimulink_library:: probeLib.slx
+       :members: Gain Block, Nope
+       :noindex:
+
+    EXCLUDE-START
+
+    .. mat:autosimulink_library:: probeLib.slx
+       :members:
+       :undoc-members:
+       :exclude-members: Two Lines
+       :noindex:
+
+    EXCLUDE-END
+
+    .. mat:autosimulink_model:: R2026b/slx/probeModel.slx
+       :metadata: release, creator
+       :references:
+       :hidden-mask-parameters:
+       :noindex:
+
+    .. mat:autosimulink_subsystem_reference:: R2019b/mdl/probeSub.mdl
+       :metadata: model_version
+       :noindex:
+
+    .. mat:autosimulink_library_block:: R2006a/mdl/probeLib.mdl/Gain Block
+       :noindex:
+
+    .. mat:simulink_model:: handModel
+
+       A hand-written model.
+
+       :maskparam handGain: the gain
+       :maskparamtype handGain: double
+
+    .. mat:simulink_library_block:: handLib/Gain
+
+    * S01 :mat:simulink_model:`R2026b/slx/probeModel.slx`
+    * S02 :mat:simulink_library:`R2026b/slx/probeLib.slx`
+    * S03 :mat:simulink_library_block:`R2026b/slx/probeLib.slx/Gain Block`
+    * S04 :mat:simulink_subsystem_reference:`R2026b/slx/probeSub.slx`
+    * S05 :mat:simulink_model:`handModel`
+    * S06 :mat:simulink_model:`shapeAreas`
+    * S07 :mat:simulink_library_block:`R2026b/slx/probeLib.slx/A//B`
+    """
+
+
+@scenario
+def simulink(ctx):
+    """Document the Simulink fixtures saved by MATLAB R2006a to R2026b (.mdl, .slx,
+    libraries, subsystem files, masks) and the docs' shape models as a
+    project: apidoc, html serial and -j, api-check, hand-written pages with
+    every Simulink directive and option, doc files in reST and Markdown.
+    """
+    proj = ctx.path("proj")
+    shutil.copytree(FIXTURES, proj)
+    shutil.copytree(DOCS / "src" / "simulink", proj / "shapes")
+    docs = ctx.conf(
+        ctx.path("docs"),
+        extensions=["sphinx.ext.autodoc", "sphinxcontrib.matlab", "myst_parser"],
+        matlab_src_code_project_root=str(proj),
+        matlab_apidoc_output_dir="api",
+        matlab_simulink_metadata=["release", "model_version", "creator"],
+        matlab_simulink_autobuild_server="http://127.0.0.1:8000/",
+        autodoc_default_options={"references": True, "hidden-mask-parameters": True},
+    )
+    ctx.write(
+        "docs/index.rst",
+        """
+        Simulink
+        ========
+
+        .. toctree::
+
+           api/index
+           manual
+        """,
+    )
+    ctx.write("docs/manual.rst", SIMULINK_MANUAL)
+    # doc files: reST for a model, Markdown (with a setext heading) for a library
+    ctx.write(
+        "proj/R2026b/slx/probeModel.rst",
+        """
+        Model notes
+        ===========
+
+        Notes Q77 about the model.
+        """,
+    )
+    ctx.write(
+        "proj/R2024a-native/slx/probeLib.md",
+        """
+        # probeLib
+
+        Intro P55.
+
+        ## Gain Block
+
+        Gain text G11.
+
+        No Description
+        --------------
+
+        Setext text N22.
+        """,
+    )
+    gen = ctx.scmd("apidoc", "apidoc", "-c", docs)
+    ctx.require(gen.returncode == 0, "apidoc: exit 0")
+    serial = ctx.sphinx("html", docs, ctx.path("html"), "-n")
+    ctx.expect(serial.rc == 0, f"html: exit 0 ({serial.rc})")
+    print(f"    (warnings: {serial.subtypes})")
+    ctx.expect(
+        not serial.warned(r"cannot be parsed|could not be read"),
+        f"every MATLAB-saved file is read ({serial.warned('cannot be parsed')[:1]})",
+    )
+    par = ctx.sphinx("html -j", docs, ctx.path("html-j"), "-n", "-j", "auto")
+    same_pages(ctx, "-j writes the same pages", serial, par)
+    api = ctx.sphinx("api-check", docs, ctx.path("api"), builder="matlab-api-check")
+    ctx.expect(api.rc in (0, 1), f"api-check: exit 0 or 1 ({api.rc})")
+    ctx.expect(not api.warned(r"cannot be parsed"), "api-check reads every file")
+
+    manual = serial.html("manual.html")
+    mine = [r for r in serial.records if "manual.rst" in r]
+    nope = [r for r in mine if "Nope" in r]
+    ctx.expect(
+        len(nope) == 1,
+        f"a missing :members: block warns once ({len(nope)})",
+        bug="E2E-14",
+    )
+    other = [r for r in mine if "Nope" not in r]
+    ctx.expect(not other, f"no other warning on the manual ({other[:2]})")
+    links = links_of(manual, "S")
+    ctx.expect(
+        len(links) == 7 and all(links.values()),
+        f"every Simulink role links ({[k for k, v in links.items() if not v]})",
+    )
+    for what, needle in (
+        ("the reST doc file of a model is shown", "Q77"),
+        ("the Markdown doc file of a library is shown", "P55"),
+        ("an ATX section of a block is shown with it", "G11"),
+        ("a hand-written mask parameter is shown", "handGain"),
+    ):
+        ctx.expect(needle in manual, what)
+    setext = manual.split("SETEXT-START")[-1].split("SETEXT-END")[0]
+    ctx.expect(
+        "N22" in setext,
+        "a setext section of a block without description is shown under :members:",
+        bug="E2E-7",
+    )
+    ctx.expect(
+        "Two Lines"
+        not in html_text(manual.split("EXCLUDE-START")[-1].split("EXCLUDE-END")[0]),
+        "exclude-members leaves out a block named with a line break",
+    )
+    ctx.expect(
+        len(serial.warned(r"has no section for the blocks")) == 1,
+        "a doc file without sections for some blocks warns once, not once "
+        "per directive",
+        bug="E2E-26",
+    )
+    ctx.expect(serial.warned(r"metadata") == [], "no metadata warning")
+
+    # an unknown metadata name: one warning, not one per Simulink file
+    bad = ctx.sphinx(
+        "bad metadata",
+        docs,
+        ctx.path("bad-html"),
+        "-D",
+        "matlab_simulink_metadata=release,colour",
+    )
+    n = len(bad.warned(r"colour"))
+    ctx.expect(
+        bad.rc == 2 or n == 1,
+        f"an unknown metadata name is reported once ({n} warnings)",
+        bug="E2E-25",
+    )
+
+
+@scenario
+def broken_input(ctx):
+    """Build a copy of regularizeNd with every kind of broken or unusual input
+    added: each gets its documented warning once (reference/warnings.rst),
+    the rest is documented, nothing crashes; apidoc and api-check too.
+    """
+    proj = ctx.copy_project("regularizeNd", "proj")
+    real_slx = next((DOCS / "src" / "simulink").glob("*.slx")).read_bytes()
+    bad = proj / "broken"
+    bad.mkdir()
+    files = {
+        "lfsPointer.slx": b"version https://git-lfs.github.com/spec/v1\n"
+        b"oid sha256:" + b"0" * 64 + b"\nsize 4096\n",
+        "emptyModel.slx": b"",
+        "truncatedModel.slx": real_slx[:200],
+        "notAModel.mdl": b"hello, I am not a model\n",
+        "latin1Help.m": "function latin1Help\n% Gr\xfc\xdfe aus K\xf6ln.\nend\n".encode(
+            "latin-1"
+        ),
+        "nulBytes.m": b"function nulBytes\n% NUL \x00 here\nend\n",
+        "bomHelp.m": "﻿function bomHelp\n% BOMHELP Help after a BOM.\nend\n".encode(),
+        "emptyFile.m": b"\n\n",
+        "unreadable.m": b"function unreadable\n% UNREADABLE\nend\n",
+    }
+    for name, data in files.items():
+        (bad / name).write_bytes(data)
+    (bad / "unreadable.m").chmod(0)
+    (bad / "private").mkdir()
+    (bad / "private" / "2bad.m").write_text("function x = 2bad\nend\n")
+    (bad / "1model.slx").write_bytes(real_slx)
+    (bad / "folder.m").mkdir()
+    (bad / "folder.m" / "inside.m").write_text("function inside\nend\n")
+    (bad / "café.m").write_text("function cafe1\n% NFC\nend\n")
+    (bad / "café.m").write_text("function cafe2\n% NFD\nend\n")
+    os.makedirs(os.fsencode(str(bad)) + b"/badname", exist_ok=True)
+    with open(os.fsencode(str(bad)) + b"/badname/caf\xe9.m", "wb") as fh:
+        fh.write(b"function x\nend\n")
+    outside = ctx.path("outside")
+    outside.mkdir()
+    (outside / "outsideFun.m").write_text("function outsideFun\nend\n")
+    (bad / "linkOut").symlink_to(outside, target_is_directory=True)
+    (bad / "linkCycle").symlink_to("..", target_is_directory=True)
+    old = bad / "oldsite"
+    (old / "_downloads").mkdir(parents=True)
+    (old / "objects.inv").write_bytes(b"# Sphinx inventory version 2\n")
+    (old / "searchindex.js").write_text("Search.setIndex({})")
+    shutil.copy(
+        proj / "source" / "regularizeNd.m", old / "_downloads" / "regularizeNd.m"
+    )
+    unreadable_dir = bad / "noAccess"
+    unreadable_dir.mkdir()
+    (unreadable_dir / "hidden.m").write_text("function hidden\nend\n")
+    unreadable_dir.chmod(0)
+    try:
+        docs = ctx.conf(
+            ctx.path("docs"),
+            matlab_src_code_project_root=str(proj),
+            matlab_apidoc_output_dir="api",
+        )
+        ctx.write("docs/index.rst", "Broken\n======\n\n.. toctree::\n\n   api/index\n")
+        gen = ctx.scmd("apidoc", "apidoc", "-c", docs)
+        ctx.expect(gen.returncode == 0, f"apidoc: exit 0 ({gen.returncode})")
+        b = ctx.sphinx("html", docs, ctx.path("html"), "-n")
+        ctx.expect(b.rc == 0, f"html: exit 0 ({b.rc})")
+        api = ctx.sphinx("api-check", docs, ctx.path("api"), builder="matlab-api-check")
+        ctx.expect(api.rc in (0, 1), f"api-check: exit 0 or 1 ({api.rc})")
+    finally:
+        unreadable_dir.chmod(0o755)
+        (bad / "unreadable.m").chmod(0o644)
+    expected = [
+        ("lfsPointer.slx", "mat.parse_error"),
+        ("emptyModel.slx", "mat.parse_error"),
+        ("truncatedModel.slx", "mat.parse_error"),
+        ("notAModel.mdl", "mat.parse_error"),
+        ("unreadable.m", "mat.parse_error"),
+        ("latin1Help.m", "mat.encoding"),
+        ("nulBytes.m", "mat.invalid_matlab"),
+        ("emptyFile.m", "mat.empty_code_file"),
+        ("1model.slx", "mat.not_callable"),
+        ("folder.m", "mat.folder_name"),
+        ("differ only by Unicode form", "mat.parse_error"),
+        ("is not valid UTF-8; it is not documented", "mat.parse_error"),
+        ("linkOut", "mat.outside_root"),
+        ("linkCycle", "mat.link_cycle"),
+        ("noAccess", "mat.parse_error"),
+    ]
+    for needle, subtype in expected:
+        hits = [r for r in b.records if needle in r and f"[{subtype}]" in r]
+        ctx.expect(len(hits) == 1, f"html: {needle}: one {subtype} ({len(hits)})")
+    for needle in ("lfsPointer.slx", "notAModel.mdl"):
+        hits = [r for r in api.records if needle in r]
+        ctx.expect(
+            len(hits) == 1,
+            f"api-check: {needle}: one warning ({len(hits)})",
+            bug="E2E-8",
+        )
+        hits = [ln for ln in gen.stderr.splitlines() if needle in ln]
+        ctx.expect(
+            len(hits) == 1, f"apidoc: {needle}: one warning ({len(hits)})", bug="E2E-9"
+        )
+    ctx.expect(not b.warned(r"bomHelp"), "a file with a BOM: no warning")
+    ctx.expect(
+        "Help after a BOM"
+        in "".join(d.decode("utf-8", "replace") for d in b.files().values()),
+        "a file with a BOM is documented",
+    )
+    ctx.expect(
+        "Köln" in "".join(d.decode("utf-8", "replace") for d in b.files().values()),
+        "a Latin-1 help is decoded",
+    )
+    ctx.expect(
+        not b.warned(r"regularizeNd.*several|oldsite"),
+        "an old HTML output folder in the tree is not indexed",
+    )
+    ctx.expect(
+        not any(
+            "outsideFun" in d.decode("utf-8", "replace") for d in b.files().values()
+        ),
+        "a link out of the root is not followed",
+    )
+    # files below private/ never get mat.not_callable (user-guide/referencing.rst)
+    ctx.expect(not b.warned(r"2bad"), "private/2bad.m: no warning")
+    # regularizeNd's own README has an image that is not there (the baseline)
+    unexpected = {
+        k: v
+        for k, v in b.subtypes.items()
+        if not k.startswith("mat.") and k not in ("docutils", "image.not_readable")
+    }
+    ctx.expect(not unexpected, f"no other kinds of warning ({unexpected})")
+
+
+#: (label, -D arguments, what must be true of the pages; None: they differ)
+OPTION_BUILDS = [
+    (
+        "inherited",
+        [
+            "-D",
+            "matlab_inherited_members=1",
+            "-D",
+            "autodoc_default_options.inherited-members=",
+        ],
+        lambda html: "Inherited from" in html,
+    ),
+    ("bysource", ["-D", "autodoc_member_order=bysource"], None),
+    # members are already in sections by kind, so groupwise may equal the default
+    ("groupwise", ["-D", "autodoc_member_order=groupwise"], lambda _html: True),
+    ("autoclass both", ["-D", "autoclass_content=both"], None),
+    ("autoclass init", ["-D", "autoclass_content=init"], None),
+    ("class signature", ["-D", "matlab_class_signature=1"], None),
+    ("no property defaults", ["-D", "matlab_show_property_default_value=0"], None),
+    ("no property specs", ["-D", "matlab_show_property_specs=0"], None),
+    ("no namespace names", ["-D", "matlab_add_namespace_names=0"], None),
+    (
+        "no parentheses",
+        ["-D", "add_function_parentheses=0", "-D", "matlab_auto_link=all"],
+        None,
+    ),
+    (
+        "no docstring signature",
+        ["-D", "autodoc_docstring_signature=0"],
+        lambda _html: True,
+    ),
+    ("R2024a", ["-D", "matlab_version=R2024a"], lambda _html: True),
+    ("no stable urls", ["-D", "matlab_stable_urls=0"], lambda _html: True),
+]
+
+
+@scenario
+def options(ctx):
+    """Build the configuration values and autodoc options on matnwb, each against
+    the default build; chooser pages, other builders and an encoding on
+    vhlab and YALMIP; a stable-URL clash; a removed hand-written page.
+    """
+    docs = apidoc_project(ctx, "matnwb", folder="nwb")
+    ctx.write("nwb/index.rst", "matnwb\n======\n\n.. toctree::\n\n   api/index\n")
+    ctx.scmd("nwb apidoc", "apidoc", "-c", docs, "-q")
+    base = ctx.sphinx("default", docs, ctx.path("nwb-default"))
+    ctx.require(base.rc == 0, "the default build")
+    base_pages = {f: d for f, d in base.files().items() if f.startswith("api/")}
+    for label, args, check in OPTION_BUILDS:
+        b = ctx.sphinx(label, docs, ctx.path(f"nwb-{_slug(label)}"), *args)
+        new = set(b.subtypes) - set(base.subtypes)
+        ctx.expect(
+            b.rc == 0 and not new,
+            f"{label}: exit 0, no new kind of warning ({b.rc}, {sorted(new)})",
+        )
+        pages = {f: d for f, d in b.files().items() if f.startswith("api/")}
+        if check is None:
+            ctx.expect(pages != base_pages, f"{label}: changes the pages")
+        else:
+            ctx.expect(
+                check("".join(d.decode("utf-8") for d in pages.values())),
+                f"{label}: the pages show it",
+            )
+        if label == "no stable urls":
+            ctx.expect(not (b.out / "mat").exists(), "no stable urls: no mat/ folder")
+
+    # matlab_external_names silences -n for MATLAB's own names; emptied, they warn
+    n0 = ctx.sphinx("-n", docs, ctx.path("nwb-n"), "-n")
+    n1 = ctx.sphinx(
+        "-n no external names",
+        docs,
+        ctx.path("nwb-n-ext"),
+        "-n",
+        "-D",
+        "matlab_external_names=",
+    )
+    hits = n1.warned(r"reference target not found: (handle|matlab\.|dynamicprops)")
+    ctx.expect(
+        not n0.warned(r"reference target not found: (handle|matlab\.)") and hits,
+        f"matlab_external_names: MATLAB's names warn only when "
+        f"it is emptied ({len(hits)})",
+    )
+
+    # chooser pages for shadowed names, with every builder
+    vh = apidoc_project(
+        ctx,
+        "vhlab-toolbox-matlab",
+        folder="vh",
+        matlab_link_shadowed_files_to_chooser_pages=True,
+        matlab_auto_link="all",
+    )
+    ctx.write("vh/index.rst", "vhlab\n=====\n\n.. toctree::\n\n   api/index\n")
+    ctx.scmd("vh apidoc", "apidoc", "-c", vh, "-q")
+    b = ctx.sphinx("vh html", vh, ctx.path("vh-html"))
+    ctx.expect(
+        b.rc == 0 and not b.warned(r"\[mat\.ambiguous\]"),
+        f"chooser pages: no mat.ambiguous ({len(b.warned('ambiguous'))})",
+    )
+    ctx.expect(
+        (b.out / "mat" / "name" / "intfireleakyel_init.html").is_file(),
+        "a shadowed name has its chooser page",
+    )
+    for builder in (
+        "dirhtml",
+        "singlehtml",
+        "text",
+        "latex",
+        "epub",
+        "texinfo",
+        "man",
+        "json",
+        "xml",
+        "htmlhelp",
+    ):
+        o = ctx.sphinx(f"vh {builder}", vh, ctx.path(f"vh-{builder}"), builder=builder)
+        ctx.expect(o.rc == 0, f"-b {builder}: exit 0 ({o.rc})")
+    # the encoding of a project with Latin-1 files
+    y = apidoc_project(ctx, "YALMIP", folder="yalmip", matlab_src_encoding="latin-1")
+    ctx.write("yalmip/index.rst", "YALMIP\n======\n\n.. toctree::\n\n   api/index\n")
+    ctx.scmd("yalmip apidoc", "apidoc", "-c", y, "-q")
+    b = ctx.sphinx("yalmip latin-1", y, ctx.path("yalmip-html"))
+    ctx.expect(
+        b.rc == 0 and not b.warned(r"\[mat\.encoding\]"),
+        "matlab_src_encoding = latin-1: no mat.encoding warning",
+    )
+
+    # a file of html_extra_path where a stable address goes: a clear error
+    ctx.write("nwb-extra/mat/ref/nwbRead.m.html", "<html>mine</html>\n")
+    c = ctx.sphinx(
+        "stable url clash",
+        docs,
+        ctx.path("nwb-clash"),
+        "-D",
+        f"html_extra_path={ctx.path('nwb-extra')}",
+        crash_ok=True,
+    )
+    ctx.expect(
+        c.rc != 0, f"a clash of a stable address with a user file fails ({c.rc})"
+    )
+    ctx.expect(
+        "Extension error" not in c.stderr and "Traceback" not in c.stderr,
+        "... with a plain message, not a crash report",
+        bug="E2E-15",
+    )
+
+    # a hand-written page next to the API pages (output dir "."), then removed
+    hw = ctx.conf(
+        ctx.path("hw"),
+        matlab_src_code_project_root=str(REPOS / "matnwb"),
+        matlab_apidoc_output_dir=".",
+    )
+    ctx.scmd("hw apidoc", "apidoc", "-c", hw, "-q")
+    ctx.write("hw/notes.rst", "Notes\n=====\n\nHand-written.\n")
+    text = (hw / "index.rst").read_text(encoding="utf-8")
+    (hw / "index.rst").write_text(
+        text + "\n.. toctree::\n\n   notes\n", encoding="utf-8"
+    )
+    ctx.sphinx("hw first", hw, ctx.path("hw-html"), fresh=False)
+    (hw / "notes.rst").unlink()
+    (hw / "index.rst").write_text(text, encoding="utf-8")
+    h = ctx.sphinx("hw notes removed", hw, ctx.path("hw-html"), fresh=False)
+    ctx.expect(
+        (h.out / "notes.html").exists(),
+        "a removed hand-written page keeps its HTML, as Sphinx does "
+        "(linking-projects.rst: only pages apidoc removed are removed)",
+        bug="E2E-16",
+    )
+
+
+def report(build):
+    """Return the summary of a build's api-check.json, or {}."""
+    path = build.out / "api-check.json"
+    return (
+        json.loads(path.read_text(encoding="utf-8"))["summary"] if path.exists() else {}
+    )
+
+
+def checked(summary, kinds=None):
+    """Return the number of checked objects (of ``kinds``) in an api-check summary."""
+    return sum(
+        n for k, n in summary.get("checked", {}).items() if kinds is None or k in kinds
+    )
+
+
+def findings(summary, rule):
+    """Return the number of findings of ``rule`` in an api-check summary."""
+    n = summary.get("findings", {}).get(rule, {})
+    return n.get("error", 0) + n.get("warning", 0)
+
+
+@scenario
+def api_check(ctx):
+    """matlab-api-check settings on matnwb: rules, ignore patterns, file
+    selections (list, file, unmatched), section labels; with Markdown sidecar
+    docs (the +contrib READMEs) rendered, linked and checked.
+    """
+    docs = apidoc_project(
+        ctx,
+        "matnwb",
+        folder="docs",
+        extensions=["sphinx.ext.autodoc", "sphinxcontrib.matlab", "myst_parser"],
+        matlab_src_sidecar_suffixes=[".md"],
+        exclude_patterns=["_build"],
+    )
+    ctx.write(
+        "docs/index.rst",
+        """
+        matnwb
+        ======
+
+        .. toctree::
+
+           api/index
+           contrib
+
+        * C01 :mat:sidecar:`+contrib/+tdt/README.md`
+        """,
+    )
+    ctx.write(
+        "docs/contrib.rst",
+        """
+        Contributions
+        =============
+
+        .. mat:autosidecar:: +contrib/+blackrock/README.md
+
+        .. mat:autosidecar:: +contrib/no/README.md
+        """,
+    )
+    ctx.require(
+        ctx.scmd("apidoc", "apidoc", "-c", docs, "-q").returncode == 0,
+        "apidoc with sidecars",
+    )
+    html = ctx.sphinx("html", docs, ctx.path("html"), "-n")
+    ctx.expect(html.rc == 0, "html with Markdown sidecars: exit 0")
+    ctx.expect(
+        all(links_of(html.html("index.html"), "C").values()),
+        "a :mat:sidecar: role links",
+    )
+    ctx.expect(
+        len(html.warned(r"\+contrib/no/README.md.*\[mat\.sidecar\]")) == 1,
+        "mat:autosidecar of a missing sidecar warns mat.sidecar once",
+    )
+    ctx.expect(
+        any(
+            "blackrock" in f.lower() or "Blackrock" in html.html(f)
+            for f in html.files()
+            if f.startswith("contrib")
+        ),
+        "mat:autosidecar renders the README",
+    )
+
+    def check(label, *args):
+        b = ctx.sphinx(
+            label, docs, ctx.path(_slug(label)), *args, builder="matlab-api-check"
+        )
+        summary = report(b)
+        ctx.expect(b.rc in (0, 1) and summary, f"{label}: a report ({b.rc})")
+        return b, summary
+
+    _, s0 = check("default")
+    ctx.expect(
+        checked(s0, ("function", "class")) > 400,
+        f"the default checks every file ({s0.get('checked')})",
+    )
+    ctx.expect(
+        findings(s0, "sidecar-documented") + findings(s0, "sidecar-links") >= 0
+        and "sidecar-documented" in s0.get("findings", {}),
+        "the sidecar rules run",
+    )
+    # a dict cannot be given with -D: the rules and labels go into conf.py
+    conf = docs / "conf.py"
+    original = conf.read_text(encoding="utf-8")
+
+    def with_conf(label, extra):
+        conf.write_text(original + extra + "\n", encoding="utf-8")
+        try:
+            return check(label)
+        finally:
+            conf.write_text(original, encoding="utf-8")
+
+    b, s1 = with_conf(
+        "rules", "matlab_api_check_rules = {'description': 'ignore', 'inputs': 'error'}"
+    )
+    ctx.expect(
+        findings(s1, "description") == 0 and findings(s0, "description") > 0,
+        "a rule set to ignore reports nothing",
+    )
+    ctx.expect(
+        s1["findings"].get("inputs", {}).get("error", 0) == findings(s0, "inputs")
+        and (b.rc == 1) == (findings(s0, "inputs") > 0),
+        "a rule set to error reports errors, and exit 1 with one",
+    )
+    _, s2 = check(
+        "ignore patterns", "-D", "matlab_api_check_ignore_patterns=+tests/**,+types/**"
+    )
+    ctx.expect(
+        0 < checked(s2) < checked(s0),
+        f"ignore patterns check fewer objects ({checked(s2)} < {checked(s0)})",
+    )
+    b, s3 = check("files", "-D", "matlab_api_check_files=+io/")
+    io_files = len(list((REPOS / "matnwb" / "+io").rglob("*.m")))
+    n = checked(s3, ("function", "class", "script"))
+    ctx.expect(
+        0 < n <= io_files,
+        f"a folder selection checks the files below it ({n} of {io_files})",
+    )
+    lst = ctx.write("changed.txt", "nwbRead.m\n\n  nwbExport.m  \n")
+    _, s4 = check("files from", "-D", f"matlab_api_check_files_from={lst}")
+    n = checked(s4, ("function", "class", "script"))
+    ctx.expect(n == 2, f"a files_from list checks its 2 files ({s4['checked']})")
+    b, _ = check("unmatched", "-D", "matlab_api_check_files=nwbRead.m,deleted.m")
+    ctx.expect(
+        b.rc == 1 and b.warned(r"deleted\.m"),
+        "an entry that selects nothing: an error and exit 1",
+    )
+    b, _ = check(
+        "unmatched ignored",
+        "-D",
+        "matlab_api_check_files=nwbRead.m,deleted.m",
+        "-D",
+        "matlab_api_check_ignore_unmatched=1",
+    )
+    ctx.expect(
+        not b.warned(r"deleted\.m")
+        and "deleted.m" in (b.out / "api-check.txt").read_text(encoding="utf-8"),
+        "with ignore_unmatched it is listed as ignored, no error",
+    )
+    _, s7 = with_conf(
+        "labels",
+        "matlab_api_check_section_labels = "
+        "{'inputs': ['<built-in>', 'Input Arguments'], 'example': []}",
+    )
+    ctx.expect(
+        findings(s7, "inputs") <= findings(s0, "inputs"),
+        f"an extra inputs label finds no more missing inputs "
+        f"({findings(s7, 'inputs')} <= {findings(s0, 'inputs')})",
+    )
+    ctx.expect(
+        findings(s7, "example") >= findings(s0, "example"),
+        "accepting no example label finds no fewer missing examples",
+    )
+
+
+EVENTS_PAGE = """
+    Events
+    ======
+
+    .. mat:autoclass:: wt.RangeField
+       :members:
+       :show-inheritance:
+       :inherited-members:
+       :noindex:
+
+    .. mat:autoevent:: wt.ProgressBar.CancelPressed
+       :noindex:
+
+    .. mat:autoapplication:: widgets/examples/WidgetsExampleApp.mlapp
+       :noindex:
+
+    * E01 :mat:event:`wt.ProgressBar.CancelPressed`
+    * E02 :mat:event:`wt.abstract.BaseWidget.WidgetThemeChanged`
+    * E03 :mat:event:`wt.RangeField.WidgetThemeChanged`
+    * E04 :mat:app:`widgets/examples/WidgetsExampleApp.mlapp`
+    """
+
+
+def source_events(root):
+    """``(class reference, event)`` of every public event declared below ``root``."""
+    out = []
+    for f in sorted(root.rglob("*.m")):
+        inside = False
+        for line in f.read_text(encoding="utf-8", errors="replace").splitlines():
+            text = line.split("%")[0].strip()
+            if re.match(r"events\b", text):
+                # public events only: an access list, private, protected or
+                # Hidden needs an option (reference/directives.rst)
+                inside = not re.search(
+                    r"ListenAccess\s*=\s*[?{'\"]*(\?|private|protected)|Hidden", text
+                )
+            elif inside and re.fullmatch(r"end\b.*", text):
+                inside = False
+            elif inside and (name := re.match(r"\w+", text)):
+                out.append((f.relative_to(root).as_posix(), name.group()))
+    return out
+
+
+@scenario
+def events(ctx):
+    """widgets-toolbox (MathWorks), the project with classes that declare
+    events and App Designer apps: every event documented with an anchor,
+    inherited events, event roles, mat:autoevent and mat:autoapplication.
+    """
+    root = REPOS / "widgets-toolbox"
+    docs = apidoc_project(
+        ctx,
+        "widgets-toolbox",
+        folder="docs",
+        matlab_inherited_members=True,
+        nitpicky=True,
+        autodoc_default_options={"inherited-members": True},
+    )
+    ctx.write(
+        "docs/index.rst",
+        """
+        Widgets
+        =======
+
+        .. toctree::
+
+           api/index
+           events
+        """,
+    )
+    ctx.write("docs/events.rst", EVENTS_PAGE)
+    ctx.require(
+        ctx.scmd("apidoc", "apidoc", "-c", docs, "-q").returncode == 0, "apidoc"
+    )
+    b = ctx.sphinx("html", docs, ctx.path("html"))
+    ctx.expect(b.rc == 0, "html: exit 0")
+    pages = "".join(
+        d.decode("utf-8") for f, d in b.files().items() if f.startswith("api/")
+    )
+    declared = source_events(root)
+    missing = [
+        f"{c}.{e}"
+        for c, e in declared
+        if f'id="mat-{c}.{e}"' not in pages
+        and f'id="mat-{c.replace("+", "%2B")}.{e}"' not in pages
+    ]
+    ctx.expect(
+        declared and not missing,
+        f"every declared event has an anchor on the API pages "
+        f"({len(declared) - len(missing)} of {len(declared)}: {missing[:3]})",
+    )
+    ctx.expect("Events" in pages, "the class pages have an Events section")
+    page = b.html("events.html")
+    links = links_of(page, "E")
+    ctx.expect(
+        len(links) == 4 and all(links.values()),
+        f"every event and app role links ({[k for k, v in links.items() if not v]})",
+    )
+    ctx.expect(
+        "Inherited from" in page and "WidgetThemeChanged" in page,
+        "an inherited event is listed with the subclass",
+    )
+    mine = [
+        r for r in b.records if "events.rst" in r and re.search(r"\[(mat|ref)\.", r)
+    ]
+    ctx.expect(not mine, f"no mat.* or ref.* warning on the page ({mine[:2]})")
+    api = ctx.sphinx("api-check", docs, ctx.path("api"), builder="matlab-api-check")
+    hits = api.warned(r"CancelPressed")
+    ctx.expect(
+        len(hits) == 1,
+        f"api-check: the one event without help is found once ({len(hits)})",
+    )
+
+
+def main():
+    """Run the selected scenarios and print the summary."""
+    parser = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
+    parser.add_argument("names", nargs="*", help="run the scenarios named so")
+    parser.add_argument(
+        "--out", type=Path, default=P.HERE / "runs" / "scenarios", help="%(default)s"
+    )
+    parser.add_argument("--coverage", action="store_true")
+    parser.add_argument("--list", action="store_true", help="list the scenarios")
+    args = parser.parse_args()
+    if args.list:
+        for name, func in SCENARIOS.items():
+            print(f"{name:24} {(func.__doc__ or '').strip().splitlines()[0]}")
+        return
+    unknown = set(args.names) - set(SCENARIOS)
+    if unknown:
+        sys.exit(f"unknown scenarios: {', '.join(sorted(unknown))} (see --list)")
+    out = args.out.resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    rcfile = G.start_coverage(out / "coverage") if args.coverage else None
+    results = {"environment": G.environment(), "scenarios": {}}
+    for name, func in SCENARIOS.items():
+        if args.names and name not in args.names:
+            continue
+        print(f"== {name}", flush=True)
+        ctx = Ctx(name, out / name)
+        start = time.perf_counter()
+        error = None
+        try:
+            func(ctx)
+        except Failed as err:
+            error = f"stopped: {err}"
+        except Exception:
+            error = traceback.format_exc()
+            print(error, flush=True)
+        results["scenarios"][name] = {
+            "wall_s": round(time.perf_counter() - start, 1),
+            "error": error,
+            "checks": ctx.checks,
+        }
+        (out / "results.json").write_text(
+            json.dumps(results, indent=1) + "\n", encoding="utf-8"
+        )
+    if rcfile:
+        G.report_coverage(rcfile)
+    summary(results["scenarios"], out)
+
+
+def summary(rows, out):
+    """Print the counts and the problems; exit 1 on one."""
+    problems, known, fixed = [], [], []
+    for name, row in rows.items():
+        if row["error"]:
+            problems.append(f"{name}: {row['error'].strip().splitlines()[-1]}")
+        for c in row["checks"]:
+            if c["status"] == "FAIL":
+                problems.append(f"{name}: {c['what']}")
+            elif c["status"] == "known":
+                known.append(f"{name}: [{c['bug']}] {c['what']}")
+            elif c["status"] == "FIXED?":
+                fixed.append(f"{name}: [{c['bug']}] {c['what']}")
+    checks = sum(len(r["checks"]) for r in rows.values())
+    print(
+        f"\n{len(rows)} scenarios, {checks} checks: {len(problems)} problems, "
+        f"{len(known)} known bugs, {len(fixed)} marked bugs that passed; "
+        f"results in {out}"
+    )
+    for title, items in (
+        ("Problems", problems),
+        ("Known bugs", known),
+        ("Marked as a bug but passed (remove the mark?)", fixed),
+    ):
+        if items:
+            print(f"{title}:")
+            for item in items:
+                print(f"  {item}")
+    sys.exit(1 if problems else 0)
+
+
+if __name__ == "__main__":
+    main()
