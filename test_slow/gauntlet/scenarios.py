@@ -2921,7 +2921,6 @@ def help_links(ctx):
         "LNK7",
         "a file included by a sidecar resolves its links too",
         lambda h: any(a in h for a in api),
-        bug="E2E-27",
     )
     check(
         "LNK8", "Markdown sidecar: a file is a download", lambda h: "_downloads/" in h

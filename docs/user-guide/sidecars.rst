@@ -118,6 +118,11 @@ hyperlink (```notes <notes.rst>`_``) goes to:
 * any other file: a download;
 * anything else: the document's parser decides.
 
+The text of a file that a sidecar doc includes (``include``, MyST's
+``{include}``) is part of the sidecar doc: its relative paths and links are
+relative to the sidecar doc's folder, not to the included file's, as Sphinx
+and MyST resolve them from the document that includes the file.
+
 The domain's roles work in sidecar docs: ``:mat:func:`demo.scale``` in reST,
 ``{mat:func}`demo.scale``` in Markdown. ``:mat:sidecar:`` links to a sidecar
 doc by its path reference, with its title as text:

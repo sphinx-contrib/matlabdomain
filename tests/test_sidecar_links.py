@@ -99,8 +99,8 @@ def test_link_targets(app):
         # help text, and a file it includes
         "HLNK1": API,
         "HLNK2": "#",
-        "HLNK3": "bar.m",
-        "HLNK4": "notes.rst",
+        "HLNK3": API,
+        "HLNK4": "#",
         # a reST sidecar doc
         "RLNK1": API,
         "RLNK2": "#",
@@ -110,12 +110,12 @@ def test_link_targets(app):
         "RLNK6": "#usage",
         "RLNK7": "_downloads/7d3627df50ff4323d8ce4018d6d3e8b1/data.csv",
         "RLNK8": "gone.rst",
-        # files it includes
-        "ILNK1": "bar.m",
-        "ILNK2": "guide.md",
-        "ILNK3": "../other/far.md",
+        # files it includes: relative to the sidecar doc's folder
+        "ILNK1": API,
+        "ILNK2": "#",
+        "ILNK3": "far.html",
         "ILNK4": "https://example.com",
-        "ILNK5": "bar.m",
+        "ILNK5": API,
         "ILNK6": "../bar.m",
         # a Markdown sidecar doc, and a file it includes
         "MLNK1": API,
@@ -153,6 +153,7 @@ def test_broken_links_are_reported(app):
     issues = app.env.get_domain("mat").data["sidecar_issues"]["page"]
     assert issues == [
         ("sub/notes.rst", "link", "gone.rst", 7),
+        ("sub/notes.rst", "link", "../bar.m", 1),
         ("sub/guide.md", "link", "gone.md", 3),
     ]
     assert len(warnings(app)) == 1  # myst: gone.md

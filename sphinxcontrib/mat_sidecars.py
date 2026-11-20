@@ -181,6 +181,11 @@ def _external(target):
     )
 
 
+def _normal(path):
+    """``path`` (absolute, or relative to the current folder) to compare."""
+    return os.path.normcase(os.path.abspath(path))
+
+
 def _exists(path):
     """Return True if ``path`` (an image path may end with ``.*``) exists."""
     if "*" in path:
@@ -197,6 +202,13 @@ class _Relative:
     dom: "MATLABDomain"
     #: ``(kind, target, line)`` of broken relative links and missing images
     issues: list = field(default_factory=list)
+    #: the files included from ``folder`` (``_normal`` paths): their text is
+    #: part of the sidecar doc or help text
+    included: set = field(default_factory=set)
+
+    def wrote(self, source):
+        """Return True if ``source``, a node's source, is a file it included."""
+        return bool(source) and _normal(source) in self.included
 
     def source_path(self, target):
         """``target`` (absolute) as Sphinx's source-folder-relative path
@@ -291,7 +303,8 @@ class _Sidecar(_Relative):
         super().rewrite(tree)
         for ref in list(tree.findall(nodes.reference)):
             # Nested sidecar docs and help text resolve their own links.
-            if get_source_line(ref)[0] == self.path:
+            source = get_source_line(ref)[0]
+            if source == self.path or self.wrote(source):
                 self.rewrite_hyperlink(ref)
 
 
@@ -320,9 +333,11 @@ def relative_includes(env, current):
             and not _external(filename)
             and (rel := current()) is not None
         ):
-            source = rel.source_path(os.path.join(rel.folder, filename))
+            path = os.path.join(rel.folder, filename)
+            source = rel.source_path(path)
             if source is not None:
                 filename = source
+                rel.included.add(_normal(path))
         return original(filename, docname)
 
     env.relfn2path = relfn2path
@@ -400,9 +415,14 @@ class HelpPaths:
 
     def _hyperlink(self, ref):
         """Turn a relative hyperlink to a sidecar doc or code file into a
-        reference to it, to another file into a download.
+        reference to it, to another file into a download; also in a file the
+        help text includes.
         """
-        if (rel := self.at(get_source_line(ref)[0])) is not None:
+        source = get_source_line(ref)[0]
+        rel = self.at(source)
+        if rel is None:
+            rel = next((r for r in self._folders.values() if r.wrote(source)), None)
+        if rel is not None:
             rel.rewrite_hyperlink(ref)
 
 

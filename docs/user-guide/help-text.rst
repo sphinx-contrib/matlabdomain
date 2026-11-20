@@ -169,7 +169,8 @@ as in sidecar docs (:doc:`sidecars`), not to the documentation page:
 * ``literalinclude`` and ``include`` read files next to the code file;
 * a hyperlink to a relative path goes to a sidecar doc's document, to a
   code file's API entry, or downloads any other file; a link to a file
-  that does not exist is left as it is.
+  that does not exist is left as it is. Hyperlinks in a file the help text
+  includes are relative to the code file's folder too.
 
 Absolute paths (``/img/logo.png``) stay relative to the Sphinx source
 folder, and ``:doc:`` and ``:ref:`` name documents and labels, not files.
