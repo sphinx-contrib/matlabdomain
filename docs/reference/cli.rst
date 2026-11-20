@@ -41,10 +41,14 @@ Arguments
 
 .. option:: -o DOCS, --output-dir DOCS
 
-   The Sphinx source folder, inside ``ROOT``. Default: ``ROOT/docs``. A
+   The Sphinx source folder, inside ``ROOT``, relative to the current
+   folder like any option value. Default: ``ROOT/docs``. A
    folder that exists with files but without a ``conf.py`` is in use (an
    MkDocs ``docs/``, for example): the command says so and asks for
-   another one, relative to ``ROOT``; with :option:`-q`, it stops.
+   another one, relative to ``ROOT``; with :option:`-q`, it stops. A path
+   you type at a prompt is relative to ``ROOT``, also the file to save the
+   answers in; the paths of options (:option:`-o`, :option:`-a`) are relative to the
+   current folder.
 
 Options
 ~~~~~~~

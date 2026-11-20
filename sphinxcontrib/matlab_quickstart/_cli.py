@@ -623,14 +623,15 @@ def save_answers(args, root, answers):
     """Offer to save the answers (default yes in a dry run). The end of
     input (CI: nothing to read) is no.
     """
-    default = args.answers or os.path.join(root, ANSWERS_FILE)
+    default = os.path.abspath(args.answers or os.path.join(root, ANSWERS_FILE))
     try:
         if not prompt("Save the answers to a file", args.dry_run, yes_no):
             return
-        path = input(f"> File [{default}]: ").strip() or default
+        reply = input(f"> File [{default}]: ").strip()
     except EOFError:
         print()
         return
+    path = os.path.join(root, reply) if reply else default
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(dumps(answers))
     print(f"Saved the answers: --answers {path} reads them back.")

@@ -1755,6 +1755,15 @@ def quickstart(ctx):
         "docs outside root", "quickstart", a, "-q", "-o", ctx.path("x"), cwd=a
     )
     ctx.expect(proc.returncode == 2, "DOCS outside ROOT: exit 2")
+    # -o is relative to the working folder, not to ROOT
+    (a / "sub").mkdir(exist_ok=True)
+    proc = ctx.scmd(
+        "-o from a subfolder", "quickstart", a, "-q", "-o", "d2", cwd=a / "sub"
+    )
+    ctx.expect(
+        proc.returncode == 0 and (a / "sub" / "d2" / "conf.py").is_file(),
+        f"-o is relative to the working folder ({proc.returncode})",
+    )
     proc = ctx.scmd(
         "missing answers", "quickstart", a, "-q", "-a", ctx.path("none.toml")
     )

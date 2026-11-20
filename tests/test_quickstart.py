@@ -1140,6 +1140,37 @@ def test_save_answers_default_file(tmp_path, capsys, replies, fixed, no_git):
     assert replies.asked[-1] == "> Save the answers to a file [y/N]: "
 
 
+def test_save_path_typed_is_relative_to_root(tmp_path, replies, monkeypatch):
+    root = tmp_path / "root"
+    elsewhere = tmp_path / "elsewhere"
+    root.mkdir()
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+    answers = _cli.read_answers(answers_file(tmp_path, ANSWERS + _all_answers()))
+    namespace = SimpleNamespace(dry_run=False, answers=None)
+    replies.queue += ["y", "mine.toml"]
+    _cli.save_answers(namespace, str(root), answers)
+    assert (root / "mine.toml").is_file()
+    assert not (elsewhere / "mine.toml").exists()
+    # the option value stays relative to the working folder, also as the default
+    namespace = SimpleNamespace(dry_run=False, answers="given.toml")
+    replies.queue += ["y", ""]
+    _cli.save_answers(namespace, str(root), answers)
+    assert (elsewhere / "given.toml").is_file()
+    assert not (root / "given.toml").exists()
+
+
+def test_output_dir_is_relative_to_the_working_folder(
+    tmp_path, monkeypatch, fixed, no_git
+):
+    root = copy_root(QUICKSTART, tmp_path)
+    (root / "sub").mkdir()
+    monkeypatch.chdir(root / "sub")
+    assert matlab_quickstart.main([str(root), "-q", "-o", "d2"]) == 0
+    assert (root / "sub" / "d2" / "conf.py").is_file()
+    assert not (root / "d2").exists()
+
+
 def test_end_of_input_at_the_save_prompt_is_no(
     tmp_path, capsys, replies, fixed, no_git
 ):
