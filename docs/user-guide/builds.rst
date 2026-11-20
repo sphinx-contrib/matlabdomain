@@ -52,9 +52,10 @@ output folders. The builder that runs first after an edit reads the changed
 pages; each other output then writes every page once at its next build,
 without reading them again, and from then on only what changed. An output
 counts as its builder and its output folder. The pages of documents below
-``matlab_apidoc_output_dir`` that are gone since an output's last build are
-removed from that output, whichever builder saw them go; other files there,
-such as your own, are kept. A build with ``-E`` starts a new
+``matlab_apidoc_output_dir`` that ``scmd apidoc`` wrote (they start with its
+marker line) and that are gone since an output's last build are removed
+from that output, whichever builder saw them go; the pages of your own
+documents there, and other files, are kept. A build with ``-E`` starts a new
 :term:`environment` and forgets which pages each output has, so it keeps
 such pages, as Sphinx keeps the pages of removed documents; delete the output
 folder to drop them.

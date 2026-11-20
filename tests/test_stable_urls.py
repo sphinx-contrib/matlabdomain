@@ -22,6 +22,7 @@ from test_intersphinx import (
 
 from sphinxcontrib import mat_urls
 from sphinxcontrib.matlab_apidoc import main as apidoc
+from sphinxcontrib.matlab_apidoc._generate import MARKER
 
 CHOICE = re.compile(
     r'<a class="reference internal" href="([^"]*)"><code[^>]*>'
@@ -447,6 +448,10 @@ def test_stale_pages_outside_or_at_the_source_folder(tmp_path):
     (sources / "a.rst.txt").write_text("", encoding="utf-8")
     key = ("html", "out")
     dom = SimpleNamespace(data={"api_pages": {key: {"a", "b"}}})
+    # a and b are pages of scmd apidoc, c is hand-written
+    write(
+        tmp_path / "src", {"a.rst": f"{MARKER}\n", "b.rst": f"{MARKER}\n", "c.rst": ""}
+    )
 
     def run(output_dir, found):
         builder = SimpleNamespace(
@@ -462,7 +467,9 @@ def test_stale_pages_outside_or_at_the_source_folder(tmp_path):
             html_sourcelink_suffix=".txt",
         )
         app = SimpleNamespace(
-            env=SimpleNamespace(found_docs=found),
+            env=SimpleNamespace(
+                found_docs=found, doc2path=lambda doc: tmp_path / "src" / f"{doc}.rst"
+            ),
             config=config,
             builder=builder,
             srcdir=tmp_path / "src",
@@ -473,7 +480,7 @@ def test_stale_pages_outside_or_at_the_source_folder(tmp_path):
     run("../out", {"a", "b"})
     assert removed.is_file()
     assert dom.data["api_pages"][key] == set()
-    run(".", {"a", "b"})  # the source folder itself: every document
+    run(".", {"a", "b", "c"})  # the source folder itself: every page of apidoc
     assert dom.data["api_pages"][key] == {"a", "b"}
     run(".", {"b"})
     assert list((tmp_path / "out").iterdir()) == []
@@ -589,3 +596,20 @@ def test_pages_of_sources_apidoc_removed_go(make_app, tmp_path, output_dir, api)
     assert follow(outdir, "mat/ref/util/scale.m.html") == (
         f"{api}util/index-2.html#mat-util/scale.m"
     )
+
+
+@pytest.mark.parametrize(
+    ("output_dir", "notes"), [("api", "api/notes"), (".", "notes")]
+)
+def test_pages_of_removed_hand_written_sources_stay(
+    make_app, tmp_path, output_dir, notes
+):
+    # Next to the API pages, a hand-written page has no marker line: its
+    # pages stay when its source is removed, as Sphinx keeps them.
+    outdir = build_removed_pages(make_app, tmp_path, output_dir, notes=notes)
+    stay = [f"{notes}.html", f"_sources/{notes}.rst.txt"]
+    assert all((outdir / p).is_file() for p in stay)
+    outdir = build_removed_pages(
+        make_app, tmp_path, output_dir, remove=[f"{notes}.rst"], notes=notes
+    )
+    assert all((outdir / p).is_file() for p in stay)

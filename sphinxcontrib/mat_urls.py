@@ -53,6 +53,7 @@ from sphinx.util.logging import getLogger
 from sphinx.util.osutil import relative_uri
 
 from . import mat_naming
+from .matlab_apidoc._generate import _is_marked
 from .matlab_apidoc._names import docnames
 
 logger = getLogger("matlab-domain")
@@ -725,7 +726,8 @@ def remove_stale_pages(app, dom, key):
     """Remove the HTML page (and its copied source) of each document below
     ``matlab_apidoc_output_dir`` that the output ``key`` has a page for and
     that is gone, which Sphinx keeps; then note the documents it has pages
-    for now (``api_pages``, pickled).
+    for now (``api_pages``, pickled): those whose source starts with the
+    marker line of ``scmd apidoc``, so a hand-written page there is kept.
 
     Another builder on the same doctree folder may have seen the removal, so
     this compares with the documents of the output's last build, not with
@@ -757,4 +759,10 @@ def remove_stale_pages(app, dom, key):
                 os.rmdir(folder)
                 folder = os.path.dirname(folder)
     prefix = _api_prefix(app)
-    pages[key] = set() if prefix is None else {d for d in found if d.startswith(prefix)}
+    pages[key] = (
+        set()
+        if prefix is None
+        else {
+            d for d in found if d.startswith(prefix) and _is_marked(app.env.doc2path(d))
+        }
+    )

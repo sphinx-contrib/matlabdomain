@@ -2344,7 +2344,6 @@ def options(ctx):
         (h.out / "notes.html").exists(),
         "a removed hand-written page keeps its HTML, as Sphinx does "
         "(linking-projects.rst: only pages apidoc removed are removed)",
-        bug="E2E-16",
     )
 
 

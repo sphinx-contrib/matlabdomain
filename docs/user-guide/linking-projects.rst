@@ -29,8 +29,10 @@ Publish from an empty output folder:
 Sphinx never deletes a page it no longer builds. This :term:`extension` removes
 the HTML page, and its copy in ``_sources``, of every page below
 :confval:`matlab_apidoc_output_dir` whose source ``scmd apidoc``
-removed (``global-2`` when it writes fewer pages). Other removed pages
-stay in an output folder kept from an earlier build, and in a site copied
+removed (``global-2`` when it writes fewer pages), also when that folder
+is the :term:`source folder <source directory>` itself (``"."``): it knows
+them by the marker line at the top of each generated page. Other removed
+pages stay in an output folder kept from an earlier build, and in a site copied
 from it; a CI job that starts from a fresh checkout has an empty output
 folder.
 
