@@ -1905,11 +1905,6 @@ class MatModule(MatObject):
         #: folders in the order of their names on disk, set by the index stage
         self.members = None
 
-    @override
-    def ref_role(self):
-        """Return the role used for references and automatic links."""
-        return "folder"
-
     def member_refs(self):
         """``(name, reference)`` of the files and folders in the folder."""
         if self.members is None:  # detached use: no index stage

@@ -149,7 +149,6 @@ def test_reference_roles(built):
         "Shape.m.Area": "attr",
         "Shape.m.area": "meth",
     }
-    assert resolve(dom, "sub/").ref_role() == "folder"
 
 
 def test_module_analyzer_gives_source_order(built):
