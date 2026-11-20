@@ -106,3 +106,47 @@ def test_subcommands_run(tmp_path, capsys):
     assert "scmd quickstart: error:" in capsys.readouterr().err
     assert matlab_cli.main(["skills", "install", "missing"]) == 2
     assert "scmd skills install: error:" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--help"],
+        ["--version"],
+        ["apidoc", "--help"],
+        ["quickstart", "--help"],
+        ["skills", "--help"],
+        ["bogus"],
+        ["apidoc", "--conf-dir", "missing"],
+        ["quickstart", "missing", "--quiet"],
+        ["skills", "install", "missing"],
+    ],
+)
+def test_python_dash_m_names_scmd(args, tmp_path):
+    result = subprocess.run(
+        [sys.executable, "-m", "sphinxcontrib.matlab_cli", *args],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=tmp_path,
+        env={**os.environ, "PYTHON_COLORS": "0"},
+    )
+    output = result.stdout + result.stderr
+    assert "matlab_cli" not in output
+    assert output.startswith(("usage: scmd", "scmd"))
+
+
+@pytest.mark.parametrize(
+    ("argv0", "expected"),
+    [
+        ("/venv/bin/scmd", "scmd"),
+        ("/venv/Scripts/scmd.exe", "scmd"),
+        ("/site-packages/sphinxcontrib/matlab_cli.py", "scmd"),
+        ("/venv/bin/sphinxcontrib-matlabdomain", "sphinxcontrib-matlabdomain"),
+        ("/venv/Scripts/sphinxcontrib-matlabdomain.exe", "sphinxcontrib-matlabdomain"),
+    ],
+)
+def test_program_name(argv0, expected, monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", [argv0, "apidoc", "--conf-dir", "missing"])
+    assert matlab_cli.main() == 2
+    assert capsys.readouterr().err.startswith(f"{expected} apidoc: error:")
