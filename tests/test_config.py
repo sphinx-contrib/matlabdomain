@@ -148,6 +148,8 @@ def assert_configuration_error(stderr, message):
     """``stderr`` of sphinx-build shows the ``ConfigError`` ``message`` the
     way the Sphinx under test prints one (reference/configuration.rst).
     """
+    # With FORCE_COLOR (CI) Sphinx colours the first line.
+    stderr = re.sub(r"\x1b\[[0-9;]*m", "", stderr)
     if tuple(map(int, sphinx.__version__.split(".")[:2])) >= (8, 2):
         # The report Sphinx prints for every error, ending in the exception.
         assert "Configuration error!" in stderr
