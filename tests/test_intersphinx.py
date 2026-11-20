@@ -278,7 +278,10 @@ def test_consumer_links_to_a_block_with_a_line_break(make_app, tmp_path):
     assert text == "odd/Two Lines"
 
 
-def test_names_in_several_inventories(make_app, tmp_path):
+def several_inventories(root):
+    """Write the inventories "one" and "two" below ``root``; return the
+    ``intersphinx_mapping``.
+    """
     entries = {
         "one": [
             ("a/f.m", "function", "api.html#mat-a/f.m", "f"),
@@ -292,9 +295,14 @@ def test_names_in_several_inventories(make_app, tmp_path):
     }
     mapping = {}
     for name, items in entries.items():
-        write_inventory(tmp_path / name / "objects.inv", name, items)
+        write_inventory(root / name / "objects.inv", name, items)
         uri = f"https://{name}.example.invalid/"
-        mapping[name] = (uri, str(tmp_path / name / "objects.inv"))
+        mapping[name] = (uri, str(root / name / "objects.inv"))
+    return mapping
+
+
+def test_names_in_several_inventories(make_app, tmp_path):
+    mapping = several_inventories(tmp_path)
     references = {
         "any": ":mat:func:`f`",
         "one": ":mat:func:`one:f`",
@@ -327,6 +335,26 @@ def test_names_in_several_inventories(make_app, tmp_path):
     )
     assert "'h' matches several objects: one:c/h.m, two:c/h.m; write one" in warnings
     assert warnings.count("WARNING") == 4
+
+
+def test_external_and_any_roles_in_several_inventories(make_app, tmp_path):
+    mapping = several_inventories(tmp_path)
+    references = {
+        "external": ":external:mat:func:`g`",
+        "any": ":any:`g`",
+        "external_missing": ":external:mat:func:`nosuch`",
+        "any_missing": ":any:`nosuch`",
+    }
+    links, warnings = build_consumer(make_app, tmp_path / "app", mapping, references)
+    assert links == {
+        "external": ("https://one.example.invalid/api.html#mat-a/g.m", "g"),
+        "any": ("https://one.example.invalid/api.html#mat-a/g.m", "g"),
+        "external_missing": (None, "nosuch()"),
+        "any_missing": (None, "nosuch"),
+    }
+    assert "external mat:func reference target not found: nosuch" in warnings
+    assert "'any' reference target not found: nosuch" in warnings
+    assert warnings.count("WARNING") == 2
 
 
 def test_two_versions_of_one_library(make_app, tmp_path):
