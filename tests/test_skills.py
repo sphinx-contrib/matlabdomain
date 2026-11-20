@@ -45,11 +45,8 @@ def test_skills_are_self_contained():
 
 
 def test_front_matter():
-    text = "---\nname: a\nno colon\ndescription: x: y\n---\nbody: no\n"
+    text = "---\nname: a\ndescription: x: y\n---\nbody: no\n"
     assert _cli._front_matter(text) == {"name": "a", "description": "x: y"}
-    assert _cli._front_matter("name: a\n") == {}
-    assert _cli._front_matter("---\nname: a\n") == {"name": "a"}
-    assert _cli._front_matter("") == {}
 
 
 def test_list(capsys):

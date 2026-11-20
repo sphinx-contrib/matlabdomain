@@ -26,17 +26,15 @@ USAGE_ERROR = 2
 
 
 def _front_matter(text):
-    """Return the ``key: value`` lines of a ``SKILL.md`` header."""
+    """Return the ``key: value`` lines of the header of a ``SKILL.md`` of the
+    package: the lines between its first two ``---`` lines.
+    """
     lines = text.splitlines()
-    fields = {}
-    if lines and lines[0].strip() == "---":
-        for line in lines[1:]:
-            if line.strip() == "---":
-                break
-            key, sep, value = line.partition(":")
-            if sep:
-                fields[key.strip()] = value.strip()
-    return fields
+    header = lines[1 : lines.index("---", 1)]
+    return {
+        key.strip(): value.strip()
+        for key, _, value in (line.partition(":") for line in header)
+    }
 
 
 def skills():
