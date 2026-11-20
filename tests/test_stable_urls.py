@@ -523,3 +523,69 @@ def test_hand_written_folders_that_are_not_indexed(make_app, tmp_path, root):
     html = (app.outdir / "index.html").read_text(encoding="utf-8")
     assert 'href="#mat-mex/"' in html
     assert 'href="#mat-tools/fastSolve"' in html
+
+
+def build_removed_pages(make_app, tmp_path, output_dir, remove=(), notes="notes"):
+    """Run ``scmd apidoc`` and an HTML build of a project with ``util/alpha.m``,
+    ``util/scale.m`` and ``util/zeta.m``, one API page each below ``output_dir``,
+    and the hand-written orphan page ``notes``, after removing ``remove``.
+    """
+    if not (tmp_path / "conf.py").exists():
+        write(
+            tmp_path,
+            {
+                "conf.py": 'extensions = ["sphinxcontrib.matlab"]\n'
+                'matlab_src_code_project_root = "src"\n'
+                f"matlab_apidoc_output_dir = {output_dir!r}\n"
+                'matlab_apidoc_group = "folder"\nmatlab_apidoc_page_size = 1\n',
+                f"{notes}.rst": ":orphan:\n\nNotes\n=====\n\nHand-written.\n",
+                **{
+                    f"src/util/{name}.m": FUNCTION.format(name=name)
+                    for name in ("alpha", "scale", "zeta")
+                },
+            },
+        )
+        if output_dir != ".":
+            write(
+                tmp_path,
+                {"index.rst": "Index\n=====\n\n.. toctree::\n\n   api/index\n"},
+            )
+    for name in remove:
+        (tmp_path / name).unlink()
+    assert apidoc(["-q", "-c", str(tmp_path)]) == 0
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    app.cleanup()
+    return Path(app.outdir)
+
+
+@pytest.mark.parametrize(("output_dir", "api"), [("api", "api/"), (".", "")])
+def test_pages_of_sources_apidoc_removed_go(make_app, tmp_path, output_dir, api):
+    outdir = build_removed_pages(make_app, tmp_path, output_dir)
+    gone = [
+        f"{api}util/index-3.html",
+        f"_sources/{api}util/index-3.rst.txt",
+        "mat/ref/util/zeta.m.html",
+        "mat/name/zeta.html",
+    ]
+    stay = [
+        "index.html",
+        "notes.html",
+        "_sources/notes.rst.txt",
+        f"{api}util/index.html",
+        f"{api}util/index-2.html",
+        f"_sources/{api}util/index-2.rst.txt",
+        "mat/ref/util/scale.m.html",
+        "mat/name/scale.html",
+    ]
+    assert all((outdir / p).is_file() for p in gone + stay)
+    notes = (outdir / "notes.html").read_bytes()
+    outdir = build_removed_pages(
+        make_app, tmp_path, output_dir, remove=["src/util/zeta.m"]
+    )
+    assert not any((outdir / p).exists() for p in gone)
+    assert all((outdir / p).is_file() for p in stay)
+    assert (outdir / "notes.html").read_bytes() == notes
+    assert follow(outdir, "mat/ref/util/scale.m.html") == (
+        f"{api}util/index-2.html#mat-util/scale.m"
+    )
