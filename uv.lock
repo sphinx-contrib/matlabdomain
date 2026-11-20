@@ -1140,6 +1140,7 @@ dev = [
 ]
 docs = [
     { name = "furo" },
+    { name = "myst-parser" },
     { name = "sphinxcontrib-mermaid" },
 ]
 test = [
@@ -1175,6 +1176,7 @@ dev = [
 ]
 docs = [
     { name = "furo" },
+    { name = "myst-parser", specifier = ">=4,<6" },
     { name = "sphinxcontrib-mermaid" },
 ]
 test = [

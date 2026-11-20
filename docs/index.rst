@@ -96,6 +96,7 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    :caption: Project
 
    CHANGES
+   blog/index
 
 Indices and tables
 ------------------
