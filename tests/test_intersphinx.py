@@ -364,19 +364,31 @@ def test_external_and_any_roles_in_several_inventories(make_app, tmp_path):
     assert warnings.count("WARNING") == 4
 
 
-def test_two_versions_of_one_library(make_app, tmp_path):
-    # The same references in both inventories, at different sites.
+ONE = "https://one.example.invalid/api.html"
+TWO = "https://two.example.invalid/api.html"
+
+
+def two_versions(root):
+    """Write the inventories "one" and "two" below ``root``, with the same
+    references (two versions of one library); return the
+    ``intersphinx_mapping``.
+    """
     entries = [
         ("+p/C.m", "class", "api.html#mat-+p/C.m", "p.C"),
         ("+p/f.m", "function", "api.html#mat-+p/f.m", "p.f"),
     ]
     mapping = {}
     for name in ("one", "two"):
-        write_inventory(tmp_path / name / "objects.inv", name, entries)
+        write_inventory(root / name / "objects.inv", name, entries)
         mapping[name] = (
             f"https://{name}.example.invalid/",
-            str(tmp_path / name / "objects.inv"),
+            str(root / name / "objects.inv"),
         )
+    return mapping
+
+
+def test_two_versions_of_one_library(make_app, tmp_path):
+    mapping = two_versions(tmp_path)
     references = {
         "path_one": ":mat:func:`one:+p/f.m`",
         "path_two": ":mat:func:`two:+p/f.m`",
@@ -389,18 +401,14 @@ def test_two_versions_of_one_library(make_app, tmp_path):
         "ambiguous": ":mat:class:`p.C`",
     }
     links, warnings = build_consumer(make_app, tmp_path / "app", mapping, references)
-    one, two = (
-        "https://one.example.invalid/api.html",
-        "https://two.example.invalid/api.html",
-    )
     assert links == {
-        "path_one": (f"{one}#mat-+p/f.m", "p.f"),
-        "path_two": (f"{two}#mat-+p/f.m", "p.f"),
-        "named_one": (f"{one}#mat-+p/C.m", "p.C"),
-        "named_two": (f"{two}#mat-+p/f.m", "p.f"),
-        "name_two": (f"{two}#mat-+p/C.m", "p.C"),
-        "name_one": (f"{one}#mat-+p/C.m", "p.C"),
-        "function_one": (f"{one}#mat-+p/f.m", "p.f"),
+        "path_one": (f"{ONE}#mat-+p/f.m", "p.f"),
+        "path_two": (f"{TWO}#mat-+p/f.m", "p.f"),
+        "named_one": (f"{ONE}#mat-+p/C.m", "p.C"),
+        "named_two": (f"{TWO}#mat-+p/f.m", "p.f"),
+        "name_two": (f"{TWO}#mat-+p/C.m", "p.C"),
+        "name_one": (f"{ONE}#mat-+p/C.m", "p.C"),
+        "function_one": (f"{ONE}#mat-+p/f.m", "p.f"),
         "ambiguous": (None, "p.C"),
     }
     assert (
@@ -408,6 +416,40 @@ def test_two_versions_of_one_library(make_app, tmp_path):
         in warnings
     )
     assert warnings.count("WARNING") == 1
+
+
+def test_external_role_with_an_inventory_prefix(make_app, tmp_path):
+    mapping = two_versions(tmp_path)
+    references = {
+        "name_two": ":external:mat:func:`two:p.f`",
+        "class_two": ":external:mat:class:`two:p.C`",
+        "unprefixed": ":external:mat:func:`p.f`",
+        "named": ":external+one:mat:func:`p.f`",
+        # a prefix in the target of :external+lib: is part of the name
+        "named_same": ":external+one:mat:func:`one:p.f`",
+        "named_other": ":external+one:mat:func:`two:p.f`",
+        # no inventory of that name
+        "no_inventory": ":external:mat:func:`nolib:p.f`",
+        "colon": ":external:mat:func:`x:y`",
+    }
+    links, warnings = build_consumer(make_app, tmp_path / "app", mapping, references)
+    assert links == {
+        "name_two": (f"{TWO}#mat-+p/f.m", "p.f"),
+        "class_two": (f"{TWO}#mat-+p/C.m", "p.C"),
+        "unprefixed": (None, "p.f()"),
+        "named": (f"{ONE}#mat-+p/f.m", "p.f"),
+        "named_same": (None, "one:p.f()"),
+        "named_other": (None, "two:p.f()"),
+        "no_inventory": (None, "nolib:p.f()"),
+        "colon": (None, "x:y()"),
+    }
+    assert (
+        "'p.f' matches several objects: one:+p/f.m, two:+p/f.m; write one of them"
+        in warnings
+    )
+    for target in ("one:p.f", "two:p.f", "nolib:p.f", "x:y"):
+        assert f"external mat:func reference target not found: {target} " in warnings
+    assert warnings.count("WARNING") == 5
 
 
 # --- repaging: an object moves to another API page ---------------------------
