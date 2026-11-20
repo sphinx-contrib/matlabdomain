@@ -72,17 +72,18 @@ class MatTypedField(TypedField):
 
 def keep_unresolved_references(app, env, node, contnode):
     """``missing-reference``: render an unresolved MATLAB reference as its text, without
-    a warning, when it is a type, an ambiguous name, a name in ``matlab_external_names``
-    or a Simulink role outside the project's files.
+    a warning, when it is a type, an ambiguous name (also of an ``:any:`` role), a name
+    in ``matlab_external_names`` or a Simulink role outside the project's files.
 
     Runs after intersphinx (priority 900), so other projects' names still link.
     """
+    if node.get("mat:ambiguous"):  # warned
+        return contnode
     if node.get("refdomain") != "mat":
         return None
     external = _external_names(tuple(app.config.matlab_external_names))
     if (
         node.get("mat:type")
-        or node.get("mat:ambiguous")
         or external.fullmatch(node.get("reftarget", ""))
         or _outside_simulink_file(env, node)
     ):
@@ -158,7 +159,14 @@ def _check_inventories(env, node, contnode):
         mat_types.warn_ambiguous(target, labels, node, "write one of them")
         return contnode
     if not found:
-        return _namespace_folder(inventories, names, node, contnode)
+        link = _namespace_folder(inventories, names, node, contnode)
+        if link is None and "intersphinx" in node:
+            # intersphinx warns "not found" for an :external: role whose
+            # MATLAB name is ambiguous; mat.ambiguous says more
+            env.get_domain("mat").get_full_qualified_name(node)
+            if node.get("mat:ambiguous"):
+                return contnode
+        return link
     uri, found_in = next(iter(found.items()))
     if (
         env.config.matlab_link_shadowed_files_to_chooser_pages

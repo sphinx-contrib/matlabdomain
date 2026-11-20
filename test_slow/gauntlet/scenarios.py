@@ -1326,9 +1326,9 @@ def intersphinx(ctx):
         )
     y05 = [r for r in v.records if "index.rst:8:" in r]
     ctx.expect(
-        len(y05) == 1,
-        f"Y05: one warning for an ambiguous :external: role ({len(y05)})",
-        bug="E2E-6",
+        len(y05) == 1 and "[mat.ambiguous]" in y05[0],
+        f"Y05: one warning, mat.ambiguous, for an ambiguous :external: role "
+        f"({len(y05)})",
     )
 
 

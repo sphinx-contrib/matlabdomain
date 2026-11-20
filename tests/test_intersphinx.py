@@ -344,6 +344,9 @@ def test_external_and_any_roles_in_several_inventories(make_app, tmp_path):
         "any": ":any:`g`",
         "external_missing": ":external:mat:func:`nosuch`",
         "any_missing": ":any:`nosuch`",
+        # one mat.ambiguous warning each, and no "not found"
+        "external_ambiguous": ":external:mat:func:`f`",
+        "any_ambiguous": ":any:`f`",
     }
     links, warnings = build_consumer(make_app, tmp_path / "app", mapping, references)
     assert links == {
@@ -351,10 +354,14 @@ def test_external_and_any_roles_in_several_inventories(make_app, tmp_path):
         "any": ("https://one.example.invalid/api.html#mat-a/g.m", "g"),
         "external_missing": (None, "nosuch()"),
         "any_missing": (None, "nosuch"),
+        "external_ambiguous": (None, "f()"),
+        "any_ambiguous": (None, "f"),
     }
     assert "external mat:func reference target not found: nosuch" in warnings
     assert "'any' reference target not found: nosuch" in warnings
-    assert warnings.count("WARNING") == 2
+    ambiguous = "'f' matches several objects: one:a/f.m, two:b/f.m; write one of them"
+    assert warnings.count(ambiguous) == 2
+    assert warnings.count("WARNING") == 4
 
 
 def test_two_versions_of_one_library(make_app, tmp_path):
