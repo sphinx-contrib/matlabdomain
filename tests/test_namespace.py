@@ -832,12 +832,18 @@ def test_intersphinx_links_to_the_namespace_by_name(make_app, tmp_path):
         "name": ":mat:namespace:`geom`",
         "ref": ":mat:namespace:`+geom/+io`",
         "any": ":mat:obj:`geom.io`",
+        "prefixed": ":mat:namespace:`lib:geom`",
+        "named": ":external+lib:mat:namespace:`geom`",
+        "external": ":external:mat:namespace:`geom`",
     }
     links, found = build_consumer(make_app, tmp_path / "app", mapping, references)
     assert links == {
         "name": (f"{BASE}mat/ref/%2Bgeom.html", "geom"),
         "ref": (f"{BASE}mat/ref/%2Bgeom/%2Bio.html", "geom.io"),
         "any": (f"{BASE}mat/ref/%2Bgeom/%2Bio.html", "geom.io"),
+        "prefixed": (f"{BASE}mat/ref/%2Bgeom.html", "geom"),
+        "named": (f"{BASE}mat/ref/%2Bgeom.html", "geom"),
+        "external": (f"{BASE}mat/ref/%2Bgeom.html", "geom"),
     }
     assert found == ""
 
@@ -869,13 +875,16 @@ def test_intersphinx_to_a_namespace_of_several_folders(make_app, tmp_path, choos
         "folder": ":mat:folder:`geom`",
         # no namespace object and no only folder to fall back to
         "namespace": ":mat:namespace:`geom`",
+        "named": ":external+lib:mat:namespace:`geom`",
     }
     links, found = build_consumer(make_app, tmp_path / "app", mapping, references, conf)
     assert links["namespace"] == (None, "geom")
+    assert links["named"] == (None, "geom")
     assert "mat:namespace reference target not found: geom" in found
+    assert "external mat:namespace reference target not found: geom" in found
     if chooser:
         assert links["folder"] == (f"{BASE}mat/name/geom.html", "geom")
-        assert found.count("WARNING") == 1
+        assert found.count("WARNING") == 2
     else:
         assert links["folder"] == (None, "geom")
         assert (
@@ -883,7 +892,7 @@ def test_intersphinx_to_a_namespace_of_several_folders(make_app, tmp_path, choos
             "reference for one folder, or mat:namespace, mat:autonamespace or "
             ":mat:namespace: for the whole namespace [mat.ambiguous]"
         ) in strip_escape_sequences(found)
-        assert found.count("WARNING") == 2
+        assert found.count("WARNING") == 3
 
 
 # --- builds -------------------------------------------------------------------------
