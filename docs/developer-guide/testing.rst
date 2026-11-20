@@ -20,7 +20,7 @@ those that need POSIX permissions, non-UTF-8 file names (Linux) or Windows
 device names, and, unless ``--simulate-platforms`` is given (see
 `Coverage`_), those that fake a condition of another system.
 
-tox runs the suite against each supported Sphinx line, as CI does:
+tox runs the suite against each supported :term:`Sphinx` line, as CI does:
 
 .. code-block:: console
 
@@ -29,13 +29,14 @@ tox runs the suite against each supported Sphinx line, as CI does:
    $ uv run tox -e py313-sphinxlatest -- -x --lf
    $ uv run tox -e lint                 # Ruff, format check, basic Pyright
 
-Each tox run also builds ``tests/test_docs`` with Sphinx.
+Each tox run also builds ``tests/test_docs`` with :term:`Sphinx`.
 
 The suite fails on a deprecation warning that Python attributes to this
 package's own modules (``filterwarnings`` in ``pyproject.toml``); warnings
 from other packages, such as ``myst_parser``, do not. This is the signal that
-a Sphinx, docutils or Python release now deprecates something the package
-uses, for example the autodoc ``Documenter`` classes. Read the warning, then
+a :term:`Sphinx`, :term:`docutils` or Python release now deprecates
+something the package uses, for example the autodoc ``Documenter``
+classes. Read the warning, then
 move the code off the deprecated interface; only if that cannot happen yet,
 add a temporary ``ignore`` entry for that exact message, with a comment.
 The ``lint`` :term:`environment <virtual environment>` instead checks maintained Python without modifying it.
@@ -59,8 +60,8 @@ Layout
    (``test_quickstart.py``) and this documentation
    (``test_documentation.py``).
 ``tests/roots/test_<name>/``
-   Small Sphinx projects (``conf.py``, pages and MATLAB files) built by the
-   tests with the ``make_app`` fixture.
+   Small :term:`Sphinx` projects (``conf.py``, pages and MATLAB files)
+   built by the tests with the ``make_app`` fixture.
 ``tests/test_data/``
    MATLAB files for parser tests.
 ``tests/apidoc_golden/``
@@ -68,7 +69,7 @@ Layout
    ``test_apidoc_basics`` root: namespace grouping (``default``,
    ``separate``) and folder grouping (``folder``, ``folder-separate``).
 ``tests/quickstart_golden/``
-   The expected output of ``scmd quickstart``: the Sphinx
+   The expected output of ``scmd quickstart``: the :term:`Sphinx`
    :term:`source folder <source directory>` and the printed lines for the
    ``test_quickstart`` root as a uv
    project in git (``uv``), for ``test_apidoc_basics`` outside git
@@ -79,8 +80,8 @@ Layout
    compared with fresh output, and the project is built with ``-W``.
 ``docs/``
    The documentation is built with ``-n``, and every configuration value,
-   directive, option, :term:`role`, warning and command-line option must appear in
-   its reference pages.
+   :term:`directive`, option, :term:`role`, warning and command-line option
+   must appear in its reference pages.
 
 Writing tests
 -------------
@@ -89,7 +90,8 @@ Writing tests
   build a project. Tests that change files write the project into
   ``tmp_path`` or copy a root there first, so roots stay unchanged.
 * Check behavior through what users see: the :term:`doctree`, the HTML, the
-  inventory, warnings (``app.warning.getvalue()``), the :term:`domain` data.
+  :term:`inventory`, warnings (``app.warning.getvalue()``), the
+  :term:`domain` data.
 * When a test documents MATLAB behavior (what ``help`` shows, which file
   MATLAB calls), check it in MATLAB and name the release in the test.
 * After changing the generator or the example, regenerate the golden output
@@ -102,9 +104,10 @@ Coverage
 --------
 
 Every reachable line and branch of ``sphinxcontrib`` is covered. CI's
-coverage job combines the data of every test job except the Sphinx ``dev``
-job and fails below 100%. Those jobs run without ``--simulate-platforms``, so
-each line counts only where a test met the real condition: a Windows job
+coverage job combines the data of every test job except the :term:`Sphinx`
+``dev`` job and fails below 100%. Those jobs run without
+``--simulate-platforms``, so each line counts only where a test met the
+real condition: a Windows job
 covers the code for drive letters, a Windows or macOS job the code for a
 case-insensitive file system, a Linux job the code for file names that are
 not valid UTF-8, a Python 3.11 job the import for Python 3.11.
@@ -113,8 +116,8 @@ One system alone has only some of those conditions. With
 ``--simulate-platforms`` the tests fake the others (a case-insensitive file
 system, paths on two drives, another Python version, a folder that cannot be
 listed, a file name that is not valid UTF-8, two names that differ only by
-Unicode form), so that one machine covers every line. Check it before a push,
-on any system:
+Unicode form), so that one machine covers every
+line. Check it before a push, on any system:
 
 .. code-block:: console
 
@@ -207,8 +210,9 @@ Testing on Linux and Windows
 ----------------------------
 
 Behavior differs between systems in a few places (file name case, links,
-permissions, the default ANSI code page, parallel builds, which Sphinx runs
-serially on Windows), so changes in these areas are tested on both:
+permissions, the default ANSI code page, parallel builds, which
+:term:`Sphinx` runs serially on Windows), so changes in these areas are
+tested on both:
 
 * CI covers Linux, Windows and macOS.
 * For runs on a machine of the other system, put a script in ``tmp/`` at the

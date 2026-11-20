@@ -8,19 +8,19 @@ gives ``file:line`` where a line is known. :doc:`../reference/warnings`
 lists them in a table.
 
 A warning about a :term:`directive` names the file and line where the
-directive is written: the page, a file the page includes, a sidecar doc,
+:term:`directive` is written: the page, a file the page includes, a sidecar doc,
 or help text, as ``<file>:docstring of <reference>:<line>`` with the line
-in the code file. A warning about the text that an auto directive adds
+in the code file. A warning about the text that an auto :term:`directive` adds
 around help text, for example a base class that is not documented, names
 the code file and the line of the declaration: the ``classdef`` line, the
 property line or the ``function`` line. A file without such a line, such
 as a script or a Simulink file, is at line 1. A folder has no file, so it
-is at the auto directive.
+is at the auto :term:`directive`.
 
 Turning warnings off
 --------------------
 
-Sphinx's ``suppress_warnings`` turns off warnings by type and subtype:
+:term:`Sphinx`'s ``suppress_warnings`` turns off warnings by type and subtype:
 
 .. code-block:: python
 
@@ -29,7 +29,7 @@ Sphinx's ``suppress_warnings`` turns off warnings by type and subtype:
        "mat.empty_code_file",
    ]
 
-``"mat"`` turns off every warning of this extension. ``scmd apidoc``
+``"mat"`` turns off every warning of this :term:`extension`. ``scmd apidoc``
 reads ``suppress_warnings`` from the same ``conf.py``. Warnings about help
 text that is not valid :term:`reStructuredText` come from :term:`docutils <Docutils>` and have the
 type ``docutils``, which covers every page, not only help text
@@ -56,7 +56,7 @@ What each warning means
 
 ``mat.folder_name``
    An error, which ``suppress_warnings`` does not hide: a folder is named
-   like a file the extension reads (``.m``, ``.mlapp``, ``.slx``, ``.mdl``,
+   like a file the :term:`extension` reads (``.m``, ``.mlapp``, ``.slx``, ``.mdl``,
    ``.md``, ``.rst``, in any case), so references and output
    names could take it for a file. The folder and everything in it are not
    documented; the build goes on. Rename the folder.
@@ -107,15 +107,17 @@ What each warning means
 
 ``mat.ambiguous``
    A name in a :term:`directive`, :term:`role`, "See also" line or auto-link
-   matches several :term:`objects <object>`, or a reference matches objects in
-   several intersphinx :term:`inventories <inventory>` (:doc:`linking-projects`).
+   matches several :term:`objects <object>`, or a reference matches
+   :term:`objects <object>` in several intersphinx
+   :term:`inventories <inventory>` (:doc:`linking-projects`).
    The warning lists their path
    references; use one of them. Copies of files (vendored code, symbolic
    links) are a common cause; exclude them with
    :confval:`matlab_src_exclude_patterns`. When the copies are intended,
    :confval:`matlab_link_shadowed_files_to_chooser_pages` links such names to the page
-   that lists the objects and turns the warning off for them (an auto
-   directive still has to name one object).
+   that lists the :term:`objects <object>` and turns the warning off for
+   them (an auto
+   :term:`directive` still has to name one :term:`object`).
    A namespace name where a folder is expected (``mat:folder:: shapes``)
    matches each of the namespace's folders; to document the whole
    namespace, use ``mat:namespace`` or ``mat:autonamespace`` and link with
@@ -123,39 +125,42 @@ What each warning means
    folders of the namespace have twice, with this warning.
 
 ``mat.not_found``
-   An auto directive (``mat:autofunction`` and the others) names no object
+   An auto :term:`directive` (``mat:autofunction`` and the others) names
+   no :term:`object`
    of its kind below the project root ("don't know which object to
    document"), so it writes nothing. The warning gives the page and line
-   of the directive. Check the name, the current folder
+   of the :term:`directive`. Check the name, the current folder
    (:doc:`referencing`) and :confval:`matlab_src_code_project_root`.
-   Description directives (``mat:function``) never read a file and never
-   get it (:doc:`documenting`). A name in ``:members:`` that the object
+   Description :term:`directives <directive>` (``mat:function``) never read
+   a file and never
+   get it (:doc:`documenting`). A name in ``:members:`` that the :term:`object`
    does not have gets it too, and so does a ``mat:namespace`` or
    ``mat:autonamespace`` argument that is not the MATLAB name of a
    namespace of the project (a path, a folder, a class).
 
 ``mat.directive``
-   A directive got an argument of the wrong kind: ``mat:folder`` names a
+   A :term:`directive` got an argument of the wrong kind: ``mat:folder`` names a
    class folder (document the class instead), or ``mat:autofolder`` or
    ``mat:autonamespace`` has arguments or a return annotation (a folder or
    namespace has neither).
 
    It is also the warning for ``:inherited-members:`` while
-   :confval:`matlab_inherited_members` is off: the directive documents no
+   :confval:`matlab_inherited_members` is off: the :term:`directive` documents no
    inherited member. Set ``matlab_inherited_members = True`` in
    ``conf.py``, or remove the option. When ``autodoc_default_options`` sets
    the option, the build warns once, at start-up.
 
 ``mat.duplicate``
-   The same object is described twice (add ``:no-index:`` to one of the
-   descriptions), or two objects would get the same anchor, so the second
-   cannot be linked. It points at the second description, at the directive
-   a person wrote in a reStructuredText or Markdown file: its own
-   directive, or, for a description generated from help text, the
-   outermost auto directive (a method from ``:members:`` points at the
+   The same :term:`object` is described twice (add ``:no-index:`` to one of the
+   descriptions), or two :term:`objects <object>` would get the same
+   anchor, so the second
+   cannot be linked. It points at the second description, at the :term:`directive`
+   a person wrote in a :term:`reStructuredText` or Markdown file: its own
+   :term:`directive`, or, for a description generated from help text, the
+   outermost auto :term:`directive` (a method from ``:members:`` points at the
    ``mat:autoclass`` line). "Other instance in" names the other
    description in the same way, as ``file:line``: the page, an included
-   file, a sidecar doc, or the auto directive. A parallel build (``-j``)
+   file, a sidecar doc, or the auto :term:`directive`. A parallel build (``-j``)
    gives the same warnings as a serial one, and an incremental build the
    same as a fresh one for the pages it reads.
 
@@ -165,7 +170,7 @@ What each warning means
    than Windows allows.
 
 ``mat.api_check``
-   A finding of the ``matlab-api-check`` builder (:doc:`api-check`), an
+   A finding of the ``matlab-api-check`` :term:`builder` (:doc:`api-check`), an
    ``ERROR`` or a ``WARNING`` depending on the rule's severity.
 
 Files named ``Contents.m``, ``slblocks.m`` and the other special files
@@ -182,11 +187,12 @@ When warnings appear
 * Once per build, for the files that the pages read in that build use:
   ``mat.invalid_matlab`` and ``mat.parse_error`` found while parsing. A file
   that no page uses is not parsed, so it does not get these (the
-  ``matlab-api-check`` builder parses every file, so it reports them all).
+  ``matlab-api-check`` :term:`builder` parses every file, so it reports them all).
 
 Other warnings
 --------------
 
-Messages from docutils and Sphinx themselves, such as an unknown directive
-option, have no ``mat`` type. Fix the directive; ``suppress_warnings`` with
+Messages from :term:`docutils` and :term:`Sphinx` themselves, such as an
+unknown :term:`directive`
+option, have no ``mat`` type. Fix the :term:`directive`; ``suppress_warnings`` with
 ``mat`` does not hide them.

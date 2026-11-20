@@ -5,12 +5,12 @@ Every warning of the :term:`extension` has the type ``mat`` and one of these
 subtypes. Turn one off with ``suppress_warnings = ["mat.<subtype>"]``, or
 all with ``"mat"``; ``scmd apidoc`` reads the same setting.
 :doc:`../user-guide/warnings` explains each one. A warning about a
-directive names the file and line where the directive is written: a page,
-a file a page includes, a sidecar doc, or help text
+:term:`directive` names the file and line where the :term:`directive` is
+written: a page, a file a page includes, a sidecar doc, or help text
 (``<file>:docstring of <reference>:<line>``). A warning about the text an
-auto directive adds around help text, such as a base class that is not
+auto :term:`directive` adds around help text, such as a base class that is not
 documented, names the code file and the line of the declaration (line 1
-for a file without one, the auto directive for a folder).
+for a file without one, the auto :term:`directive` for a folder).
 
 .. list-table::
    :header-rows: 1
@@ -61,27 +61,27 @@ for a file without one, the auto directive for a folder).
        two folders of a namespace have, in ``mat:autonamespace``
      - where the name is used
    * - ``mat.not_found``
-     - an auto :term:`directive` whose argument matches no object; a name
+     - an auto :term:`directive` whose argument matches no :term:`object`; a name
        in ``:members:`` that is not a member; a ``mat:namespace`` or
        ``mat:autonamespace`` argument that is not a namespace
-     - where the directive is
+     - where the :term:`directive` is
    * - ``mat.directive``
-     - a directive argument of the wrong kind: a class folder given to
+     - a :term:`directive` argument of the wrong kind: a class folder given to
        ``mat:folder``, arguments or a return annotation given to
        ``mat:autofolder`` or ``mat:autonamespace``; ``:inherited-members:``
        while :confval:`matlab_inherited_members` is off
-     - where the directive is; for ``autodoc_default_options``, once at
+     - where the :term:`directive` is; for ``autodoc_default_options``, once at
        start-up
    * - ``mat.duplicate``
-     - an object described twice, or two objects that would get the same
-       anchor
+     - an :term:`object` described twice, or two :term:`objects <object>`
+       that would get the same anchor
      - where the second description is written (for content generated
-       from help text, the outermost auto directive); the message names
+       from help text, the outermost auto :term:`directive`); the message names
        where the first one is written
    * - ``mat.sidecar``
      - a sidecar doc without a heading, a ``mat:autosidecar`` reference
        that is not an indexed sidecar doc, a project root on another drive
-       than the Sphinx :term:`source folder <source directory>`
+       than the :term:`Sphinx` :term:`source folder <source directory>`
      - where the sidecar doc is rendered; the drive at start-up
    * - ``mat.apidoc``
      - ``scmd apidoc``: an unreadable file, output names that differ only
@@ -97,7 +97,7 @@ for a file without one, the auto directive for a folder).
        used, a heading in one of a library that names no masked block, or
        masked blocks without a section
        (:confval:`matlab_simulink_doc_suffixes`)
-     - where the directive is, or in the documentation file
+     - where the :term:`directive` is, or in the documentation file
    * - ``mat.api_check``
      - a ``matlab-api-check`` finding
-     - when the builder runs
+     - when the :term:`builder` runs

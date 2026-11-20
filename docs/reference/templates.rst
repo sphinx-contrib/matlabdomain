@@ -5,7 +5,7 @@
 templates, which :confval:`matlab_apidoc_templatedir` can
 replace (:doc:`../user-guide/apidoc`). The
 defaults are in ``sphinxcontrib/matlab_apidoc/templates/``. They are
-rendered with Sphinx's ``ReSTRenderer``, which adds the filters ``e``
+rendered with :term:`Sphinx`'s ``ReSTRenderer``, which adds the filters ``e``
 (escape :term:`reST`) and ``heading`` (underline a title; ``heading(2)`` for the
 second level).
 
@@ -66,7 +66,7 @@ The root page, in both groupings.
    ignoring case. In folder grouping: the root folder's page first, then
    the folders sorted by path, ignoring case.
 ``maxdepth``
-   The ``:maxdepth:`` of its toctree.
+   The ``:maxdepth:`` of its :term:`toctree`.
 
 ``folder.rst.jinja``
 --------------------
@@ -101,7 +101,8 @@ In folder grouping, one page of a folder with files or sidecar docs.
 ``separate``
    True with :confval:`matlab_apidoc_separate`.
 ``maxdepth``
-   The ``:maxdepth:`` of the toctrees (:confval:`matlab_apidoc_maxdepth`).
+   The ``:maxdepth:`` of the :term:`toctrees <toctree>`
+   (:confval:`matlab_apidoc_maxdepth`).
 ``sidecars``
    The :doc:`sidecar docs <../user-guide/sidecars>` on this page (the
    folder's own, and those in its ``@`` folders), sorted by file name;
@@ -126,19 +127,19 @@ groupings):
    ``"model"``, ``"library"``, ``"subsystem"`` (a subsystem file) or
    ``"library_block"``.
 ``directive``
-   The auto directive, such as ``"mat:autoclass"``.
+   The auto :term:`directive`, such as ``"mat:autoclass"``.
 ``argument``
-   The directive's argument: ``ref``, with each line break of a block name
+   The :term:`directive`'s argument: ``ref``, with each line break of a block name
    followed by the indentation that continues it.
 ``options``
-   A dictionary of directive options; ``{"members": "", "undoc-members":
+   A dictionary of :term:`directive` options; ``{"members": "", "undoc-members":
    "", "show-inheritance": ""}`` for classes, else empty.
 ``title``
    The heading: the MATLAB name, or the path reference if MATLAB cannot
    call the file (or, on a namespace page, if another file of the page has
    the same MATLAB name).
 ``display``
-   The name signatures show (the same as ``title``).
+   The name :term:`signatures <signature>` show (the same as ``title``).
 ``matlab_name``
    The MATLAB name, or ``None`` if MATLAB cannot call the file. A library
    block's is the library's MATLAB name and its block path.

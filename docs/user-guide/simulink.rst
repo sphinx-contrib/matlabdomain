@@ -18,7 +18,8 @@ What is documented
   mask. A linked block (a copy of another library's block) and a
   sublibrary block (an empty subsystem whose ``OpenFcn`` opens a library)
   are links, not :term:`objects <object>` of their own. Blocks inside
-  models and subsystem files are not documented: the file is the object.
+  models and subsystem files are not documented: the file is the
+  :term:`object`.
 
 Each page shows the description saved in the file or block (the mask
 description if it has none), then the documentation file, the mask type,
@@ -61,16 +62,17 @@ for ``.slx`` and ``.mdl``):
   work that way in R2024a and R2024b and fail in R2026a and R2026b.
 
 Because a namespaced Simulink file cannot be used by name in a model, the
-extension gives it no MATLAB name: reference it by path
+:term:`extension` gives it no MATLAB name: reference it by path
 (``:mat:simulink_model:`+pkg/plant.slx```).
 
 A block follows its file with its path in the library:
 ``lib.slx/Group/Gain`` or, by MATLAB name, ``lib/Group/Gain``. A ``/`` in a
 block name is doubled (``lib.slx/A//B``); a line break in a block name is
 written as a space (``lib/Two Lines``) in a :term:`role`'s target, an auto
-directive's argument, ``:members:`` and ``:exclude-members:``; the block's entry in ``objects.inv`` has that form,
-so another project links to it with the same text. A name in
-``:members:`` that is no documented block gets ``mat.not_found``.
+:term:`directive`'s argument, ``:members:`` and ``:exclude-members:``; the
+block's entry in ``objects.inv`` has that form, so another project links to
+it with the same text. A name in ``:members:`` that is no documented block
+gets ``mat.not_found``.
 
 ``plant.slx`` and ``plant.m`` share a MATLAB name, like two ``plant.m`` in
 different folders: give the path reference, or see
@@ -105,8 +107,8 @@ Documentation files
 Dialog boxes are no place for long text. Write it in a file next to the
 Simulink file, with the same name: ``plant.md`` or ``plant.rst`` next to
 ``plant.slx`` (:confval:`matlab_simulink_doc_suffixes`; Markdown needs
-``myst_parser`` in ``extensions``). The auto directives put its text after
-the description; the description stays the short summary.
+``myst_parser`` in ``extensions``). The auto :term:`directives <directive>`
+put its text after the description; the description stays the short summary.
 
 * The first heading is the title and is dropped; deeper headings become
   rubrics.
@@ -180,8 +182,8 @@ page.
 The settings file ``simulinkDocumentationLinker.json`` next to it names the
 folder of the local build, the server and the published site. ``scmd
 quickstart`` writes it once; a build never changes it, because a build
-writes only to its output folder and its doctree folder. When the output
-folder, the server or ``html_baseurl`` of a build differs from the file,
+writes only to its output folder and its :term:`doctree` folder. When the
+output folder, the server or ``html_baseurl`` of a build differs from the file,
 the build logs one ``info`` line (not a warning, so ``-W`` builds and CI
 builds with another output folder are not affected) that names the values:
 edit ``local``, ``server`` or ``published`` by hand and commit the file.
@@ -190,7 +192,7 @@ output folder, which tells the function whether the last build was local or
 for a server.
 
 ``sphinxcontrib.matlabdomain.setSimulinkHelp`` writes these Help lines for
-every documented object of a file. It ships with this package; add its
+every documented :term:`object` of a file. It ships with this package; add its
 folder to the MATLAB path first:
 
 .. code-block:: console

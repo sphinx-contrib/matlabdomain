@@ -9,20 +9,21 @@ them in use.
 Auto directives
 ---------------
 
-An auto directive takes one argument: a MATLAB name, a path reference, or a
+An auto :term:`directive` takes one argument: a MATLAB name, a path reference, or a
 name relative to the current folder (:doc:`../user-guide/referencing`),
 optionally followed by a :term:`signature`, ``(a, b)``, that replaces the one read
-from the file. It reads the file and writes the matching description directive
-(below) with the help text. Content below the directive is added after the
-help text. ``autodoc_default_options`` supplies default options. If no
+from the file. It reads the file and writes the matching description
+:term:`directive` (below) with the help text. Content below the
+:term:`directive` is added after the help text. ``autodoc_default_options``
+supplies default options. If no
 :term:`object` matches the argument, the build warns (``mat.not_found``, "don't
-know which object to document") and the directive writes nothing.
+know which object to document") and the :term:`directive` writes nothing.
 
 .. rst:directive:: .. mat:autofunction:: name
 
-   A function file. The signature lists the inputs; with
+   A function file. The :term:`signature` lists the inputs; with
    ``autodoc_docstring_signature``, a first help line that looks like the
-   signature replaces it.
+   :term:`signature` replaces it.
 
    .. rst:directive:option:: noindex
                              no-index
@@ -130,7 +131,7 @@ know which object to document") and the directive writes nothing.
 
    One method: ``Cls.method`` (a MATLAB name or a path reference such as
    ``+pkg/Cls.m.method``), or the method name alone inside a class.
-   Static methods are written as ``mat:staticmethod``. In the signature,
+   Static methods are written as ``mat:staticmethod``. In the :term:`signature`,
    a first input named ``obj`` or ``self`` is left out, except for the
    constructor and static methods (they have no object).
 
@@ -251,7 +252,7 @@ know which object to document") and the directive writes nothing.
    to the members too, as for ``mat:autofolder``.
 
    Not recommended: use ``scmd apidoc`` with namespace grouping instead
-   (:doc:`../user-guide/apidoc`). This directive exists so that a 0.x
+   (:doc:`../user-guide/apidoc`). This :term:`directive` exists so that a 0.x
    ``mat:automodule`` of a package has a counterpart in 1.0
    (:doc:`../user-guide/migration`).
 
@@ -298,16 +299,16 @@ Models, libraries and subsystem files (``.slx``, ``.mdl``) and the blocks
 of a library. The argument is a
 MATLAB name or a path reference; a block follows the file with its
 Simulink path (``lib.slx/Group/Gain``, a ``/`` in a block name doubled),
-with no signature (block names may hold parentheses). The page shows the
+with no :term:`signature` (block names may hold parentheses). The page shows the
 description saved in the file or block (the mask description if it has
 none), the mask type, mask description and Help (a link when the Help is
 a URL, a ``web(...)`` call or a ``simulinkDocumentationLinker`` call for
 another object; left out when it repeats the description), the metadata of
 :confval:`matlab_simulink_metadata`, the
 mask parameters (like a function's input arguments) and a table of the
-ports (columns that inherit everything are left out). The signature
+ports (columns that inherit everything are left out). The :term:`signature`
 names the kind: *Simulink model* ``probeModel``, *Simulink library block*
-``probeLib/Gain``. The auto directives add the text of the file's
+``probeLib/Gain``. The auto :term:`directives <directive>` add the text of the file's
 documentation file after the description
 (:confval:`matlab_simulink_doc_suffixes`).
 
@@ -319,7 +320,7 @@ documentation file after the description
       :type: comma-separated list
 
       The metadata to show, replacing :confval:`matlab_simulink_metadata`
-      for this object; empty shows none.
+      for this :term:`object`; empty shows none.
 
    .. rst:directive:option:: hidden-mask-parameters
 
@@ -409,9 +410,10 @@ Sidecar docs
    gets its file name as title, with a ``mat.sidecar`` warning. Relative
    paths in it are relative to its folder. A reference that is not an
    indexed sidecar doc writes nothing, with a ``mat.sidecar`` warning. Use
-   it in reST documents. In a Markdown document, wrap a reST sidecar's
-   directive in a MyST ``eval-rst`` block; otherwise its contents are read
-   as Markdown (see :doc:`../user-guide/sidecars`).
+   it in :term:`reST` documents. In a Markdown document, wrap a
+   :term:`reST` sidecar's :term:`directive` in a :term:`MyST` ``eval-rst``
+   block; otherwise its contents are read as Markdown (see
+   :doc:`../user-guide/sidecars`).
 
    .. rst:directive:option:: no-title
 
@@ -422,17 +424,18 @@ Sidecar docs
 Description directives
 ----------------------
 
-The auto directives write these; write them by hand for objects without a
-source file (:doc:`../user-guide/documenting`). They never read a file and
-never warn about a missing one: they show the signature and content as
+The auto :term:`directives <directive>` write these; write them by hand
+for :term:`objects <object>` without a source file
+(:doc:`../user-guide/documenting`). They never read a file and
+never warn about a missing one: they show the :term:`signature` and content as
 written. The argument is a
-signature: a name, optionally followed by ``(arguments)`` (optional
+:term:`signature`: a name, optionally followed by ``(arguments)`` (optional
 arguments in ``[...]``) and ``-> annotation``. If the name matches a source
-file, the object gets its path reference (for links), not its help. Their
+file, the :term:`object` gets its path reference (for links), not its help. Their
 content may use
-Sphinx's info fields: ``:param x:``, ``:type x:``, ``:returns:``,
+:term:`Sphinx`'s info fields: ``:param x:``, ``:type x:``, ``:returns:``,
 ``:rtype:``, ``:raises Cls:`` (a link to an error class), ``:var v:``.
-A type in ``:type x:`` or ``:vartype v:`` links to a documented object of
+A type in ``:type x:`` or ``:vartype v:`` links to a documented :term:`object` of
 that name; any other type (``double``, ``(1,1) string``) is shown as text,
 without a "reference target not found" warning.
 
@@ -448,12 +451,13 @@ without a "reference target not found" warning.
    .. rst:directive:option:: annotation
       :type: text
 
-      Text after the signature.
+      Text after the :term:`signature`.
 
    .. rst:directive:option:: reference
       :type: a path reference
 
-      The object's path reference (the auto directives set it).
+      The :term:`object`'s path reference (the auto :term:`directives <directive>`
+      set it).
 
 .. rst:directive:: .. mat:class:: signature
 
@@ -488,7 +492,8 @@ without a "reference target not found" warning.
                              sealed
 
       Show the MATLAB method attribute before the name (``abstract
-      area()``). The auto directives set them from the ``methods`` block.
+      area()``). The auto :term:`directives <directive>` set them from the
+      ``methods`` block.
 
 .. rst:directive:: .. mat:staticmethod:: signature
 
@@ -520,7 +525,7 @@ without a "reference target not found" warning.
                              read-only
 
       Show the property attribute before the name (``constant Max = 10``).
-      The auto directives set them from the ``properties`` block;
+      The auto :term:`directives <directive>` set them from the ``properties`` block;
       ``read-only`` when ``SetAccess`` (or ``Access``) is stricter than the
       read access (``SetAccess = private``, ``immutable``, ...), except for
       constants.
@@ -602,11 +607,11 @@ without a "reference target not found" warning.
 
 .. rst:directive:: .. mat:namespace:: name
 
-   A namespace, shown as ``namespace <MATLAB name>``: one object, however
+   A namespace, shown as ``namespace <MATLAB name>``: one :term:`object`, however
    many ``+`` folders have the name. The argument is the MATLAB name
    (``shapes.io``); anything else warns ``mat.not_found``. After it, names
    on the page are looked up in the namespace (``read`` is
-   ``shapes.io.read``) until the next folder or namespace directive. A
+   ``shapes.io.read``) until the next folder or namespace :term:`directive`. A
    namespace may be described on several pages; the last one is the link
    target.
 
@@ -677,8 +682,8 @@ Roles
 
 The target is a MATLAB name, a path reference or a name relative to the
 current folder or namespace. ``~target`` shows only the last part; ``title <target>``
-sets the text; a leading ``.`` also matches the end of MATLAB names. A role
-prefers objects of its type, then accepts any.
+sets the text; a leading ``.`` also matches the end of MATLAB names. A
+:term:`role` prefers :term:`objects <object>` of its type, then accepts any.
 
 .. rst:role:: mat:func
 
@@ -741,15 +746,15 @@ prefers objects of its type, then accepts any.
 
 .. rst:role:: mat:obj
 
-   An object of any type.
+   An :term:`object` of any type.
 
 .. rst:role:: mat:const
 
-   An object of any type (no object type uses it).
+   An :term:`object` of any type (no :term:`object` type uses it).
 
 .. rst:role:: mat:enum
 
-   An object of any type (enumeration values are attributes; prefer
+   An :term:`object` of any type (enumeration values are attributes; prefer
    ``mat:attr``).
 
 .. rst:role:: mat:sidecar
@@ -761,7 +766,7 @@ prefers objects of its type, then accepts any.
 Indices
 -------
 
-The domain adds the *MATLAB Folder Index*, which lists the documented
+The :term:`domain` adds the *MATLAB Folder Index*, which lists the documented
 folders and namespaces: link to it with ``:ref:`mat-folderindex```
 (:ref:`mat-folderindex`). The general index (``genindex``) has an entry for
-every documented object.
+every documented :term:`object`.
