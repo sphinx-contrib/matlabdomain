@@ -134,14 +134,17 @@ be moved the same way: `mv test_slow/gauntlet/repos test_slow/repos`.
 
 ## Expected (`summaries/`, 2026-11)
 
-widgets-toolbox (added 2026-11-19) is not in the saved baselines yet;
-`compare.py` lists it as new until they are made again. All 14 other
-projects: exit 0 everywhere except `api` (exit 1: every project has
-findings), no traceback or duplicate object, the rerun changes nothing, and
-Windows and Linux give the same pages, warnings and api-check findings.
-`compare.py` on the two summaries prints `1 of 14 projects differ`:
-matpower, in its `-j` rows only. On Windows `-j` builds serially, so those
-rows say `identical` there.
+The Linux baseline (2026-11-20) has all 15 projects. The Windows baseline
+(2026-11-12) is older: it lacks widgets-toolbox (added 2026-11-19), and its
+matpower `all` build counts 3492 `mat.ambiguous` warnings where the Linux
+one counts 3213 (since then an ambiguous name in help text warns once per
+help text). `compare.py` shows both until the Windows baseline is made
+again. All projects: exit 0 everywhere except `api` (exit 1: every project
+has findings), no traceback or duplicate object, the rerun changes nothing,
+and Windows and Linux give the same pages, warnings and api-check findings.
+`compare.py` on the two summaries prints `2 of 15 projects differ`
+(`1 of 15` with a current Windows baseline): matpower, in its `-j` rows.
+On Windows `-j` builds serially, so those rows say `identical` there.
 On Linux, matpower's serial and `-j` builds differ (6 pages with the
 defaults, 10 with `matlab_auto_link = "all"`, 39 `ref.equation` warnings;
 for `api` only the warnings, the reports are identical): its

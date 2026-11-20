@@ -1,12 +1,12 @@
 {
  "environment": {
-  "date": "2026-11-11",
+  "date": "2026-11-20",
   "platform": "linux",
   "python": "3.14.3",
   "sphinx": "9.2.0",
   "tree-sitter": "0.26.1",
   "tree-sitter-matlab": "1.3.3",
-  "matlabdomain": "ad58cd92389c"
+  "matlabdomain": "c834b194d0ce"
  },
  "projects": {
   "Psychtoolbox-3": {
@@ -16,7 +16,21 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.392,
+     "wall_s": 0.396,
+     "summary": [
+      "43",
+      "43",
+      "0",
+      "0",
+      "4265",
+      "300",
+      "0.18"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.399,
      "summary": [
       "43",
       "43",
@@ -41,20 +55,6 @@
       "0.18"
      ],
      "traceback": false
-    },
-    {
-     "rc": 0,
-     "wall_s": 0.379,
-     "summary": [
-      "43",
-      "43",
-      "0",
-      "0",
-      "4265",
-      "300",
-      "0.17"
-     ],
-     "traceback": false
     }
    ],
    "cli_warnings": {
@@ -76,7 +76,7 @@
    },
    "conf": {
     "rc": 0,
-    "wall_s": 11.04,
+    "wall_s": 10.87,
     "warnings": {
      "docutils": 919,
      "mat.encoding": 1,
@@ -85,15 +85,16 @@
     "warning_records": 1214,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 8123
+    "html_files": 8123,
+    "html_bytes": 13136897
    },
    "conf_jobs": {
-    "wall_s": 4.15,
+    "wall_s": 3.99,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 23.33,
+    "wall_s": 22.83,
     "warnings": {
      "docutils": 926,
      "mat.encoding": 1,
@@ -102,15 +103,16 @@
     "warning_records": 1221,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 8123
+    "html_files": 8123,
+    "html_bytes": 16765939
    },
    "all_jobs": {
-    "wall_s": 6.35,
+    "wall_s": 6.25,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 9.71,
+    "wall_s": 9.5,
     "warnings": {
      "docutils": 919,
      "mat.api_check": 6603,
@@ -121,6 +123,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 4081,
@@ -157,7 +160,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 1.76,
+    "wall_s": 1.64,
     "diff": "identical"
    }
   },
@@ -168,7 +171,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.302,
+     "wall_s": 0.296,
      "summary": [
       "5",
       "5",
@@ -182,7 +185,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.294,
+     "wall_s": 0.296,
      "summary": [
       "5",
       "5",
@@ -196,7 +199,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.298,
+     "wall_s": 0.288,
      "summary": [
       "5",
       "5",
@@ -226,29 +229,31 @@
    },
    "conf": {
     "rc": 0,
-    "wall_s": 1.67,
+    "wall_s": 1.61,
     "warnings": {
      "docutils": 42
     },
     "warning_records": 42,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 1270
+    "html_files": 1273,
+    "html_bytes": 1534264
    },
    "conf_jobs": {
-    "wall_s": 1.35,
+    "wall_s": 1.33,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 1.82,
+    "wall_s": 1.74,
     "warnings": {
      "docutils": 42
     },
     "warning_records": 42,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 1270
+    "html_files": 1273,
+    "html_bytes": 1579801
    },
    "all_jobs": {
     "wall_s": 1.46,
@@ -256,7 +261,7 @@
    },
    "api": {
     "rc": 1,
-    "wall_s": 1.47,
+    "wall_s": 1.4,
     "warnings": {
      "docutils": 42,
      "mat.api_check": 533
@@ -265,6 +270,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 72,
@@ -301,7 +307,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 1.03,
+    "wall_s": 1.05,
     "diff": "identical"
    }
   },
@@ -312,7 +318,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.234,
+     "wall_s": 0.231,
      "summary": [
       "4",
       "4",
@@ -326,7 +332,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.232,
+     "wall_s": 0.233,
      "summary": [
       "4",
       "4",
@@ -340,7 +346,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.23,
+     "wall_s": 0.242,
      "summary": [
       "4",
       "4",
@@ -370,7 +376,7 @@
    },
    "conf": {
     "rc": 0,
-    "wall_s": 1.37,
+    "wall_s": 1.31,
     "warnings": {
      "docutils": 9,
      "mat.invalid_matlab": 1
@@ -378,15 +384,16 @@
     "warning_records": 10,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 1168
+    "html_files": 1168,
+    "html_bytes": 1265089
    },
    "conf_jobs": {
-    "wall_s": 1.07,
+    "wall_s": 1.05,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 1.38,
+    "wall_s": 1.36,
     "warnings": {
      "docutils": 9,
      "mat.ambiguous": 5,
@@ -395,15 +402,16 @@
     "warning_records": 15,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 1168
+    "html_files": 1168,
+    "html_bytes": 1270039
    },
    "all_jobs": {
-    "wall_s": 1.12,
+    "wall_s": 1.08,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 1.18,
+    "wall_s": 1.12,
     "warnings": {
      "docutils": 9,
      "mat.api_check": 857,
@@ -413,6 +421,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 24,
@@ -449,7 +458,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 0.84,
+    "wall_s": 0.83,
     "diff": "identical"
    }
   },
@@ -460,21 +469,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.273,
-     "summary": [
-      "18",
-      "18",
-      "0",
-      "0",
-      "1701",
-      "17",
-      "0.06"
-     ],
-     "traceback": false
-    },
-    {
-     "rc": 0,
-     "wall_s": 0.286,
+     "wall_s": 0.271,
      "summary": [
       "18",
       "18",
@@ -488,7 +483,21 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.279,
+     "wall_s": 0.273,
+     "summary": [
+      "18",
+      "18",
+      "0",
+      "0",
+      "1701",
+      "17",
+      "0.07"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.274,
      "summary": [
       "18",
       "18",
@@ -515,12 +524,12 @@
      "18",
      "1701",
      "17",
-     "0.06"
+     "0.07"
     ]
    },
    "conf": {
     "rc": 0,
-    "wall_s": 3.7,
+    "wall_s": 3.54,
     "warnings": {
      "docutils": 73,
      "mat.empty_code_file": 1,
@@ -529,15 +538,16 @@
     "warning_records": 77,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 3408
+    "html_files": 3408,
+    "html_bytes": 3676178
    },
    "conf_jobs": {
-    "wall_s": 1.54,
+    "wall_s": 1.47,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 4.25,
+    "wall_s": 4.08,
     "warnings": {
      "docutils": 73,
      "mat.empty_code_file": 1,
@@ -546,15 +556,16 @@
     "warning_records": 77,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 3408
+    "html_files": 3408,
+    "html_bytes": 3813947
    },
    "all_jobs": {
-    "wall_s": 1.7,
+    "wall_s": 1.72,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 3.31,
+    "wall_s": 3.19,
     "warnings": {
      "docutils": 73,
      "mat.api_check": 5490,
@@ -565,6 +576,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 1698,
@@ -601,7 +613,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 0.85,
+    "wall_s": 0.84,
     "diff": "identical"
    }
   },
@@ -612,6 +624,20 @@
    "trials": [
     {
      "rc": 0,
+     "wall_s": 0.312,
+     "summary": [
+      "15",
+      "15",
+      "0",
+      "0",
+      "3435",
+      "165",
+      "0.11"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
      "wall_s": 0.311,
      "summary": [
       "15",
@@ -620,7 +646,7 @@
       "0",
       "3435",
       "165",
-      "0.10"
+      "0.11"
      ],
      "traceback": false
     },
@@ -634,21 +660,7 @@
       "0",
       "3435",
       "165",
-      "0.10"
-     ],
-     "traceback": false
-    },
-    {
-     "rc": 0,
-     "wall_s": 0.309,
-     "summary": [
-      "15",
-      "15",
-      "0",
-      "0",
-      "3435",
-      "165",
-      "0.10"
+      "0.11"
      ],
      "traceback": false
     }
@@ -665,27 +677,28 @@
      "15",
      "3435",
      "165",
-     "0.10"
+     "0.11"
     ]
    },
    "conf": {
     "rc": 0,
-    "wall_s": 8.36,
+    "wall_s": 8.18,
     "warnings": {
      "docutils": 731
     },
     "warning_records": 731,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 7865
+    "html_files": 7868,
+    "html_bytes": 8715572
    },
    "conf_jobs": {
-    "wall_s": 5.85,
+    "wall_s": 5.81,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 11.86,
+    "wall_s": 11.99,
     "warnings": {
      "docutils": 730,
      "mat.ambiguous": 1
@@ -693,15 +706,16 @@
     "warning_records": 731,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 7865
+    "html_files": 7868,
+    "html_bytes": 9421378
    },
    "all_jobs": {
-    "wall_s": 9.19,
+    "wall_s": 9.11,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 7.35,
+    "wall_s": 7.22,
     "warnings": {
      "docutils": 731,
      "mat.api_check": 10077
@@ -710,6 +724,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 1240,
@@ -746,7 +761,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 4.31,
+    "wall_s": 4.29,
     "diff": "identical"
    }
   },
@@ -757,7 +772,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.251,
+     "wall_s": 0.25,
      "summary": [
       "8",
       "8",
@@ -771,7 +786,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.247,
+     "wall_s": 0.244,
      "summary": [
       "8",
       "8",
@@ -785,7 +800,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.245,
+     "wall_s": 0.244,
      "summary": [
       "8",
       "8",
@@ -813,37 +828,39 @@
    },
    "conf": {
     "rc": 0,
-    "wall_s": 3.9,
+    "wall_s": 3.94,
     "warnings": {
      "docutils": 1867
     },
     "warning_records": 1867,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 1401
+    "html_files": 1401,
+    "html_bytes": 2647547
    },
    "conf_jobs": {
-    "wall_s": 1.85,
+    "wall_s": 1.83,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 5.54,
+    "wall_s": 5.56,
     "warnings": {
      "docutils": 1867
     },
     "warning_records": 1867,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 1401
+    "html_files": 1401,
+    "html_bytes": 3377536
    },
    "all_jobs": {
-    "wall_s": 2.88,
+    "wall_s": 3.06,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 3.55,
+    "wall_s": 3.62,
     "warnings": {
      "docutils": 1867,
      "mat.api_check": 543
@@ -852,6 +869,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 606,
@@ -888,7 +906,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 1.03,
+    "wall_s": 1.02,
     "diff": "identical"
    }
   },
@@ -899,7 +917,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.443,
+     "wall_s": 0.434,
      "summary": [
       "41",
       "41",
@@ -913,7 +931,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.436,
+     "wall_s": 0.431,
      "summary": [
       "41",
       "41",
@@ -921,13 +939,13 @@
       "0",
       "5332",
       "183",
-      "0.22"
+      "0.23"
      ],
      "traceback": false
     },
     {
      "rc": 0,
-     "wall_s": 0.444,
+     "wall_s": 0.434,
      "summary": [
       "41",
       "41",
@@ -954,12 +972,12 @@
      "41",
      "5332",
      "183",
-     "0.23"
+     "0.22"
     ]
    },
    "conf": {
     "rc": 0,
-    "wall_s": 14.14,
+    "wall_s": 14.44,
     "warnings": {
      "docutils": 4548,
      "mat.empty_code_file": 1,
@@ -968,15 +986,16 @@
     "warning_records": 4576,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 8403
+    "html_files": 8408,
+    "html_bytes": 12958243
    },
    "conf_jobs": {
-    "wall_s": 4.92,
+    "wall_s": 4.96,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 27.25,
+    "wall_s": 27.53,
     "warnings": {
      "docutils": 4551,
      "mat.ambiguous": 360,
@@ -986,15 +1005,16 @@
     "warning_records": 4939,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 8403
+    "html_files": 8408,
+    "html_bytes": 14699130
    },
    "all_jobs": {
-    "wall_s": 7.09,
+    "wall_s": 7.07,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 14.09,
+    "wall_s": 14.08,
     "warnings": {
      "docutils": 4548,
      "mat.api_check": 12797,
@@ -1005,6 +1025,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 5166,
@@ -1041,7 +1062,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 3.13,
+    "wall_s": 3.07,
     "diff": "identical"
    }
   },
@@ -1052,7 +1073,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.213,
+     "wall_s": 0.217,
      "summary": [
       "2",
       "2",
@@ -1066,7 +1087,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.212,
+     "wall_s": 0.219,
      "summary": [
       "2",
       "2",
@@ -1080,7 +1101,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.215,
+     "wall_s": 0.214,
      "summary": [
       "2",
       "2",
@@ -1108,37 +1129,39 @@
    },
    "conf": {
     "rc": 0,
-    "wall_s": 0.5,
+    "wall_s": 0.51,
     "warnings": {
      "docutils": 46
     },
     "warning_records": 46,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 47
+    "html_files": 47,
+    "html_bytes": 79308
    },
    "conf_jobs": {
-    "wall_s": 0.57,
+    "wall_s": 0.56,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 0.53,
+    "wall_s": 0.52,
     "warnings": {
      "docutils": 46
     },
     "warning_records": 46,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 47
+    "html_files": 47,
+    "html_bytes": 88313
    },
    "all_jobs": {
-    "wall_s": 0.59,
+    "wall_s": 0.56,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 0.5,
+    "wall_s": 0.46,
     "warnings": {
      "docutils": 46,
      "mat.api_check": 155
@@ -1147,6 +1170,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 64,
@@ -1183,7 +1207,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 0.52,
+    "wall_s": 0.49,
     "diff": "identical"
    }
   },
@@ -1194,7 +1218,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.258,
+     "wall_s": 0.239,
      "summary": [
       "65",
       "65",
@@ -1208,7 +1232,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.25,
+     "wall_s": 0.236,
      "summary": [
       "65",
       "65",
@@ -1222,7 +1246,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.243,
+     "wall_s": 0.239,
      "summary": [
       "65",
       "65",
@@ -1252,7 +1276,7 @@
    },
    "conf": {
     "rc": 0,
-    "wall_s": 4.15,
+    "wall_s": 3.96,
     "warnings": {
      "docutils": 64,
      "mat.encoding": 1
@@ -1260,15 +1284,16 @@
     "warning_records": 65,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 4428
+    "html_files": 4555,
+    "html_bytes": 5570346
    },
    "conf_jobs": {
-    "wall_s": 2.38,
+    "wall_s": 2.4,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 4.58,
+    "wall_s": 4.61,
     "warnings": {
      "docutils": 64,
      "mat.encoding": 1
@@ -1276,7 +1301,8 @@
     "warning_records": 65,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 4428
+    "html_files": 4555,
+    "html_bytes": 5735535
    },
    "all_jobs": {
     "wall_s": 2.7,
@@ -1284,7 +1310,7 @@
    },
    "api": {
     "rc": 1,
-    "wall_s": 3.55,
+    "wall_s": 3.35,
     "warnings": {
      "docutils": 64,
      "mat.api_check": 4099,
@@ -1294,6 +1320,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 223,
@@ -1330,7 +1357,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 1.73,
+    "wall_s": 1.62,
     "diff": "identical"
    }
   },
@@ -1341,7 +1368,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.616,
+     "wall_s": 0.581,
      "summary": [
       "25",
       "25",
@@ -1349,13 +1376,13 @@
       "0",
       "2429",
       "795",
-      "0.39"
+      "0.37"
      ],
      "traceback": false
     },
     {
      "rc": 0,
-     "wall_s": 0.627,
+     "wall_s": 0.587,
      "summary": [
       "25",
       "25",
@@ -1363,13 +1390,13 @@
       "0",
       "2429",
       "795",
-      "0.39"
+      "0.37"
      ],
      "traceback": false
     },
     {
      "rc": 0,
-     "wall_s": 0.605,
+     "wall_s": 0.591,
      "summary": [
       "25",
       "25",
@@ -1394,12 +1421,12 @@
      "25",
      "2429",
      "795",
-     "0.38"
+     "0.37"
     ]
    },
    "conf": {
     "rc": 0,
-    "wall_s": 42.48,
+    "wall_s": 39.16,
     "warnings": {
      "docutils": 1948,
      "mat.ambiguous": 615,
@@ -1410,34 +1437,36 @@
     "warning_records": 2739,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 8466
+    "html_files": 8469,
+    "html_bytes": 36613433
    },
    "conf_jobs": {
-    "wall_s": 25.78,
+    "wall_s": 23.29,
     "diff": "6 files differ: global-12.html, global-13.html, global-4.html, global-7.html, mp-3.html; warnings differ: serial 2739, parallel 2700"
    },
    "all": {
     "rc": 0,
-    "wall_s": 47.3,
+    "wall_s": 44.21,
     "warnings": {
      "docutils": 1946,
-     "mat.ambiguous": 3492,
+     "mat.ambiguous": 3213,
      "ref.equation": 66,
      "ref.numref": 4,
      "ref.ref": 106
     },
-    "warning_records": 5614,
+    "warning_records": 5335,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 8466
+    "html_files": 8469,
+    "html_bytes": 38141620
    },
    "all_jobs": {
-    "wall_s": 26.24,
-    "diff": "10 files differ: global-12.html, global-13.html, global-14.html, global-16.html, global-4.html; warnings differ: serial 5614, parallel 5575"
+    "wall_s": 24.0,
+    "diff": "6 files differ: global-14.html, global-16.html, global-5.html, global-8.html, mp-3.html; warnings differ: serial 5335, parallel 5296"
    },
    "api": {
     "rc": 1,
-    "wall_s": 35.23,
+    "wall_s": 31.75,
     "warnings": {
      "docutils": 1948,
      "mat.api_check": 11236,
@@ -1447,6 +1476,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 1708,
@@ -1483,7 +1513,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 18.31,
+    "wall_s": 17.02,
     "diff": "warnings differ: serial 13250, parallel 13211"
    }
   },
@@ -1494,7 +1524,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.362,
+     "wall_s": 0.353,
      "summary": [
       "17",
       "17",
@@ -1502,13 +1532,13 @@
       "0",
       "3414",
       "4",
-      "0.14"
+      "0.13"
      ],
      "traceback": false
     },
     {
      "rc": 0,
-     "wall_s": 0.364,
+     "wall_s": 0.345,
      "summary": [
       "17",
       "17",
@@ -1516,13 +1546,13 @@
       "0",
       "3414",
       "4",
-      "0.14"
+      "0.13"
      ],
      "traceback": false
     },
     {
      "rc": 0,
-     "wall_s": 0.357,
+     "wall_s": 0.345,
      "summary": [
       "17",
       "17",
@@ -1530,7 +1560,7 @@
       "0",
       "3414",
       "4",
-      "0.14"
+      "0.13"
      ],
      "traceback": false
     }
@@ -1547,12 +1577,12 @@
      "17",
      "3414",
      "4",
-     "0.14"
+     "0.13"
     ]
    },
    "conf": {
     "rc": 0,
-    "wall_s": 12.37,
+    "wall_s": 10.71,
     "warnings": {
      "docutils": 1616,
      "mat.encoding": 4
@@ -1560,15 +1590,16 @@
     "warning_records": 1620,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 10326
+    "html_files": 10328,
+    "html_bytes": 10896274
    },
    "conf_jobs": {
-    "wall_s": 5.83,
+    "wall_s": 5.35,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 19.36,
+    "wall_s": 17.07,
     "warnings": {
      "docutils": 1616,
      "mat.encoding": 4
@@ -1576,15 +1607,16 @@
     "warning_records": 1620,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 10326
+    "html_files": 10328,
+    "html_bytes": 13007151
    },
    "all_jobs": {
-    "wall_s": 9.55,
+    "wall_s": 8.37,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 11.08,
+    "wall_s": 9.66,
     "warnings": {
      "docutils": 1616,
      "mat.api_check": 8361,
@@ -1594,6 +1626,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 905,
@@ -1630,7 +1663,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 3.72,
+    "wall_s": 3.34,
     "diff": "identical"
    }
   },
@@ -1641,7 +1674,21 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.236,
+     "wall_s": 0.219,
+     "summary": [
+      "2",
+      "2",
+      "0",
+      "0",
+      "24",
+      "1",
+      "0.01"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.223,
      "summary": [
       "2",
       "2",
@@ -1655,21 +1702,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.24,
-     "summary": [
-      "2",
-      "2",
-      "0",
-      "0",
-      "24",
-      "1",
-      "0.02"
-     ],
-     "traceback": false
-    },
-    {
-     "rc": 0,
-     "wall_s": 0.238,
+     "wall_s": 0.226,
      "summary": [
       "2",
       "2",
@@ -1699,7 +1732,7 @@
    },
    "conf": {
     "rc": 0,
-    "wall_s": 0.56,
+    "wall_s": 0.51,
     "warnings": {
      "docutils": 5,
      "image.not_readable": 1
@@ -1707,15 +1740,16 @@
     "warning_records": 6,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 59
+    "html_files": 59,
+    "html_bytes": 123265
    },
    "conf_jobs": {
-    "wall_s": 0.6,
+    "wall_s": 0.56,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 0.57,
+    "wall_s": 0.52,
     "warnings": {
      "docutils": 5,
      "image.not_readable": 1
@@ -1723,15 +1757,16 @@
     "warning_records": 6,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 59
+    "html_files": 59,
+    "html_bytes": 130688
    },
    "all_jobs": {
-    "wall_s": 0.61,
+    "wall_s": 0.56,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 0.49,
+    "wall_s": 0.43,
     "warnings": {
      "docutils": 5,
      "image.not_readable": 1,
@@ -1741,6 +1776,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 6,
@@ -1777,7 +1813,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 0.49,
+    "wall_s": 0.46,
     "diff": "identical"
    }
   },
@@ -1788,7 +1824,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.237,
+     "wall_s": 0.215,
      "summary": [
       "3",
       "3",
@@ -1802,7 +1838,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.237,
+     "wall_s": 0.214,
      "summary": [
       "3",
       "3",
@@ -1816,7 +1852,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.234,
+     "wall_s": 0.217,
      "summary": [
       "3",
       "3",
@@ -1846,7 +1882,7 @@
    },
    "conf": {
     "rc": 0,
-    "wall_s": 1.51,
+    "wall_s": 1.35,
     "warnings": {
      "docutils": 263,
      "mat.encoding": 1
@@ -1854,15 +1890,16 @@
     "warning_records": 264,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 1038
+    "html_files": 1038,
+    "html_bytes": 1045676
    },
    "conf_jobs": {
-    "wall_s": 1.34,
+    "wall_s": 1.19,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 2.36,
+    "wall_s": 2.14,
     "warnings": {
      "docutils": 263,
      "mat.encoding": 1
@@ -1870,15 +1907,16 @@
     "warning_records": 264,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 1038
+    "html_files": 1038,
+    "html_bytes": 1665492
    },
    "all_jobs": {
-    "wall_s": 2.05,
+    "wall_s": 2.01,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 1.29,
+    "wall_s": 1.19,
     "warnings": {
      "docutils": 263,
      "mat.api_check": 1182,
@@ -1888,6 +1926,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 115,
@@ -1924,7 +1963,7 @@
     }
    },
    "api_jobs": {
-    "wall_s": 1.01,
+    "wall_s": 0.94,
     "diff": "identical"
    }
   },
@@ -1935,7 +1974,7 @@
    "trials": [
     {
      "rc": 0,
-     "wall_s": 0.305,
+     "wall_s": 0.297,
      "summary": [
       "95",
       "95",
@@ -1949,7 +1988,7 @@
     },
     {
      "rc": 0,
-     "wall_s": 0.305,
+     "wall_s": 0.3,
      "summary": [
       "95",
       "95",
@@ -1957,13 +1996,13 @@
       "0",
       "1726",
       "57",
-      "0.09"
+      "0.08"
      ],
      "traceback": false
     },
     {
      "rc": 0,
-     "wall_s": 0.317,
+     "wall_s": 0.296,
      "summary": [
       "95",
       "95",
@@ -1971,7 +2010,7 @@
       "0",
       "1726",
       "57",
-      "0.09"
+      "0.08"
      ],
      "traceback": false
     }
@@ -1989,12 +2028,12 @@
      "95",
      "1726",
      "57",
-     "0.09"
+     "0.08"
     ]
    },
    "conf": {
     "rc": 0,
-    "wall_s": 9.2,
+    "wall_s": 8.87,
     "warnings": {
      "docutils": 1425,
      "mat.invalid_matlab": 1,
@@ -2003,15 +2042,16 @@
     "warning_records": 1432,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 6630
+    "html_files": 6803,
+    "html_bytes": 11314830
    },
    "conf_jobs": {
-    "wall_s": 3.85,
+    "wall_s": 3.63,
     "diff": "identical"
    },
    "all": {
     "rc": 0,
-    "wall_s": 11.9,
+    "wall_s": 11.63,
     "warnings": {
      "docutils": 1421,
      "mat.ambiguous": 22,
@@ -2021,15 +2061,16 @@
     "warning_records": 1450,
     "duplicate_objects": 0,
     "traceback": false,
-    "html_files": 6630
+    "html_files": 6803,
+    "html_bytes": 11815939
    },
    "all_jobs": {
-    "wall_s": 4.51,
+    "wall_s": 4.39,
     "diff": "identical"
    },
    "api": {
     "rc": 1,
-    "wall_s": 7.61,
+    "wall_s": 7.21,
     "warnings": {
      "docutils": 1425,
      "mat.api_check": 6196,
@@ -2040,6 +2081,7 @@
     "duplicate_objects": 0,
     "traceback": false,
     "html_files": 0,
+    "html_bytes": 0,
     "api_check": {
      "checked": {
       "function": 1436,
@@ -2076,7 +2118,154 @@
     }
    },
    "api_jobs": {
-    "wall_s": 1.82,
+    "wall_s": 1.75,
+    "diff": "identical"
+   }
+  },
+  "widgets-toolbox": {
+   "commit": "04f492d102e31f43cf17eb997ed7b85042035f78",
+   "changed_files": 0,
+   "root": "",
+   "trials": [
+    {
+     "rc": 0,
+     "wall_s": 0.229,
+     "summary": [
+      "22",
+      "22",
+      "0",
+      "0",
+      "189",
+      "2",
+      "0.02"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.221,
+     "summary": [
+      "22",
+      "22",
+      "0",
+      "0",
+      "189",
+      "2",
+      "0.02"
+     ],
+     "traceback": false
+    },
+    {
+     "rc": 0,
+     "wall_s": 0.225,
+     "summary": [
+      "22",
+      "22",
+      "0",
+      "0",
+      "189",
+      "2",
+      "0.02"
+     ],
+     "traceback": false
+    }
+   ],
+   "cli_warnings": {
+    "mat.apidoc": 2
+   },
+   "rerun": {
+    "rc": 0,
+    "summary": [
+     "22",
+     "0",
+     "0",
+     "22",
+     "189",
+     "2",
+     "0.02"
+    ]
+   },
+   "conf": {
+    "rc": 0,
+    "wall_s": 2.03,
+    "warnings": {
+     "docutils": 8
+    },
+    "warning_records": 8,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 2433,
+    "html_bytes": 2501017
+   },
+   "conf_jobs": {
+    "wall_s": 1.17,
+    "diff": "identical"
+   },
+   "all": {
+    "rc": 0,
+    "wall_s": 2.21,
+    "warnings": {
+     "docutils": 8
+    },
+    "warning_records": 8,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 2433,
+    "html_bytes": 2526833
+   },
+   "all_jobs": {
+    "wall_s": 1.28,
+    "diff": "identical"
+   },
+   "api": {
+    "rc": 1,
+    "wall_s": 1.75,
+    "warnings": {
+     "docutils": 8,
+     "mat.api_check": 972
+    },
+    "warning_records": 980,
+    "duplicate_objects": 0,
+    "traceback": false,
+    "html_files": 0,
+    "html_bytes": 0,
+    "api_check": {
+     "checked": {
+      "function": 33,
+      "class": 142,
+      "method": 421,
+      "property": 487,
+      "event": 43,
+      "script": 4,
+      "application": 2,
+      "sidecar": 0
+     },
+     "not_checked": {
+      "ignored": 0,
+      "hidden": 3,
+      "unreadable": 0,
+      "not_parsed": 0,
+      "simulink_files": 0
+     },
+     "errors": 238,
+     "warnings": 734,
+     "findings": {
+      "description": 2,
+      "method-description": 108,
+      "property-description": 162,
+      "event-description": 1,
+      "inputs": 86,
+      "outputs": 42,
+      "name-value": 0,
+      "example": 177,
+      "method-example": 394,
+      "sidecar-documented": 0,
+      "sidecar-links": 0
+     }
+    }
+   },
+   "api_jobs": {
+    "wall_s": 0.8,
     "diff": "identical"
    }
   }
