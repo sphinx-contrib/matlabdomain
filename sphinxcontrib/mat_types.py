@@ -979,6 +979,9 @@ class SourceIndex:
     - ``simulink_docs``: Simulink documentation file path -> ``{reference,
       mtime, size}``: a file with a suffix of ``simulink_doc_suffixes`` and
       the exact name of a Simulink file next to it. It is not a sidecar doc.
+    - ``sphinx_sources``: the folders below the root with a ``conf.py`` of
+      their own, the Sphinx source folders of other projects; their files
+      are not sidecar docs.
     """
 
     settings: IndexSettings
@@ -988,6 +991,7 @@ class SourceIndex:
     text_cache: dict = field(default_factory=dict)
     sidecars: dict = field(default_factory=dict)
     simulink_docs: dict = field(default_factory=dict)
+    sphinx_sources: list = field(default_factory=list)
 
 
 def build_index(settings, old_index=None):
@@ -1163,6 +1167,7 @@ class _Indexer:
             return False
         if mod.ref != ROOT_REFERENCE and SPHINX_CONF in keys:
             self.documentation.append(mod.path)
+            self.out.sphinx_sources.append(mod.path)
         denied = []
         seen = {}  # reference: the first name on disk that has it
         # documentation file candidates, and the stems of Simulink files

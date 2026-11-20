@@ -75,7 +75,8 @@ def _escape_glob(path: str):
 def check_config(app, config):
     """``config-inited``: check ``matlab_src_sidecar_suffixes`` and
     ``matlab_simulink_doc_suffixes`` (or ConfigError), and add the sidecar docs
-    and Simulink documentation files in the Sphinx source folder to
+    and Simulink documentation files in the Sphinx source folder, and with
+    sidecar docs the folders of other Sphinx projects there, to
     ``exclude_patterns`` so Sphinx does not also read them as documents. It
     must happen here: a later change makes Sphinx see a changed config and
     read every document again on every build.
@@ -108,6 +109,9 @@ def check_config(app, config):
         settings = mat_types.IndexSettings.from_config(config, srcdir)
         found = mat_types._documentation_files(settings)
         paths = [*found.sidecars, *found.simulink_docs]
+        # The pages of another Sphinx project are not this build's documents.
+        if suffixes:
+            paths += found.sphinx_sources
     elif mat_types._within(srcdir, root):
         paths = _simulink_docs_below(srcdir, simulink)
     else:

@@ -773,6 +773,43 @@ def test_root_inside_the_source_folder(make_app, tmp_path):
     assert read_docs(again) == []
 
 
+@pytest.mark.parametrize("sidecars", [True, False])
+def test_another_sphinx_source_folder_inside_the_source_folder(
+    make_app, tmp_path, sidecars
+):
+    # The root inside the source folder: the pages of a folder with its own
+    # conf.py are not read by the build, as long as sidecar docs are on.
+    docs = tmp_path / "docs"
+    conf = (
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "src"\n'
+    )
+    if sidecars:
+        conf += 'matlab_src_sidecar_suffixes = [".rst"]\n'
+    write(
+        docs,
+        {
+            "conf.py": conf + 'exclude_patterns = ["_build"]\n',
+            "index.rst": "Index\n=====\n"
+            + (".. mat:autosidecar:: notes.rst\n" if sidecars else ""),
+            "src/f.m": "function f\nend\n",
+            "src/notes.rst": "Notes\n=====\n",
+            "src/old/conf.py": 'project = "old"\n',
+            "src/old/index.rst": "Old\n===\n\n.. automodule:: gone\n",
+        },
+    )
+    app = build(make_app, docs)
+    if not sidecars:
+        # as before: only Simulink documentation files would be added
+        assert app.config.exclude_patterns == ["_build"]
+        return
+    assert app.config.exclude_patterns == ["_build", "src/notes.rst", "src/old"]
+    assert warnings(app) == []
+    assert sorted(app.env.found_docs) == ["index"]
+    assert not (Path(app.outdir) / "src" / "old" / "index.html").exists()
+    assert sorted(app.env.get_domain("mat").sidecar_paths()) == ["notes.rst"]
+    assert read_docs(build(make_app, docs)) == []
+
+
 def test_source_folder_inside_the_root(make_app, tmp_path):
     repo = tmp_path / "repo"
     write(
