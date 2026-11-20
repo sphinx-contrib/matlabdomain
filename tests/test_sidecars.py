@@ -795,6 +795,41 @@ def test_source_folder_inside_the_root(make_app, tmp_path):
     assert warnings(app) == []
 
 
+def test_another_sphinx_source_folder_is_not_sidecar_docs(make_app, tmp_path):
+    # A folder with its own conf.py (an older documentation set) holds pages
+    # of another Sphinx project; its code is still indexed. The root's own
+    # conf.py does not count.
+    write(
+        tmp_path,
+        {
+            "docs/conf.py": CONF
+            + 'matlab_apidoc_output_dir = "api"\nmatlab_apidoc_group = "folder"\n',
+            "docs/index.rst": "Index\n=====\n\n.. toctree::\n\n   api/index\n",
+            "src/conf.py": "",
+            "src/notes.rst": "Notes\n=====\n\nSee :mat:func:`helper`.\n",
+            "src/old/conf.py": 'project = "old"\n',
+            "src/old/index.rst": "Old\n===\n\n.. automodule:: gone\n",
+            "src/old/sub/page.md": "# Page\n\n```{automodule} gone\n```\n",
+            "src/old/sub/helper.m": "function helper\n%HELPER Help.\nend\n",
+        },
+    )
+    settings = IndexSettings(str(tmp_path / "src"), sidecar_suffixes=(".md", ".rst"))
+    source_index = build_index(settings)
+    assert [r["reference"] for r in source_index.sidecars.values()] == ["notes.rst"]
+    assert mat_types.sidecar_paths(settings) == list(source_index.sidecars)
+    assert [r["reference"] for r in source_index.index.values()] == ["old/sub/helper.m"]
+    docs = tmp_path / "docs"
+    assert main(["-q", "-c", str(docs)]) == 0
+    assert sorted(
+        p.relative_to(docs / "api").as_posix() for p in (docs / "api").rglob("*.rst")
+    ) == ["index.rst", "notes-rst.rst", "old/sub/index.rst", "root.rst"]
+    app = build(make_app, docs)
+    assert warnings(app) == []
+    check = build(make_app, docs, "matlab-api-check")
+    report = json.loads((Path(check.outdir) / "api-check.json").read_text("utf-8"))
+    assert report["summary"]["checked"]["sidecar"] == 1
+
+
 # --- scmd apidoc ----------------------------------------------------
 
 

@@ -595,6 +595,8 @@ SPHINX_OUTPUT_MARKERS = frozenset((".buildinfo", "environment.pickle"))
 SPHINX_HTML_FILES = frozenset(("objects.inv", "searchindex.js"))
 #: the build folder of the Makefile and make.bat of a Sphinx source folder
 BUILD_FOLDER = "_build"
+#: the configuration file of a Sphinx project
+SPHINX_CONF = "conf.py"
 
 
 def sphinx_output(path, names):
@@ -1058,7 +1060,10 @@ class _Indexer:
             and os.path.normcase(docs) != os.path.normcase(self.basedir)
         ):
             docs = None
-        self.docs = docs
+        # Folders whose .md and .rst files are documents, not sidecar docs:
+        # the Sphinx source folder, and folders with a conf.py of their own
+        # (added by list())
+        self.documentation = [docs] if docs is not None else []
         # make's build folder (BUILDDIR = _build) exists before the first build
         self.build_dir = None
         if settings.source_dir is not None:
@@ -1156,6 +1161,8 @@ class _Indexer:
             return True
         if mod.ref != ROOT_REFERENCE and sphinx_output(mod.path, keys):
             return False
+        if mod.ref != ROOT_REFERENCE and SPHINX_CONF in keys:
+            self.documentation.append(mod.path)
         denied = []
         seen = {}  # reference: the first name on disk that has it
         # documentation file candidates, and the stems of Simulink files
@@ -1259,8 +1266,8 @@ class _Indexer:
         models among the ``loose`` files of the folder ``mod``; recorded, not
         read.
         """
-        sidecars = bool(self.sidecar_suffixes) and not (
-            self.docs is not None and _within(mod.path, self.docs)
+        sidecars = bool(self.sidecar_suffixes) and not any(
+            _within(mod.path, folder) for folder in self.documentation
         )
         for key, path, ref, st in loose:
             stem, suffix = os.path.splitext(key)

@@ -33,6 +33,12 @@ Which files are sidecar docs
   ``CODE_OF_CONDUCT.*`` and ``SECURITY.*`` at the root, which describe the
   repository rather than the code. Add patterns for anything else, such as
   notes for tools (``"**/CLAUDE.md"``).
+* A folder below the project root with a ``conf.py`` of its own is the
+  Sphinx source folder of another project, such as an older documentation
+  set: its files and those of its subfolders are documents of that
+  project, not sidecar docs. Code there is still indexed. A ``conf.py`` in
+  the project root itself does not count. ``scmd apidoc`` and
+  ``matlab-api-check`` find the same sidecar docs as the build.
 * Sidecar docs are read as UTF-8 (a byte-order mark is allowed), whatever
   :confval:`matlab_src_encoding` says. Invalid bytes are replaced, with a
   ``mat.encoding`` warning.

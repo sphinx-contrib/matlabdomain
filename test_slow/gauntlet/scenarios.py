@@ -2880,13 +2880,8 @@ def help_links(ctx):
         "regularizeNd",
         folder="docs",
         extensions=["sphinx.ext.autodoc", "sphinxcontrib.matlab", "myst_parser"],
+        # regularizeNd's own Sphinx source (docs/conf.py) is not sidecar docs
         matlab_src_sidecar_suffixes=[".md", ".rst"],
-        # regularizeNd's own Sphinx source is not sidecar docs (sidecars.rst:
-        # every .md and .rst below the root is one unless excluded)
-        matlab_src_exclude_patterns=Raw(
-            "[*__import__('sphinxcontrib.mat_types').mat_types"
-            ".DEFAULT_EXCLUSION_PATTERNS, 'docs/**']"
-        ),
     )
     text = (docs / "conf.py").read_text(encoding="utf-8")
     (docs / "conf.py").write_text(

@@ -439,7 +439,8 @@ Sidecar docs:
 
 * Tutorials and notes as ``.md`` and ``.rst`` files among the MATLAB
   files, selected by ``matlab_src_sidecar_suffixes`` (default ``[]``, off)
-  and the include and exclusion patterns. The directive
+  and the include and exclusion patterns; a folder with a ``conf.py`` of its
+  own (another Sphinx project) holds none. The directive
   ``mat:autosidecar`` renders one into a document, with relative images,
   downloads, includes and Markdown links resolved from its folder; the
   role ``:mat:sidecar:`` links to one. ``scmd apidoc`` writes a page for
