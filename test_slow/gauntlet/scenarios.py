@@ -1711,9 +1711,16 @@ def quickstart(ctx):
     )
     ctx.expect("conf.py" in proc.stdout, "-n lists the files it would write")
 
-    # 6. outside git
+    # 6. outside git, also when OUT is inside a repository (the default OUT is)
     g = clone(ctx, "matlab2tikz", "g", git=False)
-    proc = ctx.scmd("outside git", "quickstart", g, "-q", cwd=g)
+    proc = ctx.scmd(
+        "outside git",
+        "quickstart",
+        g,
+        "-q",
+        cwd=g,
+        env={"GIT_CEILING_DIRECTORIES": str(g.parent)},
+    )
     ctx.expect(proc.returncode == 0, "outside git: exit 0")
     ctx.expect(
         not (g / ".gitignore").exists()
