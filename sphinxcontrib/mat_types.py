@@ -345,12 +345,14 @@ def source_scope(dom, reference):
 
 
 def _member(entity, members):
+    # A member is a MATLAB object: what ``getter`` gives for a name autodoc
+    # asks for (``__doc__``, ``__bases__``, ...) is none.
     obj = entity
     for name in members:
-        if obj is None or isinstance(obj, MatModule):
+        if not isinstance(obj, MatObject) or isinstance(obj, MatModule):
             return None
         obj = obj.getter(name)
-    return obj
+    return obj if isinstance(obj, MatObject) else None
 
 
 def lookup_reference(dom, reference):
