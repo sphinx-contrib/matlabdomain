@@ -121,7 +121,8 @@ def check_inventories(app, env, node, contnode):
 
 class CheckExternalReferences(SphinxPostTransform):
     """``check_inventories`` for the ``:external:`` roles, which intersphinx
-    resolves before the ``missing-reference`` event.
+    resolves before the ``missing-reference`` event; and ``:external:`` with
+    ``lib:`` in the target resolved in ``lib`` alone, as ``:external+lib:``.
     """
 
     default_priority = 8  # before intersphinx's IntersphinxRoleResolver (9)
@@ -132,8 +133,35 @@ class CheckExternalReferences(SphinxPostTransform):
             if "intersphinx" in node and node.get("refdomain") == "mat":
                 contnode = node[0].deepcopy()
                 result = _check_inventories(self.env, node, contnode)
+                if result is None:
+                    result = _resolve_in_named_inventory(self.env, node, contnode)
                 if result is not None:
                     node.replace_self(result)
+
+
+def _resolve_in_named_inventory(env, node, contnode):
+    """Return the link of an ``:external:`` role whose target starts with the
+    name of an inventory (``lib:name``) in that inventory, or None (then
+    intersphinx warns with the target as written).
+    """
+    from sphinx.ext.intersphinx import (
+        InventoryAdapter,
+        resolve_reference_in_inventory,
+    )
+
+    target = node["reftarget"]
+    prefix, colon, rest = target.partition(":")
+    if (
+        node["inventory"] is not None
+        or not colon
+        or prefix not in InventoryAdapter(env).named_inventory
+    ):
+        return None
+    node["reftarget"], node["inventory"] = rest, prefix
+    try:
+        return resolve_reference_in_inventory(env, prefix, node, contnode)
+    finally:
+        node["reftarget"], node["inventory"] = target, None
 
 
 def _check_inventories(env, node, contnode):

@@ -1172,6 +1172,8 @@ TWO_VERSIONS_PAGE = """
     * Y03 :mat:func:`two:nwbRead`
     * Y04 :mat:class:`one:types.untyped.Set`
     * Y05 :external:mat:func:`nwbRead`
+    * Y06 :external:mat:class:`one:types.untyped.Set`
+    * Y07 :external:mat:func:`one:nwbRead.m`
     """
 
 
@@ -1332,6 +1334,8 @@ def intersphinx(ctx):
         ("Y02", "https://one.example/"),
         ("Y03", "https://two.example/"),
         ("Y04", "https://one.example/"),
+        ("Y06", "https://one.example/"),
+        ("Y07", "https://one.example/"),
     ):
         href = links.get(key)
         ctx.expect(

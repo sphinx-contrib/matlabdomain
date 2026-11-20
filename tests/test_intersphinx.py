@@ -423,6 +423,11 @@ def test_external_role_with_an_inventory_prefix(make_app, tmp_path):
     references = {
         "name_two": ":external:mat:func:`two:p.f`",
         "class_two": ":external:mat:class:`two:p.C`",
+        # the prefix names the inventory, by MATLAB name and by path
+        "name_one": ":external:mat:func:`one:p.f`",
+        "class_one": ":external:mat:class:`one:p.C`",
+        "path_one": ":external:mat:func:`one:+p/f.m`",
+        "path_two": ":external:mat:func:`two:+p/f.m`",
         "unprefixed": ":external:mat:func:`p.f`",
         "named": ":external+one:mat:func:`p.f`",
         # a prefix in the target of :external+lib: is part of the name
@@ -436,6 +441,10 @@ def test_external_role_with_an_inventory_prefix(make_app, tmp_path):
     assert links == {
         "name_two": (f"{TWO}#mat-+p/f.m", "p.f"),
         "class_two": (f"{TWO}#mat-+p/C.m", "p.C"),
+        "name_one": (f"{ONE}#mat-+p/f.m", "p.f"),
+        "class_one": (f"{ONE}#mat-+p/C.m", "p.C"),
+        "path_one": (f"{ONE}#mat-+p/f.m", "p.f"),
+        "path_two": (f"{TWO}#mat-+p/f.m", "p.f"),
         "unprefixed": (None, "p.f()"),
         "named": (f"{ONE}#mat-+p/f.m", "p.f"),
         "named_same": (None, "one:p.f()"),
