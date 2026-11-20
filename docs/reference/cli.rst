@@ -120,7 +120,9 @@ touches the project's MATLAB code or CI, and never commits.
 The matlabdomain requirement copies how the running matlabdomain is
 installed (``direct_url.json``, PEP 610): a git URL and commit, an editable
 folder (``uv add --editable``, ``pip install -e``), another URL, or a
-version from an index.
+version from an index. The contributors' guide names no folder of your
+machine: for an editable install or a ``file:`` URL it says
+``sphinxcontrib-matlabdomain`` without a version.
 
 Exit status
 ~~~~~~~~~~~

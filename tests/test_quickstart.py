@@ -555,6 +555,25 @@ def test_guide_install_drops_a_local_folder():
     assert _cli._guide_install(facts) is VERSION_INSTALL
 
 
+def test_guide_names_no_folder_of_a_local_install(
+    tmp_path, capsys, monkeypatch, no_git
+):
+    monkeypatch.setattr(_detect, "is_importable", lambda _name: True)
+    monkeypatch.setattr(_cli, "_git_author", lambda _root: "")
+    url = (tmp_path / "checkout").as_uri()
+    dist = FakeDist({"direct_url.json": json.dumps({"url": url, "dir_info": {}})})
+    monkeypatch.setattr(_detect, "_distribution", lambda: dist)
+    root = copy_root(QUICKSTART, tmp_path / "src")
+    text = f'{ANSWERS}make = "plain"\nguide = true\n'
+    args = [str(root), "-q", "--answers", answers_file(tmp_path, text)]
+    assert matlab_quickstart.main(args) == 0
+    # the user's own install line names the folder; the guide does not
+    assert url in capsys.readouterr().out
+    guide = (root / "docs" / "BUILDING_DOCS.md").read_text(encoding="utf-8")
+    assert "file:" not in guide
+    assert "sphinxcontrib-matlabdomain" in guide
+
+
 @pytest.mark.skipif(not HAS_GIT, reason="needs git")
 def test_git_dirty(tmp_path, monkeypatch):
     root = tmp_path / "repo"

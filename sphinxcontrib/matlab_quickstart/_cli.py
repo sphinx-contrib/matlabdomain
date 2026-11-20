@@ -422,7 +422,8 @@ def _ask_napoleon(prompter, headings):
 
 def _guide_install(facts):
     install = facts["install"]
-    if install.kind == "editable":
+    local = f"{_detect.DISTRIBUTION} @ file:"
+    if install.kind == "editable" or install.requirement.startswith(local):
         return _detect.Install("version", _detect.DISTRIBUTION)
     return install
 
