@@ -1463,13 +1463,21 @@ def test_missing_file_is_not_the_same_file(tmp_path):
     assert not _generate._same_file(missing, missing)
 
 
-@pytest.mark.skipif(
-    os.name == "nt" or not hasattr(os, "geteuid") or os.geteuid() == 0,
-    reason="needs POSIX permissions",
-)
-def test_unreadable_file_is_left_out(tmp_path, caplog_sphinx):
+def test_unreadable_file_is_left_out(tmp_path, caplog_sphinx, condition, monkeypatch):
     write(tmp_path, {"ok.m": FUNCTION.format(name="ok"), "locked.m": "x\n"})
-    (tmp_path / "locked.m").chmod(0)
+    # chmod 000 does not stop root, and Windows has no such permission.
+    can_lock = os.name != "nt" and hasattr(os, "geteuid") and os.geteuid() != 0
+    if condition("POSIX permissions", can_lock) == "real":
+        (tmp_path / "locked.m").chmod(0)
+    else:
+        read = mat_handlers.MFileHandler.read
+
+        def locked(self, path, *args, **kwargs):
+            if path.endswith("locked.m"):
+                raise PermissionError(13, "Permission denied")
+            return read(self, path, *args, **kwargs)
+
+        monkeypatch.setattr(mat_handlers.MFileHandler, "read", locked)
     try:
         page = {p.docname: p for p in pages_of(tmp_path)}["root"]
     finally:
