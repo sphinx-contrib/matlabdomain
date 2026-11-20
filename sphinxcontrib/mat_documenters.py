@@ -2263,7 +2263,7 @@ class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
     def get_object_members(self, want_all):
         library = cast(MatLibrary, self.object)
         blocks = library.diagram.library_blocks if library.diagram else ()
-        sections = mat_sidecars.documented_blocks(self.env, self.ref)
+        sections = mat_sidecars.documented_blocks(self.directive, self.ref)
         members = []
         for block in self._wanted(blocks, want_all):
             if block.mask is not None:

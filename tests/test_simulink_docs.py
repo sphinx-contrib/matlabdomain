@@ -501,6 +501,87 @@ def test_markdown_documentation_file(make_app, tmp_path):
     assert warnings.count("WARNING") == 2, warnings
 
 
+HEADINGS_MD = """\
+# Hid
+
+M
+-
+
+M text.
+
+Other *block*
+-------------
+
+Not a block.
+
+  ## *Self*
+
+Self text.
+
+```text
+## Newline
+```
+
+## `Other` ##
+
+Other text.
+"""
+HEADINGS_RST = """\
+Hid
+===
+
+*M*
+---
+
+M text.
+
+Other *block*
+-------------
+
+Not a block.
+
+``Self``
+--------
+
+Self text.
+
+.. code-block:: text
+
+   Newline
+   -------
+
+**Other**
+---------
+
+Other text.
+"""
+
+
+@pytest.mark.parametrize(
+    ("name", "content", "conf"),
+    [("hid.md", HEADINGS_MD, MYST), ("hid.rst", HEADINGS_RST, "")],
+)
+def test_headings_of_blocks_without_description(
+    make_app, tmp_path, name, content, conf
+):
+    # Masked blocks without a description are documented by a section; the
+    # section is a heading in any form the parser reads, its text without
+    # markup. A heading in a code block is no heading.
+    if name.endswith(".md"):
+        pytest.importorskip("myst_parser")  # not in the Sphinx dev job
+    write_docs(tmp_path, {name: content})
+    page, warnings = build(
+        make_app, tmp_path, ".. mat:autosimulink_library:: hid\n   :members:\n", conf
+    )
+    words = text(page)
+    for block in ("M", "Self", "Other"):
+        assert f"Simulink library block hid/ {block} {block} text." in words
+    assert 'id="mat-hid.mdl/Newline"' not in page
+    assert f"{name} has no section for the blocks 'Newline'." in warnings
+    assert "the heading 'Other block' names no masked block" in warnings
+    assert warnings.count("WARNING") == 2, warnings
+
+
 def test_markdown_documentation_file_needs_myst(make_app, tmp_path):
     from sphinx.errors import ConfigError
 

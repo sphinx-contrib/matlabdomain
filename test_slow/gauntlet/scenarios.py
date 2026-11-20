@@ -1983,7 +1983,6 @@ def simulink(ctx):
     ctx.expect(
         "N22" in setext,
         "a setext section of a block without description is shown under :members:",
-        bug="E2E-7",
     )
     ctx.expect(
         "Two Lines"

@@ -128,8 +128,10 @@ the description; the description stays the short summary.
 
      A first-order low-pass filter.
 
-  A heading that names no masked block, and masked blocks without a
-  section, get ``mat.simulink`` warnings. A block with a section counts as
+  A heading names a block by its text without markup, in any heading form
+  of the file's format (a Markdown heading underlined with ``---`` too). A
+  heading that names no masked block, and masked blocks without a section,
+  get ``mat.simulink`` warnings. A block with a section counts as
   documented for ``:members:``.
 * Relative links, images and includes work as in :doc:`sidecars`, but a
   documentation file is not a sidecar doc: it has no page of its own.

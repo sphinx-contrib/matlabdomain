@@ -631,35 +631,25 @@ def _doc_paths(env, file_ref):
     return [stem + suffix for suffix in suffixes if stem + suffix in docs]
 
 
-#: a Markdown heading, and an underline of a reST one
-_MD_HEADING = re.compile(r"#{1,6}\s+(.*?)(\s+#+)?\s*")
-_RST_UNDERLINE = re.compile(r"([!-/:-@\[-`{-~])\1*\s*")
-
-
-def documented_blocks(env, file_ref):
-    """Heading keys of the Simulink documentation file of ``file_ref``, found
-    without parsing it: ``:members:`` counts these blocks as documented.
+def _parsed(directive, file_ref):
+    """Return the parsed Simulink documentation file of the file ``file_ref``
+    (a ``_SimulinkDoc``, parsed once per document), or None.
     """
-    paths = _doc_paths(env, file_ref)
+    paths = _doc_paths(directive.env, file_ref)
     if not paths:
-        return set()
-    try:
-        with open(paths[0], "rb") as f:
-            lines = f.read().decode("utf-8-sig", errors="replace").splitlines()
-    except OSError:
-        return set()
-    keys = set()
-    for i, line in enumerate(lines):
-        if paths[0].endswith(MARKDOWN):
-            if match := _MD_HEADING.fullmatch(line):
-                keys.add(_heading_key(match[1]))
-        elif (
-            line.strip()
-            and i + 1 < len(lines)
-            and _RST_UNDERLINE.fullmatch(lines[i + 1])
-        ):
-            keys.add(_heading_key(line))
-    return keys
+        return None
+    parsed = directive.env.temp_data.setdefault(_PARSED, {})
+    if paths[0] not in parsed:
+        parsed[paths[0]] = _parse_simulink_doc(directive, file_ref, paths)
+    return parsed[paths[0]]
+
+
+def documented_blocks(directive, file_ref):
+    """Heading keys of the sections of the Simulink documentation file of
+    ``file_ref``: ``:members:`` counts these blocks as documented.
+    """
+    doc = _parsed(directive, file_ref)
+    return set() if doc is None else {key for key, _rubric, _body in doc.sections}
 
 
 def simulink_documentation(directive, ref):
@@ -669,19 +659,11 @@ def simulink_documentation(directive, ref):
     for a library block, the text of its section. Headings below the title
     become rubrics.
     """
-    env = directive.env
-    dom = env.get_domain("mat")
     file_ref, members = mat_naming.parse_reference(ref)
-    paths = _doc_paths(env, file_ref)
-    if not paths:
-        return []
-    parsed = env.temp_data.setdefault(_PARSED, {})
-    if paths[0] not in parsed:
-        parsed[paths[0]] = _parse_simulink_doc(directive, file_ref, paths)
-    doc = parsed[paths[0]]
+    doc = _parsed(directive, file_ref)
     if doc is None:
         return []
-    obj = mat_types.resolve(dom, file_ref)
+    obj = mat_types.resolve(directive.env.get_domain("mat"), file_ref)
     if members:
         key = _heading_key(members[0])
         found = [body for k, _rubric, body in doc.sections if k == key]
