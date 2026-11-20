@@ -1479,6 +1479,25 @@ def test_unreadable_file_is_left_out(tmp_path, caplog_sphinx):
     assert any("locked.m could not be read" in m for _, m in caplog_sphinx)
 
 
+def test_broken_simulink_files_warn_once_and_are_left_out(tmp_path, caplog_sphinx):
+    write(
+        tmp_path,
+        {
+            "ok.m": FUNCTION.format(name="ok"),
+            "lfs.slx": "version https://git-lfs.github.com/spec/v1\noid sha256:00\n",
+            "empty.slx": "",
+            "text.mdl": "this is not a model\n",
+        },
+    )
+    page = {p.docname: p for p in pages_of(tmp_path)}["root"]
+    listed = [e["ref"] for _, entries in page.context["sections"] for e in entries]
+    assert listed == ["ok.m"]
+    messages = [m for _, m in caplog_sphinx]
+    for name in ("lfs.slx", "empty.slx", "text.mdl"):
+        assert len([m for m in messages if name in m]) == 1, messages
+    assert not any("could not be read" in m for m in messages)
+
+
 class ComponentHandler(mat_handlers.Handler):
     """A file type without an autodoc directive."""
 

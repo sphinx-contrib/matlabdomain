@@ -189,7 +189,10 @@ def _entry(path, record):
     if is_hidden(ref):
         return None
     if kind == UNKNOWN:
-        _warn(f"{ref} could not be read; it is left out.")
+        # a file that was read but is no source file of its type was warned
+        # about by the index stage
+        if record["unreadable"]:
+            _warn(f"{ref} could not be read; it is left out.")
         return None
     handler = handler_by_extension(path)
     directive = handler.document(kind) if handler is not None else None

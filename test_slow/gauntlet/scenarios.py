@@ -2093,9 +2093,7 @@ def broken_input(ctx):
             f"api-check: {needle}: one warning ({len(hits)})",
         )
         hits = [ln for ln in gen.stderr.splitlines() if needle in ln]
-        ctx.expect(
-            len(hits) == 1, f"apidoc: {needle}: one warning ({len(hits)})", bug="E2E-9"
-        )
+        ctx.expect(len(hits) == 1, f"apidoc: {needle}: one warning ({len(hits)})")
     ctx.expect(not b.warned(r"bomHelp"), "a file with a BOM: no warning")
     ctx.expect(
         "Help after a BOM"
