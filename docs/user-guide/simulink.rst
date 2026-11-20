@@ -185,6 +185,8 @@ folder, the server or ``html_baseurl`` of a build differs from the file,
 the build logs one ``info`` line (not a warning, so ``-W`` builds and CI
 builds with another output folder are not affected) that names the values:
 edit ``local``, ``server`` or ``published`` by hand and commit the file.
+``local`` is a folder relative to the project root and is compared as one:
+``./docs/_build/html`` and ``docs/_build/html/`` are the same folder.
 Each HTML build writes ``mat/simulinkDocumentationLinker.json`` in its
 output folder, which tells the function whether the last build was local or
 for a server.

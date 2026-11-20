@@ -59,6 +59,17 @@ def _slash(url):
     return url if url.endswith("/") else url + "/"
 
 
+def _same(key, text, value):
+    """Whether the committed ``text`` of ``key`` names this build's ``value``:
+    ``local`` as a folder, the others as addresses.
+    """
+    if key == "local":
+        return os.path.normcase(os.path.normpath(text)) == os.path.normcase(
+            os.path.normpath(value)
+        )
+    return _slash(text) == value
+
+
 def _below(path, root):
     """``path`` relative to ``root`` with ``/`` and a trailing ``/``, or None
     when it is not inside ``root``.
@@ -121,7 +132,8 @@ def write_settings(app, exception):
         if isinstance(settings.get(key), str)
         else f"{key} is not set, this build has {value!r}"
         for key, value in wanted.items()
-        if not isinstance(settings.get(key), str) or _slash(settings[key]) != value
+        if not isinstance(settings.get(key), str)
+        or not _same(key, settings[key], value)
     ]
     if differ:
         logger.info(

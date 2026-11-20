@@ -3,6 +3,7 @@ the committed settings alone (``mat_simulink/_linker.py``).
 """
 
 import json
+import os
 
 import pytest
 from sphinx.errors import ConfigError
@@ -75,6 +76,34 @@ def test_matching_settings_say_nothing(make_app, tmp_path):
     app = build(make_app, root)
     assert "differs" not in app.status.getvalue()
     assert settings(root) == json.loads(text)
+
+
+@pytest.mark.parametrize(
+    "local",
+    [
+        "./docs/_build/html",
+        "docs//_build/html/",
+        "docs/_build/./html",
+        "docs/other/../_build/html",
+        os.path.join("docs", "_build", "html") + os.sep,  # backslashes on Windows
+    ],
+)
+def test_local_is_compared_as_a_folder(make_app, tmp_path, local):
+    root = project(tmp_path, json.dumps({"mode": "local", "local": local}))
+    app = build(make_app, root)
+    assert "differs" not in app.status.getvalue()
+
+
+def test_absolute_local_differs(make_app, tmp_path):
+    # The linker joins "local" to the project root: an absolute folder is not
+    # the build's folder.
+    root = tmp_path / "proj"
+    absolute = (root / "docs" / "_build" / "html").as_posix()
+    project(tmp_path, json.dumps({"mode": "local", "local": absolute}))
+    app = build(make_app, root)
+    assert f"local is '{absolute}', this build has 'docs/_build/html/'" in (
+        app.status.getvalue()
+    )
 
 
 def test_livehtml_writes_the_server_state_only(make_app, tmp_path):
