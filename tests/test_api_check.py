@@ -581,6 +581,28 @@ def test_simulink_files_pass_through(make_app, tmp_path):
     assert not_checked["not_parsed"] == 1
 
 
+def test_broken_simulink_files_warn_once(make_app, tmp_path):
+    (tmp_path / "conf.py").write_text(CONF)
+    (tmp_path / "index.rst").write_text("Index\n=====\n")
+    shutil.copyfile(SIMULINK / "probeModel.slx", tmp_path / "probeModel.slx")
+    (tmp_path / "lfs.slx").write_text(
+        "version https://git-lfs.github.com/spec/v1\noid sha256:00\nsize 1\n"
+    )
+    (tmp_path / "empty.slx").write_bytes(b"")
+    (tmp_path / "text.mdl").write_text("this is not a model\n")
+    app = build(make_app, tmp_path)
+    warnings = app.warning.getvalue()
+    for name in ("lfs.slx", "empty.slx", "text.mdl"):
+        assert warnings.count(name) == 1, warnings
+    assert "documented without content" not in warnings
+    assert "lfs.slx is a Git LFS pointer, not the model file." in warnings
+    assert "text.mdl is not a Simulink model, library or subsystem file." in warnings
+    not_checked = report(app)["summary"]["not_checked"]
+    assert not_checked["simulink_files"] == 1
+    assert not_checked["not_parsed"] == 3
+    assert "probeModel.slx" not in warnings
+
+
 def test_apps_failed_parses_and_parse_warnings(make_app, tmp_path):
     (tmp_path / "conf.py").write_text(CONF)
     (tmp_path / "index.rst").write_text("Index\n=====\n\n.. mat:autoscript:: Used.m\n")

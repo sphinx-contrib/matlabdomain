@@ -19,7 +19,7 @@ from sphinx.util.logging import getLogger
 from sphinx.util.matching import Matcher
 
 from . import mat_simulink, mat_types
-from .mat_classify import is_hidden
+from .mat_classify import UNKNOWN, is_hidden
 from .mat_typing import override
 
 logger = getLogger("matlab-domain")
@@ -582,6 +582,9 @@ class _Checker:
             return
         if record["type"] in mat_simulink.KINDS:  # no rules for them yet
             self.not_checked["simulink_files"] += 1
+            return
+        if record["type"] == UNKNOWN:  # the index stage warned: not a source file
+            self.not_checked["not_parsed"] += 1
             return
         obj = mat_types.resolve(self.dom, ref)
         self.parsed.append(path)

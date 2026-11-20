@@ -2091,7 +2091,6 @@ def broken_input(ctx):
         ctx.expect(
             len(hits) == 1,
             f"api-check: {needle}: one warning ({len(hits)})",
-            bug="E2E-8",
         )
         hits = [ln for ln in gen.stderr.splitlines() if needle in ln]
         ctx.expect(
