@@ -84,7 +84,8 @@ defaults.
      - none; the defaults of :confval:`matlab_src_exclude_patterns` and
        the git submodules are always left out
    * - ``markdown``
-     - Markdown pages with MyST
+     - Markdown pages with MyST. Without it, a project with Simulink
+       files gets ``matlab_simulink_doc_suffixes = [".rst"]``
      - yes when ``myst_parser`` can be imported
    * - ``sidecars``
      - Markdown notes next to the code as API pages

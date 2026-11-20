@@ -2984,13 +2984,9 @@ def simulink_project(ctx):
         b.rc == 0,
         f"quickstart's docs build with a Markdown note next to a "
         f"model and markdown = false ({b.rc}: {b.stderr.strip()[-150:]})",
-        bug="E2E-11",
     )
-    # without the note (what a user does to get past E2E-11)
-    (proj / "R2026b" / "slx" / "probeModel.md").unlink()
+    ctx.require(b.rc == 0, f"the docs build ({b.rc})")
     commit_all(proj)
-    b = ctx.sphinx("html in the project", proj / "docs", out)
-    ctx.require(b.rc == 0, f"without the note the docs build ({b.rc})")
     settings = json.loads((linker / "simulinkDocumentationLinker.json").read_text())
     built = out / "mat" / "simulinkDocumentationLinker.json"
     ctx.expect(
@@ -3050,7 +3046,11 @@ def simulink_project(ctx):
     ctx.write("proj/R2026b/slx/probeModel.rst", "No heading here, R44.\n")
     ctx.write("proj/R2026b/slx/probeModel.md", "# probeModel\n\nNotes M33.\n")
     conf = proj / "docs" / "conf.py"
-    conf.write_text(conf.read_text() + "\nextensions.append('myst_parser')\n")
+    conf.write_text(
+        conf.read_text()
+        + "\nextensions.append('myst_parser')\n"
+        + "matlab_simulink_doc_suffixes = ['.md', '.rst']\n"
+    )
     d = ctx.sphinx("doc shapes", proj / "docs", ctx.path("shapes-html"))
     ctx.expect(d.rc == 0, f"doc shapes: exit 0 ({d.rc})")
     ctx.expect(

@@ -85,6 +85,10 @@ matlab_version = {{ matlab_version | py }}
 # Markdown notes next to the code become part of the API pages.
 matlab_src_sidecar_suffixes = [".md"]
 {% endif %}
+{% if simulink and not markdown %}
+# Notes next to Simulink files: reST only (Markdown needs myst_parser).
+matlab_simulink_doc_suffixes = [".rst"]
+{% endif %}
 
 # API pages: scmd apidoc --conf-dir {{ docs }} (make apidoc)
 matlab_apidoc_output_dir = "API"

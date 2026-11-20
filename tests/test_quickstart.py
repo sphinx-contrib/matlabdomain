@@ -248,6 +248,31 @@ def test_golden_dry_run(tmp_path, capsys, fixed, no_git):
     assert tree(root) == before
 
 
+@pytest.mark.parametrize("markdown", [False, True])
+def test_simulink_note_next_to_a_model_builds(
+    markdown, tmp_path, capsys, make_app, fixed, no_git
+):
+    root = copy_root(APIDOC, tmp_path / "src")
+    slx = TESTS / "simulink" / "fixtures" / "R2026b" / "slx"
+    shutil.copyfile(slx / "probeModel.slx", root / "probeModel.slx")
+    (root / "probeModel.md").write_text("# probeModel\n\nNotes.\n", encoding="utf-8")
+    text = f'{ANSWERS}markdown = {str(markdown).lower()}\nmake = "plain"\n'
+    args = [str(root), "-q", "--answers", answers_file(tmp_path, text)]
+    assert matlab_quickstart.main(args) == 0
+    capsys.readouterr()
+    # An earlier test's MyST can leave ".md" in the shared default suffixes.
+    suffixes = {".rst": "restructuredtext"}
+    if markdown:
+        suffixes[".md"] = "markdown"
+    app = make_app(
+        srcdir=root / "docs", freshenv=True, confoverrides={"source_suffix": suffixes}
+    )
+    app.build(force_all=True)
+    assert app.statuscode == 0, app.warning.getvalue()
+    conf = (root / "docs" / "conf.py").read_text(encoding="utf-8")
+    assert ("matlab_simulink_doc_suffixes" in conf) is (not markdown)
+
+
 def test_simulink_project_gets_the_help_linker(tmp_path, capsys, fixed, no_git):
     root = copy_root(APIDOC, tmp_path)
     slx = TESTS / "simulink" / "fixtures" / "R2026b" / "slx"

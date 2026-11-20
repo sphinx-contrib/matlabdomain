@@ -570,6 +570,7 @@ def run(args):
             "gitmodules": f"{rel_root}/.gitmodules",
             "suggestions": suggestions,
             "path_source": path.source if path else "",
+            "simulink": simulink,
             "linker_exclude": _write.LINKER_EXCLUDE if simulink else "",
             # A contributor's guide names no folder of this machine.
             "install": "\n".join(_write.pip_lines(answers, _guide_install(facts))),
