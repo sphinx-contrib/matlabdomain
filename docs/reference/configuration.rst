@@ -215,8 +215,11 @@ Output
    builders that write ``.html`` pages, so not to EPUB, ``json`` or
    ``pickle``; other output formats use their normal links.
    Disable it when the additional redirect files or their browser redirects
-   are unsuitable for the host. A collision with an unowned stable-output
-   file fails the build instead of overwriting it.
+   are unsuitable for the host. A file that the build did not write where
+   one of these files goes, for example one that ``html_extra_path``
+   copies there, stops the build with a ``ConfigError`` that names the
+   file; the build does not overwrite it. Remove or rename that file, or
+   set this value to ``False``.
 
 .. confval:: matlab_simulink_metadata
    :type: ``list[str]``

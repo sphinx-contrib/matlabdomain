@@ -60,7 +60,9 @@ unknown builder, a ``conf.py`` that raises):
 
 The message is the last line of the Traceback section, after
 ``sphinx.errors.ConfigError:``. Correct the setting in ``conf.py`` or in
-the ``-D`` option and build again; there is nothing to report. The
+the ``-D`` option and build again; there is nothing to report. A file of
+the project in the way of a stable address (:confval:`matlab_stable_urls`)
+is reported the same way, at the end of the build. The
 extension raises the same kind of error as Sphinx's own checks, and
 Sphinx decides how it is printed. With ``-T`` or ``-v`` the Traceback
 section has the whole traceback; the message is still its last line.

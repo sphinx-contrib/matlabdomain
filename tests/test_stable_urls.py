@@ -9,8 +9,9 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from sphinx.errors import ExtensionError
+from sphinx.errors import ConfigError
 from test_apidoc import FUNCTION, write
+from test_config import assert_configuration_error, sphinx_build
 from test_intersphinx import (
     anchors,
     build_library,
@@ -24,6 +25,13 @@ from sphinxcontrib import mat_urls
 from sphinxcontrib.matlab_apidoc import main as apidoc
 from sphinxcontrib.matlab_apidoc._generate import MARKER
 
+#: the error for a file the build did not write where a stable address goes
+IN_THE_WAY = (
+    r"^matlab_stable_urls: '.+' is in the way of a file of the stable "
+    r"addresses, and the build does not overwrite a file it did not write\. "
+    r"Remove or rename it \(html_extra_path or html_static_path may copy it "
+    r"there\), or set matlab_stable_urls = False\.$"
+)
 CHOICE = re.compile(
     r'<a class="reference internal" href="([^"]*)"><code[^>]*>'
     r'<span class="pre">([^<]*)</span></code></a> \((\w+)\)'
@@ -106,12 +114,32 @@ def test_unowned_stable_output_is_not_overwritten(make_app, tmp_path, conflict):
     target_path = Path(app.outdir) / conflict
     target_path.parent.mkdir(parents=True, exist_ok=True)
     target_path.write_text("user-owned content", encoding="utf-8")
-    with pytest.raises(ExtensionError, match="unowned file"):
+    with pytest.raises(ConfigError, match=IN_THE_WAY):
         if conflict.startswith("_static/"):
             mat_urls.add_script(app)
         else:
             app.build()
     assert target_path.read_text(encoding="utf-8") == "user-owned content"
+
+
+def test_a_file_of_html_extra_path_in_the_way_stops_sphinx_build(tmp_path, capsys):
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
+        'html_extra_path = ["extra"]\n'
+    )
+    (tmp_path / "index.rst").write_text("Index\n=====\n\n.. mat:autofunction:: one\n")
+    (tmp_path / "one.m").write_text("function one\n% ONE Help.\nend\n")
+    write(tmp_path, {"extra/mat/ref/one.m.html": "user-owned content"})
+    out = tmp_path / "_build"
+    assert sphinx_build(["-q", str(tmp_path), str(out)]) == 2
+    err = capsys.readouterr().err
+    message = re.search(IN_THE_WAY[1:-1], err)
+    assert message is not None
+    path = re.match(r"matlab_stable_urls: '(.+?)' is in the way", message[0])
+    assert path is not None
+    assert path[1].replace("\\\\", "/").endswith("/_build/mat/ref/one.m.html")
+    assert_configuration_error(err, message[0])
+    assert (out / "mat/ref/one.m.html").read_text() == "user-owned content"
 
 
 def test_unowned_chooser_is_not_overwritten(make_app, tmp_path):
@@ -128,7 +156,7 @@ def test_unowned_chooser_is_not_overwritten(make_app, tmp_path):
     target_path = Path(app.outdir) / "mat/name/helper.html"
     target_path.parent.mkdir(parents=True, exist_ok=True)
     target_path.write_text("user-owned content", encoding="utf-8")
-    with pytest.raises(ExtensionError, match="unowned file"):
+    with pytest.raises(ConfigError, match=IN_THE_WAY):
         app.build()
     assert target_path.read_text(encoding="utf-8") == "user-owned content"
 
@@ -261,7 +289,7 @@ def test_unowned_refs_fail_before_pages_are_written(make_app, tmp_path):
     refs = tmp_path / "_build" / "html" / mat_urls.REFS
     refs.parent.mkdir(parents=True)
     refs.write_text("user-owned content", encoding="utf-8")
-    with pytest.raises(ExtensionError, match="unowned file"):
+    with pytest.raises(ConfigError, match=IN_THE_WAY):
         make_app(srcdir=tmp_path, builddir=tmp_path / "_build")
     assert refs.read_text(encoding="utf-8") == "user-owned content"
     assert not (refs.parents[1] / "index.html").exists()

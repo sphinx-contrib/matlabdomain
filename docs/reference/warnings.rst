@@ -89,7 +89,8 @@ for a file without one, the auto directive for a folder).
      - when it runs
    * - ``mat.stable_url``
      - a stable address file (:confval:`matlab_stable_urls`) that cannot be
-       written, for example a path too long for Windows
+       written, for example a path too long for Windows (a file of the
+       project in its place is an error that stops the build)
      - at the end of an HTML build
    * - ``mat.simulink``
      - an unknown name in :confval:`matlab_simulink_metadata` or a

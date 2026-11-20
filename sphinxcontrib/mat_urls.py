@@ -48,7 +48,7 @@ from urllib.parse import quote, urlsplit
 
 import sphinx
 from docutils import nodes
-from sphinx.errors import ExtensionError
+from sphinx.errors import ConfigError
 from sphinx.util.logging import getLogger
 from sphinx.util.osutil import relative_uri
 
@@ -483,8 +483,11 @@ def _is_ours(path):
 
 def _check_owned(path):
     if os.path.islink(path) or (os.path.isfile(path) and not _is_ours(path)):
-        raise ExtensionError(
-            f"stable URL output would overwrite an unowned file: {path}"
+        raise ConfigError(
+            f"matlab_stable_urls: {path!r} is in the way of a file of the stable "
+            "addresses, and the build does not overwrite a file it did not write. "
+            "Remove or rename it (html_extra_path or html_static_path may copy it "
+            "there), or set matlab_stable_urls = False."
         )
 
 

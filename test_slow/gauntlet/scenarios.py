@@ -2317,7 +2317,9 @@ def options(ctx):
         "matlab_src_encoding = latin-1: no mat.encoding warning",
     )
 
-    # a file of html_extra_path where a stable address goes: a clear error
+    # a file of html_extra_path where a stable address goes: a configuration
+    # error (Sphinx 8.2 and later print their report for it, FAQ.rst) that
+    # names the file and the fix, and the file is kept
     ctx.write("nwb-extra/mat/ref/nwbRead.m.html", "<html>mine</html>\n")
     c = ctx.sphinx(
         "stable url clash",
@@ -2325,15 +2327,22 @@ def options(ctx):
         ctx.path("nwb-clash"),
         "-D",
         f"html_extra_path={ctx.path('nwb-extra')}",
-        crash_ok=True,
     )
     ctx.expect(
-        c.rc != 0, f"a clash of a stable address with a user file fails ({c.rc})"
+        c.rc == 2, f"a clash of a stable address with a user file fails ({c.rc})"
     )
     ctx.expect(
-        "Extension error" not in c.stderr and "Traceback" not in c.stderr,
-        "... with a plain message, not a crash report",
-        bug="E2E-15",
+        re.search(
+            r"ConfigError: matlab_stable_urls: '.*nwbRead\.m\.html' is in the way"
+            r".*Remove or rename it.*set matlab_stable_urls = False\.",
+            c.stderr,
+        )
+        is not None,
+        "... with an error that names the file and the fix",
+    )
+    ctx.expect(
+        c.html("mat/ref/nwbRead.m.html") == "<html>mine</html>\n",
+        "... and the user's file is not overwritten",
     )
 
     # a hand-written page next to the API pages (output dir "."), then removed

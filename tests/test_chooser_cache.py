@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 
 import pytest
-from sphinx.errors import ExtensionError
+from sphinx.errors import ConfigError
 from test_apidoc import FUNCTION
 from test_incremental_equals_clean import MINIMAL_CONF, _write, minimal
 
@@ -230,7 +230,9 @@ def test_unowned_state_is_not_overwritten(make_app, tmp_path):
     path = Path(app.outdir) / mat_urls.STATE
     path.parent.mkdir(parents=True)
     path.write_text('{"mine": 1}', encoding="utf-8")
-    with pytest.raises(ExtensionError, match="unowned file"):
+    with pytest.raises(
+        ConfigError, match="is in the way of a file of the stable addresses"
+    ):
         mat_urls.add_script(app)
     app.cleanup()
     assert path.read_text(encoding="utf-8") == '{"mine": 1}'
