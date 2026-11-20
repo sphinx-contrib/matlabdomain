@@ -671,7 +671,10 @@ without a "reference target not found" warning.
 
    Set the current folder for the rest of the page without documenting
    it: a folder path or the MATLAB name of a namespace that has one
-   folder, ``.`` for the project root, or ``None`` to clear it.
+   folder, ``.`` for the project root, or ``None`` to clear it. Like the
+   description directives, it does not check the folder: a name that is
+   no folder of the project is taken as a folder path, without a warning,
+   for code that the build does not index.
 
 Roles
 -----

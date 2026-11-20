@@ -1050,16 +1050,13 @@ def handwritten(ctx):
         "autoattribute :annotation: is shown as = <value>",
     )
     warned(r"sideways", "a bad :member-order: value is an error")
-    warned(
-        r"no_such_folder/",
-        "mat:folder of a folder that does not exist warns",
-        bug="E2E-13",
-    )
-    warned(
-        r"currentfolder.*no_such_folder|no_such_folder.*currentfolder|"
-        r"no_such_folder[^/]",
-        "mat:currentfolder of a missing folder warns",
-        bug="E2E-13",
+    # directives.rst, "Description directives": they "never read a file and
+    # never warn about a missing one", so a folder described by hand may be
+    # one the build does not index; mat:currentfolder does not check either
+    ctx.expect(
+        not [r for r in b.records if "no_such_folder" in r],
+        "mat:folder and mat:currentfolder of a folder that is not indexed do "
+        "not warn (description directives)",
     )
     warned(
         r"don't know which object to document for 'Set'",
@@ -1075,10 +1072,8 @@ def handwritten(ctx):
         "a role does not resolve a name MATLAB cannot see",
     )
     ctx.expect(
-        not b.warned(r"page_location|no_such_folder/index")
-        and "mat/ref/no_such_folder/index.html" not in b.files(),
-        "no page is written for a folder that does not exist",
-        bug="E2E-13",
+        "mat/ref/no_such_folder/index.html" in b.files(),
+        "a folder described by hand has its stable address, indexed or not",
     )
     warned(
         r"noSuchFunction.*\[ref\.|M01|"
