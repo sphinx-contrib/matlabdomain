@@ -318,12 +318,7 @@ def _split_folder(folder: str) -> list[str]:
 
 
 def _join_parts(parts: list[str]) -> str:
-    if not parts:
-        return ""
-    out = parts[0]
-    for part in parts[1:]:
-        out = os.path.join(out, part)
-    return out
+    return os.path.join(*parts)
 
 
 def _package_chain(
@@ -481,7 +476,9 @@ def not_callable_reason(
         return f"a class in {last} must be named {last[1:]}"
     if not is_valid_identifier(stem, namelengthmax, allow_keywords=last[:1] == "@"):
         return f"its name {stem!r} {_name_problem(stem, namelengthmax)}"
-    return "MATLAB cannot form a name for it"
+    # Only a bug (form_matlab_name and the checks above disagree) reaches it;
+    # the warning then names no wrong reason.
+    return "MATLAB cannot form a name for it"  # pragma: no cover - defensive
 
 
 def form_matlab_name(
@@ -494,14 +491,13 @@ def form_matlab_name(
     """Forms the callable MATLAB name for a single file.
 
     Pure string/path function; returns None for non-callable/invalid entries.
+    ``folder`` has a part above its ``+`` and ``@`` folders (``name_sources``
+    passes ``root/<folder>``).
     ``matlab_version`` selects version-dependent rules (MATLAB_VERSION_RULES).
     """
     validate_matlab_version(matlab_version)
 
     folder_parts = _split_folder(folder)
-    if not folder_parts:
-        return None
-
     stem = Path(filename).stem
     if folder_parts[-1] == "private":
         return _private_name(folder_parts, stem, is_class, namelengthmax)

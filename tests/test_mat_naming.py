@@ -123,7 +123,6 @@ def test_form_matlab_name_class_folder_under_invalid_package_dropped():
 @pytest.mark.parametrize(
     ("folder", "name", "is_class"),
     [
-        ("", "f.m", False),
         ("/tmp/+", "f.m", False),
         ("/tmp/@", "f.m", False),
         ("/tmp/@Outer/@Inner", "Inner.m", True),
@@ -149,18 +148,11 @@ def test_form_matlab_name_not_callable(folder, name, is_class):
         ("/tmp/@C/sub", "D.m", True, "R2025b", "classes in subfolders of a class"),
         ("/tmp/@C", "D.m", True, "R2026a", "a class in @C must be named C"),
         ("/tmp/@C/sub", "a-b.m", False, "R2025b", "its name 'a-b' is not"),
-        ("", "f.m", False, "R2026a", "MATLAB cannot form a name for it"),
     ],
 )
 def test_not_callable_reason(folder, name, is_class, version, reason):
     assert form_matlab_name(folder, name, is_class, 63, version) is None
     assert reason in not_callable_reason(folder, name, is_class, 63, version)
-
-
-def test_form_matlab_name_of_a_relative_package_folder():
-    out = form_matlab_name("+pkg", "f.m", False, namelengthmax=2048)
-    assert out is not None
-    assert (out.pseudo_fullname, out.parent_folder) == ("pkg.f", "")
 
 
 def test_form_matlab_name_keyword_top_package_invalid():
