@@ -1672,8 +1672,6 @@ class MatObject:
 
         Subclasses add their members and the attributes autodoc asks for.
         """
-        if name == "__name__":
-            return self.__name__
         if defargs:
             return defargs[0]
         logger.debug(
@@ -2125,17 +2123,6 @@ class MatFunction(MatObject):
         """
         return self.module
 
-    @override
-    def getter(self, name, *defargs) -> Any:
-        if name == "__name__":
-            return self.__name__
-        elif name == "__doc__":
-            return self.__doc__
-        elif name == "__module__":
-            return self.__module__
-        else:
-            return super().getter(name, *defargs)
-
 
 class MatClass(MatObject):
     """A MATLAB class definition.
@@ -2149,7 +2136,7 @@ class MatClass(MatObject):
     """
 
     #: the attributes :meth:`getter` returns as they are
-    _CLASS_ATTRIBUTES = ("__name__", "__doc__", "__module__", "__bases__")
+    _CLASS_ATTRIBUTES = ("__doc__", "__module__")
 
     def __init__(self, name, modname, tokens, encoding):
         super().__init__(name)

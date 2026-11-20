@@ -87,7 +87,7 @@ def test_detached_lookups_parse_on_demand(detached):
     assert MatObject.matlabify(None) is None
     # Without an index nothing is found by name, and bases stay unresolved.
     assert find_source(mat_types._domain(), "f.m") == []
-    assert MatObject.matlabify("Shape").getter("__bases__") == {"handle": None}
+    assert MatObject.matlabify("Shape").__bases__ == {"handle": None}
     gone = MatModule("gone", str(detached / "gone"), "gone/")
     assert gone.member_refs() == []
 
@@ -130,7 +130,6 @@ def test_getter_names_and_defaults(built):
     dom = built.env.get_domain("mat")
     for ref in ("f.m", "s.m", "Shape.m"):
         obj = resolve(dom, ref)
-        assert obj.getter("__name__") == obj.name
         assert obj.getter("nothing") is None
         assert obj.getter("nothing", 7) == 7
 

@@ -418,7 +418,7 @@ def test_objects(tmp_path):
     assert block.__doc__ == "Inner masked description."
     assert not hasattr(block, "ref")
     assert lib.getter("missing") is None
-    assert lib.getter("__name__") == "probeLib"
+    assert lib.name == "probeLib"
     restored = pickle.loads(pickle.dumps(lib))
     assert isinstance(restored, MatLibrary)
     assert restored.diagram == lib.diagram
