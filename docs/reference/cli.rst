@@ -64,7 +64,8 @@ Options
 
    Read answers from a TOML file and ask only for the others. The command
    offers to save one at the end (default ``ROOT/scmd-quickstart.toml``);
-   the keys are those of :ref:`quickstart-answers`.
+   at the end of input (in CI, nothing to read) it does not save and exits 0.
+   The keys are those of :ref:`quickstart-answers`.
 
 .. option:: -f, --force
 

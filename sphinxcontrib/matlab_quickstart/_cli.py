@@ -618,11 +618,17 @@ def run(args):
 
 
 def save_answers(args, root, answers):
-    """Offer to save the answers (default yes in a dry run)."""
-    if not prompt("Save the answers to a file", args.dry_run, yes_no):
-        return
+    """Offer to save the answers (default yes in a dry run). The end of
+    input (CI: nothing to read) is no.
+    """
     default = args.answers or os.path.join(root, ANSWERS_FILE)
-    path = input(f"> File [{default}]: ").strip() or default
+    try:
+        if not prompt("Save the answers to a file", args.dry_run, yes_no):
+            return
+        path = input(f"> File [{default}]: ").strip() or default
+    except EOFError:
+        print()
+        return
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(dumps(answers))
     print(f"Saved the answers: --answers {path} reads them back.")

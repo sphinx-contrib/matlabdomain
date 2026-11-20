@@ -1096,6 +1096,39 @@ def test_save_answers_default_file(tmp_path, capsys, replies, fixed, no_git):
     assert replies.asked[-1] == "> Save the answers to a file [y/N]: "
 
 
+def test_end_of_input_at_the_save_prompt_is_no(
+    tmp_path, capsys, replies, fixed, no_git
+):
+    root = copy_root(QUICKSTART, tmp_path)
+    full = answers_file(tmp_path, ANSWERS + _all_answers())
+    # CI: not a terminal, nothing to read
+    assert matlab_quickstart.main([str(root), "-a", full]) == 0
+    out = capsys.readouterr().out
+    assert replies.asked == ["> Save the answers to a file [y/N]: "]
+    assert (root / "docs" / "conf.py").is_file()
+    assert "[Interrupted.]" not in out
+    assert "Saved the answers" not in out
+    assert not (root / _cli.ANSWERS_FILE).exists()
+    # also after a yes, at the prompt for the file
+    replies.queue += ["y"]
+    _cli.save_answers(SimpleNamespace(dry_run=False, answers=None), str(root), {})
+    assert replies.asked[-1] == f"> File [{root / _cli.ANSWERS_FILE}]: "
+    assert not (root / _cli.ANSWERS_FILE).exists()
+
+
+def test_interrupt_at_the_save_prompt_stays_an_interrupt(
+    tmp_path, capsys, monkeypatch, fixed, no_git
+):
+    def interrupt(_text):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr("builtins.input", interrupt)
+    root = copy_root(QUICKSTART, tmp_path)
+    full = answers_file(tmp_path, ANSWERS + _all_answers())
+    assert matlab_quickstart.main([str(root), "-a", full]) == 1
+    assert "[Interrupted.]" in capsys.readouterr().out
+
+
 def test_interrupted(tmp_path, capsys, replies, fixed, no_git):
     root = copy_root(QUICKSTART, tmp_path)
     assert matlab_quickstart.main([str(root)]) == 1

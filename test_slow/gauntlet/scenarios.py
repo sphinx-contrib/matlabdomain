@@ -1687,7 +1687,6 @@ def quickstart(ctx):
         proc.returncode == 0,
         f"-a FILE in CI (stdin at its end): exit 0, not 'interrupted' "
         f"({proc.returncode})",
-        bug="E2E-2",
     )
 
     # 4. invalid answers files (with -n nothing is written)
