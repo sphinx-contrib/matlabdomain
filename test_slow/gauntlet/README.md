@@ -83,7 +83,7 @@ links); a project that is changed is copied first.
 
 ```bash
 python test_slow/gauntlet/scenarios.py --list
-python test_slow/gauntlet/scenarios.py                  # all, about 10 minutes
+python test_slow/gauntlet/scenarios.py                  # all 16, about 8 minutes
 python test_slow/gauntlet/scenarios.py incremental      # one
 ```
 
