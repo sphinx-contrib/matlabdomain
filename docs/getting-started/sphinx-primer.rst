@@ -21,7 +21,7 @@ The tools and their jobs
   supplies the MATLAB :term:`domain`, which contains :term:`directives
   <directive>` for documenting MATLAB :term:`objects <object>` and
   :term:`roles <role>` for links to them.
-* ``conf.py`` configures the :term:`Sphinx` project. It is a Python file. The 
+* ``conf.py`` configures the :term:`Sphinx` project. It is a Python file. The
   generated web pages go in the build output folder.
 
 Open a terminal
