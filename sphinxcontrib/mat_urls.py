@@ -463,22 +463,14 @@ def _is_ours(path):
         return False
     if MARKER in text or text.startswith(JS_MARKER):
         return True
-    # Written without JS_MARKER by earlier versions.
     folder, name = os.path.split(os.path.normpath(path))
-    if name == SCRIPT:
-        return text.startswith(_JS.partition("\n")[0])
     if name == os.path.basename(STATE) and os.path.basename(folder) == ROOT:
         # A state cut short (empty, not JSON) is this extension's too.
         try:
             json.loads(text)
         except ValueError:
             return True
-        return False
-    return (
-        name == os.path.basename(REFS)
-        and os.path.basename(folder) == ROOT
-        and text.startswith("window.matStableRefs = ")
-    )
+    return False
 
 
 def _check_owned(path):

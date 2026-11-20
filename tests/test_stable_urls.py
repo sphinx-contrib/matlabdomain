@@ -247,38 +247,17 @@ def test_script_that_cannot_be_written(tmp_path, monkeypatch):
     assert warnings == ["[sphinxcontrib-matlabdomain] cannot write %s: %s"]
 
 
-def test_legacy_files_without_js_marker_are_owned(tmp_path):
+def test_files_without_a_marker_are_not_ours(tmp_path):
     script = tmp_path / "_static" / mat_urls.SCRIPT
     script.parent.mkdir()
     first_line = mat_urls._JS.partition("\n")[0]
-    script.write_text(f"{first_line}\nolder body\n", encoding="utf-8")
-    assert mat_urls._is_ours(script)
-    script.write_text("user content", encoding="utf-8")
-    assert not mat_urls._is_ours(script)
+    for text in (f"{first_line}\nolder body\n", "user content"):
+        script.write_text(text, encoding="utf-8")
+        assert not mat_urls._is_ours(script)
     refs = tmp_path / mat_urls.REFS
     refs.parent.mkdir()
     refs.write_text('window.matStableRefs = {"a.m": ""};\n', encoding="utf-8")
-    assert mat_urls._is_ours(refs)
-    other = tmp_path / "refs.js"
-    other.write_text('window.matStableRefs = {"a.m": ""};\n', encoding="utf-8")
-    assert not mat_urls._is_ours(other)
-
-
-def test_rebuild_over_legacy_output(make_app, tmp_path):
-    (tmp_path / "conf.py").write_text(
-        'extensions = ["sphinxcontrib.matlab"]\nmatlab_src_code_project_root = "."\n'
-    )
-    (tmp_path / "index.rst").write_text("Index\n=====\n\n.. mat:autofunction:: one\n")
-    (tmp_path / "one.m").write_text("function one\n% ONE Help.\nend\n")
-    outdir = tmp_path / "_build" / "html"
-    (outdir / mat_urls.ROOT).mkdir(parents=True)
-    (outdir / mat_urls.REFS).write_text("window.matStableRefs = {};\n")
-    (outdir / "_static").mkdir()
-    first_line = mat_urls._JS.partition("\n")[0]
-    (outdir / "_static" / mat_urls.SCRIPT).write_text(f"{first_line}\nold\n")
-    app = make_app(srcdir=tmp_path, builddir=tmp_path / "_build")
-    app.build()
-    assert refs_map(Path(app.outdir)) == {"one.m": ""}
+    assert not mat_urls._is_ours(refs)
 
 
 def test_unowned_refs_fail_before_pages_are_written(make_app, tmp_path):
