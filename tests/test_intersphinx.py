@@ -194,6 +194,7 @@ REFERENCES = {
     "name_any": ":any:`geom.Circle`",
     "name_named": ":external+lib:mat:func:`scale`",
     "name_prefixed": ":mat:func:`lib:scale`",
+    "name_external_prefixed": ":external:mat:func:`lib:scale`",
     "name_caption": ":mat:class:`A circle <geom.Circle>`",
     "name_local": ":mat:func:`scale`",
     "name_private": ":mat:func:`check`",
@@ -226,6 +227,7 @@ EXPECTED = {
     "name_any": (f"{BASE}mat/ref/%2Bgeom/Circle.m.html", "geom.Circle"),
     "name_named": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
     "name_prefixed": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
+    "name_external_prefixed": (f"{BASE}mat/ref/util/scale.m.html", "scale"),
     "name_caption": (f"{BASE}mat/ref/%2Bgeom/Circle.m.html", "A circle"),
     # The consumer's own object wins over the library's.
     "name_local": ("#mat-util/scale.m", "scale()"),
@@ -325,6 +327,47 @@ def test_names_in_several_inventories(make_app, tmp_path):
     )
     assert "'h' matches several objects: one:c/h.m, two:c/h.m; write one" in warnings
     assert warnings.count("WARNING") == 4
+
+
+def test_two_versions_of_one_library(make_app, tmp_path):
+    # The same references in both inventories, at different sites.
+    entries = [
+        ("+p/C.m", "class", "api.html#mat-+p/C.m", "p.C"),
+        ("+p/f.m", "function", "api.html#mat-+p/f.m", "p.f"),
+    ]
+    mapping = {}
+    for name in ("one", "two"):
+        write_inventory(tmp_path / name / "objects.inv", name, entries)
+        mapping[name] = (
+            f"https://{name}.example.invalid/",
+            str(tmp_path / name / "objects.inv"),
+        )
+    references = {
+        "path_one": ":mat:func:`one:+p/f.m`",
+        "path_two": ":mat:func:`two:+p/f.m`",
+        "named_one": ":external+one:mat:class:`p.C`",
+        "named_two": ":external+two:mat:func:`p.f`",
+        "name_two": ":mat:class:`two:p.C`",
+        "ambiguous": ":mat:class:`p.C`",
+    }
+    links, warnings = build_consumer(make_app, tmp_path / "app", mapping, references)
+    one, two = (
+        "https://one.example.invalid/api.html",
+        "https://two.example.invalid/api.html",
+    )
+    assert links == {
+        "path_one": (f"{one}#mat-+p/f.m", "p.f"),
+        "path_two": (f"{two}#mat-+p/f.m", "p.f"),
+        "named_one": (f"{one}#mat-+p/C.m", "p.C"),
+        "named_two": (f"{two}#mat-+p/f.m", "p.f"),
+        "name_two": (f"{two}#mat-+p/C.m", "p.C"),
+        "ambiguous": (None, "p.C"),
+    }
+    assert (
+        "'p.C' matches several objects: one:+p/C.m, two:+p/C.m; write one of them"
+        in warnings
+    )
+    assert warnings.count("WARNING") == 1
 
 
 # --- repaging: an object moves to another API page ---------------------------
