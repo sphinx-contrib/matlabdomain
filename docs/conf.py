@@ -152,11 +152,6 @@ myst_heading_anchors = 3
 # it brings its own light and dark Pygments styles.
 html_theme = "furo"
 html_title = project
-html_theme_options = {
-    "source_repository": "https://github.com/sphinx-contrib/matlabdomain",
-    "source_branch": "master",
-    "source_directory": "docs/",
-}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
