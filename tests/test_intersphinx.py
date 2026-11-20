@@ -348,6 +348,9 @@ def test_two_versions_of_one_library(make_app, tmp_path):
         "named_one": ":external+one:mat:class:`p.C`",
         "named_two": ":external+two:mat:func:`p.f`",
         "name_two": ":mat:class:`two:p.C`",
+        # The prefix names the inventory, also for a MATLAB name.
+        "name_one": ":mat:class:`one:p.C`",
+        "function_one": ":mat:func:`one:p.f`",
         "ambiguous": ":mat:class:`p.C`",
     }
     links, warnings = build_consumer(make_app, tmp_path / "app", mapping, references)
@@ -361,6 +364,8 @@ def test_two_versions_of_one_library(make_app, tmp_path):
         "named_one": (f"{one}#mat-+p/C.m", "p.C"),
         "named_two": (f"{two}#mat-+p/f.m", "p.f"),
         "name_two": (f"{two}#mat-+p/C.m", "p.C"),
+        "name_one": (f"{one}#mat-+p/C.m", "p.C"),
+        "function_one": (f"{one}#mat-+p/f.m", "p.f"),
         "ambiguous": (None, "p.C"),
     }
     assert (

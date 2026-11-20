@@ -1611,6 +1611,10 @@ class MATLABDomain(Domain):
         (``:external+lib:`` or ``lib:``) or else in any inventory. Several,
         also the same reference in several inventories: a ``mat.ambiguous``
         warning, and the target stays unlinked.
+
+        Intersphinx looks a reference returned for ``lib:name`` up in every
+        inventory, so for that form this returns None and notes ``lib``:
+        intersphinx then tries ``name`` in ``lib``, and calls this again.
         """
         from sphinx.ext.intersphinx import InventoryAdapter
 
@@ -1618,9 +1622,12 @@ class MATLABDomain(Domain):
             return None
         inventories = InventoryAdapter(self.env).named_inventory
         target = unicodedata.normalize("NFC", node["reftarget"]).removesuffix("()")
-        named = node.get("inventory")
+        named = node.get("inventory") or node.get("mat:inventory")
         prefix, colon, rest = target.partition(":")
         if named is None and colon and prefix in inventories:
+            if "intersphinx" not in node:  # an :external: role is not tried again
+                node["mat:inventory"] = prefix
+                return None
             named, target = prefix, rest
         names = [named] if named is not None else sorted(inventories)
         role = node["reftype"]

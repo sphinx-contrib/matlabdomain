@@ -1314,16 +1314,15 @@ def intersphinx(ctx):
         >= 1,
         "... and the warning lists one:nwbRead.m and two:nwbRead.m",
     )
-    for key, site, bug in (
-        ("Y02", "https://one.example/", None),
-        ("Y03", "https://two.example/", None),
-        ("Y04", "https://one.example/", "E2E-5"),
+    for key, site in (
+        ("Y02", "https://one.example/"),
+        ("Y03", "https://two.example/"),
+        ("Y04", "https://one.example/"),
     ):
         href = links.get(key)
         ctx.expect(
             bool(href) and href.startswith(site),
             f"{key} links to {site} ({href})",
-            bug=bug,
         )
     y05 = [r for r in v.records if "index.rst:8:" in r]
     ctx.expect(
