@@ -198,6 +198,25 @@ def test_member_order(make_app, tmp_path):
     assert orders["bysource"] == ["Access", "pub", "zMeth", "make"]
 
 
+@pytest.mark.parametrize(
+    "directive",
+    ["mat:autoclass:: Access", "mat:autofolder:: sub", "mat:autonamespace:: ns"],
+)
+def test_an_unknown_member_order_is_an_error(make_app, tmp_path, directive):
+    # As in Sphinx's autodoc: the directive reports the value and does nothing.
+    files = {**FILES, "+ns/h.m": "function h\n% H HELP\nend\n"}
+    text = f".. {directive}\n   :members:\n   :member-order: sideways\n"
+    app = build(make_app, tmp_path, page(text), files=files)
+    warnings = located_warnings(app)
+    name = directive.partition("::")[0]
+    assert (
+        f"index.rst:4: ERROR: [sphinxcontrib-matlabdomain] An option to {name} is "
+        'either unknown or has an invalid value: (option: "member-order"; '
+        "value: 'sideways')\ninvalid value for member-order option: sideways\n"
+    ) in warnings
+    assert documented(app) == []
+
+
 def signatures(app):
     doctree = app.env.get_doctree("index")
     return {

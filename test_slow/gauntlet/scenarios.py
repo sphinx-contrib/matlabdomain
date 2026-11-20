@@ -1049,7 +1049,7 @@ def handwritten(ctx):
         'filename = "a file name"' in html_text(html_mod.unescape(page)),
         "autoattribute :annotation: is shown as = <value>",
     )
-    warned(r"sideways", "a bad :member-order: value is an error", bug="E2E-24")
+    warned(r"sideways", "a bad :member-order: value is an error")
     warned(
         r"no_such_folder/",
         "mat:folder of a folder that does not exist warns",

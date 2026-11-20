@@ -18,6 +18,7 @@ from sphinx.ext.autodoc import (
     bool_option,
     exclude_members_option,
     identity,
+    member_order_option,
     members_option,
 )
 from sphinx.ext.autodoc import (
@@ -131,7 +132,7 @@ MEMBER_OPTIONS = {
     "noindex": bool_option,
     "no-index": bool_option,
     "show-inheritance": bool_option,
-    "member-order": identity,
+    "member-order": member_order_option,
     "exclude-members": exclude_members_option,
     "private-members": members_option,
     "protected-members": members_option,

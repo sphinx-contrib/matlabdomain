@@ -166,6 +166,9 @@ Directives and options:
   ``:special-members:``, ``:imported-members:``, ``:ignore-module-all:``
   and ``:no-value:``; ``mat:autodata`` no longer accepts ``:annotation:``
   and ``:no-value:``; no auto directive accepts ``:no-index-entry:``.
+* ``:member-order:`` accepts only ``alphabetical``, ``groupwise`` and
+  ``bysource``, as in autodoc; another value is an error (it sorted
+  alphabetically).
 
 Contributors:
 

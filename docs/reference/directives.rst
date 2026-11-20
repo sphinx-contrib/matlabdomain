@@ -83,7 +83,8 @@ know which object to document") and the directive writes nothing.
       :type: ``alphabetical``, ``groupwise`` or ``bysource``
 
       The order of the members in each section; default
-      ``autodoc_member_order``.
+      ``autodoc_member_order``. Another value is an error, as in autodoc,
+      and the directive adds nothing.
 
    .. rst:directive:option:: show-inheritance
 
