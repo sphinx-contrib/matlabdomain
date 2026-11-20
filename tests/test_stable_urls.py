@@ -11,7 +11,14 @@ from types import SimpleNamespace
 import pytest
 from sphinx.errors import ExtensionError
 from test_apidoc import FUNCTION, write
-from test_intersphinx import anchors, build_library, inventory, resolve, target
+from test_intersphinx import (
+    anchors,
+    build_library,
+    follow,
+    inventory,
+    resolve,
+    target,
+)
 
 from sphinxcontrib import mat_urls
 from sphinxcontrib.matlab_apidoc import main as apidoc
@@ -471,3 +478,48 @@ def test_stale_pages_outside_or_at_the_source_folder(tmp_path):
     run(".", {"b"})
     assert list((tmp_path / "out").iterdir()) == []
     assert dom.data["api_pages"][key] == {"b"}
+
+
+UNINDEXED_FOLDERS = """\
+Index
+=====
+
+.. mat:folder:: mex/
+
+.. mat:currentfolder:: tools
+
+.. mat:function:: fastSolve
+
+.. mat:currentfolder:: None
+
+Links: :mat:folder:`mex/` :mat:func:`tools/fastSolve`
+"""
+
+
+@pytest.mark.parametrize("root", ['"."', None])
+def test_hand_written_folders_that_are_not_indexed(make_app, tmp_path, root):
+    # mat:folder describes a folder without reading it, like mat:function
+    # (documenting.rst, "Writing directives by hand"); mat:currentfolder sets
+    # the folder of the references after it. With or without an index, they
+    # get their anchors, inventory lines and stable addresses, with no warning.
+    conf = 'extensions = ["sphinxcontrib.matlab"]\n'
+    if root:
+        conf += f"matlab_src_code_project_root = {root}\n"
+        write(tmp_path, {"f.m": FUNCTION.format(name="f")})
+    write(tmp_path, {"conf.py": conf, "index.rst": UNINDEXED_FOLDERS})
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    assert app.warning.getvalue() == ""
+    assert {
+        name: entry for name, entry in inventory(app.outdir).items() if "/" in name
+    } == {
+        "mex/": ("mat/ref/mex/index.html", "-"),
+        "tools/fastSolve": ("mat/ref/tools/fastSolve.html", "fastSolve"),
+    }
+    assert follow(app.outdir, "mat/ref/mex/index.html") == "index.html#mat-mex/"
+    assert follow(app.outdir, "mat/ref/tools/fastSolve.html") == (
+        "index.html#mat-tools/fastSolve"
+    )
+    html = (app.outdir / "index.html").read_text(encoding="utf-8")
+    assert 'href="#mat-mex/"' in html
+    assert 'href="#mat-tools/fastSolve"' in html
