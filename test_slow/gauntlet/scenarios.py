@@ -2125,6 +2125,46 @@ def broken_input(ctx):
         if not k.startswith("mat.") and k not in ("docutils", "image.not_readable")
     }
     ctx.expect(not unexpected, f"no other kinds of warning ({unexpected})")
+    # a folder page lists the good file and warns once for each broken model
+    for options in ("", "   :undoc-members:\n"):
+        label = "members" + (" and undoc-members" if options else "")
+        small = ctx.path("folder-" + label.replace(" ", "-"))
+        (small / "src" / "dir").mkdir(parents=True)
+        (small / "src" / "dir" / "good.m").write_text(
+            "function good\n% GOODHELP\nend\n"
+        )
+        for name in ("lfsPointer.slx", "emptyModel.slx", "notAModel.mdl"):
+            (small / "src" / "dir" / name).write_bytes(files[name])
+        ctx.conf(small / "docs", matlab_src_code_project_root="../src")
+        ctx.write(
+            f"{small.name}/docs/index.rst",
+            "Dir\n===\n\n.. mat:autofolder:: dir/\n   :members:\n" + options,
+        )
+        for fresh in (True, False):
+            run = ctx.sphinx(
+                f"folder {label}",
+                small / "docs",
+                small / "html",
+                fresh=fresh,
+                builder="html",
+            )
+            ctx.expect(
+                run.rc == 0
+                and "GOODHELP"
+                in "".join(d.decode("utf-8", "replace") for d in run.files().values()),
+                f"folder page, {label}: the good file is documented",
+            )
+            for name in ("lfsPointer.slx", "emptyModel.slx", "notAModel.mdl"):
+                hits = [r for r in run.records if name in r]
+                ctx.expect(
+                    len(hits) == 1,
+                    f"folder page, {label}, {'fresh' if fresh else 'second'} "
+                    f"build: {name}: one warning ({len(hits)})",
+                )
+            ctx.expect(
+                not run.warned(r"not_found|documented without content"),
+                f"folder page, {label}: no mat.not_found, no second parse warning",
+            )
 
 
 #: (label, -D arguments, what must be true of the pages; None: they differ)

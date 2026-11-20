@@ -260,10 +260,11 @@ def _load(dom, ref):
         obj = None
     if obj is None:
         stem = os.path.splitext(os.path.basename(path))[0]
-        if record["unreadable"]:
-            # The index stage warned already.
+        if record["unreadable"] or record["type"] == UNKNOWN:
+            # The index stage warned already; a file that is no source file of
+            # its type (a Git LFS pointer as .slx) is not parsed again.
             obj = placeholder(record["type"], stem, folder_of(ref))
-            obj.source_type, obj.unreadable = record["type"], True
+            obj.source_type, obj.unreadable = record["type"], record["unreadable"]
         else:
             handler = handler_by_extension(path)
             text = dom.text_cache.pop(key, None)

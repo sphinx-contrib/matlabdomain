@@ -46,7 +46,11 @@ What each warning means
    parts below ``metadata/``), a folder could not be listed
    or entered, or a file name is not valid UTF-8. A file that cannot be
    read or parsed is still indexed and documented, without content, so
-   links to it work; it is tried again on every build. Where the parser
+   links to it work; it is tried again on every build. A ``.slx`` or ``.mdl``
+   file that is not a Simulink file is the exception: it gets this one
+   warning, from the index, and no page, so an ``autofolder`` or
+   ``autonamespace`` with ``:members:`` leaves it out and ``matlab-api-check``
+   counts it as not parsed. Where the parser
    found a syntax error, the warning gives its line and column. Two names
    in one folder that differ only by Unicode form (``é`` as one character
    and as ``e`` and an accent) have the same path reference: the first in

@@ -37,7 +37,7 @@ from sphinx.util.logging import getLogger
 from sphinx.util.typing import OptionSpec
 
 from . import mat_naming, mat_sidecars, mat_simulink
-from .mat_classify import is_hidden
+from .mat_classify import UNKNOWN, is_hidden
 from .mat_types import (
     SIMULINK_CLASSES,
     MatApplication,
@@ -999,6 +999,16 @@ class MatlabDocumenter(PyDocumenter):
         self.document_members(all_members)
 
 
+def with_page(members):
+    """Return the ``(name, object)`` of ``members`` that have a page.
+
+    A file that is no source file of its type has none (the index stage warned).
+    """
+    return [
+        (n, obj) for n, obj in members if obj.source_type != UNKNOWN or obj.unreadable
+    ]
+
+
 class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
     """Documenter of ``mat:autofolder``: a folder (a namespace, a class folder or a
     plain folder) and, with ``:members:``, its files and folders.
@@ -1060,10 +1070,10 @@ class MatFolderDocumenter(MatlabDocumenter, PyModuleDocumenter):
                     members.setdefault(name, []).append(ref)
             dom = self.env.get_domain("mat")
             # sorted like class members, not in the file system's listing order
-            return False, [
+            return False, with_page(
                 (n, resolve(dom, min(refs, key=lambda r: r[-1:] == "/")))
                 for n, refs in sorted(members.items())
-            ]
+            )
         else:
             memberlist = self.options.members or []
 
@@ -1160,7 +1170,7 @@ class MatNamespaceDocumenter(MatFolderDocumenter):
                     self.directive.location,
                     "each is documented; link to one by its path reference",
                 )
-        return False, [(name, resolve(dom, ref)) for name, ref in chosen]
+        return False, with_page((name, resolve(dom, ref)) for name, ref in chosen)
 
 
 class MatModuleLevelDocumenter(MatlabDocumenter):
