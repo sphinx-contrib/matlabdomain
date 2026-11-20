@@ -1728,7 +1728,10 @@ def ensure_configuration(app, config):
     """
     mat_config.check_sources(config, app.srcdir)
     if config.matlab_auto_link not in (None, "basic", "all"):
-        raise ConfigError("matlab_auto_link must be None, 'basic', or 'all'.")
+        raise ConfigError(
+            "matlab_auto_link must be None, 'basic' or 'all', "
+            f"not {config.matlab_auto_link!r}."
+        )
 
 
 def _get_version():

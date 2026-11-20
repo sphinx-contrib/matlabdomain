@@ -1513,7 +1513,11 @@ def bad_config(ctx):
                 )
                 rc, text = b.rc, b.stdout + b.stderr + b.warnings
             ok = rc == 2 and re.search(message, text) is not None
-            first = (text.strip().splitlines() or [""])[-1][:150]
+            # the message: the last line of Sphinx's report (8.2 and later)
+            lines = text.strip().splitlines() or [""]
+            first = next(
+                (line.strip() for line in lines if "ConfigError: " in line), lines[-1]
+            )[:150]
             ctx.expect(
                 ok,
                 f"{tool}: {what}: exit 2 naming it (exit {rc}: {first})",

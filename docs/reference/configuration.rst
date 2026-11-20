@@ -11,6 +11,17 @@ is a ``ConfigError`` in the build and in ``scmd apidoc``, which
 suggests the closest value. Give helper variables another name, such as
 ``_matlab_root``.
 
+A value that is not valid stops the run with a ``ConfigError`` whose
+message names the value and what it must be. Sphinx 8.0 and 8.1 print
+``Configuration error:`` and the message. Sphinx 8.2 and later print the
+report they print for every error that stops a build, their own
+configuration errors included: ``Configuration error!``, the sections
+Versions, Last Messages, Loaded Extensions and Traceback, and a request to
+report the error to Sphinx. The message is the last line of the Traceback
+section, after ``sphinx.errors.ConfigError:``. It is not a crash of the
+extension; correct the value and build again
+(:ref:`configuration-error-report`).
+
 Reviewing settings
 ------------------
 

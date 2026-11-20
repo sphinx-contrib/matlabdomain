@@ -4,6 +4,7 @@ import importlib.metadata
 import logging
 
 import pytest
+import sphinx
 from sphinx.cmd.build import build_main
 from sphinx.errors import ConfigError
 
@@ -118,6 +119,18 @@ def test_unknown_matlab_names_set_by_another_extension_raise(make_app, project):
         make_app(srcdir=project)
 
 
+def sphinx_build(args):
+    """Run ``sphinx-build args`` in this process; return its exit status."""
+    try:
+        return build_main(args)
+    finally:
+        # Sphinx 8.0 raises on a warning as long as the -W handlers of this
+        # build are on its logger, and a later test may log without an app.
+        sphinx_logger = logging.getLogger("sphinx")
+        for handler in sphinx_logger.handlers[:]:
+            sphinx_logger.removeHandler(handler)
+
+
 def test_project_root_is_relative_to_srcdir_not_confdir(project, tmp_path):
     # sphinx-multiversion and sphinx-multiproject keep conf.py elsewhere.
     confdir = tmp_path / "conf"
@@ -126,13 +139,29 @@ def test_project_root_is_relative_to_srcdir_not_confdir(project, tmp_path):
     with open(confdir / "conf.py", "a", encoding="utf-8") as conf:
         conf.write('matlab_src_code_project_root = "code"\n')
     out = tmp_path / "out"
-    args = ["-q", "-W", "-c", str(confdir), str(project), str(out)]
-    try:
-        assert build_main(args) == 0
-    finally:
-        # Sphinx 8.0 raises on a warning as long as the -W handlers of this
-        # build are on its logger, and a later test may log without an app.
-        sphinx_logger = logging.getLogger("sphinx")
-        for handler in sphinx_logger.handlers[:]:
-            sphinx_logger.removeHandler(handler)
+    assert sphinx_build(["-q", "-W", "-c", str(confdir), str(project), str(out)]) == 0
     assert "F doc" in (out / "index.html").read_text(encoding="utf-8")
+
+
+def assert_configuration_error(stderr, message):
+    """``stderr`` of sphinx-build shows the ``ConfigError`` ``message`` the
+    way the Sphinx under test prints one (reference/configuration.rst).
+    """
+    if tuple(map(int, sphinx.__version__.split(".")[:2])) >= (8, 2):
+        # The report Sphinx prints for every error, ending in the exception.
+        assert "Configuration error!" in stderr
+        assert f"\n    sphinx.errors.ConfigError: {message}\n" in stderr
+    else:
+        assert f"Configuration error:\n{message}\n" in stderr
+
+
+def test_a_bad_value_stops_sphinx_build_naming_it(project, tmp_path, capsys):
+    with open(project / "conf.py", "a", encoding="utf-8") as conf:
+        conf.write('matlab_auto_link = "some"\n')
+    out = tmp_path / "out"
+    assert sphinx_build(["-q", str(project), str(out)]) == 2
+    assert_configuration_error(
+        capsys.readouterr().err,
+        "matlab_auto_link must be None, 'basic' or 'all', not 'some'.",
+    )
+    assert not (out / "index.html").exists()

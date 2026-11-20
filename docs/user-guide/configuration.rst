@@ -119,8 +119,7 @@ Examples, for a project root with these files:
      - ``toolbox/`` without ``toolbox/internal/``
 
 These are configuration errors (``ConfigError``), reported when the build
-starts (Sphinx prints "Configuration error!" and the message on the last
-line of a short traceback):
+starts (:ref:`how Sphinx prints them <configuration-error-report>`):
 
 * changing either list from its default without
   :confval:`matlab_src_code_project_root`;
