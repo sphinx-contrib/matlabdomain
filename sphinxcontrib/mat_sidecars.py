@@ -587,12 +587,14 @@ class AutoSidecar(SphinxDirective):
         except OSError as err:
             _warn("parse_error", f"{ref} cannot be read ({err.strerror or err}).")
             return []
-        result, title = self._titled(result, sidecar)
-        dom.note_sidecar(ref, title, sidecar.issues)
+        result, title, anchor = self._titled(result, sidecar)
+        dom.note_sidecar(ref, title, anchor, sidecar.issues)
         return result
 
     def _titled(self, result, sidecar):
-        """``(nodes, title)``: the sidecar doc's nodes and its title text."""
+        """``(nodes, title, anchor)``: the sidecar doc's nodes, its title text
+        and the id of its section ("" with ``:no-title:``).
+        """
         first = next(
             (i for i, node in enumerate(result) if isinstance(node, nodes.section)),
             None,
@@ -602,7 +604,7 @@ class AutoSidecar(SphinxDirective):
         if "no-title" in self.options:
             if first is not None:
                 result[first : first + 1] = result[first].children[1:]
-            return result, title
+            return result, title, ""
         if first is None:
             _warn(
                 "sidecar",
@@ -612,8 +614,8 @@ class AutoSidecar(SphinxDirective):
             section = nodes.section("", nodes.title(name, name), *result)
             section["names"].append(nodes.fully_normalize_name(name))
             self.state.document.note_implicit_target(section, section)
-            result = [section]
-        return result, title
+            return [section], title, section["ids"][0]
+        return result, title, result[first]["ids"][0]
 
 
 #: ``env.temp_data`` key: Simulink documentation files parsed in the document

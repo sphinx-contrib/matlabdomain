@@ -37,7 +37,8 @@ GUIDE = """\
 
 [MLNK1](bar.m), [MLNK2](notes.rst), [MLNK3](notes.rst#usage),
 [MLNK4](../other/far.md), [MLNK5](https://example.com),
-[MLNK6](#guide-part), [MLNK7](data.csv), [MLNK8](gone.md).
+[MLNK6](#guide-part), [MLNK7](data.csv), [MLNK8](gone.md),
+[MLNK9](README.md).
 
 ## Guide part
 
@@ -57,6 +58,7 @@ FILES = {
     "src/sub/inc/deep.txt": "Deep: `ILNK5 <bar.m>`_, `ILNK6 <../bar.m>`_.\n",
     "src/sub/inc/bar.m": "function bar\nend\n",
     "src/sub/guide.md": GUIDE,
+    "src/sub/README.md": "# Sub\n\nThe introduction.\n",
     "src/sub/minc.md": "Markdown include: [MILNK1](bar.m), [MILNK2](notes.rst).\n",
     "src/other/far.md": "# Far\n\n[FLNK1](../sub/notes.rst), "
     "[FLNK2](../sub/guide.md#guide-part), [FLNK3](../sub/bar.m).\n\n"
@@ -64,6 +66,7 @@ FILES = {
     "docs/conf.py": CONF,
     "docs/index.rst": "Index\n=====\n\n.. toctree::\n\n   page\n   far\n",
     "docs/page.rst": "Page\n====\n\n"
+    ".. mat:autosidecar:: sub/README.md\n   :no-title:\n\n"
     ".. mat:autofunction:: sub/withInc.m\n\n"
     ".. mat:autofunction:: sub/bar.m\n\n"
     ".. mat:autosidecar:: sub/notes.rst\n\n"
@@ -98,12 +101,12 @@ def test_link_targets(app):
     assert hrefs(page) == {
         # help text, and a file it includes
         "HLNK1": API,
-        "HLNK2": "#",
+        "HLNK2": "#notes",
         "HLNK3": API,
-        "HLNK4": "#",
+        "HLNK4": "#notes",
         # a reST sidecar doc
         "RLNK1": API,
-        "RLNK2": "#",
+        "RLNK2": "#guide",
         "RLNK3": "#guide-part",
         "RLNK4": "far.html",
         "RLNK5": "https://example.com",
@@ -112,22 +115,24 @@ def test_link_targets(app):
         "RLNK8": "gone.rst",
         # files it includes: relative to the sidecar doc's folder
         "ILNK1": API,
-        "ILNK2": "#",
+        "ILNK2": "#guide",
         "ILNK3": "far.html",
         "ILNK4": "https://example.com",
         "ILNK5": API,
         "ILNK6": "../bar.m",
         # a Markdown sidecar doc, and a file it includes
         "MLNK1": API,
-        "MLNK2": "#",
+        "MLNK2": "#notes",
         "MLNK3": "#usage",
         "MLNK4": "far.html",
         "MLNK5": "https://example.com",
         "MLNK6": "#guide-part",
         "MLNK7": "_downloads/7d3627df50ff4323d8ce4018d6d3e8b1/data.csv",
         "MLNK8": "#gone.md",
+        # a sidecar doc without its title (a README): the page
+        "MLNK9": "#",
         "MILNK1": API,
-        "MILNK2": "#",
+        "MILNK2": "#notes",
     }
     assert hrefs(html(app, "far")) == {
         "FLNK1": "page.html",

@@ -756,7 +756,8 @@ prefers objects of its type, then accepts any.
 
    A sidecar doc, by its path reference only
    (``:mat:sidecar:`+demo/guide.md```): a link to the document that renders
-   it, with its title (its first heading) as text unless one is given.
+   it (in that document, to its section), with its title (its first
+   heading) as text unless one is given.
 
 Indices
 -------

@@ -2934,7 +2934,6 @@ def help_links(ctx):
         "LNK10",
         "Markdown sidecar: a sidecar links to its document",
         lambda h: "notes" in h,
-        bug="E2E-28",
     )
     check(
         "LNK11",

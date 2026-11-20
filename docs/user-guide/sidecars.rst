@@ -109,8 +109,9 @@ Relative paths in a sidecar doc are relative to its folder, as on GitHub:
 A relative link written in Markdown (``[notes](notes.rst)``) or as a reST
 hyperlink (```notes <notes.rst>`_``) goes to:
 
-* another sidecar doc: the document that renders it, with its title when
-  the link has no text (``[](notes.rst)``); an anchor (``notes.rst#usage``)
+* another sidecar doc: the document that renders it (in that document, the
+  sidecar doc's section), with its title when the link has no text
+  (``[](notes.rst)``); an anchor (``notes.rst#usage``)
   goes to the section with that id, or with that slug when
   ``myst_heading_anchors`` is set;
 * a code file (``[](scale.m)``, ``[the class](@Shape/Shape.m)``): its API

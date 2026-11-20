@@ -1036,7 +1036,8 @@ class MATLABDomain(Domain):
         # deprecated
         "folders": {},
         "doc_sources": {},  # docname -> {source path: (mtime_ns, size)} it used
-        "sidecar_docs": {},  # docname -> {sidecar reference: title} it renders
+        # docname -> {sidecar reference: (title, id of its section)} it renders
+        "sidecar_docs": {},
         # docname -> [(sidecar reference, kind, target, line)]: broken relative
         # links and missing images in the sidecar docs it renders
         "sidecar_issues": {},
@@ -1076,7 +1077,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 34
+    data_version = 35
     indices: ClassVar[list[type[Index]]] = [
         MATLABFolderIndex,
     ]
@@ -1143,10 +1144,12 @@ class MATLABDomain(Domain):
             }
         return self._sidecars
 
-    def note_sidecar(self, ref, title, issues):
-        """Record that the document being read renders the sidecar doc ``ref``."""
+    def note_sidecar(self, ref, title, anchor, issues):
+        """Record that the document being read renders the sidecar doc ``ref``
+        in the section with the id ``anchor`` ("" for none).
+        """
         docname = self.env.docname
-        self.data["sidecar_docs"].setdefault(docname, {})[ref] = title
+        self.data["sidecar_docs"].setdefault(docname, {})[ref] = (title, anchor)
         self.data["sidecar_issues"].setdefault(docname, []).extend(
             (ref, *issue) for issue in issues
         )
@@ -1566,20 +1569,23 @@ class MATLABDomain(Domain):
         return self._refnode(builder, fromdocname, ref, entry, contnode)
 
     def _resolve_sidecar(self, env, fromdocname, builder, target, node, contnode):
-        # A link to a sidecar doc goes to the document that renders it; without
-        # text of its own it shows the sidecar doc's title.
+        # A link to a sidecar doc goes to the document that renders it, or in
+        # that document to its section; without text of its own it shows the
+        # sidecar doc's title.
         ref = unicodedata.normalize("NFC", target)
         docname = self.sidecar_doc(ref)
         if docname is None:
             return None
+        title, section = self.data["sidecar_docs"][docname][ref]
         if not node.get("refexplicit"):
-            title = self.data["sidecar_docs"][docname][ref]
             contnode = nodes.inline(title, title, classes=contnode["classes"])
         # A Markdown heading's slug (myst_heading_anchors) names its section.
         anchor = node.get("reftargetid") or ""
         slugs = env.metadata.get(docname, {}).get("myst_slugs", {})
         if anchor in slugs:
             anchor = slugs[anchor][1]
+        if not anchor and docname == fromdocname:
+            anchor = section
         return make_refnode(builder, fromdocname, docname, anchor, contnode)
 
     def _shadowed(self, matches):
