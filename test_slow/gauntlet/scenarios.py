@@ -1223,6 +1223,14 @@ def intersphinx(ctx):
     # into the library is recorded, not checked (configuration.rst does not say)
     n = sum(d.count(b"https://wecsim.example/") for d in a.files().values())
     print(f"    (note: {n} auto-links into WEC-Sim)")
+    # warnings.rst: mat.ambiguous is given where the name is used
+    names = a.warned(r"in the docstring of .*\[mat\.ambiguous\]")
+    ctx.expect(
+        all(re.match(r"\S.*:docstring of .*:\d+: WARNING", r) for r in names)
+        and len(names) == len(set(names)),
+        f"an ambiguous auto-link warns once, at the help's file and line "
+        f"({len(names)})",
+    )
 
     # a hand-written page
     ext = ["sphinxcontrib.matlab", "sphinx.ext.intersphinx"]

@@ -114,7 +114,8 @@ What each warning means
    matches several :term:`objects <object>`, or a reference matches objects in
    several intersphinx :term:`inventories <inventory>` (:doc:`linking-projects`).
    The warning lists their path
-   references; use one of them. Copies of files (vendored code, symbolic
+   references; use one of them. A name in help text warns once per help
+   text, at the line that first names it. Copies of files (vendored code, symbolic
    links) are a common cause; exclude them with
    :confval:`matlab_src_exclude_patterns`. When the copies are intended,
    :confval:`matlab_link_shadowed_files_to_chooser_pages` links such names to the page

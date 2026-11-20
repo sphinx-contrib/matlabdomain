@@ -8,8 +8,13 @@ MATLAB names are what signatures and links show (the 0.x option
 """
 
 import pickle
+import re
+from typing import Any, cast
 
 import pytest
+from sphinx.util import console
+
+strip_escape_sequences = cast(Any, console).strip_escape_sequences
 
 
 @pytest.mark.parametrize(
@@ -364,3 +369,55 @@ def test_root_auto_link_basic(app, confdict):
         ":mat:class:`ClassMeow <target/submodule/ClassMeow.m>`\n"
         ":mat:class:`package.ClassBar <target/+package/ClassBar.m>`"
     )
+
+
+AMBIGUOUS_HELP = {
+    "a/helper.m": "function helper()\n% helper A.\nend\n",
+    "b/helper.m": "function helper()\n% helper B.\nend\n",
+    "c/user.m": (
+        "function user()\n% user Calls helper.\n%\n% Then helper again.\n%\n"
+        "% See also helper\nend\n"
+    ),
+    "c/plain.m": "function plain()\n% plain Mentions helper once.\nend\n",
+}
+
+
+@pytest.mark.parametrize(
+    ("auto_link", "expected"),
+    [("basic", [("user", 6)]), ("all", [("user", 2), ("plain", 2)])],
+)
+def test_auto_link_warns_once_per_name_and_help(
+    make_app, tmp_path, auto_link, expected
+):
+    # An ambiguous name in the help text warns once, where the help is written
+    # and at its first line that the links read.
+    for path, text in AMBIGUOUS_HELP.items():
+        (tmp_path / "src" / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / "src" / path).write_text(text)
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\n'
+        'matlab_src_code_project_root = "src"\n'
+        f"matlab_auto_link = {auto_link!r}\n"
+    )
+    (tmp_path / "index.rst").write_text(
+        "Index\n=====\n\n.. mat:autofunction:: c/user.m\n\n"
+        ".. mat:autofunction:: c/plain.m\n"
+    )
+    app = make_app(srcdir=tmp_path)
+    app.build()
+    warnings = strip_escape_sequences(app.warning.getvalue()).replace("\\", "/")
+    found = [
+        (where.partition("/src/")[2], what)
+        for where, what in re.findall(
+            r"^(?:(.*): )?WARNING: (.*)$", warnings, re.MULTILINE
+        )
+    ]
+    assert found == [
+        (
+            f"c/{name}.m:docstring of c/{name}.m:{line}",
+            "[sphinxcontrib-matlabdomain] 'helper' in the docstring of "
+            f"c/{name}.m matches several objects: a/helper.m, b/helper.m; "
+            "use a path reference [mat.ambiguous]",
+        )
+        for name, line in expected
+    ]

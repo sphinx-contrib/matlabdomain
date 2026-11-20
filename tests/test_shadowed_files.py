@@ -63,8 +63,8 @@ def build(make_app, tmp_path, shadowed, builder="html", conf=""):
 def test_ambiguous_names_stay_text(make_app, tmp_path):
     page, warnings, _ = build(make_app, tmp_path, False)
     assert 'href="mat/name/helper.html"' not in page
-    # role, :any:, "See also" and the auto-link in the summary line
-    assert warnings.count("matches several objects: a/helper.m, b/helper.m") == 4
+    # role, :any:, and once for the help ("See also" and the summary line)
+    assert warnings.count("matches several objects: a/helper.m, b/helper.m") == 3
 
 
 def test_shadowed_names_link_to_their_list(make_app, tmp_path):

@@ -380,7 +380,7 @@ class MatlabDocumenter(PyDocumenter):
                 docstrings.append([])
             numbers = self.help_line_numbers(docstrings)
             if self.env.config.matlab_auto_link:
-                docstrings = self.auto_link(docstrings)
+                docstrings = self.auto_link(docstrings, numbers)
             for docstring, lines in zip(docstrings, numbers, strict=True):
                 before = list(docstring)
                 # ``autodoc-process-docstring`` handlers (napoleon) may change it
@@ -486,10 +486,11 @@ class MatlabDocumenter(PyDocumenter):
                 text += "()"
         return f":mat:{role}:`{text} <{ref}>`"
 
-    def _find_link(self, target):
+    def _find_link(self, target, line):
         """Return the (reference, object) ``target`` names from this object's folder.
 
-        A MATLAB name of several objects warns and returns None; with
+        A MATLAB name of several objects returns None, and ``auto_link`` warns
+        about it once, at the first file line ``line`` it was found on; with
         ``matlab_link_shadowed_files_to_chooser_pages`` it returns ``(target, None)``, a
         reference to the name (its chooser page).
         """
@@ -502,15 +503,9 @@ class MatlabDocumenter(PyDocumenter):
         if len(found) > 1:
             if self.env.config.matlab_link_shadowed_files_to_chooser_pages:
                 return target, None
-            logger.warning(
-                "[sphinxcontrib-matlabdomain] %r in the docstring of %s matches "
-                "several objects: %s; use a path reference",
-                target,
-                self.ref,
-                ", ".join(sorted(ref for ref, _ in found)),
-                type="mat",
-                subtype="ambiguous",
-            )
+            refs = ", ".join(sorted(ref for ref, _ in found))
+            first = self._ambiguous.get(target, (line, refs))[0]
+            self._ambiguous[target] = (min(first, line), refs)
             return None
         return found[0] if found else None
 
@@ -523,7 +518,7 @@ class MatlabDocumenter(PyDocumenter):
         see_also_re = re.compile(r"^(\s*See also:?\s*)(\b.*\b)(.*)", re.IGNORECASE)
         see_also_cond_re = re.compile(r"(\s*)(\b.*\b)(.*)")
         is_see_also_line = False
-        for lines in docstrings:
+        for lines, numbers in zip(docstrings, self._help_lines, strict=True):
             for j, line in enumerate(lines):
                 if not line:  # a blank line ends the see also section
                     is_see_also_line = False
@@ -537,31 +532,33 @@ class MatlabDocumenter(PyDocumenter):
                     match = see_also_re.search(line)  # begins with "See also"
                     is_see_also_line = match is not None
                 if match is not None and match.group(2):  # the entries
-                    lines[j] = self._link_see_also_line(match)
+                    lines[j] = self._link_see_also_line(match, numbers[j])
         return docstrings
 
-    def _link_see_also_line(self, match):
-        """Return the "See also" line of ``match`` with its entries linked."""
+    def _link_see_also_line(self, match, line):
+        """Return the "See also" line of ``match`` (file line ``line``) with its
+        entries linked.
+        """
         entries_str, tail = match.group(2), match.group(3)
         # "See also f()": the parentheses are the last entry's
         if tail.startswith("()"):
             entries_str, tail = entries_str + "()", tail[2:]
         entries = [
-            self._link_see_also_entry(entry)
+            self._link_see_also_entry(entry, line)
             for entry in re.split(r"\s*,\s*", entries_str)
         ]
         if tail and not (tail[0].isspace() or tail[0] in _MARKUP_AFTER):
             tail = "\\ " + tail
         return match.group(1) + ", ".join(entries) + tail
 
-    def _link_see_also_entry(self, entry):
-        """Return the "See also" entry ``entry`` as a link to what it names, or as
-        literal text if it names nothing.
+    def _link_see_also_entry(self, entry, line):
+        """Return the "See also" entry ``entry`` (on file line ``line``) as a link
+        to what it names, or as literal text if it names nothing.
         """
         if entry.endswith("`"):
             return entry
         # a class or function (path reference or MATLAB name)
-        found = self._find_link(entry.rstrip("()"))
+        found = self._find_link(entry.rstrip("()"), line)
         if found is not None and found[1] is None:
             return self._link("obj", entry, found[0])
         role = found[1].ref_role() if found is not None else None
@@ -637,10 +634,21 @@ class MatlabDocumenter(PyDocumenter):
             # entity_name is NOT followed by .<property_or_method>
             p = re.compile(_NAME_BEFORE + re.escape(nn) + _NAME_AFTER)
             if len(found) > 1:
-                if not any(p.search(line) for lines in docstrings for line in lines):
+                first = next(
+                    (
+                        number
+                        for lines, numbers in zip(
+                            docstrings, self._help_lines, strict=True
+                        )
+                        for line, number in zip(lines, numbers, strict=True)
+                        if p.search(line)
+                    ),
+                    None,
+                )
+                if first is None:
                     continue
-                # warns about the ambiguity, or gives the name to link
-                if self._find_link(nn) is None:
+                # notes the ambiguity, or gives the name to link
+                if self._find_link(nn, first) is None:
                     continue
                 ref, o, role = nn, None, "obj"
             else:
@@ -685,16 +693,33 @@ class MatlabDocumenter(PyDocumenter):
                 line = p2.sub(lambda m, t=text: _inline(m, t), line)
         return line
 
-    def auto_link(self, docstrings):
+    def auto_link(self, docstrings, numbers):
         """Apply ``matlab_auto_link``: the "See also" links for ``"basic"`` and
         ``"all"``, and the links everywhere for ``"all"``; return ``docstrings``.
+
+        ``numbers`` are the file lines of the lines of ``docstrings``
+        (``help_line_numbers``). A name that matches several objects warns
+        once, at the first line it is linked from.
         """
+        self._help_lines = numbers
+        self._ambiguous = {}  # name -> (file line, references)
         docstrings = self.auto_link_basic(docstrings)
 
         # auto-link everywhere
         if self.env.config.matlab_auto_link == "all":
             docstrings = self.auto_link_all(docstrings)
 
+        for target, (line, refs) in self._ambiguous.items():
+            logger.warning(
+                "[sphinxcontrib-matlabdomain] %r in the docstring of %s matches "
+                "several objects: %s; use a path reference",
+                target,
+                self.ref,
+                refs,
+                type="mat",
+                subtype="ambiguous",
+                location=f"{self.help_source()}:{line}",
+            )
         return docstrings
 
     def auto_link_methods(self, class_obj, docstrings):
