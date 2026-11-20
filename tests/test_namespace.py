@@ -858,6 +858,8 @@ def test_intersphinx_to_the_only_folder_of_a_namespace(make_app, tmp_path):
         "namespace": ":mat:namespace:`geom`",
         "prefixed": ":mat:namespace:`lib:geom`",
         "caption": ":mat:namespace:`Geometry <lib:geom>`",
+        "named": ":external+lib:mat:namespace:`geom`",
+        "external": ":external:mat:namespace:`geom`",
     }
     links, found = build_consumer(make_app, tmp_path / "app", mapping, references)
     assert links == {
@@ -865,6 +867,8 @@ def test_intersphinx_to_the_only_folder_of_a_namespace(make_app, tmp_path):
         "namespace": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
         "prefixed": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
         "caption": (f"{BASE}mat/ref/%2Bgeom/index.html", "Geometry"),
+        "named": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
+        "external": (f"{BASE}mat/ref/%2Bgeom/index.html", "geom"),
     }
     assert found == ""
 

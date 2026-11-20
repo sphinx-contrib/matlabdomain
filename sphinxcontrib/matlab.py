@@ -131,8 +131,9 @@ class CheckExternalReferences(SphinxPostTransform):
         for node in list(self.document.findall(addnodes.pending_xref)):
             if "intersphinx" in node and node.get("refdomain") == "mat":
                 contnode = node[0].deepcopy()
-                if _check_inventories(self.env, node, contnode) is not None:
-                    node.replace_self(contnode)
+                result = _check_inventories(self.env, node, contnode)
+                if result is not None:
+                    node.replace_self(result)
 
 
 def _check_inventories(env, node, contnode):
