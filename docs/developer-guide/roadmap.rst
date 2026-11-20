@@ -31,11 +31,11 @@ The command reads ``conf.py`` instead (:doc:`../user-guide/apidoc`).
 Help text
 ---------
 
-* A mode that uses MATLAB markup instead of parsing help text as
-  reStructuredText (:doc:`../user-guide/help-text`). The
+* A mode that uses MATLAB :term:`markup` instead of parsing help text as
+  :term:`reStructuredText` (:doc:`../user-guide/help-text`). The
   :doc:`specification <matlab-markup-spec>` and the
   :doc:`plan <matlab-markup-plan>` are written; the work has not started.
-* A builder that writes the comments of ``arguments`` blocks into the
+* A :term:`builder` that writes the comments of ``arguments`` blocks into the
   inputs, outputs and name-value sections of the help text, so that
   MATLAB's ``help`` shows them and the two stay in step
   (:doc:`../user-guide/api-check`).
@@ -49,7 +49,7 @@ and callability rules MATLAB had then.
 MATLAB documentation window
 ---------------------------
 
-A ``matlab-help`` builder that writes the site as MATLAB custom
+A ``matlab-help`` :term:`builder` that writes the site as MATLAB custom
 documentation (``info.xml``, ``helptoc.xml``), so that it shows under
 Supplemental Software in MATLAB's documentation, with its own search there.
 One search over MathWorks pages and the site's pages is not possible. The

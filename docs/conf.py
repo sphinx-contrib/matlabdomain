@@ -86,6 +86,7 @@ extensions = [
     "sphinxcontrib.matlab",
     "sphinx.ext.napoleon",
     "sphinxcontrib.mermaid",
+    "myst_parser",
     # Hover tips for links to glossary terms.
     "glossary_tips",
 ]
@@ -110,7 +111,10 @@ templates_path = ["_templates"]
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = {".rst": "restructuredtext"}
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".md": "markdown",
+}
 
 # The master toctree document.
 master_doc = "index"
@@ -126,7 +130,20 @@ language = "en"
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
 # snippets/ holds reST that pages both show and include.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "snippets"]
+# blog/posts/**/demo/ holds runnable examples that are not pages.
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "snippets",
+    "blog/**/demo/**",
+    "blog/README.md",
+]
+
+# -- MyST (Markdown pages, used by blog posts) ------------------------------
+
+myst_enable_extensions = ["colon_fence", "deflist"]
+myst_heading_anchors = 3
 
 
 # -- Options for HTML output -------------------------------------------------

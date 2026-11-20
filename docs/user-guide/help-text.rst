@@ -64,11 +64,11 @@ Help text is reStructuredText
 -----------------------------
 
 The help text, without the ``%`` and the common indentation, is parsed as
-:term:`reStructuredText`, also called reST, like a Python docstring. The
+:term:`reStructuredText`, also called :term:`reST`, like a Python docstring. The
 `Sphinx reStructuredText guide
 <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_
 describes the syntax. MATLAB help is plain text, and plain text is usually
-valid reST, but not always:
+valid :term:`reST`, but not always:
 
 * Lines with the same indentation run together into one paragraph, so a
   list of ``name - description`` lines becomes one line.
@@ -102,7 +102,7 @@ lists of class help (``Shape Properties:``), set ``matlab_auto_link =
 What to expect on an existing project:
 
 * Documentation is built for every file, even when its help is not valid
-  reST. The warnings name the file and the line of the help in it
+  :term:`reST`. The warnings name the file and the line of the help in it
   (``<file>:docstring of <reference>:<line>``; for a Simulink file, the line
   within its description); the text is still shown, sometimes with odd line
   breaks.
@@ -110,19 +110,21 @@ What to expect on an existing project:
   (thousands in projects with thousands of files). They do not stop a
   build unless ``-W`` turns warnings into errors.
 * Fix the help where it matters, or build without ``-W``. These warnings
-  come from docutils and have the type ``docutils``: ``suppress_warnings =
+  come from :term:`docutils` and have the type ``docutils``: ``suppress_warnings =
   ["docutils"]`` turns them off, for the pages too, so use it only when
   the help cannot be changed (third-party code).
 
-A mode that shows help as preformatted text, without parsing it as reST, is
+A mode that shows help as preformatted text, without parsing it as :term:`reST`, is
 a possible later feature.
 
 Richer help
 -----------
 
-Since help is reST, it can use any reST and Sphinx markup: field lists for
+Since help is :term:`reST`, it can use any :term:`reST` and :term:`Sphinx`
+:term:`markup`: field lists for
 arguments (as in ``times_two``, :doc:`../getting-started/quickstart`),
-roles that link to other objects (:doc:`referencing`), code samples after
+:term:`roles <role>` that link to other :term:`objects <object>`
+(:doc:`referencing`), code samples after
 ``::``, and so on.
 
 With ``sphinx.ext.napoleon`` in ``extensions``, Google- and NumPy-style
@@ -133,11 +135,11 @@ sections (``Args:``, ``Parameters:``, ``Returns:``) become field lists too:
 
 .. include:: ../snippets/napoleon.rst
 
-Napoleon's sections are its own headings (``Args:``, ``Returns:``, ...)
+:term:`Napoleon`'s sections are its own headings (``Args:``, ``Returns:``, ...)
 and those of ``napoleon_custom_sections``. A MATLAB heading such as
 ``Inputs:`` needs an entry there; ``("Inputs", "params_style")`` lists
 one entry per name, which suits ``Outputs:`` too (``"returns_style"``
-makes the whole section one entry). Napoleon only matches a heading made
+makes the whole section one entry). :term:`Napoleon` only matches a heading made
 of letters, digits, ``_`` and spaces, followed by ``:`` alone on its line,
 with the entries indented below it. ``Name-Value Pairs:`` therefore never
 becomes a section, whatever ``napoleon_custom_sections`` says, and stays
@@ -168,20 +170,21 @@ as in sidecar docs (:doc:`sidecars`), not to the documentation page:
   into the output;
 * ``literalinclude`` and ``include`` read files next to the code file;
 * a hyperlink to a relative path goes to a sidecar doc's document, to a
-  code file's API entry, or downloads any other file; a link to a file
+  code file's :term:`API` entry, or downloads any other file; a link to a file
   that does not exist is left as it is. Hyperlinks in a file the help text
   includes are relative to the code file's folder too.
 
-Absolute paths (``/img/logo.png``) stay relative to the Sphinx source
-folder, and ``:doc:`` and ``:ref:`` name documents and labels, not files.
-Content written in the page, inside an auto directive, stays relative to
+Absolute paths (``/img/logo.png``) stay relative to the :term:`Sphinx` :term:`source
+folder <source directory>`, and ``:doc:`` and ``:ref:`` name documents and labels,
+not files.
+Content written in the page, inside an auto :term:`directive`, stays relative to
 the page.
 
 Links in help text
 ------------------
 
 :confval:`matlab_auto_link` turns names in help into links, so that help
-written for MATLAB links without markup:
+written for MATLAB links without :term:`markup`:
 
 ``"basic"``
    * The entries of a "See also" line, and of the lines that follow it up to
@@ -193,7 +196,7 @@ written for MATLAB links without markup:
 
 ``"all"``
    Also every name of a documented class or function anywhere in the help
-   (not in literal blocks or existing markup), ``Class.member`` names, and
+   (not in literal blocks or existing :term:`markup`), ``Class.member`` names, and
    ``name()`` for methods of the class.
 
 Names are looked up from the folder of the documented file, as in

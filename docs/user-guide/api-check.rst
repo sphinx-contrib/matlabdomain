@@ -11,8 +11,8 @@ problem, so it can guard help text in CI.
 Running it
 ----------
 
-It is a Sphinx builder; the :term:`extension` adds it. From your project
-root, run it on the Sphinx project of your docs:
+It is a :term:`Sphinx` :term:`builder`; the :term:`extension` adds it. From
+your project root, run it on the :term:`Sphinx` project of your docs:
 
 .. code-block:: console
 
@@ -20,13 +20,13 @@ root, run it on the Sphinx project of your docs:
 
 For paths to use from inside ``docs``, see :doc:`FAQ`.
 
-It reads the pages like any builder; give it the ``-d`` folder of the HTML
-build (``-d docs/_build/doctrees``) to avoid reading them twice, in either
+It reads the pages like any :term:`builder`; give it the ``-d`` folder of the
+HTML build (``-d docs/_build/doctrees``) to avoid reading them twice, in either
 order. When the check runs between an edit and the HTML build, it reads the
 changed pages itself, and the next HTML build writes every page once without
 reading them again (see :ref:`builds-shared-doctrees`). (If the two
-builds use different options, such as ``-n`` for HTML only, Sphinx says the
-configuration changed and reads the pages again; that is harmless.) Then it
+builds use different options, such as ``-n`` for HTML only, :term:`Sphinx`
+says the configuration changed and reads the pages again; that is harmless.) Then it
 checks every file the project indexes, whether a page documents it or not,
 on every run. It writes no pages.
 
@@ -52,8 +52,8 @@ What is checked
 ---------------
 
 Every indexed :term:`object` below the project root, minus
-:confval:`matlab_api_check_ignore_patterns` (or only the objects of the
-files :confval:`matlab_api_check_files` selects, see
+:confval:`matlab_api_check_ignore_patterns` (or only the :term:`objects <object>` of
+the files :confval:`matlab_api_check_files` selects, see
 `Checking selected files`_):
 
 * functions, classes, scripts and apps (``.mlapp``); a class with the
@@ -139,12 +139,13 @@ The rules
      - error
      - sidecar docs
      - a ``mat:autosidecar`` renders the sidecar doc, in a document that a
-       toctree
+       :term:`toctree`
        includes (or an ``:orphan:`` one)
    * - ``sidecar-links``
      - error
      - sidecar docs
-     - every relative link (Markdown or reST) and download points to a file,
+     - every relative link (Markdown or :term:`reST`) and download points to a
+       file,
        and every image exists, relative to the sidecar doc's folder
 
 * Inputs are the named inputs, except ``~``, the object of a method that is
@@ -187,7 +188,7 @@ any letter case:
   name-value arguments;
 * **example:** ``Example``, ``Examples``, ``Example(s)``, ``Example 1``
   (any number), ``Usage``, ``Example Usage``, ``Usage Example``, ``Usage
-  Examples``; also a reST ``.. rubric:: Example`` (or ``Examples``,
+  Examples``; also a :term:`reST` ``.. rubric:: Example`` (or ``Examples``,
   ``Usage``).
 
 The last word of a label may also be singular or plural (``Parameter``,
@@ -234,16 +235,16 @@ The labels follow the rules above (any case, the same forms, the same two
 exceptions). ``[]`` accepts no label: only ``arguments``-block comments
 pass the section's rule. A ``.. rubric:: Example`` counts whatever the
 example labels. The check does not read ``napoleon_custom_sections``:
-that setting decides how Napoleon *formats* a section (``params_style``
+that setting decides how :term:`Napoleon` *formats* a section (``params_style``
 lists one entry per name, which suits outputs too), not what the section
-means. A heading in both settings is formatted by Napoleon and counted by
-the check.
+means. A heading in both settings is formatted by :term:`Napoleon` and counted
+by the check.
 
 Configuration
 -------------
 
 These settings in ``conf.py`` (or ``-D``) configure the check; changing
-them does not make Sphinx read the pages again
+them does not make :term:`Sphinx` read the pages again
 (:doc:`../reference/configuration`):
 
 * :confval:`matlab_api_check_rules`: the severity of each rule:
@@ -259,7 +260,8 @@ them does not make Sphinx read the pages again
          "example": "error",
      }
 
-* :confval:`matlab_api_check_ignore_patterns`: objects not to check. Globs
+* :confval:`matlab_api_check_ignore_patterns`: :term:`objects <object>` not
+  to check. Globs
   with the rules of :confval:`matlab_src_exclude_patterns`, matched
   against the path references of files, of methods and properties
   (``+pkg/Cls.m.helper``) and of sidecar docs. Use them for generated code,
@@ -380,8 +382,8 @@ The output folder gets two reports, written before anything is logged:
 * ``api-check.json``: the same for tools, without absolute paths, so it is
   identical on every system (:doc:`../reference/api-check-report`).
 
-Sphinx's last line counts the findings among its warnings ("build finished
-with problems, 1 warning"). A run without errors ends with "The MATLAB API
+:term:`Sphinx`'s last line counts the findings among its warnings ("build
+finished with problems, 1 warning"). A run without errors ends with "The MATLAB API
 check passed; see .../api-check.txt".
 
 In CI

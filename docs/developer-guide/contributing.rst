@@ -52,12 +52,13 @@ restart. Check the final text with a full strict build:
 
    $ uv run sphinx-build -M html docs docs/_build -E -n -W
 
-Link the first use of a Sphinx term on each page with the ``term``
-:term:`role`, for example ``:term:`builder```. Definitions live in
-:doc:`../reference/glossary`. Keep command examples and API names literal.
+Link the first use of a :term:`Sphinx` term on each page with the
+``term`` :term:`role`, for example ``:term:`builder```. Definitions live in
+:doc:`../reference/glossary`. Keep command examples and :term:`API` names
+literal.
 
-The previews of glossary terms come from an extension of these docs only,
-``docs/_ext/glossary_tips.py``; it is not part of the package. Before the
+The previews of glossary terms come from an :term:`extension` of these docs
+only, ``docs/_ext/glossary_tips.py``; it is not part of the package. Before the
 pages are written, it renders every glossary definition as text into one
 ``_static/glossary-tips.js``. So a parallel build (``-j``) writes the same
 files as a serial one, the same sources give the same bytes, and the
@@ -77,8 +78,9 @@ ends (LF), and ``uv lock``. Run it on demand with ``uv run pre-commit run
 * Every module, class, method and function in ``sphinxcontrib/`` has a
   docstring; tests do not need one. The first sentence may wrap over
   several lines.
-* A method that overrides a base class method (from Sphinx, docutils or this
-  package) is marked ``@override``, imported from ``sphinxcontrib.mat_typing``
+* A method that overrides a base class method (from :term:`Sphinx`,
+  :term:`docutils` or this package) is marked ``@override``, imported from
+  ``sphinxcontrib.mat_typing``
   (not from ``typing``, which lacks it on Python 3.11). Ruff then knows the
   signature is fixed by the base class, so it neither asks for a docstring
   nor reports an unused argument.
@@ -140,31 +142,33 @@ Versions and compatibility
 
 * The project follows `semantic versioning <https://semver.org/>`_ from
   1.0.0. The public interface includes the configuration values,
-  directives, roles and options, path references and link anchors
-  (:doc:`../user-guide/referencing`), the ``scmd apidoc``
+  :term:`directives <directive>`, :term:`roles <role>` and options, path
+  references and link anchors (:doc:`../user-guide/referencing`), the ``scmd apidoc``
   options and template variables, and the ``matlab-api-check`` rules and
   report format.
 * Supported, best effort: every Python version still maintained upstream
-  from 3.11 on, and every Sphinx release from 8.0 on, on Linux, Windows and
-  macOS. Python versions past their end of life may work but are not
-  supported. Tested: Python |python-tested| and Sphinx |sphinx-tested|. The
-  tested range follows new and retired releases within about three months,
-  not on the day of a release. ``requires-python`` and the Sphinx dependency
-  have no upper bound: a cap makes installers refuse the package or pick an
-  old release.
+  from 3.11 on, and every :term:`Sphinx` release from 8.0 on, on Linux,
+  Windows and macOS. Python versions past their end of life may work but
+  are not supported. Tested: Python |python-tested| and :term:`Sphinx`
+  |sphinx-tested|. The tested range follows new and retired releases within
+  about three months, not on the day of a release. ``requires-python`` and
+  the :term:`Sphinx` dependency have no upper bound: a cap makes installers
+  refuse the package or pick an old release.
 * To add or drop a Python version, change the ``Programming Language ::
   Python :: 3.x`` classifiers, the CI matrix (``.github/workflows/tests.yml``)
   and the tox ``env_list`` together; ``tests/test_tested_versions.py`` names
   what is out of step. A prerelease row in CI has ``experimental: true``: it
-  may fail and is not part of the tested range. The newest tested Sphinx is
-  the one in ``uv.lock`` (``uv lock --upgrade-package sphinx``). The docs read
-  both ranges from these files (``docs/conf.py``).
+  may fail and is not part of the tested range. The newest tested
+  :term:`Sphinx` is the one in ``uv.lock``
+  (``uv lock --upgrade-package sphinx``). The docs read both ranges from
+  these files (``docs/conf.py``).
 * ``tree-sitter`` and ``tree-sitter-matlab`` are pinned to exact ranges in
   ``pyproject.toml``. Neither project marks breaking changes with a major
   version, so every new release is evaluated by reading its changes and
   running the gauntlet (:doc:`testing`) before a pin moves.
-* ``MATLABDomain.data_version`` is bumped whenever the domain data or the
-  cached parsed objects change, so Sphinx drops stale environments.
+* ``MATLABDomain.data_version`` is bumped whenever the :term:`domain` data
+  or the cached parsed objects change, so :term:`Sphinx` drops stale
+  :term:`environments <environment>`.
 
 .. _repository-configuration:
 
@@ -182,7 +186,8 @@ when adding, removing or moving a maintained configuration file.
   runtime dependencies, optional extras, dependency groups (``dev``,
   ``test``, ``docs``), console entry point, namespace-package
   discovery and Jinja package data. Also owns pytest, coverage, codespell,
-  Ruff, Pyright, native tox environments and uv's public package index.
+  Ruff, Pyright, native tox :term:`environments <virtual environment>` and
+  uv's public package index.
   Check with ``uv build``, ``uv run pytest`` and ``uv run tox -e lint``.
   The former ``tox.ini`` is merged here. The old ``MANIFEST.in`` is removed:
   setuptools includes the declared readme and license, setuptools-scm includes
@@ -190,8 +195,9 @@ when adding, removing or moving a maintained configuration file.
   reintroduce a second copy of these settings.
 ``uv.lock``
   Generated by ``uv lock``; never edit by hand. Records the reproducible local
-  development environment, not the supported dependency range. Commit it with
-  dependency edits; check with ``uv sync --locked --all-extras``. tox deliberately
+  development :term:`environment <virtual environment>`, not the supported
+  dependency range. Commit it with dependency edits; check with
+  ``uv sync --locked --all-extras``. tox deliberately
   resolves its minimum/latest/development matrix independently of this lock.
 ``.python-version``
   Hand-selected uv development interpreter; also read by the static-check CI
@@ -202,7 +208,8 @@ when adding, removing or moving a maintained configuration file.
   ``pyproject.toml``; Ruff's hook revision must match the development pin.
   Ruff applies safe fixes only. Run ``uv run pre-commit run --all-files``;
   inspect and rerun after automatic fixes. Pyright runs in tox/CI rather than
-  once per staged file, since it needs the complete project environment.
+  once per staged file, since it needs the complete project
+  :term:`environment <virtual environment>`.
   ``mixed-line-ending`` runs last so one run also fixes the CRLF that the
   TOML formatter writes on Windows.
 ``.github/codespell_ignore_words.txt``
@@ -224,13 +231,15 @@ when adding, removing or moving a maintained configuration file.
   renaming jobs never breaks the ruleset. Actions are pinned by commit SHA
   with the version in a comment.
 ``.github/workflows/tests.yml``
-  The supported Python/OS/Sphinx matrix and the combined 100% coverage gate,
-  called by ``pr-master.yml`` and run monthly (new Python, Sphinx and
-  dependency releases) and on demand. The Sphinx-development job is
-  non-blocking. Uses the shared tox environments; local checks cannot
+  The supported Python/OS/:term:`Sphinx` matrix and the combined 100%
+  coverage gate, called by ``pr-master.yml`` and run monthly (new Python,
+  :term:`Sphinx` and dependency releases) and on demand. The
+  :term:`Sphinx`-development job is non-blocking. Uses the shared tox
+  :term:`environments <virtual environment>`; local checks cannot
   substitute for the cross-platform coverage gate. Its ``Local check`` jobs
   run the local coverage check (``--simulate-platforms``) on each system with
-  the locked environment, outside the combined gate.
+  the locked :term:`environment <virtual environment>`, outside the combined
+  gate.
 ``.github/workflows/push-master.yml``
   Pushes to ``master`` and release tags (bare versions such as ``0.22.1``):
   no tests. It builds the sdist and wheel and runs ``scmd`` from the
@@ -241,7 +250,7 @@ when adding, removing or moving a maintained configuration file.
   Read the Docs-required service file: build image, Python version, docs entry
   point, ``docs`` dependency group (installed with ``uv sync``) and warning
   policy. Validate documentation
-  locally with the strict Sphinx build, then inspect the hosted build.
+  locally with the strict :term:`Sphinx` build, then inspect the hosted build.
 ``.vscode/settings.json``
   Portable clone-level interpreter, workspace diagnostics and Ruff integration.
   ``files.eol`` makes new files LF, as ``.gitattributes`` stores them, so
@@ -261,22 +270,27 @@ when adding, removing or moving a maintained configuration file.
   them). Keep binary MATLAB artifacts binary; inspect ``git diff --check`` and
   cross-platform checkouts after edits.
 ``.gitignore``
-  Git exclusions for environments, build/coverage/cache output and fetched
-  gauntlet repositories/runs. It does not define Python analysis scope;
+  Git exclusions for :term:`environments <virtual environment>`,
+  build/coverage/cache output and fetched gauntlet repositories/runs. It
+  does not define Python analysis scope;
   ``tool.ruff`` and ``tool.pyright`` explicitly exclude fixtures and generated
   projects. Check ``git status --ignored`` after adding an output directory.
 ``docs/conf.py``
-  Hand-maintained Sphinx documentation project: extensions, MATLAB example
-  source, theme, links and strictness. Validate with
+  Hand-maintained :term:`Sphinx` documentation project:
+  :term:`extensions <extension>`, MATLAB example source, :term:`theme`,
+  links and strictness. Validate with
   ``uv run sphinx-build -M html docs docs/_build -E -n -W``.
 ``docs/Makefile``
-  POSIX Sphinx convenience targets, including live preview. Calls Sphinx tools
-  from the selected environment; try ``make html`` after edits in the docs folder.
+  POSIX :term:`Sphinx` convenience targets, including live preview. Calls
+  :term:`Sphinx` tools from the selected
+  :term:`environment <virtual environment>`; try ``make html`` after edits
+  in the docs folder.
 ``docs/make.bat``
   Windows counterpart of the Makefile. Keep equivalent targets in sync; try
   ``make html`` from the docs folder.
 ``examples/apidoc/docs/conf.py``
-  Maintained worked-example Sphinx project, not shared repository tool policy.
+  Maintained worked-example :term:`Sphinx` project, not shared repository
+  tool policy.
   The example-build tests check it, its generated API pages and reports.
 ``test_slow/gauntlet/projects.toml``
   Hand-maintained real-project declarations: URLs, versions, exclusions and

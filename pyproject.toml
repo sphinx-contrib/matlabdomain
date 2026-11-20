@@ -14,7 +14,9 @@ dev = [
 ]
 docs = [
     "furo",
-    "sphinxcontrib-mermaid"
+    "sphinxcontrib-mermaid",
+    # myst-parser is also in the test group; docs needs it for blog posts.
+    "myst-parser>=4,<6"
 ]
 test = [
     "pytest>=9",

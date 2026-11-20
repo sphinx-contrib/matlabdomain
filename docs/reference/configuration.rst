@@ -2,8 +2,8 @@ Configuration values
 ====================
 
 The values the :term:`extension` adds to ``conf.py``. :doc:`../user-guide/configuration`
-explains how to use them. Unless noted, changing a value makes Sphinx read
-every page again.
+explains how to use them. Unless noted, changing a value makes :term:`Sphinx`
+read every page again.
 
 Every name in ``conf.py`` that starts with ``matlab_`` must be one of the
 values below. Any other one (a typo, or a value this version does not have)
@@ -25,7 +25,7 @@ extension; correct the value and build again
 Reviewing settings
 ------------------
 
-The sections below list every supported extension value with its type,
+The sections below list every supported :term:`extension` value with its type,
 default and effect. Most projects need only the source root, source
 selection and :term:`API` output directory. Review the remaining values by purpose:
 
@@ -35,8 +35,8 @@ selection and :term:`API` output directory. Review the remaining values by purpo
 * Apidoc values control generated page layout and file management.
 
 Use the defaults unless a project needs different behavior. The list also
-includes removed values and the Sphinx settings read by this extension;
-those are separate from the supported ``matlab_*`` values.
+includes removed values and the :term:`Sphinx` settings read by this
+:term:`extension`; those are separate from the supported ``matlab_*`` values.
 
 Source files
 ------------
@@ -46,7 +46,7 @@ Source files
    :default: ``None``
 
    The folder all MATLAB source lives below. Every path reference is
-   relative to it. A relative path is relative to the Sphinx
+   relative to it. A relative path is relative to the :term:`Sphinx`
    :term:`source folder <source directory>`. A folder that does not exist
    is a ``ConfigError`` in the build and in ``scmd apidoc``.
    ``None`` indexes no files. Required when
@@ -62,7 +62,10 @@ Source files
    the files to index. A file is indexed if its path reference matches one
    of them; ``[]`` selects no files. Patterns use ``/``, match like
    ``exclude_patterns`` (``**`` crosses folders, ``**/x`` also matches
-   ``x``) and are case-sensitive; they are compared in Unicode NFC form. A
+   ``x``) and are case-sensitive; they are compared in :term:`Unicode NFC`
+   form. :ref:`selecting-files` explains the matching, with examples: the
+   default also selects the files at the root, ``*`` matches a leading
+   dot, and folders whose names start with a dot are never searched. A
    file that also matches
    :confval:`matlab_src_exclude_patterns` is left out: exclude wins over
    include. An absolute pattern, a drive, a ``\``, an
@@ -87,10 +90,11 @@ Source files
    The suffixes of the sidecar docs: ``".md"`` (needs
    ``myst_parser`` in ``extensions``) and ``".rst"``. ``[]`` indexes no
    sidecar docs. They follow the include and exclusion patterns and are read
-   as UTF-8. The root must not be the Sphinx source folder. See
+   as UTF-8. The root must not be the :term:`Sphinx`
+   :term:`source folder <source directory>`. See
    :doc:`../user-guide/sidecars`. Any other suffix, a missing root or
-   ``myst_parser``, or the root equal to the source folder is a
-   ``ConfigError``.
+   ``myst_parser``, or the root equal to the
+   :term:`source folder <source directory>` is a ``ConfigError``.
 
 .. confval:: matlab_src_encoding
    :type: ``str`` or ``None``
@@ -134,7 +138,7 @@ Output
    :type: ``bool``
    :default: ``False``
 
-   Show the constructor's arguments in the class signature.
+   Show the constructor's arguments in the class :term:`signature`.
 
 .. confval:: matlab_inherited_members
    :type: ``bool``
@@ -145,16 +149,17 @@ Output
    the option repeats the help of every base member on the page of every
    subclass, so it suits small projects with little inheritance. While it
    is off, the option documents no inherited member and the build warns
-   (``mat.directive``): once for each directive that writes the option, or
+   (``mat.directive``): once for each :term:`directive` that writes the option, or
    once for the build when ``autodoc_default_options`` sets it.
 
 .. confval:: matlab_add_namespace_names
    :type: ``bool``
    :default: ``True``
 
-   Show the namespace before the name in signatures (``shapes.Circle``);
-   ``False`` shows the name alone (``Circle``). It replaces Sphinx's
-   ``add_module_names``, which the MATLAB domain does not read.
+   Show the namespace before the name in :term:`signatures <signature>`
+   (``shapes.Circle``); ``False`` shows the name alone (``Circle``). It
+   replaces :term:`Sphinx`'s ``add_module_names``, which the MATLAB
+   :term:`domain` does not read.
 
 .. confval:: matlab_auto_link
    :type: ``None``, ``"basic"`` or ``"all"``
@@ -203,17 +208,19 @@ Output
    :type: ``bool``
    :default: ``True``
 
-   HTML builds write a stable address for every documented object, which
-   redirects to the page the object is on: ``mat/ref/<path
-   reference>.html`` and, for a MATLAB name of non-private objects,
-   ``mat/name/<MATLAB name>.html`` (a list of the objects when several have
-   the name). The "¶" link of an object points to it, and so does its
-   entry in ``objects.inv``; ``mat/refs.js``, a script on every page and
-   ``404.html`` send an address of a page that no longer has the object to
-   it. ``False`` writes no such files and keeps "¶" and the inventory on
-   the page (:ref:`library-changes`). This option applies only to HTML
-   builders that write ``.html`` pages, so not to EPUB, ``json`` or
-   ``pickle``; other output formats use their normal links.
+   HTML builds write a stable address for every documented
+   :term:`object`, which redirects to the page the :term:`object` is on:
+   ``mat/ref/<path reference>.html`` and, for a MATLAB name of non-private
+   :term:`objects <object>`, ``mat/name/<MATLAB name>.html`` (a list of the
+   :term:`objects <object>` when several have the name). The "¶" link of
+   an :term:`object` points to it, and so does its entry in
+   ``objects.inv``; ``mat/refs.js``, a script on every page and
+   ``404.html`` send an address of a page that no longer has the
+   :term:`object` to it. ``False`` writes no such files and keeps "¶" and
+   the :term:`inventory` on the page (:ref:`library-changes`). This option
+   applies only to HTML :term:`builders <builder>` that write ``.html``
+   pages, so not to EPUB, ``json`` or ``pickle``; other output formats use
+   their normal links.
    Disable it when the additional redirect files or their browser redirects
    are unsuitable for the host. A file that the build did not write where
    one of these files goes, for example one that ``html_extra_path``
@@ -228,7 +235,7 @@ Output
    The metadata of a Simulink file that its page shows, in this order:
    ``release`` (the release that saved it), ``model_version``,
    ``creator``, ``created``, ``last_modified_by``, ``modified``. The
-   ``:metadata:`` option of a directive replaces it for one object. An
+   ``:metadata:`` option of a :term:`directive` replaces it for one :term:`object`. An
    unknown name is a ``mat.simulink`` warning.
 
 .. confval:: matlab_simulink_doc_suffixes
@@ -237,7 +244,7 @@ Output
 
    A file next to a Simulink file, with its exact name and one of these
    suffixes (``probeLib.md`` next to ``probeLib.slx``), holds more
-   documentation for it; the autodoc directive puts its text after the
+   documentation for it; the autodoc :term:`directive` puts its text after the
    description. When there are several, the first suffix in the list wins
    and the others get a ``mat.simulink`` warning. Its first heading is the
    title and is dropped, and deeper headings become rubrics. A model or
@@ -247,7 +254,8 @@ Output
    block is documented, and the rest is the library's. Relative paths,
    images and links work as in sidecar docs
    (:confval:`matlab_src_sidecar_suffixes`).
-   Description directives written by hand read no such file. The file is
+   Description :term:`directives <directive>` written by hand read no such
+   file. The file is
    not a sidecar doc and not a page of its own. A ``.md`` file needs
    ``myst_parser`` in ``extensions`` (else a ``ConfigError``); ``[]``
    turns the files off.
@@ -258,15 +266,15 @@ Output
 
    Several files with one MATLAB name (two global ``helper.m`` in
    different folders, ``foo.m`` and ``foo.slx``) are documented either
-   way, each by its path reference. ``False``: a role, "See also" entry
+   way, each by its path reference. ``False``: a :term:`role`, "See also" entry
    or auto-link that names them by MATLAB name gets a ``mat.ambiguous``
    warning and stays text. ``True``: it links to the page that lists them
    (``mat/name/<MATLAB name>.html``, :confval:`matlab_stable_urls`) without
    a warning; a build without that page (LaTeX, or
    ``matlab_stable_urls = False``) leaves it as text, also without a
    warning. The same holds for such a name of another site, through
-   intersphinx. An auto directive that names them still warns: it
-   documents one object, so give its path reference.
+   intersphinx. An auto :term:`directive` that names them still warns:
+   it documents one :term:`object`, so give its path reference.
 
 .. confval:: matlab_simulink_autobuild_server
    :type: ``str`` or ``None``
@@ -281,7 +289,7 @@ Output
    ``"server"`` and this address when it is set, else ``"local"``. So the
    Help links of Simulink files open the site of the last build. The build
    never writes the settings file itself, because a build writes only to
-   its output and doctree folders. When its output folder (``"local"``,
+   its output and :term:`doctree` folders. When its output folder (``"local"``,
    when it is inside the project root and not a sphinx-multiversion
    build), this address (``"server"``) or ``html_baseurl``
    (``"published"``, when set) differs from the file, it logs one
@@ -324,12 +332,12 @@ Changing these reads no page again.
    :default: ``[]``
 
    Glob patterns, with the rules of
-   :confval:`matlab_src_exclude_patterns`, of objects not to check,
+   :confval:`matlab_src_exclude_patterns`, of :term:`objects <object>` not to check,
    matched against the path references of files, methods
    (``+pkg/Cls.m.helper``), properties, events and sidecar docs. Use this
    for content that should still be documented but need not meet the
-   API-check rules. Ignored objects are not checked; indexing, pages and
-   links are unchanged.
+   API-check rules. Ignored :term:`objects <object>` are not checked;
+   indexing, pages and links are unchanged.
 
 .. confval:: matlab_api_check_files
    :type: ``None``, ``list[str]`` or ``str``
@@ -416,7 +424,7 @@ relative to the folder of ``conf.py``.
    The most entries (files and sidecar docs) on one namespace or folder
    page; a longer one gets several pages. Less than 1 is a
    ``ConfigError``. Which page an entry is on, and so its address, can
-   change when files are added or removed; anchors and inventory names do
+   change when files are added or removed; anchors and :term:`inventory` names do
    not (:ref:`library-changes`).
 
 .. confval:: matlab_apidoc_private
@@ -432,7 +440,8 @@ relative to the folder of ``conf.py``.
    :type: ``bool``
    :default: ``False``
 
-   One page per file; namespace and folder pages list them in toctrees.
+   One page per file; namespace and folder pages list them in
+   :term:`toctrees <toctree>`.
    A file's page is named by its path, so its address does not depend on
    :confval:`matlab_apidoc_page_size`.
 
@@ -440,7 +449,8 @@ relative to the folder of ``conf.py``.
    :type: ``int``
    :default: ``4``
 
-   The ``:maxdepth:`` of the generated toctrees. It controls navigation,
+   The ``:maxdepth:`` of the generated :term:`toctrees <toctree>`. It controls
+   navigation,
    not how deeply the source tree is searched.
 
 .. confval:: matlab_apidoc_tocfile
@@ -472,8 +482,8 @@ Setting one of these is a ``ConfigError`` that names the replacement
    :type: removed
    :default: ``None``
 
-   Use :confval:`matlab_src_code_project_root` (relative to the Sphinx
-   source folder) and, to select files,
+   Use :confval:`matlab_src_code_project_root` (relative to the
+   :term:`Sphinx` :term:`source folder <source directory>`) and, to select files,
    :confval:`matlab_src_include_patterns` and
    :confval:`matlab_src_exclude_patterns`.
 
@@ -481,19 +491,20 @@ Setting one of these is a ``ConfigError`` that names the replacement
    :type: removed
    :default: ``None``
 
-   Objects are referenced by path (which keeps the ``+``); signatures show
-   MATLAB names (without it).
+   :term:`Objects <object>` are referenced by path (which keeps the ``+``);
+   :term:`signatures <signature>` show MATLAB names (without it).
 
 .. confval:: matlab_short_links
    :type: removed
    :default: ``None``
 
-   Signatures show MATLAB names.
+   :term:`Signatures <signature>` show MATLAB names.
 
 Sphinx and autodoc values
 -------------------------
 
-The auto directives also read these values of Sphinx and
+The auto :term:`directives <directive>` also read these values of
+:term:`Sphinx` and
 ``sphinx.ext.autodoc`` (see their documentation):
 ``autoclass_content``, ``autodoc_docstring_signature``,
 ``autodoc_member_order``, ``autodoc_default_options``,

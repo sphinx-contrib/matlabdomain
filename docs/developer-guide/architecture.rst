@@ -1,8 +1,8 @@
 Architecture
 ============
 
-How the :term:`extension` fits into Sphinx, for contributors. The modules are in
-``sphinxcontrib/``.
+How the :term:`extension` fits into :term:`Sphinx`, for contributors. The
+modules are in ``sphinxcontrib/``.
 
 Modules
 -------
@@ -15,9 +15,10 @@ Modules
      - Role
    * - ``matlab.py``
      - ``setup()``: events, the :term:`builder`, the
-       auto :term:`directives <directive>`. ``MATLABDomain``: directives,
-       :term:`roles <role>`, :term:`cross-reference` resolution, the folder
-       index and the :term:`domain` data.
+       auto :term:`directives <directive>`. ``MATLABDomain``:
+       :term:`directives <directive>`, :term:`roles <role>`,
+       :term:`cross-reference` resolution, the folder index and the
+       :term:`domain` data.
    * - ``mat_config.py``
      - Every ``matlab_*`` configuration value in one table (default,
        rebuild, types) and the source checks that the build and
@@ -46,11 +47,11 @@ Modules
    * - ``mat_documenters.py``, ``mat_directives.py``
      - The autodoc documenters behind ``mat:auto*``.
    * - ``mat_api_check.py``
-     - The ``matlab-api-check`` builder.
+     - The ``matlab-api-check`` :term:`builder`.
    * - ``mat_urls.py``
      - Stable addresses in HTML builds: the redirect files under
        ``mat/ref/`` and ``mat/name/`` and the pages that list several
-       objects of one MATLAB name.
+       :term:`objects <object>` of one MATLAB name.
    * - ``mat_typing.py``
      - ``override``, from ``typing`` or (Python 3.11) ``typing_extensions``.
    * - ``mat_sidecars.py``
@@ -66,8 +67,8 @@ Modules
        names and the templates.
    * - ``matlab_quickstart/``
      - ``scmd quickstart``: the project facts (``_detect.py``), the
-       Sphinx :term:`source folder <source directory>` from its templates
-       and the edits outside it
+       :term:`Sphinx` :term:`source folder <source directory>` from its
+       templates and the edits outside it
        (``_write.py``), the prompts and answers file (``_cli.py``), the
        report (``_report.py``). It builds the index and calls the
        generator of ``matlab_apidoc/``.
@@ -120,7 +121,7 @@ Reading and classifying text is cheap; tree-sitter parses are not.
    ``parse_cache`` by ``(path, mtime, size)``. A class folder is parsed as
    one unit. Lookups decide from the index records whenever they can.
 
-``build_index`` needs no Sphinx application, so ``scmd apidoc``
+``build_index`` needs no :term:`Sphinx` application, so ``scmd apidoc``
 shares the index stage: it agrees with the build on files, references,
 types, names and warnings, and never parses.
 
@@ -133,19 +134,20 @@ a document renders it and notes it as a dependency of that document.
 State and Sphinx's lifecycle
 ----------------------------
 
-All state that outlives a build is in the domain's data
-(``env.domaindata["mat"]``), which Sphinx pickles:
+All state that outlives a build is in the :term:`domain`'s data
+(``env.domaindata["mat"]``), which :term:`Sphinx` pickles:
 
-* per page: ``objects`` (documented objects), ``folders``,
+* per page: ``objects`` (documented :term:`objects <object>`), ``folders``,
   ``doc_sources`` (the source files each page used, with time and size),
   ``sidecar_docs`` (the sidecar docs it renders), ``sidecar_issues``
   (their broken links and missing images, for ``matlab-api-check``),
   ``simulink_doc_warnings`` (the warnings about the Simulink documentation
-  files it parsed), ``xref_docs`` and ``described`` (each object and folder a page
-  describes, with the line of its directive). ``objects`` and ``folders``
-  are derived from ``described`` on ``env-updated``: an object described
-  on several pages belongs to the last of them in sorted order, as in a
-  fresh build, so an incremental build reads no other page;
+  files it parsed), ``xref_docs`` and ``described`` (each :term:`object`
+  and folder a page describes, with the line of its :term:`directive`).
+  ``objects`` and ``folders`` are derived from ``described`` on
+  ``env-updated``: an :term:`object` described on several pages belongs to
+  the last of them in sorted order, as in a fresh build, so an incremental
+  build reads no other page;
 * rebuilt by each index stage: ``index``, ``sidecars``, ``entities_table``
   (path reference to object), ``matlab_names`` (MATLAB name to
   references);
@@ -163,8 +165,9 @@ The events ``setup()`` connects:
   removed values, patterns, encoding, version; and ``matlab_auto_link``),
   ``mat_sidecars.check_config`` (sidecar suffixes;
   with the root inside the source folder, the sidecar docs are added to
-  ``exclude_patterns`` here, because a later change would make Sphinx
-  read every page again on every build), ``mat_api_check.check_config``;
+  ``exclude_patterns`` here, because a later change would make
+  :term:`Sphinx` read every page again on every build),
+  ``mat_api_check.check_config``;
 * ``builder-inited``: ``analyze``, the index stage;
 * ``env-get-outdated``: ``outdated_docs``, the pages to read again because
   a source file they used changed, or because files were added, removed or
@@ -175,18 +178,18 @@ The events ``setup()`` connects:
   documentation files, each once for the pages read in the build;
 * ``build-finished``: ``mat_api_check.set_status``, the exit status.
 
-Sphinx calls the domain's ``clear_doc`` and ``merge_domaindata``. Parallel
-reads parse in the worker processes; ``merge_domaindata`` keeps their
-parses when the file is still current.
+:term:`Sphinx` calls the :term:`domain`'s ``clear_doc`` and
+``merge_domaindata``. Parallel reads parse in the worker processes;
+``merge_domaindata`` keeps their parses when the file is still current.
 
 Names and references
 --------------------
 
 ``mat_naming.py`` is the only place that turns paths into references,
-anchors and MATLAB names, so directives, documenters, roles,
-``scmd apidoc`` and ``matlab-api-check`` agree. The reference
-scheme and the anchors are a public contract
-(:doc:`../user-guide/referencing`). Cross-reference resolution is
+anchors and MATLAB names, so :term:`directives <directive>`, documenters,
+:term:`roles <role>`, ``scmd apidoc`` and ``matlab-api-check`` agree. The
+reference scheme and the anchors are a public contract
+(:doc:`../user-guide/referencing`). :term:`Cross-reference` resolution is
 ``MATLABDomain.find_obj``: exact reference, then relative to the current
 folder, then a unique MATLAB name, then a folder path.
 
@@ -196,9 +199,10 @@ The file-type registry
 A handler (``mat_handlers.Handler``) owns one extension and provides:
 ``discover`` (is the file of this type), ``classify`` (its index type),
 ``read`` (index stage: type, decoded text, warnings), ``parse`` (the parsed
-object) and ``document`` (the auto directive for a type). ``register`` adds
-a handler; registration order is lookup order. A new file type is a new
-handler, not a change to the index or the domain (:doc:`roadmap`).
+object) and ``document`` (the auto :term:`directive` for a type).
+``register`` adds a handler; registration order is lookup order. A new file
+type is a new handler, not a change to the index or the :term:`domain`
+(:doc:`roadmap`).
 
 Fault tolerance
 ---------------
@@ -213,7 +217,8 @@ The shift from 0.x
 ------------------
 
 Version 0.x mirrored Python: dotted module names, a module per folder, and
-every file parsed when the build started. This version names objects as
-MATLAB does (from the folder layout, ported from a MATLAB reference
-implementation that was checked against MATLAB on 66,000 files), indexes
-cheaply up front, and lets Sphinx's events pull parses only when needed.
+every file parsed when the build started. This version names
+:term:`objects <object>` as MATLAB does (from the folder layout, ported
+from a MATLAB reference implementation that was checked against MATLAB on
+66,000 files), indexes cheaply up front, and lets :term:`Sphinx`'s events
+pull parses only when needed.

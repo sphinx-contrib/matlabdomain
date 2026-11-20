@@ -15,7 +15,8 @@ below:
 
    matlab_src_code_project_root = "../src"
 
-* A relative path is relative to the Sphinx :term:`source folder <source directory>` (the folder with
+* A relative path is relative to the :term:`Sphinx` :term:`source folder <source
+  directory>` (the folder with
   ``index.rst`` that you pass to ``sphinx-build``; usually ``conf.py`` is
   there too), so the docs build the same from any working
   folder and with `sphinx-multiversion
@@ -26,7 +27,8 @@ below:
   reference* (``+shapes/Circle.m``, see :doc:`referencing`). Choose the root
   once: moving it changes every reference, link anchor and :term:`inventory` entry.
 * Without it, no file is indexed and the auto :term:`directives <directive>` (``mat:autoclass``
-  and the others) find nothing; each one warns. Description directives
+  and the others) find nothing; each one warns. Description :term:`directives
+  <directive>`
   (``.. mat:function:: f(x)``, :doc:`documenting`) never read a file, so
   they work the same with or without it.
 
@@ -34,6 +36,8 @@ Use the folder you would add to the MATLAB path, or the folder above several
 such folders (``src/`` with ``toolbox/`` and ``examples/`` below it). Plain
 folders put files into the global namespaces, as in MATLAB: ``toolbox/f.m`` is
 the global function ``f``.
+
+.. _selecting-files:
 
 Selecting files
 ---------------
@@ -57,13 +61,34 @@ change that; both are relative to the root and use ``/``:
 
 Exclude wins over include: a file that matches both lists is left out.
 
-Patterns match like Sphinx's ``exclude_patterns``: ``**`` matches across
-folders, ``*`` and ``?`` within one folder, and ``**/x`` also matches ``x``
-itself, so ``**/tests`` leaves out every ``tests`` folder with everything
-below it. Matching is case-sensitive on every system. Patterns and names
-are compared in Unicode NFC form, so ``é`` typed as one character matches a
-name stored as ``e`` and an accent (as macOS may store it), and the other
-way round.
+Patterns match like :term:`Sphinx`'s own `exclude_patterns
+<https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-exclude_patterns>`_,
+which differs in places from the globs of a shell or of Python's
+``glob``:
+
+* ``**`` matches across folders; ``*`` and ``?`` match within one folder
+  only. ``*.m`` therefore matches ``main.m`` at the root and nothing in a
+  subfolder.
+* ``**/x`` also matches ``x`` itself, at the root. The default
+  ``["**/*"]`` therefore selects the files at the root (``main.m``) as well
+  as those in every subfolder, and ``**/tests`` leaves out a ``tests``
+  folder at the root too.
+* A pattern is matched against the whole path reference, from the root:
+  ``README.*`` matches ``README.md`` at the root, not ``docs/README.md``
+  (use ``**/README.*`` for that).
+* Include patterns select *files*. ``["toolbox"]`` matches only the folder
+  name, so it selects no file; write ``["toolbox/**"]``. An exclude
+  pattern that matches a folder (``"toolbox/internal"``) leaves out the
+  folder with everything below it.
+* ``*`` and ``?`` also match a leading dot, unlike in a shell, so ``*.m``
+  matches ``.scratch.m``. Folders whose names start with a dot (``.git``,
+  ``.github``) are a different matter: they are never searched, whatever
+  the patterns say (:ref:`files that are never indexed <never-indexed>`).
+* Matching is case-sensitive on every system, Windows and macOS included:
+  ``README.*`` does not match ``readme.md``, nor ``**/*.M`` ``f.m``.
+* Patterns and names are compared in :term:`Unicode NFC` form, so ``é``
+  typed as one character matches a name stored as ``e`` and an accent (as
+  macOS may store it), and the other way round.
 
 Examples, for a project root with these files:
 
@@ -91,6 +116,12 @@ Examples, for a project root with these files:
 
    * - Patterns
      - Indexed
+   * - include ``["**/*"]``, the default
+     - every file, also ``main.m`` at the root
+   * - include ``["*.m"]``
+     - ``main.m`` only: ``*`` stays in one folder, here the root
+   * - include ``["toolbox"]``
+     - nothing: the pattern matches the folder, not the files in it
    * - include ``["toolbox/**"]``
      - every file below ``toolbox/``, at any depth
    * - include ``["toolbox/**", "examples/**"]``
@@ -129,10 +160,13 @@ starts (:ref:`how Sphinx prints them <configuration-error-report>`):
 * a list that is not a list or tuple;
 * a pattern whose leading folders lead out of the root through a link.
 
+.. _never-indexed:
+
 Some files and folders are never indexed or need care:
 
 * Folders whose names start with ``.`` are never searched (``.git``), nor
-  is Sphinx output: the ``_build`` folder of the Sphinx source folder, and
+  is :term:`Sphinx` output: the ``_build`` folder of the :term:`Sphinx`
+  :term:`source folder <source directory>`, and
   any folder with a ``.buildinfo`` or ``environment.pickle`` file, with
   both ``objects.inv`` and ``searchindex.js`` (HTML output, also a copy
   made with ``cp -r html/* public/``, which leaves out ``.buildinfo``), or
@@ -222,7 +256,7 @@ How things are shown
   property's size, class and validators (``Radius (1,1) double
   {mustBePositive}``).
 * :confval:`matlab_class_signature` (default ``False``): show the
-  constructor's arguments in the class signature. In the sample project
+  constructor's arguments in the class :term:`signature`. In the sample project
   (:doc:`documenting`):
 
   .. list-table::
@@ -242,17 +276,18 @@ How things are shown
        - ``class shapes.Shape``
 
   A constructor with ``varargin`` shows ``(varargin)``. If the
-  constructor's first help line looks like its signature and
+  constructor's first help line looks like its :term:`signature` and
   ``autodoc_docstring_signature`` is on (the default), that line is the
-  class signature whatever this setting is.
+  class :term:`signature` whatever this setting is.
 * :confval:`matlab_add_namespace_names` (default ``True``): show the
-  namespace in signatures (``shapes.Circle``); ``False`` shows ``Circle``.
+  namespace in :term:`signatures <signature>` (``shapes.Circle``); ``False`` shows
+  ``Circle``.
 * :confval:`matlab_inherited_members` (default ``False``): let the
   ``:inherited-members:`` option document the members a class inherits
   (:doc:`documenting`). It is off by default because the option repeats the
   help of every base member on the page of every subclass: the pages grow
   and the build slows down. Turn it on for a small project with little
-  inheritance. While it is off, a directive that writes the option warns
+  inheritance. While it is off, a :term:`directive` that writes the option warns
   and documents only the class's own members.
 * :confval:`matlab_external_names`: MATLAB's own classes and namespaces
   (``handle``, ``matlab.*``, ``Simulink.*``, ``double``, ``datetime``,
@@ -269,15 +304,15 @@ How things are shown
   it also links ordinary words that are names in the project: with a
   function ``data``, every "data" in the help becomes a link.
 
-These Sphinx and autodoc settings apply too:
+These :term:`Sphinx` and autodoc settings apply too:
 
 * ``autoclass_content``: ``"class"`` (default) shows the class help;
   ``"init"`` the constructor's help instead; ``"both"`` both, and then the
   constructor is not listed again among the members.
 * ``autodoc_docstring_signature`` (default ``True``): if the first help line
-  of a function or method looks like its signature (``times_two(x)``), use it
-  as the signature and drop it from the text.
-* ``autodoc_member_order``, and ``:member-order:`` on a directive, set the
+  of a function or method looks like its :term:`signature` (``times_two(x)``), use it
+  as the :term:`signature` and drop it from the text.
+* ``autodoc_member_order``, and ``:member-order:`` on a :term:`directive`, set the
   order of the members on a page:
 
   * ``"alphabetical"`` (default): by name; uppercase letters sort before
@@ -288,19 +323,21 @@ These Sphinx and autodoc settings apply too:
   * ``"bysource"``: a class's members in the order of its ``classdef``
     file. The files of a folder have no source order; they stay in name
     order, whatever order the file system lists them in.
-* ``autodoc_default_options``: default options of the auto directives, for
+* ``autodoc_default_options``: default options of the auto :term:`directives
+  <directive>`, for
   example ``{"members": True, "show-inheritance": True}``. With
   ``"inherited-members": True`` and :confval:`matlab_inherited_members`
   every class also documents the members it inherits, on the pages of
   ``scmd apidoc`` too; this is not recommended for a project with many
   subclasses (:doc:`documenting`).
 * ``add_function_parentheses``: ``()`` after function and method links.
-  Sphinx's ``add_module_names`` is not read; use
+  :term:`Sphinx`'s ``add_module_names`` is not read; use
   :confval:`matlab_add_namespace_names`.
 * ``suppress_warnings``: see :doc:`warnings`. Use this to suppress some warnings
   during the build.
 * The events ``autodoc-process-docstring`` and ``autodoc-skip-member`` are
-  emitted for MATLAB objects too, so extensions such as
+  emitted for MATLAB :term:`objects <object>` too, so :term:`extensions
+  <extension>` such as
   ``sphinx.ext.napoleon`` work on MATLAB help.
 
 Checking help text
@@ -311,7 +348,7 @@ Checking help text
 :confval:`matlab_api_check_section_labels`,
 :confval:`matlab_api_check_files`, :confval:`matlab_api_check_files_from`
 and :confval:`matlab_api_check_ignore_unmatched` configure the
-``matlab-api-check`` builder; see :doc:`api-check`.
+``matlab-api-check`` :term:`builder`; see :doc:`api-check`.
 
 The ignore patterns match the path references of files and of methods in a
 ``classdef`` file (``+shapes/Circle.m.draw``), with the rules of the
@@ -346,12 +383,6 @@ method of ``Circle``. Ignoring a class file also skips its methods.
      - the scripts directly in ``examples/``, not in its subfolders
    * - ``"@Legacy/**"``
      - an old-style class folder
-
-Memory
-------
-
-The index keeps decoded source text in memory until it is parsed or the
-build ends. Its memory cost depends on the selected source files.
 
 Removed settings
 ----------------

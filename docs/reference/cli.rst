@@ -9,7 +9,7 @@ copies the agent skills that ship with the package into a project. Run
 and options.
 
 Every option has a short and a long spelling. Prefer long spellings in
-scripts and CI. Project settings belong in Sphinx's ``conf.py``; CLI
+scripts and CI. Project settings belong in :term:`Sphinx`'s ``conf.py``; CLI
 options select the operation or control a single run.
 
 ``scmd quickstart``
@@ -24,9 +24,9 @@ Synopsis
 
    scmd quickstart [ROOT] [--output-dir DOCS] [--quiet] [--dry-run] [--answers FILE] [--force]
 
-Sets up Sphinx documentation for the MATLAB project in ``ROOT``: the Sphinx
-:term:`source folder <source directory>` ``DOCS`` with its files and API pages,
-the docs dependencies,
+Sets up :term:`Sphinx` documentation for the MATLAB project in ``ROOT``: the
+:term:`Sphinx` :term:`source folder <source directory>` ``DOCS`` with its files
+and :term:`API` pages, the docs dependencies,
 and two lines for git. It asks one question per choice, with the answer it
 detected as the default, and prints a report of the project.
 :doc:`../user-guide/setting-up` is the tutorial.
@@ -41,14 +41,14 @@ Arguments
 
 .. option:: -o DOCS, --output-dir DOCS
 
-   The Sphinx source folder, inside ``ROOT``, relative to the current
-   folder like any option value. Default: ``ROOT/docs``. A
-   folder that exists with files but without a ``conf.py`` is in use (an
-   MkDocs ``docs/``, for example): the command says so and asks for
-   another one, relative to ``ROOT``; with :option:`-q`, it stops. A path
-   you type at a prompt is relative to ``ROOT``, also the file to save the
-   answers in; the paths of options (:option:`-o`, :option:`-a`) are relative to the
-   current folder.
+   The :term:`Sphinx` :term:`source folder <source directory>`, inside
+   ``ROOT``, relative to the current folder like any option value.
+   Default: ``ROOT/docs``. A folder that exists with files but
+   without a ``conf.py`` is in use (an MkDocs ``docs/``, for example): the
+   command says so and asks for another one, relative to ``ROOT``; with
+   :option:`-q`, it stops. A path you type at a prompt is relative to
+   ``ROOT``, also the file to save the answers in; the paths of options
+   (:option:`-o`, :option:`-a`) are relative to the current folder.
 
 Options
 ~~~~~~~
@@ -75,7 +75,8 @@ Options
 
    When ``DOCS/conf.py`` exists, rewrite the files the command writes
    (``conf.py``, ``index.rst``, ``_static/.gitkeep``, ``Makefile``,
-   ``make.bat``, ``BUILDING_DOCS.md`` and the API pages) and nothing else.
+   ``make.bat``, ``BUILDING_DOCS.md`` and the :term:`API` pages) and nothing
+   else.
    Without it, an existing ``DOCS/conf.py`` stops the command.
 
 .. option:: -V, --version
@@ -91,7 +92,8 @@ What it writes
 
 In ``DOCS``: ``conf.py``, ``index.rst``, ``_static/.gitkeep``,
 ``Makefile``, ``make.bat`` (CRLF line ends), ``BUILDING_DOCS.md`` (unless
-the answer ``guide`` is ``false``), and the API pages in ``DOCS/API``,
+the answer ``guide`` is ``false``), and the :term:`API` pages in
+``DOCS/API``,
 written as :program:`scmd apidoc` would write them from that
 ``conf.py``. The templates are in the package
 (``sphinxcontrib/matlab_quickstart/templates``).
@@ -105,8 +107,8 @@ Outside ``DOCS``, each only if the line is not there yet:
   --group docs``. Without uv it edits nothing and prints the ``pip
   install`` line (and the ``[dependency-groups]`` table, when there is a
   ``pyproject.toml``).
-* ``.gitignore``: ``DOCS/_build/`` (and ``DOCS/API/`` when the API pages
-  are not committed).
+* ``.gitignore``: ``DOCS/_build/`` (and ``DOCS/API/`` when the :term:`API`
+  pages are not committed).
 * ``.gitattributes``: ``*.bat text eol=crlf``.
 * In a project with Simulink models, libraries or subsystem files:
   ``ROOT/+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` (the
@@ -132,7 +134,7 @@ Exit status
 ~~~~~~~~~~~
 
 0 on success, also with warnings (the index warnings and ``mat.apidoc``,
-printed like Sphinx prints them); 1 when ``uv add`` fails or the run is
+printed like :term:`Sphinx` prints them); 1 when ``uv add`` fails or the run is
 interrupted; 2 for a usage error and when it stops before writing: ``ROOT``
 is not a folder, ``DOCS`` is not inside ``ROOT`` or is in use with
 :option:`-q`, ``DOCS/conf.py`` exists without :option:`--force`, one of the
@@ -151,10 +153,11 @@ Synopsis
 
    scmd apidoc [--conf-dir CONF_DIR] [--force] [--dry-run] [--check] [--quiet]
 
-Writes reST pages with ``mat:auto*`` directives for the MATLAB files below
-the project root: one page per namespace and one for the global namespace
-(:confval:`matlab_apidoc_group` ``"namespace"``, the default), or one page
-per folder with files (``"folder"``), listed flat on the root page.
+Writes :term:`reST` pages with ``mat:auto*`` :term:`directives <directive>`
+for the MATLAB files below the project root: one page per namespace and one
+for the global namespace (:confval:`matlab_apidoc_group` ``"namespace"``, the
+default), or one page per folder with files (``"folder"``), listed flat on the
+root page.
 :doc:`../user-guide/apidoc` is the tutorial.
 
 Settings
@@ -177,21 +180,21 @@ The command's own settings are :confval:`matlab_apidoc_output_dir` (required),
 :confval:`matlab_apidoc_remove_old`.
 
 Paths in ``conf.py`` are relative to ``CONF_DIR``, which is taken to be
-the Sphinx source folder. Errors name the config value that caused them.
-For full control, write a script on the Python API
-(:ref:`apidoc-write-your-own`).
+the :term:`Sphinx` :term:`source folder <source directory>`. Errors name the
+config value that caused them. For full control, write a script on the
+Python :term:`API` (:ref:`apidoc-write-your-own`).
 
 The command runs ``conf.py`` as ``sphinx-build`` does, but it sets up no
-extensions and has no tags. So in a few cases it gets other values than
-the build:
+:term:`extensions <extension>` and has no tags. So in a few cases it gets
+other values than the build:
 
 * ``conf.py`` tests ``tags`` (``sphinx-build -t NAME``), for example to
   exclude files from a public build;
 * the build sets values with ``sphinx-build -D name=value``;
-* another extension changes a ``matlab_*`` value while the build runs;
-* ``conf.py`` is not in the source folder (``sphinx-build -c``): relative
-  paths in it are then relative to the source folder in the build, but to
-  ``CONF_DIR`` here.
+* another :term:`extension` changes a ``matlab_*`` value while the build runs;
+* ``conf.py`` is not in the :term:`source folder <source directory>` (``sphinx-build
+  -c``): relative paths in it are then relative to the
+  :term:`source folder <source directory>` in the build, but to ``CONF_DIR`` here.
 
 Then make ``conf.py`` give both the same values (test an environment
 variable instead of a tag, for example), or write a script.
@@ -201,9 +204,9 @@ Arguments
 
 .. option:: -c CONF_DIR, --conf-dir CONF_DIR
 
-   The folder of ``conf.py``, usually the Sphinx source folder. Default:
-   the current folder. Without a ``conf.py`` there, the command exits
-   with 2.
+   The folder of ``conf.py``, usually the :term:`Sphinx`
+   :term:`source folder <source directory>`. Default: the current folder.
+   Without a ``conf.py`` there, the command exits with 2.
 
 Run-time options
 ~~~~~~~~~~~~~~~~
@@ -239,7 +242,7 @@ Exit status
 ~~~~~~~~~~~
 
 0 on success, also with warnings (``mat.apidoc`` and the index warnings,
-printed like Sphinx prints them, except those named in
+printed like :term:`Sphinx` prints them, except those named in
 ``suppress_warnings``); 1 when :option:`--check` finds a page to
 change; 2 for a usage or settings error, such as an invalid pattern,
 version or encoding, a missing ``conf.py`` or required value, an error in

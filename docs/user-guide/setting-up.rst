@@ -1,15 +1,24 @@
 Setting up a project: ``scmd quickstart``
 =========================================
 
-``scmd quickstart`` sets up Sphinx documentation for a MATLAB
-project that has none yet: a Sphinx :term:`source folder <source directory>`
+``scmd quickstart`` sets up :term:`Sphinx` documentation for a MATLAB
+project that has none yet: a :term:`Sphinx` :term:`source folder <source directory>`
 with ``conf.py``, a home page, make files, a build guide and the :term:`API`
 pages, the docs dependencies,
 and a report of what it found in the project. It is the MATLAB counterpart
-of Sphinx's ``sphinx-quickstart``, and it uses the :term:`extension`'s own index,
+of :term:`Sphinx`'s ``sphinx-quickstart``, and it uses the :term:`extension`'s own
+index,
 so its defaults are what the build will see. Run it once; afterwards
 ``conf.py`` is yours, and ``scmd apidoc`` (:doc:`apidoc`) keeps the
-API pages up to date. The options are in :doc:`../reference/cli`.
+:term:`API` pages up to date. The options are in :doc:`../reference/cli`.
+
+.. tip::
+
+   The agent skill ``setting-up-a-project`` (``scmd skills install
+   setting-up-a-project``) has an AI coding agent run this command and
+   then work through the decisions, help-text fixes and warnings step by
+   step (:ref:`AI agent skills <agent-skills>`). Read this page first, so that you can
+   check the agent's work and maintain the site afterwards.
 
 A first look
 ------------
@@ -31,7 +40,8 @@ The report lists:
   files, one name: exclude a copy, or keep both, listed by path), files
   MATLAB cannot call, files that are not UTF-8;
 * the help headings: which go into ``napoleon_custom_sections``, which are
-  napoleon's own, which napoleon cannot match, and which are too rare;
+  :term:`napoleon`'s own, which :term:`napoleon` cannot match, and which are too
+  rare;
 * the copyright and licence blocks that run into the help text: the help
   ends at the first line that is not a comment, so a block right after the
   help, without a blank line between, becomes part of it;
@@ -70,10 +80,10 @@ defaults.
        CircleCI, Travis, Azure, Jenkins), ``matlab.toml`` and the README;
        ``R2024a`` for an older one; ``R2026a`` when none is named
    * - ``group``
-     - API pages per namespace or per folder
+     - :term:`API` pages per namespace or per folder
      - ``"namespace"`` (:confval:`matlab_apidoc_group`)
    * - ``theme``
-     - HTML theme
+     - HTML :term:`theme`
      - ``"furo"``
    * - ``html_baseurl``
      - URL of the published site
@@ -84,11 +94,11 @@ defaults.
      - none; the defaults of :confval:`matlab_src_exclude_patterns` and
        the git submodules are always left out
    * - ``markdown``
-     - Markdown pages with MyST. Without it, a project with Simulink
+     - Markdown pages with :term:`MyST`. Without it, a project with Simulink
        files gets ``matlab_simulink_doc_suffixes = [".rst"]``
      - yes when ``myst_parser`` can be imported
    * - ``sidecars``
-     - Markdown notes next to the code as API pages
+     - Markdown notes next to the code as :term:`API` pages
      - yes when ``.md`` files sit in folders with MATLAB code
        (:doc:`sidecars`); needs ``markdown``
    * - ``make``
@@ -99,7 +109,7 @@ defaults.
      - A build guide for contributors (``BUILDING_DOCS.md``)
      - yes
    * - ``api_pages``
-     - API pages committed, or generated before each build
+     - :term:`API` pages committed, or generated before each build
      - ``"commit"``
    * - ``napoleon_custom_sections``
      - Use these napoleon_custom_sections
@@ -139,8 +149,12 @@ What it detects
 ---------------
 
 The release
-   ``R2024b`` and ``r2024b`` count alike; a tie goes to the newer release.
-   It sets :confval:`matlab_version`, which decides MATLAB's naming rules.
+   Every mention of a release in those files counts once, and the release
+   mentioned most often is the default; ``R2024b`` and ``r2024b`` count as
+   the same release. When two releases are mentioned equally often, the
+   newer one is the default: three mentions each of ``R2023a`` and
+   ``R2024b`` give ``R2024b``. It sets :confval:`matlab_version`, which
+   decides MATLAB's naming rules.
 
 Exclusions
    The default patterns, plus the paths in ``.gitmodules``, which
@@ -149,7 +163,7 @@ Exclusions
    project's ``resources/project`` files) names the folders on the MATLAB
    path; the highest folders with code that are not on it, and the start-up
    and shut-down files, are written into ``conf.py`` as commented-out
-   patterns. Uncomment what is not the project's API. Any of the three
+   patterns. Uncomment what is not the project's :term:`API`. Any of the three
    ``.prj`` layouts works (single file, multi-file, fixed-path multi-file);
    a project file that cannot be read, or names no path folder, gives no
    suggestions, and the report says so. A ``startup.m`` is not read.
@@ -157,19 +171,20 @@ Exclusions
 Help headings
    A heading is a comment line that holds only a label and a colon
    (``% Inputs:``) in a help block. Spellings that differ in case count as
-   one, as napoleon matches them. A heading in 10 or more files becomes a
+   one, as :term:`napoleon` matches them. A heading in 10 or more files becomes a
    section; ``Inputs``, ``Outputs``, ``Name Value Pairs`` and ``Options``
    as ``params_style``, so that their ``name: text`` items become
    parameters. Its plural or singular is an alias (``("Input",
-   "Inputs")``). Napoleon's own sections (``Args``, ``Returns``,
+   "Inputs")``). :term:`Napoleon`'s own sections (``Args``, ``Returns``,
    ``Examples``, ``See Also``, ...) need no entry; headings with other
    characters than letters, digits, ``_`` and spaces (``Name-Value
    Pairs``) never match, so rename them in the code.
 
 Sidecar docs
    ``.md`` files in a folder with ``.m`` or ``.mlapp`` files, outside the
-   Sphinx source folder. Markdown pages elsewhere (an MkDocs site) do not
-   count.
+   :term:`Sphinx` :term:`source folder <source directory>`. Markdown pages
+   elsewhere (a MkDocs site) do not
+   count as sidecar docs but need ignored explicitly in the configuration.
 
 The matlabdomain requirement
    Copied from how the running matlabdomain is installed: a git URL and
@@ -180,21 +195,24 @@ The matlabdomain requirement
 What it writes
 --------------
 
-In the Sphinx source folder (``docs`` by default; ``-o`` names another,
+In the :term:`Sphinx` :term:`source folder <source directory>` (``docs`` by
+default; ``-o`` names another,
 inside the project):
 
 ``conf.py``
-   The extensions (``sphinxcontrib.matlab``, ``sphinx.ext.napoleon``, and
+   The :term:`extensions <extension>` (``sphinxcontrib.matlab``,
+   ``sphinx.ext.napoleon``, and
    ``myst_parser`` for Markdown), the project root, the exclusions, the
-   release, sidecar docs, the API page settings, every
-   :confval:`matlab_api_check_rules` entry set to ``"warning"``, napoleon,
-   MyST and the theme. Commented lines show :confval:`matlab_external_names`
+   release, sidecar docs, the :term:`API` page settings, every
+   :confval:`matlab_api_check_rules` entry set to ``"warning"``, :term:`napoleon`,
+   :term:`MyST` and the :term:`theme`. Commented lines show
+   :confval:`matlab_external_names`
    and ``smartquotes``.
 ``index.rst``
-   The project name and a toctree with the API pages (and the build
+   The project name and a :term:`toctree` with the :term:`API` pages (and the build
    guide). The introduction is yours to write.
 ``Makefile``, ``make.bat``
-   ``make html``, ``clean`` and every other Sphinx target, plus
+   ``make html``, ``clean`` and every other :term:`Sphinx` target, plus
    ``apidoc``, ``apidoc-check`` and ``livehtml`` (``sphinx-autobuild``,
    rebuilding when a page or a MATLAB file changes). In a uv project they
    run everything with ``uv run --frozen --group docs``. ``make.bat`` has
@@ -203,10 +221,10 @@ inside the project):
    A short guide for contributors: set-up, commands, what to do when the
    code changes, the layout.
 ``_static/.gitkeep``
-   Git keeps no empty folder, and Sphinx warns about a missing
+   Git keeps no empty folder, and :term:`Sphinx` warns about a missing
    ``_static``.
 ``API/``
-   The API pages, as ``scmd apidoc`` writes them from that
+   The :term:`API` pages, as ``scmd apidoc`` writes them from that
    ``conf.py``.
 
 Outside it, it adds the docs dependencies to ``pyproject.toml`` in a uv
@@ -237,7 +255,7 @@ Help fields of Simulink files call this function to open their page;
 ``conf.py`` excludes it from the documentation. Commit both files. The
 function is rewritten on each run, the settings only written when
 missing. HTML builds never change the settings (a build writes only to its output
-and doctree folders); when the output folder, the server or
+and :term:`doctree` folders); when the output folder, the server or
 ``html_baseurl`` (``"published"``) differs from them, a build logs one
 ``info`` line, and you edit the file. They record which site they made:
 after ``make html`` the Help links open the local files, after ``make
@@ -264,7 +282,7 @@ The report ends with them:
 #. A clean build with ``-n`` (``make clean html SPHINXOPTS="-n"``), then
    fix or explain each warning (:doc:`warnings`). The strict build
    (``-n -W``) is the CI build.
-#. ``make apidoc-check`` in CI, when the API pages are committed.
+#. ``make apidoc-check`` in CI, when the :term:`API` pages are committed.
 #. ``make matlab-api-check``, the help-text audit (:doc:`api-check`).
 
 Not automated: edits to the MATLAB code (help-text fixes, copyright
