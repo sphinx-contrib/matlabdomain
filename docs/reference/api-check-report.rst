@@ -29,8 +29,10 @@ each entry that selects no file::
 :confval:`matlab_api_check_ignore_unmatched`), and the summary has a line
 ``Selected: <n> of <total> files by <entries> entries, <unmatched>
 matching no file`` (with `` (ignored)`` added likewise; after a line that
-says so when the selection is empty); the files not selected are counted
-as ``not selected``. Without a selection, the report is as before. The
+says so when the selection is empty). The files it counts are the indexed
+files (MATLAB code, apps and Simulink files, also those that are then not
+checked) and the sidecar docs; the files not selected are counted as
+``not selected``. Without a selection, the report is as before. The
 worked example's report, with the paths shortened:
 
 .. literalinclude:: ../../examples/apidoc/api-check.txt

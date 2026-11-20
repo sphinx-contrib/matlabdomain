@@ -341,8 +341,8 @@ do not separate entries. Its lines are added to
   listed in both reports, marked ``ignored``, but they log no error and do
   not change the exit status.
 
-Both reports count the files selected and the files not selected (``not
-selected``) and list the entries that select nothing; ``api-check.json``
+Both reports count the files and sidecar docs selected and those not
+selected (``not selected``) and list the entries that select nothing; ``api-check.json``
 also lists every entry. See :doc:`../reference/api-check-report`.
 
 In CI, pass the files a change touches, relative to the project root. A

@@ -954,6 +954,10 @@ def test_selected_sidecars(make_app, tmp_path):
     assert summary["checked"]["sidecar"] == 1
     assert summary["not_checked"]["not_selected"] == 2
     assert summary["selection"]["selected"] == 1
+    # The files of the Selected line are the indexed files and sidecar docs.
+    assert "Selected: 1 of 3 files by 1 entries, 0 matching no file" in (
+        text_lines(app)
+    )
 
 
 # --- selection from a file, unmatched entries ---------------------------------
