@@ -1082,13 +1082,10 @@ def test_script(mod):
 
 def test_module(dir_test_data, mod, app):
     assert mod.getter("__name__") == "test_data"
-    assert Path(mod.getter("__path__")[0]) == dir_test_data
-    assert Path(mod.getter("__file__")) == dir_test_data
-    assert mod.getter("__package__") == "test_data/"
+    assert Path(mod.path) == dir_test_data
     assert not mod.getter("__module__")
     assert not mod.getter("__doc__")
-    all_entities = mod.getter("__all__")
-    all_items = {name for name, entity in all_entities}
+    all_items = {name for name, _ in mod.member_refs()}
     expected_items = {
         "+package",
         "@ClassFolder",

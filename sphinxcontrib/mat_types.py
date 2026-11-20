@@ -1868,38 +1868,28 @@ class MatObject:
         return SIMULINK_TYPES[diagram.kind](name, folder, diagram)
 
 
-# TODO: get docstring and __all__ from contents.m if exists
+# TODO: get the docstring from Contents.m if it exists
 class MatModule(MatObject):
-    """All MATLAB modules are packages. A package is a folder that serves as the
-    namespace for any :class:`MatObjects` in the package folder. Sphinx will
-    treats objects without a namespace as builtins, so all MATLAB projects
-    should be packaged in a folder so that they will have a namespace. This
-    can also be accomplished by using the MATLAB +folder package scheme.
+    """A folder of the project: a plain folder, a namespace folder (``+name``)
+    or a class folder (``@name``). The index stage makes one for each
+    discovered folder; its members are the files and folders in it.
 
-    :param name: Name of :class:`MatObject`.
+    :param name: Name of the folder.
     :type name: str
-    :param path: Path of folder containing :class:`MatObject`.
+    :param path: Path of the folder on disk.
     :type path: str
     :param package: Folder reference (``target/+package/``; ``./`` for the root).
     :type package: str
     """
 
     #: the attributes :meth:`getter` returns as they are
-    _MODULE_ATTRIBUTES = (
-        "__name__",
-        "__doc__",
-        "__all__",
-        "__file__",
-        "__path__",
-        "__package__",
-    )
+    _MODULE_ATTRIBUTES = ("__name__", "__doc__")
 
     def __init__(self, name, path, package):
         super().__init__(name)
-        #: Path to module on disk, path to package's __init__.py
+        #: path of the folder on disk
         self.path = path
         #: folder reference
-        self.package = package
         self.ref = package
         #: ``(name, reference)`` of its files (name without extension) and
         #: folders in the order of their names on disk, set by the index stage
@@ -1923,45 +1913,10 @@ class MatModule(MatObject):
                     self.members.append((os.path.splitext(key)[0], ref))
         return self.members
 
-    def safe_getmembers(self):
-        """``(name, object)`` of the files and folders in the folder; every
-        file is parsed (or taken from the parse cache).
-        """
-        dom = _domain()
-        return [(name, resolve(dom, ref)) for name, ref in self.member_refs()]
-
     @property
     def __doc__(self):
         """A folder has no help text of its own: autodoc reads ``__doc__`` as None."""
         return None
-
-    @property
-    def __all__(self):
-        """``(name, object)`` of the folder's files and folders: autodoc's module
-        documenter lists the members in ``__all__``.
-        """
-        return self.safe_getmembers()
-
-    @property
-    def __path__(self):
-        """The folder's path in a list, like the ``__path__`` of a Python package, which
-        autodoc reads.
-        """
-        return [self.path]
-
-    @property
-    def __file__(self):
-        """The folder's path, like the ``__file__`` of a Python module, which autodoc
-        reads.
-        """
-        return self.path
-
-    @property
-    def __package__(self):
-        """The folder reference, like the ``__package__`` of a Python module, which
-        autodoc reads.
-        """
-        return self.package
 
     @override
     def getter(self, name, *_defargs) -> Any:

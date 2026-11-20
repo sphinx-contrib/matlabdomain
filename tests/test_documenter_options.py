@@ -384,7 +384,8 @@ def test_folder_options(make_app, tmp_path):
             ".. mat:autofolder:: sub\n   :synopsis: the sub folder\n   :platform: any\n"
             "   :deprecated:\n   :no-index:\n",
             ".. mat:autofolder:: sub(x)\n",
-            ".. mat:autofolder:: sub\n   :members: g, nothing\n",
+            ".. mat:autofolder:: sub\n   :members: g, nothing, __all__, __file__, "
+            "__path__, __package__\n",
             ".. mat:autofolder:: Access.pub\n",
         ),
     )
@@ -394,11 +395,13 @@ def test_folder_options(make_app, tmp_path):
         "index.rst:10: WARNING: [sphinxcontrib-matlabdomain] signature arguments "
         "or return annotation given for autofolder sub/ [mat.directive]" in warnings
     )
-    assert (
-        "index.rst:12: WARNING: [sphinxcontrib-matlabdomain] missing attribute "
-        "mentioned in :members: or __all__: folder sub, attribute nothing "
-        "[mat.not_found]" in warnings
-    )
+    # Python's module attributes are no members of a folder either
+    for name in ("nothing", "__all__", "__file__", "__path__", "__package__"):
+        assert (
+            "index.rst:12: WARNING: [sphinxcontrib-matlabdomain] missing attribute "
+            f"mentioned in :members: or __all__: folder sub, attribute {name} "
+            "[mat.not_found]" in warnings
+        )
     assert "don't know which object to document for 'Access.pub'" in warnings
     assert documented(app, "sub/") == ["", "g.m"]
 
