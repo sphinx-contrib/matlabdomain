@@ -2,6 +2,7 @@
 
 import importlib.metadata
 import logging
+import re
 
 import pytest
 import sphinx
@@ -163,5 +164,25 @@ def test_a_bad_value_stops_sphinx_build_naming_it(project, tmp_path, capsys):
     assert_configuration_error(
         capsys.readouterr().err,
         "matlab_auto_link must be None, 'basic' or 'all', not 'some'.",
+    )
+    assert not (out / "index.html").exists()
+
+
+def test_a_missing_project_root_stops_sphinx_build(project, tmp_path, capsys):
+    with open(project / "conf.py", "a", encoding="utf-8") as conf:
+        conf.write('matlab_src_code_project_root = "../no_such_folder"\n')
+    out = tmp_path / "out"
+    assert sphinx_build(["-q", str(project), str(out)]) == 2
+    err = capsys.readouterr().err
+    # The folder as resolved: next to the source folder, not below it.
+    message = re.search(r"matlab_src_code_project_root '(.*)' is not a folder\.", err)
+    assert message is not None
+    resolved = message[1].replace("\\\\", "/")
+    assert resolved.endswith("/no_such_folder")
+    assert "/docs/" not in resolved
+    assert_configuration_error(
+        err,
+        f"{message[0]} Set it to the folder of the MATLAB code; a relative path "
+        "is relative to the Sphinx source folder.",
     )
     assert not (out / "index.html").exists()

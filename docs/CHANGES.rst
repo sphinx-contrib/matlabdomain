@@ -95,9 +95,11 @@ Names and references:
 Configuration:
 
 * ``matlab_src_dir`` is replaced by ``matlab_src_code_project_root``
-  (relative to the Sphinx source folder). Setting ``matlab_src_dir``,
-  ``matlab_keep_package_prefix`` or ``matlab_short_links`` is a
-  ``ConfigError``; one error names every removed value that is set.
+  (relative to the Sphinx source folder); a folder that does not exist is
+  a ``ConfigError`` (0.x indexed nothing, without a warning). Setting
+  ``matlab_src_dir``, ``matlab_keep_package_prefix`` or
+  ``matlab_short_links`` is a ``ConfigError``; one error names every
+  removed value that is set.
 * A ``matlab_*`` name that is not a configuration value (a typo, a helper
   variable) is a ``ConfigError`` in the build and in ``scmd apidoc``, with
   the closest value as a suggestion, also when another extension sets it

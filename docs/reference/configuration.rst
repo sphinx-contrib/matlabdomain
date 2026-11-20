@@ -47,7 +47,8 @@ Source files
 
    The folder all MATLAB source lives below. Every path reference is
    relative to it. A relative path is relative to the Sphinx
-   :term:`source folder <source directory>`.
+   :term:`source folder <source directory>`. A folder that does not exist
+   is a ``ConfigError`` in the build and in ``scmd apidoc``.
    ``None`` indexes no files. Required when
    :confval:`matlab_src_include_patterns` differs from its default,
    :confval:`matlab_src_exclude_patterns` is set to a list other than

@@ -137,8 +137,6 @@ def _settings(args):
     root = project_root(conf, srcdir)
     if root is None:
         raise ConfigError("matlab_src_code_project_root is required in conf.py.")
-    if not os.path.isdir(root):
-        raise ConfigError(f"matlab_src_code_project_root {root!r} is not a folder.")
 
     check_sources(conf, srcdir)
     settings = cast(IndexSettings, IndexSettings.from_config(conf, srcdir))

@@ -79,6 +79,7 @@ def test_build_and_command_read_the_same_settings(conf_py, tmp_path):
 
 #: row -> wrong values of the right type (an allowed set or a format)
 BAD_FORMAT = {
+    "matlab_src_code_project_root": ["no_such_folder"],
     "matlab_auto_link": ["bogus"],
     "matlab_apidoc_group": ["bogus"],
     "matlab_apidoc_page_size": [0],

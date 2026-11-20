@@ -7,6 +7,7 @@ with the same defaults and the same checks, so the two always agree.
 from __future__ import annotations
 
 import copy
+import os
 
 from sphinx.errors import ConfigError
 
@@ -138,8 +139,14 @@ def check_sources(config, srcdir):
         raise ConfigError(" ".join(removed) + f" Remove {them} from conf.py.")
 
     sources = mat_types.source_filter(config)
-    if config.matlab_src_code_project_root is not None:
-        root = mat_types.project_root(config, srcdir)
+    root = mat_types.project_root(config, srcdir)
+    if root is not None:
+        if not os.path.isdir(root):
+            raise ConfigError(
+                f"matlab_src_code_project_root {root!r} is not a folder. Set it to "
+                "the folder of the MATLAB code; a relative path is relative to the "
+                "Sphinx source folder."
+            )
         mat_types.check_pattern_folders(sources, root)
         if mat_types.sidecar_suffix_list(config.matlab_src_sidecar_suffixes):
             mat_types.sidecar_layout_error(root, srcdir)

@@ -1351,12 +1351,10 @@ def intersphinx(ctx):
 #: must stop with exit 2 (1 for scmd apidoc's usage errors is not accepted)
 #: and print the message (a regular expression), without a traceback.
 BAD_CONFIG = [
-    ({"matlab_src_code_project_root": "../no_such_root"}, "apidoc", r"no_such_root"),
     (
         {"matlab_src_code_project_root": "../no_such_root"},
-        "html",
-        r"no_such_root",
-        "E2E-10",
+        "apidoc html api",
+        r"matlab_src_code_project_root '.*no_such_root' is not a folder",
     ),
     (
         {"matlab_src_code_project_root": 5},
