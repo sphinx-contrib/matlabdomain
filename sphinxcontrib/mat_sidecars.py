@@ -687,25 +687,31 @@ def _block_keys(library):
 
 def _parse_simulink_doc(directive, file_ref, paths):
     """Parse the first of ``paths``, the documentation files of ``file_ref``,
-    and warn about the others, about headings that name no block of a
-    library, and about blocks without a section.
+    and record its warnings: about the others, about headings that name no
+    block of a library, and about blocks without a section
+    (``warn_simulink_docs`` gives them).
     """
     env = directive.env
     dom = env.get_domain("mat")
     docs = dom.data["simulink_docs"]
     path, ref = paths[0], docs[paths[0]]["reference"]
-    for other in paths[1:]:
-        _warn(
+    found: list[tuple[str, str, str | None]] = [
+        (
             "simulink",
             f"{docs[other]['reference']} is not used: {ref} documents {file_ref} "
             "(see matlab_simulink_doc_suffixes).",
             f"{other}:1",
         )
+        for other in paths[1:]
+    ]
+    dom.data["simulink_doc_warnings"].setdefault(env.docname, {})[path] = found
     env.note_dependency(path)
     try:
         result, _sidecar = parse_file(directive, path, ref)
     except OSError as err:
-        _warn("parse_error", f"{ref} cannot be read ({err.strerror or err}).")
+        found.append(
+            ("parse_error", f"{ref} cannot be read ({err.strerror or err}).", None)
+        )
         return None
     doc = _split(result)
     obj = mat_types.resolve(dom, file_ref)
@@ -713,21 +719,42 @@ def _parse_simulink_doc(directive, file_ref, paths):
         keys = _block_keys(obj)
         for key, rubric, _body in doc.sections:
             if key not in keys:
-                _warn(
-                    "simulink",
-                    f"{ref}: the heading {rubric.astext()!r} names no masked block "
-                    f"of {file_ref}; its text goes with the library.",
-                    f"{rubric.source}:{rubric.line}",
+                found.append(
+                    (
+                        "simulink",
+                        f"{ref}: the heading {rubric.astext()!r} names no masked "
+                        f"block of {file_ref}; its text goes with the library.",
+                        f"{rubric.source}:{rubric.line}",
+                    )
                 )
-        found = {key for key, _rubric, _body in doc.sections}
-        missing = [repr(p) for k, p in keys.items() if k not in found]
+        headings = {key for key, _rubric, _body in doc.sections}
+        missing = [repr(p) for k, p in keys.items() if k not in headings]
         if missing:
-            _warn(
-                "simulink",
-                f"{ref} has no section for the blocks {', '.join(missing)}.",
-                f"{path}:1",
+            found.append(
+                (
+                    "simulink",
+                    f"{ref} has no section for the blocks {', '.join(missing)}.",
+                    f"{path}:1",
+                )
             )
     return doc
+
+
+def warn_simulink_docs(_app, env):
+    """``env-updated``: the warnings about Simulink documentation files, once
+    per file that a document read in this build used, in index order (serial
+    and parallel builds).
+    """
+    dom = env.get_domain("mat")
+    found = {}
+    for docname in dom.read_docnames:
+        for path, warnings in (
+            dom.data["simulink_doc_warnings"].get(docname, {}).items()
+        ):
+            found.setdefault(path, warnings)
+    for path in dom.data["simulink_docs"]:
+        for warning in found.get(path, ()):
+            _warn(*warning)
 
 
 def _split(result):

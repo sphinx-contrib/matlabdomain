@@ -1992,7 +1992,6 @@ def simulink(ctx):
         len(serial.warned(r"has no section for the blocks")) == 1,
         "a doc file without sections for some blocks warns once, not once "
         "per directive",
-        bug="E2E-26",
     )
     ctx.expect(serial.warned(r"metadata") == [], "no metadata warning")
 

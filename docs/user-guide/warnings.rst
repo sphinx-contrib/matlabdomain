@@ -184,9 +184,11 @@ When warnings appear
   ``mat.link_cycle``, ``mat.invalid_matlab`` for NUL bytes, and
   ``mat.parse_error`` for a file or folder that cannot be read.
 * Once per build, for the files that the pages read in that build use:
-  ``mat.invalid_matlab`` and ``mat.parse_error`` found while parsing. A file
+  ``mat.invalid_matlab`` and ``mat.parse_error`` found while parsing, and
+  the ``mat.simulink`` warnings about a Simulink documentation file. A file
   that no page uses is not parsed, so it does not get these (the
-  ``matlab-api-check`` builder parses every file, so it reports them all).
+  ``matlab-api-check`` builder parses every code file, so it reports them
+  all).
 
 Other warnings
 --------------

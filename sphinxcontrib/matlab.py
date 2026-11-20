@@ -1040,6 +1040,9 @@ class MATLABDomain(Domain):
         # docname -> [(sidecar reference, kind, target, line)]: broken relative
         # links and missing images in the sidecar docs it renders
         "sidecar_issues": {},
+        # docname -> {Simulink documentation file path: [(subtype, message,
+        # location)]}: the warnings about the files it parsed
+        "simulink_doc_warnings": {},
         # docname -> True: it has a reference to a MATLAB object
         "xref_docs": {},
         # docname -> {reference: (location, objtype, display, folder)}: the
@@ -1073,7 +1076,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 33
+    data_version = 34
     indices: ClassVar[list[type[Index]]] = [
         MATLABFolderIndex,
     ]
@@ -1279,6 +1282,7 @@ class MATLABDomain(Domain):
         self.data["doc_sources"].pop(docname, None)
         self.data["sidecar_docs"].pop(docname, None)
         self.data["sidecar_issues"].pop(docname, None)
+        self.data["simulink_doc_warnings"].pop(docname, None)
         self.data["xref_docs"].pop(docname, None)
         self.data["described"].pop(docname, None)
         self._displays = self._stable_urls = None
@@ -1321,6 +1325,7 @@ class MATLABDomain(Domain):
             "doc_sources",
             "sidecar_docs",
             "sidecar_issues",
+            "simulink_doc_warnings",
             "xref_docs",
             "described",
         ):
@@ -1738,6 +1743,7 @@ def setup(app):
     app.connect("env-before-read-docs", mat_types.note_read_docs)
     app.connect("env-updated", reconcile_objects, priority=400)
     app.connect("env-updated", mat_types.warn_parsed_sources)
+    app.connect("env-updated", mat_sidecars.warn_simulink_docs)
     app.connect("build-finished", mat_api_check.set_status)
     app.connect("missing-reference", check_inventories, priority=400)
     app.add_post_transform(CheckExternalReferences)

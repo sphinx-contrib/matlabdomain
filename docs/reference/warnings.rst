@@ -97,7 +97,8 @@ for a file without one, the auto directive for a folder).
        used, a heading in one of a library that names no masked block, or
        masked blocks without a section
        (:confval:`matlab_simulink_doc_suffixes`)
-     - where the directive is, or in the documentation file
+     - where the directive is; in the documentation file once per build
+       that reads a page using it
    * - ``mat.api_check``
      - a ``matlab-api-check`` finding
      - when the builder runs

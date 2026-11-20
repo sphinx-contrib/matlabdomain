@@ -3,8 +3,10 @@
 """
 
 import html
+import os
 import re
 import shutil
+import time
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -615,6 +617,56 @@ def test_unreadable_documentation_file(make_app, tmp_path):
         make_app, tmp_path, index, before_build=(tmp_path / "src" / "hid.rst").unlink
     )
     assert warnings.count("hid.rst cannot be read") == 1, warnings
+
+
+def test_documentation_file_warns_once_per_build(make_app, tmp_path, monkeypatch):
+    # Six pages use hid.mdl and its documentation file: its warnings come
+    # once per build that reads one of them, also with parallel reading.
+    import sphinx.builders
+    from test_lazy_index import ForkLikeTasks
+
+    write_docs(tmp_path, {"hid.mdl": HID, "hid.rst": HID_RST, "hid.md": "# No\n"})
+    pages = [f"p{i}" for i in range(6)]
+    for i, name in enumerate(pages):
+        options = "   :members:\n" if i == 0 else "   :no-index:\n"
+        (tmp_path / f"{name}.rst").write_text(
+            f"P{i}\n==\n\n.. mat:autosimulink_library:: hid\n{options}"
+        )
+    toctree = "".join(f"   {name}\n" for name in pages)
+    (tmp_path / "index.rst").write_text(f"Index\n=====\n\n.. toctree::\n\n{toctree}")
+    (tmp_path / "conf.py").write_text(
+        f"{MYST}matlab_src_code_project_root = 'src'\n"
+        "matlab_simulink_doc_suffixes = ['.rst', '.md']\n"
+    )
+    expected = ["is not used", "names no masked block", "has no section"]
+
+    def counts(app):
+        found = app.warning.getvalue()
+        return [found.count(text) for text in expected]
+
+    serial = make_app(srcdir=tmp_path, builddir=tmp_path / "serial")
+    serial.build()
+    assert counts(serial) == [1, 1, 1], serial.warning.getvalue()
+    _touch(tmp_path / "p3.rst")
+    again = make_app(srcdir=tmp_path, builddir=tmp_path / "serial")
+    again.build()
+    assert counts(again) == [1, 1, 1]
+    # nothing read: no warning, as for the files the pages use
+    quiet = make_app(srcdir=tmp_path, builddir=tmp_path / "serial")
+    quiet.build()
+    assert counts(quiet) == [0, 0, 0]
+
+    monkeypatch.setattr(sphinx.builders, "parallel_available", True)
+    monkeypatch.setattr(sphinx.builders, "ParallelTasks", ForkLikeTasks)
+    parallel = make_app(srcdir=tmp_path, builddir=tmp_path / "parallel", parallel=4)
+    ForkLikeTasks.app = parallel
+    parallel.build()
+    assert counts(parallel) == [1, 1, 1], parallel.warning.getvalue()
+
+
+def _touch(path):
+    now = time.time_ns()
+    os.utime(path, ns=(now, now))
 
 
 def test_documentation_file_is_not_a_sidecar_doc(make_app, tmp_path):
