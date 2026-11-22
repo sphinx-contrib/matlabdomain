@@ -2227,6 +2227,29 @@ def simulink(ctx):
         f"an unknown metadata name stops the build once (exit {bad.rc}, {n} warnings)",
     )
 
+    # in a :metadata: option it is one warning where the directive is, and the
+    # build goes on (reference/directives.rst)
+    ctx.write(
+        "docs/option.rst",
+        """
+        :orphan:
+
+        Option
+        ======
+
+        .. mat:autosimulink_model:: R2026b/slx/probeModel.slx
+           :metadata: release, colour
+           :noindex:
+        """,
+    )
+    option = ctx.sphinx("metadata option", docs, ctx.path("option-html"))
+    hits = option.warned(r"unknown Simulink metadata 'colour'.*\[mat\.simulink\]")
+    ctx.expect(
+        option.rc == 0 and len(hits) == 1 and "option.rst" in hits[0],
+        f"an unknown name in a :metadata: option warns once, at its directive "
+        f"(exit {option.rc}, {len(hits)})",
+    )
+
 
 @scenario
 def broken_input(ctx):
