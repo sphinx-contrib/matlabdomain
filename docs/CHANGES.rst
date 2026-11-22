@@ -121,10 +121,9 @@ Configuration:
 * Each run checks the ``matlab_*`` values it uses when it starts: a value
   that is not valid stops ``sphinx-build``, ``-b matlab-api-check`` or
   ``scmd apidoc`` if the run uses it, and is one ``mat.config`` warning in a
-  run that does not. So a bad ``matlab_api_check_*`` value no longer stops
-  HTML, text or LaTeX builds. A value that is ``True`` or ``False`` must be
-  a bool: ``"no"`` acted as ``True`` before and is now a ``ConfigError``,
-  as is ``0`` (``-D name=0`` still works).
+  run that does not. A value that is ``True`` or ``False`` must be a bool:
+  ``"no"`` acted as ``True`` before and is now a ``ConfigError``, as is
+  ``0`` (``-D name=0`` still works).
 
 Help text:
 
