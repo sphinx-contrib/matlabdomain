@@ -1569,6 +1569,22 @@ def test_unreadable_file_is_left_out(
     ]
 
 
+def test_a_read_error_without_text_is_still_unreadable(tmp_path, monkeypatch):
+    # An OSError may carry no text (a handler of another package may raise one).
+    write(tmp_path, {"ok.m": FUNCTION.format(name="ok"), "locked.m": "x\n"})
+    read = mat_handlers.MFileHandler.read
+
+    def locked(self, path, *args, **kwargs):
+        if path.endswith("locked.m"):
+            raise OSError
+        return read(self, path, *args, **kwargs)
+
+    monkeypatch.setattr(mat_handlers.MFileHandler, "read", locked)
+    index = build_index(IndexSettings(str(tmp_path))).index
+    record = next(r for r in index.values() if r["reference"] == "locked.m")
+    assert (record["type"], record["unreadable"]) == ("unknown", "OSError")
+
+
 def test_broken_simulink_files_warn_once_and_are_left_out(tmp_path, caplog_sphinx):
     write(
         tmp_path,

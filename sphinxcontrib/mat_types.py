@@ -1312,7 +1312,8 @@ class _Indexer:
                 kind, text, problems = handler.read(path, self.encoding)
                 unreadable = False
             except OSError as err:
-                kind, unreadable = UNKNOWN, err.strerror or str(err)
+                cause = err.strerror or str(err) or type(err).__name__
+                kind, unreadable = UNKNOWN, cause
                 problems = [("parse_error", failure_message(err), None)]
             help_only = kind in (SCRIPT, FUNCTION) and text is not None
             help_only = help_only and is_help_only(cast(str, text))
