@@ -967,6 +967,7 @@ class SourceIndex:
 
     - ``index``: source path -> record ``{reference, type, mtime, size,
       warnings, unreadable, matlab_name, private, scope}``, in walk order;
+      ``unreadable`` is False, or why the file cannot be read;
     - ``entities``: folder reference -> ``MatModule`` with its ``members``;
     - ``matlab_names``: MATLAB name -> path references;
     - ``text_cache``: ``(path, mtime_ns, size)`` -> decoded text;
@@ -991,19 +992,20 @@ class SourceIndex:
     sphinx_sources: list = field(default_factory=list)
 
 
-def build_index(settings, old_index=None):
+def build_index(settings, old_index=None, warn_unreadable=True):
     """Run the index stage for ``settings`` without a Sphinx app.
 
     Walks the root, reads and classifies each selected file once and names
     files and folders the MATLAB way. Records in ``old_index`` (``{path:
     record}`` of an earlier run) are reused for files whose ``(mtime, size)``
     did not change. Warnings go through ``sphinx.util.logging``
-    (``type="mat"``).
+    (``type="mat"``); with ``warn_unreadable`` False, not for a file that
+    cannot be read: the caller reports it from the record (``unreadable``).
     """
     out = SourceIndex(settings)
     if os.path.isdir(settings.root):
         try:
-            _Indexer(out, old_index or {}).run()
+            _Indexer(out, old_index or {}, warn_unreadable=warn_unreadable).run()
         except Exception as e:  # pragma: no cover - defensive: log an indexer bug
             import traceback
 
@@ -1042,9 +1044,10 @@ class _Indexer:
     ``sidecars_only`` the walk records sidecar docs only.
     """
 
-    def __init__(self, out, old_index, sidecars_only=False):
+    def __init__(self, out, old_index, sidecars_only=False, warn_unreadable=True):
         settings = out.settings
         self.out = out
+        self.warn_unreadable = warn_unreadable
         self.basedir = settings.root
         self.old_index = old_index
         self.sources = SourceFilter(settings.include, settings.exclude)
@@ -1309,7 +1312,7 @@ class _Indexer:
                 kind, text, problems = handler.read(path, self.encoding)
                 unreadable = False
             except OSError as err:
-                kind, unreadable = UNKNOWN, True
+                kind, unreadable = UNKNOWN, err.strerror or str(err)
                 problems = [("parse_error", failure_message(err), None)]
             help_only = kind in (SCRIPT, FUNCTION) and text is not None
             help_only = help_only and is_help_only(cast(str, text))
@@ -1324,8 +1327,9 @@ class _Indexer:
             "unreadable": unreadable,
             "help_only": help_only,
         }
-        for subtype, message, row in problems:
-            _warn_file(ref, path, subtype, message, row)
+        if self.warn_unreadable or not unreadable:
+            for subtype, message, row in problems:
+                _warn_file(ref, path, subtype, message, row)
 
 
 def _index_shape(data):

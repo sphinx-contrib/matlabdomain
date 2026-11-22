@@ -56,7 +56,9 @@ What each warning means
    parts below ``metadata/``), a folder could not be listed
    or entered, or a file name is not valid UTF-8. A file that cannot be
    read or parsed is still indexed and documented, without content, so
-   links to it work; it is tried again on every build. A ``.slx`` or ``.mdl``
+   links to it work; it is tried again on every build. ``scmd apidoc``
+   lists no file that it cannot read, and gives it one ``mat.apidoc``
+   warning instead of this one. A ``.slx`` or ``.mdl``
    file that is not a Simulink file is the exception: it gets this one
    warning, from the index, and no page, so an ``autofolder`` or
    ``autonamespace`` with ``:members:`` and ``scmd apidoc`` leave it out, and
@@ -180,7 +182,8 @@ What each warning means
    same as a fresh one for the pages it reads.
 
 ``mat.apidoc``
-   ``scmd apidoc``: a file that cannot be read was left out, two
+   ``scmd apidoc``: a file cannot be read (the warning gives the cause,
+   such as ``Permission denied``) and is left out, two
    output names differ only by letter case, or an output path is longer
    than Windows allows.
 

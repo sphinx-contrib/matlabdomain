@@ -29,7 +29,8 @@ for a file without one, the auto :term:`directive` for a folder).
        ``.slx`` or ``.mdl`` file that is not a readable Simulink file (a Git
        LFS pointer, too large), a parser failure, a file name that is not
        valid UTF-8, two names in one folder that differ only by Unicode
-       form, a page that cannot be read
+       form, a page that cannot be read (``scmd apidoc`` reports a file it
+       cannot read as ``mat.apidoc``)
      - every build (reading); parse failures when a page uses the file
    * - ``mat.folder_name``
      - an error, not a warning (``suppress_warnings`` does not hide it): a
@@ -89,8 +90,9 @@ for a file without one, the auto :term:`directive` for a folder).
        than the :term:`Sphinx` :term:`source folder <source directory>`
      - where the sidecar doc is rendered; the drive at start-up
    * - ``mat.apidoc``
-     - ``scmd apidoc``: an unreadable file, output names that differ only
-       by case, a path too long for Windows
+     - ``scmd apidoc``: a file that cannot be read (with the cause; it is
+       left out), output names that differ only by case, a path too long
+       for Windows
      - when it runs
    * - ``mat.stable_url``
      - a stable address file (:confval:`matlab_stable_urls`) that cannot be

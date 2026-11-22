@@ -2325,6 +2325,17 @@ def broken_input(ctx):
         )
         hits = [ln for ln in gen.stderr.splitlines() if needle in ln]
         ctx.expect(len(hits) == 1, f"apidoc: {needle}: one warning ({len(hits)})")
+    # a file apidoc cannot read: one line with the cause, and it is left out
+    hits = [ln for ln in gen.stderr.splitlines() if "unreadable.m" in ln]
+    ctx.expect(
+        len(hits) == 1
+        and re.search(
+            r"unreadable\.m cannot be read \(.+\); it is left out\. \[mat\.apidoc\]$",
+            hits[0],
+        )
+        is not None,
+        f"apidoc: unreadable.m: one mat.apidoc warning with the cause ({hits})",
+    )
     ctx.expect(not b.warned(r"bomHelp"), "a file with a BOM: no warning")
     ctx.expect(
         "Help after a BOM"

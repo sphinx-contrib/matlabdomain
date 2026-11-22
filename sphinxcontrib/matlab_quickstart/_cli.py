@@ -554,7 +554,8 @@ def run(args):
         source_dir=docs,
     )
     with _sphinx_warnings(sys.stderr) as warnings:
-        source_index = build_index(settings)
+        # As scmd apidoc: the generator says that it leaves the file out.
+        source_index = build_index(settings, warn_unreadable=False)
         found = _detect.survey(source_index)
         simulink = bool(tools) or _detect.has_simulink(source_index)
         headings = _detect.napoleon_headings(found)

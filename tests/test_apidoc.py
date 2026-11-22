@@ -4,6 +4,7 @@ builds of its output.
 
 import importlib.metadata
 import os
+import re
 import runpy
 import shutil
 import subprocess
@@ -1523,12 +1524,18 @@ def test_missing_file_is_not_the_same_file(tmp_path):
     assert not _generate._same_file(missing, missing)
 
 
-def test_unreadable_file_is_left_out(tmp_path, caplog_sphinx, condition, monkeypatch):
-    write(tmp_path, {"ok.m": FUNCTION.format(name="ok"), "locked.m": "x\n"})
+def test_unreadable_file_is_left_out(
+    make_app, tmp_path, capsys, condition, monkeypatch
+):
+    """The command gives one line for a file it cannot read, with the cause
+    and what it does with it; a build keeps its own line.
+    """
+    src = tmp_path / "src"
+    write(src, {"ok.m": FUNCTION.format(name="ok"), "locked.m": "x\n"})
     # chmod 000 does not stop root, and Windows has no such permission.
     can_lock = os.name != "nt" and hasattr(os, "geteuid") and os.geteuid() != 0
     if condition("POSIX permissions", can_lock) == "real":
-        (tmp_path / "locked.m").chmod(0)
+        (src / "locked.m").chmod(0)
     else:
         read = mat_handlers.MFileHandler.read
 
@@ -1538,13 +1545,28 @@ def test_unreadable_file_is_left_out(tmp_path, caplog_sphinx, condition, monkeyp
             return read(self, path, *args, **kwargs)
 
         monkeypatch.setattr(mat_handlers.MFileHandler, "read", locked)
+    docs = tmp_path / "docs"
+    out = tmp_path / "out"
     try:
-        page = {p.docname: p for p in pages_of(tmp_path)}["root"]
+        assert main(["-q", "-c", conf_dir(docs, out, FOLDER, root=src)]) == 0
+        lines = capsys.readouterr().err.splitlines()
+        (docs / "index.rst").write_text("T\n=\n\n.. mat:autofunction:: locked\n")
+        app = make_app(
+            srcdir=docs, confoverrides={"extensions": ["sphinxcontrib.matlab"]}
+        )
+        app.build()
     finally:
-        (tmp_path / "locked.m").chmod(0o644)
-    listed = [e["ref"] for _, entries in page.context["sections"] for e in entries]
-    assert listed == ["ok.m"]
-    assert any("locked.m could not be read" in m for _, m in caplog_sphinx)
+        (src / "locked.m").chmod(0o644)
+    assert [line for line in lines if "locked.m" in line] == [
+        "WARNING: [scmd apidoc] locked.m cannot be read (Permission denied); it is "
+        "left out. [mat.apidoc]"
+    ]
+    assert "locked" not in (out / "index.rst").read_text(encoding="utf-8")
+    built = re.sub(r"\x1b\[[0-9;]*m", "", app.warning.getvalue())
+    assert [line for line in built.splitlines() if "locked" in line] == [
+        "WARNING: [sphinxcontrib-matlabdomain] locked.m cannot be read (Permission "
+        "denied); it is documented without content. [mat.parse_error]"
+    ]
 
 
 def test_broken_simulink_files_warn_once_and_are_left_out(tmp_path, caplog_sphinx):

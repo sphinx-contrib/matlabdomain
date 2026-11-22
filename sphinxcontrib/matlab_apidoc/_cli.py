@@ -245,7 +245,8 @@ def main(argv=None, *, prog="scmd apidoc"):
     with _sphinx_warnings(sys.stderr, suppress) as warnings:
         for problem in problems:
             logger.warning("[scmd apidoc] %s", problem, type="mat", subtype="config")
-        source_index = build_index(settings)
+        # The generator says that a file it cannot read is left out.
+        source_index = build_index(settings, warn_unreadable=False)
         result = generate(source_index, options)
     elapsed = time.perf_counter() - start
 
