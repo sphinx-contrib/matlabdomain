@@ -1090,6 +1090,11 @@ def test_conf_suppress_warnings_of_another_subtype(tmp_path, capsys):
             "matlab_api_check_rules must be a dict of rule -> severity.",
             "the matlab-api-check builder",
         ),
+        (
+            'matlab_simulink_metadata = "release"',
+            "matlab_simulink_metadata must be a list of metadata names, not 'release'.",
+            "sphinx-build",
+        ),
     ],
 )
 def test_values_of_other_runs_warn_once(tmp_path, capsys, conf, message, users):

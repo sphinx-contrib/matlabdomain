@@ -12,6 +12,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+from sphinx.errors import ConfigError
 
 from sphinxcontrib import mat_documenters
 
@@ -257,6 +258,60 @@ def test_metadata_settings(make_app, tmp_path):
     assert "[mat.simulink]" in warnings
     assert "Last modified: 2026-11-07T03:40:39Z" in text(page)
     assert "Release" not in text(page)
+
+
+METADATA_NAMES = "release, model_version, creator, created, last_modified_by, modified"
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        (
+            '["release", "bogus"]',
+            "matlab_simulink_metadata: unknown metadata 'bogus'; the names are "
+            f"{METADATA_NAMES}.",
+        ),
+        (
+            '"release"',
+            "matlab_simulink_metadata must be a list of metadata names, not 'release'.",
+        ),
+        ("5", "matlab_simulink_metadata must be a list of metadata names, not 5."),
+        ("[1]", "matlab_simulink_metadata must be a list of metadata names, not [1]."),
+    ],
+)
+def test_metadata_setting_is_checked_once_at_start(make_app, tmp_path, value, message):
+    """A bad matlab_simulink_metadata stops the build before any page is
+    read (not a warning per directive, a warning per character, or a crash).
+    """
+    index = "".join(
+        f".. mat:autosimulink_model:: {name}\n\n" for name in ("probeModel", "probeRef")
+    )
+    with pytest.raises(ConfigError) as error:
+        build(make_app, tmp_path, index, f"matlab_simulink_metadata = {value}\n")
+    assert str(error.value) == message
+
+
+def test_metadata_setting_stops_sphinx_build(tmp_path, capsys):
+    from test_config import assert_configuration_error, sphinx_build
+
+    (tmp_path / "src").mkdir()
+    shutil.copyfile(SLX / "probeModel.slx", tmp_path / "src" / "probeModel.slx")
+    (tmp_path / "conf.py").write_text(
+        'extensions = ["sphinxcontrib.matlab"]\n'
+        'matlab_src_code_project_root = "src"\n'
+        'matlab_simulink_metadata = ["release", "bogus"]\n'
+    )
+    (tmp_path / "index.rst").write_text(
+        "I\n=\n\n.. mat:autosimulink_model:: probeModel\n"
+    )
+    out = tmp_path / "out"
+    assert sphinx_build(["-q", "-E", str(tmp_path), str(out)]) == 2
+    assert_configuration_error(
+        capsys.readouterr().err,
+        "matlab_simulink_metadata: unknown metadata 'bogus'; the names are "
+        f"{METADATA_NAMES}.",
+    )
+    assert not (out / "index.html").exists()
 
 
 def test_wrong_kind_and_unreadable_file(make_app, tmp_path):

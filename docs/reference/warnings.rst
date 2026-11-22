@@ -98,8 +98,9 @@ for a file without one, the auto :term:`directive` for a folder).
        project in its place is an error that stops the build)
      - at the end of an HTML build
    * - ``mat.simulink``
-     - an unknown name in :confval:`matlab_simulink_metadata` or a
-       ``:metadata:`` option; a Simulink documentation file that is not
+     - an unknown name in a ``:metadata:`` option (one in
+       :confval:`matlab_simulink_metadata` stops the build); a Simulink
+       documentation file that is not
        used, a heading in one of a library that names no masked block, or
        masked blocks without a section
        (:confval:`matlab_simulink_doc_suffixes`)

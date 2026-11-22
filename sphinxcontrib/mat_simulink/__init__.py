@@ -12,6 +12,7 @@ from pathlib import Path
 
 from ._model import (
     KINDS,
+    METADATA,
     Diagram,
     LibraryBlock,
     Mask,
@@ -30,6 +31,7 @@ MATLAB_TOOLS = Path(__file__).parent / "matlab"
 __all__ = [
     "KINDS",
     "MATLAB_TOOLS",
+    "METADATA",
     "Diagram",
     "LibraryBlock",
     "Mask",

@@ -257,8 +257,10 @@ Output
    The metadata of a Simulink file that its page shows, in this order:
    ``release`` (the release that saved it), ``model_version``,
    ``creator``, ``created``, ``last_modified_by``, ``modified``. The
-   ``:metadata:`` option of a :term:`directive` replaces it for one :term:`object`. An
-   unknown name is a ``mat.simulink`` warning.
+   ``:metadata:`` option of a :term:`directive` replaces it for one :term:`object`.
+   A value that is not a list of these names is a ``ConfigError`` when the
+   build starts; an unknown name in the option is a ``mat.simulink``
+   warning where the :term:`directive` is.
 
 .. confval:: matlab_simulink_doc_suffixes
    :type: ``list[str]``

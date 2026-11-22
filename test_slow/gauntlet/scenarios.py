@@ -1475,6 +1475,21 @@ BAD_CONFIG = [
         r"matlab_short_links",
     ),
     (
+        {"matlab_simulink_metadata": ["release", "bogus"]},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_simulink_metadata: unknown metadata 'bogus'",
+    ),
+    (
+        {"matlab_simulink_metadata": "release"},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_simulink_metadata must be a list of metadata names",
+    ),
+    (
+        {"matlab_simulink_metadata": 5},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_simulink_metadata must be a list of metadata names",
+    ),
+    (
         {"matlab_simulink_doc_suffixes": ["rst"]},
         "apidoc=stop html=stop api=stop",
         r"matlab_simulink_doc_suffixes",
@@ -2197,8 +2212,8 @@ def simulink(ctx):
     )
     ctx.expect(serial.warned(r"metadata") == [], "no metadata warning")
 
-    # an unknown metadata name warns where each directive is (warnings.rst:
-    # mat.simulink), so once per Simulink object; a design question (E2E-25)
+    # an unknown name in matlab_simulink_metadata stops the build once, at the
+    # start (reference/configuration.rst), not a warning per Simulink object
     bad = ctx.sphinx(
         "bad metadata",
         docs,
@@ -2206,8 +2221,11 @@ def simulink(ctx):
         "-D",
         "matlab_simulink_metadata=release,colour",
     )
-    n = len(bad.warned(r"colour"))
-    ctx.expect(bad.rc == 0 and n >= 1, f"an unknown metadata name warns ({n} warnings)")
+    n = len(bad.warned(r"\[mat\.simulink\]"))
+    ctx.expect(
+        bad.rc == 2 and "unknown metadata 'colour'" in bad.stderr and n == 0,
+        f"an unknown metadata name stops the build once (exit {bad.rc}, {n} warnings)",
+    )
 
 
 @scenario

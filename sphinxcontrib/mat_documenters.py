@@ -1941,14 +1941,20 @@ class MatApplicationDocumenter(MatModuleLevelDocumenter):
 
 
 #: metadata of a Simulink file (``matlab_simulink_metadata``) -> its label
-SIMULINK_METADATA = {
-    "release": _("Release"),
-    "model_version": _("Model version"),
-    "creator": _("Created by"),
-    "created": _("Created"),
-    "last_modified_by": _("Last modified by"),
-    "modified": _("Last modified"),
-}
+SIMULINK_METADATA = dict(
+    zip(
+        mat_simulink.METADATA,
+        (
+            _("Release"),
+            _("Model version"),
+            _("Created by"),
+            _("Created"),
+            _("Last modified by"),
+            _("Last modified"),
+        ),
+        strict=True,
+    )
+)
 _PORT_KINDS = {
     "Inport": _("input"),
     "Outport": _("output"),
@@ -2159,29 +2165,31 @@ class MatSimulinkDocumenter(MatModuleLevelDocumenter):
 
     def metadata_lines(self, metadata):
         """Return the field lines of the file's metadata (release, model version,
-        creator, dates) chosen by ``:metadata:`` or ``matlab_simulink_metadata``; warn
-        about unknown keys.
+        creator, dates) chosen by ``:metadata:`` or ``matlab_simulink_metadata``
+        (checked at start, ``mat_config``); warn about unknown names of
+        ``:metadata:``.
         """
         keys = self.options.metadata
         if keys is None:
             keys = self.env.config.matlab_simulink_metadata
+        else:
+            for key in keys:
+                if key not in SIMULINK_METADATA:
+                    logger.warning(
+                        "[sphinxcontrib-matlabdomain] unknown Simulink metadata %r; "
+                        "known: %s",
+                        key,
+                        ", ".join(SIMULINK_METADATA),
+                        type="mat",
+                        subtype="simulink",
+                        location=self.directive.location,
+                    )
         values = dict(metadata)
-        lines = []
-        for key in keys:
-            if key not in SIMULINK_METADATA:
-                logger.warning(
-                    "[sphinxcontrib-matlabdomain] unknown Simulink metadata %r; "
-                    "known: %s",
-                    key,
-                    ", ".join(SIMULINK_METADATA),
-                    type="mat",
-                    subtype="simulink",
-                    location=self.directive.location,
-                )
-            elif values.get(key):
-                text = _escaped(values[key])
-                lines.append(f":{SIMULINK_METADATA[key]}: {text}")
-        return lines
+        return [
+            f":{SIMULINK_METADATA[key]}: {_escaped(values[key])}"
+            for key in keys
+            if values.get(key)
+        ]
 
     def mask_parameter_lines(self, parameters):
         """Return the mask parameters, like the input arguments of a function;

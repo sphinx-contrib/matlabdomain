@@ -93,6 +93,7 @@ BAD_FORMAT = {
     "matlab_api_check_rules": [{"bogus-rule": "error"}],
     "matlab_api_check_files": [["../x.m"]],
     "matlab_api_check_section_labels": [{"nope": []}],
+    "matlab_simulink_metadata": [["release", "bogus"]],
 }
 
 #: the runs: an HTML build, -b matlab-api-check and scmd apidoc
@@ -142,9 +143,6 @@ STOPS = {
     "matlab_apidoc_private": "apidoc",
 }
 
-#: not checked yet (E2E-25)
-UNCHECKED = {"matlab_simulink_metadata"}
-
 
 def wrong_type(default, types):
     """Return a value whose type the row does not allow."""
@@ -156,7 +154,7 @@ def wrong_type(default, types):
 
 def cases():
     for name, row in mat_config.CONFIG.items():
-        if name in mat_config.REMOVED or name in UNCHECKED:
+        if name in mat_config.REMOVED:
             continue  # removed: every run raises one message, test_config.py
         yield pytest.param(name, wrong_type(row.default, row.types), id=f"{name}-type")
         for value in BAD_FORMAT.get(name, []):

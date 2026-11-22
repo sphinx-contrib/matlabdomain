@@ -184,6 +184,14 @@ What each warning means
    output names differ only by letter case, or an output path is longer
    than Windows allows.
 
+``mat.simulink``
+   A ``:metadata:`` option names metadata that a Simulink file does not
+   have (:doc:`../reference/directives`; the names are those of
+   :confval:`matlab_simulink_metadata`, where an unknown name stops the
+   build instead), or a Simulink documentation file is not used, has a
+   heading that names no masked block of its library, or leaves masked
+   blocks without a section (:confval:`matlab_simulink_doc_suffixes`).
+
 ``mat.api_check``
    A finding of the ``matlab-api-check`` :term:`builder` (:doc:`api-check`), an
    ``ERROR`` or a ``WARNING`` depending on the rule's severity.

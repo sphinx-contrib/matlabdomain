@@ -17,7 +17,7 @@ from typing import Any, NamedTuple
 
 from sphinx.errors import ConfigError
 
-from . import mat_api_check, mat_naming, mat_types
+from . import mat_api_check, mat_naming, mat_simulink, mat_types
 
 _NONE = type(None)
 _LIST = (list, tuple)
@@ -63,6 +63,12 @@ class Value(NamedTuple):
     #: ``check(value, name)``: ConfigError for a bad value; it looks at the
     #: value only (type, allowed values, syntax)
     check: Callable[[Any, str], object] | None = None
+
+
+class Ignored(ConfigError):
+    """A bad part of a value that a run that uses the value can leave out:
+    one ``mat.config`` warning in that run too.
+    """
 
 
 def check_type(value, name):
@@ -112,6 +118,23 @@ def _autobuild_server(server, option):
         raise ConfigError(
             f"{option} must be None or start with http:// or https://, not {server!r}."
         )
+
+
+def _simulink_metadata(value, name):
+    if (
+        isinstance(value, str)
+        or not isinstance(value, _LIST)
+        or not all(isinstance(key, str) for key in value)
+    ):
+        raise ConfigError(f"{name} must be a list of metadata names, not {value!r}.")
+    for key in value:
+        if key not in mat_simulink.METADATA:
+            # ConfigError -> Ignored: one mat.config warning, and pages leave
+            # the name out.
+            raise ConfigError(
+                f"{name}: unknown metadata {key!r}; the names are "
+                f"{', '.join(mat_simulink.METADATA)}."
+            )
 
 
 def _file_name(value, name):
@@ -198,7 +221,7 @@ CONFIG = {
     "matlab_simulink_autobuild_server": Value(None, "", (), _HTML, _autobuild_server),
     # Metadata shown by default (directive option :metadata:).
     "matlab_simulink_metadata": Value(
-        ["release", "model_version"], "env", _LIST, _PAGES
+        ["release", "model_version"], "env", _LIST, _PAGES, _simulink_metadata
     ),
     # Suffixes of documentation files next to Simulink files, by priority.
     "matlab_simulink_doc_suffixes": Value(
@@ -297,8 +320,9 @@ def check_values(config, run, names=START_VALUES + BUILDER_VALUES):
 
     ConfigError for a removed value that is set and for the first bad value
     that ``run`` uses. Return a message for each bad value that only other
-    runs use, to be warned once (``mat.config``). In a build, a wrong type
-    of such a value is left to Sphinx's own warning.
+    runs use, and for an ``Ignored`` one, to be warned once (``mat.config``).
+    In a build, a wrong type of a value it does not use is left to Sphinx's
+    own warning.
     """
     removed = [
         f"{name} was removed: {reason}."
@@ -321,10 +345,11 @@ def check_values(config, run, names=START_VALUES + BUILDER_VALUES):
         try:
             row.check(value, name)
         except ConfigError as err:
-            if used:
+            if used and not isinstance(err, Ignored):
                 raise
             users = " and ".join(_USERS[r] for r in _USERS if r in row.runs)
-            problems.append(f"{err} It is used only by {users}; {this} ignores it.")
+            unused = f" It is used only by {users}; {this} ignores it."
+            problems.append(f"{err}{'' if used else unused}")
     return problems
 
 

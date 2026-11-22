@@ -20,6 +20,15 @@ from ._parts import (
 )
 
 KINDS = ("model", "library", "subsystem")
+#: the metadata of a file that a page can show (``matlab_simulink_metadata``)
+METADATA = (
+    "release",
+    "model_version",
+    "creator",
+    "created",
+    "last_modified_by",
+    "modified",
+)
 CORE = "metadata/coreProperties.xml"
 BLOCK_DIAGRAM = "simulink/blockdiagram.xml"
 _USED = (
