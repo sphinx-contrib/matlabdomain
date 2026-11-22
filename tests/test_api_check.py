@@ -1202,14 +1202,12 @@ def test_example_label(make_app, tmp_path):
 
 
 def test_section_label_values():
-    config = SimpleNamespace(
-        matlab_api_check_section_labels={
-            "inputs": ["Eingaben", "  Zwei   Worte ", "EINGABEN", "<Built-In>"],
-            "example": ("Beispiel",),
-            "name-value": [],
-        }
-    )
-    assert mat_api_check.section_labels(config) == (
+    value = {
+        "inputs": ["Eingaben", "  Zwei   Worte ", "EINGABEN", "<Built-In>"],
+        "example": ("Beispiel",),
+        "name-value": [],
+    }
+    assert mat_api_check.section_labels(value) == (
         ("example", ("beispiel",)),
         ("inputs", ("<built-in>", "eingaben", "zwei worte")),
         ("name-value", ()),

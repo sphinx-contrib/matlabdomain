@@ -48,7 +48,7 @@ unknown builder, a ``conf.py`` that raises):
    Traceback
    =========
 
-         File ".../sphinxcontrib/matlab.py", line ..., in ensure_configuration
+         File ".../sphinxcontrib/mat_config.py", line ..., in _auto_link
            ...
        sphinx.errors.ConfigError: matlab_auto_link must be None, 'basic' or 'all', not 'some'.
 

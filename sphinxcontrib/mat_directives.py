@@ -12,7 +12,6 @@ from sphinx.ext.autodoc.directive import (
 )
 from sphinx.util.logging import getLogger
 
-from . import mat_config
 from .mat_documenters import MatDocumenterBridge
 from .mat_sidecars import PAGE_LOCATION, HelpPaths
 from .mat_types import MatObject
@@ -28,11 +27,11 @@ INHERITED_VALUE = "matlab_inherited_members"
 
 
 def check_inherited_members(_app, config):
-    """``config-inited``: ConfigError unless ``matlab_inherited_members`` is a
-    bool; one warning for the build when ``autodoc_default_options`` turns
-    ``inherited-members`` on without it.
+    """``config-inited``: one warning for the build when
+    ``autodoc_default_options`` turns ``inherited-members`` on without
+    ``matlab_inherited_members``.
     """
-    if mat_config.typed_value(config, INHERITED_VALUE):
+    if getattr(config, INHERITED_VALUE):
         return
     value = config.autodoc_default_options.get("inherited-members", False)
     if value is not False:

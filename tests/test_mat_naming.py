@@ -11,7 +11,7 @@ from typing import Any, cast
 import pytest
 from sphinx.errors import ConfigError
 
-from sphinxcontrib import matlab
+from sphinxcontrib import mat_config, matlab
 from sphinxcontrib.mat_naming import (
     DEFAULT_MATLAB_VERSION,
     MATLAB_VERSION_FLOOR,
@@ -435,18 +435,8 @@ _APP = SimpleNamespace(srcdir=".")
 
 
 def _config(version="R2026a"):
-    return SimpleNamespace(
-        matlab_short_links=None,
-        matlab_keep_package_prefix=None,
-        matlab_src_dir=None,
-        matlab_src_code_project_root=None,
-        matlab_src_include_patterns=["**/*"],
-        matlab_src_exclude_patterns=[],
-        matlab_src_sidecar_suffixes=[],
-        matlab_src_encoding=None,
-        matlab_version=version,
-        matlab_auto_link=None,
-    )
+    defaults = {name: row.default for name, row in mat_config.CONFIG.items()}
+    return SimpleNamespace(**{**defaults, "matlab_version": version})
 
 
 @pytest.mark.parametrize(

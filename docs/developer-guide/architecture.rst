@@ -21,8 +21,8 @@ Modules
        :term:`domain` data.
    * - ``mat_config.py``
      - Every ``matlab_*`` configuration value in one table (default,
-       rebuild, types) and the source checks that the build and
-       ``scmd apidoc`` share.
+       rebuild, types, the runs that use it and the check of its value)
+       and the checks that the build and ``scmd apidoc`` share.
    * - ``mat_types.py``
      - The index stage (``IndexSettings``, ``build_index``, ``SourceIndex``,
        ``analyze``), the lazy parse (``resolve``), incremental-build hooks,
@@ -161,13 +161,19 @@ layout or the cached objects change.
 
 The events ``setup()`` connects:
 
-* ``config-inited``: ``ensure_configuration`` (``mat_config.check_sources``:
-  removed values, patterns, encoding, version; and ``matlab_auto_link``),
-  ``mat_sidecars.check_config`` (sidecar suffixes;
+* ``config-inited``: ``check_config_names`` (unknown ``matlab_*``
+  names), ``ensure_configuration`` (``mat_config.check_values``: removed
+  values and the check of each value a build uses;
+  ``mat_config.check_sources``: the project root exists, the patterns need
+  it and stay inside it, the sidecar layout),
+  ``mat_directives.check_inherited_members`` (``autodoc_default_options``),
+  ``mat_sidecars.check_config`` (sidecar suffixes need the root and, for
+  ``.md``, ``myst_parser``;
   with the root inside the source folder, the sidecar docs are added to
   ``exclude_patterns`` here, because a later change would make
   :term:`Sphinx` read every page again on every build),
-  ``mat_api_check.check_config``;
+  ``mat_api_check.check_config`` (the ``matlab_api_check_files_from``
+  file);
 * ``builder-inited``: ``analyze``, the index stage;
 * ``env-get-outdated``: ``outdated_docs``, the pages to read again because
   a source file they used changed, or because files were added, removed or

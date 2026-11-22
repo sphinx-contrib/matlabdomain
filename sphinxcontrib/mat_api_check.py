@@ -146,30 +146,27 @@ _MESSAGES = {
 }
 
 
-def section_labels(config):
-    """Return the ``matlab_api_check_section_labels`` as sorted
+def section_labels(value, option=_LABELS_OPTION):
+    """Return the ``matlab_api_check_section_labels`` ``value`` as sorted
     ``((section, labels), ...)``, the labels a sorted tuple, lowercased
     (or ConfigError).
     """
-    value = getattr(config, _LABELS_OPTION)
     if not isinstance(value, dict):
-        raise ConfigError(f"{_LABELS_OPTION} must be a dict of section -> labels.")
+        raise ConfigError(f"{option} must be a dict of section -> labels.")
     sections = []
     for section, given in value.items():
         if section not in SECTIONS:
             raise ConfigError(
-                f"{_LABELS_OPTION}: unknown section {section!r}; the sections are "
+                f"{option}: unknown section {section!r}; the sections are "
                 f"{', '.join(SECTIONS)}."
             )
         if isinstance(given, str) or not isinstance(given, (list, tuple)):
-            raise ConfigError(
-                f"{_LABELS_OPTION}[{section!r}] must be a list of labels."
-            )
+            raise ConfigError(f"{option}[{section!r}] must be a list of labels.")
         labels = set()
         for label in given:
             if not isinstance(label, str) or not label.split() or ":" in label:
                 raise ConfigError(
-                    f"{_LABELS_OPTION}[{section!r}]: {label!r} is not a label "
+                    f"{option}[{section!r}]: {label!r} is not a label "
                     "(text without ':')."
                 )
             labels.add(" ".join(label.lower().split()))
@@ -197,61 +194,69 @@ def sections_for(labels):
     return sections
 
 
-def check_config(_app, config):
-    """``config-inited``: ConfigError for unknown rules or severities and for
-    ignore patterns that are not relative globs.
-    """
-    rules = config.matlab_api_check_rules
+def check_rules(rules, option):
+    """ConfigError for unknown rules or severities."""
     if not isinstance(rules, dict):
-        raise ConfigError("matlab_api_check_rules must be a dict of rule -> severity.")
+        raise ConfigError(f"{option} must be a dict of rule -> severity.")
     for rule, severity in rules.items():
         if rule not in RULES:
             raise ConfigError(
-                f"matlab_api_check_rules: unknown rule {rule!r}; the rules are "
-                f"{', '.join(RULES)}."
+                f"{option}: unknown rule {rule!r}; the rules are {', '.join(RULES)}."
             )
         if severity not in SEVERITIES:
             raise ConfigError(
-                f"matlab_api_check_rules: the severity of {rule!r} must be "
+                f"{option}: the severity of {rule!r} must be "
                 f"{', '.join(SEVERITIES)}, not {severity!r}."
             )
-    ignore_patterns(config)
+
+
+def check_config(_app, config):
+    """``config-inited``: ConfigError for a ``matlab_api_check_files_from``
+    file that cannot be read or has a line that is not an entry.
+    """
     selected_files(config)
-    section_labels(config)
 
 
 def ignore_patterns(config):
-    """Return the normalized ``matlab_api_check_ignore_patterns`` (or ConfigError)."""
-    patterns = getattr(config, _IGNORE_OPTION)
-    if isinstance(patterns, str) or not isinstance(patterns, (list, tuple)):
-        raise ConfigError(f"{_IGNORE_OPTION} must be a list of glob patterns.")
-    return [mat_types._normalize_pattern(p, _IGNORE_OPTION) for p in patterns]
+    """Return the normalized ``matlab_api_check_ignore_patterns``."""
+    return mat_types.pattern_list(getattr(config, _IGNORE_OPTION), _IGNORE_OPTION)
+
+
+def check_files(entries, option):
+    """Return the normalized entries of ``matlab_api_check_files``, None for
+    every file (or ConfigError). A string, as ``-D`` gives it, is a list
+    separated by commas or line breaks.
+    """
+    if entries is None:
+        return None
+    if isinstance(entries, str):
+        entries = [e.strip() for e in re.split(r"[,\n]", entries)]
+        entries = [e for e in entries if e]
+    elif not isinstance(entries, (list, tuple)):
+        raise ConfigError(
+            f"{option} must be None, a list of paths or glob patterns, "
+            "or a string of them separated by commas."
+        )
+    return [mat_types._normalize_pattern(e, option) for e in entries]
+
+
+def check_files_from(listing, option):
+    """ConfigError unless ``matlab_api_check_files_from`` is None or a path."""
+    if listing is not None and (not isinstance(listing, str) or not listing):
+        raise ConfigError(f"{option} must be None or the path of a file.")
 
 
 def selected_files(config):
     """Return the normalized ``matlab_api_check_files`` and the lines of the
     ``matlab_api_check_files_from`` file, without duplicates: None selects
-    every file, ``[]`` none (or ConfigError). A string, as ``-D`` gives it,
-    is a list separated by commas or line breaks.
+    every file, ``[]`` none (or ConfigError for the file).
     """
-    entries = getattr(config, _FILES_OPTION)
+    normalized = check_files(getattr(config, _FILES_OPTION), _FILES_OPTION)
     listing = getattr(config, _FROM_OPTION)
-    if entries is None and listing is None:
+    if normalized is None and listing is None:
         return None
-    if entries is None:
-        entries = []
-    elif isinstance(entries, str):
-        entries = [e.strip() for e in re.split(r"[,\n]", entries)]
-        entries = [e for e in entries if e]
-    elif not isinstance(entries, (list, tuple)):
-        raise ConfigError(
-            f"{_FILES_OPTION} must be None, a list of paths or glob patterns, "
-            "or a string of them separated by commas."
-        )
-    normalized = [mat_types._normalize_pattern(e, _FILES_OPTION) for e in entries]
+    normalized = normalized or []
     if listing is not None:
-        if not isinstance(listing, str) or not listing:
-            raise ConfigError(f"{_FROM_OPTION} must be None or the path of a file.")
         try:
             with open(listing, encoding="utf-8-sig") as f:
                 lines = f.read().splitlines()
@@ -791,7 +796,7 @@ class MatlabApiCheckBuilder(Builder):
             rules,
             ignore_patterns(config),
             selected_files(config),
-            sections_for(section_labels(config)),
+            sections_for(section_labels(config.matlab_api_check_section_labels)),
         )
         records = sorted(dom.data["index"].items(), key=lambda i: i[1]["reference"])
         for path, record in records:

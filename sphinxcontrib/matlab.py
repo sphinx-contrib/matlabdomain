@@ -16,7 +16,6 @@ from docutils.parsers.rst import Directive, directives
 from sphinx import addnodes
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain, Index, ObjType
-from sphinx.errors import ConfigError
 from sphinx.locale import _ as translation
 from sphinx.roles import XRefRole
 from sphinx.transforms.post_transforms import SphinxPostTransform
@@ -277,25 +276,6 @@ def _plus_name(ref):
 def _external_names(patterns):
     # (?!) matches nothing: no patterns.
     return re.compile("|".join(f"(?:{p})" for p in patterns) or "(?!)")
-
-
-def check_external_names(_app, config):
-    """``config-inited``: ConfigError unless ``matlab_external_names`` is a list of
-    valid regular expressions.
-    """
-    names = config.matlab_external_names
-    if isinstance(names, str) or not isinstance(names, (list, tuple)):
-        raise ConfigError(f"matlab_external_names must be a list, not {names!r}.")
-    for pattern in names:
-        if not isinstance(pattern, str):
-            raise ConfigError(f"matlab_external_names: {pattern!r} must be a str.")
-        try:
-            re.compile(pattern)
-        except re.error as err:
-            raise ConfigError(
-                f"matlab_external_names: {pattern!r} is not a regular "
-                f"expression ({err})."
-            ) from err
 
 
 # REs for MATLAB signatures: a MATLAB name or path reference, then optional
@@ -1751,15 +1731,12 @@ def check_config_names(_app, config):
 
 
 def ensure_configuration(app, config):
-    """``config-inited``: ConfigError for invalid source settings or
-    ``matlab_auto_link``.
+    """``config-inited``: ConfigError for a bad ``matlab_*`` value
+    (``mat_config.check_values``) or source settings that do not fit the
+    files (``mat_config.check_sources``).
     """
+    mat_config.check_values(config, mat_config.BUILD)
     mat_config.check_sources(config, app.srcdir)
-    if config.matlab_auto_link not in (None, "basic", "all"):
-        raise ConfigError(
-            "matlab_auto_link must be None, 'basic' or 'all', "
-            f"not {config.matlab_auto_link!r}."
-        )
 
 
 def _get_version():
@@ -1787,11 +1764,9 @@ def setup(app):
     app.setup_extension("sphinx.ext.autodoc")
     app.connect("config-inited", check_config_names)
     app.connect("config-inited", ensure_configuration)
-    app.connect("config-inited", check_external_names)
     app.connect("config-inited", mat_directives.check_inherited_members)
     app.connect("config-inited", mat_sidecars.check_config)
     app.connect("config-inited", mat_api_check.check_config)
-    app.connect("config-inited", simulink_linker.check_config)
     app.connect("builder-inited", analyze)
     app.connect("env-get-outdated", mat_types.outdated_docs)
     app.connect("env-before-read-docs", mat_types.note_read_docs)

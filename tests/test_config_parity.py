@@ -134,7 +134,7 @@ def wrong_type(default, types):
 
 
 def cases():
-    for name, (default, _, types) in mat_config.CONFIG.items():
+    for name, (default, _, types, *_) in mat_config.CONFIG.items():
         if name in mat_config.REMOVED:
             continue  # both raise one message: test_config.py
         value = wrong_type(default, types)

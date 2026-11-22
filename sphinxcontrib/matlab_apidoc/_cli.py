@@ -19,7 +19,13 @@ from sphinx.errors import ConfigError
 from sphinx.util.logging import is_suppressed_warning
 from sphinx.util.tags import Tags
 
-from ..mat_config import CONFIG, add_config_values, check_sources, typed_value
+from ..mat_config import (
+    APIDOC,
+    CONFIG,
+    add_config_values,
+    check_sources,
+    check_values,
+)
 from ..mat_types import (
     IndexSettings,
     build_index,
@@ -27,7 +33,7 @@ from ..mat_types import (
     project_root,
 )
 from ..mat_typing import override
-from ._generate import GROUPS, ApidocOptions, generate
+from ._generate import ApidocOptions, generate
 
 #: exit status when --check finds pages to change
 CHECK_FAILED = 1
@@ -115,16 +121,8 @@ def read_conf(confdir):
 
 def _folder(conf, name, srcdir):
     """Return a path value of conf.py (relative to the source folder) or None."""
-    value = typed_value(conf, name)
+    value = getattr(conf, name)
     return None if value is None else os.path.join(srcdir, value)
-
-
-def _file_name(conf, name):
-    """Return a file-name value of conf.py, or ConfigError."""
-    value = typed_value(conf, name)
-    if not value or any(sep in value for sep in "/\\"):
-        raise ConfigError(f"{name} {value!r} must be a file name.")
-    return value
 
 
 def _settings(args):
@@ -133,6 +131,7 @@ def _settings(args):
     """
     conf = read_conf(args.conf_dir)
     srcdir = os.path.abspath(args.conf_dir)
+    check_values(conf, frozenset({APIDOC}))
 
     root = project_root(conf, srcdir)
     if root is None:
@@ -149,29 +148,18 @@ def _settings(args):
     templatedir = _folder(conf, "matlab_apidoc_templatedir", srcdir)
     if templatedir is not None and not os.path.isdir(templatedir):
         raise ConfigError(f"matlab_apidoc_templatedir {templatedir!r} is not a folder.")
-    group = typed_value(conf, "matlab_apidoc_group")
-    if group not in GROUPS:
-        raise ConfigError(
-            f"matlab_apidoc_group must be {' or '.join(map(repr, GROUPS))}, "
-            f"not {group!r}."
-        )
-    page_size = typed_value(conf, "matlab_apidoc_page_size")
-    if page_size < 1:
-        raise ConfigError(
-            f"matlab_apidoc_page_size must be 1 or more, not {page_size}."
-        )
     options = ApidocOptions(
         output_dir=output_dir,
         force=args.force,
         dry_run=args.dry_run or args.check,
-        separate=typed_value(conf, "matlab_apidoc_separate"),
-        maxdepth=typed_value(conf, "matlab_apidoc_maxdepth"),
-        tocfile=_file_name(conf, "matlab_apidoc_tocfile"),
+        separate=conf.matlab_apidoc_separate,
+        maxdepth=conf.matlab_apidoc_maxdepth,
+        tocfile=conf.matlab_apidoc_tocfile,
         templatedir=templatedir,
-        remove_old=typed_value(conf, "matlab_apidoc_remove_old"),
-        group=group,
-        page_size=page_size,
-        private=typed_value(conf, "matlab_apidoc_private"),
+        remove_old=conf.matlab_apidoc_remove_old,
+        group=conf.matlab_apidoc_group,
+        page_size=conf.matlab_apidoc_page_size,
+        private=conf.matlab_apidoc_private,
     )
     suppress = conf.suppress_warnings
     if isinstance(suppress, str) or not isinstance(suppress, (list, tuple, set)):

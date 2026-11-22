@@ -683,10 +683,6 @@ def project_root(config, srcdir):
     root = config.matlab_src_code_project_root
     if root is None:
         return None
-    if not isinstance(root, str):
-        raise ConfigError(
-            f"matlab_src_code_project_root must be a str or None, not {root!r}."
-        )
     return os.path.normpath(os.path.join(srcdir, root))
 
 
@@ -840,11 +836,10 @@ def sidecar_suffix_list(value, option="matlab_src_sidecar_suffixes"):
     return tuple(s for s in SIDECAR_SUFFIXES if s in value)
 
 
-def simulink_doc_suffix_list(value):
+def simulink_doc_suffix_list(value, option="matlab_simulink_doc_suffixes"):
     """Normalize ``matlab_simulink_doc_suffixes``, keeping its order: the
     first suffix that exists wins (or raise ConfigError).
     """
-    option = "matlab_simulink_doc_suffixes"
     if isinstance(value, str) or not isinstance(value, (list, tuple)):
         raise ConfigError(f"{option} must be a list of suffixes such as ['.md'].")
     for suffix in value:

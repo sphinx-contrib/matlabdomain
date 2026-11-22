@@ -30,7 +30,6 @@ from __future__ import annotations
 import json
 import os
 
-from sphinx.errors import ConfigError
 from sphinx.util.logging import getLogger
 
 from .. import mat_types, mat_urls
@@ -41,18 +40,6 @@ FOLDER = ("+sphinxcontrib", "+matlabdomain")
 NAME = "simulinkDocumentationLinker.json"
 #: the build state, below the HTML output folder
 STATE = f"{mat_urls.ROOT}/{NAME}"
-
-
-def check_config(_app, config):
-    """Validate the autobuild server address at ``config-inited``."""
-    server = config.matlab_simulink_autobuild_server
-    if server is not None and not (
-        isinstance(server, str) and server.startswith(("http://", "https://"))
-    ):
-        raise ConfigError(
-            "matlab_simulink_autobuild_server must be None or start with http:// or "
-            f"https://, not {server!r}."
-        )
 
 
 def _slash(url):
