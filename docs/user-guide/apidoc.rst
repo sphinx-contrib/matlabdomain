@@ -195,7 +195,9 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
   :confval:`matlab_src_sidecar_suffixes`;
 * ``suppress_warnings``: the warnings it names are not printed
   (:doc:`warnings`);
-* its own settings, which the build ignores:
+* its own settings, which the build does not use, except HTML builds
+  read :confval:`matlab_apidoc_output_dir` (a build gives one
+  ``mat.config`` warning for another one that is not valid):
 
   .. list-table::
      :header-rows: 1
@@ -230,6 +232,10 @@ It runs ``conf.py`` as ``sphinx-build`` does and reads:
      * - :confval:`matlab_apidoc_remove_old`
        - ``True``
        - remove marked pages that are no longer pages
+
+A value that only the build or ``matlab-api-check`` uses is not needed
+here; one that is not valid is a ``mat.config`` warning, and the command
+goes on, so it runs on a project that is not ready to build yet.
 
 Paths in ``conf.py`` are relative to its folder. No flag overrides a
 setting, so the command and the build agree; :doc:`../reference/cli`

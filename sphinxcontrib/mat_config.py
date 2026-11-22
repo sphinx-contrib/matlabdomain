@@ -3,7 +3,8 @@
 The build registers them (``setup``) and ``scmd apidoc`` reads ``conf.py``
 with the same defaults and the same checks, so the two always agree. Each
 row says which runs use the value and how to check it; ``check_values``
-checks the values of a run.
+checks the values of a run: a run stops for a bad value it uses and warns
+once for a bad value that only another run uses.
 """
 
 from __future__ import annotations
@@ -27,8 +28,17 @@ _LIST = (list, tuple)
 PAGES, HTML, API_CHECK, APIDOC = "pages", "html", "api-check", "apidoc"
 #: the source values, which the build and ``scmd apidoc`` share
 SOURCES = frozenset({PAGES, APIDOC})
-#: what a build checks: the values of any builder
-BUILD = frozenset({PAGES, HTML, API_CHECK})
+_PAGES = frozenset({PAGES})
+_HTML = frozenset({HTML})
+_API_CHECK = frozenset({API_CHECK})
+_APIDOC = frozenset({APIDOC})
+#: who uses a value, for the warning of a run that does not
+_USERS = {
+    PAGES: "sphinx-build",
+    HTML: "HTML builds",
+    API_CHECK: "the matlab-api-check builder",
+    APIDOC: "scmd apidoc",
+}
 
 #: MATLAB's own classes and namespaces, never documented in a project
 DEFAULT_EXTERNAL_NAMES = [
@@ -121,6 +131,13 @@ def _apidoc_group(value, name):
         )
 
 
+def _maxdepth(value, name):
+    # A toctree's :maxdepth: of 0 or less has no limit; -1 is Sphinx's own.
+    check_type(value, name)
+    if value < 1 and value != -1:
+        raise ConfigError(f"{name} must be 1 or more, or -1 for no limit, not {value}.")
+
+
 def _page_size(value, name):
     check_type(value, name)
     if value < 1:
@@ -157,27 +174,31 @@ CONFIG = {
         mat_naming.DEFAULT_MATLAB_VERSION, "env", (), SOURCES, _matlab_version
     ),
     # Rendering and links.
-    "matlab_show_property_default_value": Value(True, "env", (), BUILD),
-    "matlab_show_property_specs": Value(True, "env", (), BUILD),
-    "matlab_auto_link": Value(None, "env", (), BUILD, _auto_link),
-    "matlab_class_signature": Value(False, "env", (), BUILD),
-    "matlab_add_namespace_names": Value(True, "env", (bool,), BUILD),
+    "matlab_show_property_default_value": Value(
+        True, "env", (bool,), _PAGES, check_type
+    ),
+    "matlab_show_property_specs": Value(True, "env", (bool,), _PAGES, check_type),
+    "matlab_auto_link": Value(None, "env", (), _PAGES, _auto_link),
+    "matlab_class_signature": Value(False, "env", (bool,), _PAGES, check_type),
+    "matlab_add_namespace_names": Value(True, "env", (bool,), _PAGES, check_type),
     # :inherited-members: works only when this is on (it repeats base help).
-    "matlab_inherited_members": Value(False, "env", (bool,), BUILD, check_type),
+    "matlab_inherited_members": Value(False, "env", (bool,), _PAGES, check_type),
     # Regexes of names references to which are text, without a warning.
     "matlab_external_names": Value(
-        list(DEFAULT_EXTERNAL_NAMES), "html", _LIST, BUILD, _external_names
+        list(DEFAULT_EXTERNAL_NAMES), "html", _LIST, _PAGES, _external_names
     ),
     # Stable addresses (mat/ref/, mat/name/) and "¶" links to them.
-    "matlab_stable_urls": Value(True, "html", (bool,), BUILD),
+    "matlab_stable_urls": Value(True, "html", (bool,), _HTML, check_type),
     # Several objects of one MATLAB name are intended: link to their chooser
     # page, without mat.ambiguous.
-    "matlab_link_shadowed_files_to_chooser_pages": Value(False, "env", (bool,), BUILD),
+    "matlab_link_shadowed_files_to_chooser_pages": Value(
+        False, "env", (bool,), _PAGES, check_type
+    ),
     # Simulink. The sphinx-autobuild address for Help links (make livehtml).
-    "matlab_simulink_autobuild_server": Value(None, "", (), BUILD, _autobuild_server),
+    "matlab_simulink_autobuild_server": Value(None, "", (), _HTML, _autobuild_server),
     # Metadata shown by default (directive option :metadata:).
     "matlab_simulink_metadata": Value(
-        ["release", "model_version"], "env", _LIST, BUILD
+        ["release", "model_version"], "env", _LIST, _PAGES
     ),
     # Suffixes of documentation files next to Simulink files, by priority.
     "matlab_simulink_doc_suffixes": Value(
@@ -185,43 +206,39 @@ CONFIG = {
     ),
     # matlab-api-check: read by the builder only, so no page is read again.
     # Rule -> severity, merged over mat_api_check.DEFAULT_RULES.
-    "matlab_api_check_rules": Value({}, "", (dict,), BUILD, mat_api_check.check_rules),
+    "matlab_api_check_rules": Value(
+        {}, "", (dict,), _API_CHECK, mat_api_check.check_rules
+    ),
     "matlab_api_check_ignore_patterns": Value(
-        [], "", _LIST, BUILD, mat_types.pattern_list
+        [], "", _LIST, _API_CHECK, mat_types.pattern_list
     ),
     # None checks every file; a list (or, from -D, a comma-separated str) selects.
-    "matlab_api_check_files": Value(None, "", (), BUILD, mat_api_check.check_files),
+    "matlab_api_check_files": Value(
+        None, "", (), _API_CHECK, mat_api_check.check_files
+    ),
     # A text file of selection entries, one per line.
     "matlab_api_check_files_from": Value(
-        None, "", (), BUILD, mat_api_check.check_files_from
+        None, "", (), _API_CHECK, mat_api_check.check_files_from
     ),
-    "matlab_api_check_ignore_unmatched": Value(False, "", (bool,), BUILD),
+    "matlab_api_check_ignore_unmatched": Value(
+        False, "", (bool,), _API_CHECK, check_type
+    ),
     # Section -> the labels it accepts, replacing the built-in ones.
     "matlab_api_check_section_labels": Value(
-        {}, "", (dict,), BUILD, mat_api_check.section_labels
+        {}, "", (dict,), _API_CHECK, mat_api_check.section_labels
     ),
-    # scmd apidoc: read by the CLI only.
+    # scmd apidoc; HTML builds remove the stale pages of the output folder.
     "matlab_apidoc_output_dir": Value(
-        None, "", (str, _NONE), frozenset({APIDOC}), check_type
+        None, "", (str, _NONE), _APIDOC | _HTML, check_type
     ),
-    "matlab_apidoc_separate": Value(
-        False, "", (bool,), frozenset({APIDOC}), check_type
-    ),
-    "matlab_apidoc_maxdepth": Value(4, "", (int,), frozenset({APIDOC}), check_type),
-    "matlab_apidoc_tocfile": Value(
-        "index", "", (str,), frozenset({APIDOC}), _file_name
-    ),
-    "matlab_apidoc_templatedir": Value(
-        None, "", (str, _NONE), frozenset({APIDOC}), check_type
-    ),
-    "matlab_apidoc_remove_old": Value(
-        True, "", (bool,), frozenset({APIDOC}), check_type
-    ),
-    "matlab_apidoc_group": Value(
-        "namespace", "", (str,), frozenset({APIDOC}), _apidoc_group
-    ),
-    "matlab_apidoc_page_size": Value(100, "", (int,), frozenset({APIDOC}), _page_size),
-    "matlab_apidoc_private": Value(False, "", (bool,), frozenset({APIDOC}), check_type),
+    "matlab_apidoc_separate": Value(False, "", (bool,), _APIDOC, check_type),
+    "matlab_apidoc_maxdepth": Value(4, "", (int,), _APIDOC, _maxdepth),
+    "matlab_apidoc_tocfile": Value("index", "", (str,), _APIDOC, _file_name),
+    "matlab_apidoc_templatedir": Value(None, "", (str, _NONE), _APIDOC, check_type),
+    "matlab_apidoc_remove_old": Value(True, "", (bool,), _APIDOC, check_type),
+    "matlab_apidoc_group": Value("namespace", "", (str,), _APIDOC, _apidoc_group),
+    "matlab_apidoc_page_size": Value(100, "", (int,), _APIDOC, _page_size),
+    "matlab_apidoc_private": Value(False, "", (bool,), _APIDOC, check_type),
     # Removed: setting one raises ConfigError with the replacement.
     "matlab_src_dir": Value(None, "env", (), SOURCES),
     "matlab_keep_package_prefix": Value(None, "env", (), SOURCES),
@@ -251,21 +268,64 @@ def add_config_values(add):
         add(name, copy.deepcopy(row.default), row.rebuild, row.types)
 
 
-def check_values(config, run):
-    """ConfigError for a removed value that is set, or for the first bad
-    value that ``run`` (a set of runs) uses.
+#: the values a build checks when its builder is known (``builder-inited``)
+BUILDER_VALUES = tuple(
+    name
+    for name, row in CONFIG.items()
+    if PAGES not in row.runs and row.runs & {HTML, API_CHECK}
+)
+#: the values a build checks at ``config-inited``
+START_VALUES = tuple(name for name in CONFIG if name not in BUILDER_VALUES)
+
+
+def _sphinx_warns(value, row):
+    """Whether Sphinx's own type check (``check_confval_types``) warns about
+    ``value``: not the default's type, a declared type or a common base.
+    """
+    if row.default is None and not row.types:
+        return False
+    kind, default = type(value), type(row.default)
+    if kind is default or kind in row.types:
+        return False
+    return not ({*kind.__bases__, kind} & set(default.__bases__)) - {object}
+
+
+def check_values(config, run, names=START_VALUES + BUILDER_VALUES):
+    """Check the values ``names`` for ``run``, the runs a process is (a build:
+    ``PAGES``, and ``HTML`` or ``API_CHECK`` for its builder; ``scmd
+    apidoc``: ``APIDOC``).
+
+    ConfigError for a removed value that is set and for the first bad value
+    that ``run`` uses. Return a message for each bad value that only other
+    runs use, to be warned once (``mat.config``). In a build, a wrong type
+    of such a value is left to Sphinx's own warning.
     """
     removed = [
         f"{name} was removed: {reason}."
         for name, reason in REMOVED.items()
-        if getattr(config, name) is not None
+        if name in names and getattr(config, name) is not None
     ]
     if removed:
         them = "it" if len(removed) == 1 else "them"
         raise ConfigError(" ".join(removed) + f" Remove {them} from conf.py.")
-    for name, row in CONFIG.items():
-        if row.check is not None and row.runs & run:
-            row.check(getattr(config, name), name)
+    this = "scmd apidoc" if APIDOC in run else "this build"
+    problems = []
+    for name in names:
+        row = CONFIG[name]
+        value = getattr(config, name)
+        used = row.runs & run
+        if row.check is None or (
+            not used and PAGES in run and _sphinx_warns(value, row)
+        ):
+            continue
+        try:
+            row.check(value, name)
+        except ConfigError as err:
+            if used:
+                raise
+            users = " and ".join(_USERS[r] for r in _USERS if r in row.runs)
+            problems.append(f"{err} It is used only by {users}; {this} ignores it.")
+    return problems
 
 
 def check_sources(config, srcdir):

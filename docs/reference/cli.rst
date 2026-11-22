@@ -241,20 +241,22 @@ Run-time options
 Exit status
 ~~~~~~~~~~~
 
-0 on success, also with warnings (``mat.apidoc`` and the index warnings,
-printed like :term:`Sphinx` prints them, except those named in
-``suppress_warnings``); 1 when :option:`--check` finds a page to
+0 on success, also with warnings (``mat.apidoc``, ``mat.config`` and the
+index warnings, printed like :term:`Sphinx` prints them, except those named
+in ``suppress_warnings``); 1 when :option:`--check` finds a page to
 change; 2 for a usage or settings error, such as an invalid pattern,
 version or encoding, a missing ``conf.py`` or required value, an error in
 ``conf.py``, or a ``matlab_*`` name that is not a configuration value (a
 typo; :doc:`configuration`). Unknown and abbreviated options (``--dry``
 for ``--dry-run``) are usage errors.
 
-The command checks the values it uses: the source values
-(``matlab_src_*``, :confval:`matlab_version`) and the ``matlab_apidoc_*``
-values. It does not check the values that only the build or
-``matlab-api-check`` use, so it runs on a project that is not ready for
-those yet; they check their own values when they run.
+The command stops for a value it uses that is not valid: the source
+values (``matlab_src_*``, :confval:`matlab_version`,
+:confval:`matlab_simulink_doc_suffixes`) and the ``matlab_apidoc_*``
+values. A value that only the build or ``matlab-api-check`` uses and that
+is not valid is one ``mat.config`` warning, and the command goes on, so it
+runs on a project that is not ready for those yet; they stop for their own
+values when they run.
 
 Output files
 ~~~~~~~~~~~~

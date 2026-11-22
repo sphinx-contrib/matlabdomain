@@ -282,7 +282,9 @@ them does not make :term:`Sphinx` read the pages again
   and :confval:`matlab_api_check_ignore_unmatched`: the files to check;
   see `Checking selected files`_.
 
-An unknown rule, severity or section is a configuration error.
+An unknown rule, severity or section is a configuration error of
+``-b matlab-api-check``; other builds and ``scmd apidoc`` give one
+``mat.config`` warning for it and go on.
 
 Checking selected files
 -----------------------

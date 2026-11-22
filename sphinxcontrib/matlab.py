@@ -1730,13 +1730,41 @@ def check_config_names(_app, config):
     mat_types.check_config_names(names, config._options)
 
 
+def _warn_config(problems):
+    for problem in problems:
+        logger.warning(
+            "[sphinxcontrib-matlabdomain] %s", problem, type="mat", subtype="config"
+        )
+
+
 def ensure_configuration(app, config):
-    """``config-inited``: ConfigError for a bad ``matlab_*`` value
-    (``mat_config.check_values``) or source settings that do not fit the
-    files (``mat_config.check_sources``).
+    """``config-inited``: ConfigError for a bad ``matlab_*`` value that every
+    builder uses (``mat_config.check_values``) or source settings that do
+    not fit the files (``mat_config.check_sources``); one warning for each
+    bad value that only ``scmd apidoc`` uses.
     """
-    mat_config.check_values(config, mat_config.BUILD)
+    run = frozenset({mat_config.PAGES})
+    problems = mat_config.check_values(config, run, mat_config.START_VALUES)
     mat_config.check_sources(config, app.srcdir)
+    _warn_config(problems)
+
+
+def check_builder_configuration(app):
+    """``builder-inited``, before the index stage: the same for the values of
+    HTML builds and of ``matlab-api-check``, which the builder decides; the
+    api-check builder reads its selection file.
+    """
+    run = {mat_config.PAGES}
+    if mat_urls.writes_html_pages(app.builder):
+        run.add(mat_config.HTML)
+    api_check = isinstance(app.builder, mat_api_check.MatlabApiCheckBuilder)
+    if api_check:
+        run.add(mat_config.API_CHECK)
+    _warn_config(
+        mat_config.check_values(app.config, frozenset(run), mat_config.BUILDER_VALUES)
+    )
+    if api_check:
+        app.builder.selection = mat_api_check.selected_files(app.config)
 
 
 def _get_version():
@@ -1766,7 +1794,7 @@ def setup(app):
     app.connect("config-inited", ensure_configuration)
     app.connect("config-inited", mat_directives.check_inherited_members)
     app.connect("config-inited", mat_sidecars.check_config)
-    app.connect("config-inited", mat_api_check.check_config)
+    app.connect("builder-inited", check_builder_configuration)
     app.connect("builder-inited", analyze)
     app.connect("env-get-outdated", mat_types.outdated_docs)
     app.connect("env-before-read-docs", mat_types.note_read_docs)

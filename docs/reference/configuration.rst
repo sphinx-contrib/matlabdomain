@@ -11,9 +11,25 @@ is a ``ConfigError`` in the build and in ``scmd apidoc``, which
 suggests the closest value. Give helper variables another name, such as
 ``_matlab_root``.
 
-A value that is not valid stops the run with a ``ConfigError`` whose
-message names the value and what it must be. Sphinx 8.0 and 8.1 print
-``Configuration error:`` and the message. Sphinx 8.2 and later print the
+Each run checks the values it uses. Every :term:`Sphinx` build uses the
+source and output values, except :confval:`matlab_stable_urls` and
+:confval:`matlab_simulink_autobuild_server`, which only HTML builds use;
+HTML builds also use :confval:`matlab_apidoc_output_dir`.
+``-b matlab-api-check`` also uses the ``matlab_api_check_*`` values.
+``scmd apidoc`` uses the source values and the ``matlab_apidoc_*`` values.
+A value that is not valid stops a run that uses it, at its start, with a
+``ConfigError`` whose message names the value and what it must be
+(``scmd apidoc`` prints ``scmd apidoc: error:`` and the message, and exits
+with 2). A value that is not valid and that only another run uses gives one
+``mat.config`` warning at the start, which names the value, what is wrong
+and the run that uses it; the run goes on without it. A build leaves a
+wrong type of such a value to the warning that :term:`Sphinx` prints for
+it (``The config value ... has type ...``). A value that is ``True`` or
+``False`` accepts nothing else: ``0`` and ``"no"`` are not valid, while
+``-D name=0`` and ``-D name=1`` give ``False`` and ``True``.
+
+Sphinx 8.0 and 8.1 print a ``ConfigError`` as ``Configuration error:`` and
+the message. Sphinx 8.2 and later print the
 report they print for every error that stops a build, their own
 configuration errors included: ``Configuration error!``, the sections
 Versions, Last Messages, Loaded Extensions and Traceback, and a request to
@@ -127,18 +143,21 @@ Output
    Show a property's default value after its name. A default that spans
    lines is shortened to its first and last line. Also shows the
    constructor arguments of an enumeration value (``Red (1, 0, 0)``).
+   Anything but ``True`` or ``False`` is a ``ConfigError``.
 
 .. confval:: matlab_show_property_specs
    :type: ``bool``
    :default: ``True``
 
-   Show a property's size, class and validators after its name.
+   Show a property's size, class and validators after its name. Anything
+   but ``True`` or ``False`` is a ``ConfigError``.
 
 .. confval:: matlab_class_signature
    :type: ``bool``
    :default: ``False``
 
    Show the constructor's arguments in the class :term:`signature`.
+   Anything but ``True`` or ``False`` is a ``ConfigError``.
 
 .. confval:: matlab_inherited_members
    :type: ``bool``
@@ -159,7 +178,8 @@ Output
    Show the namespace before the name in :term:`signatures <signature>`
    (``shapes.Circle``); ``False`` shows the name alone (``Circle``). It
    replaces :term:`Sphinx`'s ``add_module_names``, which the MATLAB
-   :term:`domain` does not read.
+   :term:`domain` does not read. Anything but ``True`` or ``False`` is a
+   ``ConfigError``.
 
 .. confval:: matlab_auto_link
    :type: ``None``, ``"basic"`` or ``"all"``
@@ -226,7 +246,9 @@ Output
    one of these files goes, for example one that ``html_extra_path``
    copies there, stops the build with a ``ConfigError`` that names the
    file; the build does not overwrite it. Remove or rename that file, or
-   set this value to ``False``.
+   set this value to ``False``. Anything but ``True`` or ``False`` is a
+   ``ConfigError`` in these builds and one ``mat.config`` warning in other
+   builds and in ``scmd apidoc``.
 
 .. confval:: matlab_simulink_metadata
    :type: ``list[str]``
@@ -274,7 +296,8 @@ Output
    ``matlab_stable_urls = False``) leaves it as text, also without a
    warning. The same holds for such a name of another site, through
    intersphinx. An auto :term:`directive` that names them still warns:
-   it documents one :term:`object`, so give its path reference.
+   it documents one :term:`object`, so give its path reference. Anything
+   but ``True`` or ``False`` is a ``ConfigError``.
 
 .. confval:: matlab_simulink_autobuild_server
    :type: ``str`` or ``None``
@@ -295,12 +318,15 @@ Output
    (``"published"``, when set) differs from the file, it logs one
    ``info`` line that names the values; edit the file by hand. Any other
    value than ``None`` or an ``http://`` or ``https://`` address is a
-   ``ConfigError``.
+   ``ConfigError`` in HTML builds and one ``mat.config`` warning in other
+   builds and in ``scmd apidoc``.
 
 ``matlab-api-check``
 --------------------
 
-Changing these reads no page again.
+Changing these reads no page again. Only ``-b matlab-api-check`` uses
+them: a value that is not valid is a ``ConfigError`` there and one
+``mat.config`` warning in other builds and in ``scmd apidoc``.
 
 .. confval:: matlab_api_check_rules
    :type: ``dict[str, str]``
@@ -368,9 +394,10 @@ Changing these reads no page again.
    changed files: ``-D matlab_api_check_files_from=changed-files.txt``. A
    relative path is relative to the current folder. Blank lines and the
    spaces around a line are dropped; commas do not separate entries. Set
-   alone, it selects only its lines (none for an empty file). A file that
-   cannot be read, or a line that :confval:`matlab_src_include_patterns`
-   would reject, is a ``ConfigError``.
+   alone, it selects only its lines (none for an empty file). Only
+   ``-b matlab-api-check`` reads the file: one that cannot be read, or a
+   line that :confval:`matlab_src_include_patterns` would reject, is a
+   ``ConfigError`` there.
 
 .. confval:: matlab_api_check_ignore_unmatched
    :type: ``bool``
@@ -379,7 +406,8 @@ Changing these reads no page again.
    ``True`` (``-D matlab_api_check_ignore_unmatched=1``): a selection entry
    that selects no file (a deleted file, a file that is not MATLAB code or
    is excluded) is listed in the reports as ``ignored``, without an error
-   or exit status 1.
+   or exit status 1. Anything but ``True`` or ``False`` is a
+   ``ConfigError``.
 
 .. confval:: matlab_api_check_section_labels
    :type: ``dict[str, list[str]]``
@@ -397,15 +425,19 @@ Changing these reads no page again.
 ``scmd apidoc``
 ---------------
 
-Read by ``scmd apidoc`` (:doc:`cli`); the build ignores them,
-so changing them reads no page again. No flag overrides them. Paths are
+Read by ``scmd apidoc`` (:doc:`cli`), which stops for one that is not
+valid. HTML builds also read :confval:`matlab_apidoc_output_dir`; for any
+other value that is not valid, a build gives one ``mat.config`` warning.
+Changing them reads no page again. No flag overrides them. Paths are
 relative to the folder of ``conf.py``.
 
 .. confval:: matlab_apidoc_output_dir
    :type: ``str`` or ``None``
    :default: ``None``
 
-   The folder for the generated pages. Required.
+   The folder for the generated pages. Required. HTML builds read it too:
+   they remove the page of a generated document that is gone. A value that
+   is not a ``str`` or ``None`` stops HTML builds at the start.
 
 .. confval:: matlab_apidoc_group
    :type: ``str``
@@ -449,9 +481,9 @@ relative to the folder of ``conf.py``.
    :type: ``int``
    :default: ``4``
 
-   The ``:maxdepth:`` of the generated :term:`toctrees <toctree>`. It controls
-   navigation,
-   not how deeply the source tree is searched.
+   The ``:maxdepth:`` of the generated :term:`toctrees <toctree>`: 1 or
+   more, or ``-1`` for no limit (any other value is a ``ConfigError``). It
+   controls navigation, not how deeply the source tree is searched.
 
 .. confval:: matlab_apidoc_tocfile
    :type: ``str``

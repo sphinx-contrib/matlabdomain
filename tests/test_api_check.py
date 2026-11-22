@@ -1,6 +1,7 @@
 """The matlab-api-check builder."""
 
 import json
+import re
 import shutil
 import zipfile
 from pathlib import Path
@@ -203,39 +204,81 @@ def test_severities(make_app, root, rules, status, expected):
         assert logged == count
 
 
-@pytest.mark.parametrize(
-    ("setting", "match"),
-    [
-        ('matlab_api_check_rules = ["inputs"]', "must be a dict"),
-        ('matlab_api_check_rules = {"input": "error"}', "unknown rule 'input'"),
-        ('matlab_api_check_rules = {"inputs": "fatal"}', "severity of 'inputs'"),
-        ('matlab_api_check_ignore_patterns = "tests/**"', "must be a list"),
-        ('matlab_api_check_ignore_patterns = ["/abs/**"]', "must be relative"),
-        (r'matlab_api_check_ignore_patterns = ["a\\b.m"]', "must use '/'"),
-        ("matlab_api_check_files = 3", "must be None, a list"),
-        ('matlab_api_check_files = ["/abs.m"]', "must be relative"),
-        ('matlab_api_check_files = ["../x.m"]', "leaves matlab_src_code_project_root"),
-        (r'matlab_api_check_files = ["a\\b.m"]', "must use '/'"),
-        ('matlab_api_check_files = ["good.m", ""]', "is not a glob pattern"),
-    ],
-    ids=[
-        "not-dict",
-        "unknown-rule",
-        "severity",
-        "patterns-str",
-        "absolute",
-        "backslash",
-        "files-type",
-        "files-absolute",
-        "files-outside",
-        "files-backslash",
-        "files-empty-entry",
-    ],
-)
+CONFIG_ERRORS = [
+    ('matlab_api_check_rules = ["inputs"]', "must be a dict"),
+    ('matlab_api_check_rules = {"input": "error"}', "unknown rule 'input'"),
+    ('matlab_api_check_rules = {"inputs": "fatal"}', "severity of 'inputs'"),
+    ('matlab_api_check_ignore_patterns = "tests/**"', "must be a list"),
+    ('matlab_api_check_ignore_patterns = ["/abs/**"]', "must be relative"),
+    (r'matlab_api_check_ignore_patterns = ["a\\b.m"]', "must use '/'"),
+    ("matlab_api_check_files = 3", "must be None, a list"),
+    ('matlab_api_check_files = ["/abs.m"]', "must be relative"),
+    ('matlab_api_check_files = ["../x.m"]', "leaves matlab_src_code_project_root"),
+    (r'matlab_api_check_files = ["a\\b.m"]', "must use '/'"),
+    ('matlab_api_check_files = ["good.m", ""]', "is not a glob pattern"),
+]
+CONFIG_ERROR_IDS = [
+    "not-dict",
+    "unknown-rule",
+    "severity",
+    "patterns-str",
+    "absolute",
+    "backslash",
+    "files-type",
+    "files-absolute",
+    "files-outside",
+    "files-backslash",
+    "files-empty-entry",
+]
+
+
+@pytest.mark.parametrize(("setting", "match"), CONFIG_ERRORS, ids=CONFIG_ERROR_IDS)
 def test_config_errors(make_app, root, setting, match):
     conf = root / "conf.py"
     conf.write_text(f"{conf.read_text()}{setting}\n")
     with pytest.raises(ConfigError, match=match):
+        make_app(BUILDER, srcdir=root)
+
+
+@pytest.mark.parametrize(("setting", "match"), CONFIG_ERRORS, ids=CONFIG_ERROR_IDS)
+def test_config_errors_warn_in_other_builders(make_app, root, setting, match):
+    """Another builder does not use the value: one warning, and it goes on.
+    A wrong type that Sphinx checks is left to Sphinx's own warning.
+    """
+    conf = root / "conf.py"
+    conf.write_text(f"{conf.read_text()}{setting}\n")
+    app = make_app("html", srcdir=root)
+    name = setting.split()[0]
+    text = re.sub(r"\x1b\[[0-9;]*m", "", app.warning.getvalue())
+    warnings = [line for line in text.splitlines() if name in line]
+    assert len(warnings) == 1
+    if match in {"must be a dict", "must be a list"}:  # a wrong type
+        assert f"The config value `{name}' has type" in warnings[0]
+        return
+    assert re.search(match, warnings[0])
+    assert warnings[0].endswith(
+        "It is used only by the matlab-api-check builder; this build ignores it. "
+        "[mat.config]"
+    )
+
+
+def test_a_selection_file_is_read_only_by_the_check(make_app, root):
+    conf = root / "conf.py"
+    conf.write_text(f'{conf.read_text()}matlab_api_check_files_from = "missing.txt"\n')
+    app = make_app("html", srcdir=root)
+    assert "missing.txt" not in app.warning.getvalue()
+
+
+def test_ignore_unmatched_is_true_or_false(make_app, root):
+    """A string is no longer True: a failing selection cannot pass by it."""
+    conf = root / "conf.py"
+    conf.write_text(
+        f"{conf.read_text()}matlab_api_check_files = ['deleted.m']\n"
+        "matlab_api_check_ignore_unmatched = 'no'\n"
+    )
+    with pytest.raises(
+        ConfigError, match=r"^matlab_api_check_ignore_unmatched must be bool, not 'no'"
+    ):
         make_app(BUILDER, srcdir=root)
 
 

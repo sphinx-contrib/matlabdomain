@@ -1067,6 +1067,49 @@ def test_conf_suppress_warnings_of_another_subtype(tmp_path, capsys):
     assert len(capsys.readouterr().err.splitlines()) == 4
 
 
+@pytest.mark.parametrize(
+    ("conf", "message", "users"),
+    [
+        (
+            'matlab_auto_link = "some"',
+            "matlab_auto_link must be None, 'basic' or 'all', not 'some'.",
+            "sphinx-build",
+        ),
+        (
+            'matlab_show_property_specs = "no"',
+            "matlab_show_property_specs must be bool, not 'no'.",
+            "sphinx-build",
+        ),
+        (
+            "matlab_stable_urls = 0",
+            "matlab_stable_urls must be bool, not 0.",
+            "HTML builds",
+        ),
+        (
+            "matlab_api_check_rules = []",
+            "matlab_api_check_rules must be a dict of rule -> severity.",
+            "the matlab-api-check builder",
+        ),
+    ],
+)
+def test_values_of_other_runs_warn_once(tmp_path, capsys, conf, message, users):
+    """The command runs on a project that is not ready for a build: a bad
+    value only the build uses is one warning (mat.config), and the run goes on.
+    """
+    docs = conf_dir(tmp_path / "docs", tmp_path / "out", f"{FOLDER}{conf}\n")
+    assert main(["-n", "-c", docs]) == 0
+    captured = capsys.readouterr()
+    assert [line for line in captured.err.splitlines() if "mat.config" in line] == [
+        f"WARNING: [scmd apidoc] {message} It is used only by {users}; scmd "
+        "apidoc ignores it. [mat.config]"
+    ]
+    assert "27 files indexed, 5 warnings" in captured.out
+    suppress = f'{FOLDER}{conf}\nsuppress_warnings = ["mat.config"]\n'
+    docs = conf_dir(tmp_path / "docs", tmp_path / "out", suppress)
+    assert main(["-n", "-c", docs]) == 0
+    assert "27 files indexed, 4 warnings" in capsys.readouterr().out
+
+
 @pytest.mark.parametrize("value", ['"mat"', "None"])
 def test_conf_suppress_warnings_must_be_a_list(tmp_path, capsys, value):
     docs = conf_dir(
@@ -1267,8 +1310,8 @@ def test_conf_settings(tmp_path):
     conf = 'matlab_apidoc_output_dir = "api"\n'
     docs = conf_project(tmp_path, f'{conf}matlab_version = "R2026a"\n')
     args = _cli.get_parser().parse_args(["-c", str(docs)])
-    settings, options, suppress = _cli._settings(args)
-    assert suppress == []
+    settings, options, suppress, problems = _cli._settings(args)
+    assert (suppress, problems) == ([], [])
     assert settings.matlab_version == "R2026a"
     assert (options.maxdepth, options.tocfile, options.suffix) == (4, "index", "rst")
     assert (options.group, options.page_size) == ("namespace", 100)
@@ -1286,6 +1329,10 @@ def test_conf_settings(tmp_path):
         (
             "matlab_apidoc_maxdepth = True",
             "matlab_apidoc_maxdepth must be int, not True",
+        ),
+        (
+            "matlab_apidoc_maxdepth = 0",
+            "matlab_apidoc_maxdepth must be 1 or more, or -1 for no limit, not 0.",
         ),
         (
             "matlab_apidoc_remove_old = 0",
@@ -1369,6 +1416,14 @@ def test_unknown_names_are_named_together(tmp_path, capsys):
     err = capsys.readouterr().err
     assert "matlab_aaa is not a configuration value" in err
     assert "; matlab_zzz is not a configuration value" in err
+
+
+def test_maxdepth_minus_one_has_no_limit(tmp_path):
+    docs = conf_dir(
+        tmp_path / "docs", tmp_path / "out", "matlab_apidoc_maxdepth = -1\n"
+    )
+    assert main(["-q", "-c", docs]) == 0
+    assert ":maxdepth: -1\n" in (tmp_path / "out" / "index.rst").read_text()
 
 
 def test_build_only_values_are_accepted(tmp_path):

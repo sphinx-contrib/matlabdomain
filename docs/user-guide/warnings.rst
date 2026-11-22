@@ -38,6 +38,16 @@ type ``docutils``, which covers every page, not only help text
 What each warning means
 -----------------------
 
+``mat.config``
+   A ``matlab_*`` value in ``conf.py`` or ``-D`` is not valid, and only
+   another run uses it: an api-check value in an HTML build, an HTML value
+   in a text or LaTeX build, a ``matlab_apidoc_*`` value in a build, or a
+   value of the build in ``scmd apidoc``. The warning names the value, what
+   is wrong and the run that uses it; this run goes on without the value.
+   Correct the value, or remove it if no run of the project uses it. The run
+   that uses it stops with a ``ConfigError`` instead
+   (:doc:`../reference/configuration`).
+
 ``mat.parse_error``
    A file could not be read (no permission, for example) or parsed, an
    ``.mlapp`` file is not a valid App Designer file, a ``.slx`` or ``.mdl``

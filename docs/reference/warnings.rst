@@ -19,6 +19,11 @@ for a file without one, the auto :term:`directive` for a folder).
    * - Warning
      - Raised for
      - Emitted
+   * - ``mat.config``
+     - a ``matlab_*`` value that is not valid and that only another run
+       uses (:doc:`configuration`): the warning names the value, what is
+       wrong and the run that uses it
+     - at the start of a build or of ``scmd apidoc``
    * - ``mat.parse_error``
      - a file or folder that cannot be read, an invalid ``.mlapp``, a
        ``.slx`` or ``.mdl`` file that is not a readable Simulink file (a Git

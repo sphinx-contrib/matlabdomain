@@ -134,10 +134,10 @@ _JS = """\
 
 
 def _html(app):
-    return _html_builder(app.builder)
+    return writes_html_pages(app.builder)
 
 
-def _html_builder(builder):
+def writes_html_pages(builder):
     """Stable addresses are for builders that write ``<page>.html`` pages: not
     epub, and not ``json`` or ``pickle`` (``.fjson``, ``.fpickle``).
     """
@@ -203,7 +203,7 @@ def chooser_link(dom, builder, fromdocname, refs, contnode):
     """Link ``contnode`` to the chooser page that lists all of ``refs`` (one
     MATLAB name), or return it unlinked when the build writes no such page.
     """
-    if not (builder.config.matlab_stable_urls and _html_builder(builder)):
+    if not (builder.config.matlab_stable_urls and writes_html_pages(builder)):
         return contnode
     _, by_name, names, _ = addresses(dom)
     name = dom.object_name(refs[0])

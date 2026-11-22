@@ -5,6 +5,14 @@ All settings go in ``conf.py``. They start with ``matlab_``;
 :doc:`../reference/configuration` lists every one with its type and default.
 This page explains how to use them.
 
+Each run checks the values it uses when it starts: a value that is not
+valid stops ``sphinx-build``, ``-b matlab-api-check`` or ``scmd apidoc``
+with a configuration error (:ref:`how Sphinx prints it
+<configuration-error-report>`). A value that is not valid and that only
+another run uses, such as an api-check rule in an HTML build or an HTML
+setting in ``scmd apidoc``, is one ``mat.config`` warning
+(:doc:`warnings`), and the run goes on.
+
 The project root
 ----------------
 

@@ -16,7 +16,7 @@ from typing import cast
 
 from sphinx.config import Config
 from sphinx.errors import ConfigError
-from sphinx.util.logging import is_suppressed_warning
+from sphinx.util.logging import getLogger, is_suppressed_warning
 from sphinx.util.tags import Tags
 
 from ..mat_config import (
@@ -34,6 +34,8 @@ from ..mat_types import (
 )
 from ..mat_typing import override
 from ._generate import ApidocOptions, generate
+
+logger = getLogger("matlab-apidoc")
 
 #: exit status when --check finds pages to change
 CHECK_FAILED = 1
@@ -126,12 +128,13 @@ def _folder(conf, name, srcdir):
 
 
 def _settings(args):
-    """``(IndexSettings, ApidocOptions, suppress_warnings)`` of conf.py and
-    the flags, or ConfigError.
+    """``(IndexSettings, ApidocOptions, suppress_warnings, problems)`` of
+    conf.py and the flags, or ConfigError; ``problems`` are the bad values
+    that only the build uses, to be warned once.
     """
     conf = read_conf(args.conf_dir)
     srcdir = os.path.abspath(args.conf_dir)
-    check_values(conf, frozenset({APIDOC}))
+    problems = check_values(conf, frozenset({APIDOC}))
 
     root = project_root(conf, srcdir)
     if root is None:
@@ -164,7 +167,7 @@ def _settings(args):
     suppress = conf.suppress_warnings
     if isinstance(suppress, str) or not isinstance(suppress, (list, tuple, set)):
         raise ConfigError(f"suppress_warnings must be a list, not {suppress!r}.")
-    return settings, options, list(suppress)
+    return settings, options, list(suppress), problems
 
 
 class _WarningHandler(logging.Handler):
@@ -233,13 +236,15 @@ def main(argv=None, *, prog="scmd apidoc"):
     parser = get_parser(prog)
     args = parser.parse_args(argv)
     try:
-        settings, options, suppress = _settings(args)
+        settings, options, suppress, problems = _settings(args)
     except ConfigError as err:
         print(f"{parser.prog}: error: {err}", file=sys.stderr)
         return USAGE_ERROR
 
     start = time.perf_counter()
     with _sphinx_warnings(sys.stderr, suppress) as warnings:
+        for problem in problems:
+            logger.warning("[scmd apidoc] %s", problem, type="mat", subtype="config")
         source_index = build_index(settings)
         result = generate(source_index, options)
     elapsed = time.perf_counter() - start

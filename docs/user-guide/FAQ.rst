@@ -30,8 +30,10 @@ directory` is reported by :term:`Sphinx` before the :term:`extension` is loaded.
 Why does a wrong setting look like a crash?
 -------------------------------------------
 
-A wrong ``matlab_*`` value stops the build with a configuration error
-(``ConfigError``) whose message names the setting and what it must be.
+A wrong ``matlab_*`` value that the build uses stops it with a
+configuration error (``ConfigError``) whose message names the setting and
+what it must be. (A wrong value that only another run uses is one
+``mat.config`` warning instead.)
 Sphinx 8.0 and 8.1 print the message under ``Configuration error:``.
 Sphinx 8.2 and later print every error that stops a build as a report
 meant for a bug report, their own configuration errors included (an

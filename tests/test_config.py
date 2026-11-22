@@ -9,6 +9,8 @@ import sphinx
 from sphinx.cmd.build import build_main
 from sphinx.errors import ConfigError
 
+from sphinxcontrib import mat_api_check
+
 
 @pytest.fixture
 def project(tmp_path):
@@ -188,3 +190,251 @@ def test_a_missing_project_root_stops_sphinx_build(project, tmp_path, capsys):
         "is relative to the Sphinx source folder.",
     )
     assert not (out / "index.html").exists()
+
+
+# -- which run checks which value ----------------------------------------------
+
+
+def _with_root(project, *lines):
+    """Add the project root and ``lines`` to ``conf.py``."""
+    with open(project / "conf.py", "a", encoding="utf-8") as conf:
+        conf.write('matlab_src_code_project_root = "code"\n')
+        conf.write("".join(f"{line}\n" for line in lines))
+
+
+def _plain(text):
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
+def config_warnings(text):
+    """Return the ``mat.config`` lines of a warning stream."""
+    return [line for line in _plain(text).splitlines() if "[mat.config]" in line]
+
+
+def config_warning(message, users, this="this build"):
+    return (
+        f"WARNING: [sphinxcontrib-matlabdomain] {message} It is used only by "
+        f"{users}; {this} ignores it. [mat.config]"
+    )
+
+
+API = "the matlab-api-check builder"
+RULES = "matlab_api_check_rules: unknown rule 'bogus'; the rules are " + ", ".join(
+    mat_api_check.RULES
+)
+
+
+OUTSIDE = "matlab_api_check_files: '../x.m' leaves matlab_src_code_project_root."
+SERVER = (
+    "matlab_simulink_autobuild_server must be None or start with http:// or "
+    "https://, not 'localhost:8000'."
+)
+
+
+def _status_with_W():
+    """sphinx-build -W fails at the end (1) from Sphinx 8.1, at once (2) before."""
+    return 1 if tuple(map(int, sphinx.__version__.split(".")[:2])) >= (8, 1) else 2
+
+
+def test_a_value_of_another_builder_warns_once(project, tmp_path, capsys):
+    """The api-check values stop only -b matlab-api-check; an HTML build
+    warns once (mat.config) and goes on; -W makes that a failure.
+    """
+    _with_root(project, 'matlab_api_check_rules = {"bogus": "error"}')
+    out = tmp_path / "out"
+    assert sphinx_build(["-q", "-E", str(project), str(out)]) == 0
+    assert config_warnings(capsys.readouterr().err) == [
+        config_warning(f"{RULES}.", API)
+    ]
+    assert "F doc" in (out / "index.html").read_text(encoding="utf-8")
+
+    args = ["-q", "-E", "-b", "matlab-api-check", str(project), str(tmp_path / "api")]
+    assert sphinx_build(args) == 2
+    assert_configuration_error(capsys.readouterr().err, f"{RULES}.")
+
+    assert sphinx_build(["-q", "-E", "-W", str(project), str(tmp_path / "w")]) == (
+        _status_with_W()
+    )
+    assert len(config_warnings(capsys.readouterr().err)) == 1
+
+
+def test_suppress_warnings_silences_mat_config(make_app, project):
+    _with_root(
+        project, 'matlab_apidoc_group = "x"', 'suppress_warnings = ["mat.config"]'
+    )
+    app = make_app(srcdir=project)
+    assert app.warning.getvalue() == ""
+
+
+def test_an_apidoc_value_in_a_build_warns_once_naming_apidoc(project, tmp_path, capsys):
+    _with_root(project, 'matlab_apidoc_group = "x"')
+    assert sphinx_build(["-q", "-E", "-b", "text", str(project), str(tmp_path)]) == 0
+    assert config_warnings(capsys.readouterr().err) == [
+        config_warning(
+            "matlab_apidoc_group must be 'namespace' or 'folder', not 'x'.",
+            "scmd apidoc",
+        )
+    ]
+
+
+@pytest.mark.parametrize(
+    ("line", "builder", "outcome", "message"),
+    [
+        # matlab-api-check values
+        ('matlab_api_check_files = ["../x.m"]', "matlab-api-check", "stop", OUTSIDE),
+        ('matlab_api_check_files = ["../x.m"]', "text", "warn", (OUTSIDE, API)),
+        (
+            'matlab_api_check_ignore_unmatched = "no"',
+            "matlab-api-check",
+            "stop",
+            "matlab_api_check_ignore_unmatched must be bool, not 'no'.",
+        ),
+        ('matlab_api_check_ignore_unmatched = "no"', "html", "sphinx", None),
+        (
+            "matlab_api_check_ignore_unmatched = 0",
+            "html",
+            "warn",
+            ("matlab_api_check_ignore_unmatched must be bool, not 0.", API),
+        ),
+        ('matlab_api_check_files_from = "missing.txt"', "html", "ok", None),
+        (
+            'matlab_api_check_files_from = "missing.txt"',
+            "matlab-api-check",
+            "stop",
+            "matlab_api_check_files_from: cannot read 'missing.txt': ",
+        ),
+        # values of HTML builds
+        ('matlab_simulink_autobuild_server = "localhost:8000"', "html", "stop", SERVER),
+        (
+            'matlab_simulink_autobuild_server = "localhost:8000"',
+            "matlab-api-check",
+            "warn",
+            (SERVER, "HTML builds"),
+        ),
+        (
+            "matlab_stable_urls = 0",
+            "dirhtml",
+            "stop",
+            "matlab_stable_urls must be bool, not 0.",
+        ),
+        (
+            "matlab_stable_urls = 0",
+            "json",
+            "warn",
+            ("matlab_stable_urls must be bool, not 0.", "HTML builds"),
+        ),
+        ('matlab_stable_urls = "no"', "text", "sphinx", None),
+        (
+            "matlab_apidoc_output_dir = 5",
+            "html",
+            "stop",
+            "matlab_apidoc_output_dir must be str or None, not 5.",
+        ),
+        ("matlab_apidoc_output_dir = 5", "text", "sphinx", None),
+        # values of scmd apidoc
+        (
+            "matlab_apidoc_maxdepth = 0",
+            "html",
+            "warn",
+            (
+                "matlab_apidoc_maxdepth must be 1 or more, or -1 for no limit, not 0.",
+                "scmd apidoc",
+            ),
+        ),
+        ("matlab_apidoc_maxdepth = -1", "html", "ok", None),
+        ('matlab_apidoc_maxdepth = "x"', "html", "sphinx", None),
+        (
+            'matlab_apidoc_tocfile = "a/b"',
+            "html",
+            "warn",
+            ("matlab_apidoc_tocfile 'a/b' must be a file name.", "scmd apidoc"),
+        ),
+        # values of every builder: booleans are True or False
+        (
+            'matlab_show_property_specs = "no"',
+            "html",
+            "stop",
+            "matlab_show_property_specs must be bool, not 'no'.",
+        ),
+        (
+            "matlab_class_signature = 0",
+            "text",
+            "stop",
+            "matlab_class_signature must be bool, not 0.",
+        ),
+        (
+            'matlab_link_shadowed_files_to_chooser_pages = "no"',
+            "matlab-api-check",
+            "stop",
+            "matlab_link_shadowed_files_to_chooser_pages must be bool, not 'no'.",
+        ),
+    ],
+)
+def test_which_run_checks_which_value(
+    make_app, project, monkeypatch, line, builder, outcome, message
+):
+    """A run stops for a bad value it uses, warns once (mat.config) for one
+    only another run uses, and leaves a wrong type of that one to Sphinx's
+    own warning.
+    """
+    monkeypatch.chdir(project)
+    _with_root(project, line)
+    name = line.split()[0]
+    if outcome == "stop":
+        with pytest.raises(ConfigError) as error:
+            make_app(builder, srcdir=project)
+        assert str(error.value).startswith(message)
+        return
+    app = make_app(builder, srcdir=project)
+    warnings = app.warning.getvalue()
+    if outcome == "warn":
+        assert config_warnings(warnings) == [config_warning(*message)]
+    elif outcome == "sphinx":
+        assert config_warnings(warnings) == []
+        assert warnings.count(f"The config value `{name}' has type") == 1
+    else:
+        assert name not in warnings
+
+
+def test_a_command_line_value_is_checked_by_the_run_that_uses_it(
+    project, tmp_path, capsys
+):
+    _with_root(project)
+    entry = ["-D", "matlab_api_check_files=../x.m"]
+    assert sphinx_build(["-q", "-E", *entry, str(project), str(tmp_path / "h")]) == 0
+    assert config_warnings(capsys.readouterr().err) == [config_warning(OUTSIDE, API)]
+    api = ["-b", "matlab-api-check", str(project), str(tmp_path / "a")]
+    assert sphinx_build(["-q", "-E", *entry, *api]) == 2
+    assert_configuration_error(capsys.readouterr().err, OUTSIDE)
+
+
+@pytest.mark.parametrize(("flag", "written"), [("0", False), ("1", True)])
+def test_a_boolean_from_the_command_line(project, tmp_path, capsys, flag, written):
+    _with_root(project)
+    out = tmp_path / "out"
+    argv = ["-q", "-E", "-D", f"matlab_stable_urls={flag}", str(project), str(out)]
+    assert sphinx_build(argv) == 0
+    assert capsys.readouterr().err == ""
+    assert (out / "mat" / "ref" / "+pkg" / "f.m.html").exists() is written
+
+
+def test_a_bad_value_set_by_another_extension(make_app, project):
+    """Like sphinx-multiproject: values set before the checks are checked."""
+    _with_root(project)
+    with open(project / "conf.py", "a", encoding="utf-8") as conf:
+        conf.write(
+            "def setup(app):\n"
+            "    def inject(app, config):\n"
+            '        config["matlab_api_check_files"] = 5\n'
+            '    app.connect("config-inited", inject, priority=-999)\n'
+        )
+    app = make_app(srcdir=project)
+    assert config_warnings(app.warning.getvalue()) == [
+        config_warning(
+            "matlab_api_check_files must be None, a list of paths or glob "
+            "patterns, or a string of them separated by commas.",
+            API,
+        )
+    ]
+    with pytest.raises(ConfigError, match=r"^matlab_api_check_files must be None"):
+        make_app("matlab-api-check", srcdir=project)

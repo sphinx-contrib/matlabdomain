@@ -39,6 +39,8 @@ from pathlib import Path
 import gauntlet as G
 import projects as P
 
+from sphinxcontrib.mat_api_check import RULES as API_CHECK_RULES
+
 REPO = G.REPO
 REPOS = P.REPOS
 DOCS = REPO / "docs"
@@ -1345,162 +1347,332 @@ def intersphinx(ctx):
     )
 
 
-#: (values, tools, message) of each invalid configuration. Tools: "apidoc"
-#: (scmd apidoc), "html" (sphinx-build), "api" (-b matlab-api-check); each
-#: must stop with exit 2 (1 for scmd apidoc's usage errors is not accepted)
-#: and print the message (a regular expression), without a traceback.
+#: (values, outcomes, message) of each invalid configuration, run in
+#: "apidoc" (scmd apidoc), "html" (sphinx-build) and "api" (-b
+#: matlab-api-check). A run stops for a bad value it uses and warns once for
+#: one that only another run uses (reference/configuration.rst):
+#: "stop": exit 2 and the message (a regular expression), no traceback;
+#: "warn": one mat.config warning that matches the message, and exit 0;
+#: "type": Sphinx's own type warning for a value it does not use, no
+#: mat.config, exit 0; "ok": no warning naming it, exit 0.
 BAD_CONFIG = [
     (
         {"matlab_src_code_project_root": "../no_such_root"},
-        "apidoc html api",
-        r"matlab_src_code_project_root '.*no_such_root' is not a folder",
+        "apidoc=stop html=stop api=stop",
+        r"matlab_src_code_project_root \'.*no_such_root\' is not a folder",
     ),
     (
         {"matlab_src_code_project_root": 5},
-        "apidoc html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_code_project_root",
     ),
     (
         {"matlab_src_include_patterns": "*.m"},
-        "apidoc html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_include_patterns",
     ),
     (
         {"matlab_src_include_patterns": ["src\\*.m"]},
-        "apidoc html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_include_patterns",
     ),
     (
         {"matlab_src_include_patterns": ["/abs/*.m"]},
-        "apidoc html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_include_patterns",
     ),
     (
         {"matlab_src_exclude_patterns": ["../*.m"]},
-        "apidoc html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_exclude_patterns",
     ),
     (
         {"matlab_src_exclude_patterns": [""]},
-        "apidoc html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_exclude_patterns",
     ),
     (
         {"matlab_src_sidecar_suffixes": ["md"]},
-        "apidoc html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_sidecar_suffixes",
     ),
-    ({"matlab_src_sidecar_suffixes": [".md"]}, "html", r"myst"),
-    ({"matlab_src_encoding": "no-such-codec"}, "apidoc html", r"no-such-codec"),
-    ({"matlab_version": "R2020c"}, "apidoc html", r"R2020c"),
-    ({"matlab_auto_link": "some"}, "html", r"matlab_auto_link"),
-    ({"matlab_external_names": "abc"}, "html", r"matlab_external_names"),
-    ({"matlab_external_names": [1]}, "html", r"matlab_external_names"),
-    ({"matlab_external_names": ["("]}, "html", r"matlab_external_names"),
-    ({"matlab_inherited_members": "yes"}, "html", r"matlab_inherited_members"),
-    ({"matlab_src_dir": "src"}, "apidoc html", r"matlab_src_dir"),
-    ({"matlab_keep_package_prefix": True}, "html", r"matlab_keep_package_prefix"),
-    ({"matlab_short_links": True}, "html", r"matlab_short_links"),
+    ({"matlab_src_sidecar_suffixes": [".md"]}, "apidoc=ok html=stop api=stop", r"myst"),
+    (
+        {"matlab_src_encoding": "no-such-codec"},
+        "apidoc=stop html=stop api=stop",
+        r"no-such-codec",
+    ),
+    ({"matlab_version": "R2020c"}, "apidoc=stop html=stop api=stop", r"R2020c"),
+    (
+        {"matlab_auto_link": "some"},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_auto_link",
+    ),
+    (
+        {"matlab_external_names": "abc"},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_external_names",
+    ),
+    (
+        {"matlab_external_names": [1]},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_external_names",
+    ),
+    (
+        {"matlab_external_names": ["("]},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_external_names",
+    ),
+    (
+        {"matlab_inherited_members": "yes"},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_inherited_members",
+    ),
+    (
+        {"matlab_show_property_default_value": "no"},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_show_property_default_value must be bool",
+    ),
+    (
+        {"matlab_show_property_specs": 0},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_show_property_specs must be bool",
+    ),
+    (
+        {"matlab_class_signature": "no"},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_class_signature must be bool",
+    ),
+    (
+        {"matlab_add_namespace_names": "no"},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_add_namespace_names must be bool",
+    ),
+    (
+        {"matlab_link_shadowed_files_to_chooser_pages": "no"},
+        "apidoc=warn html=stop api=stop",
+        r"matlab_link_shadowed_files_to_chooser_pages must be bool",
+    ),
+    (
+        {"matlab_stable_urls": "no"},
+        "apidoc=warn html=stop api=type",
+        r"matlab_stable_urls",
+    ),
+    (
+        {"matlab_stable_urls": 0},
+        "apidoc=warn html=stop api=warn",
+        r"matlab_stable_urls must be bool",
+    ),
+    ({"matlab_src_dir": "src"}, "apidoc=stop html=stop api=stop", r"matlab_src_dir"),
+    (
+        {"matlab_keep_package_prefix": True},
+        "apidoc=stop html=stop api=stop",
+        r"matlab_keep_package_prefix",
+    ),
+    (
+        {"matlab_short_links": True},
+        "apidoc=stop html=stop api=stop",
+        r"matlab_short_links",
+    ),
     (
         {"matlab_simulink_doc_suffixes": ["rst"]},
-        "html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_simulink_doc_suffixes",
     ),
     (
         {"matlab_simulink_autobuild_server": "localhost:8000"},
-        "html",
+        "apidoc=warn html=stop api=warn",
         r"matlab_simulink_autobuild_server",
     ),
-    ({"matlab_api_check_rules": []}, "api", r"matlab_api_check_rules"),
-    ({"matlab_api_check_rules": {"no_such_rule": "error"}}, "api", r"no_such_rule"),
-    ({"matlab_api_check_rules": {"description": "fatal"}}, "api", r"fatal"),
+    (
+        {"matlab_api_check_rules": []},
+        "apidoc=warn html=type api=stop",
+        r"matlab_api_check_rules",
+    ),
+    (
+        {"matlab_api_check_rules": {"no_such_rule": "error"}},
+        "apidoc=warn html=warn api=stop",
+        r"no_such_rule",
+    ),
+    (
+        {"matlab_api_check_rules": {"description": "fatal"}},
+        "apidoc=warn html=warn api=stop",
+        r"fatal",
+    ),
     (
         {"matlab_api_check_section_labels": []},
-        "api",
+        "apidoc=warn html=type api=stop",
         r"matlab_api_check_section_labels",
     ),
-    ({"matlab_api_check_section_labels": {"Nope": "X"}}, "api", r"Nope"),
+    (
+        {"matlab_api_check_section_labels": {"Nope": "X"}},
+        "apidoc=warn html=warn api=stop",
+        r"Nope",
+    ),
     (
         {"matlab_api_check_ignore_patterns": "x"},
-        "api",
+        "apidoc=warn html=type api=stop",
         r"matlab_api_check_ignore_patterns",
     ),
-    ({"matlab_api_check_files": 5}, "api", r"matlab_api_check_files"),
-    ({"matlab_api_check_files_from": ""}, "api", r"matlab_api_check_files_from"),
-    ({"matlab_api_check_files_from": "no_such_list.txt"}, "api", r"no_such_list"),
-    ({"matlab_apidoc_output_dir": None}, "apidoc", r"matlab_apidoc_output_dir"),
-    ({"matlab_apidoc_output_dir": "conf.py"}, "apidoc", r"conf.py"),
+    (
+        {"matlab_api_check_files": 5},
+        "apidoc=warn html=warn api=stop",
+        r"matlab_api_check_files",
+    ),
+    (
+        {"matlab_api_check_files": ["../x.m"]},
+        "apidoc=warn html=warn api=stop",
+        r"matlab_api_check_files: '../x.m' leaves",
+    ),
+    (
+        {"matlab_api_check_files_from": ""},
+        "apidoc=warn html=warn api=stop",
+        r"matlab_api_check_files_from",
+    ),
+    (
+        {"matlab_api_check_files_from": "no_such_list.txt"},
+        "apidoc=ok html=ok api=stop",
+        r"no_such_list",
+    ),
+    (
+        {"matlab_api_check_ignore_unmatched": "no"},
+        "apidoc=warn html=type api=stop",
+        r"matlab_api_check_ignore_unmatched",
+    ),
+    (
+        {"matlab_apidoc_output_dir": None},
+        "apidoc=stop html=ok api=ok",
+        r"matlab_apidoc_output_dir",
+    ),
+    (
+        {"matlab_apidoc_output_dir": 5},
+        "apidoc=stop html=stop api=type",
+        r"matlab_apidoc_output_dir",
+    ),
+    ({"matlab_apidoc_output_dir": "conf.py"}, "apidoc=stop html=ok api=ok", r"conf.py"),
     (
         {"matlab_apidoc_templatedir": "no_such_templates"},
-        "apidoc",
+        "apidoc=stop html=ok api=ok",
         r"no_such_templates",
     ),
-    ({"matlab_apidoc_group": "x"}, "apidoc", r"matlab_apidoc_group"),
-    ({"matlab_apidoc_page_size": 0}, "apidoc", r"matlab_apidoc_page_size"),
-    ({"matlab_apidoc_tocfile": "a/b"}, "apidoc", r"matlab_apidoc_tocfile"),
-    ({"matlab_apidoc_tocfile": ""}, "apidoc", r"matlab_apidoc_tocfile"),
-    ({"matlab_apidoc_maxdepth": "x"}, "apidoc", r"matlab_apidoc_maxdepth"),
-    ({"matlab_apidoc_separate": "yes"}, "apidoc", r"matlab_apidoc_separate"),
-    ({"suppress_warnings": "mat.apidoc"}, "apidoc", r"suppress_warnings"),
-    ({"matlab_src_code_project_root": None}, "apidoc", r"matlab_src_code_project_root"),
+    (
+        {"matlab_apidoc_group": "x"},
+        "apidoc=stop html=warn api=warn",
+        r"matlab_apidoc_group",
+    ),
+    (
+        {"matlab_apidoc_page_size": 0},
+        "apidoc=stop html=warn api=warn",
+        r"matlab_apidoc_page_size",
+    ),
+    (
+        {"matlab_apidoc_tocfile": "a/b"},
+        "apidoc=stop html=warn api=warn",
+        r"matlab_apidoc_tocfile",
+    ),
+    (
+        {"matlab_apidoc_tocfile": ""},
+        "apidoc=stop html=warn api=warn",
+        r"matlab_apidoc_tocfile",
+    ),
+    (
+        {"matlab_apidoc_maxdepth": "x"},
+        "apidoc=stop html=type api=type",
+        r"matlab_apidoc_maxdepth",
+    ),
+    (
+        {"matlab_apidoc_maxdepth": 0},
+        "apidoc=stop html=warn api=warn",
+        r"matlab_apidoc_maxdepth must be 1 or more, or -1",
+    ),
+    (
+        {"matlab_apidoc_maxdepth": -1},
+        "apidoc=ok html=ok api=ok",
+        r"matlab_apidoc_maxdepth",
+    ),
+    (
+        {"matlab_apidoc_separate": "yes"},
+        "apidoc=stop html=type api=type",
+        r"matlab_apidoc_separate",
+    ),
+    ({"suppress_warnings": "mat.apidoc"}, "apidoc=stop", r"suppress_warnings"),
+    (
+        {"matlab_src_code_project_root": None},
+        "apidoc=stop html=ok api=ok",
+        r"matlab_src_code_project_root",
+    ),
     (
         {"matlab_src_code_project_root": None, "matlab_src_sidecar_suffixes": [".rst"]},
-        "html",
-        r"matlab_src_sidecar_suffixes",
+        "apidoc=stop html=stop api=stop",
+        r"matlab_src_sidecar_suffixes|matlab_src_code_project_root",
     ),
     (
         {"matlab_src_code_project_root": None, "matlab_src_include_patterns": ["*.m"]},
-        "html",
-        r"matlab_src_include_patterns",
+        "apidoc=stop html=stop api=stop",
+        r"matlab_src_include_patterns|matlab_src_code_project_root",
     ),
     (
         {"matlab_src_code_project_root": ".", "matlab_src_sidecar_suffixes": [".rst"]},
-        "html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_code_project_root|source folder|source directory",
     ),
     (
         {"matlab_src_include_patterns": ["."]},
-        "apidoc html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_include_patterns",
     ),
     (
         {"matlab_src_sidecar_suffixes": ".md"},
-        "apidoc html",
+        "apidoc=stop html=stop api=stop",
         r"matlab_src_sidecar_suffixes",
     ),
-    ({"matlab_simulink_doc_suffixes": ".rst"}, "html", r"matlab_simulink_doc_suffixes"),
+    (
+        {"matlab_simulink_doc_suffixes": ".rst"},
+        "apidoc=stop html=stop api=stop",
+        r"matlab_simulink_doc_suffixes",
+    ),
     (
         {"matlab_api_check_section_labels": {"inputs": "Inputs"}},
-        "api",
+        "apidoc=warn html=warn api=stop",
         r"matlab_api_check_section_labels",
     ),
-    ({"matlab_api_check_section_labels": {"inputs": ["a:b"]}}, "api", r"a:b"),
+    (
+        {"matlab_api_check_section_labels": {"inputs": ["a:b"]}},
+        "apidoc=warn html=warn api=stop",
+        r"a:b",
+    ),
 ]
 
 
 @scenario
 def bad_config(ctx):
     """Every invalid matlab_* value (and a few Sphinx ones the tools read):
-    scmd apidoc and sphinx-build stop with exit 2 and name the setting, no
-    traceback; a misspelled matlab_ name warns.
+    the run that uses it stops with exit 2 and names the setting, no
+    traceback; another run warns once (mat.config) and goes on; a misspelled
+    matlab_ name stops every run.
     """
     root = str(REPOS / "regularizeNd")
-    for i, (values, tools, message, *bug) in enumerate(BAD_CONFIG):
+    # No finding fails the check, so a run that goes on exits with 0.
+    quiet = dict.fromkeys(API_CHECK_RULES, "ignore")
+    for i, (values, outcomes, message, *bug) in enumerate(BAD_CONFIG):
         bug = bug[0] if bug else None
         docs = ctx.conf(
             ctx.path(f"c{i:02d}"),
             **{
                 "matlab_src_code_project_root": root,
                 "matlab_apidoc_output_dir": "api",
+                "matlab_api_check_rules": quiet,
                 **values,
             },
         )
         (docs / "index.rst").write_text("Bad\n===\n", encoding="utf-8")
         what = ", ".join(f"{k}={v!r}" for k, v in values.items())
-        for tool in tools.split():
+        names = [k for k in values if k.startswith("matlab_")]
+        for tool, outcome in (o.split("=") for o in outcomes.split()):
             if tool == "apidoc":
-                proc = ctx.scmd(f"{i:02d} apidoc", "apidoc", "-c", docs)
+                proc = ctx.scmd(f"{i:02d} apidoc", "apidoc", "-n", "-c", docs)
                 rc, text = proc.returncode, proc.stdout + proc.stderr
+                warned = proc.stderr.splitlines()
             else:
                 b = ctx.sphinx(
                     f"{i:02d} {tool}",
@@ -1509,15 +1681,31 @@ def bad_config(ctx):
                     builder="html" if tool == "html" else "matlab-api-check",
                 )
                 rc, text = b.rc, b.stdout + b.stderr + b.warnings
-            ok = rc == 2 and re.search(message, text) is not None
+                warned = b.warnings.splitlines()
+            ours = [line for line in warned if "[mat.config]" in line]
+            sphinx = [
+                line
+                for line in warned
+                if any(f"The config value `{n}'" in line for n in names)
+            ]
+            if outcome == "stop":
+                ok = rc == 2 and re.search(message, text) is not None
+            elif outcome == "warn":
+                ok = rc == 0 and len(ours) == 1 and re.search(message, ours[0])
+                ok = ok and not sphinx
+            elif outcome == "type":
+                ok = rc == 0 and not ours and len(sphinx) == 1
+            else:
+                ok = rc == 0 and not ours and not sphinx
             # the message: the last line of Sphinx's report (8.2 and later)
             lines = text.strip().splitlines() or [""]
             first = next(
-                (line.strip() for line in lines if "ConfigError: " in line), lines[-1]
+                (line.strip() for line in lines if "ConfigError: " in line),
+                (ours or sphinx or lines)[-1],
             )[:150]
             ctx.expect(
-                ok,
-                f"{tool}: {what}: exit 2 naming it (exit {rc}: {first})",
+                bool(ok),
+                f"{tool}: {what}: {outcome} (exit {rc}: {first})",
                 bug=bug if tool == "html" else None,
             )
 

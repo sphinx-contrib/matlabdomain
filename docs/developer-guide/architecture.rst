@@ -21,8 +21,10 @@ Modules
        :term:`domain` data.
    * - ``mat_config.py``
      - Every ``matlab_*`` configuration value in one table (default,
-       rebuild, types, the runs that use it and the check of its value)
-       and the checks that the build and ``scmd apidoc`` share.
+       rebuild, types, the runs that use it and the check of its value),
+       ``check_values``, which decides for a run which bad values stop it
+       and which give a ``mat.config`` warning, and the checks that the
+       build and ``scmd apidoc`` share.
    * - ``mat_types.py``
      - The index stage (``IndexSettings``, ``build_index``, ``SourceIndex``,
        ``analyze``), the lazy parse (``resolve``), incremental-build hooks,
@@ -162,8 +164,10 @@ layout or the cached objects change.
 The events ``setup()`` connects:
 
 * ``config-inited``: ``check_config_names`` (unknown ``matlab_*``
-  names), ``ensure_configuration`` (``mat_config.check_values``: removed
-  values and the check of each value a build uses;
+  names), ``ensure_configuration`` (``mat_config.check_values`` for the
+  values that do not depend on the builder: removed values, a
+  ``ConfigError`` for a bad value every builder uses, one ``mat.config``
+  warning for a bad ``matlab_apidoc_*`` value;
   ``mat_config.check_sources``: the project root exists, the patterns need
   it and stay inside it, the sidecar layout),
   ``mat_directives.check_inherited_members`` (``autodoc_default_options``),
@@ -172,9 +176,12 @@ The events ``setup()`` connects:
   with the root inside the source folder, the sidecar docs are added to
   ``exclude_patterns`` here, because a later change would make
   :term:`Sphinx` read every page again on every build),
-  ``mat_api_check.check_config`` (the ``matlab_api_check_files_from``
-  file);
-* ``builder-inited``: ``analyze``, the index stage;
+* ``builder-inited``: ``check_builder_configuration`` (the builder
+  exists only now: ``mat_config.check_values`` for the values of HTML
+  builds and of ``matlab-api-check``, an error in those builders and a
+  warning in the others; the api-check builder reads the
+  ``matlab_api_check_files_from`` file), then ``analyze``, the index
+  stage;
 * ``env-get-outdated``: ``outdated_docs``, the pages to read again because
   a source file they used changed, or because files were added, removed or
   changed type;

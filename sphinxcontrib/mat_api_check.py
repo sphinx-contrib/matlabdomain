@@ -210,13 +210,6 @@ def check_rules(rules, option):
             )
 
 
-def check_config(_app, config):
-    """``config-inited``: ConfigError for a ``matlab_api_check_files_from``
-    file that cannot be read or has a line that is not an entry.
-    """
-    selected_files(config)
-
-
 def ignore_patterns(config):
     """Return the normalized ``matlab_api_check_ignore_patterns``."""
     return mat_types.pattern_list(getattr(config, _IGNORE_OPTION), _IGNORE_OPTION)
@@ -249,7 +242,8 @@ def check_files_from(listing, option):
 def selected_files(config):
     """Return the normalized ``matlab_api_check_files`` and the lines of the
     ``matlab_api_check_files_from`` file, without duplicates: None selects
-    every file, ``[]`` none (or ConfigError for the file).
+    every file, ``[]`` none (or ConfigError for the file). Only the
+    api-check builder reads the file.
     """
     normalized = check_files(getattr(config, _FILES_OPTION), _FILES_OPTION)
     listing = getattr(config, _FROM_OPTION)
@@ -764,6 +758,8 @@ class MatlabApiCheckBuilder(Builder):
         self.errors = 0
         #: number of selection entries that selected no file and fail the build
         self.unmatched = 0
+        #: ``selected_files``, read at ``builder-inited``
+        self.selection = None
 
     @override
     def get_outdated_docs(self):
@@ -790,12 +786,12 @@ class MatlabApiCheckBuilder(Builder):
         config = self.config
         dom = self.env.get_domain("mat")
         rules = {**DEFAULT_RULES, **config.matlab_api_check_rules}
-        ignore_unmatched = bool(config.matlab_api_check_ignore_unmatched)
+        ignore_unmatched = config.matlab_api_check_ignore_unmatched
         checker = _Checker(
             dom,
             rules,
             ignore_patterns(config),
-            selected_files(config),
+            self.selection,
             sections_for(section_labels(config.matlab_api_check_section_labels)),
         )
         records = sorted(dom.data["index"].items(), key=lambda i: i[1]["reference"])

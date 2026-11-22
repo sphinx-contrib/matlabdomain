@@ -9,6 +9,7 @@ wrong value must be listed in ``ONE_SIDED``, so the gap is a decision.
 import dataclasses
 import io
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -75,73 +76,91 @@ def test_build_and_command_read_the_same_settings(conf_py, tmp_path):
         assert getattr(app.config, name) == getattr(command, name), name
 
 
-# -- the same errors -----------------------------------------------------------
+# -- which run stops for which value -------------------------------------------
 
-#: row -> wrong values of the right type (an allowed set or a format)
+#: row -> wrong values of the right type (an allowed set, a range or a format)
 BAD_FORMAT = {
     "matlab_src_code_project_root": ["no_such_folder"],
     "matlab_auto_link": ["bogus"],
     "matlab_apidoc_group": ["bogus"],
     "matlab_apidoc_page_size": [0],
+    "matlab_apidoc_maxdepth": [0],
     "matlab_apidoc_tocfile": ["a/b"],
     "matlab_version": ["R2999z"],
     "matlab_src_encoding": ["no-such-codec"],
     "matlab_external_names": [["(unclosed"]],
+    "matlab_simulink_autobuild_server": ["localhost:8000"],
     "matlab_api_check_rules": [{"bogus-rule": "error"}],
+    "matlab_api_check_files": [["../x.m"]],
+    "matlab_api_check_section_labels": [{"nope": []}],
 }
 
-#: (row, "type" or "format") -> who refuses it: "build" or "command". Both
-#: refusing, or both accepting, is not listed. Each tool checks only the
-#: values it uses (decided 2026-11-11), so ``scmd apidoc`` can run on a
-#: project that is not ready for a build or a check yet. The command reads
-#: the rows of ``matlab_src_*``, ``matlab_version`` and ``matlab_apidoc_*``
-#: only; the build checks the value of the others (and, for
-#: ``matlab_apidoc_*``, only the type, as a warning).
-ONE_SIDED = {
-    ("matlab_auto_link", "format"): "build",
-    ("matlab_external_names", "type"): "build",
-    ("matlab_external_names", "format"): "build",
-    ("matlab_api_check_rules", "type"): "build",
-    ("matlab_api_check_rules", "format"): "build",
-    ("matlab_api_check_ignore_patterns", "type"): "build",
-    ("matlab_api_check_section_labels", "type"): "build",
-    ("matlab_inherited_members", "type"): "build",
-    ("matlab_apidoc_output_dir", "type"): "command",
-    ("matlab_apidoc_separate", "type"): "command",
-    ("matlab_apidoc_maxdepth", "type"): "command",
-    ("matlab_apidoc_tocfile", "type"): "command",
-    ("matlab_apidoc_tocfile", "format"): "command",
-    ("matlab_apidoc_templatedir", "type"): "command",
-    ("matlab_apidoc_remove_old", "type"): "command",
-    ("matlab_apidoc_group", "type"): "command",
-    ("matlab_apidoc_group", "format"): "command",
-    ("matlab_apidoc_page_size", "type"): "command",
-    ("matlab_apidoc_page_size", "format"): "command",
-    ("matlab_apidoc_private", "type"): "command",
+#: the runs: an HTML build, -b matlab-api-check and scmd apidoc
+RUNS = ("html", "api", "apidoc")
+SOURCES = "html api apidoc"
+PAGES = "html api"
+#: row -> the runs a bad value stops. Every other run warns once
+#: (mat.config), or a build leaves a wrong type to Sphinx's own type
+#: warning, and goes on. Every row is listed, so a new value cannot be
+#: added without deciding. Each run stops only for the values it uses, so
+#: scmd apidoc runs on a project that is not ready for a build or a check
+#: yet (decided 2026-11-11), and a build is not stopped by the values of
+#: another builder.
+STOPS = {
+    "matlab_src_code_project_root": SOURCES,
+    "matlab_src_include_patterns": SOURCES,
+    "matlab_src_exclude_patterns": SOURCES,
+    "matlab_src_sidecar_suffixes": SOURCES,
+    "matlab_src_encoding": SOURCES,
+    "matlab_version": SOURCES,
+    "matlab_show_property_default_value": PAGES,
+    "matlab_show_property_specs": PAGES,
+    "matlab_auto_link": PAGES,
+    "matlab_class_signature": PAGES,
+    "matlab_add_namespace_names": PAGES,
+    "matlab_inherited_members": PAGES,
+    "matlab_external_names": PAGES,
+    "matlab_stable_urls": "html",
+    "matlab_link_shadowed_files_to_chooser_pages": PAGES,
+    "matlab_simulink_autobuild_server": "html",
+    "matlab_simulink_metadata": PAGES,
+    "matlab_simulink_doc_suffixes": SOURCES,
+    "matlab_api_check_rules": "api",
+    "matlab_api_check_ignore_patterns": "api",
+    "matlab_api_check_files": "api",
+    "matlab_api_check_files_from": "api",
+    "matlab_api_check_ignore_unmatched": "api",
+    "matlab_api_check_section_labels": "api",
+    "matlab_apidoc_output_dir": "html apidoc",
+    "matlab_apidoc_separate": "apidoc",
+    "matlab_apidoc_maxdepth": "apidoc",
+    "matlab_apidoc_tocfile": "apidoc",
+    "matlab_apidoc_templatedir": "apidoc",
+    "matlab_apidoc_remove_old": "apidoc",
+    "matlab_apidoc_group": "apidoc",
+    "matlab_apidoc_page_size": "apidoc",
+    "matlab_apidoc_private": "apidoc",
 }
+
+#: not checked yet (E2E-25)
+UNCHECKED = {"matlab_simulink_metadata"}
 
 
 def wrong_type(default, types):
-    """Return a value whose type the row does not allow, or None (any is)."""
-    if types == () and default is None:
-        return None
-    allowed = {types} if isinstance(types, type) else set(types)
-    allowed = allowed or {type(default)}
-    for candidate in (12345, "text", [1], {"a": 1}, 1.5):
-        if type(candidate) not in allowed:
-            return candidate
-    return None
+    """Return a value whose type the row does not allow."""
+    allowed = set(types) or {type(default)}
+    return next(
+        c for c in (12345, "text", [1], {"a": 1}, 1.5) if type(c) not in allowed
+    )
 
 
 def cases():
-    for name, (default, _, types, *_) in mat_config.CONFIG.items():
-        if name in mat_config.REMOVED:
-            continue  # both raise one message: test_config.py
-        value = wrong_type(default, types)
-        if value is not None:
-            yield pytest.param(name, "type", value, id=f"{name}-type")
+    for name, row in mat_config.CONFIG.items():
+        if name in mat_config.REMOVED or name in UNCHECKED:
+            continue  # removed: every run raises one message, test_config.py
+        yield pytest.param(name, wrong_type(row.default, row.types), id=f"{name}-type")
         for value in BAD_FORMAT.get(name, []):
-            yield pytest.param(name, "format", value, id=f"{name}-format")
+            yield pytest.param(name, value, id=f"{name}-format")
 
 
 @pytest.fixture(scope="module")
@@ -154,46 +173,89 @@ def project(tmp_path_factory):
     return root
 
 
+def _build(project, builder, tmp_path):
+    """``("stop", message)``, ``("warn", message)`` for a mat.config
+    warning, ``("sphinx", None)`` for Sphinx's type warning, or ``None``.
+    """
+    warning = io.StringIO()
+    try:
+        with docutils_namespace():
+            Sphinx(
+                str(project),
+                str(project),
+                str(tmp_path / builder),
+                str(tmp_path / f"{builder}.doctrees"),
+                builder,
+                status=None,
+                warning=warning,
+                freshenv=True,
+            )
+    except ConfigError as err:
+        return "stop", str(err)
+    return _warned(warning.getvalue(), "[sphinxcontrib-matlabdomain] ")
+
+
+def _warned(text, prefix):
+    text = re.sub(r"\x1b\[[0-9;]*m", "", text)  # FORCE_COLOR, or an earlier test
+    lines = [line for line in text.splitlines() if "WARNING" in line]
+    if not lines:
+        return None
+    assert len(lines) == 1, lines  # one line, never ours and Sphinx's
+    if "[mat.config]" in lines[0]:
+        message = lines[0].split(prefix, 1)[1].split(" It is used only by ")[0]
+        return "warn", message
+    assert "The config value `" in lines[0]
+    return "sphinx", None
+
+
 def outcomes(project, assignment, tmp_path, capsys):
-    """``(build, command)``, each ``None`` (accepts) or the error message."""
+    """Run -> its outcome (``_build``) for a ``conf.py`` with ``assignment``."""
     (project / "conf.py").write_text(
         'extensions = ["sphinxcontrib.matlab"]\n'
         'matlab_src_code_project_root = "src"\n'
         'matlab_apidoc_output_dir = "api"\n'
         f"{assignment}\n"
     )
-    try:
-        _start_app(project, tmp_path)
-        build = None
-    except ConfigError as err:
-        build = str(err)
+    result = {
+        "html": _build(project, "html", tmp_path),
+        "api": _build(project, "matlab-api-check", tmp_path),
+    }
     capsys.readouterr()
     status = apidoc.main(["-n", "-q", "-c", str(project)])
-    stderr = capsys.readouterr().err.strip()
-    prefix = "scmd apidoc: error: "
-    command = stderr.removeprefix(prefix) if status == apidoc.USAGE_ERROR else None
-    return build, command
-
-
-def test_one_sided_rows_exist():
-    """No stale entry: every listed row is in the table."""
-    assert {name for name, _ in ONE_SIDED} <= set(mat_config.CONFIG)
-    assert set(BAD_FORMAT) <= set(mat_config.CONFIG)
-
-
-@pytest.mark.parametrize(("name", "kind", "value"), list(cases()))
-def test_build_and_command_refuse_alike(name, kind, value, project, tmp_path, capsys):
-    build, command = outcomes(project, f"{name} = {value!r}", tmp_path, capsys)
-    expected = ONE_SIDED.get((name, kind))
-    if expected == "build":
-        assert build is not None
-        assert command is None
-    elif expected == "command":
-        assert command is not None
-        assert build is None
+    stderr = capsys.readouterr().err
+    if status == apidoc.USAGE_ERROR:
+        prefix = "scmd apidoc: error: "
+        result["apidoc"] = "stop", stderr.strip().removeprefix(prefix)
     else:
-        assert (build is None) == (command is None), (build, command)
-        assert build == command  # the same words, naming the same value
+        assert status == 0
+        result["apidoc"] = _warned(stderr, "[scmd apidoc] ")
+    return result
+
+
+def test_every_row_is_decided():
+    """No row without a decision and no stale entry."""
+    assert set(STOPS) == set(mat_config.CONFIG) - set(mat_config.REMOVED)
+    assert set(BAD_FORMAT) <= set(STOPS)
+
+
+@pytest.mark.parametrize(("name", "value"), list(cases()))
+def test_each_run_stops_for_its_values_and_warns_for_the_others(
+    name, value, project, tmp_path, capsys
+):
+    result = outcomes(project, f"{name} = {value!r}", tmp_path, capsys)
+    # Every run reports a bad value: it stops or warns.
+    got = {run: outcome for run, outcome in result.items() if outcome is not None}
+    assert len(got) == len(RUNS), result
+    stops = STOPS[name].split()
+    assert [run for run in RUNS if got[run][0] == "stop"] == stops
+    for run in set(RUNS) - set(stops):
+        # apidoc runs no type check of Sphinx's
+        allowed = ("warn",) if run == "apidoc" else ("warn", "sphinx")
+        assert got[run][0] in allowed, (run, got)
+    # The same words, naming the same value, wherever it is reported.
+    messages = {got[run][1] for run in RUNS if got[run][1] is not None}
+    assert len(messages) == 1, messages
+    assert name in messages.pop()
 
 
 # -- the order of the extensions ----------------------------------------------
