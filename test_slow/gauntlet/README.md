@@ -134,15 +134,18 @@ be moved the same way: `mv test_slow/gauntlet/repos test_slow/repos`.
 
 ## Expected (`summaries/`, 2026-11)
 
-The Linux baseline (2026-11-20) has all 15 projects. The Windows baseline
-(2026-11-12) is older: it lacks widgets-toolbox (added 2026-11-19), and its
+The Linux baseline (2026-11-24) has all 15 projects. The Windows baseline
+(2026-11-12) is older: it lacks widgets-toolbox (added 2026-11-19), its
 matpower `all` build counts 3492 `mat.ambiguous` warnings where the Linux
 one counts 3213 (since then an ambiguous name in help text warns once per
-help text). `compare.py` shows both until the Windows baseline is made
+help text), and it was made when Simulink files were read (every api-check
+summary has a `simulink_files` count, and WEC-Sim and WEC-Sim_Applications
+have the pages and warnings of their 19 and 60 Simulink files).
+`compare.py` shows all of this until the Windows baseline is made
 again. All projects: exit 0 everywhere except `api` (exit 1: every project
 has findings), no traceback or duplicate object, the rerun changes nothing,
 and Windows and Linux give the same pages, warnings and api-check findings.
-`compare.py` on the two summaries prints `2 of 15 projects differ`
+`compare.py` on the two summaries prints `15 of 15 projects differ`
 (`1 of 15` with a current Windows baseline): matpower, in its `-j` rows.
 On Windows `-j` builds serially, so those rows say `identical` there.
 On Linux, matpower's serial and `-j` builds differ (6 pages with the
