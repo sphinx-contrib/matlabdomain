@@ -20,18 +20,12 @@ handler provides:
 - ``parse(path, stem, folder, encoding)``: the parsed ``MatObject``; a
   handler whose ``read`` returns text also accepts it as ``text=``;
 - ``document(kind)``: the autodoc directive that documents a ``kind``;
-  None for an index type that has no directive yet (apidoc leaves it out);
-- ``blocks``: True if references continue into the file's blocks with
-  ``/`` (``mat_naming.parse_reference``);
-- ``naming``: how MATLAB names the file: ``"code"`` (``form_matlab_name``)
-  or ``"model"`` (``form_model_name``).
+  None for an index type that has no directive yet (apidoc leaves it out).
 
 Registration order is lookup order: a name without extension tries ``.m``
 before ``.mlapp``.
 
-Simulink files: models, libraries and subsystem files (``.slx``, a zip
-container; ``.mdl``, text), read by ``sphinxcontrib.mat_simulink``.
-Planned: Simscape components (``.ssc``, text).
+Planned file types: ``docs/developer-guide/roadmap.rst``.
 
 ``mat_naming`` imports this module, so it must not import the parser or
 ``mat_types`` at import time; handlers import them when they parse.
@@ -41,15 +35,8 @@ from __future__ import annotations
 
 import os
 
-from . import mat_classify, mat_simulink
+from . import mat_classify
 from .mat_typing import override
-
-#: Simulink index type -> its auto directive
-SIMULINK_DIRECTIVES = {
-    "model": "mat:autosimulink_model",
-    "library": "mat:autosimulink_library",
-    "subsystem": "mat:autosimulink_subsystem_reference",
-}
 
 
 class Handler:
@@ -58,8 +45,6 @@ class Handler:
     extension = ""
     #: index types this handler's ``classify`` returns (besides ``unknown``)
     kinds: tuple[str, ...] = ()
-    blocks = False
-    naming = "code"
 
     def discover(self, path) -> bool:
         """Return True if ``path``, which has this handler's extension, is a source file
@@ -153,54 +138,6 @@ class MlappHandler(Handler):
         return MatObject.parse_mlappfile(path, stem, folder)
 
 
-class SimulinkHandler(Handler):
-    """Simulink models, libraries and subsystem files."""
-
-    kinds = mat_simulink.KINDS
-    blocks = True
-    naming = "model"
-
-    @override
-    def classify(self, path, text=None):
-        try:
-            return mat_simulink.classify(path)
-        except (OSError, mat_simulink.SimulinkFileError):
-            return "unknown"
-
-    @override
-    def read(self, path, encoding=None):
-        try:
-            kind = mat_simulink.classify(path)
-        except mat_simulink.SimulinkFileError as err:
-            return "unknown", None, [("parse_error", f"{err}", None)]
-        if kind == "unknown":
-            message = "is not a Simulink model, library or subsystem file."
-            return kind, None, [("parse_error", message, None)]
-        return kind, None, []
-
-    @override
-    def parse(self, path, stem, folder, encoding=None):
-        from .mat_types import MatObject
-
-        return MatObject.parse_simulink(path, stem, folder)
-
-    @override
-    def document(self, kind):
-        return SIMULINK_DIRECTIVES.get(kind)
-
-
-class SlxHandler(SimulinkHandler):
-    """Simulink files saved as ``.slx``: a zip container of XML parts."""
-
-    extension = ".slx"
-
-
-class MdlHandler(SimulinkHandler):
-    """Simulink files saved as ``.mdl``: one text file (the older format)."""
-
-    extension = ".mdl"
-
-
 _HANDLERS: dict[str, Handler] = {}
 
 
@@ -221,11 +158,6 @@ def handlers() -> tuple[Handler, ...]:
     return tuple(_HANDLERS.values())
 
 
-def block_extensions() -> tuple[str, ...]:
-    """Return the extensions of files with blocks (``Handler.blocks``)."""
-    return tuple(ext for ext, h in _HANDLERS.items() if h.blocks)
-
-
 def handler_by_extension(path) -> Handler | None:
     """Return the handler registered for the extension of ``path``."""
     return _HANDLERS.get(os.path.splitext(os.fspath(path))[1])
@@ -241,5 +173,3 @@ def handler_for(path) -> Handler | None:
 
 register(MFileHandler())
 register(MlappHandler())
-register(SlxHandler())
-register(MdlHandler())

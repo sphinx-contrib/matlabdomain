@@ -4,9 +4,7 @@ Pure functions of path references: the same names on every OS.
 
 - The output tree mirrors the folder tree: the page of folder ``a/+p/`` is
   ``a/+p/index``, the root folder's page is the toc file, and with
-  ``separate`` the page of ``a/+p/Cls.m`` is ``a/+p/Cls.m``. A block
-  reference keeps its block path in the file's name (``a/lib.slx/G/B`` ->
-  ``a/lib.slx~2FG~2FB``), as a member does (``a/Cls.m.meth``).
+  ``separate`` the page of ``a/+p/Cls.m`` is ``a/+p/Cls.m``.
 - Each path segment keeps ``A-Z a-z 0-9 _ . + @ -``; every other character
   becomes ``~XX`` per UTF-8 byte (uppercase hex). ``~`` is escaped too, so
   the mapping is injective.
@@ -26,7 +24,7 @@ from __future__ import annotations
 
 import string
 
-from ..mat_naming import ROOT_REFERENCE, parse_reference
+from ..mat_naming import ROOT_REFERENCE
 
 SAFE_CHARS = frozenset(string.ascii_letters + string.digits + "_.+@-")
 DEVICE_NAMES = frozenset(
@@ -69,10 +67,6 @@ def _split(reference: str) -> tuple[tuple[str, ...], str | None]:
     parts = reference.rstrip("/").split("/")
     if reference.endswith("/"):
         return tuple(parts), None
-    file, _ = parse_reference(reference)
-    if file is not None and reference.startswith(f"{file}/"):
-        head, sep, _ = file.rpartition("/")
-        return tuple(head.split("/")) if head else (), reference[len(head + sep) :]
     return tuple(parts[:-1]), parts[-1]
 
 

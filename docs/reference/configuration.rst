@@ -12,9 +12,9 @@ suggests the closest value. Give helper variables another name, such as
 ``_matlab_root``.
 
 Each run checks the values it uses. Every :term:`Sphinx` build uses the
-source and output values, except :confval:`matlab_stable_urls` and
-:confval:`matlab_simulink_autobuild_server`, which only HTML builds use;
-HTML builds also use :confval:`matlab_apidoc_output_dir`.
+source and output values, except :confval:`matlab_stable_urls`, which
+only HTML builds use; HTML builds also use
+:confval:`matlab_apidoc_output_dir`.
 ``-b matlab-api-check`` also uses the ``matlab_api_check_*`` values.
 ``scmd apidoc`` uses the source values and the ``matlab_apidoc_*`` values.
 A value that is not valid stops a run that uses it, at its start, with a
@@ -46,7 +46,7 @@ default and effect. Most projects need only the source root, source
 selection and :term:`API` output directory. Review the remaining values by purpose:
 
 * Source files and MATLAB semantics control indexing and name resolution.
-* Output values control presentation, linking and Simulink integration.
+* Output values control presentation and linking.
 * API-check values control audit rules and file selection.
 * Apidoc values control generated page layout and file management.
 
@@ -187,9 +187,8 @@ Output
 
    Turn names in help text into links. ``"basic"``: the entries of "See also"
    lines and of the property and
-   method lists of class help. ``"all"``: also every documented class,
-   function, Simulink model, library and subsystem file name anywhere in
-   help text ("See also" entries link to these files too). ``None`` turns
+   method lists of class help. ``"all"``: also every documented class
+   and function name anywhere in help text. ``None`` turns
    it off; any other value is a ``ConfigError``. See
    :doc:`../user-guide/help-text`.
 
@@ -250,46 +249,12 @@ Output
    ``ConfigError`` in these builds and one ``mat.config`` warning in other
    builds and in ``scmd apidoc``.
 
-.. confval:: matlab_simulink_metadata
-   :type: ``list[str]``
-   :default: ``["release", "model_version"]``
-
-   The metadata of a Simulink file that its page shows, in this order:
-   ``release`` (the release that saved it), ``model_version``,
-   ``creator``, ``created``, ``last_modified_by``, ``modified``. The
-   ``:metadata:`` option of a :term:`directive` replaces it for one :term:`object`.
-   A value that is not a list of these names is a ``ConfigError`` when the
-   build starts; an unknown name in the option is a ``mat.simulink``
-   warning where the :term:`directive` is.
-
-.. confval:: matlab_simulink_doc_suffixes
-   :type: ``list[str]``
-   :default: ``[".md", ".rst"]``
-
-   A file next to a Simulink file, with its exact name and one of these
-   suffixes (``probeLib.md`` next to ``probeLib.slx``), holds more
-   documentation for it; the autodoc :term:`directive` puts its text after the
-   description. When there are several, the first suffix in the list wins
-   and the others get a ``mat.simulink`` warning. Its first heading is the
-   title and is dropped, and deeper headings become rubrics. A model or
-   subsystem file gets the whole text. For a library, each section whose
-   heading is a block path (``Group/Gain``; spaces and line breaks in
-   block names compare as one space) is that block's text, wherever the
-   block is documented, and the rest is the library's. Relative paths,
-   images and links work as in sidecar docs
-   (:confval:`matlab_src_sidecar_suffixes`).
-   Description :term:`directives <directive>` written by hand read no such
-   file. The file is
-   not a sidecar doc and not a page of its own. A ``.md`` file needs
-   ``myst_parser`` in ``extensions`` (else a ``ConfigError``); ``[]``
-   turns the files off.
-
 .. confval:: matlab_link_shadowed_files_to_chooser_pages
    :type: ``bool``
    :default: ``False``
 
    Several files with one MATLAB name (two global ``helper.m`` in
-   different folders, ``foo.m`` and ``foo.slx``) are documented either
+   different folders) are documented either
    way, each by its path reference. ``False``: a :term:`role`, "See also" entry
    or auto-link that names them by MATLAB name gets a ``mat.ambiguous``
    warning and stays text. ``True``: it links to the page that lists them
@@ -300,28 +265,6 @@ Output
    intersphinx. An auto :term:`directive` that names them still warns:
    it documents one :term:`object`, so give its path reference. Anything
    but ``True`` or ``False`` is a ``ConfigError``.
-
-.. confval:: matlab_simulink_autobuild_server
-   :type: ``str`` or ``None``
-   :default: ``None``
-
-   The address of a sphinx-autobuild server of this site, such as
-   ``"http://127.0.0.1:8000/"``; the ``livehtml`` target of the make files
-   that ``scmd quickstart`` writes sets it with ``-D``. In a
-   project with ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.json``
-   below :confval:`matlab_src_code_project_root`, each HTML build writes
-   ``mat/simulinkDocumentationLinker.json`` in its output folder: the mode
-   ``"server"`` and this address when it is set, else ``"local"``. So the
-   Help links of Simulink files open the site of the last build. The build
-   never writes the settings file itself, because a build writes only to
-   its output and :term:`doctree` folders. When its output folder (``"local"``,
-   when it is inside the project root and not a sphinx-multiversion
-   build), this address (``"server"``) or ``html_baseurl``
-   (``"published"``, when set) differs from the file, it logs one
-   ``info`` line that names the values; edit the file by hand. Any other
-   value than ``None`` or an ``http://`` or ``https://`` address is a
-   ``ConfigError`` in HTML builds and one ``mat.config`` warning in other
-   builds and in ``scmd apidoc``.
 
 ``matlab-api-check``
 --------------------

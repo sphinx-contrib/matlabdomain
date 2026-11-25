@@ -7,18 +7,16 @@ text keeps ``<file>:docstring of <reference>``.
 
 import os
 import re
-import shutil
-from pathlib import Path
 from typing import Any, cast
 
 import pytest
 from docutils import nodes
 from sphinx import addnodes
 from sphinx.util import console
+from test_help_source import write_app
 
 strip_escape_sequences = cast(Any, console).strip_escape_sequences
 
-SLX = Path(__file__).parent / "simulink" / "fixtures" / "R2026b" / "slx"
 CONF = (
     'extensions = ["sphinxcontrib.matlab"]\n'
     'matlab_src_code_project_root = "src"\n'
@@ -245,54 +243,12 @@ def test_folder_lines_name_the_auto_directive(make_app, tmp_path):
     assert signatures(app, "p", tmp_path)["pk.g"] == ("src/+pk/g.m", 1)
 
 
-LIBRARY = """\
-Library {
-  Name "lib"
-  System {
-    Name "lib"
-    Block {
-      BlockType SubSystem
-      Name "Blk"
-      Description "Block text."
-      MaskType "T"
-      MaskDescription "Mask :mat:func:`noMask` and `data <data.txt>`__."
-      System {
-      }
-    }
-  }
-}
-"""
-
-
-def test_simulink_lines_name_line_1_of_the_file(make_app, tmp_path):
-    files = {
-        "src/lib.mdl": LIBRARY,
-        "src/data.txt": "Data.\n",
-        "p.rst": "P\n=\n\n.. mat:autosimulink_library_block:: lib.mdl/Blk\n\n"
-        ".. mat:autosimulink_model:: probeModel\n",
-    }
+def test_app_lines_name_line_1_of_the_file(make_app, tmp_path):
     (tmp_path / "src").mkdir()
-    shutil.copyfile(SLX / "probeModel.slx", tmp_path / "src" / "probeModel.slx")
+    write_app(tmp_path / "src" / "App.mlapp", "An app.")
+    files = {"p.rst": "P\n=\n\n.. mat:autoapplication:: App\n"}
     app = build(make_app, tmp_path, files)
-    assert signatures(app, "p", tmp_path) == {
-        "lib/Blk": ("src/lib.mdl", 1),
-        "probeModel": ("src/probeModel.slx", 1),
-    }
-    doctree = app.env.get_doctree("p")
-    fields = {
-        node.astext(): where(node, tmp_path) for node in doctree.findall(nodes.field)
-    }
-    assert fields["Mask type\n\nT"] == ("src/lib.mdl", 1)
-    rubrics = [where(node, tmp_path) for node in doctree.findall(nodes.rubric)]
-    assert rubrics
-    assert set(rubrics) == {("src/probeModel.slx", 1)}
-    # The mask description is text of the file: help text, whose relative
-    # paths are relative to the code folder.
-    assert not_found(located(app, tmp_path)) == {
-        ("src/lib.mdl:docstring of lib.mdl/Blk", 1, "noMask")
-    }
-    page = (Path(app.outdir) / "p.html").read_text(encoding="utf-8")
-    assert re.search(r'href="_downloads/[0-9a-f]+/data\.txt"', page)
+    assert signatures(app, "p", tmp_path) == {"App": ("src/App.mlapp", 1)}
 
 
 def test_no_node_is_in_a_file_that_does_not_exist(make_app, tmp_path):
@@ -300,7 +256,7 @@ def test_no_node_is_in_a_file_that_does_not_exist(make_app, tmp_path):
         "p.rst": "P\n=\n\n.. include:: inc.txt\n\n"
         ".. mat:autofolder:: +pk\n   :members:\n\n"
         ".. mat:autoscript:: s\n\n.. mat:autofunction:: f\n\n"
-        ".. mat:autosimulink_model:: probeModel\n\n"
+        ".. mat:autoapplication:: App\n\n"
         ".. mat:autosidecar:: guide.rst\n",
         "inc.txt": "Included.\n\n.. mat:autoclass:: Sub\n   :members:\n"
         "   :show-inheritance:\n",
@@ -309,7 +265,7 @@ def test_no_node_is_in_a_file_that_does_not_exist(make_app, tmp_path):
         "src/f.m": FUNCTION.format("f"),
     }
     (tmp_path / "src").mkdir()
-    shutil.copyfile(SLX / "probeModel.slx", tmp_path / "src" / "probeModel.slx")
+    write_app(tmp_path / "src" / "App.mlapp", "An app.")
     app = build(make_app, tmp_path, files)
     sources = {
         node.source
@@ -332,7 +288,7 @@ def test_no_node_is_in_a_file_that_does_not_exist(make_app, tmp_path):
         "src/+pk/g.m",
         "src/s.m",
         "src/f.m",
-        "src/probeModel.slx",
+        "src/App.mlapp",
     }
 
 

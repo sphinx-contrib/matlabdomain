@@ -94,19 +94,17 @@ def used_paths(srcdir, refs=USED):
 
 
 def test_initial_data_layout():
-    assert MATLABDomain.data_version == 35
+    assert MATLABDomain.data_version == 36
     assert set(MATLABDomain.initial_data) == {
         "objects",
         "folders",
         "doc_sources",
         "sidecar_docs",
         "sidecar_issues",
-        "simulink_doc_warnings",
         "xref_docs",
         "described",
         "index",
         "sidecars",
-        "simulink_docs",
         "parse_cache",
         "parse_warnings",
         "entities_table",
@@ -406,7 +404,6 @@ def test_older_domain_data_version_drops_misdecoded_docstrings(
 SOURCE_STATE = (
     "index",
     "sidecars",
-    "simulink_docs",
     "parse_cache",
     "parse_warnings",
     "entities_table",
@@ -469,7 +466,6 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
         "doc_sources": {"doc_a": {unused: key[unused][1:]}, "doc_b": {}},
         "sidecar_docs": {"doc_a": {"a/guide.md": "A"}, "doc_b": {"b/guide.md": "B"}},
         "sidecar_issues": {"doc_a": [], "doc_b": [("b/guide.md", "link", "x", 1)]},
-        "simulink_doc_warnings": {"doc_a": {}, "doc_b": {"/b/lib.md": warning}},
         "xref_docs": {"doc_a": True, "doc_b": True},
         "described": {
             "doc_a": {"a/Obj.m": ("doc_a.rst:3", "class", "Obj", None)},
@@ -497,7 +493,6 @@ def test_merge_domaindata_filters_by_docnames(make_app, srcdir):
     assert "doc_b" not in data["doc_sources"]
     assert data["sidecar_docs"] == {"doc_a": {"a/guide.md": "A"}}
     assert data["sidecar_issues"] == {"doc_a": []}
-    assert data["simulink_doc_warnings"] == {"doc_a": {}}
     assert "doc_a" in data["xref_docs"]
     assert "doc_b" not in data["xref_docs"]
     assert data["described"]["doc_a"] == {

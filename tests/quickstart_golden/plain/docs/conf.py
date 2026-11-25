@@ -79,6 +79,3 @@ napoleon_use_rtype = True
 
 html_theme = "furo"
 html_static_path = ["_static"]
-# Put published URL here. Blank, it means local mode is used.
-# This assists Simulink documentation linking.
-html_baseurl = ""

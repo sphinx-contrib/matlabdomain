@@ -19,10 +19,8 @@ their size and get a new path and time.
 
 import json
 import os
-import re
 import shutil
 import time
-import zipfile
 from pathlib import Path
 from typing import Any, cast
 
@@ -34,7 +32,6 @@ from test_apidoc import FUNCTION
 from sphinxcontrib.matlab_apidoc import main as apidoc
 
 ROOT = Path(__file__).parent
-MODEL = ROOT / "simulink" / "fixtures" / "R2020a" / "slx" / "probeModel.slx"
 
 CONF = (
     'project = "Edits"\n'
@@ -53,7 +50,7 @@ PAGES = {
     "links.rst": "Links\n=====\n\n"
     ":mat:func:`alpha`, :mat:func:`beta`, :mat:func:`gamma`, "
     ":mat:obj:`thing`, :mat:obj:`mexed`, :mat:func:`manual`, "
-    ":mat:obj:`model`, :mat:folder:`lib/`, :mat:folder:`core/`, "
+    ":mat:folder:`lib/`, :mat:folder:`core/`, "
     ":mat:sidecar:`lib/notes.rst`, :mat:sidecar:`lib/guide.rst`.\n",
     "p1.rst": "P1\n==\n\n.. mat:function:: manual(x)\n\n   Manual.\n",
     "p2.rst": "P2\n==\n\nNothing yet.\n",
@@ -81,23 +78,6 @@ def _write(root, path, text):
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
     _touch(target)
-
-
-def _set_description(slx, text):
-    """Rewrite the model description in ``slx`` (a different size)."""
-    with zipfile.ZipFile(slx) as z:
-        items = [(i, z.read(i.filename)) for i in z.infolist()]
-    with zipfile.ZipFile(slx, "w", zipfile.ZIP_DEFLATED) as z:
-        for info, data in items:
-            if info.filename == "metadata/coreProperties.xml":
-                data = re.sub(
-                    rb"<dc:description>.*?</dc:description>",
-                    f"<dc:description>{text}</dc:description>".encode(),
-                    data,
-                    flags=re.DOTALL,
-                )
-            z.writestr(info, data)
-    _touch(slx)
 
 
 def _rename(root, old, new):
@@ -133,9 +113,6 @@ EDITS = {
     ),
     "add_sidecar": lambda r: _write(r, "src/lib/guide.rst", "Guide\n=====\n\nNew.\n"),
     "remove_sidecar": lambda r: _remove(r, "src/lib/notes.rst"),
-    "change_slx": lambda r: _set_description(
-        r / "src/model.slx", "A changed and longer description"
-    ),
 }
 
 # Edits applied to a project that already has the state the edit removes.
@@ -149,7 +126,6 @@ def make_project(root, setup=None):
         target = root / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8")
-    shutil.copyfile(MODEL, root / "src" / "model.slx")
     if setup:
         EDITS[setup](root)
     stamp = time.time_ns() - 60 * 10**9

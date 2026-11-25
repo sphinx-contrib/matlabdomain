@@ -7,7 +7,6 @@ outside those two folders, build, and compare.
 """
 
 import hashlib
-import json
 import os
 import shutil
 import stat
@@ -15,8 +14,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
-from sphinxcontrib.mat_simulink import _linker
 
 REPO = Path(__file__).parent.parent
 BUILDERS = ("html", "dirhtml", "matlab-api-check")
@@ -29,10 +26,7 @@ CONF = (
     'extensions = ["sphinxcontrib.matlab"]\n'
     'matlab_src_code_project_root = ".."\n'
     'matlab_src_include_patterns = ["src/**"]\n'
-    'html_baseurl = "https://example.org/docs"\n'
 )
-# the committed settings of a project whose output folder is not this one
-SETTINGS = '{"mode": "local", "local": "elsewhere/", "published": ""}\n'
 
 
 def synthetic_project(tmp_path):
@@ -43,9 +37,6 @@ def synthetic_project(tmp_path):
     docs.mkdir()
     (docs / "conf.py").write_text(CONF)
     (docs / "index.rst").write_text("Index\n=====\n\n.. mat:autofunction:: src/f.m\n")
-    folder = root / "+sphinxcontrib" / "+matlabdomain"
-    folder.mkdir(parents=True)
-    (folder / _linker.NAME).write_text(SETTINGS)
     return root, docs
 
 
@@ -138,6 +129,3 @@ def test_read_only_project_root_builds(make_app, tmp_path):
         for path in paths:
             if path not in folders:
                 path.chmod(0o644)
-    assert json.loads(
-        (root / "+sphinxcontrib" / "+matlabdomain" / _linker.NAME).read_text()
-    ) == json.loads(SETTINGS)

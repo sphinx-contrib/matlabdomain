@@ -76,7 +76,6 @@ ENTRY_KEYS = {
     "ref",
     "kind",
     "directive",
-    "argument",
     "options",
     "title",
     "display",
@@ -1091,11 +1090,6 @@ def test_conf_suppress_warnings_of_another_subtype(tmp_path, capsys):
             "matlab_api_check_rules must be a dict of rule -> severity.",
             "the matlab-api-check builder",
         ),
-        (
-            'matlab_simulink_metadata = "release"',
-            "matlab_simulink_metadata must be a list of metadata names, not 'release'.",
-            "sphinx-build",
-        ),
     ],
 )
 def test_values_of_other_runs_warn_once(tmp_path, capsys, conf, message, users):
@@ -1585,21 +1579,22 @@ def test_a_read_error_without_text_is_still_unreadable(tmp_path, monkeypatch):
     assert (record["type"], record["unreadable"]) == ("unknown", "OSError")
 
 
-def test_broken_simulink_files_warn_once_and_are_left_out(tmp_path, caplog_sphinx):
+def test_files_not_of_their_type_warn_once_and_are_left_out(
+    tmp_path, caplog_sphinx, odd_files
+):
     write(
         tmp_path,
         {
             "ok.m": FUNCTION.format(name="ok"),
-            "lfs.slx": "version https://git-lfs.github.com/spec/v1\noid sha256:00\n",
-            "empty.slx": "",
-            "text.mdl": "this is not a model\n",
+            "empty.odd": "",
+            "text.odd": "this is not an odd file\n",
         },
     )
     page = {p.docname: p for p in pages_of(tmp_path)}["root"]
     listed = [e["ref"] for _, entries in page.context["sections"] for e in entries]
     assert listed == ["ok.m"]
     messages = [m for _, m in caplog_sphinx]
-    for name in ("lfs.slx", "empty.slx", "text.mdl"):
+    for name in ("empty.odd", "text.odd"):
         assert len([m for m in messages if name in m]) == 1, messages
     assert not any("could not be read" in m for m in messages)
 

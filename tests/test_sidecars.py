@@ -799,7 +799,7 @@ def test_another_sphinx_source_folder_inside_the_source_folder(
     )
     app = build(make_app, docs)
     if not sidecars:
-        # as before: only Simulink documentation files would be added
+        # without sidecar suffixes nothing is added
         assert app.config.exclude_patterns == ["_build"]
         return
     assert app.config.exclude_patterns == ["_build", "src/notes.rst", "src/old"]

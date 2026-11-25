@@ -1,10 +1,9 @@
 """A warning about help text names the file and the line of the help in it:
-``<file>:docstring of <reference>:<line>`` (a Simulink file has no text lines,
-so it is the line within the description); a sidecar doc is its own file.
+``<file>:docstring of <reference>:<line>`` (an app has no text lines, so it
+is the line within its description); a sidecar doc is its own file.
 """
 
-import shutil
-from pathlib import Path
+import zipfile
 from typing import Any, cast
 
 import pytest
@@ -15,7 +14,6 @@ from sphinxcontrib.mat_types import MatObject
 
 strip_escape_sequences = cast(Any, console).strip_escape_sequences
 
-SLX = Path(__file__).parent / "simulink" / "fixtures" / "R2026b" / "slx"
 CONF = (
     'extensions = ["sphinxcontrib.matlab"]\n'
     'matlab_src_code_project_root = "src"\n'
@@ -59,15 +57,18 @@ classdef Shape
     end
 end
 """
-MODEL = """\
-Model {
-  Name "m"
-  Description "Intro.\\n\\nCalls :mat:func:`noModel` here."
-  System {
-    Name "m"
-  }
-}
-"""
+
+
+def write_app(path, description):
+    """Write an ``.mlapp`` file whose description is ``description``."""
+    core = (
+        '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/'
+        'metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+        f"<dc:description>{description}</dc:description></cp:coreProperties>"
+    )
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("metadata/appMetadata.xml", "<metadata/>")
+        z.writestr("metadata/coreProperties.xml", core)
 
 
 def build(make_app, tmp_path, files, index, conf=""):
@@ -144,38 +145,34 @@ def test_help_of_a_method_file_is_in_that_file(make_app, tmp_path):
     assert 'src="_images/pic.png"' in html
 
 
-def test_simulink_help_is_at_its_line_in_the_description(make_app, tmp_path):
-    index = ".. mat:autosimulink_model:: m\n"
-    found = build(make_app, tmp_path, {"m.mdl": MODEL}, index)
-    src = tmp_path / "src" / "m.mdl"
-    assert found[0].startswith(missing(src, "docstring of m.mdl:3", "noModel"))
+def test_app_help_is_at_its_line_in_the_description(make_app, tmp_path):
+    (tmp_path / "src").mkdir()
+    src = tmp_path / "src" / "App.mlapp"
+    write_app(src, "Intro.\n\nCalls :mat:func:`noApp` here.")
+    found = build(make_app, tmp_path, {}, ".. mat:autoapplication:: App\n")
+    assert found[0].startswith(missing(src, "docstring of App.mlapp:3", "noApp"))
     assert len(found) == 1, found
 
 
 def test_sidecar_help_is_at_its_file_line(make_app, tmp_path):
     pytest.importorskip("myst_parser")
-    (tmp_path / "src").mkdir()
-    shutil.copyfile(SLX / "probeModel.slx", tmp_path / "src" / "probeModel.slx")
-    shutil.copyfile(SLX / "probeSub.slx", tmp_path / "src" / "probeSub.slx")
     files = {
-        "probeModel.md": "# Title\n\nText {mat:func}`noMd` here.\n",
-        "probeSub.rst": "Title\n=====\n\nText :mat:func:`noRst` here.\n",
+        "notes.md": "# Title\n\nText {mat:func}`noMd` here.\n",
+        "guide.rst": "Title\n=====\n\nText :mat:func:`noRst` here.\n",
     }
-    index = (
-        ".. mat:autosimulink_model:: probeModel\n\n"
-        ".. mat:autosimulink_subsystem_reference:: probeSub\n"
-    )
+    index = ".. mat:autosidecar:: notes.md\n\n.. mat:autosidecar:: guide.rst\n"
     found = build(
         make_app,
         tmp_path,
         files,
         index,
-        'extensions = ["sphinxcontrib.matlab", "myst_parser"]\n',
+        'extensions = ["sphinxcontrib.matlab", "myst_parser"]\n'
+        'matlab_src_sidecar_suffixes = [".md", ".rst"]\n',
     )
     src = tmp_path / "src"
     assert [line.split(": WARNING")[0] for line in found] == [
-        f"{src / 'probeModel.md'}:3",
-        f"{src / 'probeSub.rst'}:4",
+        f"{src / 'notes.md'}:3",
+        f"{src / 'guide.rst'}:4",
     ], found
 
 

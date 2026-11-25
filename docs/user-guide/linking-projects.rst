@@ -190,8 +190,8 @@ names that differ only by case, are escaped like the output names of
 Adding a file or folder whose name differs from an existing one only by
 case (``foo.m`` next to ``Foo.m``) changes the address of the existing one
 too, if its name has an uppercase letter: those letters are then escaped
-(``Foo.m`` becomes ``~46oo.m``). Links to it that are stored elsewhere, for
-example in a Simulink model, must then be updated.
+(``Foo.m`` becomes ``~46oo.m``). Links to it that are stored elsewhere
+must then be updated.
 
 The address in the browser's address bar after the redirect is the page's
 own, which does not follow the :term:`object`. A small script on every page

@@ -85,17 +85,12 @@ defaults.
    * - ``theme``
      - HTML :term:`theme`
      - ``"furo"``
-   * - ``html_baseurl``
-     - URL of the published site
-     - blank: not published yet. Written to ``html_baseurl`` in
-       ``conf.py``; Simulink Help links use it (blank: the local build)
    * - ``exclude``
      - Folders and files not to document
      - none; the defaults of :confval:`matlab_src_exclude_patterns` and
        the git submodules are always left out
    * - ``markdown``
-     - Markdown pages with :term:`MyST`. Without it, a project with Simulink
-       files gets ``matlab_simulink_doc_suffixes = [".rst"]``
+     - Markdown pages with :term:`MyST`
      - yes when ``myst_parser`` can be imported
    * - ``sidecars``
      - Markdown notes next to the code as :term:`API` pages
@@ -130,7 +125,6 @@ asks only for what the file leaves out:
    matlab_version = "R2024b"
    group = "namespace"
    theme = "furo"
-   html_baseurl = "https://example.org/my-toolbox/"
    exclude = ["tests", "examples/data"]
    markdown = true
    sidecars = true
@@ -237,34 +231,6 @@ instead. Without uv it prints the ``pip install`` line. It never touches
 ``uv.lock``, the project's MATLAB code or CI, and never commits. (``uv
 add`` writes ``pyproject.toml`` with LF line ends, so a CRLF file shows as
 changed on every line.)
-
-In a project with Simulink models, libraries or subsystem files it also
-writes ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` in
-the project root, with its settings ``simulinkDocumentationLinker.json``:
-
-.. code-block:: json
-
-   {
-    "mode": "local",
-    "local": "DOCS/_build/html/",
-    "server": "http://127.0.0.1:8000/",
-    "published": ""
-   }
-
-Help fields of Simulink files call this function to open their page;
-``conf.py`` excludes it from the documentation. Commit both files. The
-function is rewritten on each run, the settings only written when
-missing. HTML builds never change the settings (a build writes only to its output
-and :term:`doctree` folders); when the output folder, the server or
-``html_baseurl`` (``"published"``) differs from them, a build logs one
-``info`` line, and you edit the file. They record which site they made:
-after ``make html`` the Help links open the local files, after ``make
-livehtml`` the sphinx-autobuild server (:confval:`matlab_simulink_autobuild_server`;
-the local files once it stops). Without a local build they open the
-published site. ``"mode"`` is the choice before the first build; one
-person can choose for themselves in MATLAB with
-``setpref("sphinxcontrib_matlabdomain", "linkerMode", "published")``
-(``"local"``, ``"server"`` or ``"published"``; ``rmpref`` removes it).
 
 A ``DOCS`` folder that exists with files but no ``conf.py`` is in use (an
 MkDocs ``docs/``): the command asks for another folder. One with a

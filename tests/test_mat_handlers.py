@@ -1,7 +1,9 @@
 """File-type handler registry."""
 
+import re
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -10,8 +12,7 @@ from sphinxcontrib.mat_types import MatApplication
 
 
 def test_registered_handlers(tmp_path):
-    assert mat_handlers.extensions() == (".m", ".mlapp", ".slx", ".mdl")
-    assert mat_handlers.block_extensions() == (".slx", ".mdl")
+    assert mat_handlers.extensions() == (".m", ".mlapp")
     (tmp_path / "f.m").write_text("function f\nend\n")
     (tmp_path / "app.mlapp").write_bytes(b"")
     (tmp_path / "x.txt").write_text("")
@@ -30,7 +31,7 @@ def test_registered_handlers(tmp_path):
 
 
 def test_document_directives():
-    m, mlapp, slx, *_ = mat_handlers.handlers()
+    m, mlapp = mat_handlers.handlers()
     assert [m.document(k) for k in ("script", "function", "class")] == [
         "mat:autoscript",
         "mat:autofunction",
@@ -38,12 +39,6 @@ def test_document_directives():
     ]
     assert mlapp.document("application") == "mat:autoapplication"
     assert m.document("application") is None
-    assert [slx.document(k) for k in ("model", "library", "subsystem")] == [
-        "mat:autosimulink_model",
-        "mat:autosimulink_library",
-        "mat:autosimulink_subsystem_reference",
-    ]
-    assert slx.document("function") is None
 
 
 def test_extension_has_one_handler():
@@ -121,3 +116,20 @@ def test_new_handler_is_additive(make_app, tmp_path, ssc_registered):
     assert 'id="mat-+pkg/valve.ssc"' in html
     assert "Simscape component valve." in html
     assert "WARNING" not in app.warning.getvalue()
+
+
+def test_package_names_no_simulink_file_type():
+    """Simulink files are not a file type of this release. A file type is
+    added through the registry, in a package of its own that brings what it
+    needs: the modules here do not name it.
+    """
+    package = Path(mat_handlers.__file__).parent
+    pattern = re.compile(r"\.slx\b|\.mdl\b|mat_simulink|simulink_|autosimulink")
+    named = [
+        f"{path.relative_to(package).as_posix()}:{number}"
+        for path in sorted(package.rglob("*"))
+        if path.suffix in (".py", ".jinja", ".md")
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+        if pattern.search(line)
+    ]
+    assert named == []

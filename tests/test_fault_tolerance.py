@@ -583,8 +583,8 @@ def test_unknown_encoding_is_a_config_error(make_app, tmp_path):
     ["   :members:\n", "   :members:\n   :undoc-members:\n"],
     ids=["members", "undoc-members"],
 )
-def test_broken_simulink_files_in_a_folder_warn_once(
-    make_app, tmp_path, directive, options
+def test_files_not_of_their_type_in_a_folder_warn_once(
+    make_app, tmp_path, directive, options, odd_files
 ):
     write(
         tmp_path,
@@ -592,22 +592,18 @@ def test_broken_simulink_files_in_a_folder_warn_once(
             "conf.py": CONF,
             "index.rst": f"Index\n=====\n\n.. mat:{directive}\n{options}",
             "+pkg/good.m": FUNCTION.format(name="good", help="GOOD HELP"),
-            "+pkg/model.slx": (
-                "version https://git-lfs.github.com/spec/v1\noid sha256:00\nsize 1\n"
-            ),
-            "+pkg/empty.slx": b"",
-            "+pkg/text.mdl": "not a model\n",
+            "+pkg/empty.odd": b"",
+            "+pkg/text.odd": "not an odd file\n",
         },
     )
     for _ in range(2):
         app = make_app(srcdir=tmp_path, freshenv=True)
         app.build()
         assert warnings_of(app) == [
-            ("parse_error", "+pkg/empty.slx"),
-            ("parse_error", "+pkg/model.slx"),
-            ("parse_error", "+pkg/text.mdl"),
+            ("parse_error", "+pkg/empty.odd"),
+            ("parse_error", "+pkg/text.odd"),
         ]
-        assert app.warning.getvalue().count("[mat.") == 3
+        assert app.warning.getvalue().count("[mat.") == 2
         html = (app.outdir / "index.html").read_text(encoding="utf-8")
         assert "GOOD HELP" in html
 

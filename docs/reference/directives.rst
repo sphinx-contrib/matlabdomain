@@ -293,112 +293,6 @@ know which object to document") and the :term:`directive` writes nothing.
 
       Do not create link targets or index entries.
 
-Simulink files
---------------
-
-Models, libraries and subsystem files (``.slx``, ``.mdl``) and the blocks
-of a library. The argument is a
-MATLAB name or a path reference; a block follows the file with its
-Simulink path (``lib.slx/Group/Gain``, a ``/`` in a block name doubled),
-with no :term:`signature` (block names may hold parentheses). The page shows the
-description saved in the file or block (the mask description if it has
-none), the mask type, mask description and Help (a link when the Help is
-a URL, a ``web(...)`` call or a ``simulinkDocumentationLinker`` call for
-another object; left out when it repeats the description), the metadata of
-:confval:`matlab_simulink_metadata`, the
-mask parameters (like a function's input arguments) and a table of the
-ports (columns that inherit everything are left out). The :term:`signature`
-names the kind: *Simulink model* ``probeModel``, *Simulink library block*
-``probeLib/Gain``. The auto :term:`directives <directive>` add the text of the file's
-documentation file after the description
-(:confval:`matlab_simulink_doc_suffixes`).
-
-.. rst:directive:: .. mat:autosimulink_model:: name
-
-   A model.
-
-   .. rst:directive:option:: metadata
-      :type: comma-separated list
-
-      The metadata to show, replacing :confval:`matlab_simulink_metadata`
-      for this :term:`object`; empty shows none.
-
-   .. rst:directive:option:: hidden-mask-parameters
-
-      Also show the mask parameters the mask dialog hides (``Visible`` off),
-      like ``:private-members:`` for classes. ``autodoc_default_options``
-      may set it; ``:no-hidden-mask-parameters:`` turns it off again.
-
-   .. rst:directive:option:: references
-
-      Add a list, *References*, of what the file uses: each model
-      reference, subsystem reference and library link with its block
-      path, as a link to the model, subsystem file or library block. One
-      outside the project (``simulink/Sources/Sine Wave``) stays text,
-      without a warning. Off by default; ``autodoc_default_options`` may
-      set it; ``:no-references:`` turns it off again.
-
-   .. rst:directive:option:: noindex
-                             no-index
-
-      Do not create a link target or an index entry.
-
-.. rst:directive:: .. mat:autosimulink_library:: name
-
-   A library.
-
-   .. rst:directive:option:: members
-      :type: no value, or a comma-separated list of block paths
-
-      Document the library's blocks in the library's order, or the named
-      ones (``Group/Gain``): the masked blocks at its top and below
-      unmasked subsystems, written as ``mat:simulink_library_block``. Then
-      a list, *Links to other blocks*, links each linked block to its
-      source block and each sublibrary block (an empty subsystem whose
-      ``OpenFcn`` opens a library) to that library. A block or library
-      outside the project (``simulink/Sources/Sine Wave``) stays text,
-      without a warning.
-
-   .. rst:directive:option:: undoc-members
-
-      Also document the blocks without a description.
-
-   .. rst:directive:option:: exclude-members
-      :type: comma-separated list of block paths
-
-      Leave these blocks out.
-
-   .. rst:directive:option:: metadata
-                             hidden-mask-parameters
-                             noindex
-                             no-index
-
-      As for ``mat:autosimulink_model``; they apply to the blocks too.
-
-.. rst:directive:: .. mat:autosimulink_subsystem_reference:: name
-
-   A subsystem file, the target of Subsystem Reference blocks.
-
-   .. rst:directive:option:: metadata
-                             hidden-mask-parameters
-                             references
-                             noindex
-                             no-index
-
-      As for ``mat:autosimulink_model``.
-
-.. rst:directive:: .. mat:autosimulink_library_block:: reference
-
-   A block of a library: a masked block found at the top of the library
-   or below unmasked subsystems.
-
-   .. rst:directive:option:: metadata
-                             hidden-mask-parameters
-                             noindex
-                             no-index
-
-      As for ``mat:autosimulink_model`` (a block has no metadata).
-
 Sidecar docs
 ------------
 
@@ -624,54 +518,6 @@ without a "reference target not found" warning.
 
       As for ``mat:folder``.
 
-.. rst:directive:: .. mat:simulink_model:: name
-
-   A Simulink model; the name as Simulink shows it, without arguments. Mask
-   parameters use the info fields ``:maskparam name: text`` and
-   ``:maskparamtype name: type``.
-
-   .. rst:directive:option:: noindex
-                             no-index
-                             annotation
-                             reference
-
-      As for ``mat:function``. A ``reference`` with a newline (in a block
-      name) is written as a JSON string, ``"lib.slx/Two\nLines"``.
-
-.. rst:directive:: .. mat:simulink_library:: name
-
-   A Simulink library.
-
-   .. rst:directive:option:: noindex
-                             no-index
-                             annotation
-                             reference
-
-      As for ``mat:simulink_model``.
-
-.. rst:directive:: .. mat:simulink_subsystem_reference:: name
-
-   A Simulink subsystem file.
-
-   .. rst:directive:option:: noindex
-                             no-index
-                             annotation
-                             reference
-
-      As for ``mat:simulink_model``.
-
-.. rst:directive:: .. mat:simulink_library_block:: name
-
-   A block of a Simulink library: the library's name and the block path
-   (``probeLib/Gain``).
-
-   .. rst:directive:option:: noindex
-                             no-index
-                             annotation
-                             reference
-
-      As for ``mat:simulink_model``.
-
 .. rst:directive:: .. mat:currentfolder:: name
 
    Set the current folder for the rest of the page without documenting
@@ -729,24 +575,6 @@ sets the text; a leading ``.`` also matches the end of MATLAB names. A
 .. rst:role:: mat:data
 
    An object documented with ``mat:data``.
-
-.. rst:role:: mat:simulink_model
-
-   A Simulink model.
-
-.. rst:role:: mat:simulink_library
-
-   A Simulink library.
-
-.. rst:role:: mat:simulink_subsystem_reference
-
-   A Simulink subsystem file.
-
-.. rst:role:: mat:simulink_library_block
-
-   A block of a Simulink library, by path reference
-   (``lib.slx/Group/Gain``) or by the library's name and the block path
-   (``lib/Group/Gain``).
 
 .. rst:role:: mat:obj
 

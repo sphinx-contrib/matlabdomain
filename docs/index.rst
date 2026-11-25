@@ -10,8 +10,7 @@ code. It adds a ``mat`` :term:`domain` to :term:`Sphinx`, with
 :term:`directives <directive>` and :term:`roles <role>` for MATLAB functions,
 classes, scripts, apps and folders, and *auto* :term:`directives <directive>`
 that read the help text from the ``.m`` and ``.mlapp`` files themselves, much like
-``sphinx.ext.autodoc`` does for Python. Simulink models and libraries are
-documented too (:doc:`user-guide/simulink`).
+``sphinx.ext.autodoc`` does for Python.
 
 .. _agent-skills:
 
@@ -87,7 +86,6 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    user-guide/help-text
    user-guide/apidoc
    user-guide/sidecars
-   user-guide/simulink
    user-guide/api-check
    user-guide/warnings
    user-guide/builds
@@ -115,7 +113,6 @@ Linux, Windows and macOS. Start with :doc:`getting-started/installation`.
    developer-guide/testing
    developer-guide/architecture
    developer-guide/debugging
-   developer-guide/simulink-file-formats
    developer-guide/roadmap
 
 .. toctree::

@@ -16,7 +16,7 @@ rest of the interface on the same checkouts (below).
 | `combine_coverage.py` | Combines the coverage of several runs made with `--coverage`. |
 | `summaries/` | The baseline per platform (`linux.json`, `windows.json`): the `results.json` of a full run with `--jobs`. `environment` in each names the date and the commit. |
 
-`test_slow/repos/` (checkouts, shared with the profiling and Simulink tools) and
+`test_slow/repos/` (checkouts, shared with the profiling tools) and
 `runs/` (output) are ignored by Git.
 
 ## Run
@@ -71,19 +71,19 @@ To update a baseline, copy `runs/<name>/results.json` to `summaries/<platform>.j
 
 `gauntlet.py` builds every project with the default configuration, so it
 reaches about 78% of the code. `scenarios.py` runs the real `scmd` and
-`sphinx-build` on the same checkouts (and on the repo's `docs/` and
-Simulink fixtures) with the rest of the interface: apidoc's options and
+`sphinx-build` on the same checkouts (and on the repo's `docs/`) with the
+rest of the interface: apidoc's options and
 flags, incremental rebuilds after edits, hand-written pages with every
 directive and role, intersphinx between projects, every invalid
 configuration value, quickstart answered on stdin and from answers files,
-`scmd skills`, the Simulink fixtures, broken input, the other configuration
+`scmd skills`, broken input, the other configuration
 values and builders, api-check settings, and classes with events. Each
 scenario checks what correct behavior is (exit codes, warnings, pages,
 links); a project that is changed is copied first.
 
 ```bash
 python test_slow/gauntlet/scenarios.py --list
-python test_slow/gauntlet/scenarios.py                  # all 16, about 8 minutes
+python test_slow/gauntlet/scenarios.py                  # all 14, about 8 minutes
 python test_slow/gauntlet/scenarios.py incremental      # one
 ```
 

@@ -6,7 +6,6 @@
 
 import functools
 import itertools
-import json
 import re
 import unicodedata
 from typing import Any, ClassVar, cast
@@ -38,7 +37,6 @@ from . import mat_documenters as doc
 
 # Public: a conf.py extends it (matlab_external_names = [*DEFAULT_EXTERNAL_NAMES, ...]).
 from .mat_config import DEFAULT_EXTERNAL_NAMES as DEFAULT_EXTERNAL_NAMES
-from .mat_simulink import _linker as simulink_linker
 from .mat_typing import override
 
 logger = getLogger("matlab-domain")
@@ -69,10 +67,10 @@ class MatTypedField(TypedField):
         return node
 
 
-def keep_unresolved_references(app, env, node, contnode):
+def keep_unresolved_references(app, _env, node, contnode):
     """``missing-reference``: render an unresolved MATLAB reference as its text, without
-    a warning, when it is a type, an ambiguous name (also of an ``:any:`` role), a name
-    in ``matlab_external_names`` or a Simulink role outside the project's files.
+    a warning, when it is a type, an ambiguous name (also of an ``:any:`` role) or a
+    name in ``matlab_external_names``.
 
     Runs after intersphinx (priority 900), so other projects' names still link.
     """
@@ -81,29 +79,9 @@ def keep_unresolved_references(app, env, node, contnode):
     if node.get("refdomain") != "mat":
         return None
     external = _external_names(tuple(app.config.matlab_external_names))
-    if (
-        node.get("mat:type")
-        or external.fullmatch(node.get("reftarget", ""))
-        or _outside_simulink_file(env, node)
-    ):
+    if node.get("mat:type") or external.fullmatch(node.get("reftarget", "")):
         return contnode
     return None
-
-
-def _outside_simulink_file(env, node):
-    """Return True for a Simulink role whose target names no Simulink file of
-    the project (a MathWorks library such as ``simulink/Sources``).
-    """
-    if node.get("reftype") not in SIMULINK_LABELS:
-        return False
-    target = node.get("reftarget", "")
-    file, _ = mat_naming.parse_reference(target)
-    if file and mat_naming.is_block_container(file.rpartition("/")[2]):
-        return False  # a path reference
-    refs = env.get_domain("mat").data["matlab_names"].get(target.split("/", 1)[0], ())
-    return not any(
-        mat_naming.is_block_container(ref.rpartition("/")[2]) for ref in refs
-    )
 
 
 def check_inventories(app, env, node, contnode):
@@ -476,11 +454,11 @@ class MatObjectDirective(ObjectDescription):
             signode += addnodes.desc_annotation(f" {anno}", f" {anno}")
         return ref, display
 
-    def _source_reference(self, name, accept=mat_types.is_code_object):
+    def _source_reference(self, name):
         # A directive written by hand: use the source file it names, if any.
         dom = self.env.get_domain("mat")
         folder = self.env.temp_data.get("mat:folder")
-        found = mat_types.find_one(dom, name, folder, accept, self.get_location())
+        found = mat_types.find_one(dom, name, folder, location=self.get_location())
         if found:
             return found[0], mat_types.display_name(dom, found[0])
         # below the current folder; a current namespace has no single folder
@@ -565,89 +543,6 @@ class MatModulelevel(MatObjectDirective):
             return translation("%s (application in %s)") % (name_cls[1], folder)
         else:
             return ""
-
-
-class MatSimulinkObject(MatObjectDirective):
-    """Description of a Simulink model, library, subsystem file or library
-    block. The signature is its name as Simulink shows it, without
-    arguments; a ``:reference:`` with a newline is written as JSON text.
-    """
-
-    doc_field_types: ClassVar[list[Field]] = [
-        *MatObjectDirective.doc_field_types,
-        TypedField(
-            "maskparameter",
-            label=translation("Mask parameters"),
-            names=("maskparam",),
-            typenames=("maskparamtype",),
-            can_collapse=True,
-        ),
-    ]
-
-    @override
-    def handle_signature(self, sig, signode):
-        sig = sig.strip()
-        reference = self.options.get("reference")
-        if reference:
-            ref = json.loads(reference) if reference[:1] == '"' else reference
-            display = sig
-        else:
-            accept = mat_types.simulink_accepts(
-                mat_types.SIMULINK_CLASSES[self.objtype]
-            )
-            ref, display = self._source_reference(sig, accept)
-            display = display.replace("\n", " ")
-        _, members = mat_naming.parse_reference(ref)
-        shown = members[0].replace("\n", " ") if members else ""
-        if shown and display.endswith(shown) and len(display) > len(shown):
-            prefix, shown = display[: -len(shown)], shown
-        else:
-            prefix, shown = mat_naming.split_display(display)
-
-        signode["module"] = mat_naming.folder_of(ref)
-        signode["class"] = ""
-        signode["fullname"] = display
-        label = f"{SIMULINK_LABELS[self.objtype]} "
-        signode += addnodes.desc_annotation(label, label)
-        if prefix:
-            signode += addnodes.desc_addname(prefix, prefix)
-        signode += addnodes.desc_name(shown, shown)
-        return ref, display
-
-    @override
-    def transform_content(self, content_node):
-        """Put the Simulink documentation file where the autodoc directive's
-        placeholder comment is.
-        """
-        super().transform_content(content_node)
-        for node in content_node.children:
-            if (
-                isinstance(node, nodes.comment)
-                and node.astext() == doc.SIMULINK_DOC_PLACEHOLDER
-            ):
-                found = []
-                if self.names:  # pragma: no branch - autodoc gives a reference
-                    ref = self.names[0][0]
-                    found = mat_sidecars.simulink_documentation(self, ref)
-                content_node.replace(node, found)
-                return
-
-    @override
-    def get_index_text(self, folder, name_cls):
-        return translation("%s (%s in %s)") % (
-            name_cls[1],
-            SIMULINK_LABELS[self.objtype],
-            folder,
-        )
-
-
-#: object type -> what its signature calls it
-SIMULINK_LABELS = {
-    "simulink_model": translation("Simulink model"),
-    "simulink_library": translation("Simulink library"),
-    "simulink_subsystem_reference": translation("Simulink subsystem reference"),
-    "simulink_library_block": translation("Simulink library block"),
-}
 
 
 class MatClasslike(MatObjectDirective):
@@ -1006,10 +901,6 @@ class MATLABDomain(Domain):
         "namespace": ObjType(translation("namespace"), "namespace", "obj"),
         "script": ObjType(translation("script"), "scpt", "obj"),
         "application": ObjType(translation("application"), "app", "obj"),
-        **{
-            objtype: ObjType(label, objtype, "obj")
-            for objtype, label in SIMULINK_LABELS.items()
-        },
     }
 
     directives: ClassVar[dict[str, type[Directive]]] = {
@@ -1025,7 +916,6 @@ class MATLABDomain(Domain):
         "currentfolder": MatCurrentFolder,
         "script": MatModulelevel,
         "application": MatModulelevel,
-        **dict.fromkeys(SIMULINK_LABELS, MatSimulinkObject),
     }
     roles: ClassVar[dict[str, RoleFunction | XRefRole]] = {
         "data": MatXRefRole(),
@@ -1041,7 +931,6 @@ class MATLABDomain(Domain):
         "obj": MatXRefRole(),
         "scpt": MatXRefRole(),
         "app": MatXRefRole(),
-        **{objtype: MatXRefRole() for objtype in SIMULINK_LABELS},
         # A sidecar doc, by path reference; the text is its title.
         "sidecar": XRefRole(),
     }
@@ -1059,9 +948,6 @@ class MATLABDomain(Domain):
         # docname -> [(sidecar reference, kind, target, line)]: broken relative
         # links and missing images in the sidecar docs it renders
         "sidecar_issues": {},
-        # docname -> {Simulink documentation file path: [(subtype, message,
-        # location)]}: the warnings about the files it parsed
-        "simulink_doc_warnings": {},
         # docname -> True: it has a reference to a MATLAB object
         "xref_docs": {},
         # docname -> {reference: (location, objtype, display, folder)}: the
@@ -1078,8 +964,6 @@ class MATLABDomain(Domain):
         #                 matlab_name, private, scope}
         "index": {},
         "sidecars": {},  # sidecar doc path -> {reference, mtime, size}
-        # Simulink documentation file path -> {reference, mtime, size}
-        "simulink_docs": {},
         "parse_cache": {},  # (path, mtime_ns, size) -> parsed MatObject
         "parse_warnings": {},  # (path, mtime_ns, size) -> parse-stage warnings
         "entities_table": {},  # path reference -> MatObject (files and folders)
@@ -1095,7 +979,7 @@ class MATLABDomain(Domain):
     }
     # Bump when the layout of ``initial_data`` (the pickled domain data) or the
     # parsed objects it caches change, so Sphinx drops stale cached environments.
-    data_version = 35
+    data_version = 36
     indices: ClassVar[list[type[Index]]] = [
         MATLABFolderIndex,
     ]
@@ -1104,7 +988,6 @@ class MATLABDomain(Domain):
         super().__init__(env)
         # display name -> references of documented objects (built lazily)
         self._displays = None
-        self._spaced: dict[str, str] = {}  # built with _displays
         # namespace name -> references of the documented folders that have
         # it (built with _displays)
         self._folder_names: dict[str, list[str]] = {}
@@ -1303,7 +1186,6 @@ class MATLABDomain(Domain):
         self.data["doc_sources"].pop(docname, None)
         self.data["sidecar_docs"].pop(docname, None)
         self.data["sidecar_issues"].pop(docname, None)
-        self.data["simulink_doc_warnings"].pop(docname, None)
         self.data["xref_docs"].pop(docname, None)
         self.data["described"].pop(docname, None)
         self._displays = self._stable_urls = None
@@ -1346,7 +1228,6 @@ class MATLABDomain(Domain):
             "doc_sources",
             "sidecar_docs",
             "sidecar_issues",
-            "simulink_doc_warnings",
             "xref_docs",
             "described",
         ):
@@ -1399,10 +1280,6 @@ class MATLABDomain(Domain):
     def _by_display(self, name):
         if self._displays is None:
             self._displays = {}
-            # a block with a line break in its name, by its reference with
-            # spaces; the first of those that collapse to one form (in sorted
-            # order) has it
-            self._spaced = {}
             self._folder_names = {}
             # by reference: the merge order of a parallel read does not matter
             for ref, (_, objtype, display) in sorted(self.data["objects"].items()):
@@ -1410,19 +1287,7 @@ class MATLABDomain(Domain):
                 entity = self.entities_table.get(ref) if objtype == "folder" else None
                 if namespace := getattr(entity, "matlab_name", None):
                     self._folder_names.setdefault(namespace, []).append(ref)
-            for ref in sorted(self.data["objects"]):
-                if mat_naming.has_line_break(ref):
-                    self._spaced.setdefault(mat_naming.collapse_space(ref), ref)
         return self._displays.get(name, [])
-
-    def _documented(self, ref):
-        """Return the documented reference ``ref`` names: itself, or the block
-        it names with spaces for line breaks (as a role's target writes it).
-        """
-        if ref in self.data["objects"]:
-            return ref
-        self._by_display("")
-        return self._spaced.get(ref, ref)
 
     def _scope(self, reference):
         # Folder a documented object's MATLAB name is visible from.
@@ -1480,7 +1345,6 @@ class MATLABDomain(Domain):
             exact.append(f"{cls}.{name}")
         if folder:
             exact.append(mat_naming.join_reference(folder, name))
-        exact = [self._documented(r) for r in exact]
         # Exact references are tried in order.
         steps = [([r for r in exact if r in objects], True)]
         if namespace is not None:
@@ -1664,28 +1528,11 @@ class MATLABDomain(Domain):
             return None
         return next(iter(found), (None, None))[1]
 
-    def inventory_name(self, ref):
-        """Return the name of ``ref`` in ``objects.inv``, or None when it has
-        none. That is ``ref``, but with spaces for the line breaks of a block's
-        name (one line of the file per entry): the form a role's target has.
-        When that form is another object's reference or the form of an earlier
-        block, the block has no entry.
-        """
-        if not mat_naming.has_line_break(ref):
-            return ref
-        name = mat_naming.collapse_space(ref)
-        return name if self._documented(name) == ref else None
-
     @override
     def get_objects(self):
         for ref, (docname, objtype, display) in self.data["objects"].items():
-            name = self.inventory_name(ref)
-            if name is None:
-                continue
-            if mat_naming.has_line_break(display):
-                display = mat_naming.collapse_space(display)
             yield (
-                name,
+                ref,
                 display,
                 objtype,
                 docname,
@@ -1800,7 +1647,6 @@ def setup(app):
     app.connect("env-before-read-docs", mat_types.note_read_docs)
     app.connect("env-updated", reconcile_objects, priority=400)
     app.connect("env-updated", mat_types.warn_parsed_sources)
-    app.connect("env-updated", mat_sidecars.warn_simulink_docs)
     app.connect("build-finished", mat_api_check.set_status)
     app.connect("missing-reference", check_inventories, priority=400)
     app.add_post_transform(CheckExternalReferences)
@@ -1811,7 +1657,6 @@ def setup(app):
     app.connect("env-get-outdated", mat_urls.note_pages)
     app.connect("env-get-updated", mat_urls.pages_to_write)
     app.connect("build-finished", mat_urls.write_redirects)
-    app.connect("build-finished", simulink_linker.write_settings)
 
     app.add_domain(MATLABDomain)
     app.add_builder(mat_api_check.MatlabApiCheckBuilder)
@@ -1871,12 +1716,6 @@ def setup(app):
     app.add_directive_to_domain(
         "mat", "autoapplication", mat_directives.MatlabAutodocDirective
     )
-
-    for documenter in doc.SIMULINK_DOCUMENTERS:
-        app.registry.add_documenter(f"mat:{documenter.objtype}", documenter)
-        app.add_directive_to_domain(
-            "mat", f"auto{documenter.objtype}", mat_directives.MatlabAutodocDirective
-        )
 
     app.add_autodoc_attrgetter(mat_types.MatModule, mat_types.MatModule.getter)
     app.add_autodoc_attrgetter(mat_types.MatNamespace, mat_types.MatNamespace.getter)

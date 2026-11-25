@@ -2,8 +2,6 @@
 
 import os
 import re
-import shutil
-from pathlib import Path
 from typing import Any, cast
 
 import pytest
@@ -200,7 +198,6 @@ def test_classmethod_directive_is_removed(make_app, tmp_path):
 
 # --- where the warnings of directives point --------------------------------------
 
-SLX = Path(__file__).parent / "simulink" / "fixtures" / "R2026b" / "slx"
 # (directive, what it warns): each directive warns once, at the place it is
 # written; a duplicate at the directive a person wrote in a reST or Markdown
 # file (``AUTO``: the outermost auto directive of help text).
@@ -215,8 +212,6 @@ WARNING_DIRECTIVES = [
     (".. mat:autofunction:: dup", "mat.ambiguous"),
     (".. mat:autofunction:: h", "mat.duplicate"),
     (".. mat:autofunction:: one\n   :members: [", "option"),
-    (".. mat:autosimulink_model:: probeModel\n   :metadata: bogus", "mat.simulink"),
-    (".. mat:autosimulink_library:: probeLib\n   :members: Nosuch", "mat.not_found"),
 ]
 DIRECTIVES = "\n\n".join(directive for directive, _ in WARNING_DIRECTIVES) + "\n"
 FUNCTION = "function y = {0}(x)\n% {0} help\ny = x;\nend\n"
@@ -314,9 +309,6 @@ def build_place(make_app, root, files, conf=""):
     for path, text in sources.items():
         (root / path).parent.mkdir(parents=True, exist_ok=True)
         (root / path).write_text(text, encoding="utf-8")
-    (root / "src").mkdir(exist_ok=True)
-    for name in ("probeModel", "probeLib"):
-        shutil.copyfile(SLX / f"{name}.slx", root / "src" / f"{name}.slx")
     app = make_app(srcdir=root, freshenv=True)
     app.build()
     return app

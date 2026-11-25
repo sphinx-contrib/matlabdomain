@@ -19,8 +19,8 @@ Highlights
 * One command, ``scmd``: ``quickstart`` sets up a project, ``apidoc`` writes
   the API pages, ``skills`` copies agent skills into a project.
 * A ``matlab-api-check`` builder that audits the help text.
-* Simulink files, sidecar docs (Markdown and reST notes next to the code)
-  and stable addresses for every documented object.
+* Sidecar docs (Markdown and reST notes next to the code) and stable
+  addresses for every documented object.
 * Rewritten documentation: getting started, a user guide, a reference of
   every configuration value, directive, role, option and warning, and a
   developer guide. Examples are rendered by the documentation's own build.
@@ -89,7 +89,7 @@ Names and references:
   documented by path with one ``mat.not_callable`` warning each that says
   why; files below ``private/`` never warn.
 * A folder named like a file the extension reads (``.m``, ``.mlapp``,
-  ``.slx``, ``.mdl``, ``.md``, ``.rst``, any case) is not documented and
+  ``.md``, ``.rst``, any case) is not documented and
   logs the error ``mat.folder_name``.
 
 Configuration:
@@ -209,8 +209,8 @@ Commands:
   (``matlab_apidoc_templatedir``). By default (``matlab_apidoc_group =
   "namespace"``) it writes one page per namespace, merging all its
   folders, and Global for the files outside any namespace, listed flat on
-  the root page; sections Functions, Classes, Scripts, Apps, the Simulink
-  sections and the sidecar docs; at most ``matlab_apidoc_page_size``
+  the root page; sections Functions, Classes, Scripts, Apps and the
+  sidecar docs; at most ``matlab_apidoc_page_size``
   entries (default 100) per page; ``private/`` files are left out
   (``matlab_apidoc_private = True`` lists them with the folder above).
   ``matlab_apidoc_group = "folder"`` writes one page per folder with files,
@@ -284,7 +284,7 @@ Source files:
   ``matlabrc.m`` and ``rtwmakecfg.m`` are left out of ``mat:autofolder``
   members; an explicit directive still documents them.
 * Source files are found through a file-type handler registry (``.m``,
-  ``.mlapp``, Simulink files), the extension point for more file types.
+  ``.mlapp``), the extension point for more file types.
 
 Builds:
 
@@ -398,7 +398,7 @@ Linking:
   gone, also when another builder on the same doctree folder (``-d``) saw
   it go.
 * :confval:`matlab_link_shadowed_files_to_chooser_pages`: a name of
-  several objects (two global ``helper.m``, ``foo.m`` and ``foo.slx``)
+  several objects (two global ``helper.m``)
   links to a page that lists them, locally and through intersphinx.
 * ``matlab_external_names``: regular expressions of names the project does
   not document; a reference to such a name is text, without a "reference
@@ -413,38 +413,6 @@ Linking:
   to ``/`` are not linked.
 * Help lines that start with ``%%`` (a section start) lose both ``%``, as
   in MATLAB's ``help`` (#350): ``%% Inputs:`` gives ``Inputs:``.
-
-Simulink files:
-
-* The index reads Simulink models, libraries and subsystem files
-  (``.slx`` and ``.mdl``) without MATLAB, from every release since R2006a. They get MATLAB names as
-  Simulink runs them, and a block of a library is referenced by its
-  Simulink path after the file (``lib.slx/Group/Gain``).
-* New directives ``mat:autosimulink_model``, ``mat:autosimulink_library``,
-  ``mat:autosimulink_subsystem_reference`` and
-  ``mat:autosimulink_library_block`` (and their description directives and
-  roles) document the description, mask type, mask description and Help,
-  metadata (:confval:`matlab_simulink_metadata`), mask parameters and
-  ports. ``:members:`` of a library documents its blocks;
-  ``:references:`` lists the model references, subsystem references and
-  library links of a model. A ``.md`` or ``.rst`` file next to a Simulink
-  file with its name adds documentation
-  (:confval:`matlab_simulink_doc_suffixes`).
-* ``scmd apidoc`` lists Simulink files in their own sections;
-  ``matlab-api-check`` counts them as not checked. ``scmd quickstart`` adds
-  ``+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` to a
-  project with Simulink files: Help fields call it to open the page of a
-  model or block on the local build, the sphinx-autobuild server
-  (:confval:`matlab_simulink_autobuild_server`) or the published site;
-  ``sphinxcontrib.matlabdomain.setSimulinkHelp`` writes those Help fields.
-  The linker gives the address by the rules of the output names, including
-  the escaped leading ``_`` of a folder, except those that need the sibling
-  files (names that differ only by case, a folder named like a page file).
-  A build writes only to its output and doctree folders: it records its
-  state in ``mat/simulinkDocumentationLinker.json`` there, never changes
-  the committed ``simulinkDocumentationLinker.json`` (written once by
-  ``scmd quickstart``), and logs one ``info`` line when ``local``,
-  ``server`` or ``published`` of that file differ from the build.
 
 Sidecar docs:
 
@@ -489,19 +457,10 @@ Fixes
 * An invalid option of a ``mat:auto*`` directive is reported at the right
   file.
 * A corrupt or huge ``.mlapp`` file gives one ``mat.parse_error`` and the
-  build goes on: the reader has the size limits, the refusal of a DTD or
-  entity declaration and the nesting limit of the Simulink reader (a
-  300 MiB member took 1.2 GiB of memory before).
-* A Simulink XML part whose declaration names the encoding ``utf-7`` or
-  ``idna`` crashed the reader with a ``ValueError``; it is a
-  ``mat.parse_error`` now.
-* The refusal of a DTD or entity declaration in a Simulink XML part or an
-  ``.mlapp`` metadata part also holds for a UTF-16 part (it was parsed with
-  its entities before).
-* The parts below ``metadata/`` of a ``.slx``, ``.mdl`` or ``.mlapp`` file
-  have a size limit of 16 MiB instead of 256 MiB (a 255 MiB
-  ``metadata/coreProperties.xml`` was accepted without a warning and took
-  about 1 GiB of memory to parse); the real ones are a few kilobytes.
+  build goes on: the reader has size limits, refuses a DTD or entity
+  declaration, also in a UTF-16 part, and limits the nesting of the XML (a
+  300 MiB member took 1.2 GiB of memory before). The metadata parts it
+  reads have a size limit of 16 MiB; the real ones are a few kilobytes.
 * The package metadata names the license in ``LICENSE``, BSD-2-Clause (it
   said BSD-3-Clause).
 

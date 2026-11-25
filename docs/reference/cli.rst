@@ -110,13 +110,6 @@ Outside ``DOCS``, each only if the line is not there yet:
 * ``.gitignore``: ``DOCS/_build/`` (and ``DOCS/API/`` when the :term:`API`
   pages are not committed).
 * ``.gitattributes``: ``*.bat text eol=crlf``.
-* In a project with Simulink models, libraries or subsystem files:
-  ``ROOT/+sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m`` (the
-  MATLAB function that Help links of Simulink files call; rewritten on
-  each run) and its settings ``simulinkDocumentationLinker.json`` (written
-  once; HTML builds do not change it, they only log when it differs from
-  the build, :confval:`matlab_simulink_autobuild_server`); ``conf.py`` excludes
-  ``+sphinxcontrib/``.
 
 Before it writes anything it checks ``git status`` of these three files and
 stops if one has uncommitted changes, so ``git restore`` undoes exactly its
@@ -168,9 +161,8 @@ flag overrides one:
 
 The source settings are :confval:`matlab_src_code_project_root` (required),
 :confval:`matlab_src_include_patterns`, :confval:`matlab_src_exclude_patterns`,
-:confval:`matlab_src_sidecar_suffixes`, :confval:`matlab_version`,
-:confval:`matlab_src_encoding` and
-:confval:`matlab_simulink_doc_suffixes`.
+:confval:`matlab_src_sidecar_suffixes`, :confval:`matlab_version` and
+:confval:`matlab_src_encoding`.
 
 The command's own settings are :confval:`matlab_apidoc_output_dir` (required),
 :confval:`matlab_apidoc_group`, :confval:`matlab_apidoc_page_size`,
@@ -251,9 +243,8 @@ typo; :doc:`configuration`). Unknown and abbreviated options (``--dry``
 for ``--dry-run``) are usage errors.
 
 The command stops for a value it uses that is not valid: the source
-values (``matlab_src_*``, :confval:`matlab_version`,
-:confval:`matlab_simulink_doc_suffixes`) and the ``matlab_apidoc_*``
-values. A value that only the build or ``matlab-api-check`` uses and that
+values (``matlab_src_*``, :confval:`matlab_version`) and the
+``matlab_apidoc_*`` values. A value that only the build or ``matlab-api-check`` uses and that
 is not valid is one ``mat.config`` warning, and the command goes on, so it
 runs on a project that is not ready for those yet; they stop for their own
 values when they run.

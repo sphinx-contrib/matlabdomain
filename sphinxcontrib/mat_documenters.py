@@ -1,11 +1,10 @@
-"""Autodoc documenters for MATLAB functions, classes, scripts and models.
+"""Autodoc documenters for MATLAB functions, classes, scripts and apps.
 
 :copyright: Copyright by the sphinxcontrib-matlabdomain team, see AUTHORS.
 :license: BSD, see LICENSE for details.
 """
 
 import difflib
-import json
 import re
 from dataclasses import dataclass
 from typing import Any, ClassVar, NamedTuple, cast
@@ -37,35 +36,28 @@ from sphinx.util.inspect import safe_getattr
 from sphinx.util.logging import getLogger
 from sphinx.util.typing import OptionSpec
 
-from . import mat_naming, mat_sidecars, mat_simulink
+from . import mat_naming, mat_sidecars
 from .mat_classify import UNKNOWN, is_hidden
 from .mat_types import (
-    SIMULINK_CLASSES,
     MatApplication,
-    MatBlock,
     MatClass,
     MatcodeError,
     MatEnumeration,
     MatEvent,
     MatFunction,
-    MatLibrary,
     MatMethod,
     MatModule,
     MatModuleAnalyzer,
     MatNamespace,
     MatProperty,
     MatScript,
-    MatSimulinkFile,
     display_name,
     find_namespace,
     find_source,
-    is_code_object,
     is_folder_object,
     is_source_object,
     lookup_reference,
     resolve,
-    same_block,
-    simulink_accepts,
     warn_ambiguous,
     warn_not_namespace,
 )
@@ -163,13 +155,7 @@ _NAME_BEFORE = r"(?<!(`|\.|\+|<|@|\*|\xa0|/|\|))\b"
 _NAME_AFTER = r"\b(?!(`|\*|\xa0|\sProperties:|\sMethods:|\.\w|/|\|))"
 _MEMBER_AFTER = r"\b(?!(`|\*|\xa0|\sProperties:|\sMethods:|/|\|))"
 #: roles of files that "See also" and auto-links name (``ref_role``)
-_FILE_ROLES = (
-    "class",
-    "func",
-    "simulink_model",
-    "simulink_library",
-    "simulink_subsystem_reference",
-)
+_FILE_ROLES = ("class", "func")
 
 
 def _inline(match, markup):
@@ -313,7 +299,7 @@ class MatlabDocumenter(PyDocumenter):
         return super().get_doc() or []
 
     #: True for the objects this documenter documents (folders or not)
-    accepts = staticmethod(is_code_object)
+    accepts = staticmethod(is_source_object)
 
     @override
     def format_name(self):
@@ -440,7 +426,7 @@ class MatlabDocumenter(PyDocumenter):
     def help_sources(self):
         """``(help, line)`` of each help text of the object, in order: the help
         and the one-based file line it starts on (None: there are no file
-        lines, as in a Simulink file, so the lines of the help count).
+        lines, as in an app, so the lines of the help count).
         """
         obj = self.object
         return [(getattr(obj, "docstring", None), getattr(obj, "docstring_line", None))]
@@ -848,8 +834,6 @@ class MatlabDocumenter(PyDocumenter):
             isattr = False
 
             has_doc = bool(self.get_attr(member, "__doc__", None))
-            # a library block with a section in the documentation file
-            has_doc = has_doc or self.get_attr(member, "has_doc_section", False)
             # GetAccess applies when Access is not given; an event's is ListenAccess
             level = (
                 access_of(member, "Access")
@@ -938,8 +922,6 @@ class MatlabDocumenter(PyDocumenter):
                 full_mname = getattr(member, "ref", None) or mat_naming.join_reference(
                     self.ref, mname
                 )
-            elif isinstance(self.object, MatLibrary):
-                full_mname = f"{self.ref}/{mname}"
             else:
                 full_mname = f"{self.ref}.{mname}"
             documenter = classes[-1](self.directive, full_mname, self.indent)
@@ -1938,420 +1920,3 @@ class MatApplicationDocumenter(MatModuleLevelDocumenter):
     @override
     def document_members(self, all_members=False):
         pass
-
-
-#: metadata of a Simulink file (``matlab_simulink_metadata``) -> its label
-SIMULINK_METADATA = dict(
-    zip(
-        mat_simulink.METADATA,
-        (
-            _("Release"),
-            _("Model version"),
-            _("Created by"),
-            _("Created"),
-            _("Last modified by"),
-            _("Last modified"),
-        ),
-        strict=True,
-    )
-)
-_PORT_KINDS = {
-    "Inport": _("input"),
-    "Outport": _("output"),
-    "PMIOPort": _("connection"),
-    "EnablePort": _("enable"),
-    "TriggerPort": _("trigger"),
-    "ActionPort": _("action"),
-}
-# Port settings Simulink leaves to inheritance: shown as empty cells.
-_PORT_UNSET = {"data_type": "Inherit: auto", "dimensions": "-1", "unit": "inherit"}
-_PORT_COLUMNS = (
-    ("data_type", _("Data type")),
-    ("dimensions", _("Dimensions")),
-    ("unit", _("Unit")),
-    ("description", _("Description")),
-)
-
-
-def metadata_option(arg):
-    """``:metadata: release, creator``: the metadata to show (none if empty)."""
-    return [key.strip() for key in (arg or "").split(",") if key.strip()]
-
-
-def _literal(text):
-    """``text`` as reST that shows it as it is, in code font."""
-    text = " ".join(text.split())
-    if text and "`" not in text:
-        return f"``{text}``"
-    return _escaped(text)
-
-
-def _escaped(text):
-    """``text`` as reST that shows it as it is."""
-    return re.sub(r"([^\w\s])", r"\\\1", " ".join(text.split()))
-
-
-class _FileText(str):
-    """A line that holds reST text of a Simulink file (a mask description or
-    Help, a parameter prompt, a port description): help text of the object,
-    whose relative paths are relative to the code folder.
-    """
-
-    __slots__ = ()
-
-
-def _block(first, text, indent):
-    """Lines of ``first`` followed by the lines of reST ``text``, indented."""
-    lines = text.strip().splitlines() or [""]
-    return [
-        _FileText(f"{first}{lines[0]}".rstrip()),
-        *(_FileText(f"{indent}{line}".rstrip()) for line in lines[1:]),
-    ]
-
-
-#: the comment that the Simulink directive replaces with the documentation file
-SIMULINK_DOC_PLACEHOLDER = "sphinxcontrib-matlabdomain: Simulink documentation file"
-
-#: options of every Simulink documenter
-_SIMULINK_OPTIONS = {
-    **MatlabDocumenter.option_spec,
-    "hidden-mask-parameters": bool_option,
-    "metadata": metadata_option,
-}
-#: reference kind -> (label, role)
-_REFERENCE_KINDS = {
-    "model": (_("model reference"), "simulink_model"),
-    "subsystem": (_("subsystem reference"), "simulink_subsystem_reference"),
-    "library": (_("library link"), "simulink_library_block"),
-}
-_SIMULINK_NAME = re.compile(r"[A-Za-z]\w*")
-
-
-class MatSimulinkDocumenter(MatModuleLevelDocumenter):
-    """Documenter of a Simulink model; the base of the other Simulink
-    documenters. Shows the description, the mask (type, help, parameters),
-    the ports and the metadata of ``matlab_simulink_metadata``.
-    """
-
-    objtype = "simulink_model"
-    # The argument is the whole name: block names may hold parentheses.
-    name_pattern = re.compile(r"\s*(.+?)\s*((?!))?((?!))?\Z", re.DOTALL)
-    option_spec: ClassVar[OptionSpec] = {
-        **_SIMULINK_OPTIONS,
-        "references": bool_option,
-    }
-
-    @override
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.accepts = staticmethod(simulink_accepts(SIMULINK_CLASSES[cls.objtype]))
-
-    @classmethod
-    @override
-    def can_document_member(cls, member, membername, isattr, parent):
-        return isinstance(member, SIMULINK_CLASSES[cls.objtype])
-
-    @override
-    def format_name(self):
-        return self.display.replace("\n", " ")
-
-    @override
-    def format_signature(self, **kwargs):
-        return ""
-
-    @override
-    def add_directive_header(self, sig):
-        self.add_generated(f".. mat:{self.objtype}:: {self.format_name()}")
-        if self.options.no_index or self.options.noindex:
-            self.add_generated("   :noindex:")
-        ref = self.ref
-        # An option value is one line without surrounding space.
-        if "\n" in ref or ref != ref.strip() or ref[:1] == '"':
-            ref = json.dumps(ref, ensure_ascii=False)
-        self.add_generated(f"   :reference: {ref}")
-
-    @override
-    def document_members(self, all_members=False):
-        pass
-
-    @override
-    def add_content(self, more_content, no_docstring=False):
-        super().add_content(None, no_docstring)
-        # The directive puts the Simulink documentation file here.
-        self.add_generated("")
-        self.add_generated(f".. {SIMULINK_DOC_PLACEHOLDER}")
-        self.add_generated("")
-        if more_content:
-            for line, src in zip(more_content.data, more_content.items, strict=False):
-                self.add_line(line, src[0], src[1])
-        for line in self.simulink_lines():
-            if isinstance(line, _FileText):
-                # no file lines: line 1, as for the description
-                self.add_line(line, self.help_source())
-            else:
-                self.add_generated(line)
-
-    def simulink_parts(self):
-        """Return ``(mask, ports, metadata)`` of the object."""
-        obj = self.object
-        if isinstance(obj, MatBlock):
-            return obj.block.mask, obj.block.ports, ()
-        diagram = cast(MatSimulinkFile, obj).diagram
-        if diagram is None:  # a placeholder: the file could not be read
-            return None, (), ()
-        return diagram.system_mask, diagram.ports, diagram.metadata
-
-    def simulink_lines(self):
-        """Return the reST of the mask, ports and metadata."""
-        mask, ports, metadata = self.simulink_parts()
-        fields = []
-        if mask is not None:
-            if mask.type:
-                fields.append(f":{_('Mask type')}: {_literal(mask.type)}")
-            if mask.description and mask.description != self.object.docstring:
-                fields += _block(f":{_('Mask description')}: ", mask.description, "   ")
-            fields += self.help_lines(mask)
-        fields += self.metadata_lines(metadata)
-        lines = ["", *fields, ""] if fields else [""]
-        if mask is not None:
-            lines += self.mask_parameter_lines(mask.parameters)
-        return lines + self.port_lines(ports) + self.reference_lines()
-
-    def reference_lines(self):
-        """Return the list of the model references, subsystem references and
-        library links of the file (``:references:``), each a link to its
-        target; one outside the project stays text.
-        """
-        diagram = getattr(self.object, "diagram", None)
-        if not self.options.get("references") or diagram is None:
-            return []
-        lines = []
-        for ref in diagram.references:
-            label, role = _REFERENCE_KINDS[ref.kind]
-            target = " ".join(ref.target.split())
-            if ref.kind != "library":
-                target = re.sub(r"\.(slx|mdl)$", "", target)
-            if ref.kind == "library" or _SIMULINK_NAME.fullmatch(target):
-                link = f":mat:{role}:`{target}`"
-            else:  # not set, or a variable name in the dialog
-                link = _literal(target)
-            block = _literal(" ".join(ref.block.split()))
-            lines.append(f"* {block} ({label}): {link}")
-        if not lines:
-            return []
-        return [f".. rubric:: {_('References')}", "", *lines, ""]
-
-    def help_lines(self, mask):
-        """Return the mask Help: a link for a URL, ``web(...)`` or a linker line
-        to another object (one to this object is left out), else its text.
-        """
-        text = mask.help
-        if not text.strip():
-            return []
-        shown = (self.object.docstring or "", mask.description)
-        if " ".join(text.split()) in {" ".join(t.split()) for t in shown}:
-            return []  # the same text as the description
-        label = f":{_('Help')}: "
-        target = mat_simulink.help_target(text)
-        if target is None:
-            return _block(label, text, "   ")
-        kind, value = target
-        if kind == "url":
-            return [f"{label}`{value} <{value}>`__"]
-        if same_block(value, self.ref):
-            return []
-        # A role's target writes a line break in a block name as a space.
-        return [f"{label}:mat:obj:`{' '.join(value.split())}`"]
-
-    def metadata_lines(self, metadata):
-        """Return the field lines of the file's metadata (release, model version,
-        creator, dates) chosen by ``:metadata:`` or ``matlab_simulink_metadata``
-        (checked at start, ``mat_config``); warn about unknown names of
-        ``:metadata:``.
-        """
-        keys = self.options.metadata
-        if keys is None:
-            keys = self.env.config.matlab_simulink_metadata
-        else:
-            for key in keys:
-                if key not in SIMULINK_METADATA:
-                    logger.warning(
-                        "[sphinxcontrib-matlabdomain] unknown Simulink metadata %r; "
-                        "known: %s",
-                        key,
-                        ", ".join(SIMULINK_METADATA),
-                        type="mat",
-                        subtype="simulink",
-                        location=self.directive.location,
-                    )
-        values = dict(metadata)
-        return [
-            f":{SIMULINK_METADATA[key]}: {_escaped(values[key])}"
-            for key in keys
-            if values.get(key)
-        ]
-
-    def mask_parameter_lines(self, parameters):
-        """Return the mask parameters, like the input arguments of a function;
-        hidden ones only with ``:hidden-mask-parameters:``.
-        """
-        lines = []
-        for p in parameters:
-            if not (p.visible or self.options.hidden_mask_parameters) or not p.name:
-                continue
-            prompt = " ".join(p.prompt.split())
-            if prompt and prompt[-1] not in ".?!:":
-                prompt += "."
-            details = [prompt] if prompt else []
-            if p.value:
-                details.append(_("Default: %s.") % _literal(p.value))
-            if p.options:
-                choices = ", ".join(_literal(o) for o in p.options)
-                details.append(_("Options: %s.") % choices)
-            lines += _block(f":maskparam {p.name}: ", " ".join(details), "   ")
-            if p.type:
-                lines.append(f":maskparamtype {p.name}: {p.type}")
-        return [*lines, ""] if lines else []
-
-    def port_lines(self, ports):
-        """Return the ports as a table, with the columns that have a value."""
-        if not ports:
-            return []
-
-        def value(port, key):
-            text = getattr(port, key)
-            return "" if text == _PORT_UNSET.get(key) else text
-
-        columns = [
-            (key, title)
-            for key, title in _PORT_COLUMNS
-            if any(value(port, key) for port in ports)
-        ]
-        lines = [
-            f".. rubric:: {_('Ports')}",
-            "",
-            ".. list-table::",
-            "   :header-rows: 1",
-            "",
-            f"   * - {_('Port')}",
-            f"     - {_('Name')}",
-            *(f"     - {title}" for _key, title in columns),
-        ]
-        for port in ports:
-            # a bus element port: port.element
-            name = ".".join(filter(None, (port.port_name, port.element))) or port.name
-            kind = _PORT_KINDS.get(port.block_type, port.block_type)
-            lines.append(f"   * - {kind} {port.number}".rstrip())
-            lines.append(f"     - {_literal(name)}")
-            for key, _title in columns:
-                text = value(port, key)
-                if key == "description":
-                    lines += _block("     - ", text, "       ")
-                else:
-                    lines.append(f"     - {_literal(text)}".rstrip())
-        return [*lines, ""]
-
-
-class MatSimulinkLibraryDocumenter(MatSimulinkDocumenter):
-    """Documenter of a Simulink library. With ``:members:``, its documented
-    blocks follow in the library's order, then a list of its linked blocks
-    (each a link to its source block) and sublibrary blocks (each a link to
-    the library it opens).
-    """
-
-    objtype = "simulink_library"
-    option_spec: ClassVar[OptionSpec] = {
-        **_SIMULINK_OPTIONS,
-        "members": members_option,
-        "undoc-members": bool_option,
-        "exclude-members": exclude_members_option,
-    }
-
-    def _wanted(self, blocks, want_all):
-        """Return the blocks named by ``:members:`` (all if ``want_all``),
-        without those of ``:exclude-members:``.
-        """
-        named = [] if want_all else list(self.options.members or ())
-        excluded = self.options.exclude_members or ()
-
-        def among(block, names):
-            return any(same_block(block.path, name) for name in names)
-
-        return [
-            block
-            for block in blocks
-            if (want_all or among(block, named)) and not among(block, excluded)
-        ]
-
-    @override
-    def get_object_members(self, want_all):
-        library = cast(MatLibrary, self.object)
-        blocks = library.diagram.library_blocks if library.diagram else ()
-        # Here, not in _wanted, which document_members calls again.
-        for name in () if want_all else self.options.members or ():
-            if not any(same_block(block.path, name) for block in blocks):
-                logger.warning(
-                    "[sphinxcontrib-matlabdomain] %s has no documented block %r",
-                    self.ref,
-                    name,
-                    type="mat",
-                    subtype="not_found",
-                    location=self.directive.location,
-                )
-        sections = mat_sidecars.documented_blocks(self.directive, self.ref)
-        members = []
-        for block in self._wanted(blocks, want_all):
-            if block.mask is not None:
-                member = MatBlock(block, library)
-                member.has_doc_section = " ".join(block.path.split()) in sections
-                members.append((block.path, member))
-        return False, members
-
-    @override
-    def document_members(self, all_members=False):
-        MatlabDocumenter.document_members(self, all_members)
-        want_all = all_members or self.options.members is ALL
-        if not (want_all or self.options.members):
-            return
-        library = cast(MatLibrary, self.object)
-        blocks = library.diagram.library_blocks if library.diagram else ()
-        items = []
-        for block in self._wanted(blocks, want_all):
-            if block.link:
-                target = " ".join(block.link.split())
-                items.append((block.path, f":mat:simulink_library_block:`{target}`"))
-            elif block.opens:
-                items.append((block.path, f":mat:simulink_library:`{block.opens}`"))
-        if not items:
-            return
-        self.add_generated("")
-        self.add_generated(f".. rubric:: {_('Links to other blocks')}")
-        self.add_generated("")
-        for path, link in items:
-            self.add_generated(f"* {_literal(path)}: {link}")
-        self.add_generated("")
-
-
-class MatSimulinkSubsystemDocumenter(MatSimulinkDocumenter):
-    """Documenter of a Simulink subsystem file (a Subsystem Reference's target)."""
-
-    objtype = "simulink_subsystem_reference"
-
-
-class MatSimulinkBlockDocumenter(MatSimulinkDocumenter):
-    """Documenter of a block of a Simulink library."""
-
-    objtype = "simulink_library_block"
-    option_spec: ClassVar[OptionSpec] = _SIMULINK_OPTIONS
-
-
-MatSimulinkDocumenter.accepts = staticmethod(
-    simulink_accepts(SIMULINK_CLASSES[MatSimulinkDocumenter.objtype])
-)
-#: registered as ``mat:auto<objtype>``
-SIMULINK_DOCUMENTERS = (
-    MatSimulinkDocumenter,
-    MatSimulinkLibraryDocumenter,
-    MatSimulinkSubsystemDocumenter,
-    MatSimulinkBlockDocumenter,
-)

@@ -248,82 +248,6 @@ def test_golden_dry_run(tmp_path, capsys, fixed, no_git):
     assert tree(root) == before
 
 
-@pytest.mark.parametrize("markdown", [False, True])
-def test_simulink_note_next_to_a_model_builds(
-    markdown, tmp_path, capsys, make_app, fixed, no_git
-):
-    root = copy_root(APIDOC, tmp_path / "src")
-    slx = TESTS / "simulink" / "fixtures" / "R2026b" / "slx"
-    shutil.copyfile(slx / "probeModel.slx", root / "probeModel.slx")
-    (root / "probeModel.md").write_text("# probeModel\n\nNotes.\n", encoding="utf-8")
-    text = f'{ANSWERS}markdown = {str(markdown).lower()}\nmake = "plain"\n'
-    args = [str(root), "-q", "--answers", answers_file(tmp_path, text)]
-    assert matlab_quickstart.main(args) == 0
-    capsys.readouterr()
-    # An earlier test's MyST can leave ".md" in the shared default suffixes.
-    suffixes = {".rst": "restructuredtext"}
-    if markdown:
-        suffixes[".md"] = "markdown"
-    app = make_app(
-        srcdir=root / "docs", freshenv=True, confoverrides={"source_suffix": suffixes}
-    )
-    app.build(force_all=True)
-    assert app.statuscode == 0, app.warning.getvalue()
-    conf = (root / "docs" / "conf.py").read_text(encoding="utf-8")
-    assert ("matlab_simulink_doc_suffixes" in conf) is (not markdown)
-
-
-def test_simulink_project_gets_the_help_linker(tmp_path, capsys, fixed, no_git):
-    root = copy_root(APIDOC, tmp_path)
-    slx = TESTS / "simulink" / "fixtures" / "R2026b" / "slx"
-    (root / "models" / "private").mkdir(parents=True)
-    shutil.copyfile(slx / "probeModel.slx", root / "models" / "probeModel.slx")
-    shutil.copyfile(slx / "probeLib.slx", root / "models" / "probeLib.slx")
-    shutil.copyfile(slx / "probeRef.slx", root / "models" / "private" / "probeRef.slx")
-    text = f'{ANSWERS}markdown = false\nmake = "plain"\nhtml_baseurl = "https://x.org/d/"\n'
-    args = [str(root), "-q", "--answers", answers_file(tmp_path, text)]
-    assert matlab_quickstart.main(args) == 0
-    out = " ".join(normalize(capsys.readouterr().out, root).split())
-    folder = root / "+sphinxcontrib" / "+matlabdomain"
-    linker = folder / "simulinkDocumentationLinker.m"
-    assert (
-        linker.read_bytes()
-        == (
-            _write.MATLAB_TOOLS / "+sphinxcontrib" / "+matlabdomain" / linker.name
-        ).read_bytes()
-    )
-    settings = json.loads((folder / "simulinkDocumentationLinker.json").read_text())
-    assert settings == {
-        "mode": "local",
-        "local": "docs/_build/html/",
-        "server": "http://127.0.0.1:8000/",
-        "published": "https://x.org/d/",
-    }
-    assert (
-        "Creating file +sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m "
-        "(Help links of the Simulink files)." in out
-    )
-    assert "2 models, 1 library" in out
-    assert "models/private/probeRef.slx" in out  # not callable
-    conf = (root / "docs" / "conf.py").read_text(encoding="utf-8")
-    assert (
-        "    # The MATLAB function behind the Help links of the Simulink files.\n"
-        '    "+sphinxcontrib/",\n'
-    ) in conf
-
-    # A second run keeps the settings and does not document the function.
-    (folder / "simulinkDocumentationLinker.json").write_text('{"mode": "published"}')
-    assert matlab_quickstart.main([*args, "--force"]) == 0
-    out = capsys.readouterr().out
-    assert (folder / "simulinkDocumentationLinker.json").read_text() == (
-        '{"mode": "published"}'
-    )
-    assert "simulinkDocumentationLinker" not in out
-    api = tree(root / "docs" / "API")
-    assert not [name for name in api if "sphinxcontrib" in name]
-    assert not [text for text in api.values() if "simulinkDocumentationLinker" in text]
-
-
 def test_help_and_version(capsys):
     with pytest.raises(SystemExit):
         matlab_quickstart.main(["--version"])
@@ -1025,7 +949,7 @@ def test_inventory(tmp_path):
 def _all_answers():
     return (
         'matlab_version = "R2024b"\ngroup = "namespace"\ntheme = "furo"\n'
-        'html_baseurl = ""\nexclude = []\nmarkdown = true\nsidecars = true\n'
+        "exclude = []\nmarkdown = true\nsidecars = true\n"
         'make = "plain"\nguide = true\napi_pages = "commit"\n'
         "napoleon_custom_sections = []\n"
     )
@@ -1042,7 +966,6 @@ def _all_answers():
         ("napoleon_custom_sections = 1\n", "must be a list"),
         ("napoleon_custom_sections = [[1, 2]]\n", "[heading, style] pairs"),
         ('project = " "\n', "project must be a text"),
-        ("html_baseurl = 1\n", "html_baseurl must be a text"),
         ('matlab_version = "R2019b"\n', "older than the oldest supported"),
     ],
 )
@@ -1094,8 +1017,6 @@ def test_prompts(tmp_path, capsys, replies, fixed, no_git):
         "flat",  # a bad grouping
         "folder",
         "",  # theme
-        "ftp://x",  # not a web address: asked again
-        "https://example.org/docs/",  # published site
         "data, ext",  # exclusions
         "maybe",  # not y or n
         "y",  # markdown
@@ -1118,8 +1039,6 @@ def test_prompts(tmp_path, capsys, replies, fixed, no_git):
     assert saved["exclude"] == ["data", "ext"]
     assert saved["napoleon_custom_sections"] == []
     assert saved["matlab_version"] == "R2025b"
-    assert saved["html_baseurl"] == "https://example.org/docs/"
-    assert "* html_baseurl must start with https:// or http://" in out
     assert "Saved the answers" in out
     assert not (root / "docs").exists()
 

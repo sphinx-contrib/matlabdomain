@@ -5,14 +5,12 @@ The project sets what a builder needs to be quiet (``version``, ``copyright``,
 ``man_pages``), so a warning here is the extension's.
 """
 
-import shutil
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
 from sphinx.util.inventory import InventoryFile
 
-SLX = Path(__file__).parent / "simulink" / "fixtures" / "R2026b" / "slx"
 BUILDERS = (
     "html",
     "dirhtml",
@@ -84,8 +82,6 @@ Tiny
 
 .. mat:autoclass:: Box
    :members:
-
-.. mat:autosimulink_model:: probeModel
 """
 
 
@@ -93,7 +89,6 @@ def tiny_project(tmp_path):
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "scale.m").write_text(FUNCTION)
     (tmp_path / "src" / "Box.m").write_text(CLASS)
-    shutil.copyfile(SLX / "probeModel.slx", tmp_path / "src" / "probeModel.slx")
     (tmp_path / "conf.py").write_text(CONF)
     (tmp_path / "index.rst").write_text(INDEX)
     return tmp_path

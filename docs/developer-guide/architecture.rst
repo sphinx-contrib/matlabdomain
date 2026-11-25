@@ -31,18 +31,20 @@ Modules
        and the object model (``MatObject`` and subclasses).
    * - ``mat_naming.py``
      - Path references, anchors, MATLAB names (``form_matlab_name``, a port
-       of MATLAB's own naming rules; ``form_model_name`` for Simulink
-       files) and the release-dependent rules (``MATLAB_VERSION_RULES``).
+       of MATLAB's own naming rules) and the release-dependent rules
+       (``MATLAB_VERSION_RULES``).
    * - ``mat_classify.py``
      - ``classify()`` (script, function, class or unknown, from the first
        line of code), ``decode_source()`` (encodings as MATLAB reads them),
        the special files.
    * - ``mat_handlers.py``
      - The file-type registry: one handler per extension (``.m``,
-       ``.mlapp``, ``.slx``, ``.mdl``).
-   * - ``mat_simulink/``
-     - The Simulink file reader: layouts, limits, parsers and the
-       format-neutral content (see :doc:`simulink-file-formats`).
+       ``.mlapp``).
+   * - ``mat_container.py``
+     - Reads members of a zip container file within limits (file size,
+       number of entries, member size) and parses their XML with guards (no
+       DTD or entity declaration, a nesting limit); used for ``.mlapp``
+       files.
    * - ``mat_tree_sitter_parser.py``
      - tree-sitter queries: :term:`signatures <signature>`, members,
        arguments and help text.
@@ -97,9 +99,9 @@ is imported). Most modules also use ``mat_naming.py`` and
      apidoc["matlab_apidoc/"] --> types
      types["mat_types.py<br/>index, parse, objects"] --> naming["mat_naming.py<br/>references, MATLAB names"]
      types --> parser["mat_tree_sitter_parser.py"]
+     types --> container["mat_container.py<br/>zip containers, XML"]
      naming --> handlers["mat_handlers.py<br/>file types"]
      handlers --> classify["mat_classify.py<br/>file kind, decoding"]
-     handlers --> simulink["mat_simulink/<br/>Simulink files"]
      handlers -. "when parsing" .-> types
      parser --> treesitter[("tree-sitter-matlab")]
 
@@ -143,13 +145,12 @@ All state that outlives a build is in the :term:`domain`'s data
   ``doc_sources`` (the source files each page used, with time and size),
   ``sidecar_docs`` (the sidecar docs it renders), ``sidecar_issues``
   (their broken links and missing images, for ``matlab-api-check``),
-  ``simulink_doc_warnings`` (the warnings about the Simulink documentation
-  files it parsed), ``xref_docs`` and ``described`` (each :term:`object`
-  and folder a page describes, with the line of its :term:`directive`).
-  ``objects`` and ``folders`` are derived from ``described`` on
-  ``env-updated``: an :term:`object` described on several pages belongs to
-  the last of them in sorted order, as in a fresh build, so an incremental
-  build reads no other page;
+  ``xref_docs`` and ``described`` (each :term:`object` and folder a page
+  describes, with the line of its :term:`directive`). ``objects`` and
+  ``folders`` are derived from ``described`` on ``env-updated``: an
+  :term:`object` described on several pages belongs to the last of them
+  in sorted order, as in a fresh build, so an incremental build reads no
+  other page;
 * rebuilt by each index stage: ``index``, ``sidecars``, ``entities_table``
   (path reference to object), ``matlab_names`` (MATLAB name to
   references);
@@ -186,9 +187,7 @@ The events ``setup()`` connects:
   a source file they used changed, or because files were added, removed or
   changed type;
 * ``env-before-read-docs``: ``note_read_docs``;
-* ``env-updated``: ``warn_parsed_sources``, the parse-stage warnings, and
-  ``mat_sidecars.warn_simulink_docs``, the warnings about Simulink
-  documentation files, each once for the pages read in the build;
+* ``env-updated``: ``warn_parsed_sources``, the parse-stage warnings;
 * ``build-finished``: ``mat_api_check.set_status``, the exit status.
 
 :term:`Sphinx` calls the :term:`domain`'s ``clear_doc`` and

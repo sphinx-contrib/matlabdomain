@@ -108,8 +108,7 @@ With :confval:`matlab_apidoc_group` ``"namespace"`` (the default):
 * One page for the global namespace, titled ``Global``: the files outside
   any namespace, in plain folders at any depth.
 * Each page has a local table of contents and sections in this order:
-  Functions, Classes, Scripts, Apps, Simulink Models, Simulink Libraries,
-  Simulink Subsystem References, Simulink Library Blocks, Sidecar docs.
+  Functions, Classes, Scripts, Apps, Sidecar docs.
   Within a section, entries are sorted by title, ignoring case.
 * A page holds at most :confval:`matlab_apidoc_page_size` entries (100 by
   default; sidecar docs count). A longer namespace gets several pages,
@@ -144,8 +143,7 @@ With ``"folder"``:
   (``a/+ns/``, ``b/+ns/``) gets a page per folder, each with its own title;
   the ``mat:autofolder`` :term:`signature` still shows ``namespace ns``.
   The page has ``mat:autofolder`` (without ``:members:``), a local table of
-  contents, and sections in this order: Classes, Functions, Scripts, Apps,
-  then the Simulink sections as in namespace grouping.
+  contents, and sections in this order: Classes, Functions, Scripts, Apps.
   A long folder gets several pages, split at
   :confval:`matlab_apidoc_page_size` entries like a namespace
   (``folder utils/ (101-200)``). ``private/``
@@ -157,10 +155,6 @@ With ``"folder"``:
 
 In both:
 
-* Simulink libraries are read for their masked blocks (the only files
-  apidoc reads): each gets an entry in Simulink Library Blocks, titled
-  ``library/Group/Block``. A library that cannot be read gets a
-  ``mat.apidoc`` warning and no block entries.
 * Each file gets a heading, its MATLAB name (or its path when MATLAB cannot
   call it), and an auto :term:`directive` with its full path reference:
   ``mat:autoclass`` with ``:members:``, ``:undoc-members:`` and

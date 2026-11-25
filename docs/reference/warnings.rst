@@ -26,16 +26,15 @@ for a file without one, the auto :term:`directive` for a folder).
      - at the start of a build or of ``scmd apidoc``
    * - ``mat.parse_error``
      - a file or folder that cannot be read, an invalid ``.mlapp``, a
-       ``.slx`` or ``.mdl`` file that is not a readable Simulink file (a Git
-       LFS pointer, too large), a parser failure, a file name that is not
+       parser failure, a file name that is not
        valid UTF-8, two names in one folder that differ only by Unicode
        form, a page that cannot be read (``scmd apidoc`` reports a file it
        cannot read as ``mat.apidoc``)
      - every build (reading); parse failures when a page uses the file
    * - ``mat.folder_name``
      - an error, not a warning (``suppress_warnings`` does not hide it): a
-       folder named like a supported file (``.m``, ``.mlapp``, ``.slx``,
-       ``.mdl``, ``.md``, ``.rst``, any case); it is not documented
+       folder named like a supported file (``.m``, ``.mlapp``, ``.md``,
+       ``.rst``, any case); it is not documented
      - every build
    * - ``mat.encoding``
      - a file decoded with the fallback encoding or with replaced bytes; a
@@ -52,8 +51,7 @@ for a file without one, the auto :term:`directive` for a folder).
    * - ``mat.not_callable``
      - a file MATLAB cannot call for :confval:`matlab_version`; the
        message says why (an invalid name, a keyword, a subfolder of a
-       class folder, a Simulink file directly in ``private/`` or a class
-       folder, or in a namespace folder, ...)
+       class folder, ...)
      - every build
    * - ``mat.outside_root``
      - a link below the project root that points outside it
@@ -99,15 +97,6 @@ for a file without one, the auto :term:`directive` for a folder).
        written, for example a path too long for Windows (a file of the
        project in its place is an error that stops the build)
      - at the end of an HTML build
-   * - ``mat.simulink``
-     - an unknown name in a ``:metadata:`` option (one in
-       :confval:`matlab_simulink_metadata` stops the build); a Simulink
-       documentation file that is not
-       used, a heading in one of a library that names no masked block, or
-       masked blocks without a section
-       (:confval:`matlab_simulink_doc_suffixes`)
-     - where the :term:`directive` is; in the documentation file once per
-       build that reads a page using it
    * - ``mat.api_check``
      - a ``matlab-api-check`` finding
      - when the :term:`builder` runs

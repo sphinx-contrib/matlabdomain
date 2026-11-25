@@ -225,10 +225,6 @@ RULES = "matlab_api_check_rules: unknown rule 'bogus'; the rules are " + ", ".jo
 
 
 OUTSIDE = "matlab_api_check_files: '../x.m' leaves matlab_src_code_project_root."
-SERVER = (
-    "matlab_simulink_autobuild_server must be None or start with http:// or "
-    "https://, not 'localhost:8000'."
-)
 
 
 def _status_with_W():
@@ -304,13 +300,6 @@ def test_an_apidoc_value_in_a_build_warns_once_naming_apidoc(project, tmp_path, 
             "matlab_api_check_files_from: cannot read 'missing.txt': ",
         ),
         # values of HTML builds
-        ('matlab_simulink_autobuild_server = "localhost:8000"', "html", "stop", SERVER),
-        (
-            'matlab_simulink_autobuild_server = "localhost:8000"',
-            "matlab-api-check",
-            "warn",
-            (SERVER, "HTML builds"),
-        ),
         (
             "matlab_stable_urls = 0",
             "dirhtml",

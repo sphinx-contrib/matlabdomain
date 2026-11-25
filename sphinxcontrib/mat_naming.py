@@ -13,10 +13,7 @@ intersphinx):
   separators, Unicode NFC and the file extension kept
   (``target/+package/ClassBar.m``). Folders end with ``/``; the root folder
   is ``./``. Members follow the file with ``.``
-  (``target/+package/ClassBar.m.myMethod``). A block of a Simulink file
-  follows it with ``/`` and its Simulink path below the file, a ``/``
-  inside a block name doubled (``src/lib.slx/Group/Gain//Bias``); a
-  folder whose name ends in such an extension is not a source folder.
+  (``target/+package/ClassBar.m.myMethod``).
 - A namespace, one object however many ``+`` folders have its MATLAB name,
   is named by its ``+`` folder names joined with ``/``, without the
   trailing ``/`` of a folder (``+a/+b`` for ``a.b``). No path reference has
@@ -157,18 +154,6 @@ def is_valid_identifier(
     return name not in MATLAB_KEYWORDS
 
 
-def has_line_break(text: str) -> bool:
-    """Tell whether ``text`` has a line break an ``objects.inv`` line cannot."""
-    return "\n" in text or "\r" in text
-
-
-def collapse_space(text: str) -> str:
-    """Return ``text`` with each run of white space as one space, as a role
-    writes a target (a block name with a line break has this form there).
-    """
-    return " ".join(text.split())
-
-
 def make_target_id(reference: str) -> str:
     """Anchor for a path reference (see the module docstring)."""
     out = ["mat-"]
@@ -180,34 +165,20 @@ def make_target_id(reference: str) -> str:
     return "".join(out)
 
 
-def parse_reference(
-    reference: str, extensions=None, block_extensions=None
-) -> tuple[str | None, list[str]]:
+def parse_reference(reference: str, extensions=None) -> tuple[str | None, list[str]]:
     """Split a path reference into ``(file or folder, members)``.
 
     The file part ends at the first registered extension (``extensions``
     defaults to the handler registry's) in the last path
     segment that is followed by ``.`` or the end:
     ``"a/Cls.m.meth"`` -> ``("a/Cls.m", ["meth"])``; folders
-    (``"a/+pkg/"``) have no members. A segment that ends in an extension of
-    a file with blocks (``block_extensions``, default from the registry) and
-    is followed by ``/`` ends the file; the rest is one member, the block
-    path: ``"a/lib.slx/G/B"`` -> ``("a/lib.slx", ["G/B"])``. Returns
-    ``(None, [])`` for anything else, e.g. a MATLAB name or a folder without
-    its trailing ``/``.
+    (``"a/+pkg/"``) have no members. Returns ``(None, [])`` for anything
+    else, e.g. a MATLAB name or a folder without its trailing ``/``.
     """
     if extensions is None:
         extensions = mat_handlers.extensions()
-    if block_extensions is None:
-        block_extensions = mat_handlers.block_extensions()
     if reference.endswith("/"):
         return reference, []
-    start = 0
-    while (slash := reference.find("/", start)) >= 0:
-        segment = reference[reference.rfind("/", 0, slash) + 1 : slash]
-        if is_block_container(segment, block_extensions):
-            return reference[:slash], [reference[slash + 1 :]]
-        start = slash + 1
     head, sep, last = reference.rpartition("/")
     for i, char in enumerate(last):
         if char != "." or i == 0:
@@ -220,15 +191,6 @@ def parse_reference(
                     return None, []
                 return head + sep + last[:end], members
     return None, []
-
-
-def is_block_container(name: str, block_extensions=None) -> bool:
-    """Return True if the file or folder name ``name`` ends in the extension
-    of a file with blocks (``block_extensions``, default from the registry).
-    """
-    if block_extensions is None:
-        block_extensions = mat_handlers.block_extensions()
-    return any(len(name) > len(ext) and name.endswith(ext) for ext in block_extensions)
 
 
 def split_folder(folder: str) -> list[str]:
@@ -548,65 +510,3 @@ def _name_outside_class_folder(
     if kind == "package":
         return MatlabName(stem, prefix, f"{prefix}.{stem}", parent_folder)
     return MatlabName(stem, "", stem, parent_folder)
-
-
-def _model_folder_problem(parts: list[str]) -> str | None:
-    # Simulink:Commands:UnsuitableModelFileLocation (R2024a-R2026b) checks the
-    # file's own folder only: private/sub/ and @C/sub/ load.
-    last = parts[-1] if parts else ""
-    if last == "private" or last.startswith("@"):
-        return "Simulink cannot load models in private or class folders"
-    if "*" in last:
-        return "Simulink cannot load models in folders with * in their names"
-    return None
-
-
-def form_model_name(
-    folder: str,
-    filename: str,
-    namelengthmax: int,
-    matlab_version: str = DEFAULT_MATLAB_VERSION,
-) -> MatlabName | None:
-    """Form the name that ``load_system`` takes for a Simulink file (model,
-    library or subsystem file), or None.
-
-    Probed in R2024a-R2026b: the name is the file name, a MATLAB identifier
-    that is no keyword and at most ``namelengthmax`` long, in the global
-    namespace only: Simulink cannot run or reference a model in a namespace
-    folder by name (R2026a and R2026b load ``pkg.model``, but ``sim`` and
-    Model blocks refuse it). Nothing directly in ``private/`` or a class
-    folder loads, even by path; their subfolders are plain folders in every
-    release (``.m`` files in ``@C/sub/`` are not callable from R2026a,
-    models there still load).
-    """
-    validate_matlab_version(matlab_version)
-    parts = _split_folder(folder)
-    if not parts or _model_folder_problem(parts) is not None:
-        return None
-    stem = Path(filename).stem
-    if not is_valid_identifier(stem, namelengthmax, allow_keywords=False):
-        return None
-    if parts[-1].startswith("+"):
-        # A release that runs namespace models would name them pkg.model here.
-        return None
-    return MatlabName(stem, "", stem, _join_parts(parts))
-
-
-def model_not_callable_reason(
-    folder: str,
-    filename: str,
-    namelengthmax: int,
-) -> str:
-    """Says why ``form_model_name`` returns None."""
-    parts = _split_folder(folder)
-    problem = _model_folder_problem(parts)
-    if problem is not None:
-        return problem
-    stem = Path(filename).stem
-    if not is_valid_identifier(stem, namelengthmax, allow_keywords=False):
-        return f"its name {stem!r} {_name_problem(stem, namelengthmax)}"
-    return (
-        "in a namespace folder, Simulink cannot reference it by name and loads "
-        "it reliably only by its full path; keep Simulink files in the global "
-        "namespace"
-    )

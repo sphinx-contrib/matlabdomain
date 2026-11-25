@@ -158,7 +158,6 @@ def enabled(app):
 def _names(dom):
     """MATLAB name -> references of the non-private objects that have it.
 
-    A Simulink block's display name is a Simulink path, not a MATLAB name.
     The folders of a namespace that has several are under its name
     (``MATLABDomain.object_name``), unless the namespace object is
     documented: then the name is its alone.
@@ -166,7 +165,7 @@ def _names(dom):
     out = {}
     for ref in dom.data["objects"]:
         name = dom.object_name(ref)
-        if name and "/" not in name and not mat_naming.is_private_reference(ref):
+        if name and not mat_naming.is_private_reference(ref):
             out.setdefault(name, []).append(ref)
     return {name: sorted(dom.without_own_folders(refs)) for name, refs in out.items()}
 
@@ -409,7 +408,7 @@ def _kept_choosers(app):
 
 def rewrite_inventory(path, uris, choosers=()):
     """Point the ``mat`` entries of the ``objects.inv`` at ``path`` whose
-    name is in ``uris`` (inventory name -> URI) to that URI, and add the
+    name is in ``uris`` (reference -> URI) to that URI, and add the
     ``choosers`` entries ``(MATLAB name, objtype, URI)``.
     """
     if not os.path.isfile(path):
@@ -588,11 +587,7 @@ def _inventory_entries(dom, by_ref, by_name, names, failed):
     without the addresses whose file could not be written (``failed``).
     """
     objects = dom.data["objects"]
-    uris = {}
-    for ref, stub in by_ref.items():
-        name = dom.inventory_name(ref)
-        if name is not None and stub not in failed:
-            uris[name] = quote(stub)
+    uris = {ref: quote(stub) for ref, stub in by_ref.items() if stub not in failed}
     choosers = [
         (name, objtype, quote(by_name[name]))
         for name, refs in sorted(names.items())

@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from sphinxcontrib import mat_handlers
+
 # Sphinx's test fixtures (make_app, test_params, ...) for every test file.
 pytest_plugins = ["sphinx.testing.fixtures"]
 
@@ -38,6 +40,28 @@ def pytest_collection_modifyitems(config, items):
         if (marker := item.get_closest_marker("simulates")) is not None:
             reason = f"simulates {marker.args[0]}; runs with {SIMULATE}"
             item.add_marker(pytest.mark.skip(reason=reason))
+
+
+class OddHandler(mat_handlers.Handler):
+    """A file type (``.odd``) none of whose files is of the type: the index
+    stage reads each as ``unknown``, with a warning.
+    """
+
+    extension = ".odd"
+    kinds = ("odd",)
+
+    def classify(self, path, text=None):
+        return "unknown"
+
+    def read(self, path, encoding=None):
+        return "unknown", None, [("parse_error", "is not an odd file.", None)]
+
+
+@pytest.fixture
+def odd_files(monkeypatch):
+    """Register ``OddHandler`` for the test."""
+    monkeypatch.setattr(mat_handlers, "_HANDLERS", dict(mat_handlers._HANDLERS))
+    mat_handlers.register(OddHandler())
 
 
 @pytest.fixture

@@ -498,8 +498,8 @@ def test_parse_reference(reference, expected):
 
 
 def test_parse_reference_with_given_extensions():
-    assert parse_reference("a/M.slx.x", extensions=(".slx",)) == ("a/M.slx", ["x"])
-    assert parse_reference("a/F.m", extensions=(".slx",)) == (None, [])
+    assert parse_reference("a/M.xyz.x", extensions=(".xyz",)) == ("a/M.xyz", ["x"])
+    assert parse_reference("a/F.m", extensions=(".xyz",)) == (None, [])
 
 
 @pytest.mark.parametrize(

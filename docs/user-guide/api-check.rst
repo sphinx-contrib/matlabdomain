@@ -72,8 +72,7 @@ the files :confval:`matlab_api_check_files` selects, see
 
 Files below ``private/`` and files MATLAB cannot call are checked.
 ``Contents.m`` and the other special files, files that cannot be read and
-files that cannot be parsed are counted as not checked, as are Simulink
-models, libraries and subsystem files (no rule checks them yet). The
+files that cannot be parsed are counted as not checked. The
 function files of a class folder ``@X/`` whose ``X.m`` is a ``classdef``
 are methods, with
 the attributes of their :term:`signature` in a ``methods`` block of ``X.m``

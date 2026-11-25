@@ -43,7 +43,6 @@ from pathlib import Path
 from sphinx.util.logging import getLogger
 from sphinx.util.template import ReSTRenderer
 
-from .. import mat_simulink
 from ..mat_classify import UNKNOWN, is_hidden
 from ..mat_handlers import handler_by_extension
 from ..mat_naming import ROOT_REFERENCE, folder_of, join_folder, split_folder
@@ -77,10 +76,6 @@ SECTIONS = {
     "function": "Functions",
     "script": "Scripts",
     "application": "Apps",
-    "model": "Simulink Models",
-    "library": "Simulink Libraries",
-    "subsystem": "Simulink Subsystem References",
-    "library_block": "Simulink Library Blocks",
 }
 #: section order of namespace pages
 NAMESPACE_ORDER = (
@@ -88,10 +83,6 @@ NAMESPACE_ORDER = (
     "class",
     "script",
     "application",
-    "model",
-    "library",
-    "subsystem",
-    "library_block",
 )
 #: directive options by index type
 OPTIONS = {"class": {"members": "", "undoc-members": "", "show-inheritance": ""}}
@@ -205,7 +196,6 @@ def _entry(path, record):
         "ref": ref,
         "kind": kind,
         "directive": directive,
-        "argument": ref,
         "options": dict(OPTIONS.get(kind, {})),
         "title": display,
         "display": display,
@@ -214,44 +204,6 @@ def _entry(path, record):
         "private": bool(record.get("private")),
         "docname": None,
     }
-
-
-def _entries(path, record):
-    """Template contexts of a file: its entry and, for a Simulink library,
-    one per masked block (the library is read for them).
-    """
-    entry = _entry(path, record)
-    if entry is None:
-        return []
-    if entry["kind"] != "library":
-        return [entry]
-    try:
-        blocks = mat_simulink.read_diagram(path).library_blocks
-    except (OSError, mat_simulink.SimulinkFileError) as err:
-        _warn(f"{entry['ref']}: its blocks cannot be read ({err}); they are left out.")
-        return [entry]
-    found = [entry]
-    for block in blocks:
-        if block.mask is None:
-            continue
-        ref = f"{entry['ref']}/{block.path}"
-        name = f"{entry['matlab_name']}/{block.path}" if entry["callable"] else None
-        display = " ".join((name or ref).split())
-        found.append(
-            {
-                **entry,
-                "ref": ref,
-                "kind": "library_block",
-                "directive": "mat:autosimulink_library_block",
-                # a newline in a block name continues the argument
-                "argument": ref.replace("\n", "\n   "),
-                "options": {},
-                "title": display,
-                "display": display,
-                "matlab_name": name,
-            }
-        )
-    return found
 
 
 def _order(entry):
@@ -340,7 +292,8 @@ def _folder_pages(source_index, options):
     for path, record in source_index.index.items():
         if record["reference"] in methods or (record.get("private") and not private):
             continue
-        for entry in _entries(path, record):
+        entry = _entry(path, record)
+        if entry is not None:
             listed.setdefault(page_folder(record["reference"]), []).append(entry)
     sidecars, readmes = _sidecars(source_index)
     folders = {*listed, *sidecars, *readmes}
@@ -453,8 +406,7 @@ def _group_of(source_index, folder):
 
 def _untangle_titles(entries, namespace):
     """Title by path the entries whose MATLAB name another entry of the same
-    page group has (path shadowing), with a warning (the blocks of such
-    libraries follow them without one).
+    page group has (path shadowing), with a warning.
     """
     by_title = {}
     for entry in entries:
@@ -462,15 +414,14 @@ def _untangle_titles(entries, namespace):
     for title, same in sorted(by_title.items()):
         if len(same) == 1:
             continue
-        if same[0]["kind"] != "library_block":
-            refs = sorted(e["ref"] for e in same)
-            where = f"namespace {namespace}" if namespace else GLOBAL_TITLE
-            _warn(
-                f"{title} is defined by several files in {where}: "
-                f"{', '.join(refs)}; they are listed by path."
-            )
+        refs = sorted(e["ref"] for e in same)
+        where = f"namespace {namespace}" if namespace else GLOBAL_TITLE
+        _warn(
+            f"{title} is defined by several files in {where}: "
+            f"{', '.join(refs)}; they are listed by path."
+        )
         for entry in same:
-            entry["title"] = entry["display"] = " ".join(entry["ref"].split())
+            entry["title"] = entry["display"] = entry["ref"]
 
 
 def _namespace_docnames(namespaces, options, taken):
@@ -502,8 +453,9 @@ def _namespace_pages(source_index, options):
     for path, record in source_index.index.items():
         if record["reference"] in methods or (record.get("private") and not private):
             continue
-        group = _group_of(source_index, page_folder(record["reference"]))
-        for entry in _entries(path, record):
+        entry = _entry(path, record)
+        if entry is not None:
+            group = _group_of(source_index, page_folder(record["reference"]))
             groups.setdefault(group, ([], []))[0].append(entry)
     for record in source_index.sidecars.values():
         ref = record["reference"]

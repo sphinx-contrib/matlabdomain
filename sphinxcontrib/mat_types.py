@@ -43,6 +43,7 @@ from .mat_classify import (
     is_help_only,
     is_hidden,
 )
+from .mat_container import parse_xml, read_members
 from .mat_handlers import handler_by_extension, handler_for, handlers
 from .mat_naming import (
     ROOT_REFERENCE,
@@ -53,31 +54,23 @@ from .mat_naming import (
     parse_reference,
     split_folder,
 )
-from .mat_simulink import read_diagram
-from .mat_simulink._nodes import parse_xml
-from .mat_simulink._parts import read_members
 from .mat_typing import override
 
 logger = getLogger("matlab-domain")
 
 __all__ = [
     "MatApplication",
-    "MatBlock",
     "MatClass",
     "MatEnumeration",
     "MatEvent",
     "MatFunction",
-    "MatLibrary",
     "MatMethod",
-    "MatModel",
     "MatModule",
     "MatModuleAnalyzer",
     "MatNamespace",
     "MatObject",
     "MatProperty",
     "MatScript",
-    "MatSimulinkFile",
-    "MatSubsystemFile",
 ]
 
 
@@ -262,7 +255,7 @@ def _load(dom, ref):
         stem = os.path.splitext(os.path.basename(path))[0]
         if record["unreadable"] or record["type"] == UNKNOWN:
             # The index stage warned already; a file that is no source file of
-            # its type (a Git LFS pointer as .slx) is not parsed again.
+            # its type is not parsed again.
             obj = placeholder(record["type"], stem, folder_of(ref))
             obj.source_type, obj.unreadable = record["type"], record["unreadable"]
         else:
@@ -369,15 +362,6 @@ def _named(dom, name):
     The longest known prefix of ``name`` is the file or folder; the rest are
     members (``pkg.Cls.method``).
     """
-    # A block by the MATLAB name of its library: lib/Group/Gain.
-    head, slash, block = name.partition("/")
-    if slash:
-        refs = dom.data["matlab_names"].get(head, ())
-        return [
-            (f"{ref}/{block}", ref)
-            for ref in refs
-            if mat_naming.is_block_container(ref.rpartition("/")[2])
-        ]
     parts = name.split(".")
     for i in range(len(parts), 0, -1):
         refs = dom.data["matlab_names"].get(".".join(parts[:i]))
@@ -401,28 +385,6 @@ is_source_object.folders = False
 is_folder_object.folders = True
 
 
-def is_code_object(obj):
-    """Return True for anything but a folder or a Simulink file."""
-    return is_source_object(obj) and not isinstance(obj, MatSimulinkFile)
-
-
-is_code_object.folders = False
-# Directives that document code never take a Simulink file.
-is_code_object.refs = lambda file: (
-    not mat_naming.is_block_container(file.rpartition("/")[2])
-)
-
-
-def simulink_accepts(cls):
-    """Return a ``find_source`` predicate for the Simulink objects of ``cls``."""
-
-    def accept(obj):
-        return isinstance(obj, cls)
-
-    accept.refs = lambda file: mat_naming.is_block_container(file.rpartition("/")[2])
-    return accept
-
-
 def _match(dom, ref, accept):
     """``(ref, object)`` if ``ref`` names an accepted object, else None.
 
@@ -431,9 +393,6 @@ def _match(dom, ref, accept):
     """
     file, members = parse_reference(ref)
     if file is None:
-        return None
-    refs = getattr(accept, "refs", None)
-    if refs is not None and not refs(file):
         return None
     folders = getattr(accept, "folders", None)
     if folders is not None and not members:
@@ -445,15 +404,7 @@ def _match(dom, ref, accept):
     obj = _member(resolve(dom, file), members)
     if obj is None or not accept(obj):
         return None
-    # A block named with spaces for its line breaks: its own reference.
-    return (getattr(obj, "ref", ref) if isinstance(obj, MatBlock) else ref), obj
-
-
-def same_block(path, name):
-    """Return True if ``name`` is the block path ``path``, any run of
-    whitespace (a line break in a block name) written as a space.
-    """
-    return " ".join(path.split()) == " ".join(name.split())
+    return ref, obj
 
 
 def _resolved(dom, matches):
@@ -561,15 +512,11 @@ def folder_reference(dom, target, location=None):
 
 
 def display_name(dom, reference):
-    """MATLAB name of a reference, or the reference if it has none. A block
-    of a Simulink file follows the file's name with its Simulink path.
-    """
+    """MATLAB name of a reference, or the reference if it has none."""
     file, members = parse_reference(reference)
     attrs = _attrs(dom, file if file is not None else reference)
     if attrs is None or attrs[0] is None:
         return reference
-    if members and mat_naming.is_block_container(cast(str, file).rpartition("/")[2]):
-        return "/".join([attrs[0], *members])
     return ".".join([attrs[0], *members])
 
 
@@ -836,21 +783,6 @@ def sidecar_suffix_list(value, option="matlab_src_sidecar_suffixes"):
     return tuple(s for s in SIDECAR_SUFFIXES if s in value)
 
 
-def simulink_doc_suffix_list(value, option="matlab_simulink_doc_suffixes"):
-    """Normalize ``matlab_simulink_doc_suffixes``, keeping its order: the
-    first suffix that exists wins (or raise ConfigError).
-    """
-    if isinstance(value, str) or not isinstance(value, (list, tuple)):
-        raise ConfigError(f"{option} must be a list of suffixes such as ['.md'].")
-    for suffix in value:
-        if suffix not in SIDECAR_SUFFIXES:
-            raise ConfigError(
-                f"{option}: {suffix!r} is not a documentation suffix; use "
-                f"{', '.join(map(repr, SIDECAR_SUFFIXES))}."
-            )
-    return tuple(dict.fromkeys(value))
-
-
 def sidecar_layout_error(root, srcdir):
     """ConfigError if sidecar docs cannot be told from the documentation: the
     project root is the Sphinx source folder.
@@ -937,8 +869,6 @@ class IndexSettings:
     matlab_version: str = mat_naming.DEFAULT_MATLAB_VERSION
     sidecar_suffixes: tuple[str, ...] = ()
     source_dir: str | None = None
-    #: suffixes of Simulink documentation files, in priority order
-    simulink_doc_suffixes: tuple[str, ...] = ()
 
     @classmethod
     def from_config(cls, config, srcdir):
@@ -955,9 +885,6 @@ class IndexSettings:
             matlab_version=config.matlab_version,
             sidecar_suffixes=sidecar_suffix_list(config.matlab_src_sidecar_suffixes),
             source_dir=os.path.normpath(os.fspath(srcdir)),
-            simulink_doc_suffixes=simulink_doc_suffix_list(
-                config.matlab_simulink_doc_suffixes
-            ),
         )
 
 
@@ -974,9 +901,6 @@ class SourceIndex:
     - ``sidecars``: sidecar doc path -> ``{reference, mtime, size}``, in walk
       order. Sidecar docs are not read, named or members of their folder, so
       they never shadow code.
-    - ``simulink_docs``: Simulink documentation file path -> ``{reference,
-      mtime, size}``: a file with a suffix of ``simulink_doc_suffixes`` and
-      the exact name of a Simulink file next to it. It is not a sidecar doc.
     - ``sphinx_sources``: the folders below the root with a ``conf.py`` of
       their own, the Sphinx source folders of other projects; their files
       are not sidecar docs.
@@ -988,7 +912,6 @@ class SourceIndex:
     matlab_names: dict = field(default_factory=dict)
     text_cache: dict = field(default_factory=dict)
     sidecars: dict = field(default_factory=dict)
-    simulink_docs: dict = field(default_factory=dict)
     sphinx_sources: list = field(default_factory=list)
 
 
@@ -1026,10 +949,11 @@ def sidecar_paths(settings):
 
 
 def _documentation_files(settings):
+    """Return the ``SourceIndex`` of a walk that records only the sidecar
+    docs and the Sphinx source folders of other projects.
+    """
     out = SourceIndex(settings)
-    if (settings.sidecar_suffixes or settings.simulink_doc_suffixes) and (
-        os.path.isdir(settings.root)
-    ):
+    if settings.sidecar_suffixes and os.path.isdir(settings.root):
         # The index stage warns about the walk.
         with suppress_logging():
             _Indexer(out, {}, sidecars_only=True).run()
@@ -1056,7 +980,6 @@ class _Indexer:
         self.pending = {}
         self.sidecars_only = sidecars_only
         self.sidecar_suffixes = frozenset(settings.sidecar_suffixes)
-        self.simulink_doc_suffixes = frozenset(settings.simulink_doc_suffixes)
         # The Sphinx source folder inside the root holds the documentation.
         docs = settings.source_dir
         if docs is not None and not (
@@ -1170,8 +1093,7 @@ class _Indexer:
             self.out.sphinx_sources.append(mod.path)
         denied = []
         seen = {}  # reference: the first name on disk that has it
-        # documentation file candidates, and the stems of Simulink files
-        loose, simulink_stems = [], set()
+        loose = []  # sidecar doc candidates
         for key in keys:
             entry = self.entry(mod, key, denied)
             if entry is None:
@@ -1185,15 +1107,12 @@ class _Indexer:
                 continue
             handler = handler_for(path)
             if handler is None:
-                suffix = os.path.splitext(key)[1]
-                if suffix in self.sidecar_suffixes | self.simulink_doc_suffixes:
+                if os.path.splitext(key)[1] in self.sidecar_suffixes:
                     loose.append((key, path, ref, st))
                 continue
-            if handler.blocks and self.sources.includes(ref):
-                simulink_stems.add(os.path.splitext(key)[0])
             if self.add_file(handler, key, path, ref, st, seen):
                 mod.members.append((os.path.splitext(key)[0], ref))
-        self.add_documentation_files(mod, loose, simulink_stems, seen)
+        self.add_sidecars(mod, loose, seen)
         if denied:
             _warn(
                 "parse_error",
@@ -1266,32 +1185,24 @@ class _Indexer:
         self.index_file(handler, path, ref, st)
         return True
 
-    def add_documentation_files(self, mod, loose, simulink_stems, seen):
-        """Record the sidecar docs and the documentation files of Simulink
-        models among the ``loose`` files of the folder ``mod``; recorded, not
-        read.
+    def add_sidecars(self, mod, loose, seen):
+        """Record the sidecar docs among the ``loose`` files of the folder
+        ``mod``; recorded, not read.
         """
-        sidecars = bool(self.sidecar_suffixes) and not any(
-            _within(mod.path, folder) for folder in self.documentation
-        )
+        if any(_within(mod.path, folder) for folder in self.documentation):
+            return
         for key, path, ref, st in loose:
-            stem, suffix = os.path.splitext(key)
-            simulink_doc = (
-                suffix in self.simulink_doc_suffixes and stem in simulink_stems
-            )
-            if not (simulink_doc or (sidecars and suffix in self.sidecar_suffixes)):
-                continue
             if (
                 not self.sources.includes(ref)
                 or (_is_link(path) and self.outside(path, ref))
                 or self.twin(seen, key, ref)
             ):
                 continue
-            record = {"reference": ref, "mtime": st.st_mtime_ns, "size": st.st_size}
-            if simulink_doc:
-                self.out.simulink_docs[path] = record
-            else:
-                self.out.sidecars[path] = record
+            self.out.sidecars[path] = {
+                "reference": ref,
+                "mtime": st.st_mtime_ns,
+                "size": st.st_size,
+            }
 
     def index_file(self, handler, path, ref, st):
         key = (path, st.st_mtime_ns, st.st_size)
@@ -1334,12 +1245,12 @@ class _Indexer:
 
 
 def _index_shape(data):
-    """Return what names and lookups depend on: the folders, each file's
-    reference and type, and which Simulink documentation files exist.
+    """Return what names and lookups depend on: the folders and each file's
+    reference and type.
     """
     files = {path: (r["reference"], r["type"]) for path, r in data["index"].items()}
     folders = frozenset(r for r in data["entities_table"] if r[-1:] == "/")
-    return files, folders, frozenset(data["simulink_docs"])
+    return files, folders
 
 
 def analyze(app):
@@ -1360,7 +1271,6 @@ def analyze(app):
         data["parse_warnings"].clear()
     data["index"].clear()
     data["sidecars"].clear()
-    data["simulink_docs"].clear()
     data["matlab_names"].clear()
     dom.entities_table.clear()
     dom.reset_sources()
@@ -1377,14 +1287,6 @@ def analyze(app):
         source_index = build_index(settings, old_index)
         data["index"].update(source_index.index)
         data["sidecars"].update(source_index.sidecars)
-        data["simulink_docs"].update(source_index.simulink_docs)
-        if "myst_parser" not in app.extensions and any(
-            path.endswith(".md") for path in source_index.simulink_docs
-        ):
-            raise ConfigError(
-                "Simulink documentation files in Markdown (.md) need myst_parser in "
-                "extensions, or leave '.md' out of matlab_simulink_doc_suffixes."
-            )
         data["matlab_names"].update(source_index.matlab_names)
         dom.entities_table.update(source_index.entities)
         dom.text_cache.update(source_index.text_cache)
@@ -1481,34 +1383,20 @@ def name_sources(source_index):
     matlab_names = source_index.matlab_names
     for path, record in source_index.index.items():
         ref = record["reference"]
-        naming = getattr(handler_by_extension(path), "naming", "code")
-        # a .slx that is no Simulink file (an LFS pointer) is nothing to call
-        if naming == "model" and record["type"] == UNKNOWN:
-            record.update(matlab_name=None, private=False, scope=None)
-            continue
         filename = os.path.basename(path)
-        if naming == "model":
-            name = mat_naming.form_model_name(
-                _naming_folder(ref), filename, namelengthmax, version
-            )
-        else:
-            name = mat_naming.form_matlab_name(
-                _naming_folder(ref),
-                filename,
-                record["type"] == "class",
-                namelengthmax,
-                version,
-            )
+        name = mat_naming.form_matlab_name(
+            _naming_folder(ref),
+            filename,
+            record["type"] == "class",
+            namelengthmax,
+            version,
+        )
         matlab_name = mat_naming.canonical_name(name) if name else None
         private = is_private_reference(ref)
         scope = _scope(folder_of(ref)) if name is not None else None
         record.update(matlab_name=matlab_name, private=private, scope=scope)
         if name is None:
-            if naming == "model":
-                reason = mat_naming.model_not_callable_reason(
-                    _naming_folder(ref), filename, namelengthmax
-                )
-            elif not private and not is_hidden(ref):
+            if not private and not is_hidden(ref):
                 reason = mat_naming.not_callable_reason(
                     _naming_folder(ref),
                     filename,
@@ -1516,17 +1404,15 @@ def name_sources(source_index):
                     namelengthmax,
                     version,
                 )
-            else:
-                continue
-            logger.warning(
-                "[sphinxcontrib-matlabdomain] %s is not callable in MATLAB %s "
-                "(%s); it is documented by its path reference.",
-                ref,
-                version,
-                reason,
-                type="mat",
-                subtype="not_callable",
-            )
+                logger.warning(
+                    "[sphinxcontrib-matlabdomain] %s is not callable in MATLAB %s "
+                    "(%s); it is documented by its path reference.",
+                    ref,
+                    version,
+                    reason,
+                    type="mat",
+                    subtype="not_callable",
+                )
             continue
         if matlab_name == name.pseudo_fullname:
             matlab_names.setdefault(matlab_name, []).append(ref)
@@ -1559,8 +1445,6 @@ def placeholder(kind, name, folder) -> Any:
     """Empty object of the index type ``kind`` for a file that failed to parse."""
     if kind == "application":
         return MatApplication(name, folder, "")
-    if kind in SIMULINK_TYPES:
-        return SIMULINK_TYPES[kind](name, folder, None)
     cls = {"class": MatClass, "function": MatFunction}.get(kind, MatScript)
     obj = cls.__new__(cls)
     MatObject.__init__(obj, name)
@@ -1629,7 +1513,7 @@ class MatObject:
     #: no help, or help that is not on a file line)
     docstring_line: int | None = None
     #: one-based line of the declaration in the code file (None: no
-    #: declaration line, as in a script, a Simulink file or a folder)
+    #: declaration line, as in a script or a folder)
     line: int | None = None
     ref: str
     matlab_name: str
@@ -1819,7 +1703,7 @@ class MatObject:
     def parse_mlappfile(mlappfile, name, path):
         """Read the metadata/appMetadata.xml file and
         the metadata/coreProperties.xml file description tags.
-        Parses the XML with the guards of the Simulink reader.
+        Reads them with the guards of ``mat_container``.
 
         :param mlappfile: Full path of ``.mlapp`` file.
         :type mlappfile: str
@@ -1828,15 +1712,15 @@ class MatObject:
         :param path: Folder reference of the folder containing :class:`MatApplication`.
         :type path: str
         :returns: :class:`MatApplication` representing the application.
-        :raises SimulinkFileError: for a file or member over a size limit, or XML
-            with a DTD or nested too deep.
+        :raises ContainerFileError: for a file or member over a size limit, or
+            XML with a DTD or nested too deep.
         """
         # Read contents of meta-data file
         # This might change in different Matlab versions
         # Note: `code` is a verbatim copy of the MATLAB source inside the App
         #       Variable `codeText` will contain the source.
-        # The size limits, the DTD refusal and the nesting limit of the
-        # Simulink reader; a violation is a SimulinkFileError.
+        # The size limits, the DTD refusal and the nesting limit of
+        # mat_container; a violation is a ContainerFileError.
         meta_part, core_part = "metadata/appMetadata.xml", "metadata/coreProperties.xml"
         meta_data, core_data = read_members(Path(mlappfile), (meta_part, core_part))
         meta = parse_xml(meta_data, meta_part)
@@ -1854,18 +1738,6 @@ class MatObject:
         modname = path  # folder reference
 
         return MatApplication(name, modname, docstring)
-
-    @staticmethod
-    def parse_simulink(path, name, folder) -> Any:
-        """Read a Simulink file (``.slx`` or ``.mdl``).
-
-        :returns: :class:`MatModel`, :class:`MatLibrary` or
-            :class:`MatSubsystemFile`.
-        :raises SimulinkFileError: for a file that is not a readable
-            Simulink file.
-        """
-        diagram = read_diagram(path)
-        return SIMULINK_TYPES[diagram.kind](name, folder, diagram)
 
 
 # TODO: get the docstring from Contents.m if it exists
@@ -2479,132 +2351,6 @@ class MatApplication(MatObject):
         ``__module__``, the module of a Python object.
         """
         return self.module
-
-
-class MatSimulinkFile(MatObject):
-    """A Simulink file: model, library or subsystem file.
-
-    :param name: File name without extension.
-    :param modname: Folder reference of its folder.
-    :param diagram: What ``mat_simulink.read_diagram`` read; None for a
-        placeholder.
-    """
-
-    def __init__(self, name, modname, diagram):
-        super().__init__(name)
-        self.module = modname
-        self.diagram = diagram
-        #: the description saved in the file, else the system mask's
-        self.docstring = None
-        if diagram is not None:
-            mask = diagram.system_mask
-            self.docstring = diagram.description or (mask.description if mask else "")
-
-    @override
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        # a subclass's own ``__doc__`` and ``__module__`` hide the properties
-        for name in ("__doc__", "__module__"):
-            type.__setattr__(cls, name, MatSimulinkFile.__dict__[name])
-
-    #: object type: the directive and role
-    objtype = ""
-
-    @override
-    def ref_role(self):
-        return self.objtype
-
-    @property
-    def __doc__(self):
-        """The file's description, else its system mask's: autodoc reads it as
-        ``__doc__``.
-        """
-        return self.docstring
-
-    @property
-    def __module__(self):
-        """The folder reference of the folder that holds the Simulink file: autodoc
-        reads it as ``__module__``, the module of a Python object.
-        """
-        return self.module
-
-
-class MatModel(MatSimulinkFile):
-    """A Simulink model file."""
-
-    objtype = "simulink_model"
-
-
-class MatSubsystemFile(MatSimulinkFile):
-    """A Simulink subsystem file (the target of a Subsystem Reference)."""
-
-    objtype = "simulink_subsystem_reference"
-
-
-class MatLibrary(MatSimulinkFile):
-    """A Simulink library; its members are the blocks of the library walk,
-    by their path below the library.
-    """
-
-    objtype = "simulink_library"
-
-    @override
-    def getter(self, name, *defargs) -> Any:
-        blocks = self.diagram.library_blocks if self.diagram is not None else ()
-        # The exact path first; else a space for a line break, as in a role.
-        for same in (lambda path: path == name, lambda path: same_block(path, name)):
-            for block in blocks:
-                if same(block.path):
-                    return MatBlock(block, self)
-        return super().getter(name, *defargs)
-
-
-class MatBlock(MatObject):
-    """A block of a library found by the library walk.
-
-    :param block: The ``mat_simulink.LibraryBlock``.
-    :param library: The :class:`MatLibrary` that holds it.
-    """
-
-    def __init__(self, block, library):
-        super().__init__(block.path)
-        self.block = block
-        self.library = library
-        #: it has a section in the library's documentation file
-        self.has_doc_section = False
-        self.module = library.module
-        self.docstring = block.description or (
-            block.mask.description if block.mask else ""
-        )
-        if hasattr(library, "ref"):
-            self.ref = f"{library.ref}/{block.path}"
-
-    @property
-    def __doc__(self):
-        """The block's description, else its mask's: autodoc reads it as ``__doc__``."""
-        return self.docstring
-
-    @property
-    def __module__(self):
-        """The folder reference of the folder that holds the block's library: autodoc
-        reads it as ``__module__``, the module of a Python object.
-        """
-        return self.module
-
-
-#: Simulink index type -> object class
-SIMULINK_TYPES = {
-    "model": MatModel,
-    "library": MatLibrary,
-    "subsystem": MatSubsystemFile,
-}
-#: object type (directive and role name) -> object class
-SIMULINK_CLASSES = {
-    "simulink_model": MatModel,
-    "simulink_library": MatLibrary,
-    "simulink_subsystem_reference": MatSubsystemFile,
-    "simulink_library_block": MatBlock,
-}
 
 
 class MatcodeError(Exception):

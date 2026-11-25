@@ -15,7 +15,6 @@ from sphinxcontrib import mat_api_check
 from sphinxcontrib.mat_types import MatObject
 
 ROOT = Path(__file__).parent / "roots" / "test_api_check"
-SIMULINK = Path(__file__).parent / "simulink" / "fixtures" / "R2026b" / "slx"
 BUILDER = "matlab-api-check"
 ALL_RULES = mat_api_check.RULES
 
@@ -135,7 +134,6 @@ def test_root_findings(make_app, root):
         "hidden": 1,
         "unreadable": 0,
         "not_parsed": 0,
-        "simulink_files": 0,
     }
     assert summary["rules"] == mat_api_check.DEFAULT_RULES
     assert "selection" not in summary
@@ -157,8 +155,7 @@ def test_root_findings(make_app, root):
     assert lines[39:42] == [
         "Checked: 11 functions, 2 classes, 8 methods, 1 properties, 0 events, "
         "2 scripts, 0 apps, 0 sidecars",
-        "Not checked: 2 ignored, 1 hidden, 0 unreadable, 0 not parsed, "
-        "0 simulink files",
+        "Not checked: 2 ignored, 1 hidden, 0 unreadable, 0 not parsed",
         "Findings: 17 errors, 21 warnings",
     ]
     assert lines[-5:] == [
@@ -609,41 +606,18 @@ CONF = (
 BROKEN = "classdef {name}\n% {name} HELP\nmethods\nfunction obj = {name}()\nend\n"
 
 
-def test_simulink_files_pass_through(make_app, tmp_path):
+def test_files_not_of_their_type_warn_once(make_app, tmp_path, odd_files):
     (tmp_path / "conf.py").write_text(CONF)
     (tmp_path / "index.rst").write_text("Index\n=====\n")
-    for name in ("probeModel", "probeLib"):
-        shutil.copyfile(SIMULINK / f"{name}.slx", tmp_path / f"{name}.slx")
-    (tmp_path / "lfs.slx").write_text(
-        "version https://git-lfs.github.com/spec/v1\noid sha256:00\nsize 1\n"
-    )
-    app = build(make_app, tmp_path)
-    assert findings(app) == set()
-    not_checked = report(app)["summary"]["not_checked"]
-    assert not_checked["simulink_files"] == 2
-    assert not_checked["not_parsed"] == 1
-
-
-def test_broken_simulink_files_warn_once(make_app, tmp_path):
-    (tmp_path / "conf.py").write_text(CONF)
-    (tmp_path / "index.rst").write_text("Index\n=====\n")
-    shutil.copyfile(SIMULINK / "probeModel.slx", tmp_path / "probeModel.slx")
-    (tmp_path / "lfs.slx").write_text(
-        "version https://git-lfs.github.com/spec/v1\noid sha256:00\nsize 1\n"
-    )
-    (tmp_path / "empty.slx").write_bytes(b"")
-    (tmp_path / "text.mdl").write_text("this is not a model\n")
+    (tmp_path / "empty.odd").write_bytes(b"")
+    (tmp_path / "text.odd").write_text("not an odd file\n")
     app = build(make_app, tmp_path)
     warnings = app.warning.getvalue()
-    for name in ("lfs.slx", "empty.slx", "text.mdl"):
+    for name in ("empty.odd", "text.odd"):
         assert warnings.count(name) == 1, warnings
     assert "documented without content" not in warnings
-    assert "lfs.slx is a Git LFS pointer, not the model file." in warnings
-    assert "text.mdl is not a Simulink model, library or subsystem file." in warnings
-    not_checked = report(app)["summary"]["not_checked"]
-    assert not_checked["simulink_files"] == 1
-    assert not_checked["not_parsed"] == 3
-    assert "probeModel.slx" not in warnings
+    assert "text.odd is not an odd file." in warnings
+    assert report(app)["summary"]["not_checked"]["not_parsed"] == 2
 
 
 def test_apps_failed_parses_and_parse_warnings(make_app, tmp_path):
@@ -805,15 +779,13 @@ def test_selected_file_members(make_app, root):
         "hidden": 0,
         "unreadable": 0,
         "not_parsed": 0,
-        "simulink_files": 0,
         "not_selected": 15,
     }
     assert text_lines(app)[-15:-12] == [
         "Selected: 3 of 18 files by 3 entries, 0 matching no file",
         "Checked: 1 functions, 1 classes, 7 methods, 1 properties, 0 events, "
         "0 scripts, 0 apps, 0 sidecars",
-        "Not checked: 1 ignored, 0 hidden, 0 unreadable, 0 not parsed, "
-        "0 simulink files, 15 not selected",
+        "Not checked: 1 ignored, 0 hidden, 0 unreadable, 0 not parsed, 15 not selected",
     ]
 
 
@@ -831,7 +803,6 @@ def test_selected_files_exclusions(make_app, root):
         "hidden": 1,
         "unreadable": 0,
         "not_parsed": 0,
-        "simulink_files": 0,
         "not_selected": 16,
     }
     assert summary["selection"]["unmatched"] == []

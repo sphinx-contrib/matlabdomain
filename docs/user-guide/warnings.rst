@@ -14,7 +14,7 @@ in the code file. A warning about the text that an auto :term:`directive` adds
 around help text, for example a base class that is not documented, names
 the code file and the line of the declaration: the ``classdef`` line, the
 property line or the ``function`` line. A file without such a line, such
-as a script or a Simulink file, is at line 1. A folder has no file, so it
+as a script, is at line 1. A folder has no file, so it
 is at the auto :term:`directive`.
 
 Turning warnings off
@@ -50,19 +50,13 @@ What each warning means
 
 ``mat.parse_error``
    A file could not be read (no permission, for example) or parsed, an
-   ``.mlapp`` file is not a valid App Designer file, a ``.slx`` or ``.mdl``
-   file is not a Simulink model, library or subsystem file (or is a Git
-   LFS pointer, or exceeds the size limits, which are smaller for the
-   parts below ``metadata/``), a folder could not be listed
+   ``.mlapp`` file is not a valid App Designer file (or exceeds the size
+   limits of its reader), a folder could not be listed
    or entered, or a file name is not valid UTF-8. A file that cannot be
    read or parsed is still indexed and documented, without content, so
    links to it work; it is tried again on every build. ``scmd apidoc``
    lists no file that it cannot read, and gives it one ``mat.apidoc``
-   warning instead of this one. A ``.slx`` or ``.mdl``
-   file that is not a Simulink file is the exception: it gets this one
-   warning, from the index, and no page, so an ``autofolder`` or
-   ``autonamespace`` with ``:members:`` and ``scmd apidoc`` leave it out, and
-   ``matlab-api-check`` counts it as not parsed. Where the parser
+   warning instead of this one. Where the parser
    found a syntax error, the warning gives its line and column. Two names
    in one folder that differ only by Unicode form (``é`` as one character
    and as ``e`` and an accent) have the same path reference: the first in
@@ -72,7 +66,7 @@ What each warning means
 
 ``mat.folder_name``
    An error, which ``suppress_warnings`` does not hide: a folder is named
-   like a file the :term:`extension` reads (``.m``, ``.mlapp``, ``.slx``, ``.mdl``,
+   like a file the :term:`extension` reads (``.m``, ``.mlapp``,
    ``.md``, ``.rst``, in any case), so references and output
    names could take it for a file. The folder and everything in it are not
    documented; the build goes on. Rename the folder.
@@ -103,12 +97,7 @@ What each warning means
    MATLAB cannot call the file for :confval:`matlab_version`, so it has no
    MATLAB name; it is documented and linked by path (:doc:`referencing`).
    The warning says why (an invalid name such as ``my-file``, a keyword,
-   a subfolder of a class folder, ...). Simulink cannot reference a model,
-   library or subsystem file in a namespace folder by name
-   (:ref:`simulink-namespaces`), and does not load one directly in
-   ``private/`` or a class folder, even by its path, so these have no name. Their subfolders are plain folders
-   for Simulink: a model in ``@C/sub/`` loads in every release, though
-   ``.m`` files there are not callable from R2026a.
+   a subfolder of a class folder, ...).
    Rename or move the file, or suppress the warning if that is intended.
 
 ``mat.outside_root``
@@ -187,14 +176,6 @@ What each warning means
    output names differ only by letter case, or an output path is longer
    than Windows allows.
 
-``mat.simulink``
-   A ``:metadata:`` option names metadata that a Simulink file does not
-   have (:doc:`../reference/directives`; the names are those of
-   :confval:`matlab_simulink_metadata`, where an unknown name stops the
-   build instead), or a Simulink documentation file is not used, has a
-   heading that names no masked block of its library, or leaves masked
-   blocks without a section (:confval:`matlab_simulink_doc_suffixes`).
-
 ``mat.api_check``
    A finding of the ``matlab-api-check`` :term:`builder` (:doc:`api-check`), an
    ``ERROR`` or a ``WARNING`` depending on the rule's severity.
@@ -211,8 +192,7 @@ When warnings appear
   ``mat.link_cycle``, ``mat.invalid_matlab`` for NUL bytes, and
   ``mat.parse_error`` for a file or folder that cannot be read.
 * Once per build, for the files that the pages read in that build use:
-  ``mat.invalid_matlab`` and ``mat.parse_error`` found while parsing, and
-  the ``mat.simulink`` warnings about a Simulink documentation file. A file
+  ``mat.invalid_matlab`` and ``mat.parse_error`` found while parsing. A file
   that no page uses is not parsed, so it does not get these (the
   ``matlab-api-check`` :term:`builder` parses every code file, so it reports
   them all).

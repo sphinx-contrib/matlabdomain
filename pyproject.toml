@@ -121,12 +121,12 @@ source_pkgs = [
     "sphinxcontrib.mat_api_check",
     "sphinxcontrib.mat_classify",
     "sphinxcontrib.mat_config",
+    "sphinxcontrib.mat_container",
     "sphinxcontrib.mat_directives",
     "sphinxcontrib.mat_documenters",
     "sphinxcontrib.mat_handlers",
     "sphinxcontrib.mat_naming",
     "sphinxcontrib.mat_sidecars",
-    "sphinxcontrib.mat_simulink",
     "sphinxcontrib.mat_tree_sitter_parser",
     "sphinxcontrib.mat_types",
     "sphinxcontrib.mat_typing",
@@ -293,7 +293,6 @@ max-returns = 8
 max-statements = 60
 
 [tool.setuptools.package-data]
-"sphinxcontrib.mat_simulink" = ["matlab/+sphinxcontrib/+matlabdomain/*.m"]
 "sphinxcontrib.matlab_apidoc" = ["templates/*.jinja"]
 "sphinxcontrib.matlab_quickstart" = ["templates/*.jinja"]
 "sphinxcontrib.matlab_skills" = ["*/SKILL.md", "*/scripts/*.py"]

@@ -19,9 +19,6 @@ from .mat_typing import override
 
 logger = getLogger("matlab-domain")
 
-#: options of this extension that ``autodoc_default_options`` may set (autodoc
-#: itself merges only its own); ``:no-<option>:`` turns one off
-DEFAULT_OPTIONS = ("hidden-mask-parameters", "references")
 #: the configuration value without which ``:inherited-members:`` does nothing
 INHERITED_VALUE = "matlab_inherited_members"
 
@@ -76,16 +73,6 @@ class MatlabAutodocDirective(AutodocDirective):
         doccls = MatObject.sphinx_app.registry.documenters[objtype]
 
         # process the options with the selected documenter's option_spec
-        defaults = self.config.autodoc_default_options
-        for name in DEFAULT_OPTIONS:
-            negated = self.options.pop(f"no-{name}", True) is None
-            if (
-                name in doccls.option_spec
-                and name in defaults
-                and name not in self.options
-                and not negated
-            ):
-                self.options[name] = defaults[name]
         self._check_inherited_members(doccls)
         try:
             documenter_options = process_documenter_options(

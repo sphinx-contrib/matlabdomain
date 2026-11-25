@@ -42,7 +42,6 @@ KEYS = (
     "matlab_version",
     "group",
     "theme",
-    "html_baseurl",
     "exclude",
     "markdown",
     "sidecars",
@@ -85,9 +84,7 @@ def get_parser(prog="scmd quickstart"):
             "It stops before writing anything when DOCS/conf.py exists (unless "
             "--force) or when pyproject.toml, .gitignore or .gitattributes have "
             "uncommitted changes. It never touches uv.lock, the project's MATLAB "
-            "code or CI, and never commits. For a project with Simulink files it "
-            "adds +sphinxcontrib/+matlabdomain/simulinkDocumentationLinker.m and "
-            "its settings to ROOT, for Help links to the documentation."
+            "code or CI, and never commits."
         ),
     )
     parser.add_argument(
@@ -168,13 +165,6 @@ def check_answer(key, value):
         if not isinstance(value, list):
             raise ValueError(f"{key} must be a list, not {value!r}.")
         value = [_section(entry) for entry in value]
-    elif key == "html_baseurl":
-        if not isinstance(value, str):
-            raise ValueError(f"{key} must be a text, not {value!r}.")
-        if value and not value.startswith(("https://", "http://")):
-            raise ValueError(
-                f"{key} must start with https:// or http://, not {value!r}."
-            )
     else:
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"{key} must be a text, not {value!r}.")
@@ -369,12 +359,6 @@ def _ask(prompter, facts, root, docs):
     p.ask("matlab_version", "MATLAB release the code targets", facts["version"])
     p.ask("group", "API pages per namespace or per folder", "namespace")
     p.ask("theme", "HTML theme", "furo")
-    p.ask(
-        "html_baseurl",
-        "URL of the published site (blank: not published yet)",
-        "",
-        shown="none",
-    )
     exclude = p.ask(
         "exclude",
         "Folders and files not to document (patterns relative to ROOT, "
@@ -515,19 +499,6 @@ def _apply(args, root, docs, answers, facts, files, dirty):
     return commands, written
 
 
-def _write_linker(args, root, docs_rel, published):
-    """Write the function behind the Help links of the Simulink files."""
-    written = _write.write_files(
-        root, _write.linker_files(root, docs_rel, published), args.dry_run
-    )
-    verbs = (
-        ("Would create", "Would update") if args.dry_run else ("Creating", "Updating")
-    )
-    for verb, names in zip(verbs, (written.created, written.updated), strict=True):
-        for name in names:
-            print(f"{verb} file {name} (Help links of the Simulink files).")
-
-
 def run(args):
     """Run the command for ``args``; return the exit status, or Stop."""
     start = time.perf_counter()
@@ -543,9 +514,7 @@ def run(args):
     facts = _facts(root)
     candidates = _ask(prompter, facts, root, docs)
     answers = prompter.answers
-    linker = os.path.join(root, *_write.LINKER_FOLDER.split("/"), f"{_write.LINKER}.m")
-    tools = [_write.LINKER_EXCLUDE] if os.path.isfile(linker) else []
-    exclude = pattern_list([*facts["exclude"], *answers["exclude"], *tools], "exclude")
+    exclude = pattern_list([*facts["exclude"], *answers["exclude"]], "exclude")
     settings = IndexSettings(
         root=root,
         exclude=tuple(exclude),
@@ -557,7 +526,6 @@ def run(args):
         # As scmd apidoc: the generator says that it leaves the file out.
         source_index = build_index(settings, warn_unreadable=False)
         found = _detect.survey(source_index)
-        simulink = bool(tools) or _detect.has_simulink(source_index)
         headings = _detect.napoleon_headings(found)
         _ask_napoleon(prompter, headings)
         path = facts["path"]
@@ -572,15 +540,11 @@ def run(args):
             "gitmodules": f"{rel_root}/.gitmodules",
             "suggestions": suggestions,
             "path_source": path.source if path else "",
-            "simulink": simulink,
-            "linker_exclude": _write.LINKER_EXCLUDE if simulink else "",
             # A contributor's guide names no folder of this machine.
             "install": "\n".join(_write.pip_lines(answers, _guide_install(facts))),
         }
         files = _write.render(answers, context)
         commands, written = _apply(args, root, docs, answers, facts, files, dirty)
-        if simulink:
-            _write_linker(args, root, docs_rel, answers["html_baseurl"])
         result = generate(
             source_index,
             ApidocOptions(

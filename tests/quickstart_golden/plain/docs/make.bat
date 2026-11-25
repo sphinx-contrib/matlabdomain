@@ -17,10 +17,6 @@ if "%SPHINXAUTOBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-REM The port of make livehtml; the build gives it to Simulink Help links.
-if "%LIVEPORT%" == "" (
-	set LIVEPORT=8000
-)
 
 %SPHINXBUILD% --version >NUL 2>NUL
 if errorlevel 9009 (
@@ -46,7 +42,7 @@ if "%1" == "apidoc-check" (
 )
 
 if "%1" == "livehtml" (
-	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html -d %BUILDDIR%/doctrees --watch ".." --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% --conf-dir . --quiet" --port %LIVEPORT% -D matlab_simulink_autobuild_server=http://127.0.0.1:%LIVEPORT%/ %SPHINXOPTS% %O%
+	%SPHINXAUTOBUILD% %SOURCEDIR% %BUILDDIR%/html -d %BUILDDIR%/doctrees --watch ".." --ignore "*/.venv/*" --ignore "*/.git/*" --pre-build "%APIDOC% --conf-dir . --quiet" %SPHINXOPTS% %O%
 	goto end
 )
 

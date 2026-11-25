@@ -7,14 +7,15 @@ More file types
 ---------------
 
 The file-type registry (:doc:`architecture`) is the place for new MATLAB
-file types. Simulink models, libraries and subsystem files are supported
-(:doc:`../user-guide/simulink`). Planned:
+file types. Planned:
 
+* Simulink models, libraries and subsystem files (``.slx``, a zip
+  container; ``.mdl``, text);
 * Simscape components (``.ssc``, text);
 * live scripts (``.mlx``): first a check of what they would add next to
   ``.m`` files and apps (``.mlapp``).
 
-One handler owns one extension, as for ``.slx`` and ``.mdl`` files.
+One handler owns one extension, as for ``.m`` and ``.mlapp`` files.
 
 ``scmd apidoc``
 ---------------

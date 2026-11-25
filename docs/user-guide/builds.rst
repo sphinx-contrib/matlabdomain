@@ -118,15 +118,14 @@ way:
 
 * Every file below :confval:`matlab_src_code_project_root` that
   :confval:`matlab_src_include_patterns` and
-  :confval:`matlab_src_exclude_patterns` select. Help text, Simulink mask
-  descriptions, :doc:`sidecar docs <sidecars>` and Simulink documentation
-  files are read as :term:`reStructuredText` with all its
-  :term:`directives <directive>` (``include``,
+  :confval:`matlab_src_exclude_patterns` select. Help text and
+  :doc:`sidecar docs <sidecars>` are read as :term:`reStructuredText` with
+  all its :term:`directives <directive>` (``include``,
   ``raw``, ``literalinclude``), exactly like your pages.
 * Code from elsewhere below the root (vendored toolboxes, submodules,
   downloaded dependencies) the same way, unless a pattern excludes it, for
   example ``matlab_src_exclude_patterns = ["README.*", "vendor/"]``.
-* The readers of ``.m``, ``.mlapp``, ``.slx`` and ``.mdl`` files never
+* The readers of ``.m`` and ``.mlapp`` files never
   run MATLAB and never execute the files. Their limits on size and
   nesting protect a build from a corrupt or huge file; they are not a
   security boundary.

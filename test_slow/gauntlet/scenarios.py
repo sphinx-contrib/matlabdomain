@@ -5,8 +5,8 @@ Usage, from the matlabdomain repo root:
 
 The gauntlet (gauntlet.py) builds 14 real projects with the default
 configuration. A scenario uses the rest of the interface on the same checkouts
-(test_slow/repos/, see README.md) or on the repo's own docs and Simulink
-fixtures: the other configuration values, the CLI flags, hand-written pages
+(test_slow/repos/, see README.md) or on the repo's own docs: the other
+configuration values, the CLI flags, hand-written pages
 with every directive and role, incremental rebuilds after edits, intersphinx
 between two projects, other builders, invalid configuration, broken input, and
 quickstart answered on stdin. Each scenario states what correct behavior is
@@ -44,7 +44,6 @@ from sphinxcontrib.mat_api_check import RULES as API_CHECK_RULES
 REPO = G.REPO
 REPOS = P.REPOS
 DOCS = REPO / "docs"
-FIXTURES = REPO / "tests" / "simulink" / "fixtures"
 SCMD = Path(sys.executable).with_name("scmd" + (".exe" if os.name == "nt" else ""))
 SCENARIOS = {}
 #: the base conf.py of a scenario; values are added with ``conf(..., **values)``
@@ -1475,31 +1474,6 @@ BAD_CONFIG = [
         r"matlab_short_links",
     ),
     (
-        {"matlab_simulink_metadata": ["release", "bogus"]},
-        "apidoc=warn html=stop api=stop",
-        r"matlab_simulink_metadata: unknown metadata 'bogus'",
-    ),
-    (
-        {"matlab_simulink_metadata": "release"},
-        "apidoc=warn html=stop api=stop",
-        r"matlab_simulink_metadata must be a list of metadata names",
-    ),
-    (
-        {"matlab_simulink_metadata": 5},
-        "apidoc=warn html=stop api=stop",
-        r"matlab_simulink_metadata must be a list of metadata names",
-    ),
-    (
-        {"matlab_simulink_doc_suffixes": ["rst"]},
-        "apidoc=stop html=stop api=stop",
-        r"matlab_simulink_doc_suffixes",
-    ),
-    (
-        {"matlab_simulink_autobuild_server": "localhost:8000"},
-        "apidoc=warn html=stop api=warn",
-        r"matlab_simulink_autobuild_server",
-    ),
-    (
         {"matlab_api_check_rules": []},
         "apidoc=warn html=type api=stop",
         r"matlab_api_check_rules",
@@ -1642,11 +1616,6 @@ BAD_CONFIG = [
         r"matlab_src_sidecar_suffixes",
     ),
     (
-        {"matlab_simulink_doc_suffixes": ".rst"},
-        "apidoc=stop html=stop api=stop",
-        r"matlab_simulink_doc_suffixes",
-    ),
-    (
         {"matlab_api_check_section_labels": {"inputs": "Inputs"}},
         "apidoc=warn html=warn api=stop",
         r"matlab_api_check_section_labels",
@@ -1756,7 +1725,6 @@ FULL_ANSWERS = """
     matlab_version = "R2024b"
     group = "folder"
     theme = "alabaster"
-    html_baseurl = "https://m2t.example/"
     exclude = ["test"]
     markdown = false
     sidecars = false
@@ -1780,8 +1748,6 @@ BAD_ANSWERS = [
     ("markdown = false\nsidecars = true\n", r"sidecars"),
     ('project = "unterminated\n', r"TOML|toml|line 1"),
     ('napoleon_custom_sections = "Inputs"\n', r"napoleon_custom_sections"),
-    ("html_baseurl = 5\n", r"html_baseurl"),
-    ('html_baseurl = "m2t.example"\n', r"html_baseurl"),
 ]
 
 
@@ -1879,7 +1845,6 @@ def quickstart(ctx):
     for what, needle in (
         ("project", "matlab2tikz by answers"),
         ("theme", "alabaster"),
-        ("html_baseurl", "https://m2t.example/"),
         ("group", "folder"),
         ("version", "R2024b"),
         ("exclude", "test"),
@@ -2040,217 +2005,6 @@ def quickstart(ctx):
     )
 
 
-SIMULINK_MANUAL = """
-    Manual
-    ======
-
-    .. mat:currentfolder:: R2024a-native/slx
-
-    SETEXT-START
-
-    .. mat:autosimulink_library:: probeLib.slx
-       :members:
-       :noindex:
-
-    SETEXT-END
-
-    .. mat:autosimulink_library:: probeLib.slx
-       :members: Gain Block, Nope
-       :noindex:
-
-    EXCLUDE-START
-
-    .. mat:autosimulink_library:: probeLib.slx
-       :members:
-       :undoc-members:
-       :exclude-members: Two Lines
-       :noindex:
-
-    EXCLUDE-END
-
-    .. mat:autosimulink_model:: R2026b/slx/probeModel.slx
-       :metadata: release, creator
-       :references:
-       :hidden-mask-parameters:
-       :noindex:
-
-    .. mat:autosimulink_subsystem_reference:: R2019b/mdl/probeSub.mdl
-       :metadata: model_version
-       :noindex:
-
-    .. mat:autosimulink_library_block:: R2006a/mdl/probeLib.mdl/Gain Block
-       :noindex:
-
-    .. mat:simulink_model:: handModel
-
-       A hand-written model.
-
-       :maskparam handGain: the gain
-       :maskparamtype handGain: double
-
-    .. mat:simulink_library_block:: handLib/Gain
-
-    * S01 :mat:simulink_model:`R2026b/slx/probeModel.slx`
-    * S02 :mat:simulink_library:`R2026b/slx/probeLib.slx`
-    * S03 :mat:simulink_library_block:`R2026b/slx/probeLib.slx/Gain Block`
-    * S04 :mat:simulink_subsystem_reference:`R2026b/slx/probeSub.slx`
-    * S05 :mat:simulink_model:`handModel`
-    * S06 :mat:simulink_model:`shapeAreas`
-    * S07 :mat:simulink_library_block:`R2026b/slx/probeLib.slx/A//B`
-    """
-
-
-@scenario
-def simulink(ctx):
-    """Document the Simulink fixtures saved by MATLAB R2006a to R2026b (.mdl, .slx,
-    libraries, subsystem files, masks) and the docs' shape models as a
-    project: apidoc, html serial and -j, api-check, hand-written pages with
-    every Simulink directive and option, doc files in reST and Markdown.
-    """
-    proj = ctx.path("proj")
-    shutil.copytree(FIXTURES, proj)
-    shutil.copytree(DOCS / "src" / "simulink", proj / "shapes")
-    docs = ctx.conf(
-        ctx.path("docs"),
-        extensions=["sphinx.ext.autodoc", "sphinxcontrib.matlab", "myst_parser"],
-        matlab_src_code_project_root=str(proj),
-        matlab_apidoc_output_dir="api",
-        matlab_simulink_metadata=["release", "model_version", "creator"],
-        matlab_simulink_autobuild_server="http://127.0.0.1:8000/",
-        autodoc_default_options={"references": True, "hidden-mask-parameters": True},
-    )
-    ctx.write(
-        "docs/index.rst",
-        """
-        Simulink
-        ========
-
-        .. toctree::
-
-           api/index
-           manual
-        """,
-    )
-    ctx.write("docs/manual.rst", SIMULINK_MANUAL)
-    # doc files: reST for a model, Markdown (with a setext heading) for a library
-    ctx.write(
-        "proj/R2026b/slx/probeModel.rst",
-        """
-        Model notes
-        ===========
-
-        Notes Q77 about the model.
-        """,
-    )
-    ctx.write(
-        "proj/R2024a-native/slx/probeLib.md",
-        """
-        # probeLib
-
-        Intro P55.
-
-        ## Gain Block
-
-        Gain text G11.
-
-        No Description
-        --------------
-
-        Setext text N22.
-        """,
-    )
-    gen = ctx.scmd("apidoc", "apidoc", "-c", docs)
-    ctx.require(gen.returncode == 0, "apidoc: exit 0")
-    serial = ctx.sphinx("html", docs, ctx.path("html"), "-n")
-    ctx.expect(serial.rc == 0, f"html: exit 0 ({serial.rc})")
-    print(f"    (warnings: {serial.subtypes})")
-    ctx.expect(
-        not serial.warned(r"cannot be parsed|could not be read"),
-        f"every MATLAB-saved file is read ({serial.warned('cannot be parsed')[:1]})",
-    )
-    par = ctx.sphinx("html -j", docs, ctx.path("html-j"), "-n", "-j", "auto")
-    same_pages(ctx, "-j writes the same pages", serial, par)
-    api = ctx.sphinx("api-check", docs, ctx.path("api"), builder="matlab-api-check")
-    ctx.expect(api.rc in (0, 1), f"api-check: exit 0 or 1 ({api.rc})")
-    ctx.expect(not api.warned(r"cannot be parsed"), "api-check reads every file")
-
-    manual = serial.html("manual.html")
-    mine = [r for r in serial.records if "manual.rst" in r]
-    nope = [r for r in mine if "Nope" in r]
-    ctx.expect(
-        len(nope) == 1,
-        f"a missing :members: block warns once ({len(nope)})",
-    )
-    other = [r for r in mine if "Nope" not in r]
-    ctx.expect(not other, f"no other warning on the manual ({other[:2]})")
-    links = links_of(manual, "S")
-    ctx.expect(
-        len(links) == 7 and all(links.values()),
-        f"every Simulink role links ({[k for k, v in links.items() if not v]})",
-    )
-    for what, needle in (
-        ("the reST doc file of a model is shown", "Q77"),
-        ("the Markdown doc file of a library is shown", "P55"),
-        ("an ATX section of a block is shown with it", "G11"),
-        ("a hand-written mask parameter is shown", "handGain"),
-    ):
-        ctx.expect(needle in manual, what)
-    setext = manual.split("SETEXT-START")[-1].split("SETEXT-END")[0]
-    ctx.expect(
-        "N22" in setext,
-        "a setext section of a block without description is shown under :members:",
-    )
-    ctx.expect(
-        "Two Lines"
-        not in html_text(manual.split("EXCLUDE-START")[-1].split("EXCLUDE-END")[0]),
-        "exclude-members leaves out a block named with a line break",
-    )
-    ctx.expect(
-        len(serial.warned(r"has no section for the blocks")) == 1,
-        "a doc file without sections for some blocks warns once, not once "
-        "per directive",
-    )
-    ctx.expect(serial.warned(r"metadata") == [], "no metadata warning")
-
-    # an unknown name in matlab_simulink_metadata stops the build once, at the
-    # start (reference/configuration.rst), not a warning per Simulink object
-    bad = ctx.sphinx(
-        "bad metadata",
-        docs,
-        ctx.path("bad-html"),
-        "-D",
-        "matlab_simulink_metadata=release,colour",
-    )
-    n = len(bad.warned(r"\[mat\.simulink\]"))
-    ctx.expect(
-        bad.rc == 2 and "unknown metadata 'colour'" in bad.stderr and n == 0,
-        f"an unknown metadata name stops the build once (exit {bad.rc}, {n} warnings)",
-    )
-
-    # in a :metadata: option it is one warning where the directive is, and the
-    # build goes on (reference/directives.rst)
-    ctx.write(
-        "docs/option.rst",
-        """
-        :orphan:
-
-        Option
-        ======
-
-        .. mat:autosimulink_model:: R2026b/slx/probeModel.slx
-           :metadata: release, colour
-           :noindex:
-        """,
-    )
-    option = ctx.sphinx("metadata option", docs, ctx.path("option-html"))
-    hits = option.warned(r"unknown Simulink metadata 'colour'.*\[mat\.simulink\]")
-    ctx.expect(
-        option.rc == 0 and len(hits) == 1 and "option.rst" in hits[0],
-        f"an unknown name in a :metadata: option warns once, at its directive "
-        f"(exit {option.rc}, {len(hits)})",
-    )
-
-
 @scenario
 def broken_input(ctx):
     """Build a copy of regularizeNd with every kind of broken or unusual input
@@ -2258,15 +2012,9 @@ def broken_input(ctx):
     the rest is documented, nothing crashes; apidoc and api-check too.
     """
     proj = ctx.copy_project("regularizeNd", "proj")
-    real_slx = next((DOCS / "src" / "simulink").glob("*.slx")).read_bytes()
     bad = proj / "broken"
     bad.mkdir()
     files = {
-        "lfsPointer.slx": b"version https://git-lfs.github.com/spec/v1\n"
-        b"oid sha256:" + b"0" * 64 + b"\nsize 4096\n",
-        "emptyModel.slx": b"",
-        "truncatedModel.slx": real_slx[:200],
-        "notAModel.mdl": b"hello, I am not a model\n",
         "latin1Help.m": "function latin1Help\n% Gr\xfc\xdfe aus K\xf6ln.\nend\n".encode(
             "latin-1"
         ),
@@ -2280,7 +2028,6 @@ def broken_input(ctx):
     (bad / "unreadable.m").chmod(0)
     (bad / "private").mkdir()
     (bad / "private" / "2bad.m").write_text("function x = 2bad\nend\n")
-    (bad / "1model.slx").write_bytes(real_slx)
     (bad / "folder.m").mkdir()
     (bad / "folder.m" / "inside.m").write_text("function inside\nend\n")
     (bad / "café.m").write_text("function cafe1\n% NFC\nend\n")
@@ -2321,15 +2068,10 @@ def broken_input(ctx):
         unreadable_dir.chmod(0o755)
         (bad / "unreadable.m").chmod(0o644)
     expected = [
-        ("lfsPointer.slx", "mat.parse_error"),
-        ("emptyModel.slx", "mat.parse_error"),
-        ("truncatedModel.slx", "mat.parse_error"),
-        ("notAModel.mdl", "mat.parse_error"),
         ("unreadable.m", "mat.parse_error"),
         ("latin1Help.m", "mat.encoding"),
         ("nulBytes.m", "mat.invalid_matlab"),
         ("emptyFile.m", "mat.empty_code_file"),
-        ("1model.slx", "mat.not_callable"),
         ("folder.m", "mat.folder_name"),
         ("differ only by Unicode form", "mat.parse_error"),
         ("is not valid UTF-8; it is not documented", "mat.parse_error"),
@@ -2340,14 +2082,6 @@ def broken_input(ctx):
     for needle, subtype in expected:
         hits = [r for r in b.records if needle in r and f"[{subtype}]" in r]
         ctx.expect(len(hits) == 1, f"html: {needle}: one {subtype} ({len(hits)})")
-    for needle in ("lfsPointer.slx", "notAModel.mdl"):
-        hits = [r for r in api.records if needle in r]
-        ctx.expect(
-            len(hits) == 1,
-            f"api-check: {needle}: one warning ({len(hits)})",
-        )
-        hits = [ln for ln in gen.stderr.splitlines() if needle in ln]
-        ctx.expect(len(hits) == 1, f"apidoc: {needle}: one warning ({len(hits)})")
     # a file apidoc cannot read: one line with the cause, and it is left out
     hits = [ln for ln in gen.stderr.splitlines() if "unreadable.m" in ln]
     ctx.expect(
@@ -2388,46 +2122,6 @@ def broken_input(ctx):
         if not k.startswith("mat.") and k not in ("docutils", "image.not_readable")
     }
     ctx.expect(not unexpected, f"no other kinds of warning ({unexpected})")
-    # a folder page lists the good file and warns once for each broken model
-    for options in ("", "   :undoc-members:\n"):
-        label = "members" + (" and undoc-members" if options else "")
-        small = ctx.path("folder-" + label.replace(" ", "-"))
-        (small / "src" / "dir").mkdir(parents=True)
-        (small / "src" / "dir" / "good.m").write_text(
-            "function good\n% GOODHELP\nend\n"
-        )
-        for name in ("lfsPointer.slx", "emptyModel.slx", "notAModel.mdl"):
-            (small / "src" / "dir" / name).write_bytes(files[name])
-        ctx.conf(small / "docs", matlab_src_code_project_root="../src")
-        ctx.write(
-            f"{small.name}/docs/index.rst",
-            "Dir\n===\n\n.. mat:autofolder:: dir/\n   :members:\n" + options,
-        )
-        for fresh in (True, False):
-            run = ctx.sphinx(
-                f"folder {label}",
-                small / "docs",
-                small / "html",
-                fresh=fresh,
-                builder="html",
-            )
-            ctx.expect(
-                run.rc == 0
-                and "GOODHELP"
-                in "".join(d.decode("utf-8", "replace") for d in run.files().values()),
-                f"folder page, {label}: the good file is documented",
-            )
-            for name in ("lfsPointer.slx", "emptyModel.slx", "notAModel.mdl"):
-                hits = [r for r in run.records if name in r]
-                ctx.expect(
-                    len(hits) == 1,
-                    f"folder page, {label}, {'fresh' if fresh else 'second'} "
-                    f"build: {name}: one warning ({len(hits)})",
-                )
-            ctx.expect(
-                not run.warned(r"not_found|documented without content"),
-                f"folder page, {label}: no mat.not_found, no second parse warning",
-            )
 
 
 #: (label, -D arguments, what must be true of the pages; None: they differ)
@@ -2980,15 +2674,6 @@ def naming_layouts(ctx):
     proj = ctx.path("proj")
     for rel, text in LAYOUT.items():
         ctx.write(f"proj/{rel}", text)
-    sim = next((DOCS / "src" / "simulink").glob("shapeAreas.slx"))
-    for rel in (
-        "private/modelInPrivate.slx",
-        "@C/modelInClass.slx",
-        "st*r/model.slx",
-        "+p/modelInPkg.slx",
-    ):
-        (proj / rel).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(sim, proj / rel)
     docs = apidoc_project(
         ctx, "regularizeNd", folder="docs", matlab_apidoc_private=True
     )
@@ -3214,123 +2899,6 @@ def help_links(ctx):
         not b.warned(r"withLinks|notes\.rst|guide\.md|inc\.txt"),
         f"no warning ({b.warned('withLinks|notes|guide|inc')[:2]})",
     )
-
-
-@scenario
-def simulink_project(ctx):
-    """Run scmd quickstart on a git project with Simulink models and a
-    Markdown note next to one (Help links of Simulink files: the linker
-    function and settings), build its docs into the project and with an
-    autobuild server, change the settings file by hand, and the doc file
-    shapes of a library (a reST and a Markdown file for one model, a heading
-    that names no block, no heading, a subsection).
-    """
-    proj = ctx.path("proj")
-    for rel in (
-        "R2026b/slx/probeModel.slx",
-        "R2026b/slx/probeLib.slx",
-        "R2021a/mdl/probeSub.mdl",
-    ):
-        (proj / rel).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(FIXTURES / rel, proj / rel)
-    ctx.write("proj/run.m", "function run\n% RUN Run the model.\nend\n")
-    ctx.write("proj/R2026b/slx/probeModel.md", "# probeModel\n\nNotes M33.\n")
-    subprocess.run(["git", "init", "-q"], cwd=proj, check=True)
-    commit_all(proj)
-    answers = ctx.write("answers.toml", "markdown = false\nsidecars = false\n")
-    q = ctx.scmd("quickstart", "quickstart", proj, "-q", "-a", answers, cwd=proj)
-    ctx.require(q.returncode == 0, f"quickstart: exit 0 ({q.returncode})")
-    linker = proj / "+sphinxcontrib" / "+matlabdomain"
-    ctx.expect(
-        (linker / "simulinkDocumentationLinker.m").is_file()
-        and (linker / "simulinkDocumentationLinker.json").is_file(),
-        "quickstart writes the linker function and its settings",
-    )
-    out = proj / "docs" / "_build" / "html"
-    b = ctx.sphinx("html in the project", proj / "docs", out)
-    ctx.expect(
-        b.rc == 0,
-        f"quickstart's docs build with a Markdown note next to a "
-        f"model and markdown = false ({b.rc}: {b.stderr.strip()[-150:]})",
-    )
-    ctx.require(b.rc == 0, f"the docs build ({b.rc})")
-    commit_all(proj)
-    settings = json.loads((linker / "simulinkDocumentationLinker.json").read_text())
-    built = out / "mat" / "simulinkDocumentationLinker.json"
-    ctx.expect(
-        not b.rc
-        and built.is_file()
-        and json.loads(built.read_text()).get("mode") == "local",
-        f"the build writes mat/simulinkDocumentationLinker.json, mode local "
-        f"(settings: {settings})",
-    )
-    # the build never writes the settings file; a difference is one info line
-    s = ctx.sphinx(
-        "autobuild server",
-        proj / "docs",
-        out,
-        "-D",
-        "matlab_simulink_autobuild_server=http://127.0.0.1:8001/",
-        fresh=False,
-    )
-    data = json.loads(built.read_text()) if built.is_file() else {}
-    ctx.expect(
-        data.get("mode") == "server" and "8001" in str(data),
-        f"with a server: mode server and its address ({data})",
-    )
-    ctx.expect(not git_status(proj).strip(), "the build changes no file of the project")
-    ctx.expect(
-        s.stdout.count("simulinkDocumentationLinker.json") >= 1,
-        "a server that differs from the settings is named in an info line",
-    )
-    for label, text in (("settings []", "[]"), ("broken settings", "{nope")):
-        (linker / "simulinkDocumentationLinker.json").write_text(text)
-        r = ctx.sphinx(label, proj / "docs", out, fresh=False)
-        ctx.expect(
-            r.rc == 0 and ("simulinkDocumentationLinker.json" in r.stdout + r.warnings),
-            f"{label}: exit 0, named in the log",
-        )
-    subprocess.run(["git", "checkout", "-q", "--", "."], cwd=proj, check=True)
-
-    # doc file shapes of a library: one section per masked block
-    ctx.write(
-        "proj/R2026b/slx/probeLib.md",
-        """
-        # probeLib
-
-        ## Gain Block
-
-        Text G1.
-
-        ### A subsection
-
-        Text G2.
-
-        ## Not A Block
-
-        Text X1.
-        """,
-    )
-    ctx.write("proj/R2026b/slx/probeModel.rst", "No heading here, R44.\n")
-    ctx.write("proj/R2026b/slx/probeModel.md", "# probeModel\n\nNotes M33.\n")
-    conf = proj / "docs" / "conf.py"
-    conf.write_text(
-        conf.read_text()
-        + "\nextensions.append('myst_parser')\n"
-        + "matlab_simulink_doc_suffixes = ['.md', '.rst']\n"
-    )
-    d = ctx.sphinx("doc shapes", proj / "docs", ctx.path("shapes-html"))
-    ctx.expect(d.rc == 0, f"doc shapes: exit 0 ({d.rc})")
-    ctx.expect(
-        len(d.warned(r"Not A Block.*\[mat\.simulink\]|names no.*Not A Block")) == 1,
-        "a heading that names no masked block warns once",
-    )
-    ctx.expect(
-        len(d.warned(r"probeModel\.(md|rst)")) >= 1,
-        "a model with both a .md and a .rst doc file is reported",
-    )
-    pages = "".join(d.html(f) for f in d.files())
-    ctx.expect("G2" in pages, "a subsection stays with its block")
 
 
 @scenario

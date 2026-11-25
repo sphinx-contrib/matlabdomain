@@ -17,7 +17,7 @@ PKG_MODULES = [
     "sphinxcontrib.mat_documenters",
     "sphinxcontrib.matlab_cli",
     "sphinxcontrib.matlab_apidoc._generate",
-    "sphinxcontrib.mat_simulink._model",
+    "sphinxcontrib.matlab_quickstart._cli",
 ]
 OTHER_MODULES = [
     "myst_parser.mdit_to_docutils.base",

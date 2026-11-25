@@ -237,7 +237,7 @@ per project, no new errors) is recorded with the change.
 
 - **publish is P-code.** Rules come from probes only; a later release
   may differ. Mitigation: the oracle in M0, rerun per MATLAB release
-  (add to the release routine with the Simulink formats page).
+  (add to the release routine).
 - **False positives in old help.** ``$Id$``, ``<describe ...>``, ``||f-r|``:
   deviations D6 and D7 handle the frequent ones (``f(R)`` is safe: no
   trademark conversion, D9); the gauntlet run in M6 finds the rest. The

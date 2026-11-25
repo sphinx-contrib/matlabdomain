@@ -89,11 +89,9 @@ BAD_FORMAT = {
     "matlab_version": ["R2999z"],
     "matlab_src_encoding": ["no-such-codec"],
     "matlab_external_names": [["(unclosed"]],
-    "matlab_simulink_autobuild_server": ["localhost:8000"],
     "matlab_api_check_rules": [{"bogus-rule": "error"}],
     "matlab_api_check_files": [["../x.m"]],
     "matlab_api_check_section_labels": [{"nope": []}],
-    "matlab_simulink_metadata": [["release", "bogus"]],
 }
 
 #: the runs: an HTML build, -b matlab-api-check and scmd apidoc
@@ -123,9 +121,6 @@ STOPS = {
     "matlab_external_names": PAGES,
     "matlab_stable_urls": "html",
     "matlab_link_shadowed_files_to_chooser_pages": PAGES,
-    "matlab_simulink_autobuild_server": "html",
-    "matlab_simulink_metadata": PAGES,
-    "matlab_simulink_doc_suffixes": SOURCES,
     "matlab_api_check_rules": "api",
     "matlab_api_check_ignore_patterns": "api",
     "matlab_api_check_files": "api",

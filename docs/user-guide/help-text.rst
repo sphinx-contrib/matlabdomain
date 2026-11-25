@@ -103,7 +103,7 @@ What to expect on an existing project:
 
 * Documentation is built for every file, even when its help is not valid
   :term:`reST`. The warnings name the file and the line of the help in it
-  (``<file>:docstring of <reference>:<line>``; for a Simulink file, the line
+  (``<file>:docstring of <reference>:<line>``; for an app, the line
   within its description); the text is still shown, sometimes with odd line
   breaks.
 * Large projects written for MATLAB alone can produce many such warnings

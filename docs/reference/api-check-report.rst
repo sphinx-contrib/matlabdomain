@@ -30,7 +30,7 @@ each entry that selects no file::
 ``Selected: <n> of <total> files by <entries> entries, <unmatched>
 matching no file`` (with `` (ignored)`` added likewise; after a line that
 says so when the selection is empty). The files it counts are the indexed
-files (MATLAB code, apps and Simulink files, also those that are then not
+files (MATLAB code and apps, also those that are then not
 checked) and the sidecar docs; the files not selected are counted as
 ``not selected``. Without a selection, the report is as before. The
 worked example's report, with the paths shortened:
@@ -55,8 +55,7 @@ identical on every system.
       (:confval:`matlab_api_check_ignore_patterns`), ``hidden``
       (``Contents.m`` and the other special files, and ``Hidden`` classes;
       their members are not counted), ``unreadable``,
-      ``not_parsed`` (parse failures), ``simulink_files`` (Simulink models,
-      libraries and subsystem files: no rule checks them yet); with a
+      ``not_parsed`` (parse failures); with a
       selection, also ``not_selected`` (files and sidecar docs; their
       members are not counted).
    ``selection``
