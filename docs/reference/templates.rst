@@ -49,7 +49,8 @@ In namespace grouping, one page of a namespace or of the global namespace.
 ``separate``
    True with :confval:`matlab_apidoc_separate`.
 ``maxdepth``
-   The ``:maxdepth:`` of the :term:`toctrees <toctree>` (:confval:`matlab_apidoc_maxdepth`).
+   The ``:maxdepth:`` of the :term:`toctrees <toctree>`
+   (:confval:`matlab_apidoc_maxdepth`).
 
 ``root.rst.jinja``
 ------------------

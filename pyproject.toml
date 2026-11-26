@@ -136,6 +136,13 @@ source_pkgs = [
     "sphinxcontrib.matlab_skills"
 ]
 
+[tool.doc8]
+allow-long-titles = true
+ignore-path = [
+    "*/changes/*.rst"
+]
+max-line-length = 88
+
 [tool.pyright]
 exclude = [
     "**/__pycache__",

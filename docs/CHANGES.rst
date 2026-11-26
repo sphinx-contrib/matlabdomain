@@ -306,7 +306,8 @@ Builds:
   ``<autodoc>``. A ``mat.duplicate`` warning
   for an object generated from help text points at the outermost auto
   directive, and its "other instance in" names the file and line where
-  the other description is written, not its page. An object or folder described on several pages
+  the other description is written, not its page.
+  An object or folder described on several pages
   belongs to the same page after an incremental build as after a fresh
   one, also when that page changes, drops the description or is removed.
 * One bad source file no longer stops the build. A file that cannot be
@@ -723,11 +724,18 @@ Project
 * Only Sphinx >= 4.0.0 is now supported.
 * Only Python >= 3.6 is supported.
 * Fixed numerous warnings due to `deprecated Sphinx API`_.
-  * Use ``sphinx.ext.autodoc.directive.DocumenterBridge.record_dependencies`` instead of ``sphinx.ext.autodoc.directive.DocumenterBridge.filename_set``.
+
+  * Use ``sphinx.ext.autodoc.directive.DocumenterBridge.record_dependencies``
+    instead of ``sphinx.ext.autodoc.directive.DocumenterBridge.filename_set``.
+
   * Use ``str.rpartition()`` instead of ``sphinx.util.rpartition()``
+
   * Remove use of ``sphinx.util.force_decode()``.
+
   * Use ``inspect.getmembers()`` instead of ``sphinx.util.inspect.safe_getmembers()``.
+
   * Remove use of encoding argument in ``autodoc.Documenter.get_doc()``.
+
 * Fixed `Issue 101 <https://github.com/sphinx-contrib/matlabdomain/issues/101>`_.
 * CI now tests on Python 3.6, 3.7, 3.8 and 3.9.
 

@@ -34,11 +34,11 @@ below:
 * Every :term:`object` is identified by its path below this folder, its *path
   reference* (``+shapes/Circle.m``, see :doc:`referencing`). Choose the root
   once: moving it changes every reference, link anchor and :term:`inventory` entry.
-* Without it, no file is indexed and the auto :term:`directives <directive>` (``mat:autoclass``
-  and the others) find nothing; each one warns. Description :term:`directives
-  <directive>`
-  (``.. mat:function:: f(x)``, :doc:`documenting`) never read a file, so
-  they work the same with or without it.
+* Without it, no file is indexed
+  and the auto :term:`directives <directive>`(``mat:autoclass`` and the others)
+  find nothing; each one warns. Description :term:`directives <directive>`
+  (``.. mat:function:: f(x)``, :doc:`documenting`) never read a file,
+  so they work the same with or without it.
 
 Use the folder you would add to the MATLAB path, or the folder above several
 such folders (``src/`` with ``toolbox/`` and ``examples/`` below it). Plain

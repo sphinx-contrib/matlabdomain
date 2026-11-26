@@ -17,7 +17,8 @@ publish options (image sizes, output formats, stylesheets).
 
 Evidence (2026-11-06, MATLAB R2026b 26.2.0.3386108):
 
-- Probe kit (plan step M0 moves it into the test suite): ``publish/pubAll.m`` (every construct of the
+- Probe kit (plan step M0 moves it into the test suite):
+  ``publish/pubAll.m`` (every construct of the
   MathWorks "Publishing Markup" page), ``publish/pubEdge.m`` and
   ``publish/pubMore.m`` (thresholds, lists, links, includes, titles),
   ``makeDelims.m`` (writes ``publish/pubDelims.m``: every ASCII punctuation
@@ -29,11 +30,13 @@ Evidence (2026-11-06, MATLAB R2026b 26.2.0.3386108):
   ``help`` and ``doc`` (``matlab.internal.help.helpwin.help2json``) output.
   ``summarize.py`` turns the XML into ``out/<file>.cells.txt`` (one block per
   cell): the oracle quoted below.
+
 - MATLAB's own help code, readable ``.m`` in R2026b
   ``toolbox/matlab/helptools/+matlab/+internal/+help/``: ``getMFileHelpText``,
   ``sanitizeHelpComments``, ``HelpSections``, ``highlightHelp``,
   ``@helpProcess/hotlinkHelp``, ``fixsymbols``, ``ParsedSeeAlso``,
   ``private/seeAlsoPattern``. ``publish`` itself is P-code.
+
 - Survey of the gauntlet help text (``survey_help.py`` in the probe kit;
   file-level help of 21,446 files in 14
   projects; regexes approximate the rules below).
