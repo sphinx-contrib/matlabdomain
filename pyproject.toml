@@ -7,8 +7,6 @@ dev = [
     { include-group = "test" },
     { include-group = "docs" },
     "pre-commit",
-    "ruff==0.17.3",
-    "pyright==1.1.414",
     "tox>=4.60",
     "sphinx-autobuild"
 ]
@@ -321,19 +319,6 @@ env_list = [
     "py315-sphinxdev"
 ]
 requires = ["tox>=4.60", "tox_uv"]
-
-[tool.tox.env.lint]
-commands = [
-    ["ruff", "check", "."],
-    ["ruff", "format", "--check", "."],
-    ["pyright", "--pythonpath", "{env_python}", "--pythonplatform", "Linux"],
-    ["pyright", "--pythonpath", "{env_python}", "--pythonplatform", "Windows"],
-    ["pyright", "--pythonpath", "{env_python}", "--pythonplatform", "Darwin"]
-]
-dependency_groups = ["dev"]
-deps = []
-description = "Lint, format-check, and basic-type-check maintained Python"
-extras = ["markdown"]
 
 [tool.tox.env_run_base]
 commands = [

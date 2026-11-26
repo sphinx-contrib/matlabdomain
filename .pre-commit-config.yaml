@@ -20,6 +20,17 @@ repos:
         args: [--autofix, --indent, '4']
         exclude: uv.lock
 
+-   repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.414
+    hooks:
+    -   id: pyright
+        additional_dependencies:
+        -   Sphinx
+        -   tree-sitter
+        -   tree-sitter-matlab
+        -   myst-parser>=4,<6
+        -   pytest
+
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.17.3
     hooks:
