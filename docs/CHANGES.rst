@@ -743,7 +743,7 @@ Project
 -------------------
 
 * Fixed `Issue 117 <https://github.com/sphinx-contrib/matlabdomain/issues/117>`_.
-  Parsing errors due to `"..."`.  Fix `MatObject::_remove_line_continuations`
+  Parsing errors due to ``"..."``.  Fix ``MatObject::_remove_line_continuations``
   to take MATLAB strings into account.
 
 
@@ -751,8 +751,8 @@ Project
 -------------------
 
 * Fixed `Issue 116 <https://github.com/sphinx-contrib/matlabdomain/issues/116>`_.
-  Failure on parfor statements in class methods. Fix `MatFunction` class to
-  also take `parfor` into account when counting `end`.
+  Failure on parfor statements in class methods. Fix ``MatFunction`` class to
+  also take ``parfor`` into account when counting ``end``.
 
 
 0.11.5 (2021-01-05)
@@ -872,12 +872,12 @@ Project
   Matlab parsing "seems" to hang if code contains a bunch of "%" consecutively.
   Thanks to GulyasGergelyR for reporting and providing a much better solution.
 * Fixed `Issue 86 <https://github.com/sphinx-contrib/matlabdomain/issues/86>`_.
-  Handles the ``DeprecationWarning: `formatargspec` is deprecated since Python
-  3.5. Use `signature` and the `Signature` object directly.``
+  Handles the ``DeprecationWarning: 'formatargspec' is deprecated since Python
+  3.5. Use 'signature' and the 'Signature' object directly.``
 * Fixed `Issue 87 <https://github.com/sphinx-contrib/matlabdomain/issues/87>`_.
   Strings in double quotes are not parsed correctly by pygments.
 * Closed `Issue 82 <https://github.com/sphinx-contrib/matlabdomain/issues/82>`_.
-  Instead of renaming getter and setter functions to `get_whatever`, they are
+  Instead of renaming getter and setter functions to ``get_whatever``, they are
   not documented anymore. This is in line with MATLAB documentation
   https://se.mathworks.com/help/matlab/matlab_oop/property-access-methods.html,
   as these functions cannot be called directly.

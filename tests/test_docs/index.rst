@@ -1,7 +1,7 @@
 .. MATLAB Sphinx Documentation Test documentation master file, created by
    sphinx-quickstart on Wed Jan 15 11:38:03 2014.
    You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+   contain the root ``toctree`` directive.
 
 Welcome to MATLAB Sphinx Documentation Test's documentation!
 ============================================================
@@ -80,7 +80,7 @@ A method in ClassExample
 A class using bysource ordering
 +++++++++++++++++++++++++++++++
 
-Using `bysource` ordering instead of default `alphabetic`
+Using ``bysource`` ordering instead of default ``alphabetic``
 
 .. autoclass:: ClassBySource
     :show-inheritance:
@@ -91,7 +91,7 @@ A class with undocumented members
 +++++++++++++++++++++++++++++++++
 
 List all members of a class, even those without documentation by using
-`:undoc-members:`.
+``:undoc-members:``.
 
 .. autoclass:: ClassWithUndocumentedMembers
     :members:
