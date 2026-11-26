@@ -143,6 +143,71 @@ ignore-path = [
 ]
 max-line-length = 88
 
+# Import contracts from docs/developer-guide/architecture.rst.
+[tool.importlinter]
+include_external_packages = true
+root_packages = ["sphinxcontrib"]
+
+[[tool.importlinter.contracts]]
+# The diagram, top to bottom: a module may import modules in lower layers only.
+# "|" separates modules of one layer that must not import each other.
+# mat_typing is a helper every module may use; it is in no layer.
+# ignore_imports lists the imports that break the layers today.
+id = "layers"
+ignore_imports = [
+    # mat_handlers imports mat_types inside its functions to break the cycle.
+    "sphinxcontrib.mat_handlers -> sphinxcontrib.mat_types",
+    "sphinxcontrib.mat_sidecars -> sphinxcontrib.matlab",
+    "sphinxcontrib.mat_urls -> sphinxcontrib.matlab",
+    "sphinxcontrib.mat_config -> sphinxcontrib.mat_api_check",
+    "sphinxcontrib.mat_config -> sphinxcontrib.matlab_apidoc._generate"
+]
+layers = [
+    "sphinxcontrib.matlab_cli",
+    "sphinxcontrib.matlab_quickstart | sphinxcontrib.matlab_skills",
+    "sphinxcontrib.matlab",
+    "sphinxcontrib.mat_directives",
+    "sphinxcontrib.mat_documenters | sphinxcontrib.mat_urls",
+    "sphinxcontrib.mat_sidecars | sphinxcontrib.mat_api_check | sphinxcontrib.matlab_apidoc",
+    "sphinxcontrib.mat_config",
+    "sphinxcontrib.mat_types",
+    "sphinxcontrib.mat_tree_sitter_parser | sphinxcontrib.mat_container",
+    "sphinxcontrib.mat_naming",
+    "sphinxcontrib.mat_handlers",
+    "sphinxcontrib.mat_classify"
+]
+name = "Modules follow the layers of the architecture diagram"
+type = "layers"
+
+[[tool.importlinter.contracts]]
+# Only the parser talks to tree-sitter.
+allow_indirect_imports = true
+forbidden_modules = ["tree_sitter", "tree_sitter_matlab"]
+id = "tree-sitter"
+ignore_imports = [
+    "sphinxcontrib.mat_types -> tree_sitter"
+]
+name = "Only mat_tree_sitter_parser imports tree-sitter"
+source_modules = [
+    "sphinxcontrib.mat_api_check",
+    "sphinxcontrib.mat_classify",
+    "sphinxcontrib.mat_config",
+    "sphinxcontrib.mat_container",
+    "sphinxcontrib.mat_directives",
+    "sphinxcontrib.mat_documenters",
+    "sphinxcontrib.mat_handlers",
+    "sphinxcontrib.mat_naming",
+    "sphinxcontrib.mat_sidecars",
+    "sphinxcontrib.mat_types",
+    "sphinxcontrib.mat_urls",
+    "sphinxcontrib.matlab",
+    "sphinxcontrib.matlab_apidoc",
+    "sphinxcontrib.matlab_cli",
+    "sphinxcontrib.matlab_quickstart",
+    "sphinxcontrib.matlab_skills"
+]
+type = "forbidden"
+
 [tool.numpydoc_validation]
 # https://numpydoc.readthedocs.io/en/latest/validation.html#built-in-validation-checks
 checks = [

@@ -72,6 +72,14 @@ repos:
         args: [--fix, --show-fixes]
     -   id: ruff-format
 
+    # Check imports contracts
+-   repo: https://github.com/seddonym/import-linter
+    rev: v2.15
+    hooks:
+    -   id: import-linter
+        args: [--verbose]
+        language: python
+
 -   repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
