@@ -3,13 +3,13 @@
 Checks too slow or too large for the test suite (`tests/`); pytest does not
 collect them.
 
-| Folder | Purpose |
-|---|---|
-| `gauntlet/` | The real-project gauntlet: `scmd apidoc` and `sphinx-build` on real MATLAB projects; `scenarios.py`, end-to-end scenarios that use the rest of the interface on them; end-to-end coverage. Details: [gauntlet/README.md](gauntlet/README.md). |
-| `repos/` | The gauntlet's checkouts (`fetch.py` creates it; ignored by Git). |
-| `profiling/` | The profiling harness (a parse sweep and a `sphinx-build` of vhlab-toolbox-matlab, from the gauntlet's checkouts). |
-| `naming/` | `compare_render.py`: snapshots the rendered anchors, links, inventories and warnings of the test roots and docs, and compares two code versions. |
-| `integrations/` | Probes with sphinx-multiproject, one search over several sites (Pagefind) and sphinx-multiversion. Details: [integrations/README.md](integrations/README.md). |
+| Folder          | Purpose                                                                                                                                                                                                                                       |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gauntlet/`     | The real-project gauntlet: `scmd apidoc` and `sphinx-build` on real MATLAB projects; `scenarios.py`, end-to-end scenarios that use the rest of the interface on them; end-to-end coverage. Details: [gauntlet/README.md](gauntlet/README.md). |
+| `repos/`        | The gauntlet's checkouts (`fetch.py` creates it; ignored by Git).                                                                                                                                                                             |
+| `profiling/`    | The profiling harness (a parse sweep and a `sphinx-build` of vhlab-toolbox-matlab, from the gauntlet's checkouts).                                                                                                                            |
+| `naming/`       | `compare_render.py`: snapshots the rendered anchors, links, inventories and warnings of the test roots and docs, and compares two code versions.                                                                                              |
+| `integrations/` | Probes with sphinx-multiproject, one search over several sites (Pagefind) and sphinx-multiversion. Details: [integrations/README.md](integrations/README.md).                                                                                 |
 
 ## Run the gauntlet
 

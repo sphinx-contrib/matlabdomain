@@ -194,6 +194,7 @@ filterwarnings = [
 ]
 junit_family = "xunit2"
 log_cli_level = "INFO"
+log_level = "INFO"
 minversion = "9.0"
 # The strict settings are not in addopts, so a run with -o addopts= keeps them.
 strict_config = true

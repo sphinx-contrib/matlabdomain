@@ -140,20 +140,20 @@ exclusions, `make apidoc` rewrites the API pages.
 Help text is reStructuredText after napoleon's rewrite. Fix the code's
 comments if step 0 allows it (comment-only changes):
 
-| Problem | Fix |
-|---|---|
-| A licence or copyright block runs into the help (the report lists them) | a blank line (not `%`) before it ends the help there |
-| "Unexpected indentation" after `Label:` and an indented table | `Label::` and a blank comment line: a literal block |
+| Problem                                                                                | Fix                                                                                |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| A licence or copyright block runs into the help (the report lists them)                | a blank line (not `%`) before it ends the help there                               |
+| "Unexpected indentation" after `Label:` and an indented table                          | `Label::` and a blank comment line: a literal block                                |
 | "Block quote ends without a blank line" or "Definition list ends without a blank line" | a blank comment line after the indented lines, or indent the following lines alike |
-| A list right after a paragraph | a blank comment line before the list; continuation lines under the item's text |
-| "Literal block expected; none found" | a `::` line with nothing indented after it: add the syntax line, or remove `::` |
-| "Undefined substitution referenced" (`\|name\|`, an absolute value or norm) | double backquotes around the expression |
-| "Unknown target name" (`word_`, a name ending in `_`) | double backquotes, or `\_` |
-| "Unexpected section title" or "Title underline too short" (`----` lines) | a blank comment line around the rule, or remove it |
-| "Inline emphasis start-string without end-string" (a lone `*`) | double backquotes around the expression, or `\*` |
-| "Anonymous hyperlink mismatch" (`text__`) | double backquotes |
-| A property gets commented-out code as its help | a blank line between that comment and the property |
-| An unedited template help (wrong name, `TBD`) | rewrite it in the project's style |
+| A list right after a paragraph                                                         | a blank comment line before the list; continuation lines under the item's text     |
+| "Literal block expected; none found"                                                   | a `::` line with nothing indented after it: add the syntax line, or remove `::`    |
+| "Undefined substitution referenced" (`\|name\|`, an absolute value or norm)            | double backquotes around the expression                                            |
+| "Unknown target name" (`word_`, a name ending in `_`)                                  | double backquotes, or `\_`                                                         |
+| "Unexpected section title" or "Title underline too short" (`----` lines)               | a blank comment line around the rule, or remove it                                 |
+| "Inline emphasis start-string without end-string" (a lone `*`)                         | double backquotes around the expression, or `\*`                                   |
+| "Anonymous hyperlink mismatch" (`text__`)                                              | double backquotes                                                                  |
+| A property gets commented-out code as its help                                         | a blank line between that comment and the property                                 |
+| An unedited template help (wrong name, `TBD`)                                          | rewrite it in the project's style                                                  |
 
 Line numbers in docutils warnings count lines of the rewritten docstring,
 not of the file: search for the text.
@@ -190,16 +190,16 @@ On Windows: `set SPHINXOPTS=-n -w _build/warnings.txt`, then `make clean`
 and `make html`. `group_warnings.py` groups by type and subtype, so all
 docutils warnings are one group: read them in the file.
 
-| Warning | Usual fix |
-|---|---|
+| Warning                                                                                                      | Usual fix                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | "reference target not found" for base classes of other projects (submodules, referenced projects, toolboxes) | find the project with the namespace folder (`+name`), then its namespaces in `matlab_external_names` (commented out in `conf.py`); later `sphinx.ext.intersphinx` to their published docs |
-| "reference target not found" for a project class | its file is excluded, or the name is wrong in the help |
-| docutils errors in help | step 4 |
-| `mat.encoding` | save the file as UTF-8, or leave it (it decodes) |
-| `mat.invalid_matlab` | a syntax error or an unfinished file: fix it, or exclude it if it is not code |
-| `mat.not_callable` | the message says why; rename or move the file, or suppress it if intended |
-| `mat.apidoc` duplicate name | step 5 |
-| `toc.not_included` | add the page to a toctree |
+| "reference target not found" for a project class                                                             | its file is excluded, or the name is wrong in the help                                                                                                                                    |
+| docutils errors in help                                                                                      | step 4                                                                                                                                                                                    |
+| `mat.encoding`                                                                                               | save the file as UTF-8, or leave it (it decodes)                                                                                                                                          |
+| `mat.invalid_matlab`                                                                                         | a syntax error or an unfinished file: fix it, or exclude it if it is not code                                                                                                             |
+| `mat.not_callable`                                                                                           | the message says why; rename or move the file, or suppress it if intended                                                                                                                 |
+| `mat.apidoc` duplicate name                                                                                  | step 5                                                                                                                                                                                    |
+| `toc.not_included`                                                                                           | add the page to a toctree                                                                                                                                                                 |
 
 The goal: `-n -W` with no warnings, or every remaining warning type
 explained. Then `make clean html SPHINXOPTS="-n -W"` is the CI build.
@@ -223,7 +223,7 @@ choice. Raise rules to `"error"` as the help improves.
 - `<src>/BUILDING_DOCS.md` is the build guide for contributors: fill in
   the project's specifics (external names, the CI build).
 - CI, no MATLAB needed: `uv sync --locked`; `make apidoc-check`; `make
-  clean html SPHINXOPTS="-n -W"`; optionally the api-check build with its
+clean html SPHINXOPTS="-n -W"`; optionally the api-check build with its
   report kept; publishing from the default branch.
 - On Windows, git's `core.autocrlf` checks the pages out with CRLF; the
   generator ignores line endings, so `--check` still passes.

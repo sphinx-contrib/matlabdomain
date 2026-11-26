@@ -5,11 +5,11 @@ Posts are Markdown pages using MyST.
 
 Run from `docs/`:
 
-| Task | Command |
-|---|---|
-| Build (strict) | `uv run --group docs sphinx-build -E -n -W --keep-going -b html . _build/html` |
-| Live preview | `uv run --group docs sphinx-autobuild . _build/html` |
-| Run a post's demo | `uv run --group docs python blog/<yyyy>/<mm>/<dd-slug>/demo/run.py` |
+| Task              | Command                                                                        |
+| ----------------- | ------------------------------------------------------------------------------ |
+| Build (strict)    | `uv run --group docs sphinx-build -E -n -W --keep-going -b html . _build/html` |
+| Live preview      | `uv run --group docs sphinx-autobuild . _build/html`                           |
+| Run a post's demo | `uv run --group docs python blog/<yyyy>/<mm>/<dd-slug>/demo/run.py`            |
 
 ## Writing a post
 

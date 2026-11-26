@@ -33,6 +33,12 @@ repos:
     -   id: numpydoc-validation
         exclude: ^test.*py$
 
+- repo: https://github.com/rbubley/mirrors-prettier
+  rev: "v3.9.10"
+  hooks:
+    - id: prettier
+      types_or: [markdown]
+
 -   repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.30.1
     hooks:

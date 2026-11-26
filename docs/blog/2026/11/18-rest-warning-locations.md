@@ -24,7 +24,7 @@ flowchart TD
 ```
 
 1. Every line docutils parses carries its own origin.
-2. A message gives an *absolute* line number, and the reporter maps it back
+2. A message gives an _absolute_ line number, and the reporter maps it back
    to that origin.
 3. The reporter's mapping is bound once, so text that comes from somewhere
    else has to switch it: `switch_source_input`.
@@ -43,7 +43,7 @@ lines.info(3)  # ('page.rst', 3): the 4th line of page.rst
 ```
 
 Sphinx reads a page as one `StringList` whose source is the page's path.
-`.. include::` doesn't parse the included file separately. It *splices*
+`.. include::` doesn't parse the included file separately. It _splices_
 the included lines into the same list (`StateMachine.insert_input`), each
 with its own item `(included path, n)`, plus two padding lines. That is
 why a warning inside an included file names that file.
@@ -128,10 +128,10 @@ if not hasattr(self.reporter, "get_source_and_line"):
     self.reporter.get_source_and_line = self.state_machine.get_source_and_line
 ```
 
-*If it doesn't have one yet.* The first state machine, the one parsing the
+_If it doesn't have one yet._ The first state machine, the one parsing the
 page, wins. A directive that parses its own `StringList` with
 `state.nested_parse` gets a nested state machine that counts lines within
-*that* list, but the reporter still looks them up in the *page's* list.
+_that_ list, but the reporter still looks them up in the _page's_ list.
 The result is the page's file at a line that means nothing there.
 
 Sphinx's answer is `sphinx.util.docutils.switch_source_input`:
@@ -156,7 +156,7 @@ it.
 
 Python's autodoc builds its list as
 `StringList(docstring_lines, source="<file>:docstring of <name>")`. The
-offsets count from 0 *within the docstring*. So `mod.py:docstring of
+offsets count from 0 _within the docstring_. So `mod.py:docstring of
 mod.f:3` means the third line of the docstring, not line 3 of `mod.py`.
 
 Nothing forces that choice. The offset is just an integer per line. Give

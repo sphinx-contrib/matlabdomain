@@ -90,7 +90,7 @@ Follow the `conf.py` table of the migration guide:
   not UTF-8 get `mat.encoding` (step 9).
 - Exclusions: `matlab_src_exclude_patterns` replaces its defaults
   (`"README.*", "CHANGES.*", "CHANGELOG.*", "LICENSE.*", "CONTRIBUTING.*",
-  "CODE_OF_CONDUCT.*", "SECURITY.*"`); copy them into your list. Patterns
+"CODE_OF_CONDUCT.*", "SECURITY.*"`); copy them into your list. Patterns
   use `/` and match path references (folder names such as `"tests"` or
   globs such as `"**/private"`). Port an existing exclusion list one to one
   first, then review it: 1.0 parses files that 0.x could not, so some
@@ -217,24 +217,24 @@ Group the warnings by type and fix the largest groups first:
 python scripts/group_warnings.py warnings.txt
 ```
 
-| Warning | Usual fix |
-|---|---|
+| Warning                                                                                       | Usual fix                                                                                                                  |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | "reference target not found" for another toolbox's classes (`sltest.*`, a vendor's namespace) | add them to `matlab_external_names` (below); MATLAB's own (`handle`, `matlab.*`, `Simulink.*`, `int32`) are in its default |
-| "reference target not found" for other base classes that are not in the project | add them to `matlab_external_names`, or document them |
-| "reference target not found" for a project class | its file is excluded (review the exclusions) or not documented |
-| "reference target not found" for a dotted name with `+` or `@` | a 0.x name in help text (step 7) |
-| "duplicate object description" | a hand-written page and a generated page document the same file: `:no-index:` on one |
-| `toc.not_readable`, `ref.doc`, include file not found | a page still points into the copied tree (step 5) |
-| `mat.ambiguous` | use the path reference the warning lists, or exclude copies |
-| `mat.not_found` | a name the rewrite missed, a file now excluded or removed |
-| `mat.empty_code_file` | an empty `.m` file: delete it, or exclude it |
-| `mat.not_callable` | rename the file, or suppress if intended |
-| `mat.encoding` | save the file as UTF-8; set `matlab_src_encoding` only if all files share one codec; suppress if intended |
-| `mat.invalid_matlab` | the file is probably broken MATLAB; fix it or exclude it |
-| docutils errors in help ("Unexpected indentation") | fix the help text (it is reStructuredText); comment-only changes |
-| `image.not_readable` from help | paths in help are relative to the code file (0.x: the documentation page); fix the path |
-| unknown directive / role / option | step 6 |
-| MyST and Markdown page warnings | fix the page |
+| "reference target not found" for other base classes that are not in the project               | add them to `matlab_external_names`, or document them                                                                      |
+| "reference target not found" for a project class                                              | its file is excluded (review the exclusions) or not documented                                                             |
+| "reference target not found" for a dotted name with `+` or `@`                                | a 0.x name in help text (step 7)                                                                                           |
+| "duplicate object description"                                                                | a hand-written page and a generated page document the same file: `:no-index:` on one                                       |
+| `toc.not_readable`, `ref.doc`, include file not found                                         | a page still points into the copied tree (step 5)                                                                          |
+| `mat.ambiguous`                                                                               | use the path reference the warning lists, or exclude copies                                                                |
+| `mat.not_found`                                                                               | a name the rewrite missed, a file now excluded or removed                                                                  |
+| `mat.empty_code_file`                                                                         | an empty `.m` file: delete it, or exclude it                                                                               |
+| `mat.not_callable`                                                                            | rename the file, or suppress if intended                                                                                   |
+| `mat.encoding`                                                                                | save the file as UTF-8; set `matlab_src_encoding` only if all files share one codec; suppress if intended                  |
+| `mat.invalid_matlab`                                                                          | the file is probably broken MATLAB; fix it or exclude it                                                                   |
+| docutils errors in help ("Unexpected indentation")                                            | fix the help text (it is reStructuredText); comment-only changes                                                           |
+| `image.not_readable` from help                                                                | paths in help are relative to the code file (0.x: the documentation page); fix the path                                    |
+| unknown directive / role / option                                                             | step 6                                                                                                                     |
+| MyST and Markdown page warnings                                                               | fix the page                                                                                                               |
 
 MATLAB's own classes are text by default (`matlab_external_names`); add
 other toolboxes' names to its default list, and drop a 0.x

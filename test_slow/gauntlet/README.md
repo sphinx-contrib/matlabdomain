@@ -5,16 +5,16 @@ reports crashes, warnings by subtype, timings, and serial vs `-j`
 differences (15 projects, about 24,000 `.m` files). `scenarios.py` uses the
 rest of the interface on the same checkouts (below).
 
-| File | Purpose |
-|---|---|
-| `projects.toml` | The project list: name, Git URL, optional commit and options. Edit it to change what is tested. |
-| `projects.lock.toml` | Written by `fetch.py`: the commit of each checkout. Commit it so other machines and later runs use the same commits. |
-| `fetch.py` | Clones a missing project into `../repos/<name>` and moves an existing checkout to its commit. |
-| `gauntlet.py` | Runs the gauntlet on the checkouts and writes `results.json` (the summary) and `manifest.json`. Clones nothing. |
-| `compare.py` | Compares two runs, or a run and a saved summary. |
-| `scenarios.py` | End-to-end scenarios: the options, flags, directives, roles, builders, rebuilds and error paths the gauntlet's default runs never use, each with checks of the expected behavior. |
-| `combine_coverage.py` | Combines the coverage of several runs made with `--coverage`. |
-| `summaries/` | The baseline per platform (`linux.json`, `windows.json`): the `results.json` of a full run with `--jobs`. `environment` in each names the date and the commit. |
+| File                  | Purpose                                                                                                                                                                           |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `projects.toml`       | The project list: name, Git URL, optional commit and options. Edit it to change what is tested.                                                                                   |
+| `projects.lock.toml`  | Written by `fetch.py`: the commit of each checkout. Commit it so other machines and later runs use the same commits.                                                              |
+| `fetch.py`            | Clones a missing project into `../repos/<name>` and moves an existing checkout to its commit.                                                                                     |
+| `gauntlet.py`         | Runs the gauntlet on the checkouts and writes `results.json` (the summary) and `manifest.json`. Clones nothing.                                                                   |
+| `compare.py`          | Compares two runs, or a run and a saved summary.                                                                                                                                  |
+| `scenarios.py`        | End-to-end scenarios: the options, flags, directives, roles, builders, rebuilds and error paths the gauntlet's default runs never use, each with checks of the expected behavior. |
+| `combine_coverage.py` | Combines the coverage of several runs made with `--coverage`.                                                                                                                     |
+| `summaries/`          | The baseline per platform (`linux.json`, `windows.json`): the `results.json` of a full run with `--jobs`. `environment` in each names the date and the commit.                    |
 
 `test_slow/repos/` (checkouts, shared with the profiling tools) and
 `runs/` (output) are ignored by Git.
@@ -46,6 +46,7 @@ with `conf`'s to see what `:inherited-members:` costs:
 ```console
 python test_slow/gauntlet/gauntlet.py --jobs --variant conf --variant inherited
 ```
+
 `--jobs` builds each again with `-j auto` and compares the HTML,
 `objects.inv` (the api-check reports) and warnings. On Windows, `-j` runs
 serially (no fork).
