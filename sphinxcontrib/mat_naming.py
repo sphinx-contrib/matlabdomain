@@ -409,7 +409,7 @@ def not_callable_reason(
     namelengthmax: int,
     matlab_version: str = DEFAULT_MATLAB_VERSION,
 ) -> str:
-    """Says why ``form_matlab_name`` returns None for a file outside ``private/``."""
+    """Say why ``form_matlab_name`` returns None for a file outside ``private/``."""
     parts = _split_folder(folder)
     in_class = False
     for i, part in enumerate(parts):
@@ -450,7 +450,7 @@ def form_matlab_name(
     namelengthmax: int,
     matlab_version: str = DEFAULT_MATLAB_VERSION,
 ) -> MatlabName | None:
-    """Forms the callable MATLAB name for a single file.
+    """Form the callable MATLAB name for a single file.
 
     Pure string/path function; returns None for non-callable/invalid entries.
     ``folder`` has a part above its ``+`` and ``@`` folders (``name_sources``

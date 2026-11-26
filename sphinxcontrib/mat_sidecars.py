@@ -390,7 +390,7 @@ class HelpPaths:
 
 @functools.cache
 def _renderer_class():
-    """myst-parser's Sphinx renderer, adapted to render one page into the
+    """Return a Myst-parser's Sphinx renderer, adapted to render one page into the
     current document (imported on first use: myst-parser is optional).
     """
     from myst_parser.mdit_to_docutils.sphinx_ import SphinxRenderer

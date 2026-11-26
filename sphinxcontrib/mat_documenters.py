@@ -412,7 +412,7 @@ class MatlabDocumenter(PyDocumenter):
         return known[cls.ref]
 
     def member_names(self, cls, kind):
-        """Names of the members of ``cls`` of the type ``kind`` (``MatMethod``,
+        """Return names of the members of ``cls`` of the type ``kind`` (``MatMethod``,
         ``MatProperty`` or ``MatEvent``), with the inherited ones.
         """
         own = {

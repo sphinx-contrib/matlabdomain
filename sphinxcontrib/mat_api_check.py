@@ -83,7 +83,7 @@ _LABELS_OPTION = "matlab_api_check_section_labels"
 
 
 def _header(*labels):
-    """Regexes for a help line that starts a section with a label (any case):
+    """Return regexes for a help line that starts a section with a label (any case):
     ``(colon, alone)``. ``colon``: the label, then ``:`` and anything
     (``Inputs: x - data``, ``Input : x``, ``Options::``), or a short
     qualifier and ``:`` ending the line (``Inputs (all optional):``,
@@ -359,7 +359,7 @@ def has_example(docstring, sections=SECTIONS):
 
 
 def undocumented(rule, docstring, comments, names=(), sections=SECTIONS):
-    """Names in ``comments`` (name -> its ``arguments``-block comment) left
+    """Return names in ``comments`` (name -> its ``arguments``-block comment) left
     undocumented: [] if the help has the rule's section (``has_section``) or
     every name has a comment, else the names without one.
     """

@@ -491,7 +491,7 @@ def warn_ambiguous(target, labels, location, hint=None):
 
 
 def find_one(dom, target, folder=None, accept=is_source_object, location=None):
-    """``find_source``'s only ``(reference, object)``, or None: nothing
+    """Handle ``find_source``'s only ``(reference, object)``, or None: nothing
     matches, or several do (then after a ``mat.ambiguous`` warning).
     """
     found = find_source(dom, target, folder, accept)
@@ -942,7 +942,7 @@ def build_index(settings, old_index=None, warn_unreadable=True):
 
 
 def sidecar_paths(settings):
-    """Paths of the sidecar docs below the root, in walk order: the walk of
+    """List paths of the sidecar docs below the root, in walk order: the walk of
     ``build_index`` without reading files or warning.
     """
     return list(_documentation_files(settings).sidecars)
@@ -2082,7 +2082,9 @@ class MatClass(MatObject):
 
 
 def _member_names(cls):
-    """Names of the properties, methods, enumeration values and events of ``cls``."""
+    """Return names of the properties, methods,
+    enumeration values and events of ``cls``.
+    """
     return [*cls.properties, *cls.methods, *cls.enumerations, *cls.events]
 
 
