@@ -182,14 +182,6 @@ testpaths = ["tests"]
 xfail_strict = true
 
 [tool.ruff]
-extend-exclude = [
-    "tests/roots",
-    "tests/test_data",
-    "tests/test_docs",
-    "tests/quickstart_golden",
-    "test_slow/repos",
-    "test_slow/gauntlet/runs"
-]
 force-exclude = true
 indent-width = 4
 line-length = 88
@@ -275,6 +267,8 @@ max-complexity = 15
 # Test names say what they test (D1). Literal expected values: see test_slow
 # above (PLR2004).
 "tests/**/*" = ["ARG001", "ARG002", "D1", "PLR2004"]
+"tests/quickstart_golden/plain/docs/conf.py" = ["ERA001"]
+"tests/quickstart_golden/uv/docs/conf.py" = ["ERA001"]
 # Expected output is compared as whole lines, longer than the line length.
 "tests/test_autodoc.py" = ["E501"]
 "tests/test_mat_types.py" = ["E501"]
