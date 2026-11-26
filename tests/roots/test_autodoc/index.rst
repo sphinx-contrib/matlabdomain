@@ -16,7 +16,7 @@ folder layout is::
 Table of contents
 =================
 
-.. automodule:: target
+.. autofolder:: target
 
 .. toctree::
    :maxdepth: 2

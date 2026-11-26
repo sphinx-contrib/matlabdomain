@@ -1,0 +1,102 @@
+Warnings
+========
+
+Every warning of the :term:`extension` has the type ``mat`` and one of these
+subtypes. Turn one off with ``suppress_warnings = ["mat.<subtype>"]``, or
+all with ``"mat"``; ``scmd apidoc`` reads the same setting.
+:doc:`../user-guide/warnings` explains each one. A warning about a
+:term:`directive` names the file and line where the :term:`directive` is
+written: a page, a file a page includes, a sidecar doc, or help text
+(``<file>:docstring of <reference>:<line>``). A warning about the text an
+auto :term:`directive` adds around help text, such as a base class that is not
+documented, names the code file and the line of the declaration (line 1
+for a file without one, the auto :term:`directive` for a folder).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 50 25
+
+   * - Warning
+     - Raised for
+     - Emitted
+   * - ``mat.config``
+     - a ``matlab_*`` value that is not valid and that only another run
+       uses (:doc:`configuration`): the warning names the value, what is
+       wrong and the run that uses it
+     - at the start of a build or of ``scmd apidoc``
+   * - ``mat.parse_error``
+     - a file or folder that cannot be read, an invalid ``.mlapp``, a
+       parser failure, a file name that is not
+       valid UTF-8, two names in one folder that differ only by Unicode
+       form, a page that cannot be read (``scmd apidoc`` reports a file it
+       cannot read as ``mat.apidoc``)
+     - every build (reading); parse failures when a page uses the file
+   * - ``mat.folder_name``
+     - an error, not a warning (``suppress_warnings`` does not hide it): a
+       folder named like a supported file (``.m``, ``.mlapp``, ``.md``,
+       ``.rst``, any case); it is not documented
+     - every build
+   * - ``mat.encoding``
+     - a file decoded with the fallback encoding or with replaced bytes; a
+       page that is not valid UTF-8
+     - every build; pages when they are rendered
+   * - ``mat.invalid_matlab``
+     - a file whose first line of code and parse disagree, a dotted
+       ``function`` name, a ``classdef`` named unlike its file, a ``.m``
+       file with NUL bytes
+     - when a page uses the file (NUL bytes: every build)
+   * - ``mat.empty_code_file``
+     - an empty file (nothing but blank lines)
+     - every build
+   * - ``mat.not_callable``
+     - a file MATLAB cannot call for :confval:`matlab_version`; the
+       message says why (an invalid name, a keyword, a subfolder of a
+       class folder, ...)
+     - every build
+   * - ``mat.outside_root``
+     - a link below the project root that points outside it
+     - every build
+   * - ``mat.link_cycle``
+     - a link that points to the folder it is in or a folder above it (a
+       cycle); it is not followed
+     - every build
+   * - ``mat.ambiguous``
+     - a name that matches several :term:`objects <object>`; a file that
+       two folders of a namespace have, in ``mat:autonamespace``
+     - where the name is used
+   * - ``mat.not_found``
+     - an auto :term:`directive` whose argument matches no :term:`object`; a name
+       in ``:members:`` that is not a member; a ``mat:namespace`` or
+       ``mat:autonamespace`` argument that is not a namespace
+     - where the :term:`directive` is
+   * - ``mat.directive``
+     - a :term:`directive` argument of the wrong kind: a class folder given to
+       ``mat:folder``, arguments or a return annotation given to
+       ``mat:autofolder`` or ``mat:autonamespace``; ``:inherited-members:``
+       while :confval:`matlab_inherited_members` is off
+     - where the :term:`directive` is; for ``autodoc_default_options``, once at
+       start-up
+   * - ``mat.duplicate``
+     - an :term:`object` described twice, or two :term:`objects <object>`
+       that would get the same anchor
+     - where the second description is written (for content generated
+       from help text, the outermost auto :term:`directive`); the message names
+       where the first one is written
+   * - ``mat.sidecar``
+     - a sidecar doc without a heading, a ``mat:autosidecar`` reference
+       that is not an indexed sidecar doc, a project root on another drive
+       than the :term:`Sphinx` :term:`source folder <source directory>`
+     - where the sidecar doc is rendered; the drive at start-up
+   * - ``mat.apidoc``
+     - ``scmd apidoc``: a file that cannot be read (with the cause; it is
+       left out), output names that differ only by case, a path too long
+       for Windows
+     - when it runs
+   * - ``mat.stable_url``
+     - a stable address file (:confval:`matlab_stable_urls`) that cannot be
+       written, for example a path too long for Windows (a file of the
+       project in its place is an error that stops the build)
+     - at the end of an HTML build
+   * - ``mat.api_check``
+     - a ``matlab-api-check`` finding
+     - when the :term:`builder` runs

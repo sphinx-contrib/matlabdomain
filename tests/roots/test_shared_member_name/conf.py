@@ -1,0 +1,10 @@
+author = "Denis Rosset, Jean-Daniel Bancal and collaborators"
+autodoc_default_options = {"members": True, "show-inheritance": True}
+autosummary_generate = True
+default_role = "obj"
+project = "RepLAB"
+copyright = "Denis Rosset, Jean-Daniel Bancal and collaborators"
+extensions = ["sphinx.ext.autodoc", "sphinxcontrib.matlab"]
+matlab_src_code_project_root = "_src"
+nitpicky = True
+primary_domain = "mat"

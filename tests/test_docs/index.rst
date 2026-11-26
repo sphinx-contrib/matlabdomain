@@ -1,7 +1,7 @@
 .. MATLAB Sphinx Documentation Test documentation master file, created by
    sphinx-quickstart on Wed Jan 15 11:38:03 2014.
    You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+   contain the root ``toctree`` directive.
 
 Welcome to MATLAB Sphinx Documentation Test's documentation!
 ============================================================
@@ -21,9 +21,9 @@ Test Data
 ^^^^^^^^^
 This is the test data module
 
-.. automodule:: test_data
+.. autofolder:: test_data
 
-:mod:`test_data` is a really cool module
+:folder:`test_data` is a really cool module
 
 .. _ClassInheritHandle:
 
@@ -80,7 +80,7 @@ A method in ClassExample
 A class using bysource ordering
 +++++++++++++++++++++++++++++++
 
-Using `bysource` ordering instead of default `alphabetic`
+Using ``bysource`` ordering instead of default ``alphabetic``
 
 .. autoclass:: ClassBySource
     :show-inheritance:
@@ -91,7 +91,7 @@ A class with undocumented members
 +++++++++++++++++++++++++++++++++
 
 List all members of a class, even those without documentation by using
-`:undoc-members:`.
+``:undoc-members:``.
 
 .. autoclass:: ClassWithUndocumentedMembers
     :members:
@@ -335,35 +335,35 @@ FunctionWithLatin1Encoding
 ++++++++
 This is the test package
 
-.. automodule:: test_data.+package
+.. autofolder:: test_data/+package
 
 packageFunc
 ~~~~~~~~~~~
 
-.. autofunction:: package_func
+.. autofunction:: package_func.m
 
 @ClassFolder
 ++++++++++++
 This is the test class folder
 
-.. automodule:: test_data.@ClassFolder
+.. currentfolder:: test_data/@ClassFolder
 
 ClassFolder
 ~~~~~~~~~~~
 
-.. autoclass:: ClassFolder
+.. autoclass:: ClassFolder.m
 
 classMethod
 ~~~~~~~~~~~
 
-.. autofunction:: classMethod
-.. automethod:: ClassFolder.method_inside_classdef
+.. autofunction:: classMethod.m
+.. automethod:: ClassFolder.m.method_inside_classdef
 
 
 A Static Function
 ~~~~~~~~~~~~~~~~~
 
-.. autofunction:: a_static_func
+.. autofunction:: a_static_func.m
 
 
 
@@ -371,7 +371,7 @@ Submodule
 +++++++++
 This is the test_data module
 
-.. automodule:: test_data.submodule
+.. autofolder:: test_data/submodule
 
 
 Ellipsis after equals
@@ -427,9 +427,9 @@ A Matlab unittest class
 A matlab application (``.mlapp`` file)
 ++++++++++++++++++++++++++++++++++++++
 
-.. autoapplication:: test_data.Application
+.. autoapplication:: test_data/Application.mlapp
 
-This is a reference to an application :app:`test_data.Application`
+This is a reference to an application :app:`Application`
 
 Indices and tables
 ==================

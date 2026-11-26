@@ -1,0 +1,2 @@
+.. autofolder:: src
+   :members:

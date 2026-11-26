@@ -1,0 +1,8 @@
+{#- Edited copy of scmd apidoc's object.rst.jinja for the example
+    (used with -e): classes are documented without :undoc-members:. -#}
+{{ title | e | heading }}
+
+.. {{ directive }}:: {{ ref }}
+{%- for name, value in options.items() if name != "undoc-members" %}
+   :{{ name }}:{% if value %} {{ value }}{% endif %}
+{%- endfor %}

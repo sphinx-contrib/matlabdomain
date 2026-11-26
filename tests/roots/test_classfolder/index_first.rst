@@ -1,6 +1,6 @@
 First
 -----
-.. currentmodule:: .
+.. currentfolder:: .
 
 .. autoclass:: First
     :show-inheritance:

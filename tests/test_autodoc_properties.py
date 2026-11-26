@@ -1,7 +1,4 @@
-"""test_autodoc.
-~~~~~~~~~~~~
-
-Test the autodoc extension.
+"""Test how the property default value and specs options show properties.
 
 :copyright: Copyright by the Sphinx team, see AUTHORS.
 :license: BSD, see LICENSE for details.

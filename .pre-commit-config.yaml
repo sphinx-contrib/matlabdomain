@@ -1,3 +1,6 @@
+# Recorded tool output and MATLAB-written fixtures are kept verbatim.
+exclude: ^test_slow/profiling/results/
+
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -8,32 +11,91 @@ repos:
     -   id: check-toml
     -   id: check-yaml
     -   id: end-of-file-fixer
-    -   id: mixed-line-ending
-        args: [--fix=lf]
     -   id: trailing-whitespace
 
-    # Format TOML files
 -   repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
     rev: v2.15.0
     hooks:
     -   id: pretty-format-toml
         args: [--autofix, --indent, '4']
+        exclude: uv.lock
+
+-   repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+    -   id: rst-backticks
+    -   id: rst-directive-colons
+    -   id: rst-inline-touching-normal
+
+-   repo: https://github.com/numpy/numpydoc
+    rev: v1.11.0
+    hooks:
+    -   id: numpydoc-validation
+        exclude: ^test.*py$
+
+- repo: https://github.com/rbubley/mirrors-prettier
+  rev: "v3.9.10"
+  hooks:
+    - id: prettier
+      types_or: [markdown]
+      # Golden files must match scmd quickstart output byte for byte.
+      exclude: ^tests/quickstart_golden/
+
+-   repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.30.1
+    hooks:
+    -   id: zizmor
+        args: [--fix=unsafe-only]
+        exclude: ^tests/roots/test_quickstart/\.github/workflows/ci\.yml$
+
+-   repo: https://github.com/PyCQA/doc8
+    rev: v2.0.0
+    hooks:
+    -   id: doc8
+        args: [--config=pyproject.toml]
+
+-   repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.414
+    hooks:
+    -   id: pyright
+        additional_dependencies:
+        -   Sphinx
+        -   tree-sitter
+        -   tree-sitter-matlab
+        -   myst-parser>=4,<6
+        -   pytest
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10
+    rev: v0.17.3
     hooks:
-    # Run the linter.
     -   id: ruff-check
-        # args: [--statistics]
-        args: [--fix, --show-fixes, --unsafe-fixes]
-    # Run the formatter.
+        args: [--fix, --show-fixes]
     -   id: ruff-format
-        # args: [--diff]
 
-    # Checks for spelling errors
+    # Check imports contracts
+-   repo: https://github.com/seddonym/import-linter
+    rev: v2.15
+    hooks:
+    -   id: import-linter
+        args: [--verbose]
+        language: python
+
 -   repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
     -   id: codespell
         args: [--toml, pyproject.toml]
         additional_dependencies: [tomli]
+
+-   repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.5
+    hooks:
+    -   id: uv-lock
+
+# Last, so it also fixes the CRLF that pretty-format-toml writes on Windows.
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: \.(bat|cmd)$

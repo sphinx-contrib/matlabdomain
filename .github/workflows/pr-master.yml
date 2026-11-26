@@ -31,11 +31,11 @@ jobs:
       with:
         path: ~/.cache/pre-commit
         key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-    - run: uvx pre-commit run --all-files --show-diff-on-failure
+    - run: uv run --locked pre-commit run --all-files --show-diff-on-failure
 
   tests:
     name: Tests
-    uses: ./.github/workflows/tests.yml
+    uses: $/.github/workflows/tests.yml
 
   pr-checks:
     name: PR checks

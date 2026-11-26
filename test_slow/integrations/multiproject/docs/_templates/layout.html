@@ -1,0 +1,17 @@
+{% extends "!layout.html" %}
+{#- Pagefind markers: index the page content and record the project. -#}
+{% set site_root = pathto("_static", 1)[:-7] %}
+{% block relbar1 %}{{ super() }}
+<p class="unified-search"><a href="{{ site_root }}../search/index.html">Search all projects</a></p>
+{% endblock %}
+{% block document %}
+{%- if pagename in ("genindex", "search") or pagename.endswith("index") and pagename.startswith(("py-", "mat-")) %}
+{{ super() }}
+{%- else %}
+<div data-pagefind-body>
+<span hidden data-pagefind-filter="project">{{ project|e }}</span>
+<span hidden data-pagefind-meta="title">{{ project|e }}: {{ title|striptags|e }}</span>
+{{ super() }}
+</div>
+{%- endif %}
+{% endblock %}

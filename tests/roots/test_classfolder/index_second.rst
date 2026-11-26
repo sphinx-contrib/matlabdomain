@@ -1,7 +1,7 @@
 Second
 ------
 
-.. currentmodule:: src
+.. currentfolder:: src
 
 .. autoclass:: Second
     :show-inheritance:

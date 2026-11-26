@@ -1,0 +1,43 @@
+/* Hover tips for links to glossary terms (docs/_ext/glossary_tips.py).
+ * Furo's color variables follow its light and dark themes; the fallbacks
+ * serve other themes. */
+.glossary-tip {
+  position: absolute;
+  z-index: 100;
+  box-sizing: border-box;
+  max-width: min(30rem, calc(100vw - 16px));
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-foreground-border, #878787);
+  border-radius: 0.25rem;
+  background: var(--color-background-primary, #fff);
+  color: var(--color-foreground-primary, #000);
+  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 20%);
+  font-size: var(--font-size--small, 0.875rem);
+  line-height: 1.5;
+}
+
+.glossary-tip[hidden] {
+  display: none;
+}
+
+.glossary-tip > * {
+  margin: 0.4rem 0;
+}
+
+.glossary-tip > :first-child {
+  margin-top: 0;
+}
+
+.glossary-tip > :last-child {
+  margin-bottom: 0;
+}
+
+.glossary-tip-term {
+  font-weight: bold;
+}
+
+@media print {
+  .glossary-tip {
+    display: none;
+  }
+}

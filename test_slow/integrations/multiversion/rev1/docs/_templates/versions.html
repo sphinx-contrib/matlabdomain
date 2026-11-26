@@ -1,0 +1,11 @@
+{#- Version list from sphinx-multiversion; build provenance below it. #}
+{%- if versions %}
+<h3>Versions</h3>
+<ul class="versions">
+{%- for item in versions %}
+  <li><a class="version{% if current_version and item.name == current_version.name %} current{% endif %}" href="{{ item.url }}">{{ item.name }}</a>{% if not vhasdoc(item.name) %} <span class="no-page">(not in this version)</span>{% endif %}</li>
+{%- endfor %}
+</ul>
+{%- endif %}
+<p class="build-info">Documents <span class="documented">{{ current_version.name if current_version else "working tree" }}</span>
+(release {{ release }}), built with matlabdomain <span class="matlabdomain">{{ matlabdomain_version }}</span>.</p>

@@ -1,0 +1,40 @@
+Install the docs dependencies:
+  pip install "sphinx>=8.0" "sphinxcontrib-matlabdomain>=1.0" furo sphinx-autobuild
+Not in a git repository; add to .gitignore: docs/_build/
+Not in a git repository; add to .gitignore: docs/API/
+Not in a git repository; add to .gitattributes: *.bat text eol=crlf
+Creating file docs/conf.py.
+Creating file docs/index.rst.
+Creating file docs/_static/.gitkeep.
+Creating file docs/Makefile.
+Creating file docs/make.bat.
+Creating file docs/BUILDING_DOCS.md.
+Writing 10 API pages in docs/API.
+Project:
+  No MATLAB release is named in the CI files, matlab.toml or a README.
+  matlab_version: R2026a (the default; none is named)
+  uv project: no
+  matlabdomain is installed as: sphinxcontrib-matlabdomain>=1.0 (version)
+  MATLAB project path: none read (matlab.toml, resources/project); no
+    exclusions suggested
+Inventory:
+  27 files indexed: 17 functions, 5 classes, 4 scripts, 1 app; 3 namespaces
+  Duplicate MATLAB names (1; exclude a copy, or keep both, listed by path):
+    nm_shared: alpha/nm_shared.m, beta/nm_shared.m
+  Not callable (4; documented by path): +for/nm_kw.m, @Bad/Other.m,
+    @NmBox/sub/nm_legacy.m, bad-name.m
+Help headings:
+  none
+Next steps:
+  1. Install the docs dependencies (above).
+  2. Write an introduction in docs/index.rst.
+  3. Build in docs, with a warning for each link that does not resolve (on
+     Windows: set SPHINXOPTS=-n, then make clean and make html):
+       make clean html SPHINXOPTS="-n"
+  4. Fix or explain each warning: the Warnings page of the
+     sphinxcontrib-matlabdomain docs lists the usual fixes. Then the strict
+     build is the CI build:
+       make clean html SPHINXOPTS="-n -W"
+  5. The help-text audit; every rule is a warning at first:
+       make matlab-api-check
+6 files in docs, 10 API pages; 27 files indexed, 4 warnings, <T> s.

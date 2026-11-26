@@ -1,10 +1,10 @@
 package
 -------
 
-.. autoclass:: target.+package.ClassBar
+.. autoclass:: target/+package/ClassBar.m
     :show-inheritance:
     :members:
 
-.. automodule:: target.+package
+.. autofolder:: target/+package/
 
-.. autofunction:: funcFoo
+.. autofunction:: funcFoo.m

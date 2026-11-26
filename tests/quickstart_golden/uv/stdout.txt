@@ -1,0 +1,49 @@
+Running uv add --frozen --group docs "sphinx>=8.0" "sphinxcontrib-matlabdomain>=1.0" "myst-parser>=4,<6" furo sphinx-autobuild
+Adding to .gitignore: docs/_build/
+Adding to .gitattributes: *.bat text eol=crlf
+Creating file docs/conf.py.
+Creating file docs/index.rst.
+Creating file docs/_static/.gitkeep.
+Creating file docs/Makefile.
+Creating file docs/make.bat.
+Creating file docs/BUILDING_DOCS.md.
+Writing 3 API pages in docs/API.
+Project:
+  R2024b is named in .github/workflows/ci.yml (2), README.md (1)
+  R2023a is named in .github/workflows/ci.yml (1)
+  matlab_version: R2024b
+  uv project: yes, [tool.uv]
+  matlabdomain is installed as: sphinxcontrib-matlabdomain>=1.0 (version)
+  Git submodules, left out: ext/lib
+  MATLAB project path (matlab.toml): 1 folder
+  Not on it, commented out in conf.py: data, src/startup_hook.m
+  Sidecar docs on: 1 Markdown file next to the code
+Inventory:
+  16 files indexed: 13 functions, 1 class, 2 scripts; 1 namespace
+  1 sidecar doc
+Help headings:
+  In napoleon_custom_sections: Description (12), Outputs (12), Inputs (10),
+    Input (2)
+  Napoleon's own sections, no entry needed: Examples (12)
+  Napoleon cannot match them (rename them in the code): Name-Value Pairs (3)
+  In fewer than 10 files, not used: Remarks (3)
+Copyright blocks that run into help (1; a blank line, not %, before such a
+  block ends the help there):
+  src/legal.m:4
+Next steps:
+  1. Lock and install the docs dependencies:
+       uv lock
+       uv sync --group docs
+  2. Write an introduction in docs/index.rst.
+  3. Build in docs, with a warning for each link that does not resolve (on
+     Windows: set SPHINXOPTS=-n, then make clean and make html):
+       make clean html SPHINXOPTS="-n"
+  4. Fix or explain each warning: the Warnings page of the
+     sphinxcontrib-matlabdomain docs lists the usual fixes. Then the strict
+     build is the CI build:
+       make clean html SPHINXOPTS="-n -W"
+  5. Commit the API pages. In CI, this fails when they are out of date:
+       make apidoc-check
+  6. The help-text audit; every rule is a warning at first:
+       make matlab-api-check
+6 files in docs, 3 API pages; 16 files indexed, 0 warnings, <T> s.
