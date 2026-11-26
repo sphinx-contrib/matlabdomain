@@ -37,9 +37,8 @@ release = ""
 # -- Tested versions ---------------------------------------------------------
 
 # The pages state the tested range as |python-tested| and |sphinx-tested|.
-# Python: the classifiers, which tests/test_tested_versions.py keeps equal to
-# the CI matrix. Sphinx: the dependency's floor to the newest Sphinx in
-# uv.lock.
+# Python: the classifiers.
+# Sphinx: the dependency's floor to the newest Sphinx in uv.lock.
 _root = Path(__file__).parent.parent
 _project = tomllib.loads((_root / "pyproject.toml").read_text(encoding="utf-8"))
 _lock = tomllib.loads((_root / "uv.lock").read_text(encoding="utf-8"))

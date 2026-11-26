@@ -27,8 +27,7 @@ jobs:
     timeout-minutes: 15
     runs-on: ${{ matrix.os }}
     # Sphinx master may break at any time, and so may a Python prerelease;
-    # neither may block. tests/test_tested_versions.py reads the matrix: the
-    # Python versions of the other rows are the tested range in the docs.
+    # neither may block.
     continue-on-error: ${{ matrix.experimental == true }}
     env:
       COVERAGE_FILE: .coverage.${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.sphinx-version }}

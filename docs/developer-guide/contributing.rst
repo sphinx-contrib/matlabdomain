@@ -156,8 +156,8 @@ Versions and compatibility
   refuse the package or pick an old release.
 * To add or drop a Python version, change the ``Programming Language ::
   Python :: 3.x`` classifiers, the CI matrix (``.github/workflows/tests.yml``)
-  and the tox ``env_list`` together; ``tests/test_tested_versions.py`` names
-  what is out of step. A prerelease row in CI has ``experimental: true``: it
+  and the tox ``env_list`` together.
+  A prerelease row in CI has ``experimental: true``: it
   may fail and is not part of the tested range. The newest tested
   :term:`Sphinx` is the one in ``uv.lock``
   (``uv lock --upgrade-package sphinx``). The docs read both ranges from
