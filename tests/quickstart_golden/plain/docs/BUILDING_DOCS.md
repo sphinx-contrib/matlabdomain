@@ -20,14 +20,14 @@ pip install "sphinx>=8.0" "sphinxcontrib-matlabdomain>=1.0" furo sphinx-autobuil
 
 Run these from the `docs` folder. On Windows, `make` is `make.bat`.
 
-| Command                 | What it does                                                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `make html`             | Builds the site into `docs/_build/html`; open `index.html` there.                                                               |
-| `make livehtml`         | Builds the site, serves it at <http://127.0.0.1:8000> and rebuilds when a MATLAB file or a page changes. Stop it with `Ctrl+C`. |
-| `make apidoc`           | Writes the API pages in `docs/API` from the MATLAB code.                                                                        |
-| `make apidoc-check`     | Fails when the API pages in `docs/API` are out of date.                                                                         |
-| `make matlab-api-check` | Lists gaps in the MATLAB help text in `docs/_build/matlab-api-check/api-check.txt`.                                             |
-| `make clean`            | Deletes `docs/_build`.                                                                                                          |
+| Command | What it does |
+|---|---|
+| `make html` | Builds the site into `docs/_build/html`; open `index.html` there. |
+| `make livehtml` | Builds the site, serves it at <http://127.0.0.1:8000> and rebuilds when a MATLAB file or a page changes. Stop it with `Ctrl+C`. |
+| `make apidoc` | Writes the API pages in `docs/API` from the MATLAB code. |
+| `make apidoc-check` | Fails when the API pages in `docs/API` are out of date. |
+| `make matlab-api-check` | Lists gaps in the MATLAB help text in `docs/_build/matlab-api-check/api-check.txt`. |
+| `make clean` | Deletes `docs/_build`. |
 
 A strict build from scratch, which treats every warning as an error (on
 Windows: `set SPHINXOPTS=-n -W`, then `make clean` and `make html`):

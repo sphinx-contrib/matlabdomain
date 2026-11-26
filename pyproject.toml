@@ -12,14 +12,14 @@ dev = [
 ]
 docs = [
     "furo",
-    "sphinxcontrib-mermaid",
+    "sphinxcontrib-mermaid>=1",
     # myst-parser is also in the test group; docs needs it for blog posts.
     "myst-parser>=4,<6"
 ]
 test = [
     "pytest>=9",
-    "pytest-cov",
-    "pytest-randomly",
+    "pytest-cov>=7",
+    "pytest-randomly>=3.16",
     # The Markdown tests need the renderer; keep the cap in step with the
     # `markdown` extra.
     "myst-parser>=4,<6"
@@ -319,7 +319,7 @@ include = ["sphinxcontrib*"]
 
 [tool.tox]
 env_list = [
-    "py3{11,12,13,14,15}-{sphinxmin,sphinxlatest}",
+    { product = [["py311", "py312", "py313", "py314", "py315"], ["sphinxmin", "sphinxlatest"]] },
     "py316-sphinxlatest",
     "py312-sphinx82",
     "py315-sphinxdev"
@@ -333,7 +333,6 @@ commands = [
 ]
 dependency_groups = ["test", "docs"]
 deps = [
-    { replace = "if", condition = "not factor.sphinxdev", then = ["myst-parser"], else = [], extend = true },
     { replace = "if", condition = "factor.sphinx82", then = ["Sphinx==8.2.*"], else = [], extend = true },
     { replace = "if", condition = "factor.sphinxlatest", then = ["Sphinx"], else = [], extend = true },
     { replace = "if", condition = "factor.sphinxdev", then = ["https://github.com/sphinx-doc/sphinx/archive/refs/heads/master.zip"], else = [], extend = true }

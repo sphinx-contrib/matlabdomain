@@ -38,6 +38,8 @@ repos:
   hooks:
     - id: prettier
       types_or: [markdown]
+      # Golden files must match scmd quickstart output byte for byte.
+      exclude: ^tests/quickstart_golden/
 
 -   repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.30.1
