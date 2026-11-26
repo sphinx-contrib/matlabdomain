@@ -17,11 +17,15 @@ updates:
         actions-security:
             applies-to: security-updates
             patterns: ['*']
+    cooldown:
+        default-days: 7
 
 -   package-ecosystem: pre-commit
     directory: /
     patterns: ['*']
     multi-ecosystem-group: dependencies
+    cooldown:
+        default-days: 7
 
 -   package-ecosystem: uv
     directory: /
@@ -31,3 +35,5 @@ updates:
         uv-security:
             applies-to: security-updates
             patterns: ['*']
+    cooldown:
+        default-days: 7

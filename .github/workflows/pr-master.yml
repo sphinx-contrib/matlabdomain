@@ -35,7 +35,7 @@ jobs:
 
   tests:
     name: Tests
-    uses: ./.github/workflows/tests.yml
+    uses: $/.github/workflows/tests.yml
 
   pr-checks:
     name: PR checks
