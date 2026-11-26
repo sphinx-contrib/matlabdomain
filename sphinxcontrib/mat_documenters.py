@@ -1668,7 +1668,6 @@ class MatMethodDocumenter(MatDocstringSignatureMixin, MatClassLevelDocumenter):
         unless it's a class constructor or a static method (which has no object).
 
         Rendering -> "(arg1, arg2, arg3)"
-
         """
         is_ctor = self.object.cls.name == self.object.name
         is_static = bool(self.object.attrs.get("Static"))
