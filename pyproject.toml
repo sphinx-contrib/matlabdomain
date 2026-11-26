@@ -320,7 +320,7 @@ env_list = [
     "py312-sphinx82",
     "py315-sphinxdev"
 ]
-requires = ["tox>=4.60"]
+requires = ["tox>=4.60", "tox_uv"]
 
 [tool.tox.env.lint]
 commands = [
