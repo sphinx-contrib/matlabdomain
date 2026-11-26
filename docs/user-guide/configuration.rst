@@ -35,7 +35,7 @@ below:
   reference* (``+shapes/Circle.m``, see :doc:`referencing`). Choose the root
   once: moving it changes every reference, link anchor and :term:`inventory` entry.
 * Without it, no file is indexed
-  and the auto :term:`directives <directive>`(``mat:autoclass`` and the others)
+  and the auto :term:`directives <directive>` (``mat:autoclass`` and the others)
   find nothing; each one warns. Description :term:`directives <directive>`
   (``.. mat:function:: f(x)``, :doc:`documenting`) never read a file,
   so they work the same with or without it.
