@@ -326,6 +326,14 @@ env_list = [
 ]
 requires = ["tox>=4.60", "tox_uv"]
 
+[tool.tox.env.archi]
+commands = [
+    ["pydeps", "sphinxcontrib", "-v", "--noshow", "--only", "sphinxcontrib", "--max-module-depth", "2"]
+]
+deps = ["pydeps"]
+description = "build figure of the dependencies between sphinxcontrib subpackages"
+skip_install = false
+
 [tool.tox.env_run_base]
 commands = [
     ["pytest", "--cov", "--cov-report=term-missing", "--cov-report=html", { replace = "posargs", extend = true }],
