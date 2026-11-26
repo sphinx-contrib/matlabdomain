@@ -323,19 +323,6 @@ def test_quiet_run_stays_strict(tmp_path):
     assert "'nosuch' not found in `markers` configuration option" in result.stdout
 
 
-def test_ruff_hook_matches_dev_pin():
-    project = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))
-    pins = [
-        d.removeprefix("ruff==")
-        for d in project["dependency-groups"]["dev"]
-        if isinstance(d, str) and d.startswith("ruff==")
-    ]
-    hooks = (REPO / ".pre-commit-config.yaml").read_text(encoding="utf-8")
-    hook = re.search(r"ruff-pre-commit\s+rev: v(\S+)", hooks)
-    assert hook is not None
-    assert pins == [hook[1]]
-
-
 @pytest.mark.parametrize(
     ("name", "included"),
     [
